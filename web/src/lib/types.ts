@@ -13,15 +13,41 @@ export type MemberPatch = Partial<Pick<Member, 'name' | 'color'>>;
  */
 export interface Reward {
   id: string;
-  memberId: string;
+  /** Who it's for: one kid, or several together. */
+  memberIds: string[];
   title: string;
   goal: number;
   mode: RewardMode;
+  /** With several kids: their stars added together, or each kid reaching the goal. */
+  teamMode: TeamMode;
+  /** Until-earned only: starts counting again after it's given. */
+  repeats: boolean;
   startDay: string;
-  /** Stars counted toward it so far. */
+  /** Stars counted toward it so far (everyone's together). */
   stars: number;
+  /** Each kid's part of `stars`. */
+  memberStars: Record<string, number>;
+  /** earned: reached, waiting to be handed over; given: handed over (this month's, for a monthly one). */
+  status: 'in_progress' | 'earned' | 'given';
+  winId: string | null;
+  /** When the goal was reached. */
+  earnedDay: string | null;
 }
 export type RewardMode = 'monthly' | 'until_reached';
+export type TeamMode = 'pooled' | 'each';
+export type RewardInput = Pick<Reward, 'memberIds' | 'title' | 'goal' | 'mode' | 'teamMode' | 'repeats' | 'startDay'>;
+
+/** One time a reward was earned (and maybe given), kept even if the reward changes later. */
+export interface RewardWin {
+  id: string;
+  rewardId: string;
+  title: string;
+  memberIds: string[];
+  goal: number;
+  stars: number;
+  earnedDay: string;
+  givenAt: string | null;
+}
 
 export interface CalEvent {
   id: string;
@@ -182,4 +208,32 @@ export interface Weather {
   sunset: string;
   /** Today and the next six days. */
   days: { date: string; high: number; low: number; code: number }[];
+}
+
+/** A photo in the album. */
+export interface Photo {
+  id: string;
+  width: number;
+  height: number;
+  /** When it was taken (or the file's date). */
+  takenAt: string | null;
+  /** Who added it. */
+  memberId: string | null;
+  source: 'upload' | 'google';
+  /** Shown in the screen saver. */
+  inSlideshow: boolean;
+  createdAt: string;
+  url: string;
+  thumbUrl: string;
+}
+
+/** Screen saver settings (the "screensaver" setting). */
+export interface ScreenSaverSettings {
+  enabled: boolean;
+  /** Minutes without a touch before it starts. */
+  idleMinutes: number;
+  /** How long each photo stays up. */
+  seconds: number;
+  /** "mix" changes it every photo. */
+  transition: 'mix' | 'fade' | 'kenburns' | 'slide' | 'zoom' | 'blur' | 'flip';
 }

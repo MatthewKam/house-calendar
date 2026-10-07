@@ -1,0 +1,285 @@
+/* The Rewards page: ready to hand over, in progress, and given. */
+.page {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+}
+.pageHead {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.6rem;
+	flex-wrap: wrap;
+}
+.pageTitle {
+	margin: 0;
+	font-size: 2rem;
+}
+.filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+}
+.filter {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0 0.8rem;
+	border: 1.5px solid color-mix(in srgb, var(--c) 55%, var(--line));
+	background: var(--surface);
+}
+.filter i {
+	width: 0.8rem;
+	height: 0.8rem;
+	border-radius: 50%;
+}
+.filterOn {
+	border-color: var(--accent);
+	border-width: 2.5px;
+	font-weight: 650;
+}
+.newReward {
+	padding: 0 1rem;
+	background: var(--accent);
+	color: var(--surface);
+	font-weight: 650;
+}
+
+/* Rewards given this year, per kid. */
+.tally {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+}
+.tallyItem {
+	display: grid;
+	grid-template-columns: auto auto;
+	align-items: baseline;
+	column-gap: 0.5rem;
+	padding: 0.5rem 0.9rem;
+	border-radius: var(--radius);
+	background: color-mix(in srgb, var(--c) 14%, var(--surface));
+	border: 1px solid color-mix(in srgb, var(--c) 35%, var(--line));
+}
+.tallyName {
+	grid-column: 1 / -1;
+	font-weight: 650;
+}
+.tallyNumber {
+	font-size: 1.8rem;
+	font-weight: 700;
+	line-height: 1;
+}
+.tallyLabel {
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+
+.scroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	padding-bottom: 1rem;
+}
+.section {
+	margin: 0.6rem 0 0;
+	font-size: 1.2rem;
+}
+.none {
+	margin: 0;
+	color: var(--muted);
+}
+.grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+	gap: 0.75rem;
+}
+.card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.55rem;
+	padding: 0.9rem 1rem;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+}
+/* Earned: a warm, gold card that asks to be handed over. */
+.earned {
+	background: linear-gradient(160deg, #fff6d6 0%, #ffe9a8 100%);
+	border-color: #f0c64a;
+	box-shadow: 0 0.4rem 1rem rgb(200 150 20 / 0.15);
+}
+/* A monthly reward already given this month. */
+.doneForNow {
+	opacity: 0.7;
+}
+.cardTop {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.cardTop svg {
+	width: 1.4rem;
+	height: 1.4rem;
+	flex: none;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.7;
+	stroke-linejoin: round;
+}
+.title {
+	flex: 1;
+	margin: 0;
+	font-size: 1.15rem;
+}
+.edit {
+	min-height: 0;
+	padding: 0.3rem;
+	color: var(--muted);
+}
+.edit svg {
+	width: 1.2rem;
+	height: 1.2rem;
+}
+.who {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.3rem;
+}
+.name {
+	padding: 0.1rem 0.6rem;
+	border-radius: 999px;
+	font-size: 0.85rem;
+	font-weight: 650;
+}
+.together {
+	color: var(--muted);
+	font-size: 0.85rem;
+	font-style: italic;
+}
+.meta {
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.give {
+	align-self: flex-start;
+	padding: 0 1.1rem;
+	background: var(--accent);
+	color: var(--surface);
+	font-weight: 700;
+}
+
+/* Progress: a bar split by who added the stars, or one per kid. */
+.eachBars {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+.eachRow {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+}
+.eachName {
+	width: 4.5rem;
+	font-size: 0.9rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.bar {
+	flex: 1;
+	display: flex;
+	height: 0.7rem;
+	border-radius: 1rem;
+	background: var(--bg);
+	overflow: hidden;
+}
+.bar > span {
+	height: 100%;
+}
+.count {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-weight: 650;
+	font-size: 0.95rem;
+	white-space: nowrap;
+}
+.star {
+	width: 1rem;
+	height: 1rem;
+	color: #e3a008;
+}
+
+/* Given: by month. */
+.month {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+.monthName {
+	margin: 0.3rem 0 0;
+	font-size: 0.95rem;
+	color: var(--muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+.givenList {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+.givenList li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem 0.8rem;
+	padding: 0.5rem 0.8rem;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: 0.7rem;
+}
+.givenTitle {
+	font-weight: 650;
+}
+.givenDates {
+	color: var(--muted);
+	font-size: 0.85rem;
+	margin-left: auto;
+}
+.undo,
+.more {
+	min-height: 0;
+	padding: 0.15rem 0.3rem;
+	font-size: 0.85rem;
+	color: var(--muted);
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+.more {
+	align-self: flex-start;
+	font-weight: 650;
+	color: var(--accent);
+}
+
+@media (max-width: 700px) {
+	.pageTitle {
+		font-size: 1.5rem;
+	}
+	.grid {
+		grid-template-columns: 1fr;
+	}
+	.givenDates {
+		margin-left: 0;
+	}
+}

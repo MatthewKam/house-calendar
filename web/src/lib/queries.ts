@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import { addDays, dayKey, fromDayKey, startOfWeek } from './dates';
-import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, Reward } from './types';
+import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, RewardInput } from './types';
 
 const REFRESH_MS = 60_000;
 
@@ -124,17 +124,26 @@ export function useRewards(today: string) {
   return useQuery({ queryKey: keys.rewards(today), queryFn: () => api.rewards(today), refetchInterval: REFRESH_MS });
 }
 
-/** Add, change, mark as given and delete rewards; each refreshes the list afterwards. */
+/** Every reward earned (waiting to be given first, then given, newest first). Ticks refresh it too. */
+export function useRewardHistory() {
+  return useQuery({ queryKey: ['tasksDone', 'rewards', 'history'], queryFn: api.rewardHistory, refetchInterval: REFRESH_MS });
+}
+
+/** Add, change, hand over and delete rewards; each refreshes the rewards and their history afterwards. */
 export function useRewardActions() {
   const qc = useQueryClient();
   const refresh = () => qc.invalidateQueries({ queryKey: ['tasksDone', 'rewards'] });
   return {
     save: useMutation({
-      mutationFn: ({ id, reward }: { id?: string; reward: Pick<Reward, 'memberId' | 'title' | 'goal' | 'mode' | 'startDay'> }) =>
-        id ? api.updateReward(id, { title: reward.title, goal: reward.goal, mode: reward.mode }) : api.addReward(reward),
+      mutationFn: ({ id, reward }: { id?: string; reward: RewardInput }) => {
+        const { startDay, ...changes } = reward;
+        return id ? api.updateReward(id, changes) : api.addReward({ ...changes, startDay });
+      },
       onSettled: refresh,
     }),
-    give: useMutation({ mutationFn: (id: string) => api.giveReward(id), onSettled: refresh }),
+    give: useMutation({ mutationFn: ({ id, today }: { id: string; today: string }) => api.giveReward(id, today), onSettled: refresh }),
+    giveWin: useMutation({ mutationFn: ({ id, today }: { id: string; today: string }) => api.giveWin(id, today), onSettled: refresh }),
+    undoWin: useMutation({ mutationFn: (id: string) => api.undoWin(id), onSettled: refresh }),
     remove: useMutation({ mutationFn: (id: string) => api.removeReward(id), onSettled: refresh }),
   };
 }
@@ -284,3 +293,27 @@ export const useUpdateMember = () =>
   useMemberMutation(({ id, patch }: { id: string; patch: MemberPatch }) =>
     api.updateMember(id, patch));
 export const useRemoveMember = () => useMemberMutation((id: string) => api.removeMember(id));
+
+/** The photo album, newest first. */
+export function usePhotos() {
+  return useQuery({ queryKey: ['photos'], queryFn: api.photos, refetchInterval: 5 * 60_000 });
+}
+
+export function usePhotoActions() {
+  const qc = useQueryClient();
+  const refresh = () => qc.invalidateQueries({ queryKey: ['photos'] });
+  return {
+    refresh,
+    update: useMutation({
+      mutationFn: ({ id, patch }: { id: string; patch: { inSlideshow?: boolean; memberId?: string | null } }) => api.updatePhoto(id, patch),
+      onSettled: refresh,
+    }),
+    remove: useMutation({ mutationFn: (id: string) => api.deletePhoto(id), onSettled: refresh }),
+    /** Several at once (Select mode). */
+    setSlideshow: useMutation({
+      mutationFn: ({ ids, inSlideshow }: { ids: string[]; inSlideshow: boolean }) => api.setSlideshow(ids, inSlideshow),
+      onSettled: refresh,
+    }),
+    removeMany: useMutation({ mutationFn: (ids: string[]) => api.deletePhotos(ids), onSettled: refresh }),
+  };
+}

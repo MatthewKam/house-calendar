@@ -156,7 +156,7 @@ export default function TasksPage({ today, members, onAdd, onEdit }: Props) {
 		const p = progress.get(kid.id);
 		const pct = percent(p);
 		const earned = monthStars(kid.id);
-		const mine = rewards.filter((r) => r.memberId === kid.id);
+		const mine = rewards.filter((r) => r.memberIds.includes(kid.id));
 		return (
 			<header className={s.kidHead}>
 				<div className={s.head}>
@@ -188,27 +188,38 @@ export default function TasksPage({ today, members, onAdd, onEdit }: Props) {
 				</div>
 				{/* The kid's rewards and how close their stars are to each. Tap one to change it. */}
 				{mine.map((r) => {
-					const reached = r.stars >= r.goal;
+					const reached = r.status !== "in_progress";
+					// A team reward names the others it's shared with.
+					const others = members.filter((m) => m.id !== kid.id && r.memberIds.includes(m.id)).map((m) => m.name);
 					return (
 						<div key={r.id} className={`${s.reward} ${reached ? s.rewardReached : ""}`}>
 							<button className={s.rewardMain} onClick={() => setRewardSheet({ member: kid, reward: r })}>
 								<GiftIcon />
 								<span className={s.rewardText}>
-									{reached ? `${r.title} earned! 🎉` : r.title}
+									{r.status === "earned" ? `${r.title} earned! 🎉` : r.status === "given" ? `${r.title} ✓` : r.title}
 									<span className={s.rewardMode}>
-										{r.mode === "monthly" ? "this month" : "until earned"}
+										{r.mode === "monthly" ? (r.status === "given" ? "given this month" : "this month") : "until earned"}
+										{others.length > 0 && ` · with ${others.join(" & ")}`}
 									</span>
 								</span>
-								<span className={s.rewardBar} aria-hidden="true">
-									<span style={{ width: `${Math.min(100, (r.stars / r.goal) * 100)}%` }} />
-								</span>
-								<span className={s.rewardCount}>
-									{Math.min(r.stars, r.goal)}/{r.goal}
-								</span>
+								{/* Pooled or alone: everyone's stars; each-reaches: this kid's own. */}
+								{(() => {
+									const n = r.teamMode === "each" && r.memberIds.length > 1 ? (r.memberStars[kid.id] ?? 0) : r.stars;
+									return (
+										<>
+											<span className={s.rewardBar} aria-hidden="true">
+												<span style={{ width: `${Math.min(100, (n / r.goal) * 100)}%` }} />
+											</span>
+											<span className={s.rewardCount}>
+												{Math.min(n, r.goal)}/{r.goal}
+											</span>
+										</>
+									);
+								})()}
 							</button>
-							{/* An until-earned reward stays until it's handed over. */}
-							{reached && r.mode === "until_reached" && (
-								<button className={s.given} onClick={() => give.mutate(r.id)}>
+							{/* Earned: waiting to be handed over. */}
+							{r.status === "earned" && (
+								<button className={s.given} onClick={() => give.mutate({ id: r.id, today })}>
 									Mark as given
 								</button>
 							)}
