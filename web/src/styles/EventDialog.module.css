@@ -43,3 +43,7 @@
   font-size: 1.05rem; padding: 0.55rem 0.6rem; border: 1px solid var(--line); border-radius: 0.6rem;
   color: var(--text); background: var(--surface);
 }
+
+/* "This day only or every day?" for a repeating event. */
+.scopeAsk { display: flex; flex-direction: column; gap: 0.4rem; padding-top: 0.6rem; border-top: 1px solid var(--line); }
+.scopeQuestion { font-weight: 650; }

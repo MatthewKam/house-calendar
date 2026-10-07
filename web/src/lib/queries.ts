@@ -269,7 +269,7 @@ export function useResolveConflict() {
 export function useDeleteEvent() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.removeEvent(id),
+    mutationFn: ({ id, scope }: { id: string; scope?: 'one' | 'all' }) => api.removeEvent(id, scope),
     // An iCloud event's edit also changes what's waiting to be sent.
     onSettled: () => Promise.all([qc.invalidateQueries({ queryKey: keys.events }), qc.invalidateQueries({ queryKey: ['outbox'] })]),
   });

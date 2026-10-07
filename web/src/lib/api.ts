@@ -37,7 +37,7 @@ export const api = {
   addAlert: (eventId: string, minutesBefore: number) => call<LeaveAlert>('POST', '/api/alerts', { eventId, minutesBefore }),
   dismissAlert: (id: string) => call<void>('POST', `/api/alerts/${id}/dismiss`),
   cancelAlert: (id: string) => call<void>('DELETE', `/api/alerts/${id}`),
-  removeEvent: (id: string) => call<void>('DELETE', `/api/events/${id}`),
+  removeEvent: (id: string, scope: 'one' | 'all' = 'one') => call<void>('DELETE', `/api/events/${id}${scope === 'all' ? '?scope=all' : ''}`),
   restoreEvent: (id: string) => call<CalEvent>('POST', `/api/events/${id}/restore`),
   outbox: () => call<OutboxStatus>('GET', '/api/outbox'),
   resolveConflict: (id: number, keep: 'mine' | 'theirs') => call<OutboxStatus>('POST', `/api/outbox/${id}/resolve`, { keep }),

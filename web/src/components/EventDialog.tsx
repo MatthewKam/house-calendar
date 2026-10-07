@@ -2,7 +2,7 @@ import { useState, type CSSProperties, type FormEvent } from 'react';
 import { addDays, dayKey, fromDayKey, hhmm, timeLabel, toInstant } from '../lib/dates';
 import { textOn, UNASSIGNED } from '../lib/color';
 import { useCalendars, useSetPeople, useSetSetting, useSettings } from '../lib/queries';
-import type { CalEvent, EventInput, Member } from '../lib/types';
+import type { CalEvent, EventInput, Member, Scope } from '../lib/types';
 import { PencilIcon } from './icons';
 import TravelInfo from './TravelInfo';
 import sheet from '../styles/Sheet.module.css';
@@ -13,7 +13,8 @@ interface Props {
   event?: CalEvent;
   members: Member[];
   onSave: (input: EventInput) => void;
-  onDelete: (event: CalEvent) => void;
+  /** scope "all": every day of a repeating iCloud event. */
+  onDelete: (event: CalEvent, scope?: Scope) => void;
   onClose: () => void;
   /** iCloud events can be changed here (and are sent to iCloud). */
   canEditSynced?: boolean;
@@ -158,6 +159,9 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
   const [endTime, setEndTime] = useState(event && !event.allDay ? hhmm(event.end) : '10:00');
   const [location, setLocation] = useState(event?.location ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // A repeating iCloud event asks "this day or every day?" before saving.
+  const [askScope, setAskScope] = useState<EventInput | null>(null);
+  const repeating = !!event?.repeats && event.calendarId !== 'local';
   const target = useNewEventCalendar(!event && !!canEditSynced);
   // null until picked, so the remembered choice can arrive after the form opens.
   const [calendarId, setCalendarId] = useState<string | null>(null);
@@ -177,9 +181,11 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
     // Only new events choose a calendar.
     const where = !event && target.options.length ? { calendarId: chosenCalendar } : {};
     if (!event && target.options.length) target.remember(chosenCalendar);
-    onSave(allDay
+    const input: EventInput = allDay
       ? { title: t, memberIds, allDay, start: date, end: dayKey(addDays(fromDayKey(lastDate), 1)), location: place, ...where }
-      : { title: t, memberIds, allDay, start: toInstant(date, startTime), end: toInstant(date, endTime), location: place, ...where });
+      : { title: t, memberIds, allDay, start: toInstant(date, startTime), end: toInstant(date, endTime), location: place, ...where };
+    if (repeating) setAskScope(input);
+    else onSave(input);
   }
 
   return (
@@ -231,22 +237,47 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
         {problem && title && <div className={s.problem}>{problem}</div>}
         {event && event.calendarId !== 'local' && (
           <p className={s.note}>
-            {event.repeats && <strong>This event repeats: changes apply to this day only. </strong>}
+            {event.repeats && <strong>This event repeats: you'll choose this day or every day when you save. </strong>}
             Saved here now and sent to iCloud shortly. Who it's for applies every time it repeats.
           </p>
         )}
 
-        <div className={sheet.actions}>
-          {event && (
-            <button type="button" className={sheet.danger}
-              onClick={() => (confirmDelete ? onDelete(event) : setConfirmDelete(true))}>
-              {confirmDelete ? 'Tap again to delete' : event.repeats ? 'Delete this day' : 'Delete'}
-            </button>
-          )}
-          <span className={sheet.spacer} />
-          <button type="button" className={sheet.secondary} onClick={onClose}>Cancel</button>
-          <button type="submit" className={sheet.primary} disabled={!!problem}>Save</button>
-        </div>
+        {askScope ? (
+          // Like the iPhone: this day only, or every day it repeats.
+          <div className={s.scopeAsk}>
+            <span className={s.scopeQuestion}>This event repeats. Save the change for:</span>
+            <div className={sheet.actions}>
+              <button type="button" className={sheet.secondary} onClick={() => setAskScope(null)}>Back</button>
+              <span className={sheet.spacer} />
+              <button type="button" className={sheet.secondary} onClick={() => onSave({ ...askScope, scope: 'one' })}>This day only</button>
+              <button type="button" className={sheet.primary} disabled={askScope.allDay !== event!.allDay}
+                title={askScope.allDay !== event!.allDay ? 'Change all day for every repeat on your phone' : undefined}
+                onClick={() => onSave({ ...askScope, scope: 'all' })}>Every day</button>
+            </div>
+          </div>
+        ) : confirmDelete && repeating ? (
+          <div className={s.scopeAsk}>
+            <span className={s.scopeQuestion}>Delete this event:</span>
+            <div className={sheet.actions}>
+              <button type="button" className={sheet.secondary} onClick={() => setConfirmDelete(false)}>Back</button>
+              <span className={sheet.spacer} />
+              <button type="button" className={sheet.danger} onClick={() => onDelete(event!, 'one')}>This day only</button>
+              <button type="button" className={sheet.danger} onClick={() => onDelete(event!, 'all')}>Every day</button>
+            </div>
+          </div>
+        ) : (
+          <div className={sheet.actions}>
+            {event && (
+              <button type="button" className={sheet.danger}
+                onClick={() => (confirmDelete ? onDelete(event) : setConfirmDelete(true))}>
+                {confirmDelete ? 'Tap again to delete' : 'Delete'}
+              </button>
+            )}
+            <span className={sheet.spacer} />
+            <button type="button" className={sheet.secondary} onClick={onClose}>Cancel</button>
+            <button type="submit" className={sheet.primary} disabled={!!problem}>Save</button>
+          </div>
+        )}
       </form>
     </>
   );

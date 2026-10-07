@@ -11,14 +11,14 @@ import { registerTravel, type Estimator } from './travel.ts';
 import { registerWeather } from './weather.ts';
 import { registerPhotos } from './photos.ts';
 import { registerReminders } from './reminders.ts';
-import { cancelDelete, diff, outboxStatus, queueCreate, queueEdit, resolveConflict } from './outbox.ts';
+import { cancelDelete, diff, outboxStatus, queueCreate, queueEdit, queueSeries, resolveConflict } from './outbox.ts';
 
 const COLOR = { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' } as const;
 const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 
 interface MemberRow { id: string; name: string; color: string; sort_order: number }
 interface EventRow {
-  id: string; calendar_id: string; title: string; remote_id: string | null;
+  id: string; calendar_id: string; title: string; remote_id: string | null; series_id: string | null;
   all_day: number; start: string; end: string; sync_state: string; location: string | null;
   /** JSON array of member ids, in family order; [] means everyone. */
   member_ids: string;
@@ -213,8 +213,24 @@ export function buildApp(db: DB, opts: {
     return getEvent(id);
   });
 
-  app.patch<{ Params: { id: string }; Body: Partial<EventInput> }>('/api/events/:id', {
-    schema: { body: { ...eventBody, minProperties: 1 } },
+  /**
+   * Other copies of the same event (same title, same times) in other calendars: the wall shows one,
+   * so a change made to it is made to all of them.
+   */
+  function copiesOf(row: EventRow) {
+    const key = (t: string) => t.trim().toLowerCase().replace(/\s+/g, ' ');
+    return (db.prepare(`SELECT * FROM events WHERE id != ? AND all_day = ? AND start = ? AND end = ? AND sync_state != 'pending_delete'`)
+      .all(row.id, row.all_day, row.start, row.end) as EventRow[]).filter((r) => key(r.title) === key(row.title));
+  }
+  const writable = (calendarId: string) =>
+    !!opts.syncedEdits && !!db.prepare('SELECT 1 FROM calendars WHERE id = ? AND writable = 1').get(calendarId);
+  type Details = { title: string; allDay: boolean; start: string; end: string; location?: string | null };
+  const details = (x: Details) => ({ title: x.title.trim(), allDay: x.allDay, start: x.start, end: x.end, location: x.location?.trim() || null });
+  const rowDetails = (r: EventRow) => details({ ...r, allDay: r.all_day === 1 });
+
+  // scope "all": a repeating iCloud event's every day (otherwise just the day that was opened).
+  app.patch<{ Params: { id: string }; Body: Partial<EventInput> & { scope?: 'one' | 'all' } }>('/api/events/:id', {
+    schema: { body: { ...eventBody, properties: { ...eventBody.properties, scope: { type: 'string', enum: ['one', 'all'] } }, minProperties: 1 } },
   }, async (req, reply) => {
     const row = db.prepare(`${EVENT_SELECT} WHERE e.id = ?`).get(req.params.id) as EventRow | undefined;
     if (!row) return reply.code(404).send({ error: 'Event not found' });
@@ -230,34 +246,70 @@ export function buildApp(db: DB, opts: {
     const err = validateTimes(ev);
     if (err) return reply.code(400).send({ error: err });
     if (!allMembers(ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
-    if (row.calendar_id !== 'local') {
-      // iCloud: shown here now, sent to iCloud shortly. Who it's for stays on this display (every repeat).
-      const details = (x: { title: string; allDay: boolean; start: string; end: string; location?: string | null }) =>
-        ({ title: x.title.trim(), allDay: x.allDay, start: x.start, end: x.end, location: x.location?.trim() || null });
-      const changes = diff(details({ ...row, allDay: row.all_day === 1 }), details(ev));
+    const next = details(ev);
+    if (row.calendar_id !== 'local' && req.body.scope === 'all' && row.remote_id?.includes('#')) {
+      // Every day of a repeating event: a new title or address, and the same move for every day.
+      const was = rowDetails(row);
+      if (next.allDay !== was.allDay) return reply.code(400).send({ error: 'Change all day for every repeat on your phone' });
+      const changes: { title?: string; location?: string | null; shiftMs?: number; durationMs?: number } = {};
+      if (next.title !== was.title) changes.title = next.title;
+      if (next.location !== was.location) changes.location = next.location;
+      if (!was.allDay) {
+        const shiftMs = Date.parse(next.start) - Date.parse(was.start);
+        if (shiftMs) changes.shiftMs = shiftMs;
+        const length = Date.parse(next.end) - Date.parse(next.start);
+        if (length !== Date.parse(was.end) - Date.parse(was.start)) changes.durationMs = length;
+      } else if (next.start !== was.start || next.end !== was.end) {
+        return reply.code(400).send({ error: 'Move every day of an all-day repeating event on your phone' });
+      }
       if (Object.keys(changes).length) {
-        queueEdit(db, row, 'update', changes);
+        queueSeries(db, row, 'update', changes);
         opts.syncedEdits!.soon();
       }
       if (req.body.memberIds && JSON.stringify(ev.memberIds) !== row.member_ids) assignManually(db, row.id, ev.memberIds);
       return getEvent(row.id);
     }
+    const copies = copiesOf(row);
+    /** Makes the change to one copy: on the wall directly, or queued for iCloud. */
+    const change = (r: EventRow) => {
+      if (r.calendar_id === 'local') {
+        db.prepare(`UPDATE events SET title = ?, all_day = ?, start = ?, end = ?, location = ?,
+                    updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`)
+          .run(next.title, next.allDay ? 1 : 0, next.start, next.end, next.location, r.id);
+      } else if (r.id === row.id || writable(r.calendar_id)) {
+        const changes = diff(rowDetails(r), next);
+        if (Object.keys(changes).length) queueEdit(db, r, 'update', changes);
+      }
+    };
     db.transaction(() => {
-      db.prepare(`UPDATE events SET title = ?, all_day = ?, start = ?, end = ?, location = ?,
-                  updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`)
-        .run(ev.title.trim(), ev.allDay ? 1 : 0, ev.start, ev.end, ev.location?.trim() || null, row.id);
-      setMembers(row.id, ev.memberIds);
+      change(row);
+      copies.forEach(change);
+      if (row.calendar_id === 'local') setMembers(row.id, ev.memberIds);
     })();
+    if (row.calendar_id !== 'local' || copies.some((c) => c.calendar_id !== 'local')) opts.syncedEdits?.soon();
+    // iCloud events: who it's for stays on this display (every repeat).
+    if (row.calendar_id !== 'local' && req.body.memberIds && JSON.stringify(ev.memberIds) !== row.member_ids) {
+      assignManually(db, row.id, ev.memberIds);
+    }
     return getEvent(row.id);
   });
 
-  app.delete<{ Params: { id: string } }>('/api/events/:id', async (req, reply) => {
+  // ?scope=all deletes every day of a repeating iCloud event.
+  app.delete<{ Params: { id: string }; Querystring: { scope?: 'one' | 'all' } }>('/api/events/:id', async (req, reply) => {
     const row = db.prepare('SELECT * FROM events WHERE id = ?').get(req.params.id) as EventRow | undefined;
     if (!row) return reply.code(404).send({ error: 'Event not found' });
     if (row.calendar_id !== 'local') {
       if (!opts.syncedEdits) return reply.code(409).send({ error: READ_ONLY });
-      // Hidden here now; deleted in iCloud after the Undo window (one day, for a repeating event).
-      queueEdit(db, row, 'delete', {});
+      // Hidden here now; deleted in iCloud after the Undo window.
+      if (req.query.scope === 'all' && row.remote_id?.includes('#')) {
+        queueSeries(db, row, 'delete', {});
+      } else {
+        db.transaction(() => {
+          queueEdit(db, row, 'delete', {});
+          // Other iCloud copies of it go too (Undo brings them back with it).
+          for (const c of copiesOf(row)) if (c.calendar_id !== 'local' && writable(c.calendar_id)) queueEdit(db, c, 'delete', {});
+        })();
+      }
       opts.syncedEdits.soon();
       return reply.code(204).send();
     }
@@ -269,6 +321,11 @@ export function buildApp(db: DB, opts: {
   app.post<{ Params: { id: string } }>('/api/events/:id/restore', async (req, reply) => {
     const row = db.prepare('SELECT * FROM events WHERE id = ?').get(req.params.id) as EventRow | undefined;
     if (!row || !cancelDelete(db, row)) return reply.code(404).send({ error: 'Nothing to undo' });
+    // Its copies in other calendars, deleted with it, come back too.
+    const key = (t: string) => t.trim().toLowerCase().replace(/\s+/g, ' ');
+    const copies = (db.prepare(`SELECT * FROM events WHERE id != ? AND all_day = ? AND start = ? AND end = ? AND sync_state = 'pending_delete'`)
+      .all(row.id, row.all_day, row.start, row.end) as EventRow[]).filter((r) => key(r.title) === key(row.title));
+    for (const c of copies) cancelDelete(db, c);
     return getEvent(row.id);
   });
 

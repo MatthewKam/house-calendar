@@ -33,11 +33,11 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
   app.get('/api/photos', async () =>
     (db.prepare('SELECT * FROM photos ORDER BY COALESCE(taken_at, created_at) DESC').all() as PhotoRow[]).map(toPhoto));
 
-  app.post<{ Querystring: { width: number; height: number; takenAt?: string; memberId?: string } }>('/api/photos', {
+  app.post<{ Querystring: { width: number; height: number; takenAt?: string; memberId?: string; inSlideshow?: boolean } }>('/api/photos', {
     bodyLimit: MAX_BYTES,
     schema: { querystring: { type: 'object', required: ['width', 'height'], properties: {
       width: { type: 'integer', minimum: 1, maximum: 20000 }, height: { type: 'integer', minimum: 1, maximum: 20000 },
-      takenAt: { type: 'string', maxLength: 40 }, memberId: { type: 'string' } } } },
+      takenAt: { type: 'string', maxLength: 40 }, memberId: { type: 'string' }, inSlideshow: { type: 'boolean' } } } },
   }, async (req, reply) => {
     const body = req.body as Buffer;
     if (!Buffer.isBuffer(body) || !isJpeg(body)) return reply.code(415).send({ error: 'Photos are uploaded as JPEG' });
@@ -46,8 +46,9 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
     const takenAt = req.query.takenAt && !Number.isNaN(Date.parse(req.query.takenAt)) ? new Date(req.query.takenAt).toISOString() : null;
     const id = randomUUID();
     writeFileSync(file(id), body);
-    db.prepare('INSERT INTO photos (id, width, height, taken_at, member_id) VALUES (?, ?, ?, ?, ?)')
-      .run(id, req.query.width, req.query.height, takenAt, memberId ?? null);
+    // New photos go into the screen saver unless the upload says otherwise.
+    db.prepare('INSERT INTO photos (id, width, height, taken_at, member_id, in_slideshow) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(id, req.query.width, req.query.height, takenAt, memberId ?? null, req.query.inSlideshow === false ? 0 : 1);
     reply.code(201);
     return toPhoto(get(id)!);
   });
