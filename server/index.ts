@@ -29,6 +29,7 @@ const sync = ICLOUD_APPLE_ID && ICLOUD_APP_PASSWORD
 let reminders: ReturnType<typeof syncRunner> | null = null;
 const app = buildApp(db, {
   webDist: resolve(root, 'web/dist'),
+  photosDir: process.env.PHOTOS_DIR ?? resolve(root, 'data/photos'),
   sync: sync?.status,
   onAssignmentsChanged: () => void sync?.assignPeople(),
   syncedEdits: sync?.canWrite ? { soon: () => sync.soon() } : undefined,

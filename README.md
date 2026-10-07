@@ -119,6 +119,18 @@ the wall, not on phones.
   together: their stars **added together** toward one goal, or **each** reaching it. Until-earned rewards can **start
   again after they're given**. Every time a goal is reached it's kept in the history (even if the reward is renamed or
   deleted later); **Undo** takes back a hand-over tapped by mistake.
+- **Photos:** the **Photos** page (left bar, `#photos`) is the family album. **Upload photos** takes several at
+  once (drag them in, or choose them in Finder; you can also drop photos anywhere on the page); each is shrunk to wall size in the browser first (iPhone photos included). Photos in the screen
+  saver have a ✓. **Select** starts with those selected; tap photos to change it, then **Save selection**. Tap a photo
+  to see it full size (or delete it). Photos are stored in `data/photos` (not in git). To upload from phones, the server has to be
+  reachable on your Wi-Fi (`HOST=0.0.0.0`).
+- **Screen saver:** after 15 minutes without a touch, the wall shows the album full screen, shuffled, with the time
+  and weather in a corner (not while a pop-up is open; "time to leave" alerts still show on top). Swipe for the
+  next or previous photo; the small pause icon (top right) holds the current one and shows ‹ › to step through
+  (arrow keys and Space on a keyboard). Tap anywhere else to close.
+  In **Settings**: on or off, how long before it starts, how long each photo stays up (20 seconds by default),
+  and the transition (a mix, crossfade, slow zoom and pan, slide, zoom, blur or flip); the same settings open from
+  **Screen saver settings** on the Photos page, with **Play it now**.
 - **Edit or delete:** tap an event. Delete asks twice, and you get 10 seconds to undo.
 - **iCloud events:** tap one, then **Edit event** to change its title, time or address, or delete it. The change
   shows at once (marked ↻ until it's sent) and goes to iCloud after the 10-second Undo, then to your phones. For a

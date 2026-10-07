@@ -122,16 +122,7 @@
 	background: var(--surface);
 	box-shadow: 0 0 0 1px var(--line);
 }
-.add button.iconAdd {
-	align-self: center;
-	border: 1px solid var(--line);
-	background: var(--surface);
-	padding: 0;
-	background-color: transparent;
-	color: #6b7079;
-	min-width: 2.3rem;
-	min-height: 2.3rem;
-}
+
 /* Suggested, not yet in its name. */
 .suggested {
 	opacity: 0.55;
@@ -212,6 +203,16 @@
 	opacity: 0.4;
 }
 
+.add button.iconAdd {
+	align-self: center;
+	border: 1px solid var(--line);
+	background: var(--surface);
+	padding: 0;
+	background-color: transparent;
+	color: #6b7079;
+	min-width: 2.3rem;
+	min-height: 2.3rem;
+}
 .error {
 	margin: 0;
 	color: #b42318;

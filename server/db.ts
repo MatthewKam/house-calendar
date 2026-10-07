@@ -374,6 +374,22 @@ const migrations: string[] = [
     SELECT lower(hex(randomblob(16))), id, start_day, title, json_array(member_id), goal, goal,
       substr(claimed_at, 1, 10), claimed_at FROM rewards WHERE claimed_at IS NOT NULL;
   `,
+  // The photo album (and screen saver). Files live in data/photos: <id>.jpg and <id>.thumb.jpg.
+  `
+  CREATE TABLE photos (
+    id            TEXT PRIMARY KEY,
+    width         INTEGER NOT NULL,
+    height        INTEGER NOT NULL,
+    -- When it was taken (or the file's date), as an ISO instant; null if unknown.
+    taken_at      TEXT,
+    -- Who added it; null once that person is removed.
+    member_id     TEXT REFERENCES members(id) ON DELETE SET NULL,
+    source        TEXT NOT NULL DEFAULT 'upload' CHECK (source IN ('upload', 'google')),
+    in_slideshow  INTEGER NOT NULL DEFAULT 1,
+    has_thumb     INTEGER NOT NULL DEFAULT 0,
+    created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

@@ -293,3 +293,27 @@ export const useUpdateMember = () =>
   useMemberMutation(({ id, patch }: { id: string; patch: MemberPatch }) =>
     api.updateMember(id, patch));
 export const useRemoveMember = () => useMemberMutation((id: string) => api.removeMember(id));
+
+/** The photo album, newest first. */
+export function usePhotos() {
+  return useQuery({ queryKey: ['photos'], queryFn: api.photos, refetchInterval: 5 * 60_000 });
+}
+
+export function usePhotoActions() {
+  const qc = useQueryClient();
+  const refresh = () => qc.invalidateQueries({ queryKey: ['photos'] });
+  return {
+    refresh,
+    update: useMutation({
+      mutationFn: ({ id, patch }: { id: string; patch: { inSlideshow?: boolean; memberId?: string | null } }) => api.updatePhoto(id, patch),
+      onSettled: refresh,
+    }),
+    remove: useMutation({ mutationFn: (id: string) => api.deletePhoto(id), onSettled: refresh }),
+    /** Several at once (Select mode). */
+    setSlideshow: useMutation({
+      mutationFn: ({ ids, inSlideshow }: { ids: string[]; inSlideshow: boolean }) => api.setSlideshow(ids, inSlideshow),
+      onSettled: refresh,
+    }),
+    removeMany: useMutation({ mutationFn: (ids: string[]) => api.deletePhotos(ids), onSettled: refresh }),
+  };
+}

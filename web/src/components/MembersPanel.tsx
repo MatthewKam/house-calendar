@@ -3,6 +3,7 @@ import { PALETTE } from '../lib/color';
 import { useAddMember, useRemoveMember, useSetSetting, useSettings, useUpdateMember } from '../lib/queries';
 import type { Member } from '../lib/types';
 import CalendarList from './CalendarList';
+import ScreenSaverSettings from './ScreenSaverSettings';
 import sheet from '../styles/Sheet.module.css';
 import s from '../styles/MembersPanel.module.css';
 
@@ -223,6 +224,8 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
         <CalendarList members={members} />
 
         <HomeAddress />
+
+        <ScreenSaverSettings />
 
         <label className={s.scale}>
           Text size

@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, TaskPoints, Weather, OutboxStatus, RewardInput, RewardWin } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, TaskPoints, Weather, OutboxStatus, RewardInput, RewardWin, Photo } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -18,6 +18,11 @@ export const api = {
   addMember: (m: { name: string; color: string }) => call<Member>('POST', '/api/members', m),
   updateMember: (id: string, m: MemberPatch) => call<Member>('PATCH', `/api/members/${id}`, m),
   removeMember: (id: string) => call<void>('DELETE', `/api/members/${id}`),
+  photos: () => call<Photo[]>('GET', '/api/photos'),
+  updatePhoto: (id: string, p: { inSlideshow?: boolean; memberId?: string | null }) => call<Photo>('PATCH', `/api/photos/${id}`, p),
+  deletePhoto: (id: string) => call<void>('DELETE', `/api/photos/${id}`),
+  setSlideshow: (ids: string[], inSlideshow: boolean) => call<{ changed: number }>('POST', '/api/photos/slideshow', { ids, inSlideshow }),
+  deletePhotos: (ids: string[]) => call<{ deleted: number }>('POST', '/api/photos/delete', { ids }),
 
   events: (from: Date, to: Date, fromDay: string, toDay: string) =>
     call<CalEvent[]>('GET', `/api/events?${new URLSearchParams({

@@ -209,3 +209,31 @@ export interface Weather {
   /** Today and the next six days. */
   days: { date: string; high: number; low: number; code: number }[];
 }
+
+/** A photo in the album. */
+export interface Photo {
+  id: string;
+  width: number;
+  height: number;
+  /** When it was taken (or the file's date). */
+  takenAt: string | null;
+  /** Who added it. */
+  memberId: string | null;
+  source: 'upload' | 'google';
+  /** Shown in the screen saver. */
+  inSlideshow: boolean;
+  createdAt: string;
+  url: string;
+  thumbUrl: string;
+}
+
+/** Screen saver settings (the "screensaver" setting). */
+export interface ScreenSaverSettings {
+  enabled: boolean;
+  /** Minutes without a touch before it starts. */
+  idleMinutes: number;
+  /** How long each photo stays up. */
+  seconds: number;
+  /** "mix" changes it every photo. */
+  transition: 'mix' | 'fade' | 'kenburns' | 'slide' | 'zoom' | 'blur' | 'flip';
+}
