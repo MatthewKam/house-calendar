@@ -280,3 +280,10 @@
 		max-height: 4.5rem;
 	}
 }
+
+/* Phones on their side: as wide as the day list. */
+@media (max-height: 520px) {
+	.card {
+		max-width: none;
+	}
+}

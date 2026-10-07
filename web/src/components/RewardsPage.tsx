@@ -5,6 +5,7 @@ import { textOn } from "../lib/color";
 import type { Member, Reward, RewardWin } from "../lib/types";
 import { GiftIcon, PencilIcon, StarIcon } from "./icons";
 import RewardDialog from "./RewardDialog";
+import Fab from "./Fab";
 import s from "../styles/Rewards.module.css";
 
 interface Props {
@@ -172,9 +173,7 @@ export default function RewardsPage({ today, members }: Props) {
 							{f.label}
 						</button>
 					))}
-					<button className={s.newReward} onClick={() => setSheet({})}>
-						+ New reward
-					</button>
+					
 				</div>
 			</header>
 
@@ -321,15 +320,13 @@ export default function RewardsPage({ today, members }: Props) {
 				)}
 			</div>
 
+			{/* Add a reward, for no one in particular yet (Who is picked in the form). */}
+			<Fab label="Add a reward" onClick={() => setSheet({})} />
+
 			{sheet && (
 				<RewardDialog
 					key={sheet.reward?.id ?? "new"}
 					reward={sheet.reward}
-					member={
-						filter && filter !== TOGETHER
-							? members.find((m) => m.id === filter)
-							: undefined
-					}
 					today={today}
 					onClose={() => setSheet(null)}
 				/>

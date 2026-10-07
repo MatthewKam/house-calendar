@@ -7,13 +7,23 @@ async function call<T>(method: string, url: string, body?: unknown): Promise<T> 
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) {
+    // Signed out (or the PIN changed): the app shows the PIN screen.
+    if (res.status === 401 && !url.startsWith('/api/auth/')) window.dispatchEvent(new Event('household:signed-out'));
     const msg = await res.json().then((j) => j.error ?? j.message, () => res.statusText);
     throw new Error(msg);
   }
   return res.status === 204 ? (undefined as T) : res.json();
 }
 
+export interface AuthStatus { pinSet: boolean; masterSet: boolean; signedIn: boolean }
+export interface SignedInDevice { id: string; label: string; signedInAt: string; lastSeen: string; thisDevice: boolean }
+
 export const api = {
+  authStatus: () => call<AuthStatus>('GET', '/api/auth/status'),
+  login: (pin: string) => call<{ signedIn: true }>('POST', '/api/auth/login', { pin }),
+  setPin: (body: { pin: string; currentPin?: string; masterPin?: string; signOutOthers?: boolean }) => call<{ pinSet: true }>('POST', '/api/auth/pin', body),
+  devices: () => call<SignedInDevice[]>('GET', '/api/auth/devices'),
+  signOutDevice: (id: string) => call<void>('POST', `/api/auth/devices/${id}/sign-out`),
   members: () => call<Member[]>('GET', '/api/members'),
   addMember: (m: { name: string; color: string }) => call<Member>('POST', '/api/members', m),
   updateMember: (id: string, m: MemberPatch) => call<Member>('PATCH', `/api/members/${id}`, m),

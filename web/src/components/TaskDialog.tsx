@@ -19,6 +19,8 @@ interface Props {
 	task?: Task;
 	/** Who to preselect for a new task: a member, or null for everyone. */
 	memberId?: string | null;
+	/** A new task with no one picked yet (from the round +): Who has to be chosen. */
+	blank?: boolean;
 	members: Member[];
 	onSave: (input: TaskInput) => void;
 	onDelete: (task: Task) => void;
@@ -41,6 +43,7 @@ const LETTERS = EVERY_DAY.map((d) =>
 export default function TaskDialog({
 	task,
 	memberId: preset,
+	blank,
 	members,
 	onSave,
 	onDelete,
@@ -48,13 +51,15 @@ export default function TaskDialog({
 }: Props) {
 	// The parent remounts this dialog for each open, so initial state is enough.
 	const [title, setTitle] = useState(task?.title ?? "");
-	// null means everyone: each person gets the task and ticks off their own.
-	const [memberId, setMemberId] = useState<string | null>(
+	// null means everyone: each person gets the task and ticks off their own. undefined: not picked yet.
+	const [memberId, setMemberId] = useState<string | null | undefined>(
 		task
 			? task.memberId
-			: preset !== undefined
-				? preset
-				: (members[0]?.id ?? null),
+			: blank
+				? undefined
+				: preset !== undefined
+					? preset
+					: (members[0]?.id ?? null),
 	);
 	const [days, setDays] = useState<number[]>(task?.days ?? EVERY_DAY);
 	const [time, setTime] = useState<TaskTime | null>(task?.time ?? null);
@@ -78,6 +83,8 @@ export default function TaskDialog({
 
 	const problem = !title.trim()
 		? "Add a task"
+		: memberId === undefined
+			? "Pick who it's for"
 		: days.length === 0
 			? "Pick at least one day"
 			: null;
@@ -89,7 +96,7 @@ export default function TaskDialog({
 		if (!problem) {
 			onSave({
 				title: title.trim(),
-				memberId,
+				memberId: memberId ?? null,
 				days: [...days].sort(),
 				time,
 				category,

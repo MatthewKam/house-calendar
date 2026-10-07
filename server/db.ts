@@ -400,6 +400,26 @@ const migrations: string[] = [
     PRIMARY KEY (day, kind)
   );
   `,
+  // The family PIN (hashed) and the devices signed in with it.
+  `
+  CREATE TABLE auth (
+    id        INTEGER PRIMARY KEY CHECK (id = 1),
+    pin_hash  TEXT NOT NULL,
+    set_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE TABLE sessions (
+    -- SHA-256 of the cookie's token, so the database alone can't sign anyone in.
+    token_hash  TEXT PRIMARY KEY,
+    -- What the device said it is (browser and system), to tell devices apart in Settings.
+    label       TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    last_seen   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  `,
+  // A master PIN (hashed): the one that can change the family PIN, and always signs in.
+  `
+  ALTER TABLE auth ADD COLUMN master_hash TEXT;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

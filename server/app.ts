@@ -11,6 +11,7 @@ import { registerTravel, type Estimator } from './travel.ts';
 import { registerWeather } from './weather.ts';
 import { registerPhotos } from './photos.ts';
 import { registerDaily } from './daily.ts';
+import { registerAuth } from './auth.ts';
 import { registerReminders } from './reminders.ts';
 import { cancelDelete, diff, outboxStatus, queueCreate, queueEdit, queueSeries, resolveConflict } from './outbox.ts';
 
@@ -99,7 +100,11 @@ export function buildApp(db: DB, opts: {
   /** How weather lookups reach the internet (replaced in tests). */
   weatherFetch?: typeof fetch;
 } = {}) {
-  const app = Fastify({ logger: process.env.NODE_ENV !== 'test' && { level: 'info' } });
+  // trustProxy: behind Tailscale's HTTPS (tailscale serve), so the device's address and https are seen.
+  const app = Fastify({ logger: process.env.NODE_ENV !== 'test' && { level: 'info' }, trustProxy: 'loopback' });
+
+  // The family PIN: once set, every /api call needs a signed-in device.
+  registerAuth(app, db);
 
   // ---- Members -----------------------------------------------------------
   app.get('/api/members', async () =>

@@ -631,9 +631,6 @@ export default function TasksPage({ today, members, onAdd, onEdit }: Props) {
 						{editing ? "Done editing" : "Edit tasks"}
 					</button>
 				)}
-				<button className={s.addBig} onClick={() => onAdd()}>
-					+ Add a task
-				</button>
 			</div>
 
 			{toDelete && (

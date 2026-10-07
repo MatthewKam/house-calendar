@@ -304,7 +304,19 @@
 
 /* Phones: one list per row. */
 @media (max-width: 700px) {
+	/* One column, as wide as the screen allows (never wider, whatever's inside). */
 	.board {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.card {
+		min-width: 0;
+	}
+}
+
+/* Phones (upright or on their side): the page runs to the bottom edge; the end of the list stays
+   clear of the home bar. */
+@media (max-width: 959.98px), (max-height: 520px) {
+	.board {
+		padding-bottom: calc(1rem + env(safe-area-inset-bottom));
 	}
 }

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Android's "maskable" icon: the logo inside the middle 60%, since the edges can be cut to any shape. -->
+  <rect width="64" height="64" fill="#FFFFFF"/>
+  <g transform="translate(32 32) scale(0.6) translate(-30 -33)" fill="none" stroke="#EE7B45" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M29 13C17 13 10 19 10 29C10 37 16 42 24 42H50"/>
+    <path d="M29 13V53"/>
+    <path d="M50 12V53"/>
+  </g>
+</svg>

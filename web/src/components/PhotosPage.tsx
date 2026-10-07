@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type DragEvent } from "react";
 import { usePhotoActions, usePhotos } from "../lib/queries";
 import { preparePhoto, uploadPhoto } from "../lib/photos";
 import ConfirmDialog from "./ConfirmDialog";
+import Fab from "./Fab";
 import ScreenSaverSettings from "./ScreenSaverSettings";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Photos.module.css";
@@ -176,9 +177,6 @@ export default function PhotosPage({ onPreview }: Props) {
 					>
 						Screen saver settings
 					</button>
-					<button className={s.upload} onClick={() => setUploadOpen(true)}>
-						+ Upload photos
-					</button>
 					<input
 						ref={input}
 						type="file"
@@ -287,7 +285,7 @@ export default function PhotosPage({ onPreview }: Props) {
 				<div className={s.empty}>
 					<h2>No photos yet</h2>
 					<p>
-						Drag photos here, or tap <strong>Upload photos</strong> to choose
+						Drag photos here, or tap the <strong>+</strong> to choose
 						them. Pick which ones the screen saver shows with{" "}
 						<strong>Select</strong>.
 					</p>
@@ -449,6 +447,9 @@ export default function PhotosPage({ onPreview }: Props) {
 					undone.
 				</ConfirmDialog>
 			)}
+			{/* Upload photos: the round + at the bottom right. */}
+			<Fab label="Upload photos" onClick={() => setUploadOpen(true)} />
+
 			{uploadOpen && (
 				<>
 					<div
