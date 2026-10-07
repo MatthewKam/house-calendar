@@ -244,3 +244,9 @@ export interface ScreenSaverSettings {
   nightFrom: string;
   nightTo: string;
 }
+
+/** The day's cards beside the weather (null when one couldn't be fetched). */
+export interface Daily {
+  joke: { text: string } | null;
+  quote: { text: string; author: string } | null;
+}

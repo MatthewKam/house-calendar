@@ -38,6 +38,7 @@ import NavBar from "./components/NavBar";
 import LeaveAlerts from "./components/LeaveAlerts";
 import NowLine from "./components/NowLine";
 import WeatherCard from "./components/WeatherCard";
+import DailyCards from "./components/DailyCards";
 import OutboxNotices from "./components/OutboxNotices";
 import { usePage } from "./lib/usePage";
 import ListView from "./components/ListView";
@@ -464,7 +465,12 @@ export default function App() {
 								members={members}
 								onSelect={setSelected}
 								onOpen={(event, day) => setDialog({ day, event })}
-								footer={view === "week" && narrow ? <WeatherCard /> : undefined}
+								footer={view === "week" && narrow ? (
+									<div className={s.cards}>
+										<WeatherCard />
+										<DailyCards today={today} />
+									</div>
+								) : undefined}
 							/>
 						)}
 						{selected && (
@@ -480,7 +486,13 @@ export default function App() {
 						)}
 					</div>
 					{/* Week view only: the weather now, the sun, and the week ahead. */}
-					{view === "week" && !narrow && !settings.isPending && <WeatherCard />}
+					{/* Week view: the weather, then the day's joke and quote. */}
+					{view === "week" && !narrow && !settings.isPending && (
+						<div className={s.cards}>
+							<WeatherCard />
+							<DailyCards today={today} />
+						</div>
+					)}
 					</>)}
 				</div>
 			</div>

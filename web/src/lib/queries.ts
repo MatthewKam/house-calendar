@@ -317,3 +317,8 @@ export function usePhotoActions() {
     removeMany: useMutation({ mutationFn: (ids: string[]) => api.deletePhotos(ids), onSettled: refresh }),
   };
 }
+
+/** The day's joke, quote and "on this day" (fetched once a day by the server). */
+export function useDaily(day: string) {
+  return useQuery({ queryKey: ['daily', day], queryFn: () => api.daily(day), refetchInterval: 30 * 60_000, retry: false });
+}

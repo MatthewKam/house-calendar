@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type CSSProperties, type FormEvent } from "react";
 import {
 	useChangeReminders,
 	useReminders,
@@ -8,6 +8,8 @@ import {
 import type { ReminderList } from "../lib/types";
 import { GROCERY_ICONS, splitIcon, suggestIcon } from "../lib/emoji";
 import IconPicker from "./IconPicker";
+import SortableList, { type HandleProps } from "./SortableList";
+import { GripIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/ListView.module.css";
 
@@ -23,8 +25,32 @@ function ago(iso: string) {
 	});
 }
 
-function ListCard({ list }: { list: ReminderList }) {
+/** Soft colors for a list's rows, light enough for dark text. */
+const LIST_COLORS = ["#f2dcb3", "#ecb0ea", "#c9dcf7", "#cdebd3", "#ddd3f5", "#f8cfb8", "#f6e7a1", "#c3ece4", "#e4e4e4"];
+
+/** An item's place in the saved order: its name without the icon, ignoring case. */
+const keyOf = (title: string) => splitIcon(title).text.trim().toLowerCase();
+
+interface CardProps {
+	list: ReminderList;
+	color: string;
+	onColor: (color: string) => void;
+	/** Item names in the order they were dragged into (kept on the wall). */
+	order: string[];
+	onReorder: (order: string[]) => void;
+}
+
+function ListCard({ list, color, onColor, order, onReorder }: CardProps) {
 	const { add, setDone, rename } = useChangeReminders();
+	const [choosingColor, setChoosingColor] = useState(false);
+	// Open items in the dragged order (new ones at the end, as Reminders has them); done ones after.
+	const rank = (title: string) => {
+		const i = order.indexOf(keyOf(title));
+		return i < 0 ? order.length : i;
+	};
+	const open = list.items.filter((it) => !it.done).map((it, i) => ({ it, i }))
+		.sort((a, b) => rank(a.it.title) - rank(b.it.title) || a.i - b.i).map(({ it }) => it);
+	const done = list.items.filter((it) => it.done);
 	const [title, setTitle] = useState("");
 	// The item whose icon is being picked; id "new" is the item being typed in the add box.
 	const [picking, setPicking] = useState<{ id: string; title: string } | null>(
@@ -77,9 +103,50 @@ function ListCard({ list }: { list: ReminderList }) {
 		setPicking(null);
 	}
 
+	/** One item: tick circle, icon, name, and (open items) a grip to drag it up or down. */
+	function row(it: ReminderList["items"][number], handle?: HandleProps) {
+		const { icon, text } = splitIcon(it.title);
+		// No icon in its name: show a suggested one, lighter, until it's picked.
+		const suggested = icon ? null : suggestIcon(text);
+		const toggle = () => setDone.mutate({ id: it.id, done: !it.done });
+		return (
+			<div className={`${s.row} ${it.done ? s.done : ""}`} style={{ "--c": color } as CSSProperties}>
+				<button className={s.boxButton} aria-pressed={it.done} aria-label={`${text}: ${it.done ? "done" : "not done"}`} onClick={toggle}>
+					<span className={s.box} aria-hidden="true">
+						{it.done ? "✓" : ""}
+					</span>
+				</button>
+				<button
+					className={`${s.iconSpot} ${suggested ? s.suggested : ""} ${!icon && !suggested ? s.noIcon : ""}`}
+					onClick={() => setPicking({ id: it.id, title: it.title })}
+					aria-label={`Icon for ${text}`}
+					title={icon ? "Change icon" : suggested ? "Suggested icon: tap to keep or change" : "Add an icon"}
+				>
+					{icon ?? suggested ?? "+"}
+				</button>
+				<button className={s.item} onClick={toggle} tabIndex={-1}>
+					<span className={s.text}>{text}</span>
+					{/* Changed here; it reaches Reminders at the next sync. */}
+					{it.pending && (
+						<span className={s.pending} title="Waiting to sync">
+							↻
+						</span>
+					)}
+				</button>
+				{handle && (
+					<span className={s.grip} {...handle}>
+						<GripIcon />
+					</span>
+				)}
+			</div>
+		);
+	}
+
 	return (
 		<section className={s.card}>
 			<header className={s.head}>
+				<button className={s.colorDot} style={{ background: color }} aria-expanded={choosingColor}
+					onClick={() => setChoosingColor(!choosingColor)} aria-label={`Color for ${list.title}`} title="Change the color" />
 				<h2 className={s.title}>{list.title}</h2>
 				{last && (
 					<span
@@ -92,52 +159,28 @@ function ListCard({ list }: { list: ReminderList }) {
 					</span>
 				)}
 			</header>
-			<ul className={s.items}>
-				{list.items.map((it) => {
-					const { icon, text } = splitIcon(it.title);
-					// No icon in its name: show a suggested one, lighter, until it's picked.
-					const suggested = icon ? null : suggestIcon(text);
-					const toggle = () => setDone.mutate({ id: it.id, done: !it.done });
-					return (
-						<li key={it.id} className={`${s.row} ${it.done ? s.done : ""}`}>
-							<button
-								className={s.boxButton}
-								aria-pressed={it.done}
-								aria-label={`${text}: ${it.done ? "done" : "not done"}`}
-								onClick={toggle}
-							>
-								<span className={s.box} aria-hidden="true">
-									{it.done ? "✓" : ""}
-								</span>
-							</button>
-							<button
-								className={`${s.iconSpot} ${suggested ? s.suggested : ""} ${!icon && !suggested ? s.noIcon : ""}`}
-								onClick={() => setPicking({ id: it.id, title: it.title })}
-								aria-label={`Icon for ${text}`}
-								title={
-									icon
-										? "Change icon"
-										: suggested
-											? "Suggested icon: tap to keep or change"
-											: "Add an icon"
-								}
-							>
-								{icon ?? suggested ?? "+"}
-							</button>
-							<button className={s.item} onClick={toggle} tabIndex={-1}>
-								<span className={s.text}>{text}</span>
-								{/* Changed here; it reaches Reminders at the next sync. */}
-								{it.pending && (
-									<span className={s.pending} title="Waiting to sync">
-										↻
-									</span>
-								)}
-							</button>
-						</li>
-					);
-				})}
-				{list.items.length === 0 && <li className={s.empty}>Nothing here.</li>}
-			</ul>
+			{choosingColor && (
+				<div className={s.swatches} role="radiogroup" aria-label={`Color for ${list.title}`}>
+					{LIST_COLORS.map((c) => (
+						<button key={c} role="radio" aria-checked={c === color} className={`${s.swatch} ${c === color ? s.swatchOn : ""}`}
+							style={{ background: c }} onClick={() => {
+								onColor(c);
+								setChoosingColor(false);
+							}} aria-label={c} />
+					))}
+				</div>
+			)}
+			<SortableList
+				items={open}
+				getId={(it) => it.id}
+				onReorder={(ids) => onReorder(ids.map((id) => keyOf(open.find((it) => it.id === id)!.title)))}
+				className={s.items}
+				draggingClass={s.dragging}
+			>
+				{(it, handle) => row(it, handle)}
+			</SortableList>
+			{done.length > 0 && <ul className={s.items}>{done.map((it) => <li key={it.id}>{row(it)}</li>)}</ul>}
+			{list.items.length === 0 && <p className={s.empty}>Nothing here.</p>}
 			<form className={s.add} onSubmit={submit}>
 				<button
 					type="button"
@@ -271,6 +314,11 @@ export default function ListView() {
 
 function Lists({ hidden }: { hidden: (title: string) => boolean }) {
 	const { data, isPending } = useReminders();
+	// Each list's color and its items' dragged order, kept on the wall by list name.
+	const settings = useSettings().data;
+	const colors = (settings?.listColors as Record<string, string> | undefined) ?? {};
+	const orders = (settings?.listOrder as Record<string, string[]> | undefined) ?? {};
+	const setSetting = useSetSetting();
 	if (isPending) return null;
 	if (!data?.enabled) {
 		return (
@@ -309,7 +357,15 @@ function Lists({ hidden }: { hidden: (title: string) => boolean }) {
 	return (
 		<div className={s.board}>
 			{shown.map((l) => (
-				<ListCard key={l.title} list={l} />
+				<ListCard
+					key={l.title}
+					list={l}
+					// Until one is picked, each list gets the next color in turn.
+					color={colors[l.title.toLowerCase()] ?? LIST_COLORS[data.lists.indexOf(l) % LIST_COLORS.length]}
+					onColor={(c) => setSetting.mutate({ key: "listColors", value: { ...colors, [l.title.toLowerCase()]: c } })}
+					order={orders[l.title.toLowerCase()] ?? []}
+					onReorder={(order) => setSetting.mutate({ key: "listOrder", value: { ...orders, [l.title.toLowerCase()]: order } })}
+				/>
 			))}
 		</div>
 	);
