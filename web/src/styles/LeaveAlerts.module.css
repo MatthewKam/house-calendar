@@ -1,0 +1,93 @@
+/* "Time to leave" alerts: large, at the top of the wall, above everything but other pop-ups. */
+.stack {
+	position: fixed;
+	top: 1rem;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 25;
+	width: min(40rem, 94vw);
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.alert {
+	display: flex;
+	align-items: center;
+	gap: 0.9rem;
+	padding: 1rem 1.1rem;
+	border-radius: 1.1rem;
+	background: #1d1f23;
+	color: #fff;
+	box-shadow: 0 1rem 2.5rem rgb(0 0 0 / 0.3);
+	/* Bounces in, then shakes every few seconds until someone taps Got it. */
+	animation:
+		bounce 0.8s ease-out,
+		shake 3s ease-in-out 0.8s infinite;
+}
+@keyframes bounce {
+	0% { transform: translateY(-6rem); opacity: 0; }
+	45% { transform: translateY(0.6rem); opacity: 1; }
+	65% { transform: translateY(-0.9rem); }
+	80% { transform: translateY(0.2rem); }
+	90% { transform: translateY(-0.25rem); }
+	100% { transform: none; }
+}
+/* A quick shake in the first fifth of each cycle, then still. */
+@keyframes shake {
+	0%, 20%, 100% { transform: none; }
+	2%, 10% { transform: translateX(-0.6rem) rotate(-1.5deg); }
+	6%, 14% { transform: translateX(0.6rem) rotate(1.5deg); }
+	18% { transform: translateX(-0.2rem); }
+}
+/* A car zooms across the screen when the alert appears, then again every 9 seconds. The emoji car
+   faces left, so it drives right to left with its dust behind it. */
+.zoom {
+	position: fixed;
+	/* Roughly centred top to bottom. */
+	top: calc(50vh - 9rem);
+	left: 0;
+	z-index: 26;
+	display: flex;
+	align-items: center;
+	font-size: 15rem;
+	pointer-events: none;
+	transform: translateX(110vw);
+	animation: zoom 9s cubic-bezier(0.5, 0, 0.9, 0.6) 0.3s infinite;
+}
+.dust {
+	font-size: 9rem;
+	opacity: 0.8;
+}
+@keyframes zoom {
+	0% { transform: translateX(110vw); }
+	14%, 100% { transform: translateX(-80rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.alert {
+		animation: none;
+	}
+	.zoom {
+		display: none;
+	}
+}
+.icon {
+	font-size: 2.2rem;
+}
+.body {
+	flex: 1;
+	min-width: 0;
+}
+.title {
+	font-size: 1.3rem;
+	font-weight: 700;
+}
+.detail {
+	opacity: 0.8;
+}
+.ok {
+	padding: 0 1.3rem;
+	background: #e3a008;
+	color: #1d1f23;
+	font-weight: 700;
+	flex: none;
+}

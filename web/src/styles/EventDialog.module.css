@@ -1,0 +1,31 @@
+.title { font-size: 1.3rem; padding: 0.7rem 0.9rem; border: 1px solid var(--line); border-radius: var(--radius); }
+.wrap { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.chip { background: var(--bg); padding: 0 0.9rem; font-size: 0.95rem; }
+.labelHint { text-transform: none; letter-spacing: 0; }
+.label { color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.person { padding: 0 1.1rem; border: 2px solid var(--c); font-weight: 600; }
+.on { background: var(--c); }
+.toggle { display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem; }
+.toggle input { width: 1.4rem; height: 1.4rem; }
+.row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+.row label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; color: var(--muted); }
+.row input { font-size: 1.1rem; padding: 0.5rem; border: 1px solid var(--line); border-radius: 0.6rem; color: var(--text); }
+.problem { color: #b42318; font-size: 0.95rem; }
+
+.note { color: var(--muted); margin: 0; font-size: 0.95rem; }
+/* Who an iCloud event is for, locked until Edit. */
+.whoRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.6rem; }
+.static { cursor: default; display: inline-flex; align-items: center; min-height: 2.75rem; border-radius: var(--radius); }
+.editWho { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0 0.9rem; flex: none;
+  border: 1px solid var(--line); background: var(--surface); font-weight: 600; }
+.editWho svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* Address and travel time. */
+.locationInput { font-size: 1rem; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 0.6rem; }
+.travel { display: flex; flex-direction: column; gap: 0.4rem; }
+.address { color: var(--muted); }
+.travelButton { align-self: flex-start; padding: 0 1rem; border: 1px solid var(--line); background: var(--surface); font-weight: 600; }
+.trip { padding: 0.6rem 0.8rem; border-radius: 0.6rem; background: #eef6ff; line-height: 1.4; }
+.tripLate { background: #fff1f0; color: #8a1f1f; }
+.remind { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.alertSet { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.5rem 0.8rem; border-radius: 0.6rem; background: #fff6dc; }
+.linkButton { min-height: 0; padding: 0.2rem 0.4rem; color: var(--muted); font-weight: 600; text-decoration: underline; }

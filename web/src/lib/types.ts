@@ -1,0 +1,152 @@
+export interface Member {
+  id: string;
+  name: string;
+  color: string;
+  sortOrder: number;
+}
+
+export type MemberPatch = Partial<Pick<Member, 'name' | 'color'>>;
+
+/**
+ * A reward a person earns with stars. "monthly" counts this month's stars and starts over each month;
+ * "until_reached" counts from `startDay` until the goal is reached, then it's marked as given.
+ */
+export interface Reward {
+  id: string;
+  memberId: string;
+  title: string;
+  goal: number;
+  mode: RewardMode;
+  startDay: string;
+  /** Stars counted toward it so far. */
+  stars: number;
+}
+export type RewardMode = 'monthly' | 'until_reached';
+
+export interface CalEvent {
+  id: string;
+  calendarId: string;
+  /** Who it's for, in family order; empty means everyone. */
+  memberIds: string[];
+  title: string;
+  allDay: boolean;
+  /** Timed: ISO UTC instant. All-day: YYYY-MM-DD. */
+  start: string;
+  /** Timed: ISO UTC instant. All-day: YYYY-MM-DD, exclusive. */
+  end: string;
+  syncState: string;
+  /** Where it is, on one line; null when there's no address. */
+  location: string | null;
+}
+
+/** A "time to leave" alert the wall shows at `remindAt`. */
+export interface LeaveAlert {
+  id: string;
+  eventId: string;
+  title: string;
+  destination: string;
+  arriveBy: string;
+  minutesBefore: number;
+  driveMinutes: number;
+  leaveAt: string;
+  remindAt: string;
+}
+
+/** Drive from home to an event, and when to leave to get there on time. */
+export interface Trip {
+  minutes: number;
+  meters: number;
+  /** When to leave; null for all-day events or ones that have started. */
+  leaveAt: string | null;
+  late: boolean;
+  origin: string;
+  destination: string;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  /** Who does it; null means everyone, each ticking off their own. */
+  memberId: string | null;
+  /** Weekdays it's due: 0 = Sunday ... 6 = Saturday. */
+  days: number[];
+  sortOrder: number;
+  /** When it was added (UTC instant); days before that aren't counted as missed. */
+  createdAt: string;
+  /** Part of the day it's for; null means any time. */
+  time: TaskTime | null;
+  category: TaskCategory;
+  /** Counts toward the day's bar. Otherwise it's an extra worth `points`. */
+  required: boolean;
+  points: number;
+  /** An emoji shown before the title, or null. */
+  icon: string | null;
+}
+
+export type TaskTime = 'morning' | 'evening';
+/** Shown as Daily, Chores and Bonus ("non_negotiable" is Daily's stored name). */
+export type TaskCategory = 'non_negotiable' | 'chores' | 'bonus';
+
+export type TaskInput = Pick<Task, 'title' | 'memberId' | 'days' | 'time' | 'category' | 'required' | 'points' | 'icon'>;
+
+/** Points a person earned from extras. */
+export interface TaskPoints { memberId: string; week: number; month: number }
+
+/** One check-off: this person did the task on this local day. */
+export interface TaskDone { taskId: string; memberId: string; day: string; /** Stars this tick earned (extras only). */ points?: number }
+
+/** A synced (iCloud) calendar and how it shows on the wall. */
+export interface SyncedCalendar {
+  id: string;
+  provider: 'icloud' | 'google';
+  name: string;
+  /** Its color in Apple Calendar, if any. */
+  color: string | null;
+  /** Everyone's events in it are this person's; null lets manual picks and Claude decide per event. */
+  memberId: string | null;
+  hidden: boolean;
+  /** Distinct events (a repeating event counts once). */
+  events: number;
+  /** A few upcoming titles, to tell same-named calendars apart. */
+  sample: string[];
+}
+
+/** A Reminders list as the wall shows it (synced from the family's iPhones by a Shortcut). */
+export interface ReminderList {
+  title: string;
+  items: ReminderItem[];
+  /** Phones that last sent this list, newest first. */
+  syncedBy: { device: string; at: string }[];
+}
+
+export interface ReminderItem {
+  /** "p…" came from a phone, "w…" was added on the wall. */
+  id: string;
+  title: string;
+  done: boolean;
+  due: string | null;
+  /** Changed on the wall and waiting for a phone to apply it in Reminders. */
+  pending: boolean;
+}
+
+export interface SyncStatus {
+  provider: 'icloud' | 'google';
+  running: boolean;
+  lastSuccess: string | null;
+  lastError: string | null;
+  calendars: number;
+  events: number;
+  peopleError: string | null;
+}
+
+export type EventInput = Pick<CalEvent, 'title' | 'memberIds' | 'allDay' | 'start' | 'end'> & { location?: string | null };
+
+/** Today's weather at home (°F), from GET /api/weather. */
+export interface Weather {
+  temp: number;
+  high: number;
+  low: number;
+  /** WMO weather code: 0 clear ... 99 thunderstorm. */
+  code: number;
+  isDay: boolean;
+}

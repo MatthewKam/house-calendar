@@ -1,0 +1,297 @@
+import Database from 'better-sqlite3';
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
+
+export type DB = Database.Database;
+
+// Each entry runs once, in order. Never edit a shipped migration; add a new one.
+const migrations: string[] = [
+  `
+  CREATE TABLE members (
+    id          TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
+    color       TEXT NOT NULL,
+    sort_order  INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+
+  -- A source calendar (local, Google or iCloud) mapped to one member, or to nobody ("Family").
+  CREATE TABLE calendars (
+    id          TEXT PRIMARY KEY,
+    provider    TEXT NOT NULL CHECK (provider IN ('local','google','icloud')),
+    remote_id   TEXT,
+    name        TEXT NOT NULL,
+    member_id   TEXT REFERENCES members(id) ON DELETE SET NULL,
+    sync_token  TEXT
+  );
+
+  CREATE TABLE events (
+    id          TEXT PRIMARY KEY,
+    calendar_id TEXT NOT NULL REFERENCES calendars(id) ON DELETE CASCADE,
+    member_id   TEXT REFERENCES members(id) ON DELETE SET NULL,
+    title       TEXT NOT NULL,
+    all_day     INTEGER NOT NULL DEFAULT 0,
+    -- Timed events: ISO-8601 UTC instants. All-day events: YYYY-MM-DD, end exclusive.
+    start       TEXT NOT NULL,
+    end         TEXT NOT NULL,
+    remote_id   TEXT,
+    etag        TEXT,
+    sync_state  TEXT NOT NULL DEFAULT 'synced'
+                CHECK (sync_state IN ('synced','pending_create','pending_update','pending_delete')),
+    updated_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX events_range ON events(start, end);
+
+  -- Changes made on the wall that still need to reach Google or iCloud.
+  CREATE TABLE outbox (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id    TEXT NOT NULL,
+    op          TEXT NOT NULL CHECK (op IN ('create','update','delete')),
+    attempts    INTEGER NOT NULL DEFAULT 0,
+    last_error  TEXT,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+
+  CREATE TABLE settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+
+  INSERT INTO calendars (id, provider, name) VALUES ('local', 'local', 'On this display');
+  `,
+  // Synced calendars are matched by their remote id; sync replaces a calendar's events at once.
+  `
+  CREATE UNIQUE INDEX calendars_remote ON calendars(provider, remote_id) WHERE remote_id IS NOT NULL;
+  CREATE INDEX events_calendar ON events(calendar_id);
+  `,
+  // Who a synced event is for. Kept per series (one iCloud resource, every repeat of it) and
+  // outside the events table, which each sync replaces.
+  `
+  ALTER TABLE events ADD COLUMN series_id TEXT;
+
+  CREATE TABLE event_people (
+    calendar_id TEXT NOT NULL REFERENCES calendars(id) ON DELETE CASCADE,
+    series_id   TEXT NOT NULL,
+    -- NULL means everyone / no one in particular.
+    member_id   TEXT REFERENCES members(id) ON DELETE CASCADE,
+    source      TEXT NOT NULL CHECK (source IN ('ai', 'manual')),
+    -- For AI picks: the family list it chose from. A different list means ask again.
+    basis       TEXT,
+    PRIMARY KEY (calendar_id, series_id)
+  );
+  `,
+  // Per synced calendar: hide it from the wall, and its color in Apple Calendar (to tell
+  // same-named calendars apart). calendars.member_id already links a calendar to a person.
+  `
+  ALTER TABLE calendars ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0;
+  ALTER TABLE calendars ADD COLUMN color TEXT;
+  `,
+  // Chores: who does each one and on which weekdays, plus a row per day it was done.
+  `
+  CREATE TABLE chores (
+    id          TEXT PRIMARY KEY,
+    title       TEXT NOT NULL,
+    member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    -- Weekdays it's due, as digits 0 (Sunday) to 6, e.g. '135' for Mon/Wed/Fri.
+    days        TEXT NOT NULL,
+    sort_order  INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+
+  CREATE TABLE chore_done (
+    chore_id    TEXT NOT NULL REFERENCES chores(id) ON DELETE CASCADE,
+    -- YYYY-MM-DD in the display's local time zone.
+    day         TEXT NOT NULL,
+    done_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    PRIMARY KEY (chore_id, day)
+  );
+  `,
+  // Chores for everyone (member_id NULL), so each tick now records who did it. SQLite can't relax
+  // NOT NULL in place, so both tables are rebuilt. Order matters: the new tick table points at the
+  // new chores table before the old ones are dropped, so no delete cascades into the copied rows.
+  `
+  CREATE TABLE chores_new (
+    id          TEXT PRIMARY KEY,
+    title       TEXT NOT NULL,
+    -- NULL means everyone in the family does it.
+    member_id   TEXT REFERENCES members(id) ON DELETE CASCADE,
+    days        TEXT NOT NULL,
+    sort_order  INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  INSERT INTO chores_new (id, title, member_id, days, sort_order, created_at)
+    SELECT id, title, member_id, days, sort_order, created_at FROM chores;
+
+  CREATE TABLE chore_done_new (
+    chore_id    TEXT NOT NULL REFERENCES chores_new(id) ON DELETE CASCADE,
+    member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    day         TEXT NOT NULL,
+    done_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    PRIMARY KEY (chore_id, member_id, day)
+  );
+  INSERT INTO chore_done_new (chore_id, member_id, day, done_at)
+    SELECT d.chore_id, c.member_id, d.day, d.done_at FROM chore_done d JOIN chores c ON c.id = d.chore_id;
+
+  DROP TABLE chore_done;
+  DROP TABLE chores;
+  ALTER TABLE chores_new RENAME TO chores;
+  ALTER TABLE chore_done_new RENAME TO chore_done;
+  `,
+  // Events can be for several people. events.member_id is superseded by event_members (cleared
+  // here, kept only because SQLite can't drop a foreign-key column in place), and a series' pick
+  // becomes a JSON list of member ids, where [] means everyone / no one in particular.
+  `
+  CREATE TABLE event_members (
+    event_id    TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    PRIMARY KEY (event_id, member_id)
+  );
+  CREATE INDEX event_members_member ON event_members(member_id);
+  INSERT INTO event_members (event_id, member_id) SELECT id, member_id FROM events WHERE member_id IS NOT NULL;
+  UPDATE events SET member_id = NULL;
+
+  CREATE TABLE event_people_new (
+    calendar_id TEXT NOT NULL REFERENCES calendars(id) ON DELETE CASCADE,
+    series_id   TEXT NOT NULL,
+    member_ids  TEXT NOT NULL DEFAULT '[]',
+    source      TEXT NOT NULL CHECK (source IN ('ai', 'manual')),
+    basis       TEXT,
+    PRIMARY KEY (calendar_id, series_id)
+  );
+  INSERT INTO event_people_new (calendar_id, series_id, member_ids, source, basis)
+    SELECT calendar_id, series_id, CASE WHEN member_id IS NULL THEN '[]' ELSE json_array(member_id) END, source, basis
+    FROM event_people;
+  DROP TABLE event_people;
+  ALTER TABLE event_people_new RENAME TO event_people;
+  `,
+  // iCloud Reminders, synced by an iPhone Shortcut (Apple offers no API a Raspberry Pi can use).
+  // Each phone sends a snapshot of its lists; changes made on the wall wait in reminder_outbox
+  // until a phone that has that list applies them. Lists and items are matched by name, because
+  // Shortcuts doesn't expose Reminders' internal ids.
+  `
+  CREATE TABLE reminder_items (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    list        TEXT NOT NULL,
+    title       TEXT NOT NULL,
+    done        INTEGER NOT NULL DEFAULT 0,
+    -- YYYY-MM-DD or an ISO instant, as the phone sent it.
+    due         TEXT
+  );
+  CREATE INDEX reminder_items_list ON reminder_items(list);
+
+  -- Which phone last reported which list, so changes go to a phone that has it.
+  CREATE TABLE reminder_devices (
+    device      TEXT NOT NULL,
+    list        TEXT NOT NULL,
+    synced_at   TEXT NOT NULL,
+    PRIMARY KEY (device, list)
+  );
+
+  CREATE TABLE reminder_outbox (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    op          TEXT NOT NULL CHECK (op IN ('add', 'complete', 'uncomplete')),
+    list        TEXT NOT NULL,
+    title       TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    -- Handed to this phone; if it doesn't confirm in time, another run can take it.
+    claimed_by  TEXT,
+    claimed_at  TEXT
+  );
+  `,
+  // "Chores" became "Tasks". Renaming keeps every task and its tick history; foreign keys follow.
+  `
+  ALTER TABLE chores RENAME TO tasks;
+  ALTER TABLE chore_done RENAME TO task_done;
+  ALTER TABLE task_done RENAME COLUMN chore_id TO task_id;
+  `,
+  // Tasks get a time of day, a category, and required-or-extra. Required tasks fill the day's bar;
+  // extras earn points, recorded on each tick so later changes to a task don't rewrite history.
+  // Existing tasks become everyday, required, any time: the bar works as it did.
+  `
+  ALTER TABLE tasks ADD COLUMN time TEXT CHECK (time IN ('morning', 'evening'));
+  ALTER TABLE tasks ADD COLUMN category TEXT NOT NULL DEFAULT 'everyday'
+    CHECK (category IN ('non_negotiable', 'chores', 'everyday', 'bonus'));
+  ALTER TABLE tasks ADD COLUMN required INTEGER NOT NULL DEFAULT 1;
+  ALTER TABLE tasks ADD COLUMN points INTEGER NOT NULL DEFAULT 0;
+  ALTER TABLE task_done ADD COLUMN points INTEGER NOT NULL DEFAULT 0;
+  `,
+  // "Everyday" is gone: required ones become Daily (also always required), extras become Chores.
+  // Each person can have a reward for reaching a number of stars in a month.
+  `
+  UPDATE tasks SET category = 'non_negotiable' WHERE category = 'everyday' AND required = 1;
+  UPDATE tasks SET category = 'chores' WHERE category = 'everyday';
+  ALTER TABLE members ADD COLUMN reward_title TEXT;
+  ALTER TABLE members ADD COLUMN reward_goal INTEGER;
+  `,
+  // Rewards get their own table: several per person, each either resetting monthly or counting
+  // stars from when it was set until it's earned (then marked as given). The one-per-person
+  // reward on members moves here as a monthly reward.
+  `
+  CREATE TABLE rewards (
+    id          TEXT PRIMARY KEY,
+    member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    title       TEXT NOT NULL,
+    goal        INTEGER NOT NULL CHECK (goal > 0),
+    mode        TEXT NOT NULL DEFAULT 'monthly' CHECK (mode IN ('monthly', 'until_reached')),
+    -- Local day stars start counting from (for until_reached).
+    start_day   TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    -- Set when an earned reward has been handed over; it then drops off the card.
+    claimed_at  TEXT
+  );
+  INSERT INTO rewards (id, member_id, title, goal, mode, start_day)
+    SELECT lower(hex(randomblob(16))), id, reward_title, reward_goal, 'monthly', strftime('%Y-%m-01', 'now', 'localtime')
+    FROM members WHERE reward_title IS NOT NULL AND reward_goal IS NOT NULL;
+  ALTER TABLE members DROP COLUMN reward_title;
+  ALTER TABLE members DROP COLUMN reward_goal;
+  `,
+  // An optional icon (an emoji) shown before a task's name.
+  `
+  ALTER TABLE tasks ADD COLUMN icon TEXT;
+  `,
+  // Where an event is (from iCloud's LOCATION, or typed on the wall), for travel times.
+  `
+  ALTER TABLE events ADD COLUMN location TEXT;
+  `,
+  // "Time to leave" alerts. Not tied to events by a foreign key: synced events are replaced on
+  // every sync (same ids), which would delete the alerts with them.
+  `
+  CREATE TABLE leave_alerts (
+    id            TEXT PRIMARY KEY,
+    event_id      TEXT NOT NULL,
+    title         TEXT NOT NULL,
+    destination   TEXT NOT NULL,
+    arrive_by     TEXT NOT NULL,
+    minutes_before INTEGER NOT NULL DEFAULT 0,
+    drive_minutes INTEGER NOT NULL,
+    leave_at      TEXT NOT NULL,
+    -- When the wall shows the alert: leave_at minus minutes_before.
+    remind_at     TEXT NOT NULL,
+    -- Traffic is re-checked once, shortly before leaving.
+    refreshed_at  TEXT,
+    dismissed_at  TEXT,
+    created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX leave_alerts_remind ON leave_alerts(remind_at);
+  `,
+];
+
+/** `upTo` stops after that many migrations; tests use it to build an older database. */
+export function openDb(file: string, upTo = migrations.length): DB {
+  if (file !== ':memory:') mkdirSync(dirname(file), { recursive: true });
+  const db = new Database(file);
+  db.pragma('journal_mode = WAL');
+  db.pragma('foreign_keys = ON');
+  migrate(db, upTo);
+  return db;
+}
+
+function migrate(db: DB, upTo: number) {
+  const current = db.pragma('user_version', { simple: true }) as number;
+  for (let v = current; v < upTo; v++) {
+    db.transaction(() => {
+      db.exec(migrations[v]);
+      db.pragma(`user_version = ${v + 1}`);
+    })();
+  }
+}

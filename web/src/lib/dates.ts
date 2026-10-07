@@ -1,0 +1,44 @@
+// All "day" strings are YYYY-MM-DD in the display's local time zone.
+
+export const pad = (n: number) => String(n).padStart(2, '0');
+export const dayKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+export const fromDayKey = (k: string) => {
+  const [y, m, d] = k.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
+export const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+
+/** Start of the week containing d. weekStartsOn: 0 = Sunday, 1 = Monday. */
+export function startOfWeek(d: Date, weekStartsOn = 0) {
+  const diff = (d.getDay() - weekStartsOn + 7) % 7;
+  return addDays(d, -diff);
+}
+
+export const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
+export const addMonths = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth() + n, 1);
+
+/** Every day in a month grid: whole weeks, from the week holding the 1st to the week holding the last day. */
+export function monthGridDays(d: Date, weekStartsOn = 0) {
+  const first = startOfWeek(startOfMonth(d), weekStartsOn);
+  const after = addDays(startOfWeek(new Date(d.getFullYear(), d.getMonth() + 1, 0), weekStartsOn), 7);
+  // Round so a DST change inside the month doesn't drop or add a day.
+  const count = Math.round((after.getTime() - first.getTime()) / 86_400_000);
+  return Array.from({ length: count }, (_, i) => addDays(first, i));
+}
+
+export const timeLabel = (iso: string) =>
+  new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+/** HH:MM in local time, for <input type="time">. */
+export const hhmm = (iso: string) => {
+  const d = new Date(iso);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+/** Combine a local day and HH:MM into a UTC ISO instant. */
+export const toInstant = (day: string, time: string) => {
+  const [h, m] = time.split(':').map(Number);
+  const d = fromDayKey(day);
+  d.setHours(h, m, 0, 0);
+  return d.toISOString();
+};

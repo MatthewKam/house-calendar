@@ -1,0 +1,191 @@
+/* The page: title on top, then the lists. */
+.page {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+}
+.pageTitle {
+	margin: 0;
+	font-size: 2rem;
+}
+.pageHead {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+.choose {
+	padding: 0.45rem 0.9rem;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	background: var(--surface);
+	color: var(--muted);
+}
+.choose[aria-pressed="true"] {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: #fff;
+}
+/* Which lists show: a check per list, tapped on or off. */
+.picker {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+.pick {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.4rem 0.9rem 0.4rem 0.5rem;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	background: var(--surface);
+}
+.pick[aria-pressed="false"] {
+	color: var(--muted);
+}
+.pick[aria-pressed="true"] .box {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: #fff;
+}
+.board {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+	align-content: start;
+	gap: 0.75rem;
+}
+.card {
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	padding: 0.9rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.head {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 0.5rem;
+}
+.title {
+	margin: 0;
+	font-size: 1.25rem;
+}
+.synced {
+	color: var(--muted);
+	font-size: 0.8rem;
+	white-space: nowrap;
+}
+.items {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+}
+.item {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+	text-align: left;
+	padding: 0.35rem 0.4rem;
+	border-radius: 0.6rem;
+	font-size: 1.05rem;
+}
+.item:hover {
+	background: var(--bg);
+}
+.box {
+	width: 1.5rem;
+	height: 1.5rem;
+	flex: none;
+	border-radius: 50%;
+	border: 2px solid var(--line);
+	display: grid;
+	place-items: center;
+	font-size: 0.85rem;
+	font-weight: 800;
+}
+.done .box {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--surface);
+}
+.done .text {
+	color: var(--muted);
+	text-decoration: line-through;
+}
+.text {
+	flex: 1;
+	overflow-wrap: anywhere;
+}
+.pending {
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.empty {
+	color: var(--muted);
+	padding: 0.3rem 0.4rem;
+}
+.add {
+	display: flex;
+	gap: 0.4rem;
+	margin-top: auto;
+}
+.add input {
+	flex: 1;
+	min-width: 0;
+	padding: 0.5rem 0.7rem;
+	border: 1px solid var(--line);
+	border-radius: 0.6rem;
+}
+.add button {
+	background: var(--accent);
+	color: var(--surface);
+	font-weight: 650;
+	padding: 0 1rem;
+}
+.add button:disabled {
+	opacity: 0.4;
+}
+.error {
+	margin: 0;
+	color: #b42318;
+	font-size: 0.9rem;
+}
+.setup {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	color: var(--muted);
+	gap: 0.3rem;
+}
+.setup h2 {
+	margin: 0;
+	color: var(--text);
+}
+.setup p {
+	max-width: 32rem;
+	margin: 0;
+}
+
+/* Phones: one list per row. */
+@media (max-width: 700px) {
+	.board {
+		grid-template-columns: 1fr;
+	}
+}

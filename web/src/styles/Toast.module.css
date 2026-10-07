@@ -1,0 +1,6 @@
+.toast {
+  position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%); z-index: 30;
+  background: #1d1f23; color: #fff; border-radius: var(--radius);
+  padding: 0.4rem 0.5rem 0.4rem 1.2rem; display: flex; align-items: center; gap: 1rem; font-size: 1.05rem;
+}
+.toast button { color: #ffd76a; font-weight: 650; padding: 0 1rem; }

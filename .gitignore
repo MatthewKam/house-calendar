@@ -1,0 +1,9 @@
+node_modules/
+web/dist/
+# Calendar database and iCloud credentials stay on this machine.
+data/
+.env
+.DS_Store
+*.db
+*.db-*
+*.log
