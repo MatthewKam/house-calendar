@@ -10,6 +10,7 @@ import { registerRewards } from './rewards.ts';
 import { registerTravel, type Estimator } from './travel.ts';
 import { registerWeather } from './weather.ts';
 import { registerPhotos } from './photos.ts';
+import { registerDaily } from './daily.ts';
 import { registerReminders } from './reminders.ts';
 import { cancelDelete, diff, outboxStatus, queueCreate, queueEdit, queueSeries, resolveConflict } from './outbox.ts';
 
@@ -93,6 +94,8 @@ export function buildApp(db: DB, opts: {
   syncedEdits?: { soon: () => void };
   /** Where album photos are stored; without it, the album is off. */
   photosDir?: string;
+  /** How the daily joke, quote and events are fetched (replaced in tests). */
+  dailyFetch?: typeof fetch;
   /** How weather lookups reach the internet (replaced in tests). */
   weatherFetch?: typeof fetch;
 } = {}) {
@@ -395,6 +398,7 @@ export function buildApp(db: DB, opts: {
   registerRewards(app, db);
   registerTravel(app, db, opts.travel);
   registerWeather(app, db, opts.weatherFetch);
+  registerDaily(app, db, opts.dailyFetch);
   if (opts.photosDir) registerPhotos(app, db, opts.photosDir);
   registerReminders(app, db, opts.remindersToken, opts.onRemindersChanged);
 

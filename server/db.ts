@@ -390,6 +390,16 @@ const migrations: string[] = [
     created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
   `,
+  // The day's joke, quote and "on this day" events, fetched once a day and kept, so they stay the
+  // same all day (and still show if the internet drops).
+  `
+  CREATE TABLE daily_items (
+    day   TEXT NOT NULL,
+    kind  TEXT NOT NULL,
+    data  TEXT NOT NULL,
+    PRIMARY KEY (day, kind)
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

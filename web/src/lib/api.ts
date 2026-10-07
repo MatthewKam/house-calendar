@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, TaskPoints, Weather, OutboxStatus, RewardInput, RewardWin, Photo } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, TaskPoints, Weather, OutboxStatus, RewardInput, RewardWin, Photo, Daily } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -33,6 +33,7 @@ export const api = {
   /** Drive time from home and when to leave (Google Maps, on the server). */
   travel: (id: string) => call<Trip>('GET', `/api/events/${id}/travel`),
   weather: () => call<Weather>('GET', '/api/weather'),
+  daily: (day: string) => call<Daily>('GET', `/api/daily?${new URLSearchParams({ day })}`),
   alerts: () => call<LeaveAlert[]>('GET', '/api/alerts'),
   addAlert: (eventId: string, minutesBefore: number) => call<LeaveAlert>('POST', '/api/alerts', { eventId, minutesBefore }),
   dismissAlert: (id: string) => call<void>('POST', `/api/alerts/${id}/dismiss`),

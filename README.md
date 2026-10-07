@@ -94,11 +94,15 @@ the wall, not on phones.
 
 - **Month / Week:** switch views at the top left. ‹ › move by a month or a week.
 - **Lists:** the **Lists** page in the left bar (address ends in `#lists`) shows your iCloud Reminders (see "Connect Reminders").
+  Each list's items are shown in its color; tap the dot by a list's name to pick another. Drag an item by its ⋮⋮ to
+  put it in order of importance (the color and order are kept on the wall; Reminders on the phones keeps its own order).
   Tap the spot before an item to give it an icon (search or **Show more** for every icon); it's added to the start of
   the item's name in Reminders, so phones show it too. Common groceries get a suggested icon (shown lighter until
   picked), and items added on the wall get theirs straight away. Renaming needs the Mac sync (`REMINDERS_MAC=1`); the
   phone Shortcut doesn't rename yet.
 - **Time and weather:** under the month: the clock, the sky, the temperature now, and today's high and low, for the home address in Settings. Weather comes from [Open-Meteo](https://open-meteo.com) (free, no key); the address is found on a map once, through the US Census geocoder.
+- **Daily cards:** in Week view, beside the weather: a **dad joke** (tap for the answer, from icanhazdadjoke.com) and
+  a **quote of the day** (ZenQuotes). They're fetched once a day and kept; grim jokes are skipped (it's a family wall).
 - **Day:** tap any day to see it in a panel on the right. Close it with ×.
 - **Add:** tap a day, then **+ Add event** in the day panel.
 - **Who:** an event can be for any number of people: tap each person in **Who** (tap again to remove), or
