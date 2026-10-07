@@ -30,3 +30,11 @@
 .scale { display: flex; align-items: center; gap: 0.8rem; color: var(--muted); }
 .scale input { flex: 1; }
 .home { display: flex; flex-direction: column; gap: 0.4rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
+/* Screen saver settings. */
+.saverRow { display: flex; align-items: center; gap: 0.5rem; }
+.saverRow input { width: 1.2rem; height: 1.2rem; }
+.saverGrid { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; }
+.saverGrid label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.85rem; color: var(--muted); }
+.saverGrid select { font-size: 1rem; padding: 0.4rem 0.5rem; border: 1px solid var(--line); border-radius: 0.6rem; background: var(--surface); color: var(--text); }
+.saverPreview { align-self: flex-start; min-height: 0; padding: 0.2rem 0; font-weight: 650; color: var(--accent); text-decoration: underline; text-underline-offset: 0.2em; }
+.bare { display: flex; flex-direction: column; gap: 0.5rem; }

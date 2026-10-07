@@ -25,6 +25,7 @@ import {
 	useSaveEvent,
 	useSetSetting,
 	useSettings,
+	usePhotos,
 	useSyncStatus,
 	useRangeEvents,
 } from "./lib/queries";
@@ -40,6 +41,10 @@ import WeatherCard from "./components/WeatherCard";
 import OutboxNotices from "./components/OutboxNotices";
 import { usePage } from "./lib/usePage";
 import ListView from "./components/ListView";
+import RewardsPage from "./components/RewardsPage";
+import PhotosPage from "./components/PhotosPage";
+import ScreenSaver from "./components/ScreenSaver";
+import { screenSaverSettings } from "./lib/screensaver";
 import TaskDialog from "./components/TaskDialog";
 import { taskProgress, percent, tasksFor } from "./lib/tasks";
 import MembersPanel from "./components/MembersPanel";
@@ -85,6 +90,8 @@ export default function App() {
 		memberId?: string;
 	} | null>(null);
 	const [showMembers, setShowMembers] = useState(false);
+	// Screen saver: photos after the wall has been idle a while (see the effect below).
+	const [saverOn, setSaverOn] = useState(false);
 	// The pop-up of names that aren't shown in the header (people without tasks, and Everyone).
 	const [moreOpen, setMoreOpen] = useState(false);
 	// Which page fills the main area. Kept in the address (#tasks), so a refresh stays on it.
@@ -141,6 +148,34 @@ export default function App() {
 	const stale = members.length > 0 ? focus.filter((f) => f !== EVERYONE && !members.some((m) => m.id === f)) : [];
 	if (stale.length) setFocus(focus.filter((f) => !stale.includes(f)));
 	const sync = useSyncStatus().data;
+
+	const saver = screenSaverSettings(settings.data?.screensaver);
+	// The photos picked for the screen saver (on the Photos page).
+	const saverPhotos = (usePhotos().data ?? []).filter((p) => p.inSlideshow);
+	// Idle timer: any touch, mouse movement or key starts it over. If a pop-up is open when it runs
+	// out, it waits another minute rather than covering what someone was doing.
+	useEffect(() => {
+		if (!saver.enabled || saverPhotos.length === 0) return;
+		let timer: ReturnType<typeof setTimeout>;
+		const fire = () => {
+			if (document.querySelector('[class*="_scrim_"], [role="dialog"]')) {
+				timer = setTimeout(fire, 60_000);
+				return;
+			}
+			setSaverOn(true);
+		};
+		const arm = () => {
+			clearTimeout(timer);
+			timer = setTimeout(fire, saver.idleMinutes * 60_000);
+		};
+		const events = ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"] as const;
+		events.forEach((e) => window.addEventListener(e, arm, { passive: true }));
+		arm();
+		return () => {
+			clearTimeout(timer);
+			events.forEach((e) => window.removeEventListener(e, arm));
+		};
+	}, [saver.enabled, saver.idleMinutes, saverPhotos.length]);
 
 	// At midnight, move to the new day if the old one was on screen.
 	const [shownToday, setShownToday] = useState(today);
@@ -330,6 +365,10 @@ export default function App() {
 						/>
 					) : page === "lists" ? (
 						<ListView />
+					) : page === "rewards" ? (
+						<RewardsPage today={today} members={members} />
+					) : page === "photos" ? (
+						<PhotosPage onPreview={() => setSaverOn(true)} />
 					) : (<>
 					<div className={s.monthHeaderTitle}>
 						<div>
@@ -483,7 +522,10 @@ export default function App() {
 				/>
 			)}
 
-			{/* "Time to leave" alerts, on whichever page is showing. */}
+			{saverOn && saverPhotos.length > 0 && (
+				<ScreenSaver photos={saverPhotos} settings={saver} onClose={() => setSaverOn(false)} />
+			)}
+			{/* "Time to leave" alerts, on whichever page is showing (above the screen saver too). */}
 			<LeaveAlerts />
 
 			{toast && <Toast message={toast} onDone={closeToast} />}

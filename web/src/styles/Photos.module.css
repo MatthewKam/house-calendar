@@ -1,0 +1,422 @@
+/* The photo album. */
+.page {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+}
+.pageHead {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.6rem;
+	flex-wrap: wrap;
+}
+.pageTitle {
+	margin: 0;
+	font-size: 2rem;
+}
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+}
+.upload {
+	padding: 0 1rem;
+	background: var(--accent);
+	color: var(--surface);
+	font-weight: 650;
+}
+
+.textButton {
+	min-height: 0;
+	padding: 0.2rem 0.4rem;
+	font-weight: 650;
+	color: var(--accent);
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+.secondary {
+	padding: 0 1rem;
+	border: 1px solid var(--line);
+	background: var(--surface);
+	font-weight: 600;
+}
+.secondaryOn {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--surface);
+}
+.secondary:disabled,
+.danger:disabled {
+	opacity: 0.4;
+}
+.danger {
+	padding: 0 1rem;
+	border: 1px solid #f1b4ad;
+	background: var(--surface);
+	color: #b42318;
+	font-weight: 600;
+}
+
+/* All / in the screen saver / not. */
+.tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+}
+.tab {
+	min-height: 2.4rem;
+	padding: 0 0.9rem;
+	border-radius: 999px;
+	color: var(--muted);
+	font-weight: 600;
+}
+.tabOn {
+	background: var(--surface);
+	color: var(--text);
+	box-shadow: 0 0 0 1.5px var(--accent);
+}
+
+/* Select mode's toolbar. */
+.selectBar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 0.7rem;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+}
+.selectCount {
+	font-weight: 650;
+}
+.none {
+	margin: 0;
+	color: var(--muted);
+}
+.settingsNote {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+
+/* Uploads in flight. */
+.uploads {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+.uploads li {
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	padding: 0.4rem 0.8rem;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: 0.6rem;
+}
+.uploadName {
+	width: 14rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.9rem;
+}
+.uploadBar {
+	flex: 1;
+	height: 0.5rem;
+	border-radius: 1rem;
+	background: var(--bg);
+	overflow: hidden;
+}
+.uploadBar span {
+	display: block;
+	height: 100%;
+	background: var(--accent);
+	transition: width 0.2s;
+}
+.failed {
+	border-color: #f1b4ad !important;
+}
+.uploadError {
+	flex: 1;
+	color: #b42318;
+	font-size: 0.9rem;
+}
+.dismiss {
+	min-height: 0;
+	padding: 0 0.4rem;
+	color: var(--muted);
+	font-size: 1.3rem;
+}
+
+.empty {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	color: var(--muted);
+}
+.empty h2 {
+	margin: 0;
+	color: var(--text);
+}
+
+/* The grid: square tiles, filling the width. */
+.grid {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+	grid-auto-rows: min-content;
+	gap: 0.4rem;
+	align-content: start;
+}
+.tile {
+	position: relative;
+	padding: 0;
+	min-height: 0;
+	aspect-ratio: 1;
+	border-radius: 0.7rem;
+	overflow: hidden;
+	background: var(--line);
+}
+.tile img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+	transition: transform 0.25s ease;
+}
+.tile:hover img {
+	transform: scale(1.04);
+}
+/* Select mode: every photo gets a circle to tick. Picked photos get a thick frame and a filled
+   tick, and the rest fade back a little so the picked ones stand out. */
+.check {
+	position: absolute;
+	top: 0.5rem;
+	right: 0.5rem;
+	width: 2rem;
+	height: 2rem;
+	display: grid;
+	place-items: center;
+	border-radius: 50%;
+	border: 2.5px solid #fff;
+	background: rgb(0 0 0 / 0.3);
+	color: #fff;
+	font-size: 1.1rem;
+	font-weight: 800;
+	box-shadow: 0 1px 5px rgb(0 0 0 / 0.4);
+	transition: background 0.15s, transform 0.15s;
+}
+.selectable img {
+	opacity: 0.6;
+	transition: opacity 0.15s, transform 0.15s;
+}
+.selectable:hover img {
+	transform: none;
+}
+.picked {
+	box-shadow: inset 0 0 0 5px var(--accent);
+}
+.picked img {
+	opacity: 1;
+	transform: scale(0.9);
+	border-radius: 0.4rem;
+}
+.picked.selectable:hover img {
+	transform: scale(0.9);
+}
+.checkOn {
+	background: var(--accent);
+}
+.picked .check {
+	transform: scale(1.1);
+}
+/* Outside Select: a smaller tick on photos in the screen saver. */
+.inSaver {
+	width: 1.6rem;
+	height: 1.6rem;
+	font-size: 0.9rem;
+	border-width: 2px;
+}
+.save {
+	padding: 0 1.1rem;
+	background: var(--accent);
+	color: var(--surface);
+	font-weight: 700;
+}
+.save:disabled {
+	opacity: 0.5;
+}
+
+/* Full-size viewer. */
+.viewer {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	display: flex;
+	flex-direction: column;
+	background: rgb(12 14 18 / 0.96);
+	color: #fff;
+}
+.viewerTop {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.6rem 1rem;
+}
+.viewerCount {
+	color: rgb(255 255 255 / 0.7);
+}
+.viewerClose {
+	color: #fff;
+	font-size: 2rem;
+	min-height: 0;
+	padding: 0 0.6rem;
+}
+.stage {
+	flex: 1;
+	min-height: 0;
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 3.5rem;
+}
+.big {
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+	border-radius: 0.3rem;
+	animation: appear 0.25s ease-out;
+}
+@keyframes appear {
+	from { opacity: 0; transform: scale(0.98); }
+}
+.nav {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 3rem;
+	height: 3rem;
+	border-radius: 50%;
+	color: #fff;
+	font-size: 2rem;
+	background: rgb(255 255 255 / 0.12);
+}
+.nav:hover {
+	background: rgb(255 255 255 / 0.22);
+}
+.prev {
+	left: 0.5rem;
+}
+.next {
+	right: 0.5rem;
+}
+.viewerBar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.6rem 1.2rem;
+	padding: 0.8rem 1rem 1rem;
+}
+.viewerBar select {
+	background: rgb(255 255 255 / 0.1);
+	color: #fff;
+	border-color: rgb(255 255 255 / 0.25);
+}
+.when {
+	font-weight: 650;
+}
+.toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+}
+.toggle input {
+	width: 1.2rem;
+	height: 1.2rem;
+}
+.spacer {
+	flex: 1;
+}
+.delete {
+	padding: 0 1rem;
+	color: #ffb4ab;
+	border: 1px solid rgb(255 180 171 / 0.4);
+}
+
+@media (max-width: 700px) {
+	.pageTitle {
+		font-size: 1.5rem;
+	}
+	.grid {
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.25rem;
+	}
+	.stage {
+		padding: 0;
+	}
+	.uploadName {
+		width: 8rem;
+	}
+}
+
+/* Upload pop-up: a big area to drop photos on, or choose them. */
+.dropZone {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 2.2rem 1.5rem;
+	border: 2.5px dashed var(--line);
+	border-radius: var(--radius);
+	text-align: center;
+	transition: background 0.15s, border-color 0.15s;
+}
+.dropHot {
+	border-color: var(--accent);
+	background: var(--bg);
+}
+.dropIcon {
+	font-size: 2.6rem;
+}
+.dropOr {
+	color: var(--muted);
+}
+.dropHint {
+	color: var(--muted);
+	font-size: 0.85rem;
+	max-width: 22rem;
+}
+/* Photos dragged over the page. */
+.dropOverlay {
+	position: fixed;
+	inset: 0;
+	z-index: 19;
+	display: grid;
+	place-items: center;
+	background: rgb(20 24 30 / 0.45);
+	pointer-events: none;
+}
+.dropOverlay div {
+	padding: 1.5rem 2.5rem;
+	border: 3px dashed #fff;
+	border-radius: 1.2rem;
+	color: #fff;
+	font-size: 1.5rem;
+	font-weight: 700;
+	background: rgb(255 255 255 / 0.1);
+}

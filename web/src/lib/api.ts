@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, TaskPoints, Weather, OutboxStatus } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, TaskPoints, Weather, OutboxStatus, RewardInput, RewardWin, Photo } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -18,6 +18,11 @@ export const api = {
   addMember: (m: { name: string; color: string }) => call<Member>('POST', '/api/members', m),
   updateMember: (id: string, m: MemberPatch) => call<Member>('PATCH', `/api/members/${id}`, m),
   removeMember: (id: string) => call<void>('DELETE', `/api/members/${id}`),
+  photos: () => call<Photo[]>('GET', '/api/photos'),
+  updatePhoto: (id: string, p: { inSlideshow?: boolean; memberId?: string | null }) => call<Photo>('PATCH', `/api/photos/${id}`, p),
+  deletePhoto: (id: string) => call<void>('DELETE', `/api/photos/${id}`),
+  setSlideshow: (ids: string[], inSlideshow: boolean) => call<{ changed: number }>('POST', '/api/photos/slideshow', { ids, inSlideshow }),
+  deletePhotos: (ids: string[]) => call<{ deleted: number }>('POST', '/api/photos/delete', { ids }),
 
   events: (from: Date, to: Date, fromDay: string, toDay: string) =>
     call<CalEvent[]>('GET', `/api/events?${new URLSearchParams({
@@ -49,9 +54,12 @@ export const api = {
   updateTask: (id: string, c: Partial<TaskInput>) => call<Task>('PATCH', `/api/tasks/${id}`, c),
   removeTask: (id: string) => call<void>('DELETE', `/api/tasks/${id}`),
   rewards: (today: string) => call<Reward[]>('GET', `/api/rewards?${new URLSearchParams({ today })}`),
-  addReward: (r: Pick<Reward, 'memberId' | 'title' | 'goal' | 'mode' | 'startDay'>) => call<Reward>('POST', '/api/rewards', r),
-  updateReward: (id: string, r: Partial<Pick<Reward, 'title' | 'goal' | 'mode'>>) => call<Reward>('PATCH', `/api/rewards/${id}`, r),
-  giveReward: (id: string) => call<void>('POST', `/api/rewards/${id}/given`),
+  rewardHistory: () => call<RewardWin[]>('GET', '/api/rewards/history'),
+  addReward: (r: RewardInput) => call<Reward>('POST', '/api/rewards', r),
+  updateReward: (id: string, r: Partial<Omit<RewardInput, 'startDay'>>) => call<Reward>('PATCH', `/api/rewards/${id}`, r),
+  giveReward: (id: string, today: string) => call<void>('POST', `/api/rewards/${id}/given?${new URLSearchParams({ today })}`),
+  giveWin: (id: string, today: string) => call<void>('POST', `/api/rewards/wins/${id}/given?${new URLSearchParams({ today })}`),
+  undoWin: (id: string) => call<void>('POST', `/api/rewards/wins/${id}/undo`),
   removeReward: (id: string) => call<void>('DELETE', `/api/rewards/${id}`),
   /** Saves a new task order (all task ids, in order). */
   reorderTasks: (ids: string[]) => call<Task[]>('PUT', '/api/tasks/order', { ids }),

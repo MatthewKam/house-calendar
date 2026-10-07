@@ -9,6 +9,7 @@ import { registerTasks } from './tasks.ts';
 import { registerRewards } from './rewards.ts';
 import { registerTravel, type Estimator } from './travel.ts';
 import { registerWeather } from './weather.ts';
+import { registerPhotos } from './photos.ts';
 import { registerReminders } from './reminders.ts';
 import { cancelDelete, diff, outboxStatus, queueCreate, queueEdit, resolveConflict } from './outbox.ts';
 
@@ -90,6 +91,8 @@ export function buildApp(db: DB, opts: {
    * the Undo window. Without it, synced events are read-only.
    */
   syncedEdits?: { soon: () => void };
+  /** Where album photos are stored; without it, the album is off. */
+  photosDir?: string;
   /** How weather lookups reach the internet (replaced in tests). */
   weatherFetch?: typeof fetch;
 } = {}) {
@@ -335,6 +338,7 @@ export function buildApp(db: DB, opts: {
   registerRewards(app, db);
   registerTravel(app, db, opts.travel);
   registerWeather(app, db, opts.weatherFetch);
+  if (opts.photosDir) registerPhotos(app, db, opts.photosDir);
   registerReminders(app, db, opts.remindersToken, opts.onRemindersChanged);
 
   // ---- Display settings (key/value, for things like UI scale) -------------
