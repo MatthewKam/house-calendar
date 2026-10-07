@@ -13,6 +13,7 @@ function fakeReminders(lists: Record<string, string[]>) {
       for (const c of changes) {
         if (c.op === 'add') lists[c.list].push(c.title);
         if (c.op === 'complete') lists[c.list] = lists[c.list].filter((t) => t !== c.title);
+        if (c.op === 'rename') lists[c.list] = lists[c.list].map((t) => (t === c.title ? c.newTitle! : t));
       }
       return changes.map((c) => c.id);
     },

@@ -1,5 +1,5 @@
-// Contract every calendar backend implements. iCloud (CalDAV) reads today; writes and Google
-// (Calendar API v3) slot in here later.
+// Contract every calendar backend implements. iCloud (CalDAV) reads and writes today; Google
+// (Calendar API v3) slots in here later.
 
 /**
  * One occurrence of an event. Repeating events arrive already expanded, one RemoteEvent per
@@ -24,6 +24,8 @@ export interface RemoteCalendar {
   name: string;
   /** #rrggbb as set in the provider's own app, when it has one. */
   color?: string;
+  /** False for calendars we can only read (shared read-only, subscribed); unknown counts as true. */
+  writable?: boolean;
 }
 
 /**
@@ -37,16 +39,16 @@ export interface CalendarSource {
   fetchRange(calendarRemoteId: string, from: Date, to: Date): Promise<RemoteEvent[]>;
 }
 
-export class ConflictError extends Error {
-  constructor(public readonly current: RemoteEvent | null) {
-    super('Event changed on another device');
-  }
-}
-
-/** Write side, for edits made on the wall. Not implemented by any provider yet. */
-export interface CalendarProvider extends CalendarSource {
-  create(calendarRemoteId: string, ev: Omit<RemoteEvent, 'remoteId' | 'etag'>): Promise<RemoteEvent>;
-  /** Throws ConflictError when the stored etag no longer matches (HTTP 412). */
-  update(calendarRemoteId: string, ev: RemoteEvent): Promise<RemoteEvent>;
-  remove(calendarRemoteId: string, remoteId: string, etag: string): Promise<void>;
+/**
+ * Write side, for edits made on the wall: one event resource (its URL is the part of a remoteId
+ * before '#') read and written whole, the way CalDAV works.
+ */
+export interface CalendarWriter {
+  /** The resource as it is now; null when it's been deleted. */
+  getEvent(href: string): Promise<{ data: string; etag: string } | null>;
+  /**
+   * Saves the resource (or deletes it, for null) only if unchanged since `etag`; false if it changed.
+   * An empty etag creates it, and false then means it already exists.
+   */
+  writeEvent(href: string, etag: string, data: string | null): Promise<boolean>;
 }

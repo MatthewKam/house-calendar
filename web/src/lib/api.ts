@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, TaskPoints, Weather } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, TaskPoints, Weather, OutboxStatus } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -33,6 +33,9 @@ export const api = {
   dismissAlert: (id: string) => call<void>('POST', `/api/alerts/${id}/dismiss`),
   cancelAlert: (id: string) => call<void>('DELETE', `/api/alerts/${id}`),
   removeEvent: (id: string) => call<void>('DELETE', `/api/events/${id}`),
+  restoreEvent: (id: string) => call<CalEvent>('POST', `/api/events/${id}/restore`),
+  outbox: () => call<OutboxStatus>('GET', '/api/outbox'),
+  resolveConflict: (id: number, keep: 'mine' | 'theirs') => call<OutboxStatus>('POST', `/api/outbox/${id}/resolve`, { keep }),
   /** Who a synced event is for; covers every repeat of it. */
   setPeople: (id: string, memberIds: string[]) => call<CalEvent>('PUT', `/api/events/${id}/people`, { memberIds }),
 
@@ -61,6 +64,7 @@ export const api = {
   reminders: () => call<{ enabled: boolean; lists: ReminderList[] }>('GET', '/api/reminders'),
   addReminder: (list: string, title: string) => call<{ lists: ReminderList[] }>('POST', '/api/reminders', { list, title }),
   setReminderDone: (id: string, done: boolean) => call<{ lists: ReminderList[] }>('PATCH', `/api/reminders/${id}`, { done }),
+  renameReminder: (id: string, title: string) => call<{ lists: ReminderList[] }>('PATCH', `/api/reminders/${id}`, { title }),
 
   settings: () => call<Record<string, unknown>>('GET', '/api/settings'),
   setSetting: (key: string, value: unknown) => call('PUT', `/api/settings/${key}`, { value }),

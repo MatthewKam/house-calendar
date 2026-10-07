@@ -94,6 +94,10 @@ the wall, not on phones.
 
 - **Month / Week:** switch views at the top left. ‹ › move by a month or a week.
 - **Lists:** the **Lists** page in the left bar (address ends in `#lists`) shows your iCloud Reminders (see "Connect Reminders").
+  Tap the spot before an item to give it an icon (search or **Show more** for every icon); it's added to the start of
+  the item's name in Reminders, so phones show it too. Common groceries get a suggested icon (shown lighter until
+  picked), and items added on the wall get theirs straight away. Renaming needs the Mac sync (`REMINDERS_MAC=1`); the
+  phone Shortcut doesn't rename yet.
 - **Time and weather:** under the month: the clock, the sky, the temperature now, and today's high and low, for the home address in Settings. Weather comes from [Open-Meteo](https://open-meteo.com) (free, no key); the address is found on a map once, through the US Census geocoder.
 - **Day:** tap any day to see it in a panel on the right. Close it with ×.
 - **Add:** tap a day, then **+ Add event** in the day panel.
@@ -111,6 +115,11 @@ the wall, not on phones.
   per task or a month calendar (tap a day to see and fix it). **Edit tasks**: drag ⋮⋮ to reorder within a part of
   the day, ✎ to change a task, 🗑 to delete (it asks to confirm first).
 - **Edit or delete:** tap an event. Delete asks twice, and you get 10 seconds to undo.
+- **iCloud events:** tap one, then **Edit event** to change its title, time or address, or delete it. The change
+  shows at once (marked ↻ until it's sent) and goes to iCloud after the 10-second Undo, then to your phones. For a
+  repeating event, changes and deletes apply to that one day. If iCloud can't be reached, changes wait and are
+  retried with every sync. If the same detail was changed on another device meanwhile, the wall asks which version
+  to keep (**Keep mine** or **Use iCloud's**); changes to other details on the phone are kept either way.
 - **Family:** in **Settings** (the gear at the bottom of the left bar), rename people and change their color at any time. Adding and removing people is hidden for now (`CAN_ADD_OR_REMOVE` in `web/src/components/MembersPanel.tsx`). Colors only change this display.
   Removing a person keeps their events, shown in gray.
 - **Text size:** in Settings, adjust for the screen (15.6" vs 21.5").

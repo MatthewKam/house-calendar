@@ -93,18 +93,60 @@
 	flex-direction: column;
 	gap: 0.2rem;
 }
-.item {
-	width: 100%;
+/* One item: tick circle, icon, name. Tapping the circle or the name ticks it; the icon picks one. */
+.row {
 	display: flex;
 	align-items: center;
-	gap: 0.7rem;
+	gap: 0.15rem;
+	border-radius: 0.6rem;
+}
+.row:hover {
+	background: var(--bg);
+}
+.boxButton {
+	min-width: 0;
+	min-height: 2.6rem;
+	padding: 0 0.3rem 0 0.4rem;
+	display: grid;
+	place-items: center;
+}
+.iconSpot {
+	min-width: 0;
+	width: 2.3rem;
+	min-height: 2.3rem;
+	flex: none;
+	font-size: 1.3rem;
+	border-radius: 0.5rem;
+}
+.iconSpot:hover {
+	background: var(--surface);
+	box-shadow: 0 0 0 1px var(--line);
+}
+/* Suggested, not yet in its name. */
+.suggested {
+	opacity: 0.55;
+}
+/* No icon yet: a faint + to add one. */
+.noIcon {
+	color: var(--line);
+	font-size: 1.1rem;
+	font-weight: 700;
+}
+.item {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
 	text-align: left;
-	padding: 0.35rem 0.4rem;
+	padding: 0.35rem 0.4rem 0.35rem 0.2rem;
 	border-radius: 0.6rem;
 	font-size: 1.05rem;
 }
-.item:hover {
-	background: var(--bg);
+.pickNote {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.85rem;
 }
 .box {
 	width: 1.5rem;
@@ -159,6 +201,7 @@
 .add button:disabled {
 	opacity: 0.4;
 }
+
 .error {
 	margin: 0;
 	color: #b42318;
@@ -188,4 +231,16 @@
 	.board {
 		grid-template-columns: 1fr;
 	}
+}
+
+/* The add box's icon, before the text field. */
+button.iconAdd {
+	align-self: center;
+	border: 1px solid var(--line);
+	background: var(--surface);
+	padding: 0;
+	background-color: transparent;
+	color: #6b7079;
+	min-width: 2.3rem;
+	min-height: 2.3rem;
 }

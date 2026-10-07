@@ -42,6 +42,19 @@
 	padding: 0 1rem;
 	font-size: 1.1rem;
 }
+/* Right of the dates: a text button that starts a new event. */
+.addEvent {
+	margin-left: 0.5rem;
+	padding: 0 0.4rem;
+	font-size: 1.1rem;
+	font-weight: 650;
+	color: var(--accent);
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+.addEvent:hover {
+	text-decoration-thickness: 2px;
+}
 .segmented {
 	display: flex;
 	background: var(--surface);
@@ -153,11 +166,30 @@ button.who {
 }
 
 .people {
+	position: relative;
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: flex-end;
 	gap: 0.5rem;
 	margin-left: auto;
+}
+/* A text button that turns every filter off, sitting just above the names' top right so the row
+   doesn't shift when it appears. */
+.clearFilter {
+	position: absolute;
+	bottom: 100%;
+	right: 0;
+	margin-bottom: 5px;
+	min-height: 0;
+	padding: 0.15rem 0.2rem;
+	font-size: 0.85rem;
+	color: var(--muted);
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+.clearFilter:hover {
+	color: var(--text);
 }
 /* The filter button and its pop-up of the other names. */
 .moreWrap {
@@ -236,6 +268,10 @@ button.who {
 	.segmented button {
 		padding: 0 0.75rem;
 		font-size: 1rem;
+	}
+	/* When it wraps to its own line, it lines up with the buttons above. */
+	.addEvent {
+		margin-left: 0;
 	}
 	/* Their own row under the time and weather, from the left. */
 	.people {

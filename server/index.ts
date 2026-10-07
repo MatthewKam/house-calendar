@@ -31,6 +31,7 @@ const app = buildApp(db, {
   webDist: resolve(root, 'web/dist'),
   sync: sync?.status,
   onAssignmentsChanged: () => void sync?.assignPeople(),
+  syncedEdits: sync?.canWrite ? { soon: () => sync.soon() } : undefined,
   remindersToken: process.env.REMINDERS_TOKEN || undefined,
   onRemindersChanged: () => reminders?.soon(),
   travel: process.env.GOOGLE_MAPS_API_KEY ? googleRoutes(process.env.GOOGLE_MAPS_API_KEY) : undefined,

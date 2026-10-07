@@ -6,6 +6,9 @@ import {
 	useSettings,
 } from "../lib/queries";
 import type { ReminderList } from "../lib/types";
+import { GROCERY_ICONS, splitIcon, suggestIcon } from "../lib/emoji";
+import IconPicker from "./IconPicker";
+import sheet from "../styles/Sheet.module.css";
 import s from "../styles/ListView.module.css";
 
 /** "5 min ago", "2 h ago", "Oct 4". */
@@ -21,18 +24,57 @@ function ago(iso: string) {
 }
 
 function ListCard({ list }: { list: ReminderList }) {
-	const { add, setDone } = useChangeReminders();
+	const { add, setDone, rename } = useChangeReminders();
 	const [title, setTitle] = useState("");
+	// The item whose icon is being picked; id "new" is the item being typed in the add box.
+	const [picking, setPicking] = useState<{ id: string; title: string } | null>(
+		null,
+	);
+	// The add box's icon: picked, "none", or undefined to use the suggestion for what's typed.
+	const [newIcon, setNewIcon] = useState<string | undefined>(undefined);
+	const typed = splitIcon(title.trim());
+	const addIcon =
+		typed.icon ??
+		(newIcon === undefined
+			? suggestIcon(typed.text)
+			: newIcon === "none"
+				? null
+				: newIcon);
 	const last = list.syncedBy[0];
 
 	function submit(e: FormEvent) {
 		e.preventDefault();
 		const t = title.trim();
 		if (!t) return;
+		// The icon goes in the name, so it shows in Reminders too.
 		add.mutate(
-			{ list: list.title, title: t },
-			{ onSuccess: () => setTitle("") },
+			{
+				list: list.title,
+				title: addIcon ? `${addIcon} ${typed.text}` : typed.text,
+			},
+			{
+				onSuccess: () => {
+					setTitle("");
+					setNewIcon(undefined);
+				},
+			},
 		);
+	}
+
+	/** The icon goes at the start of the item's name in Reminders; None takes it off. */
+	function setIcon(icon: string | null) {
+		if (!picking) return;
+		if (picking.id === "new") {
+			// Takes the place of any icon typed into the box.
+			setTitle(typed.text);
+			setNewIcon(icon ?? "none");
+			setPicking(null);
+			return;
+		}
+		const { text } = splitIcon(picking.title);
+		const next = icon ? `${icon} ${text}` : text;
+		if (next !== picking.title) rename.mutate({ id: picking.id, title: next });
+		setPicking(null);
 	}
 
 	return (
@@ -51,29 +93,66 @@ function ListCard({ list }: { list: ReminderList }) {
 				)}
 			</header>
 			<ul className={s.items}>
-				{list.items.map((it) => (
-					<li key={it.id}>
-						<button
-							className={`${s.item} ${it.done ? s.done : ""}`}
-							aria-pressed={it.done}
-							onClick={() => setDone.mutate({ id: it.id, done: !it.done })}
-						>
-							<span className={s.box} aria-hidden="true">
-								{it.done ? "✓" : ""}
-							</span>
-							<span className={s.text}>{it.title}</span>
-							{/* Changed here; a phone applies it in Reminders the next time its Shortcut runs. */}
-							{it.pending && (
-								<span className={s.pending} title="Waiting for a phone to sync">
-									↻
+				{list.items.map((it) => {
+					const { icon, text } = splitIcon(it.title);
+					// No icon in its name: show a suggested one, lighter, until it's picked.
+					const suggested = icon ? null : suggestIcon(text);
+					const toggle = () => setDone.mutate({ id: it.id, done: !it.done });
+					return (
+						<li key={it.id} className={`${s.row} ${it.done ? s.done : ""}`}>
+							<button
+								className={s.boxButton}
+								aria-pressed={it.done}
+								aria-label={`${text}: ${it.done ? "done" : "not done"}`}
+								onClick={toggle}
+							>
+								<span className={s.box} aria-hidden="true">
+									{it.done ? "✓" : ""}
 								</span>
-							)}
-						</button>
-					</li>
-				))}
+							</button>
+							<button
+								className={`${s.iconSpot} ${suggested ? s.suggested : ""} ${!icon && !suggested ? s.noIcon : ""}`}
+								onClick={() => setPicking({ id: it.id, title: it.title })}
+								aria-label={`Icon for ${text}`}
+								title={
+									icon
+										? "Change icon"
+										: suggested
+											? "Suggested icon: tap to keep or change"
+											: "Add an icon"
+								}
+							>
+								{icon ?? suggested ?? "+"}
+							</button>
+							<button className={s.item} onClick={toggle} tabIndex={-1}>
+								<span className={s.text}>{text}</span>
+								{/* Changed here; it reaches Reminders at the next sync. */}
+								{it.pending && (
+									<span className={s.pending} title="Waiting to sync">
+										↻
+									</span>
+								)}
+							</button>
+						</li>
+					);
+				})}
 				{list.items.length === 0 && <li className={s.empty}>Nothing here.</li>}
 			</ul>
 			<form className={s.add} onSubmit={submit}>
+				<button
+					type="button"
+					className={`${s.iconSpot} ${s.iconAdd} ${newIcon === undefined && !typed.icon && addIcon ? s.suggested : ""} ${!addIcon ? s.noIcon : ""}`}
+					onClick={() =>
+						setPicking({
+							id: "new",
+							title: addIcon ? `${addIcon} ${typed.text}` : typed.text,
+						})
+					}
+					aria-label="Icon for the new item"
+					title={addIcon ? "Change the icon" : "Add an icon"}
+				>
+					{addIcon ?? "+"}
+				</button>
 				<input
 					value={title}
 					onChange={(e) => setTitle(e.target.value)}
@@ -85,10 +164,49 @@ function ListCard({ list }: { list: ReminderList }) {
 					Add
 				</button>
 			</form>
-			{(add.isError || setDone.isError) && (
+			{(add.isError || setDone.isError || rename.isError) && (
 				<p className={s.error}>
-					Couldn't save: {(add.error ?? setDone.error)?.message}
+					Couldn't save: {(add.error ?? setDone.error ?? rename.error)?.message}
 				</p>
+			)}
+			{picking && (
+				<>
+					<div
+						className={sheet.scrim}
+						onClick={() => setPicking(null)}
+						role="presentation"
+					/>
+					<div className={sheet.sheet} role="dialog" aria-label="Pick an icon">
+						<header className={sheet.head}>
+							<h2 className={sheet.heading}>
+								Icon for {splitIcon(picking.title).text || "the new item"}
+							</h2>
+							<button
+								className={sheet.close}
+								onClick={() => setPicking(null)}
+								aria-label="Close"
+							>
+								×
+							</button>
+						</header>
+						<IconPicker
+							value={splitIcon(picking.title).icon}
+							onChange={setIcon}
+							featured={[
+								...new Set(
+									[
+										suggestIcon(splitIcon(picking.title).text),
+										...GROCERY_ICONS,
+									].filter((x): x is string => !!x),
+								),
+							]}
+						/>
+						<p className={s.pickNote}>
+							The icon is added to the start of its name in Reminders, so it
+							shows on your phones too.
+						</p>
+					</div>
+				</>
 			)}
 		</section>
 	);

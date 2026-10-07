@@ -1,0 +1,282 @@
+/* Under the week, all on a sky painted to match the weather: now, the sun's arc, and the week
+   ahead. The arc and the week sit on frosted glass so the text stays readable on any sky. Each sky
+   sets the ink (--ink, --ink-soft) and glass (--glass, --glass-on) colors that suit it. */
+.card {
+	--ink: #fff;
+	--ink-soft: rgb(255 255 255 / 0.82);
+	--glass: rgb(8 24 48 / 0.22);
+	--glass-on: rgb(255 255 255 / 0.22);
+	--shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+	flex: none;
+	/* A third of the width, under the week's start; the week ahead opens underneath. */
+	width: calc((100% - 1.5rem) / 3);
+	min-width: 27rem;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	gap: 0.75rem;
+	align-items: stretch;
+	padding: 0.75rem;
+	border-radius: var(--radius);
+	color: var(--ink);
+	text-shadow: var(--shadow);
+	overflow: hidden;
+	position: relative;
+	isolation: isolate;
+	/* Lifted off the page, so the softer sky still stands out. */
+	box-shadow:
+		0 0.5rem 1.5rem rgb(30 50 80 / 0.16),
+		0 0.1rem 0.3rem rgb(30 50 80 / 0.1),
+		inset 0 0 0 1px rgb(255 255 255 / 0.3);
+}
+/* The sky: muted (less saturated, a little see-through) so it doesn't overpower the calendar. */
+.card::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background: var(--sky);
+	opacity: 0.92;
+	filter: saturate(0.72);
+}
+
+/* ---- Skies ---- */
+.sunny {
+	--sky:
+		radial-gradient(circle at 3.4rem 5.7rem, rgb(255 222 125 / 0.75) 0, rgb(255 210 90 / 0.25) 2.6rem, transparent 5rem),
+		linear-gradient(160deg, #2b7cd3 0%, #4f9fe6 55%, #7cbcf2 100%);
+}
+.partly {
+	--sky:
+		radial-gradient(ellipse at 40% 30%, rgb(255 255 255 / 0.55) 0, transparent 9rem),
+		radial-gradient(ellipse at 75% 70%, rgb(255 255 255 / 0.35) 0, transparent 10rem),
+		radial-gradient(circle at 12% 18%, rgb(255 222 125 / 0.7) 0, transparent 7rem),
+		linear-gradient(160deg, #3f82c4 0%, #6fa6d8 100%);
+}
+.cloudy {
+	--sky:
+		radial-gradient(ellipse at 30% 30%, rgb(255 255 255 / 0.35) 0, transparent 10rem),
+		radial-gradient(ellipse at 80% 60%, rgb(255 255 255 / 0.25) 0, transparent 12rem),
+		linear-gradient(160deg, #66778a 0%, #8f9cab 100%);
+}
+.rain {
+	--sky:
+		repeating-linear-gradient(105deg, rgb(255 255 255 / 0.1) 0 2px, transparent 2px 16px),
+		linear-gradient(160deg, #3f4e62 0%, #6c7d92 100%);
+}
+.storm {
+	--sky:
+		radial-gradient(ellipse at 70% 10%, rgb(255 255 255 / 0.12) 0, transparent 8rem),
+		linear-gradient(160deg, #262d3a 0%, #4f586a 100%);
+}
+.night {
+	--glass: rgb(255 255 255 / 0.08);
+	--sky:
+		radial-gradient(circle, rgb(255 255 255 / 0.75) 0 1px, transparent 1.5px) 0 0 / 23px 19px,
+		radial-gradient(circle at 12% 20%, rgb(255 244 200 / 0.3) 0, transparent 6rem),
+		linear-gradient(160deg, #101b33 0%, #2c3f63 100%);
+}
+/* A pale sky: dark ink on light glass instead. */
+.snow {
+	--ink: #1c2633;
+	--ink-soft: rgb(28 38 51 / 0.75);
+	--glass: rgb(255 255 255 / 0.55);
+	--glass-on: rgb(255 255 255 / 0.85);
+	--shadow: none;
+	--sky:
+		radial-gradient(circle, rgb(255 255 255 / 0.9) 0 1.5px, transparent 2px) 0 0 / 18px 18px,
+		linear-gradient(160deg, #a9b9cb 0%, #e3eaf2 100%);
+}
+
+/* ---- Now ---- */
+.now {
+	display: flex;
+	align-items: center;
+	gap: 0.9rem;
+	padding: 0.4rem 0.6rem;
+}
+.bigIcon {
+	font-size: 3.4rem;
+	line-height: 1;
+	text-shadow: none;
+	filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.2));
+}
+.temp {
+	font-size: 2.8rem;
+	font-weight: 700;
+	line-height: 1;
+}
+.label {
+	font-weight: 650;
+}
+.highLow {
+	color: var(--ink-soft);
+	font-size: 0.95rem;
+	font-weight: 600;
+}
+/* Opens and closes the week ahead: a small glass pill. */
+.weekToggle {
+	margin-top: 0.45rem;
+	min-height: 0;
+	padding: 0.25rem 0.7rem;
+	border-radius: 999px;
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: var(--ink);
+	text-shadow: var(--shadow);
+	background: var(--glass-on);
+	border: 1px solid rgb(255 255 255 / 0.35);
+}
+.weekToggle:hover {
+	background: rgb(255 255 255 / 0.32);
+}
+
+/* ---- The sun's arc ---- */
+.sun {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 0.15rem;
+	min-width: 0;
+	padding: 0.5rem 0.8rem;
+	border-radius: calc(var(--radius) - 0.2rem);
+	background: var(--glass);
+	backdrop-filter: blur(6px);
+}
+.arc {
+	width: 100%;
+	max-height: 5.5rem;
+	overflow: visible;
+}
+.horizon {
+	stroke: var(--ink-soft);
+	stroke-width: 1.5;
+	opacity: 0.6;
+}
+.track {
+	fill: none;
+	stroke: var(--ink-soft);
+	stroke-width: 2.5;
+	stroke-dasharray: 3 5;
+	opacity: 0.7;
+}
+.done {
+	fill: none;
+	stroke: #ffc94a;
+	stroke-width: 3.5;
+	stroke-linecap: round;
+}
+.sunDot {
+	fill: #ffd34d;
+	stroke: #fff;
+	stroke-width: 3;
+	filter: drop-shadow(0 0 6px rgb(255 211 77 / 0.9));
+}
+.sunDown {
+	fill: var(--ink-soft);
+}
+.sunTimes {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.9rem;
+	font-weight: 650;
+	white-space: nowrap;
+}
+/* Label above the time, so both fit a narrow card. */
+.sunTimes > span {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.2;
+}
+.sunTimes > span:last-child {
+	text-align: right;
+}
+.sunLabel {
+	color: var(--ink-soft);
+	font-weight: 500;
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+.daylight {
+	text-align: center;
+	color: var(--ink-soft);
+	font-size: 0.85rem;
+}
+
+/* ---- The week ahead ---- */
+.days {
+	grid-column: 1 / -1;
+	list-style: none;
+	margin: 0;
+	padding: 0.3rem;
+	display: grid;
+	grid-template-columns: repeat(6, minmax(3.6rem, 1fr));
+	gap: 0.3rem;
+	overflow-x: auto;
+	border-radius: calc(var(--radius) - 0.2rem);
+	background: var(--glass);
+	backdrop-filter: blur(6px);
+}
+.days li {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.15rem;
+	padding: 0.4rem 0.2rem;
+	border-radius: calc(var(--radius) - 0.35rem);
+}
+.dayName {
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--ink-soft);
+	font-weight: 600;
+}
+.dayIcon {
+	font-size: 1.6rem;
+	line-height: 1.2;
+	text-shadow: none;
+}
+.dayHigh {
+	font-weight: 700;
+}
+.dayLow {
+	color: var(--ink-soft);
+	font-size: 0.9rem;
+	font-weight: 600;
+}
+/* The day's range on the week's scale: a short bar, warm at the top. */
+.range {
+	width: 0.35rem;
+	height: 2.2rem;
+	border-radius: 1rem;
+	background:
+		linear-gradient(to top, transparent var(--from), #ffb15e var(--from), #ff7a45 var(--to), transparent var(--to)),
+		rgb(255 255 255 / 0.3);
+}
+
+/* Narrow screens: now and the sun side by side, the week below (swipe if it doesn't fit). */
+@media (max-width: 959.98px) {
+	.card {
+		width: 100%;
+		min-width: 0;
+		max-width: 650px;
+		margin-inline: auto;
+		gap: 0.6rem;
+	}
+}
+@media (max-width: 480px) {
+	.card {
+		grid-template-columns: 1fr;
+	}
+	.bigIcon {
+		font-size: 2.6rem;
+	}
+	.temp {
+		font-size: 2.2rem;
+	}
+	.arc {
+		max-height: 4.5rem;
+	}
+}

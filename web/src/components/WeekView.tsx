@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { dayKey, timeLabel } from '../lib/dates';
 import { eventPaint, eventsOn } from '../lib/events';
 import type { CalEvent, Member } from '../lib/types';
@@ -13,9 +13,11 @@ interface Props {
   members: Member[];
   onSelect: (day: string) => void;
   onOpen: (event: CalEvent, day: string) => void;
+  /** Shown after the last day, scrolling with them (the weather, on narrow screens). */
+  footer?: ReactNode;
 }
 
-export default function WeekView({ days, today, selected, events, members, onSelect, onOpen }: Props) {
+export default function WeekView({ days, today, selected, events, members, onSelect, onOpen, footer }: Props) {
   // When the days are a scrolling list (phones), open on today, or the top if today isn't shown.
   const list = useRef<HTMLDivElement>(null);
   const first = dayKey(days[0]);
@@ -65,6 +67,7 @@ export default function WeekView({ days, today, selected, events, members, onSel
           </section>
         );
       })}
+      {footer && <div className={s.footer}>{footer}</div>}
     </div>
   );
 }

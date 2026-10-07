@@ -1,0 +1,56 @@
+/* A change made on the wall and on another device: which to keep. */
+.conflict {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	padding: 0.8rem 1rem;
+	border: 1.5px solid #e3a008;
+	border-radius: var(--radius);
+	background: #fff8e6;
+}
+.headline {
+	font-weight: 650;
+}
+.compare {
+	align-self: flex-start;
+	border-collapse: collapse;
+	font-size: 0.95rem;
+}
+.compare th,
+.compare td {
+	text-align: left;
+	padding: 0.2rem 1rem 0.2rem 0;
+	vertical-align: top;
+}
+.compare thead th,
+.compare tbody th {
+	color: var(--muted);
+	font-weight: 600;
+}
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+.primary,
+.secondary {
+	padding: 0 1rem;
+	border-radius: var(--radius);
+	min-height: 2.5rem;
+	font-weight: 600;
+}
+.primary {
+	background: var(--accent);
+	color: var(--surface);
+}
+.secondary {
+	background: var(--surface);
+	border: 1px solid var(--line);
+}
+/* Edits stuck waiting (offline, or iCloud refusing). */
+.waiting {
+	color: #8a5a00;
+	background: #fff8e6;
+	padding: 0.5rem 1rem;
+	border-radius: var(--radius);
+}

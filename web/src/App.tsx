@@ -19,6 +19,7 @@ import {
 	useTasksDone,
 	useDeleteTask,
 	useDeleteEvent,
+	useRestoreEvent,
 	useSaveTask,
 	useMembers,
 	useSaveEvent,
@@ -35,6 +36,8 @@ import TasksPage from "./components/TasksPage";
 import NavBar from "./components/NavBar";
 import LeaveAlerts from "./components/LeaveAlerts";
 import NowLine from "./components/NowLine";
+import WeatherCard from "./components/WeatherCard";
+import OutboxNotices from "./components/OutboxNotices";
 import { usePage } from "./lib/usePage";
 import ListView from "./components/ListView";
 import TaskDialog from "./components/TaskDialog";
@@ -71,7 +74,7 @@ export default function App() {
 	// Day shown in the right-hand day panel; null when the panel is closed.
 	const [selected, setSelected] = useState<string | null>(null);
 	// Header filter: a member id, EVERYONE, or null to show all events.
-	const [focus, setFocus] = useState<string | null>(null);
+	const [focus, setFocus] = useState<string[]>([]);
 	const [dialog, setDialog] = useState<{
 		day: string;
 		event?: CalEvent;
@@ -110,6 +113,7 @@ export default function App() {
 		members.map((m) => m.id),
 	);
 	const deleteEvent = useDeleteEvent();
+	const restoreEvent = useRestoreEvent();
 
 	const days = useMemo(
 		() =>
@@ -121,25 +125,21 @@ export default function App() {
 	const eventsQuery = useRangeEvents(days[0], days.length);
 	// Phones show Month as the same day-by-day list as Week, just for every day of the month.
 	const phone = useMediaQuery(PHONE);
+	// Below 960px the week is one scrolling list of days, and the weather scrolls at its end.
+	const narrow = useMediaQuery("(max-width: 959.98px)");
 	const listDays =
 		view === "month" && phone
 			? days.filter((d) => d.getMonth() === cursor.getMonth())
 			: days;
-	// A person's filter shows every event they're part of; Everyone shows events for no one in particular.
+	// Header filters (any number; none shows everything). A person shows every event they're part of;
+	// Everyone shows events for no one in particular. An event shows if it matches any pick.
 	const shown = (ev: CalEvent) =>
-		!focus ||
-		(focus === EVERYONE
-			? ev.memberIds.length === 0
-			: ev.memberIds.includes(focus));
+		focus.length === 0 ||
+		focus.some((f) => (f === EVERYONE ? ev.memberIds.length === 0 : ev.memberIds.includes(f)));
 	const events = (eventsQuery.data ?? []).filter(shown);
 	// A removed person can't stay picked.
-	if (
-		focus &&
-		focus !== EVERYONE &&
-		members.length > 0 &&
-		!members.some((m) => m.id === focus)
-	)
-		setFocus(null);
+	const stale = members.length > 0 ? focus.filter((f) => f !== EVERYONE && !members.some((m) => m.id === f)) : [];
+	if (stale.length) setFocus(focus.filter((f) => !stale.includes(f)));
 	const sync = useSyncStatus().data;
 
 	// At midnight, move to the new day if the old one was on screen.
@@ -198,12 +198,14 @@ export default function App() {
 
 	function remove(ev: CalEvent) {
 		setDialog(null);
+		const synced = ev.calendarId !== "local";
 		deleteEvent.mutate(ev.id, {
 			onSuccess: () =>
 				setToast({
-					text: `Deleted “${ev.title}”`,
+					text: `Deleted “${ev.title}”${ev.repeats ? " (this day)" : ""}`,
+					// iCloud events wait before the delete is sent, so Undo just cancels it.
 					undo: () =>
-						saveEvent.mutate({
+						synced ? restoreEvent.mutate(ev.id) : saveEvent.mutate({
 							input: {
 								title: ev.title,
 								memberIds: ev.memberIds,
@@ -216,6 +218,14 @@ export default function App() {
 				}),
 			onError: (e) => setToast({ text: `Couldn't delete: ${e.message}` }),
 		});
+	}
+
+	// The day a new event starts on: the day open in the panel, else today if it's on screen, else
+	// the first day shown (the 1st, in Month view).
+	function newEventDay() {
+		if (selected) return selected;
+		const shownDays = view === "month" ? days.filter((d) => d.getMonth() === cursor.getMonth()) : days;
+		return shownDays.some((d) => dayKey(d) === today) ? today : dayKey(shownDays[0]);
 	}
 
 	const fmt = (d: Date, withYear = false) =>
@@ -231,9 +241,9 @@ export default function App() {
 	// Until anyone has tasks, show everybody.
 	const shownPeople = withTasks.length ? withTasks : [...members, everyone];
 	const morePeople = withTasks.length ? [...members.filter((m) => !withTasks.includes(m)), everyone] : [];
-	// A pick from the pop-up shows in the header too, so it's clear the calendar is filtered.
-	const hiddenPicked = morePeople.find((m) => m.id === focus);
-	if (hiddenPicked) shownPeople.push(hiddenPicked);
+	// Picks from the pop-up show in the header too, so it's clear the calendar is filtered.
+	const hiddenPicked = morePeople.filter((m) => focus.includes(m.id));
+	shownPeople.push(...hiddenPicked);
 	const whoButton = (m: { id: string; name: string; color: string }) => {
 		// Fills with the person's color as they finish today's tasks.
 		const p = progress.get(m.id);
@@ -241,14 +251,12 @@ export default function App() {
 		return (
 			<button
 				key={m.id}
-				className={`${s.who} ${pct === 100 ? s.whoComplete : ""} ${focus === m.id ? s.whoOn : ""} ${focus && focus !== m.id ? s.whoOff : ""}`}
+				className={`${s.who} ${pct === 100 ? s.whoComplete : ""} ${focus.includes(m.id) ? s.whoOn : ""} ${focus.length && !focus.includes(m.id) ? s.whoOff : ""}`}
 				style={{ "--c": m.color, "--p": `${pct}%` } as CSSProperties}
-				aria-pressed={focus === m.id}
-				title={`${focus === m.id ? "Show all events" : `Show only ${m.name}'s events`}${p ? ` · tasks today: ${p.done} of ${p.due}` : ""}`}
-				onClick={() => {
-					setFocus(focus === m.id ? null : m.id);
-					setMoreOpen(false);
-				}}
+				aria-pressed={focus.includes(m.id)}
+				title={`${focus.includes(m.id) ? `Stop filtering by ${m.name}` : `Show ${m.name}'s events`}${p ? ` · tasks today: ${p.done} of ${p.due}` : ""}`}
+				// Tap to add or remove a filter; the pop-up stays open so several can be picked.
+				onClick={() => setFocus(focus.includes(m.id) ? focus.filter((f) => f !== m.id) : [...focus, m.id])}
 			>
 				<i style={{ background: m.color }} />
 				{m.name}
@@ -261,11 +269,17 @@ export default function App() {
 	// button, except whoever is picked right now. Beside the month; on phones, under the time and weather.
 	const people = (
 		<div className={s.people}>
+			{/* Shows every event again. */}
+			{focus.length > 0 && (
+				<button className={s.clearFilter} onClick={() => setFocus([])}>
+					Clear
+				</button>
+			)}
 			{shownPeople.map(whoButton)}
 			{morePeople.length > 0 && (
 				<div className={s.moreWrap}>
 					<button
-						className={`${s.moreButton} ${hiddenPicked ? s.whoOn : ""}`}
+						className={`${s.moreButton} ${hiddenPicked.length ? s.whoOn : ""}`}
 						aria-expanded={moreOpen}
 						aria-label="More people"
 						title="More people"
@@ -310,7 +324,7 @@ export default function App() {
 						<TasksPage
 							today={today}
 							members={members}
-							focus={focus}
+							focus={focus.length === 1 ? focus[0] : null}
 							onAdd={(memberId) => setTaskDialog({ memberId })}
 							onEdit={(task) => setTaskDialog({ task })}
 						/>
@@ -364,6 +378,9 @@ export default function App() {
 										? cursor.getFullYear()
 										: `${fmt(days[0])} – ${fmt(days[6])}`}
 								</h1>
+								<button className={s.addEvent} onClick={() => setDialog({ day: newEventDay() })}>
+									+ Add event
+								</button>
 							</div>
 						</div>
 					</header>
@@ -379,6 +396,7 @@ export default function App() {
 							synced.
 						</div>
 					)}
+					<OutboxNotices />
 					{sync?.peopleError && (
 						<div className={s.banner}>
 							Couldn't sort new events by person: {sync.peopleError}
@@ -407,6 +425,7 @@ export default function App() {
 								members={members}
 								onSelect={setSelected}
 								onOpen={(event, day) => setDialog({ day, event })}
+								footer={view === "week" && narrow ? <WeatherCard /> : undefined}
 							/>
 						)}
 						{selected && (
@@ -421,6 +440,8 @@ export default function App() {
 							/>
 						)}
 					</div>
+					{/* Week view only: the weather now, the sun, and the week ahead. */}
+					{view === "week" && !narrow && !settings.isPending && <WeatherCard />}
 					</>)}
 				</div>
 			</div>
@@ -434,6 +455,7 @@ export default function App() {
 					onSave={save}
 					onDelete={remove}
 					onClose={() => setDialog(null)}
+					canEditSynced={!!sync?.canWrite}
 				/>
 			)}
 
@@ -443,7 +465,8 @@ export default function App() {
 					task={taskDialog.task}
 					memberId={
 						taskDialog.memberId ??
-						(focus === EVERYONE ? null : (focus ?? undefined))
+						// One person picked: new tasks start out as theirs.
+						(focus.length === 1 ? (focus[0] === EVERYONE ? null : focus[0]) : undefined)
 					}
 					members={members}
 					onSave={saveTaskInput}

@@ -34,9 +34,12 @@ export interface CalEvent {
   start: string;
   /** Timed: ISO UTC instant. All-day: YYYY-MM-DD, exclusive. */
   end: string;
+  /** synced, or pending_update / pending_delete while a wall edit waits to reach iCloud. */
   syncState: string;
   /** Where it is, on one line; null when there's no address. */
   location: string | null;
+  /** One day of a repeating iCloud event: edits here change that day only. */
+  repeats: boolean;
 }
 
 /** A "time to leave" alert the wall shows at `remindAt`. */
@@ -107,6 +110,8 @@ export interface SyncedCalendar {
   hidden: boolean;
   /** Distinct events (a repeating event counts once). */
   events: number;
+  /** New events can be added to it from the wall. */
+  writable: boolean;
   /** A few upcoming titles, to tell same-named calendars apart. */
   sample: string[];
 }
@@ -137,9 +142,32 @@ export interface SyncStatus {
   calendars: number;
   events: number;
   peopleError: string | null;
+  /** Whether iCloud events can be changed on the wall. */
+  canWrite: boolean;
 }
 
-export type EventInput = Pick<CalEvent, 'title' | 'memberIds' | 'allDay' | 'start' | 'end'> & { location?: string | null };
+/** An iCloud event's details, as compared in a conflict. */
+export interface EventDetails {
+  title: string;
+  allDay: boolean;
+  start: string;
+  end: string;
+  location: string | null;
+}
+
+/** Wall edits waiting for iCloud, and ones changed on another device too (waiting for a choice). */
+export interface OutboxStatus {
+  pending: number;
+  lastError: string | null;
+  /** theirs is null when the event was deleted on the other device. */
+  conflicts: { id: number; changed: (keyof EventDetails)[]; mine: EventDetails; theirs: EventDetails | null }[];
+}
+
+export type EventInput = Pick<CalEvent, 'title' | 'memberIds' | 'allDay' | 'start' | 'end'> & {
+  location?: string | null;
+  /** New events only: the iCloud calendar to add it to; left out, it stays on the wall. */
+  calendarId?: string;
+};
 
 /** Today's weather at home (°F), from GET /api/weather. */
 export interface Weather {
@@ -149,4 +177,9 @@ export interface Weather {
   /** WMO weather code: 0 clear ... 99 thunderstorm. */
   code: number;
   isDay: boolean;
+  /** Today's sunrise and sunset (instants). */
+  sunrise: string;
+  sunset: string;
+  /** Today and the next six days. */
+  days: { date: string; high: number; low: number; code: number }[];
 }

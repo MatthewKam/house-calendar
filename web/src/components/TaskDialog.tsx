@@ -10,6 +10,7 @@ import type {
 	Member,
 } from "../lib/types";
 import ConfirmDialog from "./ConfirmDialog";
+import IconPicker from "./IconPicker";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/EventDialog.module.css";
 import c from "../styles/Tasks.module.css";
@@ -103,7 +104,12 @@ export default function TaskDialog({
 		<>
 			<div className={sheet.scrim} onClick={onClose} role="presentation" />
 			<form className={sheet.sheet} onSubmit={submit}>
-				<h2 className={sheet.heading}>{task ? "Edit task" : "New task"}</h2>
+				<header className={sheet.head}>
+					<h2 className={sheet.heading}>{task ? "Edit task" : "New task"}</h2>
+					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
+						×
+					</button>
+				</header>
 
 				<div className={c.titleRow}>
 					{/* The chosen icon, shown before the name like on the Tasks page. */}
@@ -138,30 +144,7 @@ export default function TaskDialog({
 				)}
 
 				<div className={s.label}>Icon</div>
-				<div className={c.iconGrid} role="radiogroup" aria-label="Icon">
-					<button
-						type="button"
-						role="radio"
-						aria-checked={icon === null}
-						className={`${c.iconChoice} ${icon === null ? c.iconOn : ""}`}
-						onClick={() => setIcon(null)}
-						title="No icon"
-					>
-						<span className={c.noIcon}>None</span>
-					</button>
-					{TASK_ICONS.map((i) => (
-						<button
-							key={i}
-							type="button"
-							role="radio"
-							aria-checked={icon === i}
-							className={`${c.iconChoice} ${icon === i ? c.iconOn : ""}`}
-							onClick={() => setIcon(i)}
-						>
-							{i}
-						</button>
-					))}
-				</div>
+				<IconPicker value={icon} onChange={setIcon} featured={TASK_ICONS} />
 
 				<div className={s.label}>Who</div>
 				<div className={s.wrap}>

@@ -38,7 +38,7 @@ const SettingsIcon = () => (
   </svg>
 );
 
-/** Bar down the left edge: the Calendar, Tasks and Lists pages, and Settings at the bottom. */
+/** Bar down the left edge: the Calendar, Tasks and Lists pages, and the logo and Settings at the bottom. */
 export default function NavBar({ page, settingsOpen, onPage, onSettings }: Props) {
   const item = (p: Page, label: string, icon: ReactNode) => (
     <button className={`${s.item} ${page === p ? s.on : ''}`} aria-current={page === p ? 'page' : undefined}
@@ -52,8 +52,9 @@ export default function NavBar({ page, settingsOpen, onPage, onSettings }: Props
       {item('calendar', 'Calendar', <CalendarIcon />)}
       {item('tasks', 'Tasks', <TasksIcon />)}
       {item('lists', 'Lists', <ListsIcon />)}
-      {/* Pinned to the bottom of the bar. */}
-      <button className={`${s.item} ${s.bottom} ${settingsOpen ? s.on : ''}`} aria-pressed={settingsOpen} onClick={onSettings}
+      {/* Pinned to the bottom of the bar: the logo, then Settings. */}
+      <img className={s.logo} src="/favicon.svg" alt="" />
+      <button className={`${s.item} ${settingsOpen ? s.on : ''}`} aria-pressed={settingsOpen} onClick={onSettings}
         aria-label="Settings">
         <SettingsIcon />
         <span className={s.label}>Settings</span>

@@ -1,6 +1,7 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
-import type { CalendarSource, RemoteEvent } from './providers/types.ts';
+import type { CalendarSource, CalendarWriter, RemoteEvent } from './providers/types.ts';
+import { eventId, overlayOutbox, pushOutbox, SEND_AFTER_MS } from './outbox.ts';
 import { applyPeople, assignPending, type Classify } from './people.ts';
 
 /** How far around today synced events are kept. Further out shows only events added on the wall. */
@@ -17,6 +18,8 @@ export interface SyncStatus {
   events: number;
   /** Set when Claude couldn't sort events by person; the sync itself still succeeded. */
   peopleError: string | null;
+  /** Whether events can be changed on the wall and sent back. */
+  canWrite: boolean;
 }
 
 export function syncWindow(now = new Date()) {
@@ -26,9 +29,6 @@ export function syncWindow(now = new Date()) {
   };
 }
 
-/** Same remote occurrence, same local id, so React keys and an open editor survive a resync. */
-const eventId = (calendarId: string, remoteId: string) =>
-  createHash('sha256').update(`${calendarId}\n${remoteId}`).digest('hex').slice(0, 32);
 
 /**
  * One pass: refresh the calendar list, then replace each calendar's stored events with a fresh
@@ -41,8 +41,8 @@ export async function syncOnce(db: DB, source: CalendarSource, now = new Date())
   const fetched = await Promise.all(remote.map(async (cal) => ({ cal, events: await source.fetchRange(cal.remoteId, from, to) })));
 
   const findCal = db.prepare('SELECT id FROM calendars WHERE provider = ? AND remote_id = ?');
-  const insertCal = db.prepare('INSERT INTO calendars (id, provider, remote_id, name, color) VALUES (?, ?, ?, ?, ?)');
-  const updateCal = db.prepare('UPDATE calendars SET name = ?, color = ? WHERE id = ?');
+  const insertCal = db.prepare('INSERT INTO calendars (id, provider, remote_id, name, color, writable) VALUES (?, ?, ?, ?, ?, ?)');
+  const updateCal = db.prepare('UPDATE calendars SET name = ?, color = ?, writable = ? WHERE id = ?');
   const clearEvents = db.prepare('DELETE FROM events WHERE calendar_id = ?');
   // Who each event is for is filled in afterwards by applyPeople().
   const insertEvent = db.prepare(`
@@ -57,9 +57,9 @@ export async function syncOnce(db: DB, source: CalendarSource, now = new Date())
       let row = findCal.get(source.id, cal.remoteId) as { id: string } | undefined;
       if (!row) {
         row = { id: randomUUID() };
-        insertCal.run(row.id, source.id, cal.remoteId, cal.name, cal.color ?? null);
+        insertCal.run(row.id, source.id, cal.remoteId, cal.name, cal.color ?? null, cal.writable === false ? 0 : 1);
       } else {
-        updateCal.run(cal.name, cal.color ?? null, row.id);
+        updateCal.run(cal.name, cal.color ?? null, cal.writable === false ? 0 : 1, row.id);
       }
       keep.push(row.id);
       clearEvents.run(row.id);
@@ -70,6 +70,8 @@ export async function syncOnce(db: DB, source: CalendarSource, now = new Date())
     db.prepare(`DELETE FROM calendars WHERE provider = ? AND id NOT IN (SELECT value FROM json_each(?))`)
       .run(source.id, JSON.stringify(keep));
     applyPeople(db);
+    // Edits made on the wall that iCloud doesn't have yet stay on screen.
+    overlayOutbox(db);
   })();
 
   return { calendars: remote.length, events };
@@ -98,17 +100,29 @@ interface Log {
  * Live status for the API, plus start() to sync now and then every `intervalMs`. With a classifier,
  * each pass also has Claude pick who new events are for.
  */
-export function createSync(db: DB, source: CalendarSource, classify: Classify | null, intervalMs = 5 * 60_000) {
+export function createSync(db: DB, source: CalendarSource & Partial<CalendarWriter>, classify: Classify | null, intervalMs = 5 * 60_000) {
+  const writer = source.getEvent && source.writeEvent ? (source as CalendarWriter) : null;
   const status: SyncStatus = {
     provider: source.id, running: false, lastSuccess: null, lastError: null, calendars: 0, events: 0, peopleError: null,
+    canWrite: !!writer,
   };
   let timer: NodeJS.Timeout | undefined;
+  let soonTimer: NodeJS.Timeout | undefined;
+  let again = false;
   let log: Log = console as unknown as Log;
 
   async function run() {
-    if (status.running) return;
+    if (status.running) {
+      again = true;
+      return;
+    }
     status.running = true;
     try {
+      // Edits from the wall go first, so the snapshot that follows includes them.
+      if (writer) {
+        const sent = await pushOutbox(db, writer);
+        if (sent.sent || sent.conflicts || sent.failed) log.info(sent, 'sent wall edits to iCloud');
+      }
       const result = await syncOnce(db, source);
       Object.assign(status, result, { lastSuccess: new Date().toISOString(), lastError: null });
       log.info(result, `${source.id} sync done`);
@@ -119,6 +133,10 @@ export function createSync(db: DB, source: CalendarSource, classify: Classify | 
       status.running = false;
     }
     await assignPeople();
+    if (again) {
+      again = false;
+      void run();
+    }
   }
 
   let assigning: Promise<void> | null = null;
@@ -148,6 +166,17 @@ export function createSync(db: DB, source: CalendarSource, classify: Classify | 
       void run();
       timer = setInterval(run, intervalMs);
     },
-    stop: () => clearInterval(timer),
+    /** Whether edits made on the wall can be sent to this calendar service. */
+    canWrite: !!writer,
+    /** Sends a new wall edit (and syncs) once its Undo window has passed. */
+    soon() {
+      clearTimeout(soonTimer);
+      soonTimer = setTimeout(() => void run(), SEND_AFTER_MS + 1_000);
+      soonTimer.unref?.();
+    },
+    stop: () => {
+      clearInterval(timer);
+      clearTimeout(soonTimer);
+    },
   };
 }

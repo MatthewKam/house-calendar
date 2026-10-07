@@ -179,6 +179,7 @@ export function useChangeReminders() {
   return {
     add: useMutation({ mutationFn: ({ list, title }: { list: string; title: string }) => api.addReminder(list, title), onSuccess: replace }),
     setDone: useMutation({ mutationFn: ({ id, done }: { id: string; done: boolean }) => api.setReminderDone(id, done), onSuccess: replace }),
+    rename: useMutation({ mutationFn: ({ id, title }: { id: string; title: string }) => api.renameReminder(id, title), onSuccess: replace }),
   };
 }
 
@@ -220,7 +221,8 @@ export function useSaveEvent() {
   return useMutation({
     mutationFn: ({ id, input }: { id?: string; input: EventInput }) =>
       id ? api.updateEvent(id, input) : api.addEvent(input),
-    onSettled: () => qc.invalidateQueries({ queryKey: keys.events }),
+    // An iCloud event's edit also changes what's waiting to be sent.
+    onSettled: () => Promise.all([qc.invalidateQueries({ queryKey: keys.events }), qc.invalidateQueries({ queryKey: ['outbox'] })]),
   });
 }
 
@@ -232,11 +234,35 @@ export function useSetPeople() {
   });
 }
 
+/** Undo for deleting an iCloud event (before the delete is sent). */
+export function useRestoreEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.restoreEvent(id),
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.events }),
+  });
+}
+
+/** Wall edits waiting for iCloud and conflicts to settle; checked often, and after every edit. */
+export function useOutbox() {
+  return useQuery({ queryKey: ['outbox'], queryFn: api.outbox, refetchInterval: 20_000 });
+}
+
+export function useResolveConflict() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, keep }: { id: number; keep: 'mine' | 'theirs' }) => api.resolveConflict(id, keep),
+    onSuccess: (status) => qc.setQueryData(['outbox'], status),
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.events }),
+  });
+}
+
 export function useDeleteEvent() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.removeEvent(id),
-    onSettled: () => qc.invalidateQueries({ queryKey: keys.events }),
+    // An iCloud event's edit also changes what's waiting to be sent.
+    onSettled: () => Promise.all([qc.invalidateQueries({ queryKey: keys.events }), qc.invalidateQueries({ queryKey: ['outbox'] })]),
   });
 }
 

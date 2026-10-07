@@ -12,7 +12,9 @@ import type { DB } from './db.ts';
 const CLAIM_MS = 15 * 60_000;
 
 interface ItemRow { id: number; list: string; title: string; done: number; due: string | null }
-interface OutboxRow { id: number; op: 'add' | 'complete' | 'uncomplete'; list: string; title: string; claimed_by: string | null }
+interface OutboxRow {
+  id: number; op: 'add' | 'complete' | 'uncomplete' | 'rename'; list: string; title: string; new_title: string | null; claimed_by: string | null;
+}
 
 export interface PhoneItem { list: string; title: string; done?: boolean | string; due?: string | null }
 
@@ -90,6 +92,10 @@ export function applySnapshot(db: DB, device: string, items: PhoneItem[], applie
         AND (reminder_outbox.op = 'add'
           OR (reminder_outbox.op = 'complete' AND i.done = 1)
           OR (reminder_outbox.op = 'uncomplete' AND i.done = 0)))`).run();
+    // A rename is done once an item has the new name.
+    db.prepare(`DELETE FROM reminder_outbox WHERE op = 'rename' AND EXISTS (
+      SELECT 1 FROM reminder_items i WHERE i.list = reminder_outbox.list COLLATE NOCASE
+        AND i.title = reminder_outbox.new_title COLLATE NOCASE)`).run();
   })();
 }
 
@@ -101,17 +107,19 @@ export function claimPending(db: DB, device: string, now = new Date()) {
       SELECT o.* FROM reminder_outbox o
       WHERE (o.claimed_by IS NULL OR o.claimed_by = @device OR o.claimed_at < @stale)
         AND EXISTS (SELECT 1 FROM reminder_devices d WHERE d.device = @device AND d.list = o.list COLLATE NOCASE)
-      ORDER BY o.id`).all({ device, stale }) as OutboxRow[];
+      ORDER BY o.op = 'rename', o.id`).all({ device, stale }) as OutboxRow[];
     const claim = db.prepare('UPDATE reminder_outbox SET claimed_by = ?, claimed_at = ? WHERE id = ?');
     for (const r of rows) claim.run(device, now.toISOString(), r.id);
-    return rows.map((r) => ({ id: r.id, op: r.op, list: r.list, title: r.title }));
+    // Renames come last, so ticks queued under the old name still find their item.
+    return rows.map((r) => ({ id: r.id, op: r.op, list: r.list, title: r.title, ...(r.op === 'rename' ? { newTitle: r.new_title } : {}) }));
   })();
 }
 
 /** What the wall shows: each list's latest snapshot with the wall's own pending changes applied. */
 export function wallLists(db: DB) {
   const items = db.prepare('SELECT * FROM reminder_items ORDER BY done, id').all() as ItemRow[];
-  const outbox = db.prepare('SELECT * FROM reminder_outbox ORDER BY id').all() as OutboxRow[];
+  // Renames last, as they'll be applied.
+  const outbox = db.prepare(`SELECT * FROM reminder_outbox ORDER BY op = 'rename', id`).all() as OutboxRow[];
   const devices = db.prepare('SELECT device, list, synced_at FROM reminder_devices').all() as
     { device: string; list: string; synced_at: string }[];
 
@@ -131,6 +139,9 @@ export function wallLists(db: DB) {
     const list = listFor(o.list);
     if (o.op === 'add') {
       list.items.push({ id: `w${o.id}`, title: o.title, done: false, due: null, pending: true });
+    } else if (o.op === 'rename') {
+      const item = list.items.find((i) => same(i.title, o.title));
+      if (item) Object.assign(item, { title: o.new_title, pending: true });
     } else {
       const item = list.items.find((i) => same(i.title, o.title) && i.done === (o.op === 'uncomplete'));
       if (item) Object.assign(item, { done: o.op === 'complete', pending: true });
@@ -160,12 +171,35 @@ export function registerReminders(app: FastifyInstance, db: DB, token: string | 
     return { lists: wallLists(db) };
   });
 
-  // Tick or untick, by the id the wall was given (p = from a phone, w = added on the wall).
-  app.patch<{ Params: { id: string }; Body: { done: boolean } }>('/api/reminders/:id', {
-    schema: { body: { type: 'object', required: ['done'], additionalProperties: false, properties: { done: { type: 'boolean' } } } },
+  // Tick, untick or rename, by the id the wall was given (p = from a phone, w = added on the wall).
+  app.patch<{ Params: { id: string }; Body: { done?: boolean; title?: string } }>('/api/reminders/:id', {
+    schema: { body: { type: 'object', minProperties: 1, maxProperties: 1, additionalProperties: false,
+      properties: { done: { type: 'boolean' }, title: { type: 'string', minLength: 1, maxLength: 300 } } } },
   }, async (req, reply) => {
     const { id } = req.params;
-    const { done } = req.body;
+    if (req.body.title !== undefined) {
+      const title = norm(req.body.title);
+      if (!title) return reply.code(400).send({ error: 'A name is needed' });
+      if (id.startsWith('w')) {
+        // Not on any phone yet: it's added with the new name.
+        const changed = db.prepare(`UPDATE reminder_outbox SET title = ? WHERE id = ? AND op = 'add'`).run(title, Number(id.slice(1)));
+        if (!changed.changes) return reply.code(404).send({ error: 'Reminder not found' });
+      } else {
+        const item = db.prepare('SELECT * FROM reminder_items WHERE id = ?').get(Number(id.slice(1))) as ItemRow | undefined;
+        if (!item) return reply.code(404).send({ error: 'Reminder not found' });
+        db.transaction(() => {
+          // One waiting rename per item; renaming back to its name in Reminders cancels it.
+          db.prepare(`DELETE FROM reminder_outbox WHERE op = 'rename' AND list = ? COLLATE NOCASE AND title = ? COLLATE NOCASE`)
+            .run(item.list, item.title);
+          if (title !== item.title) {
+            db.prepare(`INSERT INTO reminder_outbox (op, list, title, new_title) VALUES ('rename', ?, ?, ?)`).run(item.list, item.title, title);
+          }
+        })();
+      }
+      onWallChange?.();
+      return { lists: wallLists(db) };
+    }
+    const done = req.body.done!;
     if (id.startsWith('w')) {
       // Not on any phone yet: ticking it off just cancels the add.
       const row = db.prepare(`SELECT * FROM reminder_outbox WHERE id = ? AND op = 'add'`).get(Number(id.slice(1))) as OutboxRow | undefined;

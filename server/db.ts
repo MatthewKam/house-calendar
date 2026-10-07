@@ -274,6 +274,72 @@ const migrations: string[] = [
   );
   CREATE INDEX leave_alerts_remind ON leave_alerts(remind_at);
   `,
+  // Edits to iCloud events made on the wall, waiting to be sent. One row per occurrence: a second
+  // edit before sending merges into the first. The wall shows these on top of each sync's snapshot.
+  `
+  CREATE TABLE event_outbox (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    calendar_id TEXT NOT NULL,
+    -- The occurrence: resource URL, plus "#<recurrence id>" for one day of a repeating event.
+    remote_id   TEXT NOT NULL,
+    op          TEXT NOT NULL CHECK (op IN ('update','delete')),
+    -- JSON: the new title / allDay / start / end / location (only what changed).
+    changes     TEXT NOT NULL DEFAULT '{}',
+    -- JSON: those details as they were when edited here, to spot edits made elsewhere meanwhile.
+    before      TEXT NOT NULL,
+    -- pending: waiting to send; conflict: changed elsewhere too, waiting for someone to choose.
+    state       TEXT NOT NULL DEFAULT 'pending' CHECK (state IN ('pending','conflict')),
+    -- JSON: iCloud's details when a conflict was found; null if it was deleted there.
+    theirs      TEXT,
+    error       TEXT,
+    attempts    INTEGER NOT NULL DEFAULT 0,
+    -- Not sent before this (the wall's Undo window).
+    send_after  TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    UNIQUE (calendar_id, remote_id)
+  );
+  `,
+  // New events made on the wall can go to iCloud too ('create'), into calendars that take changes.
+  `
+  ALTER TABLE calendars ADD COLUMN writable INTEGER NOT NULL DEFAULT 1;
+  CREATE TABLE event_outbox_new (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    calendar_id TEXT NOT NULL,
+    remote_id   TEXT NOT NULL,
+    op          TEXT NOT NULL CHECK (op IN ('create','update','delete')),
+    changes     TEXT NOT NULL DEFAULT '{}',
+    -- For a new event, null: there's no iCloud version to compare with.
+    before      TEXT NOT NULL,
+    state       TEXT NOT NULL DEFAULT 'pending' CHECK (state IN ('pending','conflict')),
+    theirs      TEXT,
+    error       TEXT,
+    attempts    INTEGER NOT NULL DEFAULT 0,
+    send_after  TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    UNIQUE (calendar_id, remote_id)
+  );
+  INSERT INTO event_outbox_new SELECT * FROM event_outbox;
+  DROP TABLE event_outbox;
+  ALTER TABLE event_outbox_new RENAME TO event_outbox;
+  `,
+  // Reminders can be renamed from the wall (to put an icon at the start of an item's name).
+  `
+  CREATE TABLE reminder_outbox_new (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    op          TEXT NOT NULL CHECK (op IN ('add', 'complete', 'uncomplete', 'rename')),
+    list        TEXT NOT NULL,
+    title       TEXT NOT NULL,
+    -- rename only: the name it gets.
+    new_title   TEXT,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    claimed_by  TEXT,
+    claimed_at  TEXT
+  );
+  INSERT INTO reminder_outbox_new (id, op, list, title, created_at, claimed_by, claimed_at)
+    SELECT id, op, list, title, created_at, claimed_by, claimed_at FROM reminder_outbox;
+  DROP TABLE reminder_outbox;
+  ALTER TABLE reminder_outbox_new RENAME TO reminder_outbox;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

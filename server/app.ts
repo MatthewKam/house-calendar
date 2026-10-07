@@ -10,13 +10,14 @@ import { registerRewards } from './rewards.ts';
 import { registerTravel, type Estimator } from './travel.ts';
 import { registerWeather } from './weather.ts';
 import { registerReminders } from './reminders.ts';
+import { cancelDelete, diff, outboxStatus, queueCreate, queueEdit, resolveConflict } from './outbox.ts';
 
 const COLOR = { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' } as const;
 const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 
 interface MemberRow { id: string; name: string; color: string; sort_order: number }
 interface EventRow {
-  id: string; calendar_id: string; title: string;
+  id: string; calendar_id: string; title: string; remote_id: string | null;
   all_day: number; start: string; end: string; sync_state: string; location: string | null;
   /** JSON array of member ids, in family order; [] means everyone. */
   member_ids: string;
@@ -33,6 +34,8 @@ const toMember = (r: MemberRow) => ({ id: r.id, name: r.name, color: r.color, so
 const toEvent = (r: EventRow) => ({
   id: r.id, calendarId: r.calendar_id, memberIds: JSON.parse(r.member_ids) as string[], title: r.title,
   allDay: r.all_day === 1, start: r.start, end: r.end, syncState: r.sync_state, location: r.location,
+  // One day of a repeating iCloud event; edits here change that day only.
+  repeats: !!r.remote_id?.includes('#'),
 });
 
 /**
@@ -68,8 +71,8 @@ function validateTimes(ev: EventInput): string | null {
   return end > start ? null : 'End must be after start';
 }
 
-// Synced events are read-only until edits can be sent back to iCloud (outbox, README step 3).
-const READ_ONLY = "This event comes from iCloud. Change it on your iPhone or Mac for now.";
+// Synced events can be changed here only when the calendar service takes edits (iCloud does).
+const READ_ONLY = "This event comes from iCloud. Change it on your iPhone or Mac.";
 
 export function buildApp(db: DB, opts: {
   webDist?: string;
@@ -82,6 +85,11 @@ export function buildApp(db: DB, opts: {
   onRemindersChanged?: () => void;
   /** Drive-time lookups (Google Maps); without it, travel times are off. */
   travel?: Estimator;
+  /**
+   * Edits to synced events: present when they can be sent to iCloud; soon() sends a new edit after
+   * the Undo window. Without it, synced events are read-only.
+   */
+  syncedEdits?: { soon: () => void };
   /** How weather lookups reach the internet (replaced in tests). */
   weatherFetch?: typeof fetch;
 } = {}) {
@@ -170,13 +178,28 @@ export function buildApp(db: DB, opts: {
     return dedupe(rows).map(toEvent);
   });
 
-  app.post<{ Body: EventInput }>('/api/events', {
-    schema: { body: { ...eventBody, required: ['title', 'allDay', 'start', 'end'] } },
+  // calendarId: an iCloud calendar to add it to (sent there shortly); left out, it stays on the wall.
+  app.post<{ Body: EventInput & { calendarId?: string } }>('/api/events', {
+    schema: { body: { ...eventBody, properties: { ...eventBody.properties, calendarId: { type: 'string' } },
+      required: ['title', 'allDay', 'start', 'end'] } },
   }, async (req, reply) => {
     const ev = { ...req.body, memberIds: req.body.memberIds ?? [] };
     const err = validateTimes(ev);
     if (err) return reply.code(400).send({ error: err });
     if (!allMembers(ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
+    if (req.body.calendarId && req.body.calendarId !== 'local') {
+      const cal = db.prepare(`SELECT id, remote_id, writable FROM calendars WHERE id = ? AND provider != 'local'`)
+        .get(req.body.calendarId) as { id: string; remote_id: string; writable: number } | undefined;
+      if (!cal) return reply.code(400).send({ error: 'Unknown calendar' });
+      if (!opts.syncedEdits || !cal.writable) return reply.code(409).send({ error: "That calendar can't be added to from here" });
+      const id = queueCreate(db, cal, { title: ev.title.trim(), allDay: ev.allDay, start: ev.start, end: ev.end,
+        location: ev.location?.trim() || null });
+      // Who it's for is kept on this display, like any iCloud event.
+      if (ev.memberIds.length) assignManually(db, id, ev.memberIds);
+      opts.syncedEdits.soon();
+      reply.code(201);
+      return getEvent(id);
+    }
     const id = randomUUID();
     db.transaction(() => {
       db.prepare(`INSERT INTO events (id, calendar_id, title, all_day, start, end, location) VALUES (?, 'local', ?, ?, ?, ?, ?)`)
@@ -192,7 +215,7 @@ export function buildApp(db: DB, opts: {
   }, async (req, reply) => {
     const row = db.prepare(`${EVENT_SELECT} WHERE e.id = ?`).get(req.params.id) as EventRow | undefined;
     if (!row) return reply.code(404).send({ error: 'Event not found' });
-    if (row.calendar_id !== 'local') return reply.code(409).send({ error: READ_ONLY });
+    if (row.calendar_id !== 'local' && !opts.syncedEdits) return reply.code(409).send({ error: READ_ONLY });
     const ev: EventInput = {
       title: req.body.title ?? row.title,
       memberIds: req.body.memberIds ?? JSON.parse(row.member_ids),
@@ -204,6 +227,18 @@ export function buildApp(db: DB, opts: {
     const err = validateTimes(ev);
     if (err) return reply.code(400).send({ error: err });
     if (!allMembers(ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
+    if (row.calendar_id !== 'local') {
+      // iCloud: shown here now, sent to iCloud shortly. Who it's for stays on this display (every repeat).
+      const details = (x: { title: string; allDay: boolean; start: string; end: string; location?: string | null }) =>
+        ({ title: x.title.trim(), allDay: x.allDay, start: x.start, end: x.end, location: x.location?.trim() || null });
+      const changes = diff(details({ ...row, allDay: row.all_day === 1 }), details(ev));
+      if (Object.keys(changes).length) {
+        queueEdit(db, row, 'update', changes);
+        opts.syncedEdits!.soon();
+      }
+      if (req.body.memberIds && JSON.stringify(ev.memberIds) !== row.member_ids) assignManually(db, row.id, ev.memberIds);
+      return getEvent(row.id);
+    }
     db.transaction(() => {
       db.prepare(`UPDATE events SET title = ?, all_day = ?, start = ?, end = ?, location = ?,
                   updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`)
@@ -214,12 +249,36 @@ export function buildApp(db: DB, opts: {
   });
 
   app.delete<{ Params: { id: string } }>('/api/events/:id', async (req, reply) => {
-    const row = db.prepare('SELECT calendar_id FROM events WHERE id = ?').get(req.params.id) as
-      Pick<EventRow, 'calendar_id'> | undefined;
+    const row = db.prepare('SELECT * FROM events WHERE id = ?').get(req.params.id) as EventRow | undefined;
     if (!row) return reply.code(404).send({ error: 'Event not found' });
-    if (row.calendar_id !== 'local') return reply.code(409).send({ error: READ_ONLY });
+    if (row.calendar_id !== 'local') {
+      if (!opts.syncedEdits) return reply.code(409).send({ error: READ_ONLY });
+      // Hidden here now; deleted in iCloud after the Undo window (one day, for a repeating event).
+      queueEdit(db, row, 'delete', {});
+      opts.syncedEdits.soon();
+      return reply.code(204).send();
+    }
     db.prepare('DELETE FROM events WHERE id = ?').run(req.params.id);
     return reply.code(204).send();
+  });
+
+  // Undo for deleting an iCloud event, before the delete is sent.
+  app.post<{ Params: { id: string } }>('/api/events/:id/restore', async (req, reply) => {
+    const row = db.prepare('SELECT * FROM events WHERE id = ?').get(req.params.id) as EventRow | undefined;
+    if (!row || !cancelDelete(db, row)) return reply.code(404).send({ error: 'Nothing to undo' });
+    return getEvent(row.id);
+  });
+
+  // ---- Edits waiting for iCloud ---------------------------------------------------
+  app.get('/api/outbox', async () => outboxStatus(db));
+
+  app.post<{ Params: { id: string }; Body: { keep: 'mine' | 'theirs' } }>('/api/outbox/:id/resolve', {
+    schema: { body: { type: 'object', required: ['keep'], additionalProperties: false,
+      properties: { keep: { type: 'string', enum: ['mine', 'theirs'] } } } },
+  }, async (req, reply) => {
+    if (!resolveConflict(db, Number(req.params.id), req.body.keep)) return reply.code(404).send({ error: 'Already settled' });
+    if (req.body.keep === 'mine') opts.syncedEdits?.soon();
+    return outboxStatus(db);
   });
 
   // Who a synced event is for (none = everyone). Applies to every repeat of it and survives future syncs.
@@ -235,9 +294,11 @@ export function buildApp(db: DB, opts: {
   });
 
   // ---- Synced calendars: who each is for, and whether it shows ------------
-  interface CalendarRow { id: string; provider: string; name: string; color: string | null; member_id: string | null; hidden: number }
+  interface CalendarRow { id: string; provider: string; name: string; color: string | null; member_id: string | null; hidden: number; writable: number }
   const calendarSummary = (c: CalendarRow) => ({
     id: c.id, provider: c.provider, name: c.name, color: c.color, memberId: c.member_id, hidden: c.hidden === 1,
+    // New events can be added to it from the wall.
+    writable: c.writable === 1 && !!opts.syncedEdits,
     events: (db.prepare('SELECT COUNT(DISTINCT series_id) n FROM events WHERE calendar_id = ?').get(c.id) as { n: number }).n,
     // A few upcoming titles, to tell same-named calendars apart.
     sample: (db.prepare(`SELECT title FROM events WHERE calendar_id = ? AND end >= ?

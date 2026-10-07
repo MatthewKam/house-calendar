@@ -19,7 +19,10 @@ function fakeICloud(calls: { method: string; url: string; auth: string }[] = [])
     'PROPFIND https://p42-caldav.icloud.com/123/calendars/': ms(
       ok('/123/calendars/', '<d:resourcetype><d:collection/></d:resourcetype>'),
       ok('/123/calendars/home/', '<d:resourcetype><d:collection/><c:calendar/></d:resourcetype><d:displayname>Home</d:displayname>'
-        + '<c:supported-calendar-component-set><c:comp name="VEVENT"/></c:supported-calendar-component-set>'),
+        + '<c:supported-calendar-component-set><c:comp name="VEVENT"/></c:supported-calendar-component-set>'
+        + '<d:current-user-privilege-set><d:privilege><d:read/></d:privilege><d:privilege><d:write/></d:privilege></d:current-user-privilege-set>'),
+      ok('/123/calendars/shared/', '<d:resourcetype><d:collection/><c:calendar/></d:resourcetype><d:displayname>Team</d:displayname>'
+        + '<d:current-user-privilege-set><d:privilege><d:read/></d:privilege></d:current-user-privilege-set>'),
       ok('/123/calendars/tasks/', '<d:resourcetype><d:collection/><c:calendar/></d:resourcetype><d:displayname>Reminders</d:displayname>'
         + '<c:supported-calendar-component-set><c:comp name="VTODO"/></c:supported-calendar-component-set>'),
       ok('/123/calendars/inbox/', '<d:resourcetype><d:collection/><c:schedule-inbox/></d:resourcetype>'),
@@ -41,8 +44,10 @@ describe('ICloudSource', () => {
   it('finds event calendars through principal discovery', async () => {
     const calls: { method: string; url: string; auth: string }[] = [];
     const source = new ICloudSource('me@icloud.com', 'abcd-efgh', fakeICloud(calls));
+    // Shared read-only calendars are listed, marked as not writable.
     expect(await source.listCalendars()).toEqual([
-      { remoteId: 'https://p42-caldav.icloud.com/123/calendars/home/', name: 'Home' },
+      { remoteId: 'https://p42-caldav.icloud.com/123/calendars/home/', name: 'Home', color: undefined, writable: true },
+      { remoteId: 'https://p42-caldav.icloud.com/123/calendars/shared/', name: 'Team', color: undefined, writable: false },
     ]);
     expect(calls[0].auth).toBe(`Basic ${Buffer.from('me@icloud.com:abcd-efgh').toString('base64')}`);
     // The home URL is remembered, so the next listing is one request.

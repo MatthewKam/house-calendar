@@ -10,6 +10,11 @@ export interface Weather {
   /** WMO weather code (0 clear ... 99 thunderstorm), which picks the icon. */
   code: number;
   isDay: boolean;
+  /** Today's sunrise and sunset, as instants. */
+  sunrise: string;
+  sunset: string;
+  /** Today and the next six days. */
+  days: { date: string; high: number; low: number; code: number }[];
 }
 
 interface Place { lat: number; lon: number }
@@ -39,17 +44,27 @@ export async function geocode(address: string, fetchImpl: typeof fetch = fetch):
 /** Current conditions and today's high and low from Open-Meteo (free, no key). */
 export async function forecast(place: Place, fetchImpl: typeof fetch = fetch): Promise<Weather> {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${place.lat.toFixed(3)}&longitude=${place.lon.toFixed(3)}`
-    + '&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min'
-    + '&temperature_unit=fahrenheit&timezone=auto&forecast_days=1';
+    + '&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset'
+    + '&temperature_unit=fahrenheit&timezone=auto&forecast_days=7';
   const res = await fetchImpl(url);
   if (!res.ok) throw new Error(`Open-Meteo answered ${res.status}`);
   const w = await res.json();
+  // Sunrise and sunset come as home's local clock time ("2026-10-07T06:50"); make them instants.
+  const instant = (local: string) => new Date(Date.parse(`${local}:00Z`) - w.utc_offset_seconds * 1000).toISOString();
   return {
     temp: Math.round(w.current.temperature_2m),
     high: Math.round(w.daily.temperature_2m_max[0]),
     low: Math.round(w.daily.temperature_2m_min[0]),
     code: w.current.weather_code,
     isDay: w.current.is_day === 1,
+    sunrise: instant(w.daily.sunrise[0]),
+    sunset: instant(w.daily.sunset[0]),
+    days: (w.daily.time as string[]).map((date, i) => ({
+      date,
+      high: Math.round(w.daily.temperature_2m_max[i]),
+      low: Math.round(w.daily.temperature_2m_min[i]),
+      code: w.daily.weather_code[i],
+    })),
   };
 }
 

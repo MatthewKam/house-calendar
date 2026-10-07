@@ -34,6 +34,9 @@ const APPLY = `function run(argv) {
       if (!list) continue;
       if (c.op === "add") {
         list.reminders.push(R.Reminder({ name: c.title }));
+      } else if (c.op === "rename") {
+        const match = list.reminders.whose({ name: c.title, completed: false })();
+        if (match.length) match[0].name = c.newTitle;
       } else {
         const match = list.reminders.whose({ name: c.title, completed: c.op !== "complete" })();
         if (match.length) match[0].completed = c.op === "complete";
@@ -46,7 +49,7 @@ const APPLY = `function run(argv) {
 
 export interface MacReminders {
   read(): Promise<{ name: string; open: string[] }[]>;
-  apply(changes: { id: number; op: string; list: string; title: string }[]): Promise<number[]>;
+  apply(changes: { id: number; op: string; list: string; title: string; newTitle?: string | null }[]): Promise<number[]>;
 }
 
 const osascriptReminders: MacReminders = {

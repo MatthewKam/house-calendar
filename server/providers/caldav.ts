@@ -1,6 +1,7 @@
 import { XMLParser } from 'fast-xml-parser';
 
-// Minimal CalDAV (RFC 4791) over fetch: just the PROPFIND and REPORT calls a read-only sync needs.
+// Minimal CalDAV (RFC 4791) over fetch: the PROPFIND and REPORT calls sync needs, plus GET, PUT and
+// DELETE of one event for edits made on the wall.
 
 export class CalDavAuthError extends Error {
   constructor() {
@@ -42,6 +43,14 @@ const NS = 'xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav"';
 /** CalDAV wants UTC instants like 20261006T000000Z. */
 const davTime = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 
+/** Whether a privilege set allows adding and changing events; unknown counts as yes. */
+function canWrite(set: any): boolean {
+  if (!set || typeof set !== 'object') return true;
+  const privs = ([] as any[]).concat(set.privilege ?? []);
+  if (!privs.length) return true;
+  return privs.some((p) => p && typeof p === 'object' && ('all' in p || 'write' in p || 'write-content' in p || 'bind' in p));
+}
+
 export class CalDavClient {
   constructor(
     private readonly username: string,
@@ -49,11 +58,15 @@ export class CalDavClient {
     private readonly fetchImpl: typeof fetch = fetch,
   ) {}
 
+  private get auth() {
+    return `Basic ${Buffer.from(`${this.username}:${this.password}`).toString('base64')}`;
+  }
+
   private async request(method: string, url: string, depth: 0 | 1, body: string): Promise<DavResponse[]> {
     const res = await this.fetchImpl(url, {
       method,
       headers: {
-        authorization: `Basic ${Buffer.from(`${this.username}:${this.password}`).toString('base64')}`,
+        authorization: this.auth,
         depth: String(depth),
         'content-type': 'application/xml; charset=utf-8',
       },
@@ -84,9 +97,9 @@ export class CalDavClient {
   }
 
   /** Calendars that hold events (not reminder lists or the inbox). */
-  async calendars(homeUrl: string): Promise<{ url: string; name: string; color?: string }[]> {
+  async calendars(homeUrl: string): Promise<{ url: string; name: string; color?: string; writable: boolean }[]> {
     const rows = await this.propfind(homeUrl, 1,
-      '<d:resourcetype/><d:displayname/><c:supported-calendar-component-set/><a:calendar-color/>');
+      '<d:resourcetype/><d:displayname/><c:supported-calendar-component-set/><a:calendar-color/><d:current-user-privilege-set/>');
     return rows
       .filter((r) => r.props.resourcetype && typeof r.props.resourcetype === 'object' && 'calendar' in r.props.resourcetype)
       .filter((r) => {
@@ -98,7 +111,42 @@ export class CalDavClient {
         name: text(r.props.displayname) || 'Untitled calendar',
         // Apple sends #RRGGBB or #RRGGBBAA; keep the opaque part.
         color: /^#[0-9a-f]{6}/i.exec(text(r.props['calendar-color']))?.[0].toLowerCase(),
+        writable: canWrite(r.props['current-user-privilege-set']),
       }));
+  }
+
+  /** One event resource as it is now; null when it's been deleted. */
+  async getEvent(href: string): Promise<{ data: string; etag: string } | null> {
+    const res = await this.fetchImpl(href, { headers: { authorization: this.auth }, signal: AbortSignal.timeout(30_000) });
+    if (res.status === 404 || res.status === 410) return null;
+    if (res.status === 401 || res.status === 403) throw new CalDavAuthError();
+    if (!res.ok) throw new Error(`CalDAV GET failed: ${res.status} ${res.statusText}`);
+    return { data: await res.text(), etag: res.headers.get('etag') ?? '' };
+  }
+
+  /**
+   * Saves or deletes an event only if it's unchanged since `etag` was read. Returns false when it
+   * changed meanwhile (412 Precondition Failed), so the caller can look again. With no etag it
+   * creates the event, and false means one is already there.
+   */
+  async writeEvent(href: string, etag: string, data: string | null): Promise<boolean> {
+    const res = await this.fetchImpl(href, {
+      method: data === null ? 'DELETE' : 'PUT',
+      headers: {
+        authorization: this.auth,
+        ...(etag ? { 'if-match': etag } : data === null ? {} : { 'if-none-match': '*' }),
+        ...(data === null ? {} : { 'content-type': 'text/calendar; charset=utf-8' }),
+      },
+      body: data ?? undefined,
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (res.status === 412) return false;
+    if (res.status === 401) throw new CalDavAuthError();
+    if (res.status === 403) throw new Error("iCloud won't let this calendar be changed (it may be shared read-only)");
+    // Deleting something already gone is fine.
+    if (data === null && res.status === 404) return true;
+    if (!res.ok) throw new Error(`CalDAV ${data === null ? 'DELETE' : 'PUT'} failed: ${res.status} ${res.statusText}`);
+    return true;
   }
 
   /** Raw iCalendar resources with at least one occurrence in [from, to). */

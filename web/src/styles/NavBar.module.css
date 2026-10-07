@@ -35,8 +35,11 @@
 	background: var(--bg);
 	color: var(--text);
 }
-.bottom {
+/* Pushed to the bottom of the bar, with Settings under it. */
+.logo {
 	margin-top: auto;
+	width: 2.6rem;
+	height: 2.6rem;
 }
 .label {
 	font-size: 0.75rem;
@@ -57,5 +60,9 @@
 	}
 	.label {
 		display: none;
+	}
+	.logo {
+		width: 2rem;
+		height: 2rem;
 	}
 }

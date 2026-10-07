@@ -429,6 +429,8 @@
 .catTag {
 	color: var(--muted);
 	border: 1px solid var(--line);
+	background: var(--surface);
+	padding: 2px 5px;
 }
 .pointsTag {
 	color: #8a5a00;
@@ -957,9 +959,11 @@
 	justify-content: space-between;
 	border: 1px solid var(--line);
 	border-radius: 0.6rem;
-	background: linear-gradient(to top,
+	background: linear-gradient(
+		to top,
 		color-mix(in srgb, var(--c) 35%, white) var(--fill),
-		var(--surface) var(--fill));
+		var(--surface) var(--fill)
+	);
 }
 .monthComplete {
 	background: color-mix(in srgb, var(--c) 50%, white);

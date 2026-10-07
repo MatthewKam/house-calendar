@@ -100,6 +100,31 @@ describe('reminders sync', () => {
     expect(json(res).error).toMatch(/Couldn't read items; it starts: Groceries Milk/);
   });
 
+  it('renames an item from the wall (an icon added to its name), after any ticks', async () => {
+    await sync('Alex', [{ list: 'Groceries', title: 'Milk' }]);
+    const milk = (await list('Groceries')).items[0];
+    await app.inject({ method: 'PATCH', url: `/api/reminders/${milk.id}`, payload: { done: true } });
+    await app.inject({ method: 'PATCH', url: `/api/reminders/${milk.id}`, payload: { title: '🥛 Milk' } });
+    expect((await list('Groceries')).items).toMatchObject([{ title: '🥛 Milk', done: true, pending: true }]);
+    // The tick is handed over first, under the name the phone knows.
+    expect(await pending('Alex')).toMatchObject([
+      { op: 'complete', title: 'Milk' }, { op: 'rename', title: 'Milk', newTitle: '🥛 Milk' }]);
+    // Renaming again replaces the waiting rename; once the phone has the new name, it's done.
+    await app.inject({ method: 'PATCH', url: `/api/reminders/${milk.id}`, payload: { title: '🧀 Milk' } });
+    const changes = await pending('Alex');
+    expect(changes.filter((c: any) => c.op === 'rename')).toMatchObject([{ newTitle: '🧀 Milk' }]);
+    await sync('Alex', [{ list: 'Groceries', title: '🧀 Milk', done: true }], changes.map((c: any) => c.id));
+    expect(await pending('Alex')).toEqual([]);
+  });
+
+  it('renames an item added on the wall before any phone has it', async () => {
+    await sync('Alex', [{ list: 'Groceries', title: 'Milk' }]);
+    await app.inject({ method: 'POST', url: '/api/reminders', payload: { list: 'Groceries', title: 'Eggs' } });
+    const eggs = (await list('Groceries')).items.find((i: any) => i.title === 'Eggs');
+    await app.inject({ method: 'PATCH', url: `/api/reminders/${eggs.id}`, payload: { title: '🥚 Eggs' } });
+    expect(await pending('Alex')).toMatchObject([{ op: 'add', title: '🥚 Eggs' }]);
+  });
+
   it('shows empty lists a phone names', async () => {
     await app.inject({ method: 'POST', url: '/api/reminders/phone/sync', headers: auth,
       payload: { device: 'Mac', items: [{ list: 'Groceries', title: 'Milk' }], lists: 'Groceries\nTarget' } });

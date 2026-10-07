@@ -1,7 +1,7 @@
 import { useState, type CSSProperties, type FormEvent } from 'react';
 import { addDays, dayKey, fromDayKey, hhmm, timeLabel, toInstant } from '../lib/dates';
 import { textOn, UNASSIGNED } from '../lib/color';
-import { useSetPeople } from '../lib/queries';
+import { useCalendars, useSetPeople, useSetSetting, useSettings } from '../lib/queries';
 import type { CalEvent, EventInput, Member } from '../lib/types';
 import { PencilIcon } from './icons';
 import TravelInfo from './TravelInfo';
@@ -15,6 +15,8 @@ interface Props {
   onSave: (input: EventInput) => void;
   onDelete: (event: CalEvent) => void;
   onClose: () => void;
+  /** iCloud events can be changed here (and are sent to iCloud). */
+  canEditSynced?: boolean;
 }
 
 const QUICK = ['Practice', 'Appointment', 'Dinner out', 'Pick up', 'Work trip'];
@@ -45,8 +47,11 @@ function WhoPicker({ members, value, onChange }: { members: Member[]; value: str
   );
 }
 
-/** Synced events can't be edited here yet, so they open as a summary where you can pick who it's for. */
-function SyncedEvent({ event, members, onClose }: { event: CalEvent; members: Member[]; onClose: () => void }) {
+/**
+ * iCloud events open as a summary, where you can pick who it's for; Edit event (when iCloud takes
+ * edits) opens the full form.
+ */
+function SyncedEvent({ event, members, onClose, onEdit }: { event: CalEvent; members: Member[]; onClose: () => void; onEdit?: () => void }) {
   const setPeople = useSetPeople();
   // Who it's for is locked until Edit; Save applies it to every repeat of this event.
   const [memberIds, setMemberIds] = useState(event.memberIds);
@@ -93,9 +98,11 @@ function SyncedEvent({ event, members, onClose }: { event: CalEvent; members: Me
           </>
         )}
         {setPeople.isError && <div className={s.problem}>Couldn't save: {setPeople.error.message}</div>}
+        {event.syncState !== 'synced' && <p className={s.pendingNote}>↻ Your change is waiting to be sent to iCloud.</p>}
         <p className={s.note}>From iCloud. Who it's for is kept on this display and applies every time it repeats.
-          To change the event itself, use Calendar on your iPhone or Mac.</p>
+          {onEdit ? ' Changes to the event itself are sent to iCloud.' : ' To change the event itself, use Calendar on your iPhone or Mac.'}</p>
         <div className={sheet.actions}>
+          {onEdit && !draft && <button type="button" className={sheet.secondary} onClick={onEdit}>Edit event</button>}
           <span className={sheet.spacer} />
           {draft ? (
             <>
@@ -112,13 +119,32 @@ function SyncedEvent({ event, members, onClose }: { event: CalEvent; members: Me
 }
 
 export default function EventDialog(props: Props) {
-  if (props.event && props.event.calendarId !== 'local') {
-    return <SyncedEvent event={props.event} members={props.members} onClose={props.onClose} />;
+  const [editing, setEditing] = useState(false);
+  if (props.event && props.event.calendarId !== 'local' && !editing) {
+    return <SyncedEvent event={props.event} members={props.members} onClose={props.onClose}
+      onEdit={props.canEditSynced ? () => setEditing(true) : undefined} />;
   }
   return <EventForm {...props} />;
 }
 
-function EventForm({ day, event, members, onSave, onDelete, onClose }: Props) {
+/**
+ * Where a new event goes: an iCloud calendar (sent there, so it reaches the phones) or this wall only.
+ * The last choice is remembered for next time.
+ */
+function useNewEventCalendar(enabled: boolean) {
+  const calendars = (useCalendars().data ?? []).filter((c) => c.writable && !c.hidden);
+  const saved = useSettings().data?.newEventCalendar as string | undefined;
+  const setSetting = useSetSetting();
+  const options = enabled ? calendars : [];
+  // Same-named calendars are told apart by one of their events.
+  const label = (c: (typeof calendars)[number]) =>
+    options.filter((o) => o.name === c.name).length > 1 && c.sample[0] ? `${c.name} (has “${c.sample[0]}”)` : c.name;
+  const fallback = options[0]?.id ?? 'local';
+  const initial = saved === 'local' || options.some((c) => c.id === saved) ? saved! : fallback;
+  return { options, label, initial, remember: (id: string) => setSetting.mutate({ key: 'newEventCalendar', value: id }) };
+}
+
+function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSynced }: Props) {
   // Form starts from the event being edited, or a one-hour slot on the tapped day.
   // The parent remounts this dialog (via key) for each open, so initial state is enough.
   const firstDate = event ? (event.allDay ? event.start : dayKey(new Date(event.start))) : day;
@@ -132,6 +158,10 @@ function EventForm({ day, event, members, onSave, onDelete, onClose }: Props) {
   const [endTime, setEndTime] = useState(event && !event.allDay ? hhmm(event.end) : '10:00');
   const [location, setLocation] = useState(event?.location ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const target = useNewEventCalendar(!event && !!canEditSynced);
+  // null until picked, so the remembered choice can arrive after the form opens.
+  const [calendarId, setCalendarId] = useState<string | null>(null);
+  const chosenCalendar = calendarId ?? target.initial;
 
   const problem =
     !title.trim() ? 'Add a title'
@@ -144,9 +174,12 @@ function EventForm({ day, event, members, onSave, onDelete, onClose }: Props) {
     if (problem) return;
     const t = title.trim();
     const place = location.trim() || null;
+    // Only new events choose a calendar.
+    const where = !event && target.options.length ? { calendarId: chosenCalendar } : {};
+    if (!event && target.options.length) target.remember(chosenCalendar);
     onSave(allDay
-      ? { title: t, memberIds, allDay, start: date, end: dayKey(addDays(fromDayKey(lastDate), 1)), location: place }
-      : { title: t, memberIds, allDay, start: toInstant(date, startTime), end: toInstant(date, endTime), location: place });
+      ? { title: t, memberIds, allDay, start: date, end: dayKey(addDays(fromDayKey(lastDate), 1)), location: place, ...where }
+      : { title: t, memberIds, allDay, start: toInstant(date, startTime), end: toInstant(date, endTime), location: place, ...where });
   }
 
   return (
@@ -164,6 +197,16 @@ function EventForm({ day, event, members, onSave, onDelete, onClose }: Props) {
         )}
 
         <WhoPicker members={members} value={memberIds} onChange={setMemberIds} />
+
+        {target.options.length > 0 && (
+          <label className={s.calendarPick}>
+            Calendar
+            <select value={chosenCalendar} onChange={(e) => setCalendarId(e.target.value)}>
+              {target.options.map((c) => <option key={c.id} value={c.id}>{target.label(c)} (iCloud)</option>)}
+              <option value="local">This wall only</option>
+            </select>
+          </label>
+        )}
 
         <input className={s.locationInput} placeholder="Address (optional), for travel time" value={location}
           maxLength={300} onChange={(e) => setLocation(e.target.value)} aria-label="Address" />
@@ -186,12 +229,18 @@ function EventForm({ day, event, members, onSave, onDelete, onClose }: Props) {
         </div>
 
         {problem && title && <div className={s.problem}>{problem}</div>}
+        {event && event.calendarId !== 'local' && (
+          <p className={s.note}>
+            {event.repeats && <strong>This event repeats: changes apply to this day only. </strong>}
+            Saved here now and sent to iCloud shortly. Who it's for applies every time it repeats.
+          </p>
+        )}
 
         <div className={sheet.actions}>
           {event && (
             <button type="button" className={sheet.danger}
               onClick={() => (confirmDelete ? onDelete(event) : setConfirmDelete(true))}>
-              {confirmDelete ? 'Tap again to delete' : 'Delete'}
+              {confirmDelete ? 'Tap again to delete' : event.repeats ? 'Delete this day' : 'Delete'}
             </button>
           )}
           <span className={sheet.spacer} />

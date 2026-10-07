@@ -31,3 +31,5 @@
   .list { overflow: visible; }
   .ev { min-height: 2.4rem; }
 }
+/* After the last day, across the whole list. */
+.footer { grid-column: 1 / -1; padding-top: 0.2rem; }
