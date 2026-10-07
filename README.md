@@ -90,6 +90,27 @@ Traffic is checked again about 30 minutes before leaving, and the alert moves if
 Each tap asks Google twice (to match traffic to when you'd leave); answers are reused for 10 minutes. Alerts show on
 the wall, not on phones.
 
+## On phones (home-screen app)
+
+The app installs on iPhones and Android phones as a home-screen app: full screen, with its own icon, and it opens even
+without a connection (showing what it last loaded). Data always comes from the wall's server.
+
+1. The phone has to reach the server. At home, put `HOST=0.0.0.0` in `.env` on the machine running it and restart.
+   Away from home, use [Tailscale](https://tailscale.com) (free for a family): install it on the server machine and
+   each phone, and the phones can reach it from anywhere, privately.
+2. On the phone, open the server's address in Safari and tap **Share → Add to Home Screen**. While developing on
+   the Mac (`npm run dev`) that's `http://<mac's address>:5173` (the page server follows `HOST` too); on the Pi
+   (`npm start`), `http://<pi's address>:3000`.
+
+Set a **family PIN** first (Settings → Family PIN): after that, every device (phones and the wall) signs in with it
+once and stays signed in for a year. Settings lists the devices signed in, with **Sign out** for each, and **Change
+the PIN** (optionally signing out every other device). Five wrong PINs lock that device out for 15 minutes. A **master PIN** (set
+for you) is the one that can change the family PIN, so knowing the family PIN isn't enough; it also signs in. The
+master PIN can't be changed from the app. The
+phones' Reminders Shortcut keeps using `REMINDERS_TOKEN`.
+For the offline start (and phone notifications, later), iPhones need the address to be HTTPS; Tailscale's `tailscale
+serve` gives the server one.
+
 ## Using it
 
 - **Month / Week:** switch views at the top left. ‹ › move by a month or a week.
@@ -104,7 +125,10 @@ the wall, not on phones.
 - **Daily cards:** in Week view, beside the weather: a **dad joke** (tap for the answer, from icanhazdadjoke.com) and
   a **quote of the day** (ZenQuotes). They're fetched once a day and kept; grim jokes are skipped (it's a family wall).
 - **Day:** tap any day to see it in a panel on the right. Close it with ×.
-- **Add:** tap a day, then **+ Add event** in the day panel.
+- **Round + buttons:** Calendar, Tasks, Rewards and Photos each have one at the bottom right (add an event, a task, a
+  reward, or upload photos). A task or reward started there has no one picked yet; each kid's card has its own.
+- **Add:** the round **+** at the bottom right of the calendar (it starts on the day open in the day panel, else today),
+  or tap a day, then **+ Add event** in the day panel.
 - **Who:** an event can be for any number of people: tap each person in **Who** (tap again to remove), or
   **Everyone** for no one in particular. Shared events get a bar split into each person's color.
 - **People:** tap a name at the top to show only their events (including ones they share) (or **Everyone** for events not for anyone in
@@ -163,7 +187,7 @@ the wall, not on phones.
 Checks: `npm test` and `npm run check` (TypeScript for server and UI).
 
 The server listens on localhost only. `HOST=0.0.0.0 npm start` makes it reachable from phones on
-your Wi-Fi, but there's no login yet, so only do that on a network you trust.
+your Wi-Fi; set the family PIN first.
 
 ## What's next
 

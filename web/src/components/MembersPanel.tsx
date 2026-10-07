@@ -4,6 +4,7 @@ import { useAddMember, useRemoveMember, useSetSetting, useSettings, useUpdateMem
 import type { Member } from '../lib/types';
 import CalendarList from './CalendarList';
 import ScreenSaverSettings from './ScreenSaverSettings';
+import FamilyPin from './FamilyPin';
 import sheet from '../styles/Sheet.module.css';
 import s from '../styles/MembersPanel.module.css';
 
@@ -226,6 +227,8 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
         <HomeAddress />
 
         <ScreenSaverSettings />
+
+        <FamilyPin />
 
         <label className={s.scale}>
           Text size

@@ -77,7 +77,10 @@ function SyncedEvent({ event, members, onClose, onEdit }: { event: CalEvent; mem
     <>
       <div className={sheet.scrim} onClick={onClose} role="presentation" />
       <div className={sheet.sheet} role="dialog" aria-label={event.title}>
-        <h2 className={sheet.heading}>{event.title}</h2>
+        <header className={sheet.head}>
+          <h2 className={sheet.heading}>{event.title}</h2>
+          <button type="button" className={sheet.close} onClick={onClose} aria-label="Close">×</button>
+        </header>
         <div>{when}</div>
         <TravelInfo event={event} />
         {draft ? (
@@ -192,7 +195,10 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
     <>
       <div className={sheet.scrim} onClick={onClose} role="presentation" />
       <form className={sheet.sheet} onSubmit={submit}>
-        <h2 className={sheet.heading}>{event ? 'Edit event' : 'New event'}</h2>
+        <header className={sheet.head}>
+          <h2 className={sheet.heading}>{event ? 'Edit event' : 'New event'}</h2>
+          <button type="button" className={sheet.close} onClick={onClose} aria-label="Close">×</button>
+        </header>
 
         <input className={s.title} placeholder="What's happening?" value={title} maxLength={200}
           autoFocus={!event} onChange={(e) => setTitle(e.target.value)} />

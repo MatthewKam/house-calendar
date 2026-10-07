@@ -23,3 +23,8 @@
 .time { color: var(--muted); font-size: 0.75rem; }
 .title { overflow: hidden; text-overflow: ellipsis; }
 .more { color: var(--muted); font-size: 0.8rem; padding-left: 0.35rem; }
+
+/* Phones on their side: the page runs to the bottom edge, so the grid keeps a little room above the home bar. */
+@media (max-width: 959.98px), (max-height: 520px) {
+  .month { padding-bottom: calc(0.6rem + env(safe-area-inset-bottom)); }
+}

@@ -40,6 +40,7 @@ import NowLine from "./components/NowLine";
 import WeatherCard from "./components/WeatherCard";
 import DailyCards from "./components/DailyCards";
 import OutboxNotices from "./components/OutboxNotices";
+import Fab from "./components/Fab";
 import { usePage } from "./lib/usePage";
 import ListView from "./components/ListView";
 import RewardsPage from "./components/RewardsPage";
@@ -86,7 +87,9 @@ export default function App() {
 		event?: CalEvent;
 	} | null>(null);
 	// Task sheet: an existing task to edit, or a kid to start a new one for.
+	// blank: opened from the round +, so no one is picked yet.
 	const [taskDialog, setTaskDialog] = useState<{
+		blank?: boolean;
 		task?: Task;
 		memberId?: string;
 	} | null>(null);
@@ -418,9 +421,7 @@ export default function App() {
 										? cursor.getFullYear()
 										: `${fmt(days[0])} – ${fmt(days[6])}`}
 								</h1>
-								<button className={s.addEvent} onClick={() => setDialog({ day: newEventDay() })}>
-									+ Add event
-								</button>
+								
 							</div>
 						</div>
 					</header>
@@ -519,6 +520,7 @@ export default function App() {
 						// One person picked: new tasks start out as theirs.
 						(focus.length === 1 ? (focus[0] === EVERYONE ? null : focus[0]) : undefined)
 					}
+					blank={taskDialog.blank}
 					members={members}
 					onSave={saveTaskInput}
 					onDelete={removeTask}
@@ -534,6 +536,10 @@ export default function App() {
 				/>
 			)}
 
+			{/* The round + at the bottom right: add an event or a task. */}
+			{page === "calendar" && <Fab label="Add event" onClick={() => setDialog({ day: newEventDay() })} />}
+			{/* Add a task, for no one in particular yet (each kid's card has its own Add a task). */}
+			{page === "tasks" && <Fab label="Add a task" onClick={() => setTaskDialog({ blank: true })} />}
 			{saverOn && saverPhotos.length > 0 && (
 				<ScreenSaver photos={saverPhotos} settings={saver} onClose={() => setSaverOn(false)} />
 			)}
