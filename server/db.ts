@@ -340,6 +340,40 @@ const migrations: string[] = [
   DROP TABLE reminder_outbox;
   ALTER TABLE reminder_outbox_new RENAME TO reminder_outbox;
   `,
+  // Rewards for several kids together (their stars pooled, or each reaching the goal), ones that
+  // start again once given, and a history of every reward earned. rewards.member_id stays as the
+  // first kid; reward_members says who it's for.
+  `
+  CREATE TABLE reward_members (
+    reward_id   TEXT NOT NULL REFERENCES rewards(id) ON DELETE CASCADE,
+    member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    PRIMARY KEY (reward_id, member_id)
+  );
+  INSERT INTO reward_members (reward_id, member_id) SELECT id, member_id FROM rewards;
+  ALTER TABLE rewards ADD COLUMN team_mode TEXT NOT NULL DEFAULT 'pooled' CHECK (team_mode IN ('pooled', 'each'));
+  -- Until-earned rewards that start counting again after they're given.
+  ALTER TABLE rewards ADD COLUMN repeats INTEGER NOT NULL DEFAULT 0;
+  -- Each time a reward was earned: kept even if the reward is later renamed or deleted.
+  CREATE TABLE reward_wins (
+    id          TEXT PRIMARY KEY,
+    reward_id   TEXT NOT NULL,
+    -- Monthly: YYYY-MM. Until earned: the day it started counting.
+    period      TEXT NOT NULL,
+    title       TEXT NOT NULL,
+    -- JSON array of who earned it.
+    member_ids  TEXT NOT NULL,
+    goal        INTEGER NOT NULL,
+    stars       INTEGER NOT NULL,
+    -- Local day the goal was reached.
+    earned_day  TEXT NOT NULL,
+    given_at    TEXT,
+    UNIQUE (reward_id, period)
+  );
+  -- Until-earned rewards already handed over become history.
+  INSERT INTO reward_wins (id, reward_id, period, title, member_ids, goal, stars, earned_day, given_at)
+    SELECT lower(hex(randomblob(16))), id, start_day, title, json_array(member_id), goal, goal,
+      substr(claimed_at, 1, 10), claimed_at FROM rewards WHERE claimed_at IS NOT NULL;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

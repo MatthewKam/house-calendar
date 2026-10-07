@@ -2,7 +2,7 @@ import { useCallback, useSyncExternalStore } from 'react';
 import type { Page } from '../components/NavBar';
 
 /** Pages that live in the address after "#"; the calendar is the plain address. */
-const PAGES: Page[] = ['calendar', 'tasks', 'lists'];
+const PAGES: Page[] = ['calendar', 'tasks', 'rewards', 'lists'];
 const read = (): Page => {
   const hash = window.location.hash.slice(1) as Page;
   return PAGES.includes(hash) ? hash : 'calendar';

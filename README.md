@@ -114,6 +114,11 @@ the wall, not on phones.
   **until earned** (from when it was set, however long it takes; once reached, **Mark as given** clears it). **History** on a card shows a week of ticks
   per task or a month calendar (tap a day to see and fix it). **Edit tasks**: drag ⋮⋮ to reorder within a part of
   the day, ✎ to change a task, 🗑 to delete (it asks to confirm first).
+- **Rewards:** the **Rewards** page (gift in the left bar, `#rewards`) shows rewards ready to hand over, rewards in
+  progress, and everything given, by month, with each kid's tally for the year. A reward can be for several kids
+  together: their stars **added together** toward one goal, or **each** reaching it. Until-earned rewards can **start
+  again after they're given**. Every time a goal is reached it's kept in the history (even if the reward is renamed or
+  deleted later); **Undo** takes back a hand-over tapped by mistake.
 - **Edit or delete:** tap an event. Delete asks twice, and you get 10 seconds to undo.
 - **iCloud events:** tap one, then **Edit event** to change its title, time or address, or delete it. The change
   shows at once (marked ↻ until it's sent) and goes to iCloud after the 10-second Undo, then to your phones. For a

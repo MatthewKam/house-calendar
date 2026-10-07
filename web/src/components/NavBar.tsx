@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import s from '../styles/NavBar.module.css';
 
-export type Page = 'calendar' | 'tasks' | 'lists';
+export type Page = 'calendar' | 'tasks' | 'rewards' | 'lists';
 
 interface Props {
   page: Page;
@@ -23,6 +23,12 @@ const TasksIcon = () => (
     <path d="M8 8.5l1.5 1.5L12 7.5M8 14.5l1.5 1.5 2.5-2.5M14.5 9h2M14.5 15h2" />
   </svg>
 );
+const RewardsIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="3.5" y="8" width="17" height="4" rx="1" />
+    <path d="M5 12v8h14v-8M12 8v12M12 8c-1.5-3-5-3.5-5-1.2C7 8 9.5 8 12 8zm0 0c1.5-3 5-3.5 5-1.2C17 8 14.5 8 12 8z" />
+  </svg>
+);
 const ListsIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M9 6.5h11M9 12h11M9 17.5h11" />
@@ -38,7 +44,7 @@ const SettingsIcon = () => (
   </svg>
 );
 
-/** Bar down the left edge: the Calendar, Tasks and Lists pages, and the logo and Settings at the bottom. */
+/** Bar down the left edge: the Calendar, Tasks, Rewards and Lists pages, and the logo and Settings at the bottom. */
 export default function NavBar({ page, settingsOpen, onPage, onSettings }: Props) {
   const item = (p: Page, label: string, icon: ReactNode) => (
     <button className={`${s.item} ${page === p ? s.on : ''}`} aria-current={page === p ? 'page' : undefined}
@@ -51,6 +57,7 @@ export default function NavBar({ page, settingsOpen, onPage, onSettings }: Props
     <nav className={s.nav} aria-label="Main">
       {item('calendar', 'Calendar', <CalendarIcon />)}
       {item('tasks', 'Tasks', <TasksIcon />)}
+      {item('rewards', 'Rewards', <RewardsIcon />)}
       {item('lists', 'Lists', <ListsIcon />)}
       {/* Pinned to the bottom of the bar: the logo, then Settings. */}
       <img className={s.logo} src="/favicon.svg" alt="" />

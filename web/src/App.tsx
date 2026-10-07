@@ -40,6 +40,7 @@ import WeatherCard from "./components/WeatherCard";
 import OutboxNotices from "./components/OutboxNotices";
 import { usePage } from "./lib/usePage";
 import ListView from "./components/ListView";
+import RewardsPage from "./components/RewardsPage";
 import TaskDialog from "./components/TaskDialog";
 import { taskProgress, percent, tasksFor } from "./lib/tasks";
 import MembersPanel from "./components/MembersPanel";
@@ -330,6 +331,8 @@ export default function App() {
 						/>
 					) : page === "lists" ? (
 						<ListView />
+					) : page === "rewards" ? (
+						<RewardsPage today={today} members={members} />
 					) : (<>
 					<div className={s.monthHeaderTitle}>
 						<div>

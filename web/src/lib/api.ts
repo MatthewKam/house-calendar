@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, TaskPoints, Weather, OutboxStatus } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, TaskPoints, Weather, OutboxStatus, RewardInput, RewardWin } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -49,9 +49,12 @@ export const api = {
   updateTask: (id: string, c: Partial<TaskInput>) => call<Task>('PATCH', `/api/tasks/${id}`, c),
   removeTask: (id: string) => call<void>('DELETE', `/api/tasks/${id}`),
   rewards: (today: string) => call<Reward[]>('GET', `/api/rewards?${new URLSearchParams({ today })}`),
-  addReward: (r: Pick<Reward, 'memberId' | 'title' | 'goal' | 'mode' | 'startDay'>) => call<Reward>('POST', '/api/rewards', r),
-  updateReward: (id: string, r: Partial<Pick<Reward, 'title' | 'goal' | 'mode'>>) => call<Reward>('PATCH', `/api/rewards/${id}`, r),
-  giveReward: (id: string) => call<void>('POST', `/api/rewards/${id}/given`),
+  rewardHistory: () => call<RewardWin[]>('GET', '/api/rewards/history'),
+  addReward: (r: RewardInput) => call<Reward>('POST', '/api/rewards', r),
+  updateReward: (id: string, r: Partial<Omit<RewardInput, 'startDay'>>) => call<Reward>('PATCH', `/api/rewards/${id}`, r),
+  giveReward: (id: string, today: string) => call<void>('POST', `/api/rewards/${id}/given?${new URLSearchParams({ today })}`),
+  giveWin: (id: string, today: string) => call<void>('POST', `/api/rewards/wins/${id}/given?${new URLSearchParams({ today })}`),
+  undoWin: (id: string) => call<void>('POST', `/api/rewards/wins/${id}/undo`),
   removeReward: (id: string) => call<void>('DELETE', `/api/rewards/${id}`),
   /** Saves a new task order (all task ids, in order). */
   reorderTasks: (ids: string[]) => call<Task[]>('PUT', '/api/tasks/order', { ids }),
