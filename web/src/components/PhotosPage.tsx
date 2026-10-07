@@ -82,6 +82,8 @@ export default function PhotosPage({ onPreview }: Props) {
 
 	// Upload pop-up (drop area, or choose from Finder), and a file being dragged over the page.
 	const [uploadOpen, setUploadOpen] = useState(false);
+	// Whether new uploads go straight into the screen saver (untick for a big batch).
+	const [toSaver, setToSaver] = useState(true);
 	const [dragging, setDragging] = useState(false);
 	const dragDepth = useRef(0);
 	const hasFiles = (e: DragEvent) =>
@@ -133,7 +135,7 @@ export default function PhotosPage({ onPreview }: Props) {
 		for (const b of batch) {
 			try {
 				const prepared = await preparePhoto(b.file);
-				await uploadPhoto(prepared, (f) =>
+				await uploadPhoto(prepared, toSaver, (f) =>
 					set(b.key, { progress: Math.min(0.99, f) }),
 				);
 				set(b.key, { progress: 1 });
@@ -482,6 +484,14 @@ export default function PhotosPage({ onPreview }: Props) {
 								uploading.
 							</span>
 						</div>
+						<label className={s.toggle}>
+							<input
+								type="checkbox"
+								checked={toSaver}
+								onChange={(e) => setToSaver(e.target.checked)}
+							/>
+							Add them to the screen saver
+						</label>
 					</div>
 				</>
 			)}

@@ -193,7 +193,10 @@ export type EventInput = Pick<CalEvent, 'title' | 'memberIds' | 'allDay' | 'star
   location?: string | null;
   /** New events only: the iCloud calendar to add it to; left out, it stays on the wall. */
   calendarId?: string;
+  /** Changing a repeating iCloud event: just the day opened, or every day. */
+  scope?: Scope;
 };
+export type Scope = 'one' | 'all';
 
 /** Today's weather at home (°F), from GET /api/weather. */
 export interface Weather {
@@ -236,4 +239,8 @@ export interface ScreenSaverSettings {
   seconds: number;
   /** "mix" changes it every photo. */
   transition: 'mix' | 'fade' | 'kenburns' | 'slide' | 'zoom' | 'blur' | 'flip';
+  /** At night (nightFrom to nightTo, "HH:MM"), photos are dimmed and change more slowly. */
+  night: boolean;
+  nightFrom: string;
+  nightTo: string;
 }

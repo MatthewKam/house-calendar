@@ -23,8 +23,11 @@ function fakeICloud() {
   const net = { down: false, raceOnce: false };
   const source: CalendarSource & CalendarWriter = {
     id: 'icloud',
-    listCalendars: async () => [{ remoteId: CAL, name: 'Home' }],
-    fetchRange: async (_cal, from, to) => [...store].flatMap(([href, r]) => expandCalendarData(r.data, href, r.etag, from, to)),
+    // Home, plus any other calendar a test puts an event in.
+    listCalendars: async () => [...new Set([CAL, ...[...store.keys()].map((h) => h.slice(0, h.lastIndexOf('/') + 1))])]
+      .map((remoteId) => ({ remoteId, name: remoteId === CAL ? 'Home' : 'Family' })),
+    fetchRange: async (cal, from, to) => [...store].filter(([href]) => href.startsWith(cal) && !href.slice(cal.length).includes('/'))
+      .flatMap(([href, r]) => expandCalendarData(r.data, href, r.etag, from, to)),
     getEvent: async (href) => {
       if (net.down) throw new Error('fetch failed');
       return store.get(href) ?? null;
@@ -201,5 +204,45 @@ describe('adding iCloud events from the wall', () => {
     const res = await app.inject({ method: 'POST', url: '/api/events', payload: {
       title: 'X', allDay: true, start: '2026-10-10', end: '2026-10-11', calendarId: cal } });
     expect(res.statusCode).toBe(409);
+  });
+});
+
+describe('repeating events and copies', () => {
+  it('changes every day of a repeating event when asked, and deletes all of it with Undo', async () => {
+    const { app, cloud, events, send, resync } = await setup();
+    const soccer = (await events()).filter((e) => e.title === 'Soccer');
+    // Every day: renamed and an hour later.
+    const later = (iso: string) => new Date(Date.parse(iso) + 3_600_000).toISOString();
+    await app.inject({ method: 'PATCH', url: `/api/events/${soccer[1].id}`, payload: {
+      scope: 'all', title: 'Soccer practice', start: later(soccer[1].start), end: later((soccer[1] as any).end) } });
+    const shown = (await events()).filter((e) => e.title === 'Soccer practice');
+    expect(shown.map((e) => e.start)).toEqual(soccer.map((e) => later(e.start)));
+    expect(await send()).toMatchObject({ sent: 1 });
+    await resync();
+    expect((await events()).filter((e) => e.title === 'Soccer practice').map((e) => [e.start, e.syncState]))
+      .toEqual(soccer.map((e) => [later(e.start), 'synced']));
+
+    // Delete every day, Undo, then delete for real.
+    const any = (await events()).find((e) => e.title === 'Soccer practice')!;
+    await app.inject({ method: 'DELETE', url: `/api/events/${any.id}?scope=all` });
+    expect((await events()).some((e) => e.title === 'Soccer practice')).toBe(false);
+    await app.inject({ method: 'POST', url: `/api/events/${any.id}/restore` });
+    expect((await events()).filter((e) => e.title === 'Soccer practice')).toHaveLength(4);
+    await app.inject({ method: 'DELETE', url: `/api/events/${any.id}?scope=all` });
+    await send();
+    expect(cloud.store.has(SOCCER)).toBe(false);
+  });
+
+  it('changes every copy of an event that is in two calendars', async () => {
+    const { app, cloud, events, send, resync } = await setup();
+    const COPY = 'https://p1.icloud.com/family/dentist.ics';
+    cloud.put(COPY, cloud.store.get(DENTIST)!.data);
+    await resync();
+    // The wall shows it once.
+    const dentist = (await events()).filter((e) => e.title === 'Dentist');
+    expect(dentist).toHaveLength(1);
+    await app.inject({ method: 'PATCH', url: `/api/events/${dentist[0].id}`, payload: { title: 'Dentist (Dr. Lee)' } });
+    expect(await send()).toMatchObject({ sent: 2 });
+    for (const href of [DENTIST, COPY]) expect(currentDetails(cloud.store.get(href)!.data, href, href)?.title).toBe('Dentist (Dr. Lee)');
   });
 });

@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
 import type { CalendarWriter } from './providers/types.ts';
-import { currentDetails, deleteOccurrence, editEvent, newEvent, type Details } from './providers/icalEdit.ts';
+import { currentDetails, deleteOccurrence, editEvent, editSeries, newEvent, seriesDetails, type Details, type SeriesChanges } from './providers/icalEdit.ts';
 
 // Edits to iCloud events made on the wall. Each is saved here and shown on the wall at once, then
 // sent to iCloud after the Undo window, before each sync. If iCloud can't be reached the edit waits
@@ -102,9 +102,61 @@ export function queueEdit(db: DB, row: SyncedRow, op: 'update' | 'delete', chang
   })();
 }
 
+/** Changes to every day of a repeating event are kept under the series' id (its resource URL). */
+type Series = SeriesChanges & { series: true };
+const isSeries = (r: OutboxRow) => (JSON.parse(r.changes) as { series?: boolean }).series === true;
+
+/**
+ * Saves a change to every day of a repeating event (or deleting all of it) and shows it at once.
+ * `row` is any one day of it; a later change to the series merges into a waiting one.
+ */
+export function queueSeries(db: DB, row: SyncedRow & { series_id: string | null }, op: 'update' | 'delete', changes: SeriesChanges, now = new Date()) {
+  if (!row.series_id) throw new Error('Not a repeating event');
+  const sendAfter = new Date(now.getTime() + SEND_AFTER_MS).toISOString();
+  db.transaction(() => {
+    const old = find(db, row.calendar_id, row.series_id!);
+    const prev = old ? (JSON.parse(old.changes) as Series) : null;
+    const merged: Series = { ...prev, ...changes, series: true,
+      // Two moves add up.
+      ...(changes.shiftMs !== undefined && prev?.shiftMs ? { shiftMs: prev.shiftMs + changes.shiftMs } : {}) };
+    if (old) {
+      db.prepare(`UPDATE event_outbox SET op = ?, changes = ?, state = 'pending', theirs = NULL, error = NULL, send_after = ? WHERE id = ?`)
+        .run(op, JSON.stringify(merged), sendAfter, old.id);
+    } else {
+      db.prepare(`INSERT INTO event_outbox (calendar_id, remote_id, op, changes, before, send_after) VALUES (?, ?, ?, ?, ?, ?)`)
+        .run(row.calendar_id, row.series_id, op, JSON.stringify(merged), JSON.stringify({ title: row.title, location: row.location }), sendAfter);
+    }
+    // Days already moved by an earlier waiting change move by just this one; the overlay moves the rest.
+    if (op === 'update' && (changes.shiftMs || changes.durationMs !== undefined)) {
+      const days = db.prepare(`SELECT id, start, end FROM events WHERE calendar_id = ? AND series_id = ? AND all_day = 0
+        AND sync_state = 'pending_update'`).all(row.calendar_id, row.series_id) as { id: string; start: string; end: string }[];
+      const move = db.prepare('UPDATE events SET start = ?, end = ? WHERE id = ?');
+      for (const d of days) {
+        const start = Date.parse(d.start) + (changes.shiftMs ?? 0);
+        const end = changes.durationMs !== undefined ? start + changes.durationMs : Date.parse(d.end) + (changes.shiftMs ?? 0);
+        move.run(new Date(start).toISOString(), new Date(end).toISOString(), d.id);
+      }
+    }
+    overlayOutbox(db);
+  })();
+}
+
 /** Undo for a delete made on the wall: brings the event back if the delete hasn't been sent yet. */
-export function cancelDelete(db: DB, row: SyncedRow): boolean {
+export function cancelDelete(db: DB, row: SyncedRow & { series_id?: string | null }): boolean {
   if (!row.remote_id) return false;
+  // Deleting every day of a repeating event is kept under the series.
+  const seriesDelete = row.series_id ? find(db, row.calendar_id, row.series_id) : undefined;
+  if (seriesDelete && seriesDelete.op === 'delete' && isSeries(seriesDelete)) {
+    db.transaction(() => {
+      const { series: _s, ...rest } = JSON.parse(seriesDelete.changes) as Series;
+      if (Object.keys(rest).length) db.prepare(`UPDATE event_outbox SET op = 'update' WHERE id = ?`).run(seriesDelete.id);
+      else db.prepare('DELETE FROM event_outbox WHERE id = ?').run(seriesDelete.id);
+      db.prepare(`UPDATE events SET sync_state = 'synced' WHERE calendar_id = ? AND series_id = ? AND sync_state = 'pending_delete'`)
+        .run(row.calendar_id, row.series_id);
+      overlayOutbox(db);
+    })();
+    return true;
+  }
   const old = find(db, row.calendar_id, row.remote_id);
   if (!old || old.op !== 'delete') return false;
   db.transaction(() => {
@@ -120,9 +172,17 @@ export function cancelDelete(db: DB, row: SyncedRow): boolean {
   return true;
 }
 
-/** Puts waiting edits on top of the synced copy (called after every sync replaces it). */
+/**
+ * Puts waiting edits on top of the synced copy (called after every sync replaces it, and after each
+ * edit). Safe to run again: a series move only applies to days not moved yet.
+ */
 export function overlayOutbox(db: DB) {
   const rows = db.prepare('SELECT * FROM event_outbox').all() as OutboxRow[];
+  const seriesRows = db.prepare('SELECT id, start, end, all_day, sync_state FROM events WHERE calendar_id = ? AND series_id = ?');
+  const seriesUpdate = db.prepare(`UPDATE events SET title = COALESCE(@title, title),
+      location = CASE WHEN @hasLocation THEN @location ELSE location END, start = @start, end = @end, sync_state = 'pending_update'
+    WHERE id = @id`);
+  const seriesRemove = db.prepare(`UPDATE events SET sync_state = 'pending_delete' WHERE calendar_id = ? AND series_id = ?`);
   const update = db.prepare(`UPDATE events SET title = COALESCE(@title, title), all_day = COALESCE(@allDay, all_day),
       start = COALESCE(@start, start), end = COALESCE(@end, end),
       location = CASE WHEN @hasLocation THEN @location ELSE location END, sync_state = @syncState
@@ -133,6 +193,23 @@ export function overlayOutbox(db: DB) {
     ON CONFLICT(id) DO NOTHING`);
   const remove = db.prepare(`UPDATE events SET sync_state = 'pending_delete' WHERE calendar_id = ? AND remote_id = ?`);
   for (const r of rows) {
+    if (isSeries(r)) {
+      if (r.op === 'delete') {
+        seriesRemove.run(r.calendar_id, r.remote_id);
+        continue;
+      }
+      const c = JSON.parse(r.changes) as Series;
+      for (const d of seriesRows.all(r.calendar_id, r.remote_id) as { id: string; start: string; end: string; all_day: number; sync_state: string }[]) {
+        // Fresh from iCloud (synced): move it. Already moved (pending_update): leave its times.
+        const timed = !d.all_day && d.sync_state !== 'pending_update';
+        const start = timed ? Date.parse(d.start) + (c.shiftMs ?? 0) : null;
+        const end = start === null ? d.end
+          : new Date(c.durationMs !== undefined ? start + c.durationMs : Date.parse(d.end) + (c.shiftMs ?? 0)).toISOString();
+        seriesUpdate.run({ id: d.id, title: c.title ?? null, hasLocation: 'location' in c ? 1 : 0, location: c.location ?? null,
+          start: start === null ? d.start : new Date(start).toISOString(), end });
+      }
+      continue;
+    }
     if (r.op === 'delete') {
       remove.run(r.calendar_id, r.remote_id);
       continue;
@@ -173,6 +250,10 @@ export async function pushOutbox(db: DB, writer: CalendarWriter, now = new Date(
           continue;
         }
         const res = await writer.getEvent(href);
+        if (isSeries(r)) {
+          outcome = await pushSeries(db, writer, r, res);
+          continue;
+        }
         const theirs = res ? currentDetails(res.data, href, r.remote_id) : null;
         if (r.op === 'delete') {
           // Already gone there: nothing to do.
@@ -206,6 +287,23 @@ export async function pushOutbox(db: DB, writer: CalendarWriter, now = new Date(
     }
   }
   return result;
+}
+
+/** Sends a change to every day of a repeating event (or deletes it all), unless its title or address changed there too. */
+async function pushSeries(db: DB, writer: CalendarWriter, r: OutboxRow, res: { data: string; etag: string } | null): Promise<'sent' | 'conflict' | 'retry'> {
+  if (r.op === 'delete') return !res || (await writer.writeEvent(r.remote_id, res.etag, null)) ? 'sent' : 'retry';
+  const theirs = res ? seriesDetails(res.data) : null;
+  const before = JSON.parse(r.before) as { title: string; location: string | null };
+  const changes = JSON.parse(r.changes) as Series;
+  const clash = !theirs || (changes.title !== undefined && theirs.title !== before.title)
+    || (changes.location !== undefined && (theirs.location ?? null) !== (before.location ?? null));
+  if (clash) {
+    db.prepare(`UPDATE event_outbox SET state = 'conflict', theirs = ?, error = NULL WHERE id = ?`)
+      .run(theirs ? JSON.stringify(theirs) : null, r.id);
+    return 'conflict';
+  }
+  const { series: _s, ...edit } = changes;
+  return (await writer.writeEvent(r.remote_id, res!.etag, editSeries(res!.data, edit))) ? 'sent' : 'retry';
 }
 
 /** Edits waiting to be sent, and conflicts waiting for a choice, for the wall's notices. */
@@ -245,6 +343,14 @@ export function resolveConflict(db: DB, id: number, keep: 'mine' | 'theirs', now
       return;
     }
     db.prepare('DELETE FROM event_outbox WHERE id = ?').run(id);
+    if (isSeries(r)) {
+      // Back to iCloud's title and address on every day; times come back with the next sync.
+      const t = r.theirs ? (JSON.parse(r.theirs) as { title: string; location: string | null }) : null;
+      if (t) db.prepare(`UPDATE events SET title = ?, location = ?, sync_state = 'synced' WHERE calendar_id = ? AND series_id = ?`)
+        .run(t.title, t.location, r.calendar_id, r.remote_id);
+      else db.prepare('DELETE FROM events WHERE calendar_id = ? AND series_id = ?').run(r.calendar_id, r.remote_id);
+      return;
+    }
     if (!r.theirs) {
       db.prepare('DELETE FROM events WHERE calendar_id = ? AND remote_id = ?').run(r.calendar_id, r.remote_id);
     } else {

@@ -36,6 +36,10 @@ describe('photo album', () => {
     expect(file.rawPayload.equals(JPEG)).toBe(true);
   });
 
+  it('can upload a photo that stays out of the screen saver', async () => {
+    expect((await upload('width=10&height=10&inSlideshow=false')).json().inSlideshow).toBe(false);
+  });
+
   it('only takes JPEGs', async () => {
     expect((await upload('width=10&height=10', Buffer.from('<svg/>'))).statusCode).toBe(415);
   });

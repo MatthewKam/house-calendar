@@ -66,4 +66,21 @@ describe('editing iCloud events', () => {
     const edited = editEvent(WEEKLY, HREF, OCT_13, { title: 'Moved' });
     expect(all(deleteOccurrence(edited, HREF, OCT_13)!).map((e) => e[0])).toEqual(['Soccer', 'Soccer', 'Soccer']);
   });
+
+  it('changes every day of a repeating event, keeping moved and skipped days in line', async () => {
+    const { editSeries, seriesDetails } = await import('./icalEdit.ts');
+    // Oct 13 moved to the 14th, Oct 20 skipped.
+    const withExceptions = deleteOccurrence(editEvent(WEEKLY, HREF, OCT_13, { allDay: false,
+      start: '2026-10-14T21:00:00.000Z', end: '2026-10-14T22:00:00.000Z' }), HREF, `${HREF}#2026-10-20T17:00:00`)!;
+    const out = editSeries(withExceptions, { title: 'Soccer practice', location: 'Field 3', shiftMs: 3_600_000, durationMs: 5_400_000 });
+    expect(seriesDetails(out)).toEqual({ title: 'Soccer practice', location: 'Field 3' });
+    // An hour later, 90 minutes long; the moved day moves too, the skipped day stays skipped.
+    expect(all(out)).toEqual([
+      ['Soccer practice', '2026-10-06T22:00:00.000Z', 'Field 3'],
+      ['Soccer practice', '2026-10-14T22:00:00.000Z', 'Field 3'],
+      ['Soccer practice', '2026-10-27T22:00:00.000Z', 'Field 3'],
+    ]);
+    const first = expandCalendarData(out, HREF, '', new Date('2026-10-01T00:00:00Z'), new Date('2026-10-08T00:00:00Z'))[0];
+    expect(Date.parse(first.end) - Date.parse(first.start)).toBe(5_400_000);
+  });
 });

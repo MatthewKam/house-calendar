@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import { useWeather } from "../lib/queries";
 import { sky } from "../lib/weather";
-import { TRANSITIONS } from "../lib/screensaver";
+import { isNight, TRANSITIONS } from "../lib/screensaver";
 import type { Photo, ScreenSaverSettings } from "../lib/types";
 import s from "../styles/ScreenSaver.module.css";
 
@@ -72,7 +72,9 @@ export default function ScreenSaver({ photos, settings, onClose }: { photos: Pho
 	/** Waits `seconds` and moves on, unless paused. */
 	function schedule() {
 		clearTimeout(timer.current);
-		if (!pausedRef.current) timer.current = setTimeout(() => step(1, false), Math.max(5, settings.seconds) * 1000);
+		// At night each photo stays up three times as long.
+		const seconds = Math.max(5, settings.seconds) * (isNight(settings) ? 3 : 1);
+		if (!pausedRef.current) timer.current = setTimeout(() => step(1, false), seconds * 1000);
 	}
 
 	/** One photo forward or back. Swipes and ‹ › slide the way you went; the timer uses the chosen transition. */
@@ -151,7 +153,7 @@ export default function ScreenSaver({ photos, settings, onClose }: { photos: Pho
 	const look = weather && sky(weather.code, weather.isDay);
 	const last = slides.at(-1);
 	return (
-		<div className={s.saver} onClick={tap} onPointerDown={down} onPointerUp={up} role="presentation" aria-label="Screen saver: tap to close">
+		<div className={`${s.saver} ${isNight(settings, now) ? s.night : ""}`} onClick={tap} onPointerDown={down} onPointerUp={up} role="presentation" aria-label="Screen saver: tap to close">
 			{slides.map((slide) => {
 				const leaving = slide !== last;
 				return (

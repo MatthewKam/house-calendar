@@ -13,7 +13,7 @@ import {
 	monthGridDays,
 	startOfWeek,
 } from "./lib/dates";
-import type { CalEvent, Task, TaskInput, EventInput } from "./lib/types";
+import type { CalEvent, Task, TaskInput, EventInput, Scope } from "./lib/types";
 import {
 	useTasks,
 	useTasksDone,
@@ -231,13 +231,13 @@ export default function App() {
 		});
 	}
 
-	function remove(ev: CalEvent) {
+	function remove(ev: CalEvent, scope: Scope = "one") {
 		setDialog(null);
 		const synced = ev.calendarId !== "local";
-		deleteEvent.mutate(ev.id, {
+		deleteEvent.mutate({ id: ev.id, scope }, {
 			onSuccess: () =>
 				setToast({
-					text: `Deleted “${ev.title}”${ev.repeats ? " (this day)" : ""}`,
+					text: `Deleted “${ev.title}”${ev.repeats ? (scope === "all" ? " (every day)" : " (this day)") : ""}`,
 					// iCloud events wait before the delete is sent, so Undo just cancels it.
 					undo: () =>
 						synced ? restoreEvent.mutate(ev.id) : saveEvent.mutate({

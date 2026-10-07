@@ -102,6 +102,71 @@ export function editEvent(ics: string, href: string, remoteId: string, changes: 
   return root.toString();
 }
 
+/** Changes to every day of a repeating event. */
+export interface SeriesChanges {
+  title?: string;
+  location?: string | null;
+  /** Moves every day's start by this much (e.g. an hour later). */
+  shiftMs?: number;
+  /** Makes every day this long. */
+  durationMs?: number;
+}
+
+/** The series' own title and address (from its main event, not any one changed day). */
+export function seriesDetails(ics: string): { title: string; location: string | null } | null {
+  const { master } = load(ics);
+  if (!master) return null;
+  return {
+    title: String(master.getFirstPropertyValue('summary') ?? ''),
+    location: String(master.getFirstPropertyValue('location') ?? '').replace(/\s*\n\s*/g, ', ').trim() || null,
+  };
+}
+
+/** Moves a time property by `ms`, keeping its time zone. */
+function shift(prop: ICAL.Property, ms: number) {
+  const moved = (prop.getValues() as ICAL.Time[]).map((t) => {
+    const next = t.clone();
+    next.adjust(0, 0, 0, Math.round(ms / 1000));
+    return next;
+  });
+  // EXDATE can hold several dates; the others hold one.
+  if (prop.isMultiValue) prop.setValues(moved);
+  else prop.setValue(moved[0]);
+}
+
+/**
+ * Returns the resource with every day of a repeating event changed. A new time moves the whole
+ * series, and the days already moved or skipped move with it so they still line up.
+ */
+export function editSeries(ics: string, changes: SeriesChanges): string {
+  const { root, vevents, master } = load(ics);
+  if (!master) throw new Error('This repeating event has no main event to change');
+  for (const v of vevents) {
+    if (changes.title !== undefined) v.updatePropertyWithValue('summary', changes.title);
+    if (changes.location !== undefined) {
+      v.removeAllProperties('x-apple-structured-location');
+      if (changes.location) v.updatePropertyWithValue('location', changes.location);
+      else v.removeAllProperties('location');
+    }
+    if (changes.shiftMs) {
+      for (const name of ['dtstart', 'dtend', 'recurrence-id', 'exdate']) {
+        for (const prop of v.getAllProperties(name)) shift(prop, changes.shiftMs);
+      }
+    }
+  }
+  if (changes.durationMs !== undefined) {
+    const start = master.getFirstPropertyValue('dtstart') as ICAL.Time;
+    const end = start.clone();
+    end.adjust(0, 0, 0, Math.round(changes.durationMs / 1000));
+    const tzid = master.getFirstProperty('dtstart')!.getParameter('tzid') as string | undefined;
+    master.removeAllProperties('dtend');
+    master.removeAllProperties('duration');
+    master.addProperty(timeProp('dtend', end, tzid));
+  }
+  stamp(master);
+  return root.toString();
+}
+
 /** A new event resource, for one made on the wall. */
 export function newEvent(uid: string, d: Details): string {
   const root = new ICAL.Component(['vcalendar', [], []]);

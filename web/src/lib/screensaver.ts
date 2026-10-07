@@ -5,7 +5,23 @@ export const SCREEN_SAVER_DEFAULTS: ScreenSaverSettings = {
   idleMinutes: 15,
   seconds: 20,
   transition: 'mix',
+  night: true,
+  nightFrom: '22:00',
+  nightTo: '06:00',
 };
+
+/** Whether `now` is in the night hours (which can run past midnight, e.g. 22:00 to 06:00). */
+export function isNight(s: { night: boolean; nightFrom: string; nightTo: string }, now = new Date()) {
+  if (!s.night) return false;
+  const t = now.getHours() * 60 + now.getMinutes();
+  const mins = (hhmm: string) => {
+    const [h, m] = hhmm.split(':').map(Number);
+    return h * 60 + m;
+  };
+  const from = mins(s.nightFrom);
+  const to = mins(s.nightTo);
+  return from <= to ? t >= from && t < to : t >= from || t < to;
+}
 
 export const TRANSITIONS: { id: ScreenSaverSettings['transition']; label: string }[] = [
   { id: 'mix', label: 'A mix of all' },

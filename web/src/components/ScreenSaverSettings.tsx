@@ -44,6 +44,22 @@ export default function ScreenSaverSettings({ onPreview, bare }: { onPreview?: (
               </select>
             </label>
           </div>
+          <label className={s.saverRow}>
+            <input type="checkbox" checked={saver.night} onChange={(e) => save({ night: e.target.checked })} />
+            Dim the photos at night (and change them more slowly)
+          </label>
+          {saver.night && (
+            <div className={s.saverGrid}>
+              <label>
+                From
+                <input type="time" value={saver.nightFrom} onChange={(e) => e.target.value && save({ nightFrom: e.target.value })} />
+              </label>
+              <label>
+                Until
+                <input type="time" value={saver.nightTo} onChange={(e) => e.target.value && save({ nightTo: e.target.value })} />
+              </label>
+            </div>
+          )}
           <p className={s.hint}>Pick which photos it shows on the Photos page.</p>
           {onPreview && <button type="button" className={s.saverPreview} onClick={onPreview}>Play it now</button>}
         </>

@@ -65,8 +65,8 @@ export async function preparePhoto(file: File): Promise<Prepared> {
 }
 
 /** Uploads a prepared photo, reporting progress from 0 to 1. */
-export function uploadPhoto(p: Prepared, onProgress: (f: number) => void): Promise<Photo> {
-  const query = new URLSearchParams({ width: String(p.width), height: String(p.height), takenAt: p.takenAt });
+export function uploadPhoto(p: Prepared, inSlideshow: boolean, onProgress: (f: number) => void): Promise<Photo> {
+  const query = new URLSearchParams({ width: String(p.width), height: String(p.height), takenAt: p.takenAt, inSlideshow: String(inSlideshow) });
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `/api/photos?${query}`);

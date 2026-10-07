@@ -123,18 +123,22 @@ the wall, not on phones.
   once (drag them in, or choose them in Finder; you can also drop photos anywhere on the page); each is shrunk to wall size in the browser first (iPhone photos included). Photos in the screen
   saver have a ✓. **Select** starts with those selected; tap photos to change it, then **Save selection**. Tap a photo
   to see it full size (or delete it). Photos are stored in `data/photos` (not in git). To upload from phones, the server has to be
-  reachable on your Wi-Fi (`HOST=0.0.0.0`).
+  reachable on your Wi-Fi (`HOST=0.0.0.0`). Untick **Add them to the screen saver** in the upload pop-up to keep a
+  batch out of it.
 - **Screen saver:** after 15 minutes without a touch, the wall shows the album full screen, shuffled, with the time
   and weather in a corner (not while a pop-up is open; "time to leave" alerts still show on top). Swipe for the
   next or previous photo; the small pause icon (top right) holds the current one and shows ‹ › to step through
   (arrow keys and Space on a keyboard). Tap anywhere else to close.
   In **Settings**: on or off, how long before it starts, how long each photo stays up (20 seconds by default),
-  and the transition (a mix, crossfade, slow zoom and pan, slide, zoom, blur or flip); the same settings open from
+  the transition (a mix, crossfade, slow zoom and pan, slide, zoom, blur or flip), and night hours when the photos
+  are dimmed and change more slowly (10 PM to 6 AM by default); the same settings open from
   **Screen saver settings** on the Photos page, with **Play it now**.
 - **Edit or delete:** tap an event. Delete asks twice, and you get 10 seconds to undo.
 - **iCloud events:** tap one, then **Edit event** to change its title, time or address, or delete it. The change
   shows at once (marked ↻ until it's sent) and goes to iCloud after the 10-second Undo, then to your phones. For a
-  repeating event, changes and deletes apply to that one day. If iCloud can't be reached, changes wait and are
+  repeating event, Save and Delete ask whether it's **this day only** or **every day** (every day can rename it, change
+  its address, or move every day's time; all-day changes to a whole series are made on the phone). An event that's in
+  two calendars (shown once) is changed or deleted in both. If iCloud can't be reached, changes wait and are
   retried with every sync. If the same detail was changed on another device meanwhile, the wall asks which version
   to keep (**Keep mine** or **Use iCloud's**); changes to other details on the phone are kept either way.
 - **Family:** in **Settings** (the gear at the bottom of the left bar), rename people and change their color at any time. Adding and removing people is hidden for now (`CAN_ADD_OR_REMOVE` in `web/src/components/MembersPanel.tsx`). Colors only change this display.
