@@ -3,6 +3,7 @@ import { useWeather } from "../lib/queries";
 import { sky } from "../lib/weather";
 import { isNight, TRANSITIONS } from "../lib/screensaver";
 import type { Photo, ScreenSaverSettings } from "../lib/types";
+import { timeLabel } from "../lib/dates";
 import s from "../styles/ScreenSaver.module.css";
 
 type Effect = Exclude<ScreenSaverSettings["transition"], "mix"> | "slideBack";
@@ -195,7 +196,7 @@ export default function ScreenSaver({ photos, settings, onClose }: { photos: Pho
 			)}
 
 			<div className={s.corner}>
-				<span className={s.time}>{now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
+				<span className={s.time}>{timeLabel(now)}</span>
 				{weather && look && (
 					<span className={s.weather}>
 						{look.icon} {weather.temp}°

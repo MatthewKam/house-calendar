@@ -44,12 +44,8 @@
 }
 /* A text button under the icons. */
 .more {
+	composes: textButton from "./Buttons.module.css";
 	align-self: flex-start;
-	min-height: 0;
 	padding: 0.2rem 0;
 	font-size: 0.9rem;
-	font-weight: 650;
-	color: var(--accent);
-	text-decoration: underline;
-	text-underline-offset: 0.2em;
 }

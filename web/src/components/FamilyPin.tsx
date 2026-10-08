@@ -1,16 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import { ago } from '../lib/dates';
 import sheet from '../styles/Sheet.module.css';
 import s from '../styles/MembersPanel.module.css';
-
-const ago = (iso: string) => {
-  const min = Math.round((Date.now() - Date.parse(iso)) / 60_000);
-  if (min < 2) return 'now';
-  if (min < 60) return `${min} min ago`;
-  if (min < 48 * 60) return `${Math.round(min / 60)} h ago`;
-  return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric' });
-};
 
 /** Settings: set or change the family PIN, and see (and sign out) the devices signed in with it. */
 export default function FamilyPin() {

@@ -1,10 +1,11 @@
-import { useState, type CSSProperties, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { addDays, dayKey, fromDayKey, hhmm, timeLabel, toInstant } from '../lib/dates';
-import { textOn, UNASSIGNED } from '../lib/color';
+import { UNASSIGNED } from '../lib/color';
 import { useCalendars, useSetPeople, useSetSetting, useSettings } from '../lib/queries';
 import type { CalEvent, EventInput, Member, Scope } from '../lib/types';
 import { PencilIcon } from './icons';
 import TravelInfo from './TravelInfo';
+import { PickChip } from './NameChip';
 import sheet from '../styles/Sheet.module.css';
 import s from '../styles/EventDialog.module.css';
 
@@ -28,14 +29,11 @@ const QUICK = ['Practice', 'Appointment', 'Dinner out', 'Pick up', 'Work trip'];
  */
 function WhoPicker({ members, value, onChange }: { members: Member[]; value: string[]; onChange: (ids: string[]) => void }) {
   const chip = (id: string | null, name: string, color: string, on: boolean) => (
-    <button key={id ?? 'everyone'} type="button" className={`${s.person} ${on ? s.on : ''}`} aria-pressed={on}
-      style={{ '--c': color, color: on ? textOn(color) : undefined } as CSSProperties}
+    <PickChip key={id ?? 'everyone'} name={name} color={color} on={on}
       onClick={() => onChange(id === null ? []
         : value.includes(id) ? value.filter((x) => x !== id)
         // Keep family order so the stripe and names read the same everywhere.
-        : members.map((m) => m.id).filter((x) => x === id || value.includes(x)))}>
-      {name}
-    </button>
+        : members.map((m) => m.id).filter((x) => x === id || value.includes(x)))} />
   );
   return (
     <>
@@ -89,8 +87,7 @@ function SyncedEvent({ event, members, onClose, onEdit }: { event: CalEvent; mem
             <div className={s.whoRow}>
               <div className={s.wrap}>
                 {(people.length ? people : [{ id: 'everyone', name: 'Everyone', color: UNASSIGNED }]).map((m) => (
-                  <span key={m.id} className={`${s.person} ${s.on} ${s.static}`}
-                    style={{ '--c': m.color, color: textOn(m.color) } as CSSProperties}>{m.name}</span>
+                  <PickChip key={m.id} name={m.name} color={m.color} on />
                 ))}
               </div>
               <button type="button" className={s.editWho} onClick={() => setDraft(memberIds)}>

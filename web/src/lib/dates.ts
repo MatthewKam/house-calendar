@@ -26,8 +26,18 @@ export function monthGridDays(d: Date, weekStartsOn = 0) {
   return Array.from({ length: count }, (_, i) => addDays(first, i));
 }
 
-export const timeLabel = (iso: string) =>
-  new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+/** "6:52 PM" (in the display's own style), from an instant or a Date. */
+export const timeLabel = (when: string | Date) =>
+  new Date(when).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+/** "just now", "5 min ago", "2 h ago", then the date ("Oct 4"). */
+export function ago(iso: string) {
+  const min = Math.round((Date.now() - Date.parse(iso)) / 60_000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min} min ago`;
+  if (min < 24 * 60) return `${Math.round(min / 60)} h ago`;
+  return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
 
 /** HH:MM in local time, for <input type="time">. */
 export const hhmm = (iso: string) => {
