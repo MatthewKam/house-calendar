@@ -45,6 +45,10 @@ export default function ScreenSaverSettings({ onPreview, bare }: { onPreview?: (
             </label>
           </div>
           <label className={s.saverRow}>
+            <input type="checkbox" checked={saver.showEvents} onChange={(e) => save({ showEvents: e.target.checked })} />
+            Show today's events (bottom left, under the clock)
+          </label>
+          <label className={s.saverRow}>
             <input type="checkbox" checked={saver.night} onChange={(e) => save({ night: e.target.checked })} />
             Dim the photos at night (and change them more slowly)
           </label>

@@ -184,6 +184,69 @@
 .tile:hover img {
 	transform: scale(1.04);
 }
+/* Videos: ▶ and the length in a corner; "Preparing…" while the server converts a new one. */
+.videoBadge {
+	position: absolute;
+	left: 0.4rem;
+	bottom: 0.4rem;
+	padding: 0.1rem 0.45rem;
+	border-radius: 999px;
+	font-size: 0.8rem;
+	font-weight: 650;
+	color: #fff;
+	background: rgb(0 0 0 / 0.55);
+}
+.preparing {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.45rem;
+	width: 100%;
+	height: 100%;
+	padding: 0.8rem;
+	text-align: center;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--muted);
+}
+.preparing .uploadBar {
+	flex: none;
+	width: 80%;
+}
+.preparingIcon {
+	font-size: 1.8rem;
+	animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+	50% {
+		opacity: 0.45;
+		transform: scale(0.92);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.preparingIcon {
+		animation: none;
+	}
+}
+/* "Uploading 45%", "Converting 42%", "Ready ✓". */
+.uploadStep {
+	flex: none;
+	min-width: 8.5rem;
+	font-size: 0.85rem;
+	color: var(--muted);
+	font-variant-numeric: tabular-nums;
+}
+/* Converting: a striped bar that moves, so it's clearly still working. */
+.convertingBar span {
+	background: repeating-linear-gradient(-45deg, var(--accent) 0 0.4rem, #4a4f58 0.4rem 0.8rem) 0 0 / 1.13rem 100%;
+	animation: stripes 0.8s linear infinite;
+}
+@keyframes stripes {
+	to {
+		background-position: 1.13rem 0;
+	}
+}
 /* Select mode: every photo gets a circle to tick. Picked photos get a thick frame and a filled
    tick, and the rest fade back a little so the picked ones stand out. */
 .check {

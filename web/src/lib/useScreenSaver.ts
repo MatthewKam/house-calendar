@@ -9,8 +9,8 @@ import { screenSaverSettings } from './screensaver';
  */
 export function useScreenSaver() {
   const settings = screenSaverSettings(useSettings().data?.screensaver);
-  // The photos picked for it (on the Photos page).
-  const photos = (usePhotos().data ?? []).filter((p) => p.inSlideshow);
+  // The photos and videos picked for it (on the Photos page), once ready.
+  const photos = (usePhotos().data ?? []).filter((p) => p.inSlideshow && p.ready);
   const [on, setOn] = useState(false);
 
   useEffect(() => {

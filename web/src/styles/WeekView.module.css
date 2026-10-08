@@ -1,43 +1,164 @@
-.week { flex: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; min-height: 0; min-width: 0; }
+/* One strip of days with a thin line between them (phones: separate cards, below). */
+.week {
+	flex: 1;
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	min-height: 0;
+	min-width: 0;
+	border-radius: var(--radius);
+	background: var(--surface);
+}
 .day {
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 0.6rem; display: flex; flex-direction: column; min-height: 0; position: relative; cursor: pointer;
+	background: var(--surface);
+	border-left: 1px solid var(--line);
+	padding: 0.4rem;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	position: relative;
+	cursor: pointer;
 }
-.today { background: var(--today); border-color: #f0d68a; }
-.selected { outline: 2px solid var(--accent); outline-offset: -1px; }
-.date { display: flex; align-items: baseline; gap: 0.4rem; margin-bottom: 0.5rem; }
-.dow { color: var(--muted); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.04em; }
-.num { font-size: 1.6rem; font-weight: 650; }
-.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; overflow-y: auto; }
+.day:first-child {
+	border-left: none;
+	border-radius: var(--radius) 0 0 var(--radius);
+}
+.day:nth-child(7) {
+	border-radius: 0 var(--radius) var(--radius) 0;
+}
+/* Today: the same background, raised a little above the rest. */
+.today {
+	z-index: 1;
+	border-left-color: transparent;
+	box-shadow:
+		0 0.35rem 1.2rem rgb(0 0 0 / 0.14),
+		0 0 0 1px rgb(0 0 0 / 0.04);
+}
+.today + .day {
+	border-left-color: transparent;
+}
+/* The time now, between what's started and what's next. */
+.nowLine {
+	position: relative;
+	height: 2px;
+	margin: 0.15rem 0 0.15rem 0.35rem;
+	background: #e5484d;
+	border-radius: 1px;
+}
+.nowLine::before {
+	content: "";
+	position: absolute;
+	left: -0.35rem;
+	top: 50%;
+	width: 0.6rem;
+	height: 0.6rem;
+	border-radius: 50%;
+	background: #e5484d;
+	transform: translateY(-50%);
+}
+.selected {
+	outline: 2px solid var(--accent);
+	outline-offset: -1px;
+}
+.date {
+	display: flex;
+	align-items: baseline;
+	gap: 0.4rem;
+	margin-bottom: 0.5rem;
+}
+.dow {
+	color: var(--muted);
+	text-transform: uppercase;
+	font-size: 0.8rem;
+	letter-spacing: 0.04em;
+}
+.num {
+	font-size: 1.6rem;
+	font-weight: 650;
+}
+.list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	overflow-y: auto;
+}
 .ev {
-  width: 100%; text-align: left; display: flex; flex-direction: column; align-items: flex-start;
-  padding: 0.4rem 0.6rem 0.4rem 0.95rem; border-radius: 0.6rem; min-height: 2.75rem; justify-content: center;
-  /* Left bar and background split between everyone it's for (see eventPaint). */
-  background: var(--stripe) left / 0.35rem 100% no-repeat, var(--tint);
+	width: 100%;
+	text-align: left;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	padding: 0.4rem 0.6rem 0.4rem 0.95rem;
+	border-radius: 0.2rem;
+	min-height: 2.75rem;
+	justify-content: center;
+	/* Left bar and background split between everyone it's for (see eventPaint). */
+	background:
+		var(--stripe) left / 0.35rem 100% no-repeat,
+		var(--tint);
 }
-.allday { background: var(--stripe) left / 0.35rem 100% no-repeat, var(--solid); font-weight: 600; }
-.time { font-size: 0.8rem; color: var(--muted); }
-.title { font-size: 1rem; line-height: 1.2; overflow-wrap: anywhere; }
+.allday {
+	background:
+		var(--stripe) left / 0.35rem 100% no-repeat,
+		var(--solid);
+	font-weight: 600;
+}
+.time {
+	font-size: 0.8rem;
+	color: var(--muted);
+}
+.title {
+	font-size: 1rem;
+	line-height: 1.2;
+	overflow-wrap: anywhere;
+}
 
 /* Phones and narrow screens (up to 960px): one day per row, top to bottom, so events get the full
    width; no wider than 650px, centered. */
 @media (max-width: 959.98px) {
-  .week {
-    grid-template-columns: 1fr; grid-auto-rows: min-content; overflow-y: auto; gap: 0.4rem;
-    width: 100%; max-width: 650px; margin-inline: auto;
-    /* A hair of room so the day cards' right border isn't clipped on sharp phone screens. */
-    padding-inline: 2px; box-sizing: border-box;
-    /* Room at the end, so the last card can scroll up past the round + button and the phone's home bar. */
-    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
-  }
-  .day { min-height: 3.5rem; padding: 0.5rem 0.6rem; }
-  .date { margin-bottom: 0.3rem; }
-  .list { overflow: visible; }
-  .ev { min-height: 2.4rem; }
+	.week {
+		grid-template-columns: 1fr;
+		grid-auto-rows: min-content;
+		overflow-y: auto;
+		gap: 0.4rem;
+		background: none;
+		width: 100%;
+		max-width: 650px;
+		margin-inline: auto;
+		/* A hair of room so the day cards' right border isn't clipped on sharp phone screens. */
+		padding-inline: 2px;
+		box-sizing: border-box;
+		/* Room at the end, so the last card can scroll up past the round + button and the phone's home bar. */
+		padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+	}
+	.day,
+	.day:first-child,
+	.day:nth-child(7) {
+		min-height: 3.5rem;
+		padding: 0.5rem 0.6rem;
+		border-left: none;
+		border-radius: var(--radius);
+	}
+	.date {
+		margin-bottom: 0.3rem;
+	}
+	.list {
+		overflow: visible;
+	}
+	.ev {
+		min-height: 2.4rem;
+	}
 }
 /* After the last day, across the whole list. */
-.footer { grid-column: 1 / -1; padding-top: 0.2rem; }
+.footer {
+	grid-column: 1 / -1;
+	padding-top: 0.2rem;
+}
 /* Phones on their side: the day list uses the full width rather than a centered column. */
 @media (max-height: 520px) {
-  .week { max-width: none; }
+	.week {
+		max-width: none;
+	}
 }

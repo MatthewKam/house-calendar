@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { usePhotoActions, usePhotos } from "../lib/queries";
-import { preparePhoto, uploadPhoto } from "../lib/photos";
+import { isVideo, preparePhoto, uploadPhoto, uploadVideo } from "../lib/photos";
+import type { Photo } from "../lib/types";
 import ConfirmDialog from "./ConfirmDialog";
 import Fab from "./Fab";
 import ScreenSaverSettings from "./ScreenSaverSettings";
@@ -18,6 +19,8 @@ interface Upload {
 	/** 0 to 1; done at 1. */
 	progress: number;
 	error?: string;
+	/** A video, once uploaded: it stays in the list while the server converts it. */
+	videoId?: string;
 }
 
 /** Which photos the grid shows. */
@@ -33,11 +36,65 @@ const taken = (iso: string | null) =>
 		: "Date unknown";
 
 /** The family photo album: upload, browse, and pick which photos the screen saver shows. */
+/** A video's length: "0:12". */
+const clock = (seconds: number | null) => {
+	const t = Math.round(seconds ?? 0);
+	return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+};
+
+/** A new video while the server converts it: 🎬, how far along, and a bar. */
+function Converting({ progress }: { progress: number | null }) {
+	const pct = Math.round((progress ?? 0) * 100);
+	return (
+		<span className={s.preparing}>
+			<span className={s.preparingIcon} aria-hidden="true">
+				🎬
+			</span>
+			{pct ? `Converting ${pct}%` : "Waiting to convert…"}
+			<span className={s.uploadBar}>
+				<span style={{ width: `${pct}%` }} />
+			</span>
+		</span>
+	);
+}
+
+/**
+ * An upload's progress. A video goes on to "Converting" (as the server reports it) and "Ready" before
+ * it leaves the list.
+ */
+function UploadStatus({ upload: u, video }: { upload: Upload; video?: Photo }) {
+	const converting = !!u.videoId;
+	const step = !converting
+		? { label: u.progress < 1 && u.progress > 0 ? `Uploading ${Math.round(u.progress * 100)}%` : "", f: u.progress }
+		: video?.ready
+			? { label: "Ready ✓", f: 1 }
+			: { label: `Converting ${Math.round((video?.progress ?? 0) * 100)}%`, f: video?.progress ?? 0 };
+	return (
+		<>
+			{step.label && <span className={s.uploadStep}>{step.label}</span>}
+			<span className={`${s.uploadBar} ${converting && !video?.ready ? s.convertingBar : ""}`}>
+				<span style={{ width: `${step.f * 100}%` }} />
+			</span>
+		</>
+	);
+}
+
 export default function PhotosPage({ onPreview }: Props) {
 	const photos = usePhotos().data ?? [];
 	const { refresh, update, remove, setSlideshow } = usePhotoActions();
 	const [show, setShow] = useState<Show>("all");
 	const [uploads, setUploads] = useState<Upload[]>([]);
+	// A converted video shows "Ready" for a moment, then leaves the list (one removed meanwhile, too).
+	const doneVideos = uploads
+		.filter((u) => u.videoId && !photos.find((p) => p.id === u.videoId && !p.ready))
+		.map((u) => u.key)
+		.join(",");
+	useEffect(() => {
+		if (!doneVideos) return;
+		const keys = doneVideos.split(",");
+		const t = setTimeout(() => setUploads((u) => u.filter((x) => !keys.includes(x.key))), 2500);
+		return () => clearTimeout(t);
+	}, [doneVideos]);
 	const [viewing, setViewing] = useState<string | null>(null);
 	// Select mode: the photos in the screen saver start out selected; tap to change, then Save selection.
 	const [selecting, setSelecting] = useState(false);
@@ -115,10 +172,11 @@ export default function PhotosPage({ onPreview }: Props) {
 	};
 
 	async function add(files: FileList | File[] | null) {
-		// Only images (a dropped folder or document is skipped).
+		// Only images and videos (a dropped folder or document is skipped).
 		const images = [...(files ?? [])].filter(
 			(f) =>
 				f.type.startsWith("image/") ||
+				isVideo(f) ||
 				/\.(heic|heif|jpe?g|png|webp|gif)$/i.test(f.name),
 		);
 		if (!images.length) return;
@@ -134,11 +192,15 @@ export default function PhotosPage({ onPreview }: Props) {
 		// One at a time, so a phone on Wi-Fi isn't sending ten at once.
 		for (const b of batch) {
 			try {
-				const prepared = await preparePhoto(b.file);
-				await uploadPhoto(prepared, toSaver, (f) =>
-					set(b.key, { progress: Math.min(0.99, f) }),
-				);
-				set(b.key, { progress: 1 });
+				const progress = (f: number) => set(b.key, { progress: Math.min(0.99, f) });
+				// Videos go up as they are (the server converts them); photos are shrunk here first.
+				if (isVideo(b.file)) {
+					const video = await uploadVideo(b.file, toSaver, progress);
+					set(b.key, { progress: 1, videoId: video.id });
+				} else {
+					await uploadPhoto(await preparePhoto(b.file), toSaver, progress);
+					set(b.key, { progress: 1 });
+				}
 			} catch (e) {
 				set(b.key, { error: e instanceof Error ? e.message : String(e) });
 			}
@@ -146,7 +208,8 @@ export default function PhotosPage({ onPreview }: Props) {
 		await refresh();
 		// Finished ones go away after a moment; failures stay until dismissed.
 		setTimeout(
-			() => setUploads((u) => u.filter((x) => x.error || x.progress < 1)),
+			// Videos stay until they're converted (below).
+			() => setUploads((u) => u.filter((x) => x.error || x.progress < 1 || x.videoId)),
 			2500,
 		);
 		if (input.current) input.current.value = "";
@@ -179,7 +242,7 @@ export default function PhotosPage({ onPreview }: Props) {
 					<input
 						ref={input}
 						type="file"
-						accept="image/*"
+						accept="image/*,video/*"
 						multiple
 						hidden
 						onChange={(e) => {
@@ -271,9 +334,7 @@ export default function PhotosPage({ onPreview }: Props) {
 									</button>
 								</>
 							) : (
-								<span className={s.uploadBar}>
-									<span style={{ width: `${u.progress * 100}%` }} />
-								</span>
+								<UploadStatus upload={u} video={photos.find((p) => p.id === u.videoId)} />
 							)}
 						</li>
 					))}
@@ -304,7 +365,16 @@ export default function PhotosPage({ onPreview }: Props) {
 								aria-label={`Photo from ${taken(p.takenAt)}`}
 								onClick={() => (selecting ? toggle(p.id) : setViewing(p.id))}
 							>
-								<img src={p.thumbUrl} alt="" loading="lazy" decoding="async" />
+								{p.ready ? (
+									<img src={p.thumbUrl} alt="" loading="lazy" decoding="async" />
+								) : (
+									<Converting progress={p.progress} />
+								)}
+								{p.kind === "video" && p.ready && (
+									<span className={s.videoBadge} aria-label={`Video, ${clock(p.seconds)}`}>
+										▶ {clock(p.seconds)}
+									</span>
+								)}
 								{/* Selecting: a circle on every photo, filled when selected. Otherwise a tick on the screen saver's photos. */}
 								{selecting ? (
 									<span
@@ -353,7 +423,16 @@ export default function PhotosPage({ onPreview }: Props) {
 								‹
 							</button>
 						)}
-						<img key={current.id} src={current.url} alt="" className={s.big} />
+						{current.kind === "video" ? (
+							current.ready ? (
+								<video key={current.id} src={current.url} poster={current.thumbUrl} className={s.big}
+									autoPlay muted loop playsInline controls />
+							) : (
+								<Converting progress={current.progress} />
+							)
+						) : (
+							<img key={current.id} src={current.url} alt="" className={s.big} />
+						)}
 						{index < shown.length - 1 && (
 							<button
 								className={`${s.nav} ${s.next}`}
@@ -457,7 +536,7 @@ export default function PhotosPage({ onPreview }: Props) {
 					/>
 					<div className={sheet.sheet} role="dialog" aria-label="Upload photos">
 						<header className={sheet.head}>
-							<h2 className={sheet.heading}>Upload photos</h2>
+							<h2 className={sheet.heading}>Upload photos and videos</h2>
 							<button
 								className={sheet.close}
 								onClick={() => setUploadOpen(false)}
@@ -470,7 +549,7 @@ export default function PhotosPage({ onPreview }: Props) {
 							<span className={s.dropIcon} aria-hidden="true">
 								🖼️
 							</span>
-							<strong>Drag photos here</strong>
+							<strong>Drag photos or videos here</strong>
 							<span className={s.dropOr}>or</span>
 							<button
 								className={s.upload}
@@ -481,6 +560,12 @@ export default function PhotosPage({ onPreview }: Props) {
 							<span className={s.dropHint}>
 								Pick as many as you like. They're shrunk to wall size before
 								uploading.
+							</span>
+							{/* Dragging from the Photos app into Chrome only hands over a still preview. */}
+							<span className={s.dropHint}>
+								Videos from the Photos app: drag them to the desktop first, or
+								use Choose from Finder → Photos (under Media). Dragging straight
+								from Photos only sends a still picture.
 							</span>
 						</div>
 						<label className={s.toggle}>
@@ -498,7 +583,7 @@ export default function PhotosPage({ onPreview }: Props) {
 			{/* Dragging photos over the page: drop anywhere. */}
 			{dragging && !uploadOpen && (
 				<div className={s.dropOverlay} aria-hidden="true">
-					<div>Drop photos to upload</div>
+					<div>Drop photos or videos to upload</div>
 				</div>
 			)}
 		</section>

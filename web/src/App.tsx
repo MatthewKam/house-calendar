@@ -37,6 +37,7 @@ import LeaveAlerts from "./components/LeaveAlerts";
 import NowLine from "./components/NowLine";
 import WeatherCard from "./components/WeatherCard";
 import DailyCards from "./components/DailyCards";
+import PhotoCard from "./components/PhotoCard";
 import OutboxNotices from "./components/OutboxNotices";
 import Fab from "./components/Fab";
 import { FilterChip } from "./components/NameChip";
@@ -157,6 +158,18 @@ export default function App() {
 
 	// Photos when the wall is idle.
 	const saver = useScreenSaver();
+	// Under the week: the photo slideshow, beside the weather with the day's joke and quote beneath it.
+	const cards = (
+		<div className={s.cards}>
+			<PhotoCard onPlay={saver.show} />
+			<div className={s.cardsSide}>
+				<WeatherCard />
+				<div className={s.cardsDaily}>
+					<DailyCards today={today} />
+				</div>
+			</div>
+		</div>
+	);
 
 	// At midnight, move to the new day if the old one was on screen.
 	const [shownToday, setShownToday] = useState(today);
@@ -437,12 +450,7 @@ export default function App() {
 								members={members}
 								onSelect={setSelected}
 								onOpen={(event, day) => setDialog({ day, event })}
-								footer={view === "week" && narrow ? (
-									<div className={s.cards}>
-										<WeatherCard />
-										<DailyCards today={today} />
-									</div>
-								) : undefined}
+								footer={view === "week" && narrow ? cards : undefined}
 							/>
 						)}
 						{selected && (
@@ -457,14 +465,7 @@ export default function App() {
 							/>
 						)}
 					</div>
-					{/* Week view only: the weather now, the sun, and the week ahead. */}
-					{/* Week view: the weather, then the day's joke and quote. */}
-					{view === "week" && !narrow && !settings.isPending && (
-						<div className={s.cards}>
-							<WeatherCard />
-							<DailyCards today={today} />
-						</div>
-					)}
+					{view === "week" && !narrow && !settings.isPending && cards}
 					</>)}
 				</div>
 			</div>
@@ -511,7 +512,18 @@ export default function App() {
 			{page === "calendar" && <Fab label="Add event" onClick={() => setDialog({ day: newEventDay() })} />}
 			{/* Add a task, for no one in particular yet (each kid's card has its own Add a task). */}
 			{page === "tasks" && <Fab label="Add a task" onClick={() => setTaskDialog({ blank: true })} />}
-			{saver.on && <ScreenSaver photos={saver.photos} settings={saver.settings} onClose={saver.hide} />}
+			{saver.on && (
+				<ScreenSaver
+					photos={saver.photos}
+					settings={saver.settings}
+					onClose={saver.hide}
+					onOpenEvent={(event, day) => {
+						saver.hide();
+						setPage("calendar");
+						setDialog({ day, event });
+					}}
+				/>
+			)}
 			{cheer.cheer && <Celebration cheer={cheer.cheer} onDone={cheer.done} />}
 			{/* "Time to leave" alerts, on whichever page is showing (above the screen saver too). */}
 			<LeaveAlerts />

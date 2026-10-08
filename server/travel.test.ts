@@ -150,3 +150,32 @@ describe('leave alerts', () => {
     vi.useRealTimers();
   });
 });
+
+describe('drive times on the screen saver', () => {
+  it("times today's events still to come that have an address, and reuses the answers", async () => {
+    let calls = 0;
+    const travel: Estimator = async () => {
+      calls++;
+      return { seconds: 18 * 60, meters: 9_000 };
+    };
+    const app = buildApp(openDb(':memory:'), { travel });
+    await app.inject({ method: 'PUT', url: '/api/settings/homeAddress', payload: { value: '1 Home Rd' } });
+    const add = async (title: string, hoursAhead: number, location: string | null) =>
+      JSON.parse((await app.inject({ method: 'POST', url: '/api/events', payload: {
+        title, allDay: false, location,
+        start: new Date(Date.now() + hoursAhead * 3_600_000).toISOString(),
+        end: new Date(Date.now() + (hoursAhead + 1) * 3_600_000).toISOString() } })).body).id as string;
+    // Halfway between now and midnight: later today.
+    const midnight = new Date(new Date().setHours(24, 0, 0, 0)).getTime();
+    const later = (midnight - Date.now()) / 2 / 3_600_000;
+    const soccer = await add('Soccer', later, '5 Park Ave');
+    await add('Yesterday', -24, '5 Park Ave'); // over
+    await add('Tomorrow', 30, '5 Park Ave'); // not today
+    await add('At home', later, null); // no address
+    const times = () => app.inject({ url: '/api/travel/times' }).then((r) => JSON.parse(r.body));
+    expect(await times()).toEqual({ [soccer]: 18 });
+    expect(calls).toBe(1);
+    expect(await times()).toEqual({ [soccer]: 18 });
+    expect(calls).toBe(1); // the same answer, without asking Google again
+  });
+});

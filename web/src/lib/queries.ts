@@ -405,7 +405,9 @@ export const useRemoveMember = () => useMemberMutation((id: string) => api.remov
 
 /** The photo album, newest first. */
 export function usePhotos() {
-  return useQuery({ queryKey: ['photos'], queryFn: api.photos, refetchInterval: 5 * 60_000 });
+  // Every few seconds while a new video is being converted, so it shows up once it's ready.
+  return useQuery({ queryKey: ['photos'], queryFn: api.photos,
+    refetchInterval: (q) => (q.state.data?.some((p) => !p.ready) ? 1000 : 5 * 60_000) });
 }
 
 export function usePhotoActions() {
@@ -445,4 +447,15 @@ export function usePhotoActions() {
 /** The day's joke, quote and "on this day" (fetched once a day by the server). */
 export function useDaily(day: string) {
   return useQuery({ queryKey: ['daily', day], queryFn: () => api.daily(day), refetchInterval: 30 * 60_000, retry: false });
+}
+
+/**
+ * Drive minutes from home to each of today's events still to come that has an address, by event id
+ * (for the screen saver; the server keeps the answers, so this is cheap). Empty without a Google
+ * Maps key or a home address.
+ */
+export function useTravelTimes(eventIds: string[]) {
+  // Keyed by the events shown, so a new or changed event is timed straight away.
+  return useQuery({ queryKey: ['travelTimes', eventIds.join(',')], queryFn: api.travelTimes, refetchInterval: 10 * 60_000,
+    staleTime: 5 * 60_000, retry: false, placeholderData: keepPreviousData });
 }

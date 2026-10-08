@@ -447,6 +447,12 @@ const migrations: string[] = [
   `
   ALTER TABLE tasks ADD COLUMN due_by TEXT;
   `,
+  // Videos in the album: converted on the server (ready = 0 until then), with their length.
+  `
+  ALTER TABLE photos ADD COLUMN kind TEXT NOT NULL DEFAULT 'photo' CHECK (kind IN ('photo', 'video'));
+  ALTER TABLE photos ADD COLUMN seconds REAL;
+  ALTER TABLE photos ADD COLUMN ready INTEGER NOT NULL DEFAULT 1;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */
