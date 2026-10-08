@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type DragEvent } from "react";
 import { usePhotoActions, usePhotos } from "../lib/queries";
 import { isVideo, preparePhoto, uploadPhoto, uploadVideo } from "../lib/photos";
 import type { Photo } from "../lib/types";
+import { useMediaQuery } from "../lib/useMediaQuery";
 import ConfirmDialog from "./ConfirmDialog";
 import Fab from "./Fab";
 import ScreenSaverSettings from "./ScreenSaverSettings";
@@ -102,6 +103,9 @@ export default function PhotosPage({ onPreview }: Props) {
 	const [confirm, setConfirm] = useState(false);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const input = useRef<HTMLInputElement>(null);
+	// Phones and tablets: + goes straight to the system's picker, which itself offers the photo
+	// library, the camera and files (the drag-and-drop pop-up is for computers).
+	const touch = useMediaQuery("(pointer: coarse)");
 
 	const inCount = photos.filter((p) => p.inSlideshow).length;
 	const shown = photos.filter((p) => show === "all" || p.inSlideshow);
@@ -525,7 +529,7 @@ export default function PhotosPage({ onPreview }: Props) {
 				</ConfirmDialog>
 			)}
 			{/* Upload photos: the round + at the bottom right. */}
-			<Fab label="Upload photos" onClick={() => setUploadOpen(true)} />
+			<Fab label="Upload photos" onClick={() => (touch ? input.current?.click() : setUploadOpen(true))} />
 
 			{uploadOpen && (
 				<>
