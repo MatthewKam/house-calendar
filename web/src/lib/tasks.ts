@@ -26,6 +26,13 @@ export const tasksFor = (tasks: Task[], memberId: string) =>
 export const didTask = (done: TaskDone[], c: Task, memberId: string, day: string) =>
   done.some((d) => d.taskId === c.id && d.memberId === memberId && d.day === day);
 
+/** Whether this person has ticked every task due on `day` (required ones and extras); false if none are due. */
+export function allTasksDone(tasks: Task[], done: TaskDone[], memberId: string, day: string) {
+  const weekday = fromDayKey(day).getDay();
+  const due = tasksFor(tasks, memberId).filter((c) => c.days.includes(weekday));
+  return due.length > 0 && due.every((c) => didTask(done, c, memberId, day));
+}
+
 /**
  * Per member: required tasks due on `day` (their own and everyone's) and how many they've ticked off.
  * Extras don't count here; they earn points instead.

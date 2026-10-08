@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { openDb } from './db.ts';
 import { buildApp } from './app.ts';
 import { googleRoutes, planTrip, type Estimator } from './travel.ts';
@@ -133,5 +133,20 @@ describe('leave alerts', () => {
     expect(db.prepare('SELECT drive_minutes, leave_at, remind_at FROM leave_alerts').get())
       .toEqual({ drive_minutes: 35, leave_at: '2099-01-01T09:25:00.000Z', remind_at: '2099-01-01T09:20:00.000Z' });
     await app.close();
+  });
+
+  it('gives up on a lookup that hangs, instead of leaving the wall waiting', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const db = openDb(':memory:');
+    db.prepare(`INSERT INTO settings (key, value) VALUES ('homeAddress', '"1 Main St"')`).run();
+    const app = buildApp(db, { travel: () => new Promise(() => {}) });
+    const ev = (await app.inject({ method: 'POST', url: '/api/events', payload: {
+      title: 'Dentist', allDay: false, start: '2030-01-01T18:00:00.000Z', end: '2030-01-01T19:00:00.000Z', location: '2 Oak Ave' } })).json();
+    const res = app.inject({ url: `/api/events/${ev.id}/travel` });
+    await vi.advanceTimersByTimeAsync(10_500);
+    const done = await res;
+    expect(done.statusCode).toBe(502);
+    expect(done.json().error).toMatch(/taking too long/);
+    vi.useRealTimers();
   });
 });

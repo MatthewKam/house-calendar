@@ -59,12 +59,10 @@ function SyncedEvent({ event, members, onClose, onEdit }: { event: CalEvent; mem
   const [draft, setDraft] = useState<string[] | null>(null);
   function save() {
     if (!draft) return;
-    setPeople.mutate({ id: event.id, memberIds: draft }, {
-      onSuccess: () => {
-        setMemberIds(draft);
-        setDraft(null);
-      },
-    });
+    setPeople.mutate({ id: event.id, memberIds: draft });
+    // Shown straight away; it's put back (with a message) if the save fails.
+    setMemberIds(draft);
+    setDraft(null);
   }
   const people = members.filter((m) => memberIds.includes(m.id));
   const date = (d: Date) => d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });

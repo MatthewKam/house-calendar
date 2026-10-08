@@ -2,6 +2,7 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 	type CSSProperties,
 } from "react";
@@ -48,7 +49,8 @@ import PhotosPage from "./components/PhotosPage";
 import ScreenSaver from "./components/ScreenSaver";
 import { screenSaverSettings } from "./lib/screensaver";
 import TaskDialog from "./components/TaskDialog";
-import { taskProgress, percent, tasksFor } from "./lib/tasks";
+import { allTasksDone, taskProgress, percent, tasksFor } from "./lib/tasks";
+import Celebration from "./components/Celebration";
 import MembersPanel from "./components/MembersPanel";
 import Toast, { type ToastMessage } from "./components/Toast";
 import { UNASSIGNED } from "./lib/color";
@@ -115,8 +117,10 @@ export default function App() {
 	const saveTask = useSaveTask();
 	const deleteTask = useDeleteTask();
 	// Today's task progress per person, shown as a fill behind each name in the header.
-	const tasks = useTasks().data ?? [];
-	const tasksDone = useTasksDone(startOfWeek(fromDayKey(today))).data ?? [];
+	const tasksQuery = useTasks();
+	const tasksDoneQuery = useTasksDone(startOfWeek(fromDayKey(today)));
+	const tasks = tasksQuery.data ?? [];
+	const tasksDone = tasksDoneQuery.data ?? [];
 	const progress = taskProgress(
 		tasks,
 		tasksDone,
@@ -124,6 +128,24 @@ export default function App() {
 		members.map((m) => m.id),
 	);
 	const deleteEvent = useDeleteEvent();
+
+	// Confetti and a big Hooray when a kid ticks the last of every task due today (extras too). Only
+	// the moment it happens, on whichever screen is open: not just from opening the page later.
+	const [cheer, setCheer] = useState<string[] | null>(null);
+	const allDone = members.filter((m) => allTasksDone(tasks, tasksDone, m.id, today)).map((m) => m.id);
+	const allDoneKey = `${today}|${allDone.join(",")}`;
+	const wasAllDone = useRef<{ today: string; ids: string[] } | null>(null);
+	const loaded = tasksQuery.isSuccess && tasksDoneQuery.isSuccess && !tasksDoneQuery.isPlaceholderData;
+	useEffect(() => {
+		if (!loaded) return;
+		const before = wasAllDone.current;
+		wasAllDone.current = { today, ids: allDone };
+		if (!before || before.today !== today) return;
+		const newly = members.filter((m) => allDone.includes(m.id) && !before.ids.includes(m.id)).map((m) => m.name);
+		if (newly.length) setCheer(newly);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [allDoneKey, loaded]);
+	const endCheer = useCallback(() => setCheer(null), []);
 	const restoreEvent = useRestoreEvent();
 
 	const days = useMemo(
@@ -204,6 +226,13 @@ export default function App() {
 		setSetting.mutate({ key: "view", value: next });
 	}
 
+	// Any edit that couldn't be saved (it was shown straight away, and has been put back).
+	useEffect(() => {
+		const failed = (e: Event) => setToast({ text: `Couldn't save: ${(e as CustomEvent<string>).detail}` });
+		window.addEventListener("household:save-failed", failed);
+		return () => window.removeEventListener("household:save-failed", failed);
+	}, []);
+
 	useEffect(() => {
 		document.documentElement.style.fontSize = `${18 * uiScale}px`;
 	}, [uiScale]);
@@ -211,28 +240,18 @@ export default function App() {
 	function save(input: EventInput) {
 		const id = dialog?.event?.id;
 		setDialog(null);
-		saveEvent.mutate(
-			{ id, input },
-			{
-				onError: (e) => setToast({ text: `Couldn't save: ${e.message}` }),
-			},
-		);
+		saveEvent.mutate({ id, input });
 	}
 
 	function saveTaskInput(input: TaskInput) {
 		const id = taskDialog?.task?.id;
 		setTaskDialog(null);
-		saveTask.mutate(
-			{ id, input },
-			{ onError: (e) => setToast({ text: `Couldn't save: ${e.message}` }) },
-		);
+		saveTask.mutate({ id, input });
 	}
 
 	function removeTask(task: Task) {
 		setTaskDialog(null);
-		deleteTask.mutate(task.id, {
-			onError: (e) => setToast({ text: `Couldn't delete: ${e.message}` }),
-		});
+		deleteTask.mutate(task.id);
 	}
 
 	function remove(ev: CalEvent, scope: Scope = "one") {
@@ -255,7 +274,6 @@ export default function App() {
 							},
 						}),
 				}),
-			onError: (e) => setToast({ text: `Couldn't delete: ${e.message}` }),
 		});
 	}
 
@@ -543,6 +561,7 @@ export default function App() {
 			{saverOn && saverPhotos.length > 0 && (
 				<ScreenSaver photos={saverPhotos} settings={saver} onClose={() => setSaverOn(false)} />
 			)}
+			{cheer && <Celebration names={cheer} onDone={endCheer} />}
 			{/* "Time to leave" alerts, on whichever page is showing (above the screen saver too). */}
 			<LeaveAlerts />
 
