@@ -1,6 +1,6 @@
-import { Fragment, useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { dayKey, timeLabel } from '../lib/dates';
-import { eventPaint, eventsOn } from '../lib/events';
+import { eventPaint, eventsOn, isOver } from '../lib/events';
 import { useNow } from '../lib/useNow';
 import type { CalEvent, Member } from '../lib/types';
 import s from '../styles/WeekView.module.css';
@@ -18,12 +18,11 @@ interface Props {
   footer?: ReactNode;
 }
 
-/** The red "now" line in today's list. */
-const NowMark = ({ now }: { now: Date }) => <li className={s.nowLine} aria-label={`Now, ${timeLabel(now)}`} />;
-
 export default function WeekView({ days, today, selected, events, members, onSelect, onOpen, footer }: Props) {
   // When the days are a scrolling list (phones), open on today, or the top if today isn't shown.
   const list = useRef<HTMLDivElement>(null);
+  // Events that have ended fade back (checked every minute).
+  const now = useNow();
   const first = dayKey(days[0]);
   useEffect(() => {
     // Wait a frame: the text-size setting is applied after this renders and shifts the layout.
@@ -36,16 +35,11 @@ export default function WeekView({ days, today, selected, events, members, onSel
     return () => cancelAnimationFrame(frame);
   }, [first, days.length, today]);
 
-  // Today gets a red line at the time now: after what's started, before what's next.
-  const now = useNow();
-
   return (
     <div className={s.week} ref={list}>
       {days.map((day) => {
         const key = dayKey(day);
         const list = eventsOn(events, day);
-        const next = key === today ? list.findIndex((ev) => !ev.allDay && Date.parse(ev.start) > now.getTime()) : -2;
-        const nowAt = next === -1 ? list.length : next;
         return (
           // Tapping a day opens it in the day panel.
           <section key={key} data-day={key} className={`${s.day} ${key === today ? s.today : ''} ${key === selected ? s.selected : ''}`}
@@ -56,13 +50,11 @@ export default function WeekView({ days, today, selected, events, members, onSel
               <span className={s.num}>{day.getDate()}</span>
             </div>
             <ul className={s.list}>
-              {list.map((ev, i) => {
+              {list.map((ev) => {
                 const paint = eventPaint(ev, members);
                 return (
-                  <Fragment key={ev.id}>
-                  {i === nowAt && <NowMark now={now} />}
-                  <li>
-                    <button className={`${s.ev} ${ev.allDay ? s.allday : ''}`}
+                  <li key={ev.id}>
+                    <button className={`${s.ev} ${ev.allDay ? s.allday : ''} ${isOver(ev, now) ? s.past : ''}`}
                       style={{ ...paint.vars, color: ev.allDay ? paint.text : undefined } as CSSProperties}
                       onClick={(e) => { e.stopPropagation(); onOpen(ev, key); }}>
                       {!ev.allDay && (
@@ -73,10 +65,8 @@ export default function WeekView({ days, today, selected, events, members, onSel
                       <span className={s.title}>{ev.title}</span>
                     </button>
                   </li>
-                  </Fragment>
                 );
               })}
-              {nowAt === list.length && <NowMark now={now} />}
             </ul>
           </section>
         );

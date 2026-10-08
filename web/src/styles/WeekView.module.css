@@ -36,24 +36,16 @@
 .today + .day {
 	border-left-color: transparent;
 }
-/* The time now, between what's started and what's next. */
-.nowLine {
-	position: relative;
-	height: 2px;
-	margin: 0.15rem 0 0.15rem 0.35rem;
+.today.day .num {
+	display: grid;
+	place-items: center;
+	min-width: 1.9rem;
+	height: 1.9rem;
+	padding: 0 0.3rem;
+	border-radius: 999px;
 	background: #e5484d;
-	border-radius: 1px;
-}
-.nowLine::before {
-	content: "";
-	position: absolute;
-	left: -0.35rem;
-	top: 50%;
-	width: 0.6rem;
-	height: 0.6rem;
-	border-radius: 50%;
-	background: #e5484d;
-	transform: translateY(-50%);
+	color: #fff;
+	box-shadow: 0 0.2rem 0.5rem rgb(229 72 77 / 0.45);
 }
 .selected {
 	outline: 2px solid var(--accent);
@@ -104,6 +96,11 @@
 		var(--stripe) left / 0.35rem 100% no-repeat,
 		var(--solid);
 	font-weight: 600;
+}
+/* Over: faded back, so what's still to come stands out. */
+.past {
+	opacity: 0.45;
+	filter: saturate(0.4);
 }
 .time {
 	font-size: 0.8rem;

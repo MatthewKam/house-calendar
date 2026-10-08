@@ -32,7 +32,17 @@
 .outside .num {
 	color: var(--muted);
 }
+/* Over: faded back, so what's still to come stands out. */
+.past {
+	opacity: 0.45;
+	filter: saturate(0.4);
+}
 /* Today: the same background; its number in a raised red circle. */
+.today {
+	box-shadow:
+		0 0.35rem 1.2rem rgb(0 0 0 / 0.14),
+		0 0 0 1px rgb(0 0 0 / 0.04);
+}
 .today .num {
 	align-self: flex-start;
 	display: grid;

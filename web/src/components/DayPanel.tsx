@@ -1,8 +1,9 @@
-import { useEffect, type CSSProperties } from 'react';
-import { addDays, fromDayKey, timeLabel } from '../lib/dates';
-import { eventPaint, eventsOn } from '../lib/events';
+import { useEffect } from 'react';
+import { fromDayKey } from '../lib/dates';
+import { eventsOn } from '../lib/events';
 import { useRangeEvents } from '../lib/queries';
 import type { CalEvent, Member } from '../lib/types';
+import DayTimeline from './DayTimeline';
 import s from '../styles/DayPanel.module.css';
 
 interface Props {
@@ -14,16 +15,6 @@ interface Props {
   onAdd: (day: string) => void;
   onOpen: (event: CalEvent, day: string) => void;
   onClose: () => void;
-}
-
-/** "9:00 AM – 10:00 AM", or "until …" / "from …" when the event runs past this day. */
-function timeRange(ev: CalEvent, day: Date) {
-  const startsBefore = Date.parse(ev.start) < day.getTime();
-  const endsAfter = Date.parse(ev.end) > addDays(day, 1).getTime();
-  if (startsBefore && endsAfter) return 'All day';
-  if (startsBefore) return `until ${timeLabel(ev.end)}`;
-  if (endsAfter) return `from ${timeLabel(ev.start)}`;
-  return `${timeLabel(ev.start)} – ${timeLabel(ev.end)}`;
 }
 
 /** The selected day's events, floating over the right side of the month or week grid. */
@@ -55,24 +46,8 @@ export default function DayPanel({ day, shown, today, members, onAdd, onOpen, on
       </header>
 
       {events.length === 0 && <p className={s.empty}>Nothing planned.</p>}
-      <ul className={s.list}>
-        {events.map((ev) => {
-          const paint = eventPaint(ev, members);
-          return (
-            <li key={ev.id}>
-              <button className={`${s.ev} ${ev.allDay ? s.allday : ''}`}
-                style={{ ...paint.vars, color: ev.allDay ? paint.text : undefined } as CSSProperties}
-                onClick={() => onOpen(ev, day)}>
-                <span className={s.time}>{ev.allDay ? 'All day' : timeRange(ev, date)}</span>
-                <span className={s.title}>{ev.title}</span>
-                {paint.people.length > 0 && (
-                  <span className={s.who}>{new Intl.ListFormat([], { type: 'conjunction' }).format(paint.people.map((m) => m.name))}</span>
-                )}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      {/* All 24 hours, scrolled to the time now (or the first event). */}
+      <DayTimeline day={date} today={today} events={events} members={members} onOpen={(ev) => onOpen(ev, day)} />
 
       <button className={s.add} onClick={() => onAdd(day)}>+ Add event</button>
     </aside>

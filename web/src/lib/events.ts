@@ -44,3 +44,7 @@ export function eventPaint(ev: CalEvent, members: Member[]) {
     } as CSSProperties,
   };
 }
+
+/** Over by `now`: a timed event once it has ended; an all-day one once its last day has passed. */
+export const isOver = (ev: CalEvent, now: Date) =>
+  ev.allDay ? ev.end <= dayKey(now) : Date.parse(ev.end) <= now.getTime();

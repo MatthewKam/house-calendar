@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { dayKey, timeLabel } from '../lib/dates';
-import { eventPaint, eventsOn } from '../lib/events';
+import { eventPaint, eventsOn, isOver } from '../lib/events';
+import { useNow } from '../lib/useNow';
 import type { CalEvent, Member } from '../lib/types';
 import s from '../styles/MonthView.module.css';
 
@@ -22,6 +23,8 @@ interface Props {
 }
 
 export default function MonthView({ days, month, today, selected, events, members, onSelect, onOpen }: Props) {
+  // Events that have ended fade back (checked every minute).
+  const now = useNow();
 
   return (
     <div className={s.month} style={{ '--rows': days.length / 7 } as CSSProperties}>
@@ -42,7 +45,7 @@ export default function MonthView({ days, month, today, selected, events, member
             <ul className={s.list}>
               {list.slice(0, extra > 0 ? MAX_SHOWN - 1 : MAX_SHOWN).map((ev) => (
                 <li key={ev.id}>
-                  <button className={`${s.ev} ${ev.allDay ? s.allday : ''}`} style={eventPaint(ev, members).vars}
+                  <button className={`${s.ev} ${ev.allDay ? s.allday : ''} ${isOver(ev, now) ? s.past : ''}`} style={eventPaint(ev, members).vars}
                     onClick={(e) => { e.stopPropagation(); onOpen(ev, key); }}>
                     {!ev.allDay && Date.parse(ev.start) >= day.getTime() && (
                       <span className={s.time}>{timeLabel(ev.start)}</span>
