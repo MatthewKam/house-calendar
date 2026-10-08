@@ -12,15 +12,4 @@
 .date { margin: 0.1rem 0 0; font-size: 1.6rem; font-weight: 650; }
 .close { font-size: 1.6rem; color: var(--muted); }
 .empty { color: var(--muted); margin: 0; }
-.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; overflow-y: auto; min-height: 0; flex: 1; }
-.ev {
-  width: 100%; text-align: left; display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem;
-  padding: 0.5rem 0.7rem 0.5rem 1.05rem; border-radius: 0.6rem; min-height: 2.75rem; justify-content: center;
-  background: var(--stripe) left / 0.35rem 100% no-repeat, var(--tint);
-}
-.allday { background: var(--stripe) left / 0.35rem 100% no-repeat, var(--solid); font-weight: 600; }
-.allday .time, .allday .who { color: inherit; opacity: 0.8; }
-.time { font-size: 0.8rem; color: var(--muted); }
-.title { font-size: 1.05rem; line-height: 1.25; overflow-wrap: anywhere; }
-.who { font-size: 0.8rem; color: var(--muted); }
 .add { background: var(--accent); color: var(--surface); font-weight: 600; }

@@ -11,6 +11,6 @@ export default defineConfig(({ mode }) => {
     // Tailscale addresses (*.ts.net) are allowed, so phones away from home can open it too.
     server: { port: 5173, host, allowedHosts: ['.ts.net'], proxy: { '/api': 'http://127.0.0.1:3000' } },
     build: { outDir: 'dist', emptyOutDir: true },
-    test: { root: '.', include: ['server/**/*.test.ts'], env: { NODE_ENV: 'test' } },
+    test: { root: '.', include: ['server/**/*.test.ts', 'web/src/**/*.test.ts'], env: { NODE_ENV: 'test' } },
   } as any;
 });

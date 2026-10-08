@@ -1,0 +1,178 @@
+/* The day panel's timeline: all-day events held at the top, then 24 hours that scroll. */
+.timeline {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	position: relative;
+}
+.allDay {
+	position: sticky;
+	top: 0;
+	z-index: 3;
+	list-style: none;
+	margin: 0;
+	padding: 0 0 0.4rem 3.6rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	background: var(--surface);
+	border-bottom: 1px solid var(--line);
+}
+.allDayLabel {
+	position: absolute;
+	left: 0;
+	width: 3.2rem;
+	padding-top: 0.3rem;
+	text-align: right;
+	font-size: 0.7rem;
+	color: var(--muted);
+}
+.allDayEvent {
+	width: 100%;
+	min-height: 0;
+	height: 1.7rem;
+	padding: 0 0.6rem 0 0.75rem;
+	border-radius: 0.45rem;
+	text-align: left;
+	font-size: 0.85rem;
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	background:
+		var(--stripe) left / 0.3rem 100% no-repeat,
+		var(--solid);
+}
+
+/* 24 hours, a line on each; the labels sit in the margin on the left. */
+.hours {
+	position: relative;
+	height: calc(24 * 3.6rem);
+}
+.hour {
+	position: absolute;
+	left: 0;
+	width: 3.2rem;
+	translate: 0 -50%;
+	text-align: right;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--muted);
+	white-space: nowrap;
+}
+.hour small {
+	font-size: 0.65rem;
+	font-weight: 500;
+}
+.events {
+	position: absolute;
+	inset: 0 0 0 3.6rem;
+	background: repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px calc(100% / 24));
+}
+
+/* An event: a block from its start to its end, showing what fits (whole lines only). */
+.event {
+	container-type: size;
+	position: absolute;
+	min-width: 0;
+	min-height: 0;
+	padding: 0.2rem 0.4rem 0.2rem 0.65rem;
+	border-radius: 0.45rem;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	overflow: hidden;
+	text-align: left;
+	line-height: 1.25;
+	box-shadow: 0 0 0 1px var(--surface);
+	background:
+		var(--stripe) left / 0.3rem 100% no-repeat,
+		var(--tint);
+}
+.event:active {
+	transform: none;
+}
+/* Over: faded back, so what's still to come stands out. */
+.past {
+	opacity: 0.45;
+	filter: saturate(0.4);
+}
+.title {
+	font-size: 0.9rem;
+	font-weight: 600;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+}
+.where,
+.time {
+	font-size: 0.78rem;
+	color: var(--muted);
+}
+.where {
+	max-width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+@container (max-height: 3.4rem) {
+	.where {
+		display: none;
+	}
+}
+@container (max-height: 2.4rem) {
+	.title {
+		-webkit-line-clamp: 1;
+	}
+}
+/* Under 45 minutes: the name and time on one line. */
+.short {
+	flex-direction: row;
+	align-items: center;
+	gap: 0.35rem;
+	padding-block: 0;
+	white-space: nowrap;
+}
+.short .title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* The time now: a red line with a dot, and the time in a pill in the margin. */
+.now {
+	position: absolute;
+	z-index: 2;
+	left: 0;
+	right: 0;
+	height: 2px;
+	margin-top: -1px;
+	background: #e5484d;
+	pointer-events: none;
+}
+.now::before {
+	content: "";
+	position: absolute;
+	left: -0.3rem;
+	top: 50%;
+	width: 0.6rem;
+	height: 0.6rem;
+	border-radius: 50%;
+	background: #e5484d;
+	translate: 0 -50%;
+}
+.nowPill {
+	position: absolute;
+	z-index: 2;
+	left: 0;
+	width: 3.2rem;
+	translate: 0 -50%;
+	text-align: center;
+	border-radius: 999px;
+	background: #e5484d;
+	color: #fff;
+	font-size: 0.75rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
