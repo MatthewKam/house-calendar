@@ -124,7 +124,7 @@ export default function App() {
 	);
 	const deleteEvent = useDeleteEvent();
 
-	// Confetti and a big Hooray when a kid ticks the last of every task due today.
+	// Confetti and a big Hooray when a kid ticks the last of every task due today, or fills a reward jar.
 	const cheer = useCheer(members, today);
 	const restoreEvent = useRestoreEvent();
 
@@ -512,7 +512,7 @@ export default function App() {
 			{/* Add a task, for no one in particular yet (each kid's card has its own Add a task). */}
 			{page === "tasks" && <Fab label="Add a task" onClick={() => setTaskDialog({ blank: true })} />}
 			{saver.on && <ScreenSaver photos={saver.photos} settings={saver.settings} onClose={saver.hide} />}
-			{cheer.names && <Celebration names={cheer.names} onDone={cheer.done} />}
+			{cheer.cheer && <Celebration cheer={cheer.cheer} onDone={cheer.done} />}
 			{/* "Time to leave" alerts, on whichever page is showing (above the screen saver too). */}
 			<LeaveAlerts />
 

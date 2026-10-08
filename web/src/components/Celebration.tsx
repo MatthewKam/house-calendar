@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import type { Cheer } from "../lib/useCheer";
 import s from "../styles/Celebration.module.css";
 
 const COLORS = ["#f6c445", "#ef6f6c", "#4ea8de", "#5cc28a", "#b48ae6", "#f59e4c", "#ff8fc7"];
@@ -57,10 +58,10 @@ function Confetti() {
 }
 
 /**
- * The big "Hooray!" when a kid finishes all of today's daily tasks: confetti and their name, for a few
- * seconds (a tap closes it sooner).
+ * The big "Hooray!" when a kid finishes all of today's daily tasks or fills a reward jar: confetti,
+ * their name and what for, for a few seconds (a tap closes it sooner).
  */
-export default function Celebration({ names, onDone }: { names: string[]; onDone: () => void }) {
+export default function Celebration({ cheer: { names, emoji, message }, onDone }: { cheer: Cheer; onDone: () => void }) {
 	const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 	useEffect(() => {
 		const t = setTimeout(onDone, 5000);
@@ -73,10 +74,10 @@ export default function Celebration({ names, onDone }: { names: string[]; onDone
 		<div className={s.overlay} onClick={onDone} role="alert">
 			<div className={s.card}>
 				<div className={s.emoji} aria-hidden="true">
-					🎉
+					{emoji}
 				</div>
 				<div className={s.hooray}>Hooray, {who}!</div>
-				<div className={s.sub}>All of today's tasks are done!</div>
+				<div className={s.sub}>{message}</div>
 			</div>
 			{/* After the card, so it falls in front of it. */}
 			{!calm && <Confetti />}

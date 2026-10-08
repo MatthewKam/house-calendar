@@ -50,7 +50,7 @@ describe('several-people migration', () => {
 });
 
 describe('rewards migration', () => {
-  it('moves a reward from the person to the rewards table, as a monthly reward', () => {
+  it('moves a reward from the person to the rewards table (since then, a jar)', () => {
     const file = join(mkdtempSync(join(tmpdir(), 'cal-')), 'cal.db');
     openDb(file, 11).close();
     const old = new Database(file);
@@ -59,7 +59,7 @@ describe('rewards migration', () => {
     old.close();
     const db = openDb(file);
     expect(db.prepare('SELECT member_id, title, goal, mode FROM rewards').all())
-      .toEqual([{ member_id: 't', title: 'Lego set', goal: 20, mode: 'monthly' }]);
+      .toEqual([{ member_id: 't', title: 'Lego set', goal: 20, mode: 'until_reached' }]);
     expect(db.prepare('PRAGMA table_info(members)').all().map((c: any) => c.name)).not.toContain('reward_title');
   });
 });

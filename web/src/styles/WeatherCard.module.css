@@ -68,10 +68,21 @@
 		radial-gradient(ellipse at 70% 10%, rgb(255 255 255 / 0.12) 0, transparent 8rem),
 		linear-gradient(160deg, #262d3a 0%, #4f586a 100%);
 }
+/* Stars: a few, scattered at uneven spots in a large tile, so they don't read as a grid. */
 .night {
 	--glass: rgb(255 255 255 / 0.08);
 	--sky:
-		radial-gradient(circle, rgb(255 255 255 / 0.75) 0 1px, transparent 1.5px) 0 0 / 23px 19px,
+		radial-gradient(circle 1.3px at 23px 31px, rgb(255 255 255 / 0.9) 60%, transparent) 0 0 / 310px 190px,
+		radial-gradient(circle 0.9px at 97px 12px, rgb(255 255 255 / 0.6) 60%, transparent) 0 0 / 310px 190px,
+		radial-gradient(circle 1.1px at 151px 64px, rgb(255 255 255 / 0.75) 60%, transparent) 0 0 / 310px 190px,
+		radial-gradient(circle 1.6px at 214px 27px, rgb(255 255 255 / 0.95) 60%, transparent) 0 0 / 310px 190px,
+		radial-gradient(circle 0.9px at 282px 88px, rgb(255 255 255 / 0.55) 60%, transparent) 0 0 / 310px 190px,
+		radial-gradient(circle 1px at 48px 118px, rgb(255 255 255 / 0.7) 60%, transparent) 0 0 / 310px 190px,
+		radial-gradient(circle 1.4px at 129px 151px, rgb(255 255 255 / 0.85) 60%, transparent) 0 0 / 310px 190px,
+		radial-gradient(circle 0.8px at 191px 122px, rgb(255 255 255 / 0.5) 60%, transparent) 0 0 / 310px 190px,
+		radial-gradient(circle 1.2px at 258px 163px, rgb(255 255 255 / 0.8) 60%, transparent) 0 0 / 310px 190px,
+		radial-gradient(circle 0.8px at 301px 140px, rgb(255 255 255 / 0.45) 60%, transparent) 0 0 / 310px 190px,
+		radial-gradient(circle 0.9px at 72px 176px, rgb(255 255 255 / 0.6) 60%, transparent) 0 0 / 310px 190px,
 		radial-gradient(circle at 12% 20%, rgb(255 244 200 / 0.3) 0, transparent 6rem),
 		linear-gradient(160deg, #101b33 0%, #2c3f63 100%);
 }

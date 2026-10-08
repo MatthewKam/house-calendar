@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query';
 import { api } from './api';
-import { addDays, dayKey, fromDayKey, startOfWeek } from './dates';
-import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, RewardInput, CalEvent, Reward, RewardWin,
+import { addDays, dayKey } from './dates';
+import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, RewardInput, CalEvent, Reward, RewardWin, Bucket, StarPlacing,
   ReminderList, Photo, LeaveAlert, OutboxStatus } from './types';
 
 // ---- Edits show straight away ---------------------------------------------------------------
@@ -35,7 +35,6 @@ async function showNow(qc: QueryClient, patches: Patch[]): Promise<Before> {
 const putBack = (qc: QueryClient) => (_e: Error, _v: unknown, ctx?: Before) =>
   ctx?.before.forEach(([key, data]) => qc.setQueryData(key, data));
 const newId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-const isHistory = (key: QueryKey) => key[2] === 'history';
 
 const REFRESH_MS = 60_000;
 
@@ -50,9 +49,10 @@ export const keys = {
   reminders: ['reminders'] as const,
   tasksDone: ['tasksDone'] as const,
   tasksRange: (from: Date, days: number) => ['tasksDone', dayKey(from), days] as const,
-  taskPoints: (today: string) => ['tasksDone', 'points', today] as const,
-  // Under 'tasksDone' too, so ticking a task refreshes reward progress.
+  // Under 'tasksDone' too, so ticking a task refreshes the buckets.
   rewards: (today: string) => ['tasksDone', 'rewards', today] as const,
+  rewardHistory: ['tasksDone', 'rewards', 'history'] as const,
+  buckets: ['tasksDone', 'rewards', 'buckets'] as const,
 };
 
 export function useMembers() {
@@ -113,18 +113,6 @@ export function useTasksDone(from: Date, days = 7) {
 }
 
 /** Ticks a task on or off, showing the change before the server answers. */
-/** Each person's points from extras this week (from Sunday) and this month, up to and including today. */
-export function useTaskPoints(today: string) {
-  return useQuery({
-    queryKey: keys.taskPoints(today),
-    queryFn: () => {
-      const day = fromDayKey(today);
-      return api.taskPoints(dayKey(startOfWeek(day)), dayKey(new Date(day.getFullYear(), day.getMonth(), 1)), dayKey(addDays(day, 1)));
-    },
-    refetchInterval: REFRESH_MS,
-  });
-}
-
 /** Ticks a task on or off, updating the `from`/`days` range on screen straight away. */
 export function useSetTaskDone(from: Date, days = 7) {
   const qc = useQueryClient();
@@ -141,7 +129,8 @@ export function useSetTaskDone(from: Date, days = 7) {
       return { before };
     },
     onError: (_e, _v, ctx) => qc.setQueryData(key, ctx?.before),
-    onSettled: () => qc.invalidateQueries({ queryKey: keys.tasksDone }),
+    // Tasks too: a one-time task's done day comes with it.
+    onSettled: () => Promise.all([keys.tasksDone, keys.tasks].map((queryKey) => qc.invalidateQueries({ queryKey }))),
   });
 }
 
@@ -151,73 +140,77 @@ export function useSaveTask() {
     mutationFn: ({ id, input }: { id?: string; input: TaskInput }) => (id ? api.updateTask(id, input) : api.addTask(input)),
     onMutate: ({ id, input }) => showNow(qc, [{ key: keys.tasks, apply: (tasks: Task[]) => id
       ? tasks.map((t) => (t.id === id ? { ...t, ...input } : t))
-      : [...tasks, { ...input, id: newId('task'), sortOrder: tasks.length, createdAt: new Date().toISOString() } as Task] }]),
+      : [...tasks, { ...input, id: newId('task'), sortOrder: tasks.length, createdAt: new Date().toISOString(), doneOn: {} } as Task] }]),
     onError: putBack(qc),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.tasks }),
   });
 }
 
-/** Rewards still on the cards, with stars counted as of `today`. */
+/** Reward jars still going (filling, earned or missed), as of `today`. */
 export function useRewards(today: string) {
   return useQuery({ queryKey: keys.rewards(today), queryFn: () => api.rewards(today), refetchInterval: REFRESH_MS });
 }
 
-/** Every reward earned (waiting to be given first, then given, newest first). Ticks refresh it too. */
+/** Every jar filled or missed (waiting to be redeemed first, then the rest, newest first). */
 export function useRewardHistory() {
-  return useQuery({ queryKey: ['tasksDone', 'rewards', 'history'], queryFn: api.rewardHistory, refetchInterval: REFRESH_MS });
+  return useQuery({ queryKey: keys.rewardHistory, queryFn: api.rewardHistory, refetchInterval: REFRESH_MS });
 }
 
-/** Add, change, hand over and delete rewards; each refreshes the rewards and their history afterwards. */
+/** Stars each kid can still put in jars. Ticks refresh them too. */
+export function useBuckets() {
+  return useQuery({ queryKey: keys.buckets, queryFn: api.buckets, refetchInterval: REFRESH_MS });
+}
+
+/** Add, change, fill, redeem and delete jars; each refreshes the jars, buckets and history afterwards. */
 export function useRewardActions() {
   const qc = useQueryClient();
   const refresh = () => qc.invalidateQueries({ queryKey: ['tasksDone', 'rewards'] });
-  const rewards = (apply: (list: Reward[]) => Reward[]): Patch => ({ key: ['tasksDone', 'rewards'], skip: (k) => isHistory(k) || k.length < 3, apply });
-  const history = (apply: (list: RewardWin[]) => RewardWin[]): Patch => ({ key: ['tasksDone', 'rewards', 'history'], apply });
-  const now = () => new Date().toISOString();
-  /** Handed over: a monthly reward shows as given for this month; an until-earned one leaves the list. */
-  const handOver = (r: Reward) => (r.mode === 'monthly' ? [{ ...r, status: 'given' as const }] : []);
+  // The jar lists are the ones keyed by a day (not the history or buckets).
+  const jars = (apply: (list: Reward[]) => Reward[]): Patch =>
+    ({ key: ['tasksDone', 'rewards'], skip: (k) => !/^\d{4}-/.test(String(k[2] ?? '')), apply });
+  const history = (apply: (list: RewardWin[]) => RewardWin[]): Patch => ({ key: keys.rewardHistory, apply });
+  const buckets = (apply: (list: Bucket[]) => Bucket[]): Patch => ({ key: keys.buckets, apply });
+  const mutation = <V>(mutationFn: (v: V) => Promise<unknown>, patches: (v: V) => Patch[]) => useMutation({
+    mutationFn,
+    onMutate: (v: V) => showNow(qc, patches(v)),
+    onError: putBack(qc),
+    onSettled: refresh,
+  });
+  const redeemed = (id: string, givenAt: string | null) => [history((wins) => wins.map((w) => (w.id === id ? { ...w, givenAt } : w)))];
   return {
-    save: useMutation({
-      mutationFn: ({ id, reward }: { id?: string; reward: RewardInput }) => {
-        const { startDay, ...changes } = reward;
-        return id ? api.updateReward(id, changes) : api.addReward({ ...changes, startDay });
-      },
-      onMutate: ({ id, reward }) => showNow(qc, [rewards((list) => id
-        ? list.map((r) => (r.id === id ? { ...r, ...reward, startDay: r.startDay } : r))
-        : [...list, { ...reward, id: newId('reward'), stars: 0, memberStars: {}, status: 'in_progress', winId: null, earnedDay: null }])]),
-      onError: putBack(qc),
+    save: mutation(({ id, reward, today }: { id?: string; reward: RewardInput; today: string }) =>
+      (id ? api.updateReward(id, reward, today) : api.addReward(reward, today)),
+    ({ id, reward }) => [jars((list) => id
+      ? list.map((r) => (r.id === id ? { ...r, ...reward } : r))
+      : [...list, { ...reward, id: newId('reward'), stars: 0, memberStars: {}, status: 'filling' }])]),
+    /** Stars into jars: out of the bucket (or the missed jar they're moved from) and into each jar. */
+    place: mutation((p: StarPlacing) => api.placeStars(p), ({ memberId, from, places }) => {
+      const spent = places.reduce((a, x) => a + x.stars, 0);
+      const freed = from
+        ? qc.getQueriesData<Reward[]>({ queryKey: ['tasksDone', 'rewards'] }).flatMap(([, d]) => (Array.isArray(d) ? d : []))
+          .find((r) => r.id === from)?.memberStars[memberId] ?? 0
+        : 0;
+      return [
+        buckets((list) => list.map((b) => (b.memberId === memberId ? { ...b, stars: b.stars + freed - spent } : b))),
+        jars((list) => list.map((r) => {
+          const n = (r.id === from ? -(r.memberStars[memberId] ?? 0) : 0) +
+            places.filter((x) => x.rewardId === r.id).reduce((a, x) => a + x.stars, 0);
+          return n ? { ...r, stars: r.stars + n, memberStars: { ...r.memberStars, [memberId]: (r.memberStars[memberId] ?? 0) + n } } : r;
+        })),
+      ];
+    }),
+    restore: mutation(({ id, deadline, today }: { id: string; deadline: string | null; today: string }) => api.restoreReward(id, deadline, today),
+      ({ id, deadline }) => [jars((list) => list.map((r) => (r.id === id ? { ...r, deadline, status: 'filling' as const } : r)))]),
+    /** A parent takes a kid's stars back out of a jar (with the master PIN). A wrong PIN is shown in its dialog, not as a toast. */
+    takeBack: useMutation({
+      mutationFn: ({ id, memberId, stars, pin }: { id: string; memberId: string; stars: number; pin: string }) =>
+        api.takeBack(id, memberId, stars, pin),
+      meta: { inline: true },
       onSettled: refresh,
     }),
-    give: useMutation({
-      mutationFn: ({ id, today }: { id: string; today: string }) => api.giveReward(id, today),
-      onMutate: ({ id }) => {
-        const winId = qc.getQueriesData<Reward[]>({ queryKey: ['tasksDone', 'rewards'] }).flatMap(([k, d]) => (isHistory(k) || !d ? [] : d))
-          .find((r) => r.id === id)?.winId;
-        return showNow(qc, [rewards((list) => list.flatMap((r) => (r.id === id ? handOver(r) : [r]))),
-          history((wins) => wins.map((w) => (w.id === winId ? { ...w, givenAt: now() } : w)))]);
-      },
-      onError: putBack(qc),
-      onSettled: refresh,
-    }),
-    giveWin: useMutation({
-      mutationFn: ({ id, today }: { id: string; today: string }) => api.giveWin(id, today),
-      onMutate: ({ id }) => showNow(qc, [rewards((list) => list.flatMap((r) => (r.winId === id ? handOver(r) : [r]))),
-        history((wins) => wins.map((w) => (w.id === id ? { ...w, givenAt: now() } : w)))]),
-      onError: putBack(qc),
-      onSettled: refresh,
-    }),
-    undoWin: useMutation({
-      mutationFn: (id: string) => api.undoWin(id),
-      onMutate: (id) => showNow(qc, [history((wins) => wins.map((w) => (w.id === id ? { ...w, givenAt: null } : w)))]),
-      onError: putBack(qc),
-      onSettled: refresh,
-    }),
-    remove: useMutation({
-      mutationFn: (id: string) => api.removeReward(id),
-      onMutate: (id) => showNow(qc, [rewards((list) => list.filter((r) => r.id !== id))]),
-      onError: putBack(qc),
-      onSettled: refresh,
-    }),
+    redeem: mutation((id: string) => api.redeem(id), (id) => redeemed(id, new Date().toISOString())),
+    undoRedeem: mutation((id: string) => api.undoRedeem(id), (id) => redeemed(id, null)),
+    remove: mutation((id: string) => api.removeReward(id), (id) => [jars((list) => list.filter((r) => r.id !== id))]),
   };
 }
 

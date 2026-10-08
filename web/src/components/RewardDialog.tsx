@@ -1,45 +1,49 @@
 import { useState, type FormEvent } from "react";
 import { useMembers, useRewardActions } from "../lib/queries";
-import type { Member, Reward, RewardMode, TeamMode } from "../lib/types";
+import type { Member, Reward, TeamMode } from "../lib/types";
 import ConfirmDialog from "./ConfirmDialog";
 import { PickChip } from "./NameChip";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/EventDialog.module.css";
 import t from "../styles/Tasks.module.css";
+import r from "../styles/Rewards.module.css";
 
 interface Props {
-	/** Who a new reward starts out for (e.g. the kid whose card it was added from). */
+	/** Who a new jar starts out for (e.g. the kid whose section it was added from). */
 	member?: Member;
-	/** The reward to change; a new one when missing. */
+	/** The jar to change; a new one when missing. */
 	reward?: Reward;
 	today: string;
 	onClose: () => void;
 }
 
-const MODES: { id: RewardMode; label: string; hint: string }[] = [
-	{ id: "monthly", label: "Resets each month", hint: "Counts this month's stars; starts again at zero on the 1st." },
-	{ id: "until_reached", label: "Until earned", hint: "Counts stars from today until the goal is reached, however long it takes." },
-];
-
 const TEAM: { id: TeamMode; label: string; hint: string }[] = [
-	{ id: "pooled", label: "Stars added together", hint: "Everyone's stars count toward one goal." },
-	{ id: "each", label: "Each reaches the goal", hint: "Every kid needs the stars on their own; earned when they all have." },
+	{ id: "pooled", label: "Stars added together", hint: "Everyone's stars fill one jar." },
+	{ id: "each", label: "Each fills it", hint: "Every kid puts in the full amount; earned when they all have." },
 ];
 
-/** Add or change a reward: for one kid, or several together. */
+/** Add or change a reward jar: for one kid, or several together. */
 export default function RewardDialog({ member, reward, today, onClose }: Props) {
 	const members = useMembers().data ?? [];
 	const { save, remove } = useRewardActions();
 	const [title, setTitle] = useState(reward?.title ?? "");
 	const [goal, setGoal] = useState(reward?.goal ?? 20);
-	const [mode, setMode] = useState<RewardMode>(reward?.mode ?? "monthly");
 	const [memberIds, setMemberIds] = useState<string[]>(reward?.memberIds ?? (member ? [member.id] : []));
 	const [teamMode, setTeamMode] = useState<TeamMode>(reward?.teamMode ?? "pooled");
-	const [repeats, setRepeats] = useState(reward?.repeats ?? false);
+	// Last day to redeem it, or none (it then fills again after each time it's redeemed).
+	const [deadline, setDeadline] = useState<string | null>(reward?.deadline ?? null);
 	const [confirmDelete, setConfirmDelete] = useState(false);
 	const together = memberIds.length > 1;
 	const names = members.filter((m) => memberIds.includes(m.id)).map((m) => m.name);
-	const problem = !title.trim() ? "Name the reward" : goal < 1 ? "Pick how many stars" : !memberIds.length ? "Pick who it's for" : null;
+	const problem = !title.trim()
+		? "Name the reward"
+		: goal < 1
+			? "Pick how many stars"
+			: !memberIds.length
+				? "Pick who it's for"
+				: deadline !== null && deadline < today && deadline !== reward?.deadline
+					? "Pick a deadline from today on"
+					: null;
 
 	function toggle(id: string) {
 		// Family order, so names read the same everywhere.
@@ -49,12 +53,7 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 	function submit(e: FormEvent) {
 		e.preventDefault();
 		if (problem) return;
-		save.mutate(
-			{
-				id: reward?.id,
-				reward: { memberIds, title: title.trim(), goal, mode, teamMode, repeats: mode === "until_reached" && repeats, startDay: today },
-			},
-		);
+		save.mutate({ id: reward?.id, reward: { memberIds, title: title.trim(), goal, teamMode, deadline }, today });
 		// It shows straight away; the save carries on in the background.
 		onClose();
 	}
@@ -64,7 +63,7 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 			<div className={sheet.scrim} onClick={onClose} role="presentation" />
 			<form className={sheet.sheet} onSubmit={submit}>
 				<header className={sheet.head}>
-					<h2 className={sheet.heading}>{reward ? "Change reward" : "New reward"}</h2>
+					<h2 className={sheet.heading}>{reward ? "Change jar" : "New reward jar"}</h2>
 					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
 						×
 					</button>
@@ -106,14 +105,14 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 						</div>
 						<p className={t.hint}>
 							{teamMode === "pooled"
-								? `${names.join(" and ")}'s stars count toward one goal.`
-								: `${names.join(" and ")} each need the stars on their own.`}
+								? `${names.join(" and ")}'s stars fill one jar.`
+								: `${names.join(" and ")} each put in the full amount.`}
 						</p>
 					</>
 				)}
 
 				<label className={t.points}>
-					{together && teamMode === "pooled" ? "Stars needed together" : together ? "Stars each" : "Stars needed"}
+					{together && teamMode === "pooled" ? "Stars to fill it, together" : together ? "Stars each" : "Stars to fill it"}
 					<input
 						type="number"
 						min={1}
@@ -123,26 +122,40 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 						onChange={(e) => setGoal(Math.max(0, Math.round(Number(e.target.value) || 0)))}
 					/>
 				</label>
-				<div className={s.label}>Counting</div>
+				<div className={s.label}>Deadline</div>
 				<div className={s.wrap}>
-					{MODES.map((m) => (
-						<button
-							key={m.id}
-							type="button"
-							aria-pressed={mode === m.id}
-							className={`${s.chip} ${mode === m.id ? t.chipOn : ""}`}
-							onClick={() => setMode(m.id)}
-						>
-							{m.label}
-						</button>
-					))}
+					<button
+						type="button"
+						aria-pressed={deadline === null}
+						className={`${s.chip} ${deadline === null ? t.chipOn : ""}`}
+						onClick={() => setDeadline(null)}
+					>
+						None
+					</button>
+					<button
+						type="button"
+						aria-pressed={deadline !== null}
+						className={`${s.chip} ${deadline !== null ? t.chipOn : ""}`}
+						onClick={() => setDeadline(deadline ?? today)}
+					>
+						By a date
+					</button>
+					{deadline !== null && (
+						<input
+							type="date"
+							className={r.date}
+							value={deadline}
+							min={today}
+							aria-label="Last day to redeem it"
+							onChange={(e) => e.target.value && setDeadline(e.target.value)}
+						/>
+					)}
 				</div>
-				<p className={t.hint}>{MODES.find((m) => m.id === mode)?.hint}</p>
-				{mode === "until_reached" && (
-					<label className={s.toggle}>
-						<input type="checkbox" checked={repeats} onChange={(e) => setRepeats(e.target.checked)} /> Start again after it's given
-					</label>
-				)}
+				<p className={t.hint}>
+					{deadline === null
+						? "After it's redeemed, it empties and can be filled again."
+						: "One time only. If it isn't redeemed by then, the kids get their stars back to use on another jar."}
+				</p>
 				{save.isError && <div className={s.problem}>Couldn't save: {save.error.message}</div>}
 				<div className={sheet.actions}>
 					{reward && (
@@ -169,7 +182,7 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 						onClose();
 					}}
 				>
-					The reward is removed. Stars aren't affected, and rewards already given stay in the history.
+					Stars in it go back to the kids' buckets. Rewards already redeemed stay in the history.
 				</ConfirmDialog>
 			)}
 		</>
