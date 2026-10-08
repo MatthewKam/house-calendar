@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { useAlertActions, useAlerts } from "../lib/queries";
 import type { CalEvent, Trip } from "../lib/types";
@@ -16,18 +16,28 @@ export default function TravelInfo({ event, showAddress = true }: { event: CalEv
 	const [trip, setTrip] = useState<Trip | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
+	// The request in flight, so it can be cancelled (or given up on) without waiting.
+	const inFlight = useRef<AbortController | null>(null);
+	useEffect(() => () => inFlight.current?.abort(), []);
 	const alert = (useAlerts().data ?? []).find((a) => a.eventId === event.id);
 	const { add, cancel } = useAlertActions();
 	if (!event.location) return null;
 
 	async function check() {
+		const ctrl = new AbortController();
+		inFlight.current = ctrl;
+		// Google is usually quick; past this, give up rather than leave it spinning.
+		const giveUp = setTimeout(() => ctrl.abort("slow"), 12_000);
 		setLoading(true);
 		setError(null);
 		try {
-			setTrip(await api.travel(event.id));
+			setTrip(await api.travel(event.id, ctrl.signal));
 		} catch (e) {
-			setError(e instanceof Error ? e.message : "Couldn't get a travel time");
+			if (ctrl.signal.aborted) setError(ctrl.signal.reason === "slow" ? "Taking too long — try again" : null);
+			else setError(e instanceof Error ? e.message : "Couldn't get a travel time");
 		} finally {
+			clearTimeout(giveUp);
+			if (inFlight.current === ctrl) inFlight.current = null;
 			setLoading(false);
 		}
 	}
@@ -40,9 +50,16 @@ export default function TravelInfo({ event, showAddress = true }: { event: CalEv
 				</div>
 			)}
 			{!trip && (
-				<button type="button" className={s.travelButton} onClick={check} disabled={loading}>
-					🚗 {loading ? "Checking traffic…" : "Travel time"}
-				</button>
+				<div className={s.travelRow}>
+					<button type="button" className={s.travelButton} onClick={check} disabled={loading}>
+						🚗 {loading ? "Checking traffic…" : error ? "Try again" : "Travel time"}
+					</button>
+					{loading && (
+						<button type="button" className={s.travelCancel} onClick={() => inFlight.current?.abort("cancel")}>
+							Cancel
+						</button>
+					)}
+				</div>
 			)}
 			{trip && (
 				<div className={`${s.trip} ${trip.late ? s.tripLate : ""}`}>

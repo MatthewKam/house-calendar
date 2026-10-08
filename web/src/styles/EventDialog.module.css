@@ -47,3 +47,7 @@
 /* "This day only or every day?" for a repeating event. */
 .scopeAsk { display: flex; flex-direction: column; gap: 0.4rem; padding-top: 0.6rem; border-top: 1px solid var(--line); }
 .scopeQuestion { font-weight: 650; }
+
+/* Travel time: the button, and Cancel while it's checking. */
+.travelRow { display: flex; align-items: center; gap: 0.6rem; }
+.travelCancel { min-height: 0; padding: 0.2rem 0.3rem; color: var(--muted); text-decoration: underline; text-underline-offset: 0.2em; }

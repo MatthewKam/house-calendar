@@ -78,13 +78,10 @@ function ListCard({ list, color, onColor, order, onReorder }: CardProps) {
 				list: list.title,
 				title: addIcon ? `${addIcon} ${typed.text}` : typed.text,
 			},
-			{
-				onSuccess: () => {
-					setTitle("");
-					setNewIcon(undefined);
-				},
-			},
 		);
+		// It shows in the list straight away, so the box is ready for the next one.
+		setTitle("");
+		setNewIcon(undefined);
 	}
 
 	/** The icon goes at the start of the item's name in Reminders; None takes it off. */

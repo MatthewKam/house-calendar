@@ -40,7 +40,8 @@ export function googleRoutes(apiKey: string, fetchImpl: typeof fetch = fetch): E
         'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters',
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(15_000),
+      // Two of these per lookup; the wall gives up after 12 s, so each waits at most 5.
+      signal: AbortSignal.timeout(5_000),
     });
     const data = (await res.json().catch(() => ({}))) as { routes?: { duration?: string; distanceMeters?: number }[]; error?: { message?: string } };
     if (!res.ok) throw new Error(data.error?.message ?? `Google Maps answered ${res.status}`);
@@ -54,6 +55,18 @@ export function googleRoutes(apiKey: string, fetchImpl: typeof fetch = fetch): E
  * Works back from the arrival time: estimate leaving 30 minutes before, then again leaving at the
  * time that first answer implies, so the traffic matches when you'd actually be on the road.
  */
+/** The lookup gives up after this long, whatever is slow (the wall gives up at 12 s). */
+const LOOKUP_MS = 10_000;
+function withinTime<T>(work: Promise<T>, ms = LOOKUP_MS): Promise<T> {
+  let timer: NodeJS.Timeout;
+  return Promise.race([
+    work,
+    new Promise<T>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('Google Maps is taking too long; try again')), ms);
+    }),
+  ]).finally(() => clearTimeout(timer));
+}
+
 export async function planTrip(estimate: Estimator, origin: string, destination: string, arriveBy: Date | null, now = new Date()) {
   if (!arriveBy || arriveBy <= now) {
     const r = await estimate(origin, destination, now);
@@ -103,7 +116,7 @@ export function registerTravel(app: FastifyInstance, db: DB, estimate: Estimator
     let trip = hit && Date.now() - hit.at < CACHE_MS ? hit.trip : undefined;
     if (!trip) {
       try {
-        const plan = await planTrip(estimate, origin, ev.location, arriveBy);
+        const plan = await withinTime(planTrip(estimate, origin, ev.location, arriveBy));
         trip = { minutes: plan.minutes, meters: plan.meters, leaveAt: plan.leaveAt, origin, destination: ev.location };
         cache.set(key, { at: Date.now(), trip });
       } catch (err) {

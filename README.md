@@ -108,8 +108,10 @@ the PIN** (optionally signing out every other device). Five wrong PINs lock that
 for you) is the one that can change the family PIN, so knowing the family PIN isn't enough; it also signs in. The
 master PIN can't be changed from the app. The
 phones' Reminders Shortcut keeps using `REMINDERS_TOKEN`.
-For the offline start (and phone notifications, later), iPhones need the address to be HTTPS; Tailscale's `tailscale
-serve` gives the server one.
+For the offline start (and phone notifications, later), iPhones need the address to be HTTPS. With MagicDNS and HTTPS
+certificates turned on in the Tailscale admin, run `tailscale serve --bg 5173` on the Mac while developing (`--bg 3000`
+on the Pi): the app is then at `https://<machine>.<tailnet>.ts.net`, for your Tailscale devices only. Add it to the
+home screen from that address; it works at home and away.
 
 ## Using it
 
@@ -142,6 +144,8 @@ serve` gives the server one.
   **until earned** (from when it was set, however long it takes; once reached, **Mark as given** clears it). **History** on a card shows a week of ticks
   per task or a month calendar (tap a day to see and fix it). **Edit tasks**: drag ⋮⋮ to reorder within a part of
   the day, ✎ to change a task, 🗑 to delete (it asks to confirm first).
+- **Hooray!** When a kid ticks the last of *every* task due today (extras too), the screen fills with confetti and a
+  big "Hooray, Tayen!" for a few seconds (tap to close); Android phones buzz too.
 - **Rewards:** the **Rewards** page (gift in the left bar, `#rewards`) shows rewards ready to hand over, rewards in
   progress, and everything given, by month, with each kid's tally for the year. A reward can be for several kids
   together: their stars **added together** toward one goal, or **each** reaching it. Until-earned rewards can **start

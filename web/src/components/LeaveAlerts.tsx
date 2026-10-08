@@ -36,11 +36,15 @@ export default function LeaveAlerts() {
 	}, []);
 	const due = alerts.filter((a) => Date.parse(a.remindAt) <= now);
 
-	// Chime once for each alert that comes due.
+	// Chime (and vibrate) once for each alert that comes due.
 	const chimed = useRef(new Set<string>());
 	useEffect(() => {
 		const fresh = due.filter((a) => !chimed.current.has(a.id));
-		if (fresh.length) chime();
+		if (fresh.length) {
+			chime();
+			// And a buzz, on phones that can (Android; iPhones don't let web apps vibrate).
+			navigator.vibrate?.([300, 150, 300, 150, 600]);
+		}
 		fresh.forEach((a) => chimed.current.add(a.id));
 	}, [due]);
 

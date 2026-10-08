@@ -54,8 +54,9 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 				id: reward?.id,
 				reward: { memberIds, title: title.trim(), goal, mode, teamMode, repeats: mode === "until_reached" && repeats, startDay: today },
 			},
-			{ onSuccess: onClose },
 		);
+		// It shows straight away; the save carries on in the background.
+		onClose();
 	}
 
 	return (
@@ -172,7 +173,10 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 					title={`Delete "${reward.title}"?`}
 					confirmLabel="Delete"
 					onCancel={() => setConfirmDelete(false)}
-					onConfirm={() => remove.mutate(reward.id, { onSuccess: onClose })}
+					onConfirm={() => {
+						remove.mutate(reward.id);
+						onClose();
+					}}
 				>
 					The reward is removed. Stars aren't affected, and rewards already given stay in the history.
 				</ConfirmDialog>

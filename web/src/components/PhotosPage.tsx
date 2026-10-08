@@ -74,10 +74,9 @@ export default function PhotosPage({ onPreview }: Props) {
 		const drop = photos
 			.filter((p) => !selected.has(p.id) && p.inSlideshow)
 			.map((p) => p.id);
-		if (add.length)
-			await setSlideshow.mutateAsync({ ids: add, inSlideshow: true });
-		if (drop.length)
-			await setSlideshow.mutateAsync({ ids: drop, inSlideshow: false });
+		// Shown straight away; both saves carry on in the background.
+		if (add.length) setSlideshow.mutate({ ids: add, inSlideshow: true });
+		if (drop.length) setSlideshow.mutate({ ids: drop, inSlideshow: false });
 		stopSelecting();
 	}
 
@@ -285,9 +284,8 @@ export default function PhotosPage({ onPreview }: Props) {
 				<div className={s.empty}>
 					<h2>No photos yet</h2>
 					<p>
-						Drag photos here, or tap the <strong>+</strong> to choose
-						them. Pick which ones the screen saver shows with{" "}
-						<strong>Select</strong>.
+						Drag photos here, or tap the <strong>+</strong> to choose them. Pick
+						which ones the screen saver shows with <strong>Select</strong>.
 					</p>
 				</div>
 			) : shown.length === 0 ? (

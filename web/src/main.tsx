@@ -1,12 +1,22 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import AuthGate from './components/AuthGate';
 import './styles/app.css';
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 2, refetchOnWindowFocus: false } },
+  // Edits show straight away and save in the background; if a save fails, the screen goes back and
+  // the app says so (App.tsx shows the message).
+  mutationCache: new MutationCache({
+    onError: (err) => {
+      if (/Sign in/.test(err.message)) return;
+      window.dispatchEvent(new CustomEvent('household:save-failed', { detail: err.message }));
+    },
+  }),
+  // Refresh when the app comes back into view: a phone pauses it (and its refresh timers) in the
+  // background, so without this it would show what it had before (e.g. stars ticked meanwhile).
+  defaultOptions: { queries: { retry: 2, refetchOnWindowFocus: true } },
 });
 
 // In landscape, iOS gives the same notch room to both sides of the screen; mark which side the notch

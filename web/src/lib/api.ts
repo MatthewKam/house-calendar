@@ -1,8 +1,9 @@
 import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, TaskPoints, Weather, OutboxStatus, RewardInput, RewardWin, Photo, Daily } from './types';
 
-async function call<T>(method: string, url: string, body?: unknown): Promise<T> {
+async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, {
     method,
+    signal,
     headers: body === undefined ? {} : { 'content-type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -41,7 +42,7 @@ export const api = {
   addEvent: (e: EventInput) => call<CalEvent>('POST', '/api/events', e),
   updateEvent: (id: string, e: Partial<EventInput>) => call<CalEvent>('PATCH', `/api/events/${id}`, e),
   /** Drive time from home and when to leave (Google Maps, on the server). */
-  travel: (id: string) => call<Trip>('GET', `/api/events/${id}/travel`),
+  travel: (id: string, signal?: AbortSignal) => call<Trip>('GET', `/api/events/${id}/travel`, undefined, signal),
   weather: () => call<Weather>('GET', '/api/weather'),
   daily: (day: string) => call<Daily>('GET', `/api/daily?${new URLSearchParams({ day })}`),
   alerts: () => call<LeaveAlert[]>('GET', '/api/alerts'),
