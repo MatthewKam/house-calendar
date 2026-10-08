@@ -8,36 +8,31 @@ export interface Member {
 export type MemberPatch = Partial<Pick<Member, 'name' | 'color'>>;
 
 /**
- * A reward a person earns with stars. "monthly" counts this month's stars and starts over each month;
- * "until_reached" counts from `startDay` until the goal is reached, then it's marked as given.
+ * A reward jar. Kids put stars from their bucket in it (they can't take them back out); once it's full
+ * it's earned, a RewardWin waiting to be redeemed. A jar with a deadline is missed if it isn't
+ * redeemed by then, and the kids move their stars back out.
  */
 export interface Reward {
   id: string;
-  /** Who it's for: one kid, or several together. */
+  /** Who can fill it: one kid, or several together. */
   memberIds: string[];
   title: string;
   goal: number;
-  mode: RewardMode;
-  /** With several kids: their stars added together, or each kid reaching the goal. */
+  /** With several kids: their stars added together, or each kid putting in the full amount. */
   teamMode: TeamMode;
-  /** Until-earned only: starts counting again after it's given. */
-  repeats: boolean;
-  startDay: string;
-  /** Stars counted toward it so far (everyone's together). */
+  /** Last day to redeem it; none means it empties after it's redeemed and fills again. */
+  deadline: string | null;
+  /** Stars in it now (everyone's together). */
   stars: number;
   /** Each kid's part of `stars`. */
   memberStars: Record<string, number>;
-  /** earned: reached, waiting to be handed over; given: handed over (this month's, for a monthly one). */
-  status: 'in_progress' | 'earned' | 'given';
-  winId: string | null;
-  /** When the goal was reached. */
-  earnedDay: string | null;
+  /** earned: full, waiting to be redeemed (shown as its win). missed: its deadline passed. */
+  status: 'filling' | 'earned' | 'missed';
 }
-export type RewardMode = 'monthly' | 'until_reached';
 export type TeamMode = 'pooled' | 'each';
-export type RewardInput = Pick<Reward, 'memberIds' | 'title' | 'goal' | 'mode' | 'teamMode' | 'repeats' | 'startDay'>;
+export type RewardInput = Pick<Reward, 'memberIds' | 'title' | 'goal' | 'teamMode' | 'deadline'>;
 
-/** One time a reward was earned (and maybe given), kept even if the reward changes later. */
+/** One time a jar was filled (then redeemed) or missed, kept even if the jar changes later. */
 export interface RewardWin {
   id: string;
   rewardId: string;
@@ -45,9 +40,19 @@ export interface RewardWin {
   memberIds: string[];
   goal: number;
   stars: number;
+  /** Who put in how many. */
+  memberStars: Record<string, number>;
   earnedDay: string;
   givenAt: string | null;
+  /** Missed: the deadline it didn't make. */
+  missedOn: string | null;
 }
+
+/** Stars a kid can still put in jars. */
+export interface Bucket { memberId: string; stars: number }
+
+/** Stars a kid puts in jars at once; with `from`, taken out of that missed jar first. */
+export interface StarPlacing { memberId: string; today: string; from?: string; places: { rewardId: string; stars: number }[] }
 
 export interface CalEvent {
   id: string;
@@ -110,16 +115,17 @@ export interface Task {
   points: number;
   /** An emoji shown before the title, or null. */
   icon: string | null;
+  /** One-time: on the list until it's done or this day ends. Null: it repeats on `days`. */
+  dueBy: string | null;
+  /** One-time: the day each person did it (it's off their list after that day). */
+  doneOn: Record<string, string>;
 }
 
 export type TaskTime = 'morning' | 'evening';
 /** Shown as Daily, Chores and Bonus ("non_negotiable" is Daily's stored name). */
 export type TaskCategory = 'non_negotiable' | 'chores' | 'bonus';
 
-export type TaskInput = Pick<Task, 'title' | 'memberId' | 'days' | 'time' | 'category' | 'required' | 'points' | 'icon'>;
-
-/** Points a person earned from extras. */
-export interface TaskPoints { memberId: string; week: number; month: number }
+export type TaskInput = Pick<Task, 'title' | 'memberId' | 'days' | 'time' | 'category' | 'required' | 'points' | 'icon' | 'dueBy'>;
 
 /** One check-off: this person did the task on this local day. */
 export interface TaskDone { taskId: string; memberId: string; day: string; /** Stars this tick earned (extras only). */ points?: number }

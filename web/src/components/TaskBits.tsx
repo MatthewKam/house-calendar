@@ -1,3 +1,4 @@
+import { dayKey, fromDayKey } from "../lib/dates";
 import { categoryLabel } from "../lib/tasks";
 import type { Task } from "../lib/types";
 import { StarIcon } from "./icons";
@@ -24,6 +25,14 @@ export function TaskTags({ task }: { task: Task }) {
 			{/* Editing or deleting a shared task changes it for the whole family. */}
 			{!task.memberId && <span className={s.sharedTag}>Everyone</span>}
 			<span className={s.catTag}>{categoryLabel(task.category)}</span>
+			{/* One-time: when it's gone from the list. */}
+			{task.dueBy && (
+				<span className={`${s.catTag} ${s.dueTag}`}>
+					{task.dueBy === dayKey(new Date())
+						? "Today only"
+						: `By ${fromDayKey(task.dueBy).toLocaleDateString([], { weekday: "short" })}`}
+				</span>
+			)}
 			{!task.required && (
 				<span className={s.starTag} aria-label={`${task.points} stars`}>
 					{task.points}

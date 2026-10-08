@@ -420,6 +420,33 @@ const migrations: string[] = [
   `
   ALTER TABLE auth ADD COLUMN master_hash TEXT;
   `,
+  // Rewards become jars: each kid's stars sit in their bucket until they put them in a jar.
+  // Monthly rewards become ordinary jars; every jar starts empty (stars already earned stay in the
+  // buckets). A jar can have a deadline; missed ones wait for the kids to move their stars out.
+  `
+  UPDATE rewards SET mode = 'until_reached';
+  ALTER TABLE rewards ADD COLUMN deadline TEXT;
+  ALTER TABLE rewards ADD COLUMN missed_at TEXT;
+  -- A jar whose deadline passed before it was redeemed: the deadline, kept in its history.
+  ALTER TABLE reward_wins ADD COLUMN missed_on TEXT;
+  -- Stars a kid put in a jar. win_id is set once the jar fills (they're spent when it's redeemed).
+  -- No link to rewards: the rows of redeemed jars stay as history when the jar is deleted.
+  CREATE TABLE jar_stars (
+    id          TEXT PRIMARY KEY,
+    reward_id   TEXT NOT NULL,
+    member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    stars       INTEGER NOT NULL CHECK (stars > 0),
+    win_id      TEXT,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX jar_stars_reward ON jar_stars (reward_id);
+  CREATE INDEX jar_stars_member ON jar_stars (member_id);
+  `,
+  // One-time tasks: due by this day (on the list from when they're added until they're done, or
+  // until this day ends). Null for tasks that repeat on their weekdays.
+  `
+  ALTER TABLE tasks ADD COLUMN due_by TEXT;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

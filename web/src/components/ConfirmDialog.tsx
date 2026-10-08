@@ -4,14 +4,16 @@ import sheet from "../styles/Sheet.module.css";
 interface Props {
 	title: string;
 	children?: ReactNode;
-	/** Label for the destructive button, e.g. "Delete". */
+	/** Label for the confirm button, e.g. "Delete". */
 	confirmLabel: string;
+	/** Nothing is lost (e.g. putting stars in jars): the confirm button isn't red. */
+	safe?: boolean;
 	onConfirm: () => void;
 	onCancel: () => void;
 }
 
-/** Asks before something can't be undone. Cancel has focus, so a stray Enter doesn't confirm. */
-export default function ConfirmDialog({ title, children, confirmLabel, onConfirm, onCancel }: Props) {
+/** Asks before something can't be undone (or, `safe`, checks it's what was meant). Cancel has focus, so a stray Enter doesn't confirm. */
+export default function ConfirmDialog({ title, children, confirmLabel, safe, onConfirm, onCancel }: Props) {
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onCancel();
 		window.addEventListener("keydown", onKey);
@@ -29,7 +31,7 @@ export default function ConfirmDialog({ title, children, confirmLabel, onConfirm
 					<button type="button" className={sheet.secondary} onClick={onCancel} autoFocus>
 						Cancel
 					</button>
-					<button type="button" className={sheet.destructive} onClick={onConfirm}>
+					<button type="button" className={safe ? sheet.primary : sheet.destructive} onClick={onConfirm}>
 						{confirmLabel}
 					</button>
 				</div>

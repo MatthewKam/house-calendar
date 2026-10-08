@@ -87,7 +87,7 @@ describe('tasks', () => {
     expect(bad.statusCode).toBe(400);
   });
 
-  it('adds up points from extras for the week and the month, as they were when ticked', async () => {
+  it('adds up stars from extras into the bucket, as they were when ticked', async () => {
     const extra = json(await app.inject({ method: 'POST', url: '/api/tasks',
       payload: { title: 'Wash car', memberId: riley, days: [0, 1, 2, 3, 4, 5, 6], category: 'bonus', points: 5 } }));
     const req = json(await app.inject({ method: 'POST', url: '/api/tasks',
@@ -100,9 +100,23 @@ describe('tasks', () => {
     await app.inject({ method: 'PATCH', url: `/api/tasks/${extra.id}`, payload: { points: 50 } });
     await app.inject({ method: 'PUT', url: `/api/tasks/${extra.id}/done/${riley}/2026-10-06` });
 
-    const totals = json(await app.inject({ url: '/api/tasks/points?week=2026-10-04&month=2026-10-01&to=2026-10-07' }));
-    // Week (Oct 4-6): 5 + 50. Month (Oct 1-6): 5 + 5 + 50. Sep 30 is in neither.
-    expect(totals).toEqual([{ memberId: riley, week: 55, month: 60 }]);
+    // 5 + 5 + 5 + 50: every star ever earned (none are in jars yet).
+    expect(json(await app.inject({ url: '/api/rewards/buckets' }))).toEqual([{ memberId: riley, stars: 65 }]);
+  });
+
+  it('keeps a one-time task with its due-by day, and when each person did it', async () => {
+    const once = json(await app.inject({ method: 'POST', url: '/api/tasks',
+      payload: { title: 'Return library book', memberId: riley, days: [2], dueBy: '2026-10-09' } }));
+    // On the list every day until it's done, so its weekdays are all of them.
+    expect(once).toMatchObject({ dueBy: '2026-10-09', days: [0, 1, 2, 3, 4, 5, 6], doneOn: {} });
+    await app.inject({ method: 'PUT', url: `/api/tasks/${once.id}/done/${riley}/2026-10-08` });
+    const listed = json<any[]>(await app.inject({ url: '/api/tasks' })).find((t) => t.id === once.id);
+    expect(listed.doneOn).toEqual({ [riley]: '2026-10-08' });
+    // Made a repeating task again: no due-by day, and its weekdays back.
+    const back = json(await app.inject({ method: 'PATCH', url: `/api/tasks/${once.id}`, payload: { dueBy: null, days: [1, 3] } }));
+    expect(back).toMatchObject({ dueBy: null, days: [1, 3] });
+    expect((await app.inject({ method: 'POST', url: '/api/tasks',
+      payload: { title: 'X', memberId: riley, days: [2], dueBy: 'Friday' } })).statusCode).toBe(400);
   });
 
   it('reorders tasks, keeping the rest after the ones given', async () => {

@@ -5,17 +5,14 @@ import {
 	useTasksDone,
 	useDeleteTask,
 	useSetTaskDone,
-	useTaskPoints,
 	useReorderTasks,
-	useRewards,
-	useRewardActions,
+	useBuckets,
 } from "../lib/queries";
 import { taskProgress, tasksFor, percent } from "../lib/tasks";
-import type { Task, Member, Reward } from "../lib/types";
+import type { Task, Member } from "../lib/types";
 import KidHeader from "./KidHeader";
 import TodayList from "./TodayList";
 import TaskHistory from "./TaskHistory";
-import RewardDialog from "./RewardDialog";
 import ConfirmDialog from "./ConfirmDialog";
 import panel from "../styles/DayPanel.module.css";
 import s from "../styles/Tasks.module.css";
@@ -42,11 +39,7 @@ export default function TasksPage({ today, members, onAdd, onEdit }: Props) {
 	const reorder = useReorderTasks();
 	// The day's bar counts required tasks only; extras earn stars instead.
 	const progress = taskProgress(tasks, done, today, members.map((m) => m.id));
-	const stars = useTaskPoints(today).data ?? [];
-	// Rewards on the cards, and the one being added or changed in the reward sheet.
-	const rewards = useRewards(today).data ?? [];
-	const { give } = useRewardActions();
-	const [rewardSheet, setRewardSheet] = useState<{ member: Member; reward?: Reward } | null>(null);
+	const buckets = useBuckets().data ?? [];
 	// Whose card is showing its history instead of today's list (one at a time).
 	const [historyKid, setHistoryKid] = useState<string | null>(null);
 	// Edit mode lists every task with edit and delete, and hides the tick buttons so nothing gets ticked by accident.
@@ -99,14 +92,10 @@ export default function TasksPage({ today, members, onAdd, onEdit }: Props) {
 							>
 								<KidHeader
 									kid={kid}
-									members={members}
 									progress={progress.get(kid.id)}
-									stars={stars.find((p) => p.memberId === kid.id)?.month ?? 0}
-									rewards={rewards.filter((r) => r.memberIds.includes(kid.id))}
+									stars={buckets.find((b) => b.memberId === kid.id)?.stars ?? 0}
 									showHistory={showHistory}
 									onHistory={() => setHistoryKid(showHistory ? null : kid.id)}
-									onReward={(reward) => setRewardSheet({ member: kid, reward })}
-									onGive={(r) => give.mutate({ id: r.id, today })}
 								/>
 								{showHistory ? (
 									<TaskHistory kid={kid} tasks={mine} today={today} onEdit={onEdit} />
@@ -156,19 +145,9 @@ export default function TasksPage({ today, members, onAdd, onEdit }: Props) {
 					}}
 				>
 					{toDelete.memberId
-						? "Its ticks and any stars it earned will be removed too. This can't be undone."
+						? "Its ticks and any stars it earned will be removed too (out of jars, if they're in one). This can't be undone."
 						: "This task is shared, so it's removed for everyone, with all their ticks and stars. This can't be undone."}
 				</ConfirmDialog>
-			)}
-
-			{rewardSheet && (
-				<RewardDialog
-					key={rewardSheet.reward?.id ?? rewardSheet.member.id}
-					member={rewardSheet.member}
-					reward={rewardSheet.reward}
-					today={today}
-					onClose={() => setRewardSheet(null)}
-				/>
 			)}
 		</section>
 	);

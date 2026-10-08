@@ -9,8 +9,9 @@ const queryClient = new QueryClient({
   // Edits show straight away and save in the background; if a save fails, the screen goes back and
   // the app says so (App.tsx shows the message).
   mutationCache: new MutationCache({
-    onError: (err) => {
-      if (/Sign in/.test(err.message)) return;
+    onError: (err, _vars, _ctx, mutation) => {
+      // Signed out shows the PIN screen; some edits show their own error (e.g. a wrong PIN in a dialog).
+      if (/Sign in/.test(err.message) || mutation.meta?.inline) return;
       window.dispatchEvent(new CustomEvent('household:save-failed', { detail: err.message }));
     },
   }),

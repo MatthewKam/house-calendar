@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, TaskPoints, Weather, OutboxStatus, RewardInput, RewardWin, Photo, Daily } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, {
@@ -67,16 +67,19 @@ export const api = {
   removeTask: (id: string) => call<void>('DELETE', `/api/tasks/${id}`),
   rewards: (today: string) => call<Reward[]>('GET', `/api/rewards?${new URLSearchParams({ today })}`),
   rewardHistory: () => call<RewardWin[]>('GET', '/api/rewards/history'),
-  addReward: (r: RewardInput) => call<Reward>('POST', '/api/rewards', r),
-  updateReward: (id: string, r: Partial<Omit<RewardInput, 'startDay'>>) => call<Reward>('PATCH', `/api/rewards/${id}`, r),
-  giveReward: (id: string, today: string) => call<void>('POST', `/api/rewards/${id}/given?${new URLSearchParams({ today })}`),
-  giveWin: (id: string, today: string) => call<void>('POST', `/api/rewards/wins/${id}/given?${new URLSearchParams({ today })}`),
-  undoWin: (id: string) => call<void>('POST', `/api/rewards/wins/${id}/undo`),
+  buckets: () => call<Bucket[]>('GET', '/api/rewards/buckets'),
+  addReward: (r: RewardInput, today: string) => call<Reward>('POST', '/api/rewards', { ...r, today }),
+  updateReward: (id: string, r: Partial<RewardInput>, today: string) =>
+    call<Reward>('PATCH', `/api/rewards/${id}?${new URLSearchParams({ today })}`, r),
+  placeStars: (p: StarPlacing) => call<void>('POST', '/api/rewards/place', p),
+  restoreReward: (id: string, deadline: string | null, today: string) => call<Reward>('POST', `/api/rewards/${id}/restore`, { deadline, today }),
+  takeBack: (id: string, memberId: string, stars: number, pin: string) =>
+    call<void>('POST', `/api/rewards/${id}/take-back`, { memberId, stars, pin }),
+  redeem: (winId: string) => call<void>('POST', `/api/rewards/wins/${winId}/given`),
+  undoRedeem: (winId: string) => call<void>('POST', `/api/rewards/wins/${winId}/undo`),
   removeReward: (id: string) => call<void>('DELETE', `/api/rewards/${id}`),
   /** Saves a new task order (all task ids, in order). */
   reorderTasks: (ids: string[]) => call<Task[]>('PUT', '/api/tasks/order', { ids }),
-  taskPoints: (week: string, month: string, to: string) =>
-    call<TaskPoints[]>('GET', `/api/tasks/points?${new URLSearchParams({ week, month, to })}`),
   tasksDone: (from: string, to: string) => call<TaskDone[]>('GET', `/api/tasks/done?${new URLSearchParams({ from, to })}`),
   setTaskDone: (id: string, memberId: string, day: string, done: boolean) =>
     call<void>(done ? 'PUT' : 'DELETE', `/api/tasks/${id}/done/${memberId}/${day}`),

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { addDays, startOfWeek } from "../lib/dates";
+import { addDays, dayKey, fromDayKey, startOfWeek } from "../lib/dates";
 import { UNASSIGNED } from "../lib/color";
 import { CATEGORIES, QUICK_TASKS, TASK_ICONS, TIMES } from "../lib/tasks";
 import type {
@@ -35,6 +35,14 @@ const PRESETS: [string, number[]][] = [
 	["Weekends", [0, 6]],
 ];
 
+const TODAY = () => dayKey(new Date());
+/** Quick picks for a one-time task's due date: today, tomorrow, and this Saturday. */
+const DUE_PICKS = (): [string, string][] => [
+	["Today", TODAY()],
+	["Tomorrow", dayKey(addDays(new Date(), 1))],
+	["End of week", dayKey(addDays(startOfWeek(new Date()), 6))],
+];
+
 // One letter per weekday in the display's language, Sunday first.
 const sunday = startOfWeek(new Date());
 const LETTERS = EVERY_DAY.map((d) =>
@@ -63,8 +71,12 @@ export default function TaskDialog({
 					: (members[0]?.id ?? null),
 	);
 	const [days, setDays] = useState<number[]>(task?.days ?? EVERY_DAY);
+	// One-time: the last day it can be done (it's on the list until then, or until it's done).
+	const [dueBy, setDueBy] = useState<string | null>(task?.dueBy ?? null);
 	const [time, setTime] = useState<TaskTime | null>(task?.time ?? null);
 	const [icon, setIcon] = useState<string | null>(task?.icon ?? null);
+	// The icon picker opens under the name when the icon square is tapped.
+	const [pickingIcon, setPickingIcon] = useState(false);
 	const [category, setCategory] = useState<TaskCategory>(
 		task?.category ?? "non_negotiable",
 	);
@@ -86,8 +98,10 @@ export default function TaskDialog({
 		? "Add a task"
 		: memberId === undefined
 			? "Pick who it's for"
-		: days.length === 0
+		: dueBy === null && days.length === 0
 			? "Pick at least one day"
+		: dueBy !== null && dueBy < TODAY() && dueBy !== task?.dueBy
+			? "Pick a due date from today on"
 			: null;
 	const same = (a: number[], b: number[]) =>
 		a.length === b.length && a.every((d) => b.includes(d));
@@ -98,12 +112,13 @@ export default function TaskDialog({
 			onSave({
 				title: title.trim(),
 				memberId: memberId ?? null,
-				days: [...days].sort(),
+				days: dueBy ? EVERY_DAY : [...days].sort(),
 				time,
 				category,
 				required: isRequired,
 				points: isRequired ? 0 : points,
 				icon,
+				dueBy,
 			});
 		}
 	}
@@ -120,10 +135,16 @@ export default function TaskDialog({
 				</header>
 
 				<div className={c.titleRow}>
-					{/* The chosen icon, shown before the name like on the Tasks page. */}
-					<span className={c.iconPreview} aria-hidden="true">
-						{icon ?? "·"}
-					</span>
+					{/* The chosen icon, shown before the name like on the Tasks page. Tap to pick one. */}
+					<button
+						type="button"
+						className={c.iconPreview}
+						aria-expanded={pickingIcon}
+						aria-label={icon ? "Change icon" : "Add an icon"}
+						onClick={() => setPickingIcon(!pickingIcon)}
+					>
+						{icon ?? "+"}
+					</button>
 					<input
 						className={s.title}
 						placeholder="What needs doing?"
@@ -133,6 +154,16 @@ export default function TaskDialog({
 						onChange={(e) => setTitle(e.target.value)}
 					/>
 				</div>
+				{pickingIcon && (
+					<IconPicker
+						value={icon}
+						featured={TASK_ICONS}
+						onChange={(next) => {
+							setIcon(next);
+							setPickingIcon(false);
+						}}
+					/>
+				)}
 				{!task && (
 					<div className={s.wrap}>
 						{QUICK_TASKS.map((q) => (
@@ -151,8 +182,6 @@ export default function TaskDialog({
 					</div>
 				)}
 
-				<div className={s.label}>Icon</div>
-				<IconPicker value={icon} onChange={setIcon} featured={TASK_ICONS} />
 
 				<div className={s.label}>Who</div>
 				<div className={s.wrap}>
@@ -180,13 +209,52 @@ export default function TaskDialog({
 						<button
 							key={label}
 							type="button"
-							className={`${s.chip} ${same(days, set) ? c.chipOn : ""}`}
-							onClick={() => setDays(set)}
+							className={`${s.chip} ${dueBy === null && same(days, set) ? c.chipOn : ""}`}
+							onClick={() => {
+								setDays(set);
+								setDueBy(null);
+							}}
 						>
 							{label}
 						</button>
 					))}
+					<button
+						type="button"
+						className={`${s.chip} ${dueBy !== null ? c.chipOn : ""}`}
+						onClick={() => setDueBy(dueBy ?? TODAY())}
+					>
+						One time
+					</button>
 				</div>
+				{dueBy !== null ? (
+					<>
+						<div className={s.wrap}>
+							{DUE_PICKS().map(([label, day]) => (
+								<button
+									key={label}
+									type="button"
+									className={`${s.chip} ${dueBy === day ? c.chipOn : ""}`}
+									onClick={() => setDueBy(day)}
+								>
+									{label}
+								</button>
+							))}
+							<input
+								type="date"
+								className={c.dueDate}
+								value={dueBy}
+								min={TODAY()}
+								aria-label="Due by"
+								onChange={(e) => e.target.value && setDueBy(e.target.value)}
+							/>
+						</div>
+						<p className={c.hint}>
+							{dueBy === TODAY()
+								? "Just today: it's gone tomorrow."
+								: `On the list until it's done, through ${fromDayKey(dueBy).toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}. Then it's gone.`}
+						</p>
+					</>
+				) : (
 				<div className={c.dayPicker} role="group" aria-label="Days it's due">
 					{LETTERS.map((label, d) => {
 						const on = days.includes(d);
@@ -205,6 +273,7 @@ export default function TaskDialog({
 						);
 					})}
 				</div>
+				)}
 
 				<div className={s.label}>Time of day</div>
 				<div className={s.wrap}>

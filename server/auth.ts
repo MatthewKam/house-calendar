@@ -31,6 +31,30 @@ function pinMatches(pin: string, stored: string) {
   return got.length === want.length && timingSafeEqual(got, want);
 }
 
+/**
+ * Checks the PIN for parent-only actions (e.g. taking stars back out of a jar): the master PIN, or
+ * the family PIN if there's no master PIN. Five wrong tries lock it for 15 minutes, as for signing in.
+ * The checker returns what's wrong, or null when the PIN is right.
+ */
+export function parentPin(db: DB) {
+  const tries = new Map<string, { n: number; until: number }>();
+  return (pin: string, ip: string): string | null => {
+    const row = db.prepare('SELECT pin_hash, master_hash FROM auth WHERE id = 1').get() as
+      { pin_hash: string; master_hash: string | null } | undefined;
+    const want = row?.master_hash ?? row?.pin_hash;
+    if (!want) return null;
+    const t = tries.get(ip);
+    if (t && t.until > Date.now()) return `Too many wrong tries. Try again in ${Math.ceil((t.until - Date.now()) / 60_000)} min.`;
+    if (pinMatches(pin, want)) {
+      tries.delete(ip);
+      return null;
+    }
+    const n = (t?.n ?? 0) + 1;
+    tries.set(ip, n >= MAX_TRIES ? { n: 0, until: Date.now() + LOCK_MS } : { n, until: 0 });
+    return n >= MAX_TRIES ? 'Too many wrong tries. Try again in 15 min.' : 'Wrong PIN';
+  };
+}
+
 /** The session token from the Cookie header, if any. */
 function tokenOf(req: FastifyRequest) {
   const m = new RegExp(`(?:^|;\\s*)${COOKIE}=([^;]+)`).exec(req.headers.cookie ?? '');

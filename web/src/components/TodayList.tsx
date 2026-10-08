@@ -1,5 +1,5 @@
 import { fromDayKey } from "../lib/dates";
-import { didTask, dueOn, TIMES } from "../lib/tasks";
+import { didTask, dueOn, expired, TIMES } from "../lib/tasks";
 import type { Member, Task, TaskDone } from "../lib/types";
 import SortableList from "./SortableList";
 import { TaskName, TaskTags, TaskTick } from "./TaskBits";
@@ -28,7 +28,7 @@ export default function TodayList({ kid, tasks, done, today, editing, onTick, on
 		return (
 			<>
 				{TIMES.map((t) => {
-					const group = tasks.filter((c) => c.time === t.id);
+					const group = tasks.filter((c) => c.time === t.id && !expired(c, today));
 					if (group.length === 0) return null;
 					return (
 						<div key={t.label} className={s.timeGroup}>
@@ -59,7 +59,7 @@ export default function TodayList({ kid, tasks, done, today, editing, onTick, on
 			</>
 		);
 	}
-	const dueToday = tasks.filter((c) => dueOn(c, fromDayKey(today)));
+	const dueToday = tasks.filter((c) => dueOn(c, fromDayKey(today), kid.id));
 	return (
 		<>
 			{/* By part of the day: Morning, Anytime, Evening. */}

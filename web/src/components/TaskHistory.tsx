@@ -137,7 +137,7 @@ function WeekTable({ kid, tasks, today, days, done, onToggle, onEdit }: {
 				<span className={s.count}>Done</span>
 			</div>
 			{tasks.map((c) => {
-				const due = days.filter((d) => dueOn(c, d) && dayKey(d) <= today);
+				const due = days.filter((d) => dueOn(c, d, kid.id) && dayKey(d) <= today);
 				const doneCount = due.filter((d) => didTask(done, c, kid.id, dayKey(d))).length;
 				return (
 					<div key={c.id} className={s.historyRow}>
@@ -147,7 +147,7 @@ function WeekTable({ kid, tasks, today, days, done, onToggle, onEdit }: {
 						<span className={s.cells} style={cols}>
 							{days.map((d) => {
 								const key = dayKey(d);
-								if (!dueOn(c, d)) {
+								if (!dueOn(c, d, kid.id)) {
 									return (
 										<span key={key} className={s.notDue} aria-label={`${key}: not due`}>
 											·
@@ -195,7 +195,7 @@ function MonthCalendar({ kid, tasks, today, from, days, done, picked, onPick, on
 }) {
 	const weekdays = Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(from), i).toLocaleDateString([], { weekday: "narrow" }));
 	const pickedDate = picked ? fromDayKey(picked) : null;
-	const pickedTasks = pickedDate ? tasks.filter((c) => dueOn(c, pickedDate)) : [];
+	const pickedTasks = pickedDate ? tasks.filter((c) => dueOn(c, pickedDate, kid.id)) : [];
 	return (
 		<>
 			<div className={s.monthGrid}>
@@ -209,7 +209,7 @@ function MonthCalendar({ kid, tasks, today, from, days, done, picked, onPick, on
 				))}
 				{days.map((d) => {
 					const key = dayKey(d);
-					const required = tasks.filter((c) => c.required && dueOn(c, d));
+					const required = tasks.filter((c) => c.required && dueOn(c, d, kid.id));
 					const doneReq = required.filter((c) => didTask(done, c, kid.id, key)).length;
 					const earned = done.filter((x) => x.memberId === kid.id && x.day === key).reduce((sum, x) => sum + (x.points ?? 0), 0);
 					const future = key > today;

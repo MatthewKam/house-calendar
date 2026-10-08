@@ -267,6 +267,12 @@
 	background: var(--surface);
 	padding: 2px 5px;
 }
+/* One-time: "Today only" or "By Fri", in a warmer color. */
+.catTag.dueTag {
+	color: #9a4a00;
+	border-color: #f3c79f;
+	background: #fff1e6;
+}
 /* Extras: a dashed outline instead of the person's tint, so required tasks stand out. */
 .extra:not(.ticked) {
 	background: var(--surface);
@@ -298,6 +304,11 @@
 	color: var(--muted);
 	background: var(--bg);
 	border-radius: 0.7rem;
+	min-width: 0;
+	min-height: 0;
+}
+.iconPreview[aria-expanded="true"] {
+	box-shadow: 0 0 0 2px var(--accent);
 }
 
 /* ---- Task sheet ---- */
@@ -326,6 +337,15 @@
 .chipOn {
 	background: var(--accent);
 	color: var(--surface);
+}
+/* A one-time task's due date, beside its quick picks. */
+.dueDate {
+	font-size: 1rem;
+	padding: 0.45rem 0.6rem;
+	border: 1px solid var(--line);
+	border-radius: 0.6rem;
+	color: var(--text);
+	background: var(--surface);
 }
 .dayPicker {
 	display: flex;
@@ -368,7 +388,7 @@
 /* A card showing history spans the full width, so a month of days fits. */
 .board .kid.wide {
 	flex-basis: 100%;
-	max-width: 100%;
+	max-width: 400px;
 }
 /* On the right end of the name row. */
 .historyLink {
@@ -505,7 +525,7 @@
 	}
 }
 
-/* ---- Card header: name row, stars this month, reward ---- */
+/* ---- Card header: name row and stars to spend ---- */
 .kidHead {
 	display: flex;
 	flex-direction: column;
@@ -538,97 +558,6 @@
 	font-weight: 700;
 	color: #8a5a00;
 	background: #fff1cc;
-}
-.reward {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	min-height: 2.4rem;
-	padding: 0.3rem 0.6rem;
-	border-radius: 0.6rem;
-	background: var(--bg);
-	text-align: left;
-}
-.reward svg {
-	width: 1.2rem;
-	height: 1.2rem;
-	flex: none;
-	fill: none;
-	stroke: currentColor;
-	stroke-width: 1.7;
-	stroke-linejoin: round;
-}
-.rewardText {
-	flex: 1;
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	font-weight: 600;
-}
-.rewardBar {
-	flex: 0 1 6rem;
-	height: 0.5rem;
-	border-radius: 1rem;
-	background: var(--line);
-	overflow: hidden;
-}
-.rewardBar span {
-	display: block;
-	height: 100%;
-	background: #e3a008;
-	transition: width 0.4s ease;
-}
-.rewardCount {
-	color: var(--muted);
-	font-size: 0.85rem;
-	font-variant-numeric: tabular-nums;
-}
-
-/* Several rewards: each row is a button (to change it), plus "Mark as given" once earned. */
-.reward {
-	padding: 0;
-	gap: 0;
-	flex-wrap: wrap;
-}
-/* Full width, so "Mark as given" wraps onto its own line below instead of squeezing the title. */
-.rewardMain {
-	flex: 1 1 100%;
-	min-width: 0;
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	min-height: 2.4rem;
-	padding: 0.3rem 0.6rem;
-	text-align: left;
-}
-.rewardMode {
-	display: block;
-	color: var(--muted);
-	font-size: 0.75rem;
-	font-weight: 400;
-}
-.rewardReached {
-	background: #fff6dc;
-}
-.given {
-	margin: 0 0.4rem 0.4rem auto;
-	padding: 0 0.9rem;
-	min-height: 2.2rem;
-	background: #e3a008;
-	color: #fff;
-	font-weight: 650;
-}
-.addReward {
-	align-self: flex-start;
-	min-height: 0;
-	padding: 0.1rem 0.3rem;
-	color: var(--muted);
-	font-weight: 600;
-	font-size: 0.9rem;
-}
-.addReward:hover {
-	color: var(--text);
 }
 
 /* ---- Edit mode: drag handle, title, edit and delete icons ---- */
@@ -759,9 +688,6 @@
 	.monthDay {
 		min-height: 2.9rem;
 		padding: 0.15rem 0.25rem;
-	}
-	.rewardBar {
-		flex-basis: 4rem;
 	}
 }
 
