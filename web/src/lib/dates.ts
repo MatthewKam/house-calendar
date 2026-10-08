@@ -52,3 +52,10 @@ export const toInstant = (day: string, time: string) => {
   d.setHours(h, m, 0, 0);
   return d.toISOString();
 };
+
+/** "🚗 18 min", "🚗 1 hr 5 min": the drive to an event. */
+export function driveLabel(minutes: number) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `🚗 ${h ? `${h} hr${m ? ` ${m} min` : ''}` : `${m} min`}`;
+}

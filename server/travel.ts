@@ -91,6 +91,11 @@ const toAlert = (r: AlertRow) => ({
   minutesBefore: r.minutes_before, driveMinutes: r.drive_minutes, leaveAt: r.leave_at, remindAt: r.remind_at,
 });
 
+/** Drive times on the screen saver: events within 3 hours count as soon. */
+const SOON_MS = 3 * 3_600_000;
+/** This machine's local day, "YYYY-MM-DD" (all-day events are stored that way). */
+const localDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 /** How long before leaving traffic is checked again (once). */
 const REFRESH_BEFORE_MS = 30 * 60_000;
 
@@ -124,6 +129,48 @@ export function registerTravel(app: FastifyInstance, db: DB, estimate: Estimator
       }
     }
     return { ...trip, late: !!trip.leaveAt && Date.parse(trip.leaveAt) <= Date.now() } satisfies Trip;
+  });
+
+  // ---- Drive times on the screen saver ---------------------------------------------
+  // Minutes from home to each of today's events still to come that has an address, listed on the
+  // screen saver. One Google request each, kept a while: events in the next few hours are checked
+  // every 30 minutes (traffic changes), later ones every 6 hours.
+  const drives = new Map<string, { at: number; minutes: number }>();
+  app.get('/api/travel/times', async (_req, reply) => {
+    if (!estimate) return reply.code(503).send({ error: 'Travel times need GOOGLE_MAPS_API_KEY in .env (see README)' });
+    const origin = home();
+    if (!origin) return {};
+    const now = new Date();
+    const until = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const rows = (db.prepare(`SELECT id, all_day, start, end, location FROM events
+      WHERE location IS NOT NULL AND trim(location) != '' AND end > ? AND start < ? ORDER BY start LIMIT 60`)
+      .all(now.toISOString().slice(0, 10), until.toISOString()) as
+      { id: string; all_day: number; start: string; end: string; location: string }[])
+      // Timed events not started yet; all-day ones from today on.
+      .filter((r) => (r.all_day ? r.end > localDay(now) : Date.parse(r.start) > now.getTime()));
+    const out: Record<string, number> = {};
+    await Promise.all(rows.map(async (r) => {
+      const arriveBy = r.all_day ? null : new Date(r.start);
+      // Leaving about half an hour before it starts (or now): close enough for the traffic.
+      const departAt = arriveBy ? new Date(Math.max(now.getTime(), arriveBy.getTime() - 30 * 60_000)) : now;
+      const key = `${origin}\n${r.location}\n${arriveBy ? Math.floor(arriveBy.getTime() / 3_600_000) : localDay(now)}`;
+      const soon = !arriveBy || arriveBy.getTime() - now.getTime() < SOON_MS;
+      const hit = drives.get(key);
+      if (hit && now.getTime() - hit.at < (soon ? 30 * 60_000 : 6 * 3_600_000)) {
+        out[r.id] = hit.minutes;
+        return;
+      }
+      try {
+        const { seconds } = await withinTime(estimate(origin, r.location, departAt));
+        const minutes = Math.max(1, Math.round(seconds / 60));
+        drives.set(key, { at: now.getTime(), minutes });
+        out[r.id] = minutes;
+      } catch {
+        // Not found or Google is slow: that event just shows no drive time.
+        if (hit) out[r.id] = hit.minutes;
+      }
+    }));
+    return out;
   });
 
   // ---- "Time to leave" alerts on the wall ------------------------------------------

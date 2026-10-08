@@ -11,7 +11,9 @@
 	animation: saverIn 0.8s ease-out;
 }
 @keyframes saverIn {
-	from { opacity: 0; }
+	from {
+		opacity: 0;
+	}
 }
 .slide {
 	position: absolute;
@@ -46,43 +48,131 @@
 	animation: drift var(--show) linear both;
 }
 @keyframes drift {
-	from { transform: scale(1); }
-	to { transform: scale(1.12); }
+	from {
+		transform: scale(1);
+	}
+	to {
+		transform: scale(1.12);
+	}
 }
 
 /* ---- Transitions: each photo comes in (In) while the last goes out (Out). ---- */
 .fadeIn,
-.kenburnsIn { animation-name: fadeIn; }
+.kenburnsIn {
+	animation-name: fadeIn;
+}
 .fadeOut,
-.kenburnsOut { animation-name: fadeOut; }
-@keyframes fadeIn { from { opacity: 0; } }
-@keyframes fadeOut { to { opacity: 0; } }
+.kenburnsOut {
+	animation-name: fadeOut;
+}
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+}
+@keyframes fadeOut {
+	to {
+		opacity: 0;
+	}
+}
 
-.slideIn { animation-name: slideIn; }
-.slideOut { animation-name: slideOut; }
-@keyframes slideIn { from { transform: translateX(100%); } }
-@keyframes slideOut { to { transform: translateX(-35%); opacity: 0.2; } }
+.slideIn {
+	animation-name: slideIn;
+}
+.slideOut {
+	animation-name: slideOut;
+}
+@keyframes slideIn {
+	from {
+		transform: translateX(100%);
+	}
+}
+@keyframes slideOut {
+	to {
+		transform: translateX(-35%);
+		opacity: 0.2;
+	}
+}
 
 /* Going back (swipe right or ‹): slides in from the left. */
-.slideBackIn { animation-name: slideBackIn; }
-.slideBackOut { animation-name: slideBackOut; }
-@keyframes slideBackIn { from { transform: translateX(-100%); } }
-@keyframes slideBackOut { to { transform: translateX(35%); opacity: 0.2; } }
+.slideBackIn {
+	animation-name: slideBackIn;
+}
+.slideBackOut {
+	animation-name: slideBackOut;
+}
+@keyframes slideBackIn {
+	from {
+		transform: translateX(-100%);
+	}
+}
+@keyframes slideBackOut {
+	to {
+		transform: translateX(35%);
+		opacity: 0.2;
+	}
+}
 
-.zoomIn { animation-name: zoomIn; }
-.zoomOut { animation-name: zoomAway; }
-@keyframes zoomIn { from { transform: scale(1.25); opacity: 0; } }
-@keyframes zoomAway { to { transform: scale(0.85); opacity: 0; } }
+.zoomIn {
+	animation-name: zoomIn;
+}
+.zoomOut {
+	animation-name: zoomAway;
+}
+@keyframes zoomIn {
+	from {
+		transform: scale(1.25);
+		opacity: 0;
+	}
+}
+@keyframes zoomAway {
+	to {
+		transform: scale(0.85);
+		opacity: 0;
+	}
+}
 
-.blurIn { animation-name: blurIn; }
-.blurOut { animation-name: blurOut; }
-@keyframes blurIn { from { filter: blur(24px); opacity: 0; transform: scale(1.04); } }
-@keyframes blurOut { to { filter: blur(24px); opacity: 0; } }
+.blurIn {
+	animation-name: blurIn;
+}
+.blurOut {
+	animation-name: blurOut;
+}
+@keyframes blurIn {
+	from {
+		filter: blur(24px);
+		opacity: 0;
+		transform: scale(1.04);
+	}
+}
+@keyframes blurOut {
+	to {
+		filter: blur(24px);
+		opacity: 0;
+	}
+}
 
-.flipIn { animation-name: flipIn; }
-.flipOut { animation-name: flipOut; }
-@keyframes flipIn { from { transform: rotateY(-90deg); opacity: 0.4; } 40% { opacity: 1; } }
-@keyframes flipOut { to { transform: rotateY(90deg); opacity: 0; } }
+.flipIn {
+	animation-name: flipIn;
+}
+.flipOut {
+	animation-name: flipOut;
+}
+@keyframes flipIn {
+	from {
+		transform: rotateY(-90deg);
+		opacity: 0.4;
+	}
+	40% {
+		opacity: 1;
+	}
+}
+@keyframes flipOut {
+	to {
+		transform: rotateY(90deg);
+		opacity: 0;
+	}
+}
 
 /* Time, weather and date, small in the corner. */
 .corner {
@@ -98,14 +188,86 @@
 	text-shadow: 0 2px 8px rgb(0 0 0 / 0.6);
 	pointer-events: none;
 }
+/* Today's events, under the clock and date: rows like the task list (no checkboxes), edged in each person's color. */
+.events {
+	grid-column: 1 / -1;
+	list-style: none;
+	margin: 0.9rem 0 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	width: min(24rem, 40vw);
+	text-shadow: none;
+}
+/* The corner lets taps through (to close the screen saver); the events take theirs. */
+.event {
+	pointer-events: auto;
+	width: 100%;
+	min-height: 0;
+	text-align: left;
+	display: flex;
+	align-items: baseline;
+	gap: 0.7rem;
+	padding: 0.55rem 0.85rem 0.55rem 1.1rem;
+	border-radius: 0.8rem;
+	color: #1d1f23;
+	background:
+		var(--stripe) left / 0.4rem 100% no-repeat,
+		rgb(255 255 255 / 0.88);
+	box-shadow: 0 0.3rem 1rem rgb(0 0 0 / 0.25);
+	backdrop-filter: blur(6px);
+}
+.eventTime {
+	flex: none;
+	min-width: 4.6rem;
+	font-size: 0.9rem;
+	color: #5b616b;
+}
+.eventTitle {
+	font-size: 1.1rem;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+/* The title, with the drive from home under it. */
+.eventText {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	min-width: 0;
+}
+.eventDrive {
+	font-size: 0.85rem;
+	color: #5b616b;
+}
+.more {
+	padding-left: 0.3rem;
+	font-size: 0.95rem;
+	color: #fff;
+	text-shadow: 0 2px 8px rgb(0 0 0 / 0.6);
+}
+.cornerInfo {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
 .time {
-	font-size: 3.2rem;
+	font-size: 3.5rem;
 	font-weight: 700;
 	line-height: 1;
 }
 .weather {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0.3rem;
 	font-size: 1.6rem;
 	font-weight: 650;
+}
+.weatherMore {
+	font-size: 1rem;
+	font-weight: 500;
+	opacity: 0.9;
 }
 .date {
 	grid-column: 1 / -1;

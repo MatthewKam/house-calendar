@@ -8,6 +8,7 @@ export const SCREEN_SAVER_DEFAULTS: ScreenSaverSettings = {
   night: true,
   nightFrom: '22:00',
   nightTo: '06:00',
+  showEvents: true,
 };
 
 /** Whether `now` is in the night hours (which can run past midnight, e.g. 22:00 to 06:00). */

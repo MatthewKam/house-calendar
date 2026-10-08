@@ -1,7 +1,8 @@
 import type { Photo } from './types';
 
 // Getting photos ready in the browser: shrunk to wall size (and a thumbnail) before uploading, so
-// big phone photos upload fast and the Pi never has to process images.
+// big phone photos upload fast and the Pi never has to process images. Videos go up as they are;
+// the server converts them.
 
 const FULL = 2560;
 const THUMB = 480;
@@ -64,16 +65,33 @@ export async function preparePhoto(file: File): Promise<Prepared> {
   }
 }
 
+/** Videos the album takes (iPhone .mov, .mp4 and the like). */
+export const isVideo = (f: File) => f.type.startsWith('video/') || /\.(mov|mp4|m4v|webm)$/i.test(f.name);
+
+/** Uploads a video as it is (the server converts it), reporting progress from 0 to 1. */
+export function uploadVideo(file: File, inSlideshow: boolean, onProgress: (f: number) => void): Promise<Photo> {
+  const query = new URLSearchParams({ takenAt: new Date(file.lastModified || Date.now()).toISOString(), inSlideshow: String(inSlideshow) });
+  return send(`/api/photos/video?${query}`, file.type || 'video/quicktime', file, onProgress);
+}
+
 /** Uploads a prepared photo, reporting progress from 0 to 1. */
-export function uploadPhoto(p: Prepared, inSlideshow: boolean, onProgress: (f: number) => void): Promise<Photo> {
+export async function uploadPhoto(p: Prepared, inSlideshow: boolean, onProgress: (f: number) => void): Promise<Photo> {
   const query = new URLSearchParams({ width: String(p.width), height: String(p.height), takenAt: p.takenAt, inSlideshow: String(inSlideshow) });
+  const photo = await send(`/api/photos?${query}`, 'image/jpeg', p.full, onProgress);
+  // The thumbnail is small; a failure just means the grid shows the full photo.
+  await fetch(`/api/photos/${photo.id}/thumb`, { method: 'PUT', headers: { 'content-type': 'image/jpeg' }, body: p.thumb }).catch(() => {});
+  return photo;
+}
+
+/** POSTs a file with upload progress (fetch can't report it). */
+function send(url: string, type: string, body: Blob, onProgress: (f: number) => void): Promise<Photo> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `/api/photos?${query}`);
-    xhr.setRequestHeader('content-type', 'image/jpeg');
+    xhr.open('POST', url);
+    xhr.setRequestHeader('content-type', type);
     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total);
     xhr.onerror = () => reject(new Error('Upload failed (no connection)'));
-    xhr.onload = async () => {
+    xhr.onload = () => {
       if (xhr.status !== 201) {
         let msg = xhr.statusText;
         try {
@@ -83,11 +101,37 @@ export function uploadPhoto(p: Prepared, inSlideshow: boolean, onProgress: (f: n
         }
         return reject(new Error(msg));
       }
-      const photo = JSON.parse(xhr.responseText) as Photo;
-      // The thumbnail is small; a failure just means the grid shows the full photo.
-      await fetch(`/api/photos/${photo.id}/thumb`, { method: 'PUT', headers: { 'content-type': 'image/jpeg' }, body: p.thumb }).catch(() => {});
-      resolve(photo);
+      resolve(JSON.parse(xhr.responseText) as Photo);
     };
-    xhr.send(p.full);
+    xhr.send(body);
   });
 }
+
+/**
+ * Loads a photo (decoded) or the start of a video before it's shown, so it never appears
+ * half-drawn. A video that's slow to start is shown anyway after a few seconds.
+ */
+export function preload(p: Photo): Promise<void> {
+  if (p.kind !== 'video') {
+    const img = new Image();
+    img.src = p.url;
+    return img.decode().catch(() => {});
+  }
+  return new Promise((resolve) => {
+    const v = document.createElement('video');
+    v.muted = true;
+    v.preload = 'auto';
+    const done = () => {
+      clearTimeout(timer);
+      resolve();
+    };
+    const timer = setTimeout(done, 4000);
+    v.addEventListener('loadeddata', done, { once: true });
+    v.addEventListener('error', done, { once: true });
+    v.src = p.url;
+  });
+}
+
+/** How long a slide stays up: a video plays through once (45 seconds at most); a photo, `photoSeconds`. */
+export const slideSeconds = (p: Photo, photoSeconds: number) =>
+  p.kind === 'video' && p.seconds ? Math.max(3, p.seconds) : photoSeconds;

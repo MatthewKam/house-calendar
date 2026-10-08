@@ -1,53 +1,85 @@
 /* Aleo (Google Fonts, SIL Open Font License; see fonts/Aleo/OFL.txt), bundled so the wall needs no
    internet for it. The variable files cover every weight from 100 to 900. */
 @font-face {
-  font-family: 'Aleo';
-  src: url('../fonts/Aleo/Aleo-VariableFont_wght.ttf') format('truetype');
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
+	font-family: "Aleo";
+	src: url("../fonts/Aleo/Aleo-VariableFont_wght.ttf") format("truetype");
+	font-weight: 100 900;
+	font-style: normal;
+	font-display: swap;
 }
 @font-face {
-  font-family: 'Aleo';
-  src: url('../fonts/Aleo/Aleo-Italic-VariableFont_wght.ttf') format('truetype');
-  font-weight: 100 900;
-  font-style: italic;
-  font-display: swap;
+	font-family: "Aleo";
+	src: url("../fonts/Aleo/Aleo-Italic-VariableFont_wght.ttf") format("truetype");
+	font-weight: 100 900;
+	font-style: italic;
+	font-display: swap;
 }
 
 :root {
-  /* Room for the phone's notch on each side. iOS reports the same room on both sides in landscape;
+	/* Room for the phone's notch on each side. iOS reports the same room on both sides in landscape;
      main.tsx marks which side the notch is really on, and the other side gets none. */
-  --inset-left: env(safe-area-inset-left);
-  --inset-right: env(safe-area-inset-right);
-  --bg: #f6f5f2;
-  --surface: #ffffff;
-  --text: #1d1f23;
-  --muted: #6b7079;
-  --line: #e3e1dc;
-  --today: #fff6dc;
-  --accent: #1d1f23;
-  --radius: 0.9rem;
-  font-family: 'Aleo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  color: var(--text);
-  /* White outside the page (the strip behind a phone's clock and battery joins the white nav bar);
+	--inset-left: env(safe-area-inset-left);
+	--inset-right: env(safe-area-inset-right);
+	--bg: #f6f5f2;
+	--surface: #ffffff;
+	--text: #1d1f23;
+	--muted: #6b7079;
+	--line: #e3e1dc;
+	--today: #fff6dc;
+	--accent: #181e2a;
+	--radius: 0.9rem;
+	font-family:
+		"Aleo",
+		system-ui,
+		-apple-system,
+		"Segoe UI",
+		Roboto,
+		sans-serif;
+	color: var(--text);
+	/* White outside the page (the strip behind a phone's clock and battery joins the white nav bar);
      the page itself is beige. */
-  background: #fff;
-  /* Base size; the UI scale setting overrides this so one layout fits 15.6" and 21.5" panels. */
-  font-size: 18px;
-  -webkit-tap-highlight-color: transparent;
+	background: #fff;
+	/* Base size; the UI scale setting overrides this so one layout fits 15.6" and 21.5" panels. */
+	font-size: 18px;
+	-webkit-tap-highlight-color: transparent;
 }
-* { box-sizing: border-box; }
-html, body, #app { margin: 0; height: 100%; overflow: hidden; }
+* {
+	box-sizing: border-box;
+}
+html,
+body,
+#app {
+	margin: 0;
+	height: 100%;
+	overflow: hidden;
+}
 /* White here too (iOS colors the strip behind the clock from it); the page area is beige (App.module.css). */
-body { user-select: none; touch-action: manipulation; background: #fff; }
-button {
-  font: inherit; color: inherit; border: none; background: none; cursor: pointer;
-  min-height: 2.75rem; min-width: 2.75rem; border-radius: var(--radius);
+body {
+	user-select: none;
+	touch-action: manipulation;
+	background: #fff;
 }
-button:active { transform: scale(0.97); }
-input { font: inherit; }
+button {
+	font: inherit;
+	color: inherit;
+	border: none;
+	background: none;
+	cursor: pointer;
+	min-height: 2.75rem;
+	min-width: 2.75rem;
+	border-radius: var(--radius);
+}
+button:active {
+	transform: scale(0.97);
+}
+input {
+	font: inherit;
+}
 
 /* Landscape with the notch on the left: no notch room on the right (and the other way round). */
-:root[data-notch="left"] { --inset-right: 0px; }
-:root[data-notch="right"] { --inset-left: 0px; }
+:root[data-notch="left"] {
+	--inset-right: 0px;
+}
+:root[data-notch="right"] {
+	--inset-left: 0px;
+}

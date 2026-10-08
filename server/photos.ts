@@ -1,33 +1,82 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
-import { createReadStream, existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import { createReadStream, createWriteStream, existsSync, mkdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { pipeline } from 'node:stream/promises';
+import type { Readable } from 'node:stream';
 import { join } from 'node:path';
 import type { DB } from './db.ts';
+import { convertVideo } from './video.ts';
 
 // The photo album. Browsers resize photos before uploading (2560px on the long side, plus a small
 // thumbnail), so the server only stores JPEGs: data/photos/<id>.jpg and <id>.thumb.jpg.
+// Videos arrive as the phone recorded them (<id>.upload) and are converted here, one at a time, to
+// <id>.mp4 and a <id>.thumb.jpg frame (see video.ts); until then they're listed as not ready.
 
 interface PhotoRow {
   id: string; width: number; height: number; taken_at: string | null; member_id: string | null;
   source: string; in_slideshow: number; has_thumb: number; created_at: string;
+  kind: 'photo' | 'video'; seconds: number | null; ready: number;
 }
 
 const MAX_BYTES = 20 * 1024 * 1024;
+/** A video as recorded (only its first 45 seconds are kept, but the whole file comes first). */
+const MAX_VIDEO_BYTES = 1024 * 1024 * 1024;
 const isJpeg = (b: Buffer) => b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+
+/** How far along each video being converted is, 0 to 1 (by id). */
+const converting = new Map<string, number>();
 
 const toPhoto = (r: PhotoRow) => ({
   id: r.id, width: r.width, height: r.height, takenAt: r.taken_at, memberId: r.member_id, source: r.source,
   inSlideshow: r.in_slideshow === 1, createdAt: r.created_at,
-  url: `/api/photos/${r.id}/full`, thumbUrl: `/api/photos/${r.id}/${r.has_thumb ? 'thumb' : 'full'}`,
+  kind: r.kind, seconds: r.seconds, ready: r.ready === 1,
+  // While converting: how far along (0 waiting its turn, up to 1).
+  progress: r.ready === 1 ? null : (converting.get(r.id) ?? 0),
+  url: `/api/photos/${r.id}/${r.kind === 'video' ? 'video' : 'full'}`,
+  thumbUrl: `/api/photos/${r.id}/${r.has_thumb || r.kind === 'video' ? 'thumb' : 'full'}`,
 });
 
 export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
   mkdirSync(dir, { recursive: true });
   const file = (id: string, thumb = false) => join(dir, `${id}${thumb ? '.thumb' : ''}.jpg`);
+  const video = (id: string) => join(dir, `${id}.mp4`);
+  const upload = (id: string) => join(dir, `${id}.upload`);
   const get = (id: string) => db.prepare('SELECT * FROM photos WHERE id = ?').get(id) as PhotoRow | undefined;
 
   // Photos arrive as the raw JPEG in the request body.
   app.addContentTypeParser('image/jpeg', { parseAs: 'buffer', bodyLimit: MAX_BYTES }, (_req, body, done) => done(null, body));
+
+  // Videos arrive as the file itself, streamed to disk rather than held in memory.
+  app.addContentTypeParser(/^video\//, (_req, body, done) => done(null, body));
+  app.addContentTypeParser('application/octet-stream', (_req, body, done) => done(null, body));
+
+  // Converting, one video at a time (it's heavy work for a Pi).
+  let queue = Promise.resolve();
+  function convertLater(id: string) {
+    queue = queue.then(async () => {
+      try {
+        converting.set(id, 0);
+        const meta = await convertVideo(upload(id), video(id), file(id, true), (f) => converting.set(id, f));
+        db.prepare('UPDATE photos SET width = ?, height = ?, seconds = ?, has_thumb = 1, ready = 1 WHERE id = ?')
+          .run(meta.width, meta.height, Math.round(meta.seconds * 10) / 10, id);
+      } catch (err) {
+        app.log.warn({ err, id }, "couldn't convert a video; it's removed");
+        removePhoto(id);
+      } finally {
+        converting.delete(id);
+        try {
+          unlinkSync(upload(id));
+        } catch {
+          // Already gone.
+        }
+      }
+    });
+  }
+  // Ones still waiting when the server last stopped: carry on (or drop them if the upload is gone).
+  for (const r of db.prepare(`SELECT id FROM photos WHERE kind = 'video' AND ready = 0`).all() as { id: string }[]) {
+    if (existsSync(upload(r.id))) convertLater(r.id);
+    else removePhoto(r.id);
+  }
 
   // Newest first (by when they were taken, else added).
   app.get('/api/photos', async () =>
@@ -51,6 +100,57 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
       .run(id, req.query.width, req.query.height, takenAt, memberId ?? null, req.query.inSlideshow === false ? 0 : 1);
     reply.code(201);
     return toPhoto(get(id)!);
+  });
+
+  // A video, as recorded. It's listed straight away (not ready) and converted in the background.
+  app.post<{ Querystring: { takenAt?: string; memberId?: string; inSlideshow?: boolean } }>('/api/photos/video', {
+    schema: { querystring: { type: 'object', properties: {
+      takenAt: { type: 'string', maxLength: 40 }, memberId: { type: 'string' }, inSlideshow: { type: 'boolean' } } } },
+  }, async (req, reply) => {
+    const { memberId } = req.query;
+    if (memberId && !db.prepare('SELECT 1 FROM members WHERE id = ?').get(memberId)) return reply.code(400).send({ error: 'Unknown member' });
+    const id = randomUUID();
+    let bytes = 0;
+    try {
+      await pipeline(req.body as Readable, async function* (chunks) {
+        for await (const chunk of chunks) {
+          bytes += chunk.length;
+          if (bytes > MAX_VIDEO_BYTES) throw new Error('too big');
+          yield chunk;
+        }
+      }, createWriteStream(upload(id)));
+    } catch (err) {
+      try {
+        unlinkSync(upload(id));
+      } catch {
+        // Never written.
+      }
+      if (bytes > MAX_VIDEO_BYTES) return reply.code(413).send({ error: 'That video is too big (1 GB at most)' });
+      throw err;
+    }
+    if (!bytes) return reply.code(400).send({ error: 'The video was empty' });
+    const takenAt = req.query.takenAt && !Number.isNaN(Date.parse(req.query.takenAt)) ? new Date(req.query.takenAt).toISOString() : null;
+    db.prepare(`INSERT INTO photos (id, width, height, taken_at, member_id, in_slideshow, kind, ready) VALUES (?, 1, 1, ?, ?, ?, 'video', 0)`)
+      .run(id, takenAt, memberId ?? null, req.query.inSlideshow === false ? 0 : 1);
+    convertLater(id);
+    reply.code(201);
+    return toPhoto(get(id)!);
+  });
+
+  // A video, in pieces as the player asks for them (Safari won't play one sent any other way).
+  app.get<{ Params: { id: string } }>('/api/photos/:id/video', async (req, reply) => {
+    const path = video(req.params.id);
+    if (!/^[0-9a-f-]{36}$/.test(req.params.id) || !existsSync(path)) return reply.code(404).send({ error: 'Video not found' });
+    const size = statSync(path).size;
+    reply.header('content-type', 'video/mp4').header('accept-ranges', 'bytes').header('cache-control', 'public, max-age=31536000, immutable');
+    const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '');
+    if (!range || (!range[1] && !range[2])) return reply.header('content-length', size).send(createReadStream(path));
+    // "bytes=500-" (from 500 on), "bytes=500-999", or "bytes=-500" (the last 500).
+    const start = range[1] ? +range[1] : Math.max(0, size - +range[2]);
+    const end = range[1] && range[2] ? Math.min(+range[2], size - 1) : size - 1;
+    if (start > end || start >= size) return reply.code(416).header('content-range', `bytes */${size}`).send();
+    return reply.code(206).header('content-range', `bytes ${start}-${end}/${size}`).header('content-length', end - start + 1)
+      .send(createReadStream(path, { start, end }));
   });
 
   // The small version for the album grid, sent right after the photo.
@@ -90,11 +190,11 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
   function removePhoto(id: string) {
     const res = db.prepare('DELETE FROM photos WHERE id = ?').run(id);
     if (!res.changes) return false;
-    for (const thumb of [false, true]) {
+    for (const path of [file(id), file(id, true), video(id), upload(id)]) {
       try {
-        unlinkSync(file(id, thumb));
+        unlinkSync(path);
       } catch {
-        // Already gone.
+        // Already gone (or never there).
       }
     }
     return true;

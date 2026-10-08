@@ -165,7 +165,12 @@ home screen from that address; it works at home and away.
     **Take back** (parents only: it asks for the master PIN) moves some of a kid's stars out of a jar into their
     bucket.
 - **Photos:** the **Photos** page (left bar, `#photos`) is the family album. **Upload photos** takes several at
-  once (drag them in, or choose them in Finder; you can also drop photos anywhere on the page); each is shrunk to wall size in the browser first (iPhone photos included). Photos in the screen
+  once (drag them in, or choose them in Finder; you can also drop photos anywhere on the page); each is shrunk to wall size in the browser first (iPhone photos included).
+  **Videos** upload the same way (iPhone .mov or .mp4). The server converts each to a 1080p H.264 .mp4 with no
+  sound, keeping the first 45 seconds (it shows "Preparing video…" until then); in the album they have ▶ and their
+  length. The screen saver and the photo card under the week play them muted, each for its full length. Converting
+  uses ffmpeg from the `ffmpeg-static` package (nothing to install on the machine); if `npm install` says its
+  install script wasn't run, allow it once with `npm install-scripts approve ffmpeg-static`. Photos in the screen
   saver have a ✓. **Select** starts with those selected; tap photos to change it, then **Save selection**. Tap a photo
   to see it full size (or delete it). Photos are stored in `data/photos` (not in git). To upload from phones, the server has to be
   reachable on your Wi-Fi (`HOST=0.0.0.0`). Untick **Add them to the screen saver** in the upload pop-up to keep a

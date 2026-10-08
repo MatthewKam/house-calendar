@@ -6,7 +6,7 @@ import { geocode } from './weather.ts';
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 const FORECAST = {
   utc_offset_seconds: -25200,
-  current: { temperature_2m: 73.5, weather_code: 2, is_day: 1 },
+  current: { temperature_2m: 73.5, relative_humidity_2m: 44.6, weather_code: 2, is_day: 1 },
   daily: { time: ['2026-10-07', '2026-10-08'], temperature_2m_max: [88.4, 91.1], temperature_2m_min: [66.9, 68.1], weather_code: [0, 3],
     sunrise: ['2026-10-07T06:50', '2026-10-08T06:50'], sunset: ['2026-10-07T18:31', '2026-10-08T18:30'] },
 };
@@ -32,7 +32,7 @@ describe('weather', () => {
     const calls: string[] = [];
     const app = appWithHome(calls, '1 Main St, Irvine, CA 92618');
     const res = await app.inject({ url: '/api/weather' });
-    expect(res.json()).toEqual({ temp: 74, high: 88, low: 67, code: 2, isDay: true,
+    expect(res.json()).toEqual({ temp: 74, high: 88, low: 67, humidity: 45, code: 2, isDay: true,
       // Home's 6:50 AM at UTC-7.
       sunrise: '2026-10-07T13:50:00.000Z', sunset: '2026-10-08T01:31:00.000Z',
       days: [{ date: '2026-10-07', high: 88, low: 67, code: 0 }, { date: '2026-10-08', high: 91, low: 68, code: 3 }] });

@@ -1,0 +1,123 @@
+/* The photo slideshow under the week, beside the weather. Photos fill it, cropped to fit. */
+.card {
+	position: relative;
+	flex: 0 0 calc((100% - 1.5rem) / 2);
+	min-width: 0;
+	min-height: 12rem;
+	padding: 0;
+	border-radius: var(--radius);
+	overflow: hidden;
+	background: #1d1f23;
+	box-shadow:
+		0 0.5rem 1.5rem rgb(30 50 80 / 0.16),
+		0 0.1rem 0.3rem rgb(30 50 80 / 0.1);
+}
+/* Photos: drag sideways to swipe, not to select or scroll the page. */
+.card {
+	touch-action: pan-y;
+	user-select: none;
+	overscroll-behavior-x: contain;
+}
+.photo {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+/* The next photo fades in over the last. */
+.fadeIn {
+	animation: fadeIn 1.4s ease both;
+}
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.fadeIn {
+		animation: none;
+	}
+}
+/* ‹ › at the sides, and the ⋯ menu: small, see-through, so the photo stays the point. */
+.step,
+.more {
+	position: absolute;
+	z-index: 2;
+	min-width: 0;
+	min-height: 0;
+	width: 2.4rem;
+	height: 2.4rem;
+	padding: 0;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	color: #fff;
+	background: rgb(0 0 0 / 0.28);
+	backdrop-filter: blur(4px);
+	line-height: 1;
+}
+.step {
+	top: 50%;
+	translate: 0 -50%;
+	font-size: 1.6rem;
+	padding-bottom: 0.15rem;
+}
+.prev {
+	left: 0.6rem;
+}
+/* Hidden (and not tappable) until the card is touched; they fade out again after a few seconds. */
+.arrows {
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.4s ease;
+}
+.arrows.awake {
+	opacity: 1;
+	pointer-events: auto;
+}
+.next {
+	right: 0.6rem;
+}
+.menu {
+	position: absolute;
+	z-index: 3;
+	top: 0.6rem;
+	right: 0.6rem;
+}
+.more {
+	position: static;
+	font-size: 1.3rem;
+	font-weight: 700;
+}
+.actions {
+	position: absolute;
+	top: calc(100% + 0.35rem);
+	right: 0;
+	min-width: 12rem;
+	padding: 0.3rem;
+	border-radius: 0.8rem;
+	background: var(--surface);
+	box-shadow: 0 0.6rem 1.6rem rgb(0 0 0 / 0.22);
+}
+.actions button {
+	width: 100%;
+	min-height: 2.6rem;
+	padding: 0 0.8rem;
+	text-align: left;
+	border-radius: 0.6rem;
+	font-weight: 600;
+	color: var(--text);
+}
+.actions button:hover {
+	background: var(--bg);
+}
+
+/* Phones: a full-width strip in the list. */
+@media (max-width: 959.98px) {
+	.card {
+		flex: none;
+		aspect-ratio: 4 / 3;
+		min-height: 0;
+	}
+}

@@ -209,6 +209,8 @@ export interface Weather {
   temp: number;
   high: number;
   low: number;
+  /** Relative humidity now, in %. */
+  humidity: number;
   /** WMO weather code: 0 clear ... 99 thunderstorm. */
   code: number;
   isDay: boolean;
@@ -234,6 +236,14 @@ export interface Photo {
   createdAt: string;
   url: string;
   thumbUrl: string;
+  /** A video plays muted, its length at most 45 seconds. */
+  kind: 'photo' | 'video';
+  /** A video's length. */
+  seconds: number | null;
+  /** False while a new video is being converted on the server. */
+  ready: boolean;
+  /** While converting: how far along, 0 to 1 (0 while it waits its turn). */
+  progress: number | null;
 }
 
 /** Screen saver settings (the "screensaver" setting). */
@@ -249,6 +259,8 @@ export interface ScreenSaverSettings {
   night: boolean;
   nightFrom: string;
   nightTo: string;
+  /** Today's events, listed in the bottom-left corner. */
+  showEvents: boolean;
 }
 
 /** The day's cards beside the weather (null when one couldn't be fetched). */

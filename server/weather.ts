@@ -7,6 +7,8 @@ export interface Weather {
   temp: number;
   high: number;
   low: number;
+  /** Relative humidity now, in %. */
+  humidity: number;
   /** WMO weather code (0 clear ... 99 thunderstorm), which picks the icon. */
   code: number;
   isDay: boolean;
@@ -44,7 +46,7 @@ export async function geocode(address: string, fetchImpl: typeof fetch = fetch):
 /** Current conditions and today's high and low from Open-Meteo (free, no key). */
 export async function forecast(place: Place, fetchImpl: typeof fetch = fetch): Promise<Weather> {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${place.lat.toFixed(3)}&longitude=${place.lon.toFixed(3)}`
-    + '&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset'
+    + '&current=temperature_2m,relative_humidity_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset'
     + '&temperature_unit=fahrenheit&timezone=auto&forecast_days=7';
   const res = await fetchImpl(url);
   if (!res.ok) throw new Error(`Open-Meteo answered ${res.status}`);
@@ -55,6 +57,7 @@ export async function forecast(place: Place, fetchImpl: typeof fetch = fetch): P
     temp: Math.round(w.current.temperature_2m),
     high: Math.round(w.daily.temperature_2m_max[0]),
     low: Math.round(w.daily.temperature_2m_min[0]),
+    humidity: Math.round(w.current.relative_humidity_2m),
     code: w.current.weather_code,
     isDay: w.current.is_day === 1,
     sunrise: instant(w.daily.sunrise[0]),
