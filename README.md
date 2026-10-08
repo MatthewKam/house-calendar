@@ -2,8 +2,9 @@
 
 A touch-screen family calendar that runs on your own hardware. No accounts, no subscription.
 
-**Status:** shows iCloud calendars (read-only) next to events added on the display, which live in a
-SQLite file on this machine. Google sync and editing iCloud events come next (see "What's next").
+**Status:** shows and edits iCloud calendars next to events added on the display, with Reminders lists, kids'
+tasks and reward jars, a photo album and screen saver. Everything lives in a SQLite file on this machine. Google
+sync and the Raspberry Pi setup come next (see "What's next").
 
 ## Run it on your computer
 
@@ -32,8 +33,7 @@ Data lives in `data/calendar.db`. Delete that file to start over.
 2. Copy `.env.example` to `.env` and fill in your Apple ID and that password. `.env` is git-ignored; keep it that way.
 3. Restart the server. It syncs on start and every 5 minutes, from 3 months back to 13 months ahead.
 
-iCloud events show on the wall but can't be edited there yet; tap one to see it, and change it on your iPhone or Mac.
-In that view you can pick **who it's for**. The pick is kept on this display, covers every repeat of the event, and
+Tap an iCloud event to see it, edit it or delete it (see "Using it"). In that view you can also pick **who it's for**. The pick is kept on this display, covers every repeat of the event, and
 survives future syncs.
 
 **Calendars:** in Settings, link each iCloud calendar to a person (all its events become theirs) or leave it on
@@ -128,7 +128,8 @@ home screen from that address; it works at home and away.
   a **quote of the day** (ZenQuotes). They're fetched once a day and kept; grim jokes are skipped (it's a family wall).
 - **Day:** tap any day to see it in a panel on the right. Close it with ×.
 - **Round + buttons:** Calendar, Tasks, Rewards and Photos each have one at the bottom right (add an event, a task, a
-  reward, or upload photos). A task or reward started there has no one picked yet; each kid's card has its own.
+  reward jar, or upload photos). A task or jar started there has no one picked yet; each kid's task card has its own
+  **+ Add a task**.
 - **Add:** the round **+** at the bottom right of the calendar (it starts on the day open in the day panel, else today),
   or tap a day, then **+ Add event** in the day panel.
 - **Who:** an event can be for any number of people: tap each person in **Who** (tap again to remove), or
@@ -139,18 +140,30 @@ home screen from that address; it works at home and away.
   bookmark opens it) shows a card for each kid with today's tasks, each with an optional icon,
   grouped into Morning, Anytime and Evening. Categories: **Daily** (always required, the default), **Chores**
   (required or an extra, your choice) and **Bonus** (always an extra). Required tasks fill the kid's bar and name
-  button; extras earn the ★ stars you set. Each card shows this month's stars and the kid's **rewards** (as many as
-  you like; tap one to change it). A reward either **resets each month** (counts that month's stars) or counts
-  **until earned** (from when it was set, however long it takes; once reached, **Mark as given** clears it). **History** on a card shows a week of ticks
-  per task or a month calendar (tap a day to see and fix it). **Edit tasks**: drag ⋮⋮ to reorder within a part of
-  the day, ✎ to change a task, 🗑 to delete (it asks to confirm first).
-- **Hooray!** When a kid ticks the last of *every* task due today (extras too), the screen fills with confetti and a
-  big "Hooray, Tayen!" for a few seconds (tap to close); Android phones buzz too.
-- **Rewards:** the **Rewards** page (gift in the left bar, `#rewards`) shows rewards ready to hand over, rewards in
-  progress, and everything given, by month, with each kid's tally for the year. A reward can be for several kids
-  together: their stars **added together** toward one goal, or **each** reaching it. Until-earned rewards can **start
-  again after they're given**. Every time a goal is reached it's kept in the history (even if the reward is renamed or
-  deleted later); **Undo** takes back a hand-over tapped by mistake.
+  button; extras earn the ★ stars you set, which go in the kid's bucket (the card shows **stars to spend**; they're
+  spent on the Rewards page). Tap the square left of a task's name to give it an icon. **Days**: every day, weekdays,
+  weekends, chosen weekdays, or **One time**: due by a date (Today, Tomorrow, End of week, or any day), it's on the
+  list every day until it's done (shown ticked that day) or its date ends, then it's gone; it's tagged **Today only**
+  or **By Sat**. **History** on a card shows a week of ticks per task or a month calendar (tap a day to see and fix
+  it). **Edit tasks**: drag ⋮⋮ to reorder within a part of the day, ✎ to change a task, 🗑 to delete (it asks to
+  confirm first). An extra's stars can't be un-ticked once they're in a jar.
+- **Hooray!** When a kid ticks the last of *every* task due today (extras too), or fills a reward jar, the screen
+  fills with confetti and a big "Hooray, Sam!" (with what it's for) for a few seconds (tap to close); Android phones
+  buzz too.
+- **Rewards:** the **Rewards** page (gift in the left bar, `#rewards`) is where kids spend their stars on **reward
+  jars** that parents set up (the round +; ✎ beside a jar's name changes it). Each kid has a card with their
+  **bucket** (stars earned from extras, not yet spent) and their jars.
+  - **Use stars:** tap a jar to place a star by it (a star flies from the bucket into the jar), − to take one back,
+    then **Done** asks to confirm. Once in a jar, stars can't come out. Kids can't spend more than they have.
+  - **Jars** can be for several kids: their stars **filled together**, or **each** putting in the full amount. With no
+    deadline, a jar empties after it's redeemed and fills again. With a **deadline**, it's one time only.
+  - **Earned:** a full jar moves here (with a Hooray), tagged with who earned it, until a parent taps **Redeem**.
+  - **Redeemed:** everything redeemed, by month, with the date and time; **Undo** takes back a tap made by mistake.
+  - **Missed:** a jar not redeemed by its deadline. Each kid moves their stars back to their bucket or into another
+    jar; once it's empty, a parent **Adds it back** (with a new deadline or none) or **Removes** it.
+  - Stars not yet redeemed go back to the kids when a jar is deleted, made smaller, or a kid is taken off it.
+    **Take back** (parents only: it asks for the master PIN) moves some of a kid's stars out of a jar into their
+    bucket.
 - **Photos:** the **Photos** page (left bar, `#photos`) is the family album. **Upload photos** takes several at
   once (drag them in, or choose them in Finder; you can also drop photos anywhere on the page); each is shrunk to wall size in the browser first (iPhone photos included). Photos in the screen
   saver have a ✓. **Select** starts with those selected; tap photos to change it, then **Save selection**. Tap a photo
@@ -197,6 +210,6 @@ your Wi-Fi; set the family PIN first.
 
 1. ~~iCloud sync over CalDAV~~ (read-only, done).
 2. ~~Map each synced calendar to a person~~ (done, plus per-event picks and Claude sorting by title).
-3. Edit iCloud events from the wall: outbox for offline edits, conflict notices.
+3. ~~Edit iCloud events from the wall: outbox for offline edits, conflict notices~~ (done).
 4. Google Calendar sync (OAuth).
 5. Raspberry Pi kiosk setup: autostart, night dimming.
