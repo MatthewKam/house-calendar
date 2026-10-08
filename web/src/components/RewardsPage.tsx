@@ -5,6 +5,7 @@ import { textOn } from "../lib/color";
 import type { Member, Reward, RewardWin } from "../lib/types";
 import { GiftIcon, PencilIcon, StarIcon } from "./icons";
 import RewardDialog from "./RewardDialog";
+import { FilterChip } from "./NameChip";
 import Fab from "./Fab";
 import s from "../styles/Rewards.module.css";
 
@@ -162,16 +163,13 @@ export default function RewardsPage({ today, members }: Props) {
 							? [{ id: TOGETHER, label: "Together", color: "#8b8f98" }]
 							: []),
 					].map((f) => (
-						<button
+						<FilterChip
 							key={f.id}
-							className={`${s.filter} ${filter === f.id ? s.filterOn : ""}`}
-							aria-pressed={filter === f.id}
-							style={{ "--c": f.color } as CSSProperties}
+							name={f.label}
+							color={f.color}
+							on={filter === f.id}
 							onClick={() => setFilter(filter === f.id ? null : f.id)}
-						>
-							<i style={{ background: f.color }} />
-							{f.label}
-						</button>
+						/>
 					))}
 					
 				</div>

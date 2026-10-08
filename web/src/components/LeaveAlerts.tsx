@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useAlertActions, useAlerts } from "../lib/queries";
+import { timeLabel } from "../lib/dates";
 import s from "../styles/LeaveAlerts.module.css";
 
-const time = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
 /** A soft two-note chime. Browsers may block sound until someone has touched the page; that's fine. */
 function chime() {
@@ -69,7 +69,7 @@ export default function LeaveAlerts() {
 								{leaveNow ? "Time to leave" : `Leave in ${Math.max(1, Math.round((Date.parse(a.leaveAt) - now) / 60_000))} min`} for {a.title}
 							</div>
 							<div className={s.detail}>
-								{a.driveMinutes} min drive to arrive by {time(a.arriveBy)} · leave by {time(a.leaveAt)}
+								{a.driveMinutes} min drive to arrive by {timeLabel(a.arriveBy)} · leave by {timeLabel(a.leaveAt)}
 							</div>
 						</div>
 						<button className={s.ok} onClick={() => dismiss.mutate(a.id)}>

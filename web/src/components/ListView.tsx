@@ -11,19 +11,8 @@ import IconPicker from "./IconPicker";
 import SortableList, { type HandleProps } from "./SortableList";
 import { GripIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
+import { ago } from "../lib/dates";
 import s from "../styles/ListView.module.css";
-
-/** "5 min ago", "2 h ago", "Oct 4". */
-function ago(iso: string) {
-	const min = Math.round((Date.now() - Date.parse(iso)) / 60_000);
-	if (min < 1) return "just now";
-	if (min < 60) return `${min} min ago`;
-	if (min < 24 * 60) return `${Math.round(min / 60)} h ago`;
-	return new Date(iso).toLocaleDateString([], {
-		month: "short",
-		day: "numeric",
-	});
-}
 
 /** Soft colors for a list's rows, light enough for dark text. */
 const LIST_COLORS = ["#f2dcb3", "#ecb0ea", "#c9dcf7", "#cdebd3", "#ddd3f5", "#f8cfb8", "#f6e7a1", "#c3ece4", "#e4e4e4"];
@@ -271,7 +260,6 @@ export default function ListView() {
 				: [...hidden, key],
 		});
 	};
-	const hiddenCount = lists.filter((l) => isHidden(l.title)).length;
 
 	return (
 		<section className={s.page} aria-label="Lists">

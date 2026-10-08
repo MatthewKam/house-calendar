@@ -1,10 +1,9 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { useWeather } from "../lib/queries";
-import { fromDayKey } from "../lib/dates";
+import { fromDayKey, timeLabel } from "../lib/dates";
 import { sky } from "../lib/weather";
 import s from "../styles/WeatherCard.module.css";
 
-const time = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
 /** Which painted sky goes behind the current conditions. */
 function scene(code: number, isDay: boolean) {
@@ -38,17 +37,17 @@ function SunArc({ sunrise, sunset, now }: { sunrise: string; sunset: string; now
 			</svg>
 			<div className={s.sunTimes}>
 				<span>
-					<span className={s.sunLabel}>Sunrise</span> {time(sunrise)}
+					<span className={s.sunLabel}>Sunrise</span> {timeLabel(sunrise)}
 				</span>
 				<span>
-					<span className={s.sunLabel}>Sunset</span> {time(sunset)}
+					<span className={s.sunLabel}>Sunset</span> {timeLabel(sunset)}
 				</span>
 			</div>
 			<div className={s.daylight}>
 				{up
 					? `${Math.floor(left / 3_600_000)}h ${Math.round((left % 3_600_000) / 60_000)}m of daylight left`
 					: now < rise
-						? `Sun's up at ${time(sunrise)}`
+						? `Sun's up at ${timeLabel(sunrise)}`
 						: "The sun has set"}
 			</div>
 		</div>

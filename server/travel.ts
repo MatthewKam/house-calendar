@@ -175,6 +175,8 @@ export function registerTravel(app: FastifyInstance, db: DB, estimate: Estimator
 
   /** Re-checks traffic once for alerts whose leave time is within the next half hour. */
   async function refreshSoon(now = new Date()) {
+    // Alerts for trips more than two days ago are done with.
+    db.prepare('DELETE FROM leave_alerts WHERE arrive_by < ?').run(new Date(now.getTime() - 2 * 86_400_000).toISOString());
     if (!estimate) return;
     const origin = home();
     if (!origin) return;

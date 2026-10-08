@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { useAlertActions, useAlerts } from "../lib/queries";
 import type { CalEvent, Trip } from "../lib/types";
+import { timeLabel } from "../lib/dates";
 import s from "../styles/EventDialog.module.css";
 
-const time = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 /** Miles where people drive in miles, kilometres elsewhere. */
 const distance = (meters: number) =>
 	/^en-(US|GB|LR|MM)$/i.test(navigator.language)
@@ -68,15 +68,15 @@ export default function TravelInfo({ event, showAddress = true }: { event: CalEv
 						{!trip.leaveAt
 							? "Leaving now"
 							: trip.late
-								? `Leave now: you needed to go at ${time(trip.leaveAt)}`
-								: `Leave by ${time(trip.leaveAt)} to arrive on time`}
+								? `Leave now: you needed to go at ${timeLabel(trip.leaveAt)}`
+								: `Leave by ${timeLabel(trip.leaveAt)} to arrive on time`}
 					</div>
 				</div>
 			)}
 			{/* Step two: an alert on the wall when it's time to go. */}
 			{alert ? (
 				<div className={s.alertSet}>
-					🔔 Reminder at {time(alert.remindAt)}
+					🔔 Reminder at {timeLabel(alert.remindAt)}
 					{alert.minutesBefore ? ` (${alert.minutesBefore} min before leaving)` : " (time to leave)"}
 					<button type="button" className={s.linkButton} onClick={() => cancel.mutate(alert.id)}>
 						Cancel

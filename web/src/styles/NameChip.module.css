@@ -1,0 +1,58 @@
+/* ---- Picking who something is for: outlined in their color, filled when picked ---- */
+.pick {
+	padding: 0 1.1rem;
+	border: 2px solid var(--c);
+	font-weight: 600;
+}
+.pickOn {
+	background: var(--c);
+}
+/* Just showing who it's for, not a button. */
+.label {
+	cursor: default;
+	display: inline-flex;
+	align-items: center;
+	min-height: 2.75rem;
+	border-radius: var(--radius);
+}
+
+/* ---- Filtering by person: outlined, with their color dot ---- */
+/* On the calendar it fills left to right in their color as they finish today's tasks (--p, 0-100%),
+   and turns solid when they're all done. */
+.filter {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0 0.8rem;
+	min-width: 0;
+	font-size: 1rem;
+	border: 1.5px solid color-mix(in srgb, var(--c) 55%, var(--line));
+	background: linear-gradient(
+		to right,
+		color-mix(in srgb, var(--c) 40%, transparent) var(--p, 0%),
+		transparent var(--p, 0%)
+	);
+	transition: background 0.4s ease;
+}
+.filter i {
+	width: 0.9rem;
+	height: 0.9rem;
+	border-radius: 50%;
+	display: inline-block;
+}
+.complete {
+	/* Half-strength color, matching ticked tasks. */
+	background: color-mix(in srgb, var(--c) 50%, white) !important;
+	font-weight: 650;
+}
+.complete i {
+	box-shadow: 0 0 0 2px rgb(255 255 255 / 0.8);
+}
+.filterOn {
+	border-color: var(--accent) !important;
+	border-width: 2.5px;
+	font-weight: 650;
+}
+.dimmed {
+	opacity: 0.4;
+}

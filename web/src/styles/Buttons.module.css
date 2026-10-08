@@ -1,0 +1,20 @@
+/* A text button: underlined, with no box. Pages compose it (composes: textButton from
+   "./Buttons.module.css") and adjust size, spacing or color in their own class.
+   The rules are written as html button:where(…) so they rank just above the plain button style
+   (app.css) and below any page's own class, wherever this file ends up in the built CSS. */
+html button:where(.textButton) {
+	min-height: 0;
+	padding: 0.2rem 0.3rem;
+	font-weight: 650;
+	color: var(--accent);
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+/* Quieter, in grey: for secondary actions (Cancel, Clear, Undo). */
+.quiet {
+	composes: textButton;
+}
+html button:where(.quiet) {
+	font-weight: 600;
+	color: var(--muted);
+}

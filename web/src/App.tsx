@@ -2,9 +2,7 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
-	useRef,
 	useState,
-	type CSSProperties,
 } from "react";
 import {
 	addDays,
@@ -26,7 +24,6 @@ import {
 	useSaveEvent,
 	useSetSetting,
 	useSettings,
-	usePhotos,
 	useSyncStatus,
 	useRangeEvents,
 } from "./lib/queries";
@@ -42,14 +39,16 @@ import WeatherCard from "./components/WeatherCard";
 import DailyCards from "./components/DailyCards";
 import OutboxNotices from "./components/OutboxNotices";
 import Fab from "./components/Fab";
+import { FilterChip } from "./components/NameChip";
 import { usePage } from "./lib/usePage";
 import ListView from "./components/ListView";
 import RewardsPage from "./components/RewardsPage";
 import PhotosPage from "./components/PhotosPage";
 import ScreenSaver from "./components/ScreenSaver";
-import { screenSaverSettings } from "./lib/screensaver";
+import { useScreenSaver } from "./lib/useScreenSaver";
+import { useCheer } from "./lib/useCheer";
 import TaskDialog from "./components/TaskDialog";
-import { allTasksDone, taskProgress, percent, tasksFor } from "./lib/tasks";
+import { taskProgress, percent, tasksFor } from "./lib/tasks";
 import Celebration from "./components/Celebration";
 import MembersPanel from "./components/MembersPanel";
 import Toast, { type ToastMessage } from "./components/Toast";
@@ -96,8 +95,6 @@ export default function App() {
 		memberId?: string;
 	} | null>(null);
 	const [showMembers, setShowMembers] = useState(false);
-	// Screen saver: photos after the wall has been idle a while (see the effect below).
-	const [saverOn, setSaverOn] = useState(false);
 	// The pop-up of names that aren't shown in the header (people without tasks, and Everyone).
 	const [moreOpen, setMoreOpen] = useState(false);
 	// Which page fills the main area. Kept in the address (#tasks), so a refresh stays on it.
@@ -117,10 +114,8 @@ export default function App() {
 	const saveTask = useSaveTask();
 	const deleteTask = useDeleteTask();
 	// Today's task progress per person, shown as a fill behind each name in the header.
-	const tasksQuery = useTasks();
-	const tasksDoneQuery = useTasksDone(startOfWeek(fromDayKey(today)));
-	const tasks = tasksQuery.data ?? [];
-	const tasksDone = tasksDoneQuery.data ?? [];
+	const tasks = useTasks().data ?? [];
+	const tasksDone = useTasksDone(startOfWeek(fromDayKey(today))).data ?? [];
 	const progress = taskProgress(
 		tasks,
 		tasksDone,
@@ -129,23 +124,8 @@ export default function App() {
 	);
 	const deleteEvent = useDeleteEvent();
 
-	// Confetti and a big Hooray when a kid ticks the last of every task due today (extras too). Only
-	// the moment it happens, on whichever screen is open: not just from opening the page later.
-	const [cheer, setCheer] = useState<string[] | null>(null);
-	const allDone = members.filter((m) => allTasksDone(tasks, tasksDone, m.id, today)).map((m) => m.id);
-	const allDoneKey = `${today}|${allDone.join(",")}`;
-	const wasAllDone = useRef<{ today: string; ids: string[] } | null>(null);
-	const loaded = tasksQuery.isSuccess && tasksDoneQuery.isSuccess && !tasksDoneQuery.isPlaceholderData;
-	useEffect(() => {
-		if (!loaded) return;
-		const before = wasAllDone.current;
-		wasAllDone.current = { today, ids: allDone };
-		if (!before || before.today !== today) return;
-		const newly = members.filter((m) => allDone.includes(m.id) && !before.ids.includes(m.id)).map((m) => m.name);
-		if (newly.length) setCheer(newly);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [allDoneKey, loaded]);
-	const endCheer = useCallback(() => setCheer(null), []);
+	// Confetti and a big Hooray when a kid ticks the last of every task due today.
+	const cheer = useCheer(members, today);
 	const restoreEvent = useRestoreEvent();
 
 	const days = useMemo(
@@ -175,33 +155,8 @@ export default function App() {
 	if (stale.length) setFocus(focus.filter((f) => !stale.includes(f)));
 	const sync = useSyncStatus().data;
 
-	const saver = screenSaverSettings(settings.data?.screensaver);
-	// The photos picked for the screen saver (on the Photos page).
-	const saverPhotos = (usePhotos().data ?? []).filter((p) => p.inSlideshow);
-	// Idle timer: any touch, mouse movement or key starts it over. If a pop-up is open when it runs
-	// out, it waits another minute rather than covering what someone was doing.
-	useEffect(() => {
-		if (!saver.enabled || saverPhotos.length === 0) return;
-		let timer: ReturnType<typeof setTimeout>;
-		const fire = () => {
-			if (document.querySelector('[class*="_scrim_"], [role="dialog"]')) {
-				timer = setTimeout(fire, 60_000);
-				return;
-			}
-			setSaverOn(true);
-		};
-		const arm = () => {
-			clearTimeout(timer);
-			timer = setTimeout(fire, saver.idleMinutes * 60_000);
-		};
-		const events = ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"] as const;
-		events.forEach((e) => window.addEventListener(e, arm, { passive: true }));
-		arm();
-		return () => {
-			clearTimeout(timer);
-			events.forEach((e) => window.removeEventListener(e, arm));
-		};
-	}, [saver.enabled, saver.idleMinutes, saverPhotos.length]);
+	// Photos when the wall is idle.
+	const saver = useScreenSaver();
 
 	// At midnight, move to the new day if the old one was on screen.
 	const [shownToday, setShownToday] = useState(today);
@@ -306,19 +261,17 @@ export default function App() {
 		const p = progress.get(m.id);
 		const pct = percent(p);
 		return (
-			<button
+			<FilterChip
 				key={m.id}
-				className={`${s.who} ${pct === 100 ? s.whoComplete : ""} ${focus.includes(m.id) ? s.whoOn : ""} ${focus.length && !focus.includes(m.id) ? s.whoOff : ""}`}
-				style={{ "--c": m.color, "--p": `${pct}%` } as CSSProperties}
-				aria-pressed={focus.includes(m.id)}
+				name={m.name}
+				color={m.color}
+				pct={pct}
+				on={focus.includes(m.id)}
+				dimmed={focus.length > 0 && !focus.includes(m.id)}
 				title={`${focus.includes(m.id) ? `Stop filtering by ${m.name}` : `Show ${m.name}'s events`}${p ? ` · tasks today: ${p.done} of ${p.due}` : ""}`}
 				// Tap to add or remove a filter; the pop-up stays open so several can be picked.
 				onClick={() => setFocus(focus.includes(m.id) ? focus.filter((f) => f !== m.id) : [...focus, m.id])}
-			>
-				<i style={{ background: m.color }} />
-				{m.name}
-				{pct === 100 && " ✓"}
-			</button>
+			/>
 		);
 	};
 
@@ -336,7 +289,7 @@ export default function App() {
 			{morePeople.length > 0 && (
 				<div className={s.moreWrap}>
 					<button
-						className={`${s.moreButton} ${hiddenPicked.length ? s.whoOn : ""}`}
+						className={`${s.moreButton} ${hiddenPicked.length ? s.moreOn : ""}`}
 						aria-expanded={moreOpen}
 						aria-label="More people"
 						title="More people"
@@ -390,7 +343,7 @@ export default function App() {
 					) : page === "rewards" ? (
 						<RewardsPage today={today} members={members} />
 					) : page === "photos" ? (
-						<PhotosPage onPreview={() => setSaverOn(true)} />
+						<PhotosPage onPreview={saver.show} />
 					) : (<>
 					<div className={s.monthHeaderTitle}>
 						<div>
@@ -558,10 +511,8 @@ export default function App() {
 			{page === "calendar" && <Fab label="Add event" onClick={() => setDialog({ day: newEventDay() })} />}
 			{/* Add a task, for no one in particular yet (each kid's card has its own Add a task). */}
 			{page === "tasks" && <Fab label="Add a task" onClick={() => setTaskDialog({ blank: true })} />}
-			{saverOn && saverPhotos.length > 0 && (
-				<ScreenSaver photos={saverPhotos} settings={saver} onClose={() => setSaverOn(false)} />
-			)}
-			{cheer && <Celebration names={cheer} onDone={endCheer} />}
+			{saver.on && <ScreenSaver photos={saver.photos} settings={saver.settings} onClose={saver.hide} />}
+			{cheer.names && <Celebration names={cheer.names} onDone={cheer.done} />}
 			{/* "Time to leave" alerts, on whichever page is showing (above the screen saver too). */}
 			<LeaveAlerts />
 

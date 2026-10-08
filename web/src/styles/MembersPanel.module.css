@@ -37,14 +37,14 @@
 .saverGrid label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.85rem; color: var(--muted); }
 .saverGrid select,
 .saverGrid input { font-size: 1rem; padding: 0.4rem 0.5rem; border: 1px solid var(--line); border-radius: 0.6rem; background: var(--surface); color: var(--text); }
-.saverPreview { align-self: flex-start; min-height: 0; padding: 0.2rem 0; font-weight: 650; color: var(--accent); text-decoration: underline; text-underline-offset: 0.2em; }
+.saverPreview { composes: textButton from "./Buttons.module.css"; align-self: flex-start; padding: 0.2rem 0; }
 .bare { display: flex; flex-direction: column; gap: 0.5rem; }
 /* Family PIN: the devices signed in, and the form to set or change it. */
 .devices { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
 .devices li { display: flex; align-items: center; gap: 0.6rem; }
 .devices li > span:first-child { flex: 1; }
 .deviceSeen { color: var(--muted); font-size: 0.85rem; }
-.textLink { min-height: 0; padding: 0.2rem 0.2rem; font-weight: 650; color: var(--accent); text-decoration: underline; text-underline-offset: 0.2em; }
+.textLink { composes: textButton from "./Buttons.module.css"; padding: 0.2rem; }
 .pinForm { display: flex; flex-direction: column; gap: 0.5rem; }
 .pinForm input[type="password"] { font-size: 1.05rem; padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: 0.6rem; }
 .pinError { margin: 0; color: #b42318; font-size: 0.9rem; }

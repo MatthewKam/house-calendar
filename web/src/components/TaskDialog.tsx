@@ -1,6 +1,6 @@
-import { useState, type CSSProperties, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { addDays, startOfWeek } from "../lib/dates";
-import { textOn, UNASSIGNED } from "../lib/color";
+import { UNASSIGNED } from "../lib/color";
 import { CATEGORIES, QUICK_TASKS, TASK_ICONS, TIMES } from "../lib/tasks";
 import type {
 	Task,
@@ -11,6 +11,7 @@ import type {
 } from "../lib/types";
 import ConfirmDialog from "./ConfirmDialog";
 import IconPicker from "./IconPicker";
+import { PickChip } from "./NameChip";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/EventDialog.module.css";
 import c from "../styles/Tasks.module.css";
@@ -157,20 +158,13 @@ export default function TaskDialog({
 				<div className={s.wrap}>
 					{[...members, { id: null, name: "Everyone", color: UNASSIGNED }].map(
 						(m) => (
-							<button
+							<PickChip
 								key={m.id ?? "everyone"}
-								type="button"
-								className={`${s.person} ${memberId === m.id ? s.on : ""}`}
-								style={
-									{
-										"--c": m.color,
-										color: memberId === m.id ? textOn(m.color) : undefined,
-									} as CSSProperties
-								}
+								name={m.name}
+								color={m.color}
+								on={memberId === m.id}
 								onClick={() => setMemberId(m.id)}
-							>
-								{m.name}
-							</button>
+							/>
 						),
 					)}
 				</div>

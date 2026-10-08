@@ -59,6 +59,8 @@ export function registerAuth(app: FastifyInstance, db: DB) {
 
   /** Signs this device in: a new session and its cookie. */
   function signIn(req: FastifyRequest, reply: FastifyReply) {
+    // Devices unused for longer than a cookie lasts are signed out for good.
+    db.prepare(`DELETE FROM sessions WHERE last_seen < strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-${YEAR_S} seconds')`).run();
     const token = randomBytes(32).toString('base64url');
     db.prepare('INSERT INTO sessions (token_hash, label) VALUES (?, ?)').run(sha(token), deviceLabel(req.headers['user-agent']));
     const secure = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https';

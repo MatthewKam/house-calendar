@@ -1,4 +1,4 @@
-import { fromDayKey } from './dates';
+import { dayKey, fromDayKey } from './dates';
 import type { Task, TaskCategory, TaskDone, TaskTime } from './types';
 
 export const CATEGORIES: { id: TaskCategory; label: string; hint: string }[] = [
@@ -21,6 +21,9 @@ export interface Progress { due: number; done: number }
 /** A person's tasks: their own, plus the ones for everyone. */
 export const tasksFor = (tasks: Task[], memberId: string) =>
   tasks.filter((c) => c.memberId === memberId || c.memberId === null);
+
+/** Due on its weekdays, from the day it was added (earlier days aren't missed, it didn't exist yet). */
+export const dueOn = (c: Task, d: Date) => c.days.includes(d.getDay()) && dayKey(d) >= dayKey(new Date(c.createdAt));
 
 /** Did this person do this task on this day? */
 export const didTask = (done: TaskDone[], c: Task, memberId: string, day: string) =>

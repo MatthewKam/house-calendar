@@ -1,8 +1,8 @@
-import { useState, type CSSProperties, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useMembers, useRewardActions } from "../lib/queries";
-import { textOn } from "../lib/color";
 import type { Member, Reward, RewardMode, TeamMode } from "../lib/types";
 import ConfirmDialog from "./ConfirmDialog";
+import { PickChip } from "./NameChip";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/EventDialog.module.css";
 import t from "../styles/Tasks.module.css";
@@ -85,16 +85,7 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 					{members.map((m) => {
 						const on = memberIds.includes(m.id);
 						return (
-							<button
-								key={m.id}
-								type="button"
-								aria-pressed={on}
-								className={`${s.person} ${on ? s.on : ""}`}
-								style={{ "--c": m.color, color: on ? textOn(m.color) : undefined } as CSSProperties}
-								onClick={() => toggle(m.id)}
-							>
-								{m.name}
-							</button>
+							<PickChip key={m.id} name={m.name} color={m.color} on={on} onClick={() => toggle(m.id)} />
 						);
 					})}
 				</div>
