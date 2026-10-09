@@ -12,7 +12,8 @@ interface Props {
   shown: (ev: CalEvent) => boolean;
   today: string;
   members: Member[];
-  onAdd: (day: string) => void;
+  /** Adding an event (missing while the parent lock is on). */
+  onAdd?: (day: string) => void;
   onOpen: (event: CalEvent, day: string) => void;
   onClose: () => void;
 }
@@ -49,7 +50,7 @@ export default function DayPanel({ day, shown, today, members, onAdd, onOpen, on
       {/* All 24 hours, scrolled to the time now (or the first event). */}
       <DayTimeline day={date} today={today} events={events} members={members} onOpen={(ev) => onOpen(ev, day)} />
 
-      <button className={s.add} onClick={() => onAdd(day)}>+ Add event</button>
+      {onAdd && <button className={s.add} onClick={() => onAdd(day)}>+ Add event</button>}
     </aside>
     </>
   );

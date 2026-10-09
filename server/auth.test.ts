@@ -14,14 +14,14 @@ beforeEach(() => {
 describe('family PIN', () => {
   it('leaves the app open until a PIN is set, then asks every device to sign in', async () => {
     expect((await get('/api/members')).statusCode).toBe(200);
-    expect((await get('/api/auth/status')).json()).toEqual({ pinSet: false, masterSet: false, signedIn: true });
+    expect((await get('/api/auth/status')).json()).toEqual({ pinSet: false, masterSet: false, signedIn: true, parent: true, parentKept: false });
     // Setting it signs this device in.
     const set = await post('/api/auth/pin', { pin: '2468' });
     const wall = cookieOf(set);
     expect((await get('/api/members', wall)).statusCode).toBe(200);
     // Another device isn't signed in.
     expect((await get('/api/members')).statusCode).toBe(401);
-    expect((await get('/api/auth/status')).json()).toEqual({ pinSet: true, masterSet: false, signedIn: false });
+    expect((await get('/api/auth/status')).json()).toEqual({ pinSet: true, masterSet: false, signedIn: false, parent: false, parentKept: false });
     // The phones' Shortcut still works with its token.
     expect((await app.inject({ url: '/api/reminders/phone/pending?device=x', headers: { authorization: 'Bearer t' } })).statusCode).toBe(200);
   });
@@ -44,6 +44,9 @@ describe('family PIN', () => {
     expect(devices).toHaveLength(2);
     expect(devices.filter((d: any) => d.thisDevice)).toHaveLength(1);
     const other = devices.find((d: any) => !d.thisDevice);
+    // Signing a device out is for parents: refused until unlocked (with no master PIN, the family PIN does).
+    expect((await post(`/api/auth/devices/${other.id}/sign-out`, {}, wall)).statusCode).toBe(403);
+    expect((await post('/api/auth/parent', { pin: '2468' }, wall)).statusCode).toBe(200);
     expect((await post(`/api/auth/devices/${other.id}/sign-out`, {}, wall)).statusCode).toBe(204);
     expect((await get('/api/members', phone)).statusCode).toBe(401);
     // Changing needs the current PIN.

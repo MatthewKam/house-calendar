@@ -62,7 +62,7 @@
 }
 /* A chevron that turns down when open. */
 .foldHead::after {
-  content: ''; flex: none; width: 0.55rem; height: 0.55rem; margin-right: 0.3rem;
+  content: ''; flex: none; width: 0.55rem; height: 0.55rem; margin: 0 0.3rem 0 auto;
   border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); rotate: -45deg; transition: rotate 0.2s;
 }
 .fold[open] > .foldHead::after { rotate: 45deg; }

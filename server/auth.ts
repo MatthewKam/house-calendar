@@ -55,6 +55,31 @@ export function parentPin(db: DB) {
   };
 }
 
+/**
+ * Changes that need a parent (the master PIN): everything except what the kids do themselves
+ * (ticking tasks, putting stars in jars, redeeming, uploading photos, adding and ticking list items).
+ * By route, and for a few routes by what's being changed.
+ */
+type Req = FastifyRequest<{ Params: Record<string, string>; Body: Record<string, unknown> | undefined }>;
+const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean][] = [
+  ['POST', '/api/events'], ['PATCH', '/api/events/:id'], ['DELETE', '/api/events/:id'], ['POST', '/api/events/:id/restore'],
+  ['PUT', '/api/events/:id/people'], ['POST', '/api/outbox/:id/resolve'], ['POST', '/api/alerts'], ['DELETE', '/api/alerts/:id'],
+  ['POST', '/api/tasks'], ['PATCH', '/api/tasks/:id'], ['DELETE', '/api/tasks/:id'], ['PUT', '/api/tasks/order'],
+  ['POST', '/api/rewards'], ['PATCH', '/api/rewards/:id'], ['DELETE', '/api/rewards/:id'], ['POST', '/api/rewards/:id/restore'],
+  ['POST', '/api/members'], ['PATCH', '/api/members/:id'], ['DELETE', '/api/members/:id'], ['PATCH', '/api/calendars/:id'],
+  // Month or week is anyone's choice; the rest of Settings isn't.
+  ['PUT', '/api/settings/:key', (req) => req.params.key !== 'view'],
+  ['PATCH', '/api/photos/:id'], ['DELETE', '/api/photos/:id'], ['POST', '/api/photos/slideshow'], ['POST', '/api/photos/delete'],
+  // Ticking a list item is fine; renaming it (or its icon) isn't.
+  ['PATCH', '/api/reminders/:id', (req) => req.body?.title !== undefined],
+  ['POST', '/api/auth/devices/:id/sign-out'],
+];
+const needsParent = (req: Req) =>
+  PARENT_ONLY.some(([method, route, when]) => req.method === method && req.routeOptions.url === route && (!when || when(req)));
+
+/** How long an unlock lasts (each parent change starts it over), unless the device is kept unlocked. */
+const PARENT_MS = 10 * 60_000;
+
 /** The session token from the Cookie header, if any. */
 function tokenOf(req: FastifyRequest) {
   const m = new RegExp(`(?:^|;\\s*)${COOKIE}=([^;]+)`).exec(req.headers.cookie ?? '');
@@ -78,6 +103,23 @@ export function registerAuth(app: FastifyInstance, db: DB) {
     if (!token) return null;
     return (db.prepare('SELECT * FROM sessions WHERE token_hash = ?').get(sha(token)) as { token_hash: string } | undefined) ?? null;
   };
+  /**
+   * Unlocked for parent changes: when there's no PIN at all (the app is open, as before), or this
+   * device was unlocked with the master PIN, a while ago or for good.
+   */
+  const parentUntil = (req: FastifyRequest) =>
+    (sessionFor(req) as { parent_until?: string | null } | null)?.parent_until ?? null;
+  const isParent = (req: FastifyRequest) => {
+    if (!pinHash()) return true;
+    const until = parentUntil(req);
+    return !!until && (until === 'always' || until > new Date().toISOString());
+  };
+  const setParent = (req: FastifyRequest, until: string | null) => {
+    const token = tokenOf(req);
+    if (token) db.prepare('UPDATE sessions SET parent_until = ? WHERE token_hash = ?').run(until, sha(token));
+  };
+  const checkParentPin = parentPin(db);
+
   // Wrong tries, per address.
   const tries = new Map<string, { n: number; until: number }>();
 
@@ -99,7 +141,37 @@ export function registerAuth(app: FastifyInstance, db: DB) {
     db.prepare(`UPDATE sessions SET last_seen = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE token_hash = ?`).run(session.token_hash);
   });
 
-  app.get('/api/auth/status', async (req) => ({ pinSet: !!pinHash(), masterSet: !!masterHash(), signedIn: !pinHash() || !!sessionFor(req) }));
+  // Parent changes from a locked device are refused; a parent's change keeps the unlock going.
+  app.addHook('preHandler', async (req, reply) => {
+    if (!needsParent(req as Req)) return;
+    if (!isParent(req)) return reply.code(403).send({ error: 'Locked: unlock with the parent PIN to change this', locked: true });
+    if (pinHash() && parentUntil(req) !== 'always') setParent(req, new Date(Date.now() + PARENT_MS).toISOString());
+  });
+
+  app.get('/api/auth/status', async (req) => ({
+    pinSet: !!pinHash(), masterSet: !!masterHash(), signedIn: !pinHash() || !!sessionFor(req),
+    parent: isParent(req), parentKept: parentUntil(req) === 'always',
+  }));
+
+  // Unlocks this device for parent changes with the master PIN: for 10 minutes (more with each
+  // change), or for good on a parent's own phone (`keep`).
+  app.post<{ Body: { pin: string; keep?: boolean } }>('/api/auth/parent', {
+    schema: { body: { type: 'object', required: ['pin'], additionalProperties: false,
+      properties: { pin: { type: 'string', minLength: 1, maxLength: 64 }, keep: { type: 'boolean' } } } },
+  }, async (req, reply) => {
+    if (!pinHash()) return { parent: true, parentKept: false };
+    if (!sessionFor(req)) return reply.code(401).send({ error: 'Sign in first' });
+    const wrong = checkParentPin(req.body.pin, req.ip);
+    if (wrong) return reply.code(403).send({ error: wrong });
+    setParent(req, req.body.keep ? 'always' : new Date(Date.now() + PARENT_MS).toISOString());
+    return { parent: true, parentKept: !!req.body.keep };
+  });
+
+  // Locks this device again.
+  app.post('/api/auth/parent/lock', async (req) => {
+    setParent(req, null);
+    return { parent: !pinHash(), parentKept: false };
+  });
 
   app.post<{ Body: { pin: string } }>('/api/auth/login', {
     schema: { body: { type: 'object', required: ['pin'], additionalProperties: false, properties: { pin: PIN } } },

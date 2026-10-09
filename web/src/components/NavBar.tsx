@@ -8,6 +8,8 @@ interface Props {
 	settingsOpen: boolean;
 	onPage: (page: Page) => void;
 	onSettings: () => void;
+	/** The parent lock: shown once a PIN is set; tapping it unlocks (master PIN) or locks again. */
+	lock?: { parent: boolean; onTap: () => void };
 }
 
 // Simple line icons, drawn in the current text color.
@@ -44,6 +46,12 @@ const PhotosIcon = () => (
 		<path d="M4 17l5-4.5 3.5 3 3-2.5 4.5 4" />
 	</svg>
 );
+const LockIcon = ({ open }: { open: boolean }) => (
+	<svg viewBox="0 0 24 24" aria-hidden="true">
+		<rect x="5" y="11" width="14" height="10" rx="2.2" />
+		<path d={open ? "M8.5 11V7.5a3.5 3.5 0 0 1 6.8-1.2" : "M8.5 11V7.5a3.5 3.5 0 0 1 7 0V11"} />
+	</svg>
+);
 const SettingsIcon = () => (
 	<svg viewBox="0 0 24 24" aria-hidden="true">
 		<circle cx="12" cy="12" r="3" />
@@ -57,6 +65,7 @@ export default function NavBar({
 	settingsOpen,
 	onPage,
 	onSettings,
+	lock,
 }: Props) {
 	const item = (p: Page, label: string, icon: ReactNode) => (
 		<button
@@ -76,8 +85,18 @@ export default function NavBar({
 			{item("lists", "Lists", <ListsIcon />)}
 			{item("rewards", "Rewards", <RewardsIcon />)}
 			{item("photos", "Photos", <PhotosIcon />)}
-			{/* Pinned to the bottom of the bar: the logo, then Settings. */}
+			{/* Pinned to the bottom of the bar: the logo, the parent lock, then Settings. */}
 			<img className={s.logo} src="/favicon.svg" alt="" />
+			{lock && (
+				<button
+					className={`${s.item} ${lock.parent ? s.unlocked : ""}`}
+					onClick={lock.onTap}
+					aria-label={lock.parent ? "Lock (parents)" : "Unlock (parents)"}
+				>
+					<LockIcon open={lock.parent} />
+					<span className={s.label}>{lock.parent ? "Unlocked" : "Locked"}</span>
+				</button>
+			)}
 			<button
 				className={`${s.item} ${settingsOpen ? s.on : ""}`}
 				aria-pressed={settingsOpen}

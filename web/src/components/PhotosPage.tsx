@@ -3,6 +3,7 @@ import { usePhotoActions, usePhotos } from "../lib/queries";
 import { isVideo, preparePhoto, uploadPhoto, uploadVideo } from "../lib/photos";
 import type { Photo } from "../lib/types";
 import { useMediaQuery } from "../lib/useMediaQuery";
+import { useParent } from "../lib/useParent";
 import ConfirmDialog from "./ConfirmDialog";
 import Fab from "./Fab";
 import ScreenSaverSettings from "./ScreenSaverSettings";
@@ -106,6 +107,8 @@ export default function PhotosPage({ onPreview }: Props) {
 	// Phones and tablets: + goes straight to the system's picker, which itself offers the photo
 	// library, the camera and files (the drag-and-drop pop-up is for computers).
 	const touch = useMediaQuery("(pointer: coarse)");
+	// Deleting photos and choosing the screen saver's needs a parent; uploading doesn't.
+	const { parent } = useParent();
 
 	const inCount = photos.filter((p) => p.inSlideshow).length;
 	const shown = photos.filter((p) => show === "all" || p.inSlideshow);
@@ -237,12 +240,14 @@ export default function PhotosPage({ onPreview }: Props) {
 			<header className={s.pageHead}>
 				<h1 className={s.pageTitle}>Photos</h1>
 				<div className={s.actions}>
-					<button
-						className={s.textButton}
-						onClick={() => setSettingsOpen(true)}
-					>
-						Screen saver settings
-					</button>
+					{parent && (
+						<button
+							className={s.textButton}
+							onClick={() => setSettingsOpen(true)}
+						>
+							Screen saver settings
+						</button>
+					)}
 					<input
 						ref={input}
 						type="file"
@@ -275,7 +280,7 @@ export default function PhotosPage({ onPreview }: Props) {
 							{label}
 						</button>
 					))}
-					{photos.length > 0 && (
+					{photos.length > 0 && parent && (
 						<button
 							className={s.secondary}
 							disabled={selecting}
@@ -449,6 +454,7 @@ export default function PhotosPage({ onPreview }: Props) {
 					</div>
 					<div className={s.viewerBar}>
 						<span className={s.when}>{taken(current.takenAt)}</span>
+						{parent && (
 						<label className={s.toggle}>
 							<input
 								type="checkbox"
@@ -462,10 +468,13 @@ export default function PhotosPage({ onPreview }: Props) {
 							/>
 							In the screen saver
 						</label>
+						)}
 						<span className={s.spacer} />
-						<button className={s.delete} onClick={() => setConfirm(true)}>
-							Delete
-						</button>
+						{parent && (
+							<button className={s.delete} onClick={() => setConfirm(true)}>
+								Delete
+							</button>
+						)}
 					</div>
 				</div>
 			)}

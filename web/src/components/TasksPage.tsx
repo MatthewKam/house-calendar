@@ -24,13 +24,15 @@ interface Props {
 	focus: string | null;
 	onAdd: (memberId?: string) => void;
 	onEdit: (task: Task) => void;
+	/** The parent lock is on: tasks can be ticked, but not added, changed or deleted. */
+	locked?: boolean;
 }
 
 /**
  * The Tasks page (in place of the calendar): every kid's tasks for today, side by side.
  * Each card's History link swaps its checklist for a week or month report, where missed days can still be ticked.
  */
-export default function TasksPage({ today, members, onAdd, onEdit }: Props) {
+export default function TasksPage({ today, members, onAdd, onEdit, locked }: Props) {
 	const thisWeek = useMemo(() => startOfWeek(fromDayKey(today)), [today]);
 	const tasks = useTasks().data ?? [];
 	const done = useTasksDone(thisWeek).data ?? [];
@@ -44,6 +46,8 @@ export default function TasksPage({ today, members, onAdd, onEdit }: Props) {
 	const [historyKid, setHistoryKid] = useState<string | null>(null);
 	// Edit mode lists every task with edit and delete, and hides the tick buttons so nothing gets ticked by accident.
 	const [editing, setEditing] = useState(false);
+	// Locked again (timed out, say) while editing: back to ticking.
+	if (locked && editing) setEditing(false);
 	// The trash button asks in a pop-up first, since deleting also removes the task's history.
 	const [toDelete, setToDelete] = useState<Task | null>(null);
 
@@ -98,7 +102,7 @@ export default function TasksPage({ today, members, onAdd, onEdit }: Props) {
 									onHistory={() => setHistoryKid(showHistory ? null : kid.id)}
 								/>
 								{showHistory ? (
-									<TaskHistory kid={kid} tasks={mine} today={today} onEdit={onEdit} />
+									<TaskHistory kid={kid} tasks={mine} today={today} onEdit={locked ? undefined : onEdit} />
 								) : (
 									<>
 										<TodayList
@@ -112,7 +116,7 @@ export default function TasksPage({ today, members, onAdd, onEdit }: Props) {
 											onDelete={setToDelete}
 											onReorder={reorderGroup}
 										/>
-										{!editing && (
+										{!editing && !locked && (
 											<button className={s.addText} onClick={() => onAdd(kid.id)}>
 												+ Add a task
 											</button>
@@ -127,7 +131,7 @@ export default function TasksPage({ today, members, onAdd, onEdit }: Props) {
 
 			{/* Bottom bar: switch on edit mode. */}
 			<div className={s.actions}>
-				{tasks.length > 0 && (
+				{tasks.length > 0 && !locked && (
 					<button className={s.editToggle} aria-pressed={editing} onClick={() => setEditing(!editing)}>
 						{editing ? "Done editing" : "Edit tasks"}
 					</button>

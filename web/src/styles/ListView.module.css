@@ -320,3 +320,14 @@
 		padding-bottom: calc(1rem + env(safe-area-inset-bottom));
 	}
 }
+
+/* Locked (parents only): the icon and color show, but don't open anything. */
+.iconSpot:disabled,
+.colorDot:disabled {
+	cursor: default;
+	opacity: 1;
+}
+.iconSpot:disabled:hover {
+	background: none;
+	box-shadow: none;
+}

@@ -7,12 +7,12 @@ import s from '../styles/MembersPanel.module.css';
 /** Minutes without a touch before it starts. */
 /** Whether this device's screen is being kept on, in words. */
 const WAKE: Record<WakeStatus, string> = {
-  on: 'This screen stays on, so the screen saver takes over instead of it sleeping.',
+  on: 'This screen stays on, so the screen saver takes over instead of it sleeping. If it still sleeps, set its Auto-Lock to Never.',
   off: 'This screen may sleep (the screen saver is off, or no photos are picked for it).',
   'low-battery': 'The battery is low, so this screen may sleep.',
-  'needs-https': "This screen may sleep: keeping it on needs the wall's https:// address.",
-  unsupported: "This screen may sleep: this browser can't keep it on (an iPad needs iPadOS 16.4 or later).",
-  refused: 'This screen may sleep: the device said no',
+  'needs-https': "Keeping this screen on with a hidden video (the wall's https:// address would do it better).",
+  unsupported: "Keeping this screen on with a hidden video (this browser has no wake lock).",
+  refused: 'Keeping this screen on with a hidden video: the wake lock was refused',
 };
 
 const IDLE: [number, string][] = [[0.5, '30 seconds'], [1, '1 minute'], [2, '2 minutes'], [5, '5 minutes'], [10, '10 minutes'],
@@ -81,7 +81,7 @@ export default function ScreenSaverSettings({ onPreview, bare }: { onPreview?: (
           <p className={s.hint}>Pick which photos it shows on the Photos page.</p>
           <p className={s.hint}>
             {WAKE[wake.status]}
-            {wake.status === 'refused' && ` (${wake.reason || 'no reason given'}). Tap anywhere to try again; Low Power Mode also stops it.`}
+            {wake.status === 'refused' && ` (${wake.reason || 'no reason given'}). Tap anywhere to try the wake lock again; Low Power Mode stops both.`}
           </p>
           {onPreview && <button type="button" className={s.saverPreview} onClick={onPreview}>Play it now</button>}
         </>

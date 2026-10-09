@@ -16,11 +16,17 @@ async function call<T>(method: string, url: string, body?: unknown, signal?: Abo
   return res.status === 204 ? (undefined as T) : res.json();
 }
 
-export interface AuthStatus { pinSet: boolean; masterSet: boolean; signedIn: boolean }
+export interface AuthStatus {
+  pinSet: boolean; masterSet: boolean; signedIn: boolean;
+  /** Unlocked for parent changes (the master PIN), and whether this device stays unlocked. */
+  parent: boolean; parentKept: boolean;
+}
 export interface SignedInDevice { id: string; label: string; signedInAt: string; lastSeen: string; thisDevice: boolean }
 
 export const api = {
   authStatus: () => call<AuthStatus>('GET', '/api/auth/status'),
+  unlockParent: (pin: string, keep: boolean) => call<Pick<AuthStatus, 'parent' | 'parentKept'>>('POST', '/api/auth/parent', { pin, keep }),
+  lockParent: () => call<Pick<AuthStatus, 'parent' | 'parentKept'>>('POST', '/api/auth/parent/lock'),
   login: (pin: string) => call<{ signedIn: true }>('POST', '/api/auth/login', { pin }),
   setPin: (body: { pin: string; currentPin?: string; masterPin?: string; signOutOthers?: boolean }) => call<{ pinSet: true }>('POST', '/api/auth/pin', body),
   devices: () => call<SignedInDevice[]>('GET', '/api/auth/devices'),

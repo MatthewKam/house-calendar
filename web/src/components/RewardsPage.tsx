@@ -11,6 +11,7 @@ import KidJars from "./KidJars";
 import TakeBackDialog from "./TakeBackDialog";
 import { Who, dayAndTime, shortDay, toDate } from "./JarBits";
 import Fab from "./Fab";
+import { useParent } from "../lib/useParent";
 import s from "../styles/Rewards.module.css";
 
 interface Props {
@@ -30,6 +31,8 @@ export default function RewardsPage({ today, members }: Props) {
 	// Parents only: the full jar whose stars are being taken back.
 	const [takingBack, setTakingBack] = useState<RewardWin | null>(null);
 	const [sheet, setSheet] = useState<{ reward?: Reward } | null>(null);
+	// Making and changing jars needs a parent (the lock in the left bar); using them doesn't.
+	const { parent } = useParent();
 	const [showAll, setShowAll] = useState(false);
 
 	const starsOf = (id: string) =>
@@ -81,7 +84,7 @@ export default function RewardsPage({ today, members }: Props) {
 								jars={jars.filter(
 									(j) => j.status !== "earned" && j.memberIds.includes(kid.id),
 								)}
-								onEdit={(reward) => setSheet({ reward })}
+								onEdit={parent ? (reward) => setSheet({ reward }) : undefined}
 							/>
 						))}
 					</div>
@@ -160,7 +163,7 @@ export default function RewardsPage({ today, members }: Props) {
 				)}
 			</div>
 
-			<Fab label="Add a reward jar" onClick={() => setSheet({})} />
+			{parent && <Fab label="Add a reward jar" onClick={() => setSheet({})} />}
 
 			{takingBack && (
 				<TakeBackDialog
