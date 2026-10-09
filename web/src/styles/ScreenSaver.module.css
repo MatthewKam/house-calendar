@@ -197,7 +197,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: 0.4rem;
-	width: min(24rem, 40vw);
+	/* As wide as the screen allows (2rem in from each edge), up to 400px. */
+	width: min(400px, calc(100vw - 4rem));
 	text-shadow: none;
 }
 /* The corner lets taps through (to close the screen saver); the events take theirs. */
@@ -214,9 +215,10 @@
 	color: #1d1f23;
 	background:
 		var(--stripe) left / 0.4rem 100% no-repeat,
-		rgb(255 255 255 / 0.88);
+		rgb(255 255 255 / 0.72);
 	box-shadow: 0 0.3rem 1rem rgb(0 0 0 / 0.25);
-	backdrop-filter: blur(6px);
+	-webkit-backdrop-filter: blur(10px);
+	backdrop-filter: blur(10px);
 }
 .eventTime {
 	flex: none;
@@ -235,6 +237,18 @@
 	flex-direction: column;
 	gap: 0.1rem;
 	min-width: 0;
+}
+/* Under 450px: the corner runs edge to edge (1rem in), the events across its full width. */
+@media (max-width: 449.98px) {
+	.corner {
+		left: 1rem;
+		right: 1rem;
+		bottom: calc(1.2rem + env(safe-area-inset-bottom));
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.events {
+		width: 100%;
+	}
 }
 .eventDrive {
 	font-size: 0.85rem;

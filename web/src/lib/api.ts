@@ -49,6 +49,9 @@ export const api = {
   updateEvent: (id: string, e: Partial<EventInput>) => call<CalEvent>('PATCH', `/api/events/${id}`, e),
   /** Drive time from home and when to leave (Google Maps, on the server). */
   /** Minutes from home to each of today's events still to come that has an address, by event id. */
+  /** Address suggestions for what's typed so far (Google Places, on the server); none without a key. */
+  places: (q: string, session: string, signal?: AbortSignal) =>
+    call<{ text: string; main: string; secondary: string }[]>('GET', `/api/places?${new URLSearchParams({ q, session })}`, undefined, signal),
   travelTimes: () => call<Record<string, number>>('GET', '/api/travel/times'),
   travel: (id: string, signal?: AbortSignal) => call<Trip>('GET', `/api/events/${id}/travel`, undefined, signal),
   weather: () => call<Weather>('GET', '/api/weather'),

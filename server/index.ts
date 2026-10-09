@@ -5,6 +5,7 @@ import { createSync } from './sync.ts';
 import { ICloudSource } from './providers/icloud.ts';
 import { claudeClassifier } from './people.ts';
 import { googleRoutes } from './travel.ts';
+import { googlePlaces } from './places.ts';
 import { runShortcut, syncRunner } from './shortcut.ts';
 import { macRemindersSync } from './macReminders.ts';
 
@@ -36,6 +37,7 @@ const app = buildApp(db, {
   remindersToken: process.env.REMINDERS_TOKEN || undefined,
   onRemindersChanged: () => reminders?.soon(),
   travel: process.env.GOOGLE_MAPS_API_KEY ? googleRoutes(process.env.GOOGLE_MAPS_API_KEY) : undefined,
+  places: process.env.GOOGLE_MAPS_API_KEY ? googlePlaces(process.env.GOOGLE_MAPS_API_KEY) : undefined,
 });
 sync?.start(app.log);
 if (process.platform === 'darwin' && (process.env.REMINDERS_MAC === '1' || process.env.REMINDERS_SHORTCUT)) {

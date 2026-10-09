@@ -38,20 +38,21 @@
 
 /* ---- Each kid: side by side when there's room ---- */
 .kids {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+	display: flex;
 	align-items: start;
-	gap: 0.9rem;
+	gap: 1rem;
 }
 .kid {
 	display: flex;
 	flex-direction: column;
 	gap: 0.6rem;
+	width: 100%;
 	padding: 0.9rem 1rem 1rem;
 	background: var(--surface);
 	border: 1px solid var(--line);
 	border-top: 0.35rem solid var(--c);
 	border-radius: var(--radius);
+	max-width: 450px;
 }
 .kidHead {
 	display: flex;
@@ -444,6 +445,11 @@
 	}
 	.givenDates {
 		margin-left: 0;
+	}
+}
+@media (max-width: 767px) {
+	.kids {
+		flex-wrap: wrap;
 	}
 }
 
