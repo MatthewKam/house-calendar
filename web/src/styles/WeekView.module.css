@@ -43,9 +43,9 @@
 	height: 1.9rem;
 	padding: 0 0.3rem;
 	border-radius: 999px;
-	background: #e5484d;
+	background: #4a4ed0;
 	color: #fff;
-	box-shadow: 0 0.2rem 0.5rem rgb(229 72 77 / 0.45);
+	box-shadow: 0 0.2rem 0.5rem rgb(74 78 208 / 0.45);
 }
 .selected {
 	outline: 2px solid var(--accent);

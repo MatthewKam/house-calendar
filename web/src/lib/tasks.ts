@@ -42,9 +42,9 @@ export const expired = (c: Task, today: string) => !!c.dueBy && c.dueBy < today;
 export const didTask = (done: TaskDone[], c: Task, memberId: string, day: string) =>
   done.some((d) => d.taskId === c.id && d.memberId === memberId && d.day === day);
 
-/** Whether this person has ticked every task due on `day` (required ones and extras); false if none are due. */
-export function allTasksDone(tasks: Task[], done: TaskDone[], memberId: string, day: string) {
-  const due = tasksFor(tasks, memberId).filter((c) => dueOn(c, fromDayKey(day), memberId));
+/** Whether this person has ticked every required task due on `day` (extras don't count); false if none are due. */
+export function requiredDone(tasks: Task[], done: TaskDone[], memberId: string, day: string) {
+  const due = tasksFor(tasks, memberId).filter((c) => c.required && dueOn(c, fromDayKey(day), memberId));
   return due.length > 0 && due.every((c) => didTask(done, c, memberId, day));
 }
 

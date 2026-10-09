@@ -176,12 +176,6 @@
 .rowMain .eachBars {
 	margin-top: 0.3rem;
 }
-.rowActions {
-	display: flex;
-	align-items: center;
-	gap: 0.3rem;
-	flex: none;
-}
 /* Placing stars: every jar can be tapped. */
 .picking {
 	cursor: pointer;
@@ -217,6 +211,24 @@
 	background: var(--accent);
 	color: var(--surface);
 	font-weight: 700;
+}
+/* In a jar's edit pop-up: each kid's stars in it, with Take back. */
+.inJar {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+.inJar li {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.6rem;
+	padding: 0.35rem 0.4rem 0.35rem 0.8rem;
+	border-radius: 0.6rem;
+	background: var(--bg);
 }
 /* Parents only (it asks for the master PIN): stars back out of a jar. */
 /* Whose stars, in the take-back pop-up for a jar filled together. */

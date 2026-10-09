@@ -48,3 +48,22 @@
 .pinForm { display: flex; flex-direction: column; gap: 0.5rem; }
 .pinForm input[type="password"] { font-size: 1.05rem; padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: 0.6rem; }
 .pinError { margin: 0; color: #b42318; font-size: 0.9rem; }
+
+/* Settings: each part folded to its heading (and how it's set) until tapped. */
+.fold { border-top: 1px solid var(--line); }
+.foldHead {
+  list-style: none; display: flex; align-items: center; gap: 0.8rem; min-height: 3rem; padding: 0.4rem 0;
+  font-size: 1.05rem; font-weight: 650; cursor: pointer;
+}
+.foldHead::-webkit-details-marker { display: none; }
+.foldNote {
+  flex: 1; min-width: 0; text-align: right; color: var(--muted); font-size: 0.9rem; font-weight: 400;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+/* A chevron that turns down when open. */
+.foldHead::after {
+  content: ''; flex: none; width: 0.55rem; height: 0.55rem; margin-right: 0.3rem;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); rotate: -45deg; transition: rotate 0.2s;
+}
+.fold[open] > .foldHead::after { rotate: 45deg; }
+.foldBody { display: flex; flex-direction: column; gap: 0.6rem; padding-bottom: 1rem; }

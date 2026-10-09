@@ -33,7 +33,8 @@ export function TaskTags({ task }: { task: Task }) {
 						: `By ${fromDayKey(task.dueBy).toLocaleDateString([], { weekday: "short" })}`}
 				</span>
 			)}
-			{!task.required && (
+			{/* Stars, for an extra worth any (a chore can be worth none). */}
+			{!task.required && task.points > 0 && (
 				<span className={s.starTag} aria-label={`${task.points} stars`}>
 					{task.points}
 					<StarIcon className={s.star} />

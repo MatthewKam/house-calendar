@@ -4,7 +4,6 @@ import { flyStar } from "../lib/flyStar";
 import type { Member, Reward } from "../lib/types";
 import { PencilIcon, StarIcon } from "./icons";
 import ConfirmDialog from "./ConfirmDialog";
-import TakeBackDialog from "./TakeBackDialog";
 import { JarProgress, eachFills, shortDay } from "./JarBits";
 import s from "../styles/Rewards.module.css";
 
@@ -62,7 +61,7 @@ export default function KidJars({
 	} | null>(null);
 	const [removing, setRemoving] = useState<Reward | null>(null);
 	// Parents only: the jar a kid's stars are being taken back out of, and how many of theirs are in it.
-	const [takingBack, setTakingBack] = useState<{ id: string; title: string; max: number } | null>(null);
+
 
 	const filling = jars.filter((j) => j.status === "filling");
 	const missed = jars.filter((j) => j.status === "missed");
@@ -269,15 +268,7 @@ export default function KidJars({
 										+
 									</button>
 								</div>
-							) : (
-								<div className={s.rowActions}>
-									{mine(j) > 0 && (
-										<button className={s.takeBack} onClick={() => setTakingBack({ id: j.id, title: j.title, max: mine(j) })}>
-											Take back
-										</button>
-									)}
-								</div>
-							)}
+							) : null}
 						</li>
 					))}
 				</ul>
@@ -325,13 +316,6 @@ export default function KidJars({
 						/>
 					</label>
 				</ConfirmDialog>
-			)}
-			{takingBack && (
-				<TakeBackDialog
-					jar={takingBack}
-					kids={[{ kid, max: takingBack.max }]}
-					onClose={() => setTakingBack(null)}
-				/>
 			)}
 			{removing && (
 				<ConfirmDialog

@@ -47,6 +47,7 @@ import RewardsPage from "./components/RewardsPage";
 import PhotosPage from "./components/PhotosPage";
 import ScreenSaver from "./components/ScreenSaver";
 import { useScreenSaver } from "./lib/useScreenSaver";
+import { useWakeLock } from "./lib/useWakeLock";
 import { useCheer } from "./lib/useCheer";
 import TaskDialog from "./components/TaskDialog";
 import { taskProgress, percent, tasksFor } from "./lib/tasks";
@@ -125,7 +126,7 @@ export default function App() {
 	);
 	const deleteEvent = useDeleteEvent();
 
-	// Confetti and a big Hooray when a kid ticks the last of every task due today, or fills a reward jar.
+	// Confetti and a big Hooray when a kid ticks the last of today's required tasks, or fills a reward jar.
 	const cheer = useCheer(members, today);
 	const restoreEvent = useRestoreEvent();
 
@@ -158,6 +159,9 @@ export default function App() {
 
 	// Photos when the wall is idle.
 	const saver = useScreenSaver();
+	// With the screen saver on, the screen stays on (it takes over instead of the device sleeping),
+	// unless the battery is low.
+	useWakeLock(saver.settings.enabled && saver.photos.length > 0);
 	// Under the week: the photo slideshow, beside the weather with the day's joke and quote beneath it.
 	const cards = (
 		<div className={s.cards}>

@@ -1,6 +1,7 @@
-import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
+import { useEffect, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { PALETTE } from '../lib/color';
-import { useAddMember, useRemoveMember, useSetSetting, useSettings, useUpdateMember } from '../lib/queries';
+import { screenSaverSettings } from '../lib/screensaver';
+import { useAddMember, useCalendars, useRemoveMember, useSetSetting, useSettings, useUpdateMember } from '../lib/queries';
 import type { Member } from '../lib/types';
 import CalendarList from './CalendarList';
 import ScreenSaverSettings from './ScreenSaverSettings';
@@ -9,6 +10,10 @@ import sheet from '../styles/Sheet.module.css';
 import s from '../styles/MembersPanel.module.css';
 
 interface Props { members: Member[]; uiScale: number; onClose: () => void }
+
+/** "30 seconds", "2 minutes", "1 hour". */
+const idleLabel = (minutes: number) =>
+  minutes < 1 ? `${Math.round(minutes * 60)} seconds` : minutes >= 60 ? `${minutes / 60} hour${minutes === 60 ? '' : 's'}` : `${minutes} minute${minutes === 1 ? '' : 's'}`;
 
 /** Adding and removing family members is hidden for now; set to true to bring both back. */
 const CAN_ADD_OR_REMOVE = false;
@@ -34,6 +39,22 @@ function ColorSet({ value, label, onPick }: { value: string; label: string; onPi
   );
 }
 
+/**
+ * One part of Settings, folded to its heading (and a word on how it's set) until tapped. Opening
+ * one closes the others, so the sheet stays short.
+ */
+function Section({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+  return (
+    <details className={s.fold} {...{ name: 'settings' }}>
+      <summary className={s.foldHead}>
+        <span>{title}</span>
+        {note && <span className={s.foldNote}>{note}</span>}
+      </summary>
+      <div className={s.foldBody}>{children}</div>
+    </details>
+  );
+}
+
 /** Where travel times start from. Saved with Save, so a half-typed address isn't used. */
 function HomeAddress() {
   const saved = (useSettings().data?.homeAddress as string | undefined) ?? '';
@@ -49,8 +70,7 @@ function HomeAddress() {
     setDraft(null);
   }
   return (
-    <section className={s.home}>
-      <h3 className={s.section}>Home address</h3>
+    <section className={s.bare}>
       <p className={s.hint}>Travel times to events start here.</p>
       {editing ? (
         <form className={s.row} onSubmit={save}>
@@ -109,6 +129,11 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
   const updateMember = useUpdateMember();
   const removeMember = useRemoveMember();
   const setSetting = useSetSetting();
+  // For the folded sections' summaries.
+  const settings = useSettings().data;
+  const homeAddress = ((settings?.homeAddress as string | undefined) ?? '').trim();
+  const saver = screenSaverSettings(settings?.screensaver);
+  const hasCalendars = (useCalendars().data ?? []).length > 0;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -145,7 +170,7 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
           <h2 className={sheet.heading}>Settings</h2>
           <button className={sheet.close} onClick={onClose} aria-label="Close Settings">×</button>
         </header>
-        <h3 className={s.section}>Family</h3>
+        <Section title="Family" note={members.map((m) => m.name).join(", ")}>
         <p className={s.hint}>Tap the pencil to change a name or color. Colors only change this display.</p>
 
         <ul className={s.list}>
@@ -221,21 +246,33 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
           )}
         </form>
         )}
+        </Section>
 
-        <CalendarList members={members} />
+        {hasCalendars && (
+          <Section title="Calendars">
+            <CalendarList members={members} />
+          </Section>
+        )}
 
-        <HomeAddress />
+        <Section title="Home address" note={homeAddress || "Not set"}>
+          <HomeAddress />
+        </Section>
 
-        <ScreenSaverSettings />
+        <Section title="Screen saver" note={saver.enabled ? `On · after ${idleLabel(saver.idleMinutes)}` : "Off"}>
+          <ScreenSaverSettings bare />
+        </Section>
 
-        <FamilyPin />
+        <Section title="Family PIN">
+          <FamilyPin />
+        </Section>
 
-        <label className={s.scale}>
-          Text size
-          <input type="range" min={0.8} max={1.6} step={0.05} defaultValue={uiScale}
-            onChange={(e) => setSetting.mutate({ key: 'uiScale', value: Number(e.target.value) })} />
-          <span>{Math.round(uiScale * 100)}%</span>
-        </label>
+        <Section title="Text size" note={`${Math.round(uiScale * 100)}%`}>
+          <label className={s.scale}>
+            <input type="range" min={0.8} max={1.6} step={0.05} defaultValue={uiScale} aria-label="Text size"
+              onChange={(e) => setSetting.mutate({ key: 'uiScale', value: Number(e.target.value) })} />
+            <span>{Math.round(uiScale * 100)}%</span>
+          </label>
+        </Section>
 
         <div className={sheet.actions}>
           <span className={sheet.spacer} />
