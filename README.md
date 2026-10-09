@@ -6,6 +6,49 @@ A touch-screen family calendar that runs on your own hardware. No accounts, no s
 tasks and reward jars, a photo album and screen saver. Everything lives in a SQLite file on this machine. Google
 sync and the Raspberry Pi setup come next (see "What's next").
 
+![The week view, with photos, weather and the day's joke and quote](docs/media/calendar-week.jpg)
+
+## See it in action
+
+The people, events and photos below are made up for the demo.
+
+### Calendar
+
+Week, day and month views; tap an event to see it, filter by person, and add events with address
+suggestions and drive times. After a while idle, the screen saver takes over.
+
+![Calendar walkthrough](docs/media/calendar.gif)
+
+### Tasks
+
+Daily tasks, chores and bonus tasks for each kid. Bonus tasks earn stars, and finishing the day's tasks gets
+a Hooray. Each kid has a History, and parents can add, edit and reorder tasks, including one-time ones.
+
+![Tasks walkthrough](docs/media/tasks.gif)
+
+### Rewards
+
+Kids put their stars into reward jars. A full jar is earned and then redeemed, and parents can edit jars or
+make new ones.
+
+![Rewards walkthrough](docs/media/rewards.gif)
+
+### Photos
+
+The family album: browse photos, pick the ones the screen saver shows, and flip through them on the calendar.
+
+![Photos walkthrough](docs/media/photos.gif)
+
+### Screenshots
+
+|                                                                                                             |                                                                                   |
+| ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| ![Week](docs/media/calendar-week.jpg) **Week**                                                              | ![Month](docs/media/calendar-month.jpg) **Month**                                 |
+| ![Day](docs/media/calendar-day.jpg) **Day**                                                                 | ![Lists](docs/media/lists.jpg) **Lists** (shared Reminders lists)                 |
+| ![Tasks](docs/media/tasks.jpg) **Tasks**                                                                    | ![Rewards](docs/media/rewards.jpg) **Rewards**: jars filling, earned and redeemed |
+| ![Settings](docs/media/settings.jpg) **Settings**                                                           | ![Locked](docs/media/locked.jpg) **Parent lock**: view-only until unlocked        |
+| ![Screen saver](docs/media/screen-saver.jpg) **Screen saver**: photos, the time, weather and today's events |                                                                                   |
+
 ## Run it on your computer
 
 Needs [Node.js 22 or newer](https://nodejs.org).
@@ -154,7 +197,7 @@ home screen from that address; it works at home and away.
   or **By Sat**. **History** on a card shows a week of ticks per task or a month calendar (tap a day to see and fix
   it). **Edit tasks**: drag ⋮⋮ to reorder within a part of the day, ✎ to change a task, 🗑 to delete (it asks to
   confirm first). An extra's stars can't be un-ticked once they're in a jar.
-- **Hooray!** When a kid ticks the last of today's *required* tasks (extras and Bonus don't count; never just from a
+- **Hooray!** When a kid ticks the last of today's _required_ tasks (extras and Bonus don't count; never just from a
   refresh; unticking takes it back, so a real finish after an accidental tick still cheers, but not twice within two
   minutes), or fills a reward jar, the screen
   fills with confetti and a big "Hooray, Sam!" (with what it's for) for a few seconds (tap to close); Android phones
@@ -219,11 +262,3 @@ Checks: `npm test` and `npm run check` (TypeScript for server and UI).
 
 The server listens on localhost only. `HOST=0.0.0.0 npm start` makes it reachable from phones on
 your Wi-Fi; set the family PIN first.
-
-## What's next
-
-1. ~~iCloud sync over CalDAV~~ (read-only, done).
-2. ~~Map each synced calendar to a person~~ (done, plus per-event picks and Claude sorting by title).
-3. ~~Edit iCloud events from the wall: outbox for offline edits, conflict notices~~ (done).
-4. Google Calendar sync (OAuth).
-5. Raspberry Pi kiosk setup: autostart, night dimming.
