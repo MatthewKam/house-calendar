@@ -54,10 +54,28 @@ body,
 	overflow: hidden;
 }
 /* White here too (iOS colors the strip behind the clock from it); the page area is beige (App.module.css). */
+/* A touch screen's long press shouldn't select text or open the system menu (Copy, Look Up, Save
+   Image) instead of pressing the button; Safari needs its own -webkit- names for both. Typing fields
+   still can (below). */
 body {
+	-webkit-user-select: none;
 	user-select: none;
+	-webkit-touch-callout: none;
 	touch-action: manipulation;
 	background: #fff;
+}
+img,
+video {
+	-webkit-user-drag: none;
+	-webkit-touch-callout: none;
+}
+input,
+textarea,
+select,
+[contenteditable="true"] {
+	-webkit-user-select: text;
+	user-select: text;
+	-webkit-touch-callout: default;
 }
 button {
 	font: inherit;

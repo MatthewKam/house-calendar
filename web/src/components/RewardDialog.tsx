@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useMembers, useRewardActions } from "../lib/queries";
 import type { Member, Reward, TeamMode } from "../lib/types";
 import ConfirmDialog from "./ConfirmDialog";
+import TakeBackDialog from "./TakeBackDialog";
 import { PickChip } from "./NameChip";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/EventDialog.module.css";
@@ -33,6 +34,9 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 	// Last day to redeem it, or none (it then fills again after each time it's redeemed).
 	const [deadline, setDeadline] = useState<string | null>(reward?.deadline ?? null);
 	const [confirmDelete, setConfirmDelete] = useState(false);
+	// Parents only: whose stars are being taken back out of this jar.
+	const [takingBack, setTakingBack] = useState<Member | null>(null);
+	const inJar = reward ? members.filter((m) => (reward.memberStars[m.id] ?? 0) > 0) : [];
 	const together = memberIds.length > 1;
 	const names = members.filter((m) => memberIds.includes(m.id)).map((m) => m.name);
 	const problem = !title.trim()
@@ -156,6 +160,25 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 						? "After it's redeemed, it empties and can be filled again."
 						: "One time only. If it isn't redeemed by then, the kids get their stars back to use on another jar."}
 				</p>
+				{inJar.length > 0 && (
+					<>
+						<div className={s.label}>
+							Stars in it <span className={s.labelHint}>· parents can take some back (master PIN)</span>
+						</div>
+						<ul className={r.inJar}>
+							{inJar.map((m) => (
+								<li key={m.id}>
+									<span>
+										<b>{m.name}</b> · {reward!.memberStars[m.id]} ⭐
+									</span>
+									<button type="button" className={r.takeBack} onClick={() => setTakingBack(m)}>
+										Take back
+									</button>
+								</li>
+							))}
+						</ul>
+					</>
+				)}
 				{save.isError && <div className={s.problem}>Couldn't save: {save.error.message}</div>}
 				<div className={sheet.actions}>
 					{reward && (
@@ -172,6 +195,13 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 					</button>
 				</div>
 			</form>
+			{reward && takingBack && (
+				<TakeBackDialog
+					jar={reward}
+					kids={[{ kid: takingBack, max: reward.memberStars[takingBack.id] ?? 0 }]}
+					onClose={() => setTakingBack(null)}
+				/>
+			)}
 			{reward && confirmDelete && (
 				<ConfirmDialog
 					title={`Delete "${reward.title}"?`}

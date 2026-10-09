@@ -36,8 +36,7 @@ export default function FamilyPin() {
   }
 
   return (
-    <section className={s.home}>
-      <h3 className={s.section}>Family PIN</h3>
+    <section className={s.bare}>
       {!status?.pinSet && !editing && (
         <>
           <p className={s.hint}>

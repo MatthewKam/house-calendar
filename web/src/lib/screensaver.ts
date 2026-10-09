@@ -2,7 +2,7 @@ import type { ScreenSaverSettings } from './types';
 
 export const SCREEN_SAVER_DEFAULTS: ScreenSaverSettings = {
   enabled: true,
-  idleMinutes: 15,
+  idleMinutes: 2,
   seconds: 20,
   transition: 'mix',
   night: true,

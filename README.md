@@ -147,7 +147,9 @@ home screen from that address; it works at home and away.
   or **By Sat**. **History** on a card shows a week of ticks per task or a month calendar (tap a day to see and fix
   it). **Edit tasks**: drag ⋮⋮ to reorder within a part of the day, ✎ to change a task, 🗑 to delete (it asks to
   confirm first). An extra's stars can't be un-ticked once they're in a jar.
-- **Hooray!** When a kid ticks the last of *every* task due today (extras too), or fills a reward jar, the screen
+- **Hooray!** When a kid ticks the last of today's *required* tasks (extras and Bonus don't count; never just from a
+  refresh; unticking takes it back, so a real finish after an accidental tick still cheers, but not twice within two
+  minutes), or fills a reward jar, the screen
   fills with confetti and a big "Hooray, Sam!" (with what it's for) for a few seconds (tap to close); Android phones
   buzz too.
 - **Rewards:** the **Rewards** page (gift in the left bar, `#rewards`) is where kids spend their stars on **reward

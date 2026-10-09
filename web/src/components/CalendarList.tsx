@@ -11,7 +11,6 @@ export default function CalendarList({ members }: { members: Member[] }) {
 
   return (
     <section className={s.section}>
-      <h3 className={s.heading}>Calendars</h3>
       <p className={s.hint}>
         Link a calendar to a person and all its events are theirs. Leave it on <b>By event</b> to pick per event,
         with Claude sorting new ones by title.
