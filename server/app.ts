@@ -8,6 +8,7 @@ import { applyPeople, forgetMember } from './people.ts';
 import { registerTasks } from './tasks.ts';
 import { registerRewards } from './rewards.ts';
 import { registerTravel, type Estimator } from './travel.ts';
+import { registerPlaces, type PlaceSearch } from './places.ts';
 import { registerWeather } from './weather.ts';
 import { registerPhotos } from './photos.ts';
 import { registerDaily } from './daily.ts';
@@ -31,6 +32,8 @@ export function buildApp(db: DB, opts: {
   onRemindersChanged?: () => void;
   /** Drive-time lookups (Google Maps); without it, travel times are off. */
   travel?: Estimator;
+  /** Address suggestions while typing (Google Places); without it, the address is plain text. */
+  places?: PlaceSearch;
   /**
    * Edits to synced events: present when they can be sent to iCloud; soon() sends a new edit after
    * the Undo window. Without it, synced events are read-only.
@@ -136,6 +139,7 @@ export function buildApp(db: DB, opts: {
   registerTasks(app, db);
   registerRewards(app, db);
   registerTravel(app, db, opts.travel);
+  registerPlaces(app, db, opts.places);
   registerWeather(app, db, opts.weatherFetch);
   registerDaily(app, db, opts.dailyFetch);
   if (opts.photosDir) registerPhotos(app, db, opts.photosDir);

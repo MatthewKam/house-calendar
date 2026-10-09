@@ -5,6 +5,7 @@ import { useCalendars, useSetPeople, useSetSetting, useSettings } from '../lib/q
 import type { CalEvent, EventInput, Member, Scope } from '../lib/types';
 import { PencilIcon } from './icons';
 import TravelInfo from './TravelInfo';
+import AddressInput from './AddressInput';
 import { PickChip } from './NameChip';
 import sheet from '../styles/Sheet.module.css';
 import s from '../styles/EventDialog.module.css';
@@ -226,8 +227,7 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
           </label>
         )}
 
-        <input className={s.locationInput} placeholder="Address (optional), for travel time" value={location}
-          maxLength={300} onChange={(e) => setLocation(e.target.value)} aria-label="Address" />
+        <AddressInput value={location} onChange={setLocation} />
         {/* Travel time for the saved address (the field above already shows it). */}
         {event?.location && event.location === location.trim() && <TravelInfo event={event} showAddress={false} />}
 

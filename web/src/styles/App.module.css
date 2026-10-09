@@ -223,6 +223,12 @@
 		flex-direction: column;
 		gap: 0.6rem;
 	}
+	/* Stacked: the weather across the full width, like the photos above it (not its own centered column). */
+	.cards .cardsSide > * {
+		width: 100%;
+		max-width: none;
+		margin-inline: 0;
+	}
 }
 
 /* Phones on their side, and narrow screens: the page runs to the bottom edge too (the scrolling
