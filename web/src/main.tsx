@@ -13,6 +13,8 @@ const queryClient = new QueryClient({
     onError: (err, _vars, _ctx, mutation) => {
       // Signed out shows the PIN screen; some edits show their own error (e.g. a wrong PIN in a dialog).
       if (/Sign in/.test(err.message) || mutation.meta?.inline) return;
+      // Refused because this device is locked (it timed out, say): show it as locked again.
+      if (/^Locked/.test(err.message)) void queryClient.invalidateQueries({ queryKey: ['auth'] });
       window.dispatchEvent(new CustomEvent('household:save-failed', { detail: err.message }));
     },
   }),

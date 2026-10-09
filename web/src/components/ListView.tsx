@@ -13,6 +13,7 @@ import { GripIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
 import { ago } from "../lib/dates";
 import s from "../styles/ListView.module.css";
+import { useParent } from "../lib/useParent";
 
 /** Soft colors for a list's rows, light enough for dark text. */
 const LIST_COLORS = ["#f2dcb3", "#ecb0ea", "#c9dcf7", "#cdebd3", "#ddd3f5", "#f8cfb8", "#f6e7a1", "#c3ece4", "#e4e4e4"];
@@ -31,6 +32,8 @@ interface CardProps {
 
 function ListCard({ list, color, onColor, order, onReorder }: CardProps) {
 	const { add, setDone, rename } = useChangeReminders();
+	// Adding and ticking are anyone's; renaming (icons), colors and order need a parent.
+	const { parent } = useParent();
 	const [choosingColor, setChoosingColor] = useState(false);
 	// Open items in the dragged order (new ones at the end, as Reminders has them); done ones after.
 	const rank = (title: string) => {
@@ -104,6 +107,7 @@ function ListCard({ list, color, onColor, order, onReorder }: CardProps) {
 				</button>
 				<button
 					className={`${s.iconSpot} ${suggested ? s.suggested : ""} ${!icon && !suggested ? s.noIcon : ""}`}
+					disabled={!parent}
 					onClick={() => setPicking({ id: it.id, title: it.title })}
 					aria-label={`Icon for ${text}`}
 					title={icon ? "Change icon" : suggested ? "Suggested icon: tap to keep or change" : "Add an icon"}
@@ -119,7 +123,7 @@ function ListCard({ list, color, onColor, order, onReorder }: CardProps) {
 						</span>
 					)}
 				</button>
-				{handle && (
+				{handle && parent && (
 					<span className={s.grip} {...handle}>
 						<GripIcon />
 					</span>
@@ -131,7 +135,7 @@ function ListCard({ list, color, onColor, order, onReorder }: CardProps) {
 	return (
 		<section className={s.card}>
 			<header className={s.head}>
-				<button className={s.colorDot} style={{ background: color }} aria-expanded={choosingColor}
+				<button className={s.colorDot} style={{ background: color }} aria-expanded={choosingColor} disabled={!parent}
 					onClick={() => setChoosingColor(!choosingColor)} aria-label={`Color for ${list.title}`} title="Change the color" />
 				<h2 className={s.title}>{list.title}</h2>
 				{last && (
@@ -244,6 +248,8 @@ function ListCard({ list, color, onColor, order, onReorder }: CardProps) {
 /** The family's iCloud Reminders lists, synced through an iPhone Shortcut on each phone. */
 /** The Lists page: shared iCloud Reminders lists, synced through the phones. */
 export default function ListView() {
+	// Choosing which lists show needs a parent.
+	const { parent } = useParent();
 	// Lists hidden from the wall, by name (lowercase, so a renamed capital doesn't bring one back).
 	const hidden =
 		(useSettings().data?.hiddenLists as string[] | undefined) ?? [];
@@ -265,7 +271,7 @@ export default function ListView() {
 		<section className={s.page} aria-label="Lists">
 			<header className={s.pageHead}>
 				<h1 className={s.pageTitle}>Lists</h1>
-				{lists.length > 0 && (
+				{lists.length > 0 && parent && (
 					<button
 						className={s.choose}
 						aria-pressed={choosing}

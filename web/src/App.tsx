@@ -48,6 +48,8 @@ import PhotosPage from "./components/PhotosPage";
 import ScreenSaver from "./components/ScreenSaver";
 import { useScreenSaver } from "./lib/useScreenSaver";
 import { useWakeLock } from "./lib/useWakeLock";
+import { useAutoLock, useParent } from "./lib/useParent";
+import ParentUnlock from "./components/ParentUnlock";
 import { useCheer } from "./lib/useCheer";
 import TaskDialog from "./components/TaskDialog";
 import { taskProgress, percent, tasksFor } from "./lib/tasks";
@@ -159,6 +161,10 @@ export default function App() {
 
 	// Photos when the wall is idle.
 	const saver = useScreenSaver();
+	// The parent lock: what kids can't change. It locks itself again when idle or the screen saver starts.
+	const parentLock = useParent();
+	useAutoLock(saver.on);
+	const [unlocking, setUnlocking] = useState<{ then?: () => void } | null>(null);
 	// With the screen saver on, the screen stays on (it takes over instead of the device sleeping),
 	// unless the battery is low.
 	useWakeLock(saver.settings.enabled && saver.photos.length > 0);
@@ -344,7 +350,12 @@ export default function App() {
 					page={page}
 					settingsOpen={showMembers}
 					onPage={setPage}
-					onSettings={() => setShowMembers(true)}
+					// Settings is for parents: unlock first if locked.
+					onSettings={() => (parentLock.parent ? setShowMembers(true) : setUnlocking({ then: () => setShowMembers(true) }))}
+					lock={parentLock.pinSet ? {
+						parent: parentLock.parent,
+						onTap: () => (parentLock.parent ? parentLock.lock.mutate() : setUnlocking({})),
+					} : undefined}
 				/>
 				<div className={s.shell}>
 					{page === "tasks" ? (
@@ -352,6 +363,7 @@ export default function App() {
 							today={today}
 							members={members}
 							focus={focus.length === 1 ? focus[0] : null}
+							locked={!parentLock.parent}
 							onAdd={(memberId) => setTaskDialog({ memberId })}
 							onEdit={(task) => setTaskDialog({ task })}
 						/>
@@ -463,7 +475,7 @@ export default function App() {
 								day={selected}
 								today={today}
 								members={members}
-								onAdd={(day) => setDialog({ day })}
+								onAdd={parentLock.parent ? (day) => setDialog({ day }) : undefined}
 								onOpen={(event, day) => setDialog({ day, event })}
 								onClose={() => setSelected(null)}
 							/>
@@ -484,6 +496,7 @@ export default function App() {
 					onDelete={remove}
 					onClose={() => setDialog(null)}
 					canEditSynced={!!sync?.canWrite}
+					locked={!parentLock.parent}
 				/>
 			)}
 
@@ -504,6 +517,7 @@ export default function App() {
 				/>
 			)}
 
+			{unlocking && <ParentUnlock onClose={() => setUnlocking(null)} onDone={unlocking.then} />}
 			{showMembers && (
 				<MembersPanel
 					members={members}
@@ -513,9 +527,10 @@ export default function App() {
 			)}
 
 			{/* The round + at the bottom right: add an event or a task. */}
-			{page === "calendar" && <Fab label="Add event" onClick={() => setDialog({ day: newEventDay() })} />}
+			{/* Adding needs a parent (the lock in the left bar). */}
+			{page === "calendar" && parentLock.parent && <Fab label="Add event" onClick={() => setDialog({ day: newEventDay() })} />}
 			{/* Add a task, for no one in particular yet (each kid's card has its own Add a task). */}
-			{page === "tasks" && <Fab label="Add a task" onClick={() => setTaskDialog({ blank: true })} />}
+			{page === "tasks" && parentLock.parent && <Fab label="Add a task" onClick={() => setTaskDialog({ blank: true })} />}
 			{saver.on && (
 				<ScreenSaver
 					photos={saver.photos}

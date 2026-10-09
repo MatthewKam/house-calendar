@@ -1,5 +1,5 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
-import { dayKey, timeLabel } from '../lib/dates';
+import { addDays, dayKey, rangeLabel, timeLabel } from '../lib/dates';
 import { eventPaint, eventsOn, isOver } from '../lib/events';
 import { useNow } from '../lib/useNow';
 import type { CalEvent, Member } from '../lib/types';
@@ -59,7 +59,11 @@ export default function WeekView({ days, today, selected, events, members, onSel
                       onClick={(e) => { e.stopPropagation(); onOpen(ev, key); }}>
                       {!ev.allDay && (
                         <span className={s.time}>
-                          {Date.parse(ev.start) < day.getTime() ? `until ${timeLabel(ev.end)}` : timeLabel(ev.start)}
+                          {Date.parse(ev.start) < day.getTime()
+                            ? `until ${timeLabel(ev.end)}`
+                            : Date.parse(ev.end) > addDays(day, 1).getTime()
+                              ? `from ${timeLabel(ev.start)}`
+                              : rangeLabel(ev.start, ev.end)}
                         </span>
                       )}
                       <span className={s.title}>{ev.title}</span>

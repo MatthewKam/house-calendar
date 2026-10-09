@@ -15,7 +15,8 @@ interface Props {
 	bucket: number;
 	/** Their jars still filling, and missed ones. */
 	jars: Reward[];
-	onEdit: (jar: Reward) => void;
+	/** Changing a jar, and a missed one's Add back and Remove (missing while the parent lock is on). */
+	onEdit?: (jar: Reward) => void;
 }
 
 /**
@@ -200,7 +201,7 @@ export default function KidJars({
 								)}
 							</span>
 						)}
-						{j.stars === 0 && (
+						{j.stars === 0 && onEdit && (
 							<span className={s.missedActions}>
 								<button className={s.quiet} onClick={() => setRemoving(j)}>
 									Remove
@@ -233,8 +234,8 @@ export default function KidJars({
 							<div className={s.rowMain}>
 								<span className={s.rowTitle}>
 									{j.title}
-									{!stage && (
-										<button className={s.edit} onClick={() => onEdit(j)} aria-label={`Change ${j.title}`}>
+									{!stage && onEdit && (
+										<button className={s.edit} onClick={() => onEdit?.(j)} aria-label={`Change ${j.title}`}>
 											<PencilIcon />
 										</button>
 									)}

@@ -115,6 +115,13 @@ home screen from that address; it works at home and away.
 
 ## Using it
 
+- **Parent lock:** once a PIN is set, every device starts **locked**: events, tasks, jars, photos, lists and the
+  calendar can be looked at, and kids can still tick tasks, put stars in jars, redeem (and undo it), upload photos and
+  add or tick list items. Adding, changing or deleting anything else needs the **lock** in the left bar (or Settings)
+  and the **master PIN**. It locks itself again after 5 minutes without a touch, or when the screen saver starts;
+  **Keep this device unlocked** is for a parent's own phone. The server checks it too, so a locked device can't
+  change those things any other way.
+
 - **Month / Week:** switch views at the top left. ‹ › move by a month or a week.
 - **Lists:** the **Lists** page in the left bar (address ends in `#lists`) shows your iCloud Reminders (see "Connect Reminders").
   Each list's items are shown in its color; tap the dot by a list's name to pick another. Drag an item by its ⋮⋮ to

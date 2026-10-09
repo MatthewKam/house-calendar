@@ -19,6 +19,8 @@ interface Props {
   onClose: () => void;
   /** iCloud events can be changed here (and are sent to iCloud). */
   canEditSynced?: boolean;
+  /** The parent lock is on: the event is shown, but nothing can be changed. */
+  locked?: boolean;
 }
 
 const QUICK = ['Practice', 'Appointment', 'Dinner out', 'Pick up', 'Work trip'];
@@ -50,7 +52,9 @@ function WhoPicker({ members, value, onChange }: { members: Member[]; value: str
  * iCloud events open as a summary, where you can pick who it's for; Edit event (when iCloud takes
  * edits) opens the full form.
  */
-function SyncedEvent({ event, members, onClose, onEdit }: { event: CalEvent; members: Member[]; onClose: () => void; onEdit?: () => void }) {
+function SyncedEvent({ event, members, onClose, onEdit, locked }: {
+  event: CalEvent; members: Member[]; onClose: () => void; onEdit?: () => void; locked?: boolean;
+}) {
   const setPeople = useSetPeople();
   // Who it's for is locked until Edit; Save applies it to every repeat of this event.
   const [memberIds, setMemberIds] = useState(event.memberIds);
@@ -78,7 +82,7 @@ function SyncedEvent({ event, members, onClose, onEdit }: { event: CalEvent; mem
           <button type="button" className={sheet.close} onClick={onClose} aria-label="Close">×</button>
         </header>
         <div>{when}</div>
-        <TravelInfo event={event} />
+        <TravelInfo event={event} locked={locked} />
         {draft ? (
           <WhoPicker members={members} value={draft} onChange={setDraft} />
         ) : (
@@ -90,16 +94,22 @@ function SyncedEvent({ event, members, onClose, onEdit }: { event: CalEvent; mem
                   <PickChip key={m.id} name={m.name} color={m.color} on />
                 ))}
               </div>
-              <button type="button" className={s.editWho} onClick={() => setDraft(memberIds)}>
-                <PencilIcon /> Edit
-              </button>
+              {!locked && (
+                <button type="button" className={s.editWho} onClick={() => setDraft(memberIds)}>
+                  <PencilIcon /> Edit
+                </button>
+              )}
             </div>
           </>
         )}
         {setPeople.isError && <div className={s.problem}>Couldn't save: {setPeople.error.message}</div>}
         {event.syncState !== 'synced' && <p className={s.pendingNote}>↻ Your change is waiting to be sent to iCloud.</p>}
-        <p className={s.note}>From iCloud. Who it's for is kept on this display and applies every time it repeats.
-          {onEdit ? ' Changes to the event itself are sent to iCloud.' : ' To change the event itself, use Calendar on your iPhone or Mac.'}</p>
+        {locked ? (
+          <p className={s.note}>Locked: a parent can unlock (the lock in the left bar) to change it.</p>
+        ) : (
+          <p className={s.note}>From iCloud. Who it's for is kept on this display and applies every time it repeats.
+            {onEdit ? ' Changes to the event itself are sent to iCloud.' : ' To change the event itself, use Calendar on your iPhone or Mac.'}</p>
+        )}
         <div className={sheet.actions}>
           {onEdit && !draft && <button type="button" className={sheet.secondary} onClick={onEdit}>Edit event</button>}
           <span className={sheet.spacer} />
@@ -119,9 +129,10 @@ function SyncedEvent({ event, members, onClose, onEdit }: { event: CalEvent; mem
 
 export default function EventDialog(props: Props) {
   const [editing, setEditing] = useState(false);
-  if (props.event && props.event.calendarId !== 'local' && !editing) {
-    return <SyncedEvent event={props.event} members={props.members} onClose={props.onClose}
-      onEdit={props.canEditSynced ? () => setEditing(true) : undefined} />;
+  // Locked: any event is just shown. Otherwise an iCloud event is shown first, with Edit.
+  if (props.event && (props.locked || (props.event.calendarId !== 'local' && !editing))) {
+    return <SyncedEvent event={props.event} members={props.members} onClose={props.onClose} locked={props.locked}
+      onEdit={props.canEditSynced && !props.locked ? () => setEditing(true) : undefined} />;
   }
   return <EventForm {...props} />;
 }

@@ -12,7 +12,12 @@ const distance = (meters: number) =>
 		: `${(meters / 1000).toFixed(meters < 10000 ? 1 : 0)} km`;
 
 /** The event's address and, on request, the drive time from home and when to leave. */
-export default function TravelInfo({ event, showAddress = true }: { event: CalEvent; showAddress?: boolean }) {
+export default function TravelInfo({ event, showAddress = true, locked }: {
+	event: CalEvent;
+	showAddress?: boolean;
+	/** The parent lock is on: the drive shows, but reminders can't be set or cancelled. */
+	locked?: boolean;
+}) {
 	const [trip, setTrip] = useState<Trip | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
@@ -78,13 +83,16 @@ export default function TravelInfo({ event, showAddress = true }: { event: CalEv
 				<div className={s.alertSet}>
 					🔔 Reminder at {timeLabel(alert.remindAt)}
 					{alert.minutesBefore ? ` (${alert.minutesBefore} min before leaving)` : " (time to leave)"}
-					<button type="button" className={s.linkButton} onClick={() => cancel.mutate(alert.id)}>
-						Cancel
-					</button>
+					{!locked && (
+						<button type="button" className={s.linkButton} onClick={() => cancel.mutate(alert.id)}>
+							Cancel
+						</button>
+					)}
 				</div>
 			) : (
 				trip?.leaveAt &&
-				!trip.late && (
+				!trip.late &&
+				!locked && (
 					<div className={s.remind}>
 						<span>🔔 Remind me</span>
 						{[

@@ -14,7 +14,8 @@ interface Props {
 	/** The kid's tasks (their own and everyone's). */
 	tasks: Task[];
 	today: string;
-	onEdit: (task: Task) => void;
+	/** Opening a task to change it (missing while the parent lock is on). */
+	onEdit?: (task: Task) => void;
 }
 
 const short = (d: Date) => d.toLocaleDateString([], { month: "short", day: "numeric" });
@@ -122,7 +123,7 @@ function WeekTable({ kid, tasks, today, days, done, onToggle, onEdit }: {
 	days: Date[];
 	done: TaskDone[];
 	onToggle: (c: Task, day: string, ticked: boolean) => void;
-	onEdit: (task: Task) => void;
+	onEdit?: (task: Task) => void;
 }) {
 	const cols = { "--cols": days.length } as CSSProperties;
 	return (
@@ -141,7 +142,7 @@ function WeekTable({ kid, tasks, today, days, done, onToggle, onEdit }: {
 				const doneCount = due.filter((d) => didTask(done, c, kid.id, dayKey(d))).length;
 				return (
 					<div key={c.id} className={s.historyRow}>
-						<button className={s.taskName} onClick={() => onEdit(c)} title="Change this task">
+						<button className={s.taskName} onClick={() => onEdit?.(c)} disabled={!onEdit} title={onEdit ? "Change this task" : undefined}>
 							<TaskName task={c} />
 						</button>
 						<span className={s.cells} style={cols}>

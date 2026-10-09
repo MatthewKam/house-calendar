@@ -451,3 +451,15 @@
 .scroll {
 	padding-bottom: calc(5rem + env(safe-area-inset-bottom));
 }
+
+/* The parent unlock: "Keep this device unlocked". */
+.keepUnlocked {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.95rem;
+}
+.keepUnlocked input {
+	width: 1.2rem;
+	height: 1.2rem;
+}

@@ -30,6 +30,18 @@ export function monthGridDays(d: Date, weekStartsOn = 0) {
 export const timeLabel = (when: string | Date) =>
   new Date(when).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
+/**
+ * "9:00 – 10:30 AM": a start and end on the same day, with the AM or PM said once when both share it
+ * ("11:00 AM – 12:30 PM" when not).
+ */
+export function rangeLabel(start: string | Date, end: string | Date) {
+  const from = timeLabel(start);
+  const to = timeLabel(end);
+  const half = /\s?([AP]M)$/i;
+  const a = from.match(half)?.[1];
+  return a && a === to.match(half)?.[1] ? `${from.replace(half, '')} – ${to}` : `${from} – ${to}`;
+}
+
 /** "just now", "5 min ago", "2 h ago", then the date ("Oct 4"). */
 export function ago(iso: string) {
   const min = Math.round((Date.now() - Date.parse(iso)) / 60_000);

@@ -453,6 +453,11 @@ const migrations: string[] = [
   ALTER TABLE photos ADD COLUMN seconds REAL;
   ALTER TABLE photos ADD COLUMN ready INTEGER NOT NULL DEFAULT 1;
   `,
+  // The parent lock: a device unlocked with the master PIN can change things (until this instant,
+  // or 'always' for a parent's own phone).
+  `
+  ALTER TABLE sessions ADD COLUMN parent_until TEXT;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */
