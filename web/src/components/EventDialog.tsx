@@ -9,6 +9,7 @@ import AddressInput from './AddressInput';
 import { PickChip } from './NameChip';
 import sheet from '../styles/Sheet.module.css';
 import s from '../styles/EventDialog.module.css';
+import DateInput from './DateInput';
 
 interface Props {
   day: string;
@@ -237,9 +238,9 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
           <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} /> All day
         </label>
         <div className={s.row}>
-          <label>{allDay ? 'From' : 'Date'} <input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
+          <label>{allDay ? 'From' : 'Date'} <DateInput value={date} onChange={(e) => setDate(e.target.value)} /></label>
           {allDay ? (
-            <label>To <input type="date" value={lastDate} min={date} onChange={(e) => setLastDate(e.target.value)} /></label>
+            <label>To <DateInput value={lastDate} min={date} onChange={(e) => setLastDate(e.target.value)} /></label>
           ) : (
             <>
               <label>Start <input type="time" step={300} value={startTime} onChange={(e) => setStartTime(e.target.value)} /></label>

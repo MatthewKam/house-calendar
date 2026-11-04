@@ -6,6 +6,7 @@ import { PencilIcon, StarIcon } from "./icons";
 import ConfirmDialog from "./ConfirmDialog";
 import { JarProgress, eachFills, shortDay } from "./JarBits";
 import s from "../styles/Rewards.module.css";
+import DateInput from "./DateInput";
 
 interface Props {
 	kid: Member;
@@ -306,8 +307,7 @@ export default function KidJars({
 				>
 					<label className={s.restoreDate}>
 						New deadline (leave empty for none)
-						<input
-							type="date"
+						<DateInput
 							className={s.date}
 							value={restoring.deadline}
 							min={today}

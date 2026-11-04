@@ -15,6 +15,7 @@ import { PickChip } from "./NameChip";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/EventDialog.module.css";
 import c from "../styles/Tasks.module.css";
+import DateInput from "./DateInput";
 
 interface Props {
 	task?: Task;
@@ -239,8 +240,7 @@ export default function TaskDialog({
 									{label}
 								</button>
 							))}
-							<input
-								type="date"
+							<DateInput
 								className={c.dueDate}
 								value={dueBy}
 								min={TODAY()}

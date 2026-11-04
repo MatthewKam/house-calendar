@@ -8,6 +8,7 @@ import sheet from "../styles/Sheet.module.css";
 import s from "../styles/EventDialog.module.css";
 import t from "../styles/Tasks.module.css";
 import r from "../styles/Rewards.module.css";
+import DateInput from "./DateInput";
 
 interface Props {
 	/** Who a new jar starts out for (e.g. the kid whose section it was added from). */
@@ -145,8 +146,7 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 						By a date
 					</button>
 					{deadline !== null && (
-						<input
-							type="date"
+						<DateInput
 							className={r.date}
 							value={deadline}
 							min={today}

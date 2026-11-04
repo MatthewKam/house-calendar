@@ -12,6 +12,7 @@ import GoogleCalendars from './GoogleCalendars';
 import ICloudCalendars from './ICloudCalendars';
 import sheet from '../styles/Sheet.module.css';
 import s from '../styles/MembersPanel.module.css';
+import DateInput from './DateInput';
 
 interface Props { members: Member[]; uiScale: number; onClose: () => void }
 
@@ -231,7 +232,7 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
                   <div className={s.details}>
                     <label className={s.detail}>
                       <span>Birthday</span>
-                      <input type="date" className={s.dateInput} value={editing.birthdate} max={dayKey(new Date())}
+                      <DateInput className={s.dateInput} aria-label="Birthday" value={editing.birthdate} max={dayKey(new Date())}
                         onChange={(e) => setEditing({ ...editing, birthdate: e.target.value })} />
                     </label>
                     <label className={s.detail}>
