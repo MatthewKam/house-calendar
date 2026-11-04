@@ -135,21 +135,17 @@ describe('reward jars', () => {
     expect((await list()).map((r) => r.title)).toEqual(['Zoo']);
   });
 
-  it('lets a parent take stars back out of a jar with the PIN', async () => {
+  it('lets a parent take stars back out of a jar', async () => {
     const jar = await add({ goal: 10 });
     await place(riley, [{ rewardId: jar.id, stars: 4 }]);
     await place(riley, [{ rewardId: jar.id, stars: 6 }]);
     expect((await list())[0].status).toBe('earned');
-    // Once a PIN is set, it's needed (and the device signs in with the cookie).
-    const res = await app.inject({ method: 'POST', url: '/api/auth/pin', payload: { pin: '4321' } });
-    const cookie = String(res.headers['set-cookie']).split(';')[0];
-    const takeBack = (pin: string, stars: number) => app.inject({ method: 'POST', url: `/api/rewards/${jar.id}/take-back`,
-      headers: { cookie }, payload: { memberId: riley, stars, pin } });
-    expect(json(await takeBack('0000', 1))).toEqual({ error: 'Wrong PIN' });
-    expect((await takeBack('4321', 11)).statusCode).toBe(400);
+    const takeBack = (stars: number) => app.inject({ method: 'POST', url: `/api/rewards/${jar.id}/take-back`,
+      payload: { memberId: riley, stars } });
+    expect((await takeBack(11)).statusCode).toBe(400);
     // From the full jar: the newest stars come out, and it's filling again.
-    expect((await takeBack('4321', 7)).statusCode).toBe(204);
-    const get = (url: string) => app.inject({ url, headers: { cookie } }).then(json<any>);
+    expect((await takeBack(7)).statusCode).toBe(204);
+    const get = (url: string) => app.inject({ url }).then(json<any>);
     expect((await get(`/api/rewards?today=${TODAY}`))[0]).toMatchObject({ status: 'filling', stars: 3 });
     expect(await get('/api/rewards/history')).toEqual([]);
     expect((await get('/api/rewards/buckets')).find((b: any) => b.memberId === riley).stars).toBe(9);

@@ -22,6 +22,8 @@ export interface RemoteEvent {
 export interface RemoteCalendar {
   remoteId: string;
   name: string;
+  /** The account's own main calendar: linked to the person who connected it. */
+  primary?: boolean;
   /** #rrggbb as set in the provider's own app, when it has one. */
   color?: string;
   /** False for calendars we can only read (shared read-only, subscribed); unknown counts as true. */
@@ -34,6 +36,10 @@ export interface RemoteCalendar {
  */
 export interface CalendarSource {
   readonly id: 'google' | 'icloud';
+  /** Which account, when several of one kind sync (e.g. 'google:<connection id>'); else the id. */
+  readonly key?: string;
+  /** Who connected it; their primary calendar is linked to them. */
+  readonly memberId?: string | null;
   listCalendars(): Promise<RemoteCalendar[]>;
   /** Every occurrence overlapping [from, to). */
   fetchRange(calendarRemoteId: string, from: Date, to: Date): Promise<RemoteEvent[]>;

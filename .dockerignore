@@ -1,0 +1,8 @@
+node_modules
+web/dist
+data
+.env
+.git
+.DS_Store
+docs/media
+*.tgz

@@ -203,8 +203,8 @@ export function useRewardActions() {
       ({ id, deadline }) => [jars((list) => list.map((r) => (r.id === id ? { ...r, deadline, status: 'filling' as const } : r)))]),
     /** A parent takes a kid's stars back out of a jar (with the master PIN). A wrong PIN is shown in its dialog, not as a toast. */
     takeBack: useMutation({
-      mutationFn: ({ id, memberId, stars, pin }: { id: string; memberId: string; stars: number; pin: string }) =>
-        api.takeBack(id, memberId, stars, pin),
+      mutationFn: ({ id, memberId, stars }: { id: string; memberId: string; stars: number }) =>
+        api.takeBack(id, memberId, stars),
       meta: { inline: true },
       onSettled: refresh,
     }),

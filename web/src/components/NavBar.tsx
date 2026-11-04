@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import type { SignedIn } from "../lib/api";
+import { Avatar } from "./AccountSheet";
 import s from "../styles/NavBar.module.css";
 
 export type Page = "calendar" | "tasks" | "rewards" | "lists" | "photos";
@@ -8,8 +10,10 @@ interface Props {
 	settingsOpen: boolean;
 	onPage: (page: Page) => void;
 	onSettings: () => void;
-	/** The parent lock: shown once a PIN is set; tapping it unlocks (master PIN) or locks again. */
-	lock?: { parent: boolean; onTap: () => void };
+	/** The parent lock, on the wall and kids' devices; tapping it unlocks (a guardian's PIN) or locks again. `by`: whose PIN. */
+	lock?: { parent: boolean; by: string | null; onTap: () => void };
+	/** Who's signed in here: their initial in their color (or the wall), opening who and Sign out. */
+	me?: { status: SignedIn; onTap: () => void };
 }
 
 // Simple line icons, drawn in the current text color.
@@ -66,6 +70,7 @@ export default function NavBar({
 	onPage,
 	onSettings,
 	lock,
+	me,
 }: Props) {
 	const item = (p: Page, label: string, icon: ReactNode) => (
 		<button
@@ -85,16 +90,24 @@ export default function NavBar({
 			{item("lists", "Lists", <ListsIcon />)}
 			{item("rewards", "Rewards", <RewardsIcon />)}
 			{item("photos", "Photos", <PhotosIcon />)}
-			{/* Pinned to the bottom of the bar: the logo, the parent lock, then Settings. */}
-			<img className={s.logo} src="/favicon.svg" alt="" />
+			{/* Pinned to the bottom of the bar: who's signed in, the parent lock, then Settings. */}
+			{me ? (
+				<button className={`${s.item} ${s.me}`} onClick={me.onTap}
+					aria-label={`Signed in as ${me.status.me?.name ?? "the wall"}`}>
+					<Avatar status={me.status} />
+					<span className={s.label}>{me.status.me?.name.split(" ")[0] ?? "Wall"}</span>
+				</button>
+			) : (
+				<img className={s.logo} src="/favicon.svg" alt="" />
+			)}
 			{lock && (
 				<button
 					className={`${s.item} ${lock.parent ? s.unlocked : ""}`}
 					onClick={lock.onTap}
-					aria-label={lock.parent ? "Lock (parents)" : "Unlock (parents)"}
+					aria-label={lock.parent ? `Unlocked${lock.by ? ` by ${lock.by}` : ""}: tap to lock` : "Unlock (guardians)"}
 				>
 					<LockIcon open={lock.parent} />
-					<span className={s.label}>{lock.parent ? "Unlocked" : "Locked"}</span>
+					<span className={s.label}>{lock.parent ? lock.by ?? "Unlocked" : "Locked"}</span>
 				</button>
 			)}
 			<button

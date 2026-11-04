@@ -130,10 +130,12 @@ function SyncedEvent({ event, members, onClose, onEdit, locked }: {
 
 export default function EventDialog(props: Props) {
   const [editing, setEditing] = useState(false);
+  // Synced events are changed here only in calendars that take changes (iCloud's; Google's are changed in Google).
+  const calendar = useCalendars().data?.find((c) => c.id === props.event?.calendarId);
   // Locked: any event is just shown. Otherwise an iCloud event is shown first, with Edit.
   if (props.event && (props.locked || (props.event.calendarId !== 'local' && !editing))) {
     return <SyncedEvent event={props.event} members={props.members} onClose={props.onClose} locked={props.locked}
-      onEdit={props.canEditSynced && !props.locked ? () => setEditing(true) : undefined} />;
+      onEdit={props.canEditSynced && calendar?.writable && !props.locked ? () => setEditing(true) : undefined} />;
   }
   return <EventForm {...props} />;
 }

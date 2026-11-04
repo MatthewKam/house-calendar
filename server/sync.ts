@@ -37,11 +37,16 @@ export function syncWindow(now = new Date()) {
  */
 export async function syncOnce(db: DB, source: CalendarSource, now = new Date()) {
   const { from, to } = syncWindow(now);
-  const remote = await source.listCalendars();
+  const key = source.key ?? source.id;
+  const findCal = db.prepare('SELECT id, source FROM calendars WHERE provider = ? AND remote_id = ?');
+  // A calendar another account already brings in (one shared with both parents, say) is shown once.
+  const remote = (await source.listCalendars()).filter((cal) => {
+    const row = findCal.get(source.id, cal.remoteId) as { source: string | null } | undefined;
+    return !row || row.source === key;
+  });
   const fetched = await Promise.all(remote.map(async (cal) => ({ cal, events: await source.fetchRange(cal.remoteId, from, to) })));
 
-  const findCal = db.prepare('SELECT id FROM calendars WHERE provider = ? AND remote_id = ?');
-  const insertCal = db.prepare('INSERT INTO calendars (id, provider, remote_id, name, color, writable) VALUES (?, ?, ?, ?, ?, ?)');
+  const insertCal = db.prepare('INSERT INTO calendars (id, provider, source, remote_id, name, color, writable, member_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
   const updateCal = db.prepare('UPDATE calendars SET name = ?, color = ?, writable = ? WHERE id = ?');
   const clearEvents = db.prepare('DELETE FROM events WHERE calendar_id = ?');
   // Who each event is for is filled in afterwards by applyPeople().
@@ -57,7 +62,8 @@ export async function syncOnce(db: DB, source: CalendarSource, now = new Date())
       let row = findCal.get(source.id, cal.remoteId) as { id: string } | undefined;
       if (!row) {
         row = { id: randomUUID() };
-        insertCal.run(row.id, source.id, cal.remoteId, cal.name, cal.color ?? null, cal.writable === false ? 0 : 1);
+        insertCal.run(row.id, source.id, key, cal.remoteId, cal.name, cal.color ?? null, cal.writable === false ? 0 : 1,
+          cal.primary && source.memberId ? source.memberId : null);
       } else {
         updateCal.run(cal.name, cal.color ?? null, cal.writable === false ? 0 : 1, row.id);
       }
@@ -66,9 +72,9 @@ export async function syncOnce(db: DB, source: CalendarSource, now = new Date())
       for (const ev of list) insertEvent.run(toRow(row.id, ev));
       events += list.length;
     }
-    // Calendars deleted (or unshared) in iCloud go away here, taking their events with them.
-    db.prepare(`DELETE FROM calendars WHERE provider = ? AND id NOT IN (SELECT value FROM json_each(?))`)
-      .run(source.id, JSON.stringify(keep));
+    // Calendars deleted (or unshared) in the account go away here, taking their events with them.
+    db.prepare(`DELETE FROM calendars WHERE source = ? AND id NOT IN (SELECT value FROM json_each(?))`)
+      .run(key, JSON.stringify(keep));
     applyPeople(db);
     // Edits made on the wall that iCloud doesn't have yet stay on screen.
     overlayOutbox(db);
@@ -90,6 +96,22 @@ const toRow = (calendarId: string, ev: RemoteEvent) => ({
   location: ev.location ?? null,
   etag: ev.etag,
 });
+
+/** One status for every account a household syncs (iCloud, each person's Google), for the banner. */
+export function combineStatus(list: SyncStatus[]): SyncStatus | null {
+  if (list.length <= 1) return list[0] ?? null;
+  const done = list.map((s) => s.lastSuccess).filter((t): t is string => !!t).sort();
+  return {
+    provider: list[0].provider,
+    running: list.some((s) => s.running),
+    lastSuccess: done[0] ?? null,
+    lastError: list.map((s) => s.lastError).filter(Boolean).join('; ') || null,
+    calendars: list.reduce((n, s) => n + s.calendars, 0),
+    events: list.reduce((n, s) => n + s.events, 0),
+    peopleError: list.find((s) => s.peopleError)?.peopleError ?? null,
+    canWrite: list.some((s) => s.canWrite),
+  };
+}
 
 interface Log {
   info: (o: object, m: string) => void;

@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import type { DB } from './db.ts';
 import type { SyncStatus } from './sync.ts';
+import type { GoogleConnection } from './googleSync.ts';
 import { applyPeople, forgetMember } from './people.ts';
 import { registerTasks } from './tasks.ts';
 import { registerRewards } from './rewards.ts';
@@ -12,7 +13,7 @@ import { registerPlaces, type PlaceSearch } from './places.ts';
 import { registerWeather } from './weather.ts';
 import { registerPhotos } from './photos.ts';
 import { registerDaily } from './daily.ts';
-import { registerAuth } from './auth.ts';
+import { registerGuard } from './auth.ts';
 import { registerReminders } from './reminders.ts';
 import { registerEvents } from './events.ts';
 
@@ -23,7 +24,10 @@ const toMember = (r: MemberRow) => ({ id: r.id, name: r.name, color: r.color, so
 
 export function buildApp(db: DB, opts: {
   webDist?: string;
-  sync?: SyncStatus;
+  /** Calendar sync status: one, or worked out on each call when accounts come and go. */
+  sync?: SyncStatus | (() => SyncStatus | null);
+  /** People's Google Calendar connections; without it, Google Calendar is off. */
+  google?: { list(): GoogleConnection[]; remove(id: string): Promise<boolean> };
   /** Called after the family list or a calendar link changes, so Claude can sort what is now unassigned. */
   onAssignmentsChanged?: () => void;
   /** Shared secret the phones' Reminders Shortcut sends; without it, Reminders sync is off. */
@@ -45,12 +49,14 @@ export function buildApp(db: DB, opts: {
   dailyFetch?: typeof fetch;
   /** How weather lookups reach the internet (replaced in tests). */
   weatherFetch?: typeof fetch;
+  /** Called after a person is removed, so their sign-ins to this household go too. */
+  onMemberRemoved?: (memberId: string) => void;
 } = {}) {
   // trustProxy: behind Tailscale's HTTPS (tailscale serve), so the device's address and https are seen.
   const app = Fastify({ logger: process.env.NODE_ENV !== 'test' && { level: 'info' }, trustProxy: 'loopback' });
 
-  // The family PIN: once set, every /api call needs a signed-in device.
-  registerAuth(app, db);
+  // Parent-only changes need a guardian (or a device unlocked with a guardian's PIN).
+  registerGuard(app);
 
   // ---- Members -----------------------------------------------------------
   app.get('/api/members', async () =>
@@ -89,6 +95,7 @@ export function buildApp(db: DB, opts: {
       return db.prepare('DELETE FROM members WHERE id = ?').run(req.params.id);
     })();
     if (res.changes === 0) return reply.code(404).send({ error: 'Member not found' });
+    opts.onMemberRemoved?.(req.params.id);
     // Calendars linked to this person fall back to manual and Claude picks.
     applyPeople(db);
     opts.onAssignmentsChanged?.();
@@ -134,7 +141,22 @@ export function buildApp(db: DB, opts: {
   });
 
   // ---- Calendar sync status (null when no account is set up) --------------
-  app.get('/api/sync', async () => opts.sync ?? null);
+  app.get('/api/sync', async () => (typeof opts.sync === 'function' ? opts.sync() : opts.sync) ?? null);
+
+  // ---- Google Calendar connections (connecting is on the front server: /api/account/google/connect)
+  app.get('/api/connections', async () => ({ google: opts.google ? opts.google.list() : null }));
+
+  // Removing a connection: the person who connected it, or a parent.
+  app.delete<{ Params: { id: string } }>('/api/connections/:id', async (req, reply) => {
+    const row = opts.google?.list().find((c) => c.id === req.params.id);
+    if (!row) return reply.code(404).send({ error: 'Not found' });
+    const viewer = req.raw.viewer;
+    if (viewer && !viewer.parent && viewer.memberId !== row.memberId) {
+      return reply.code(403).send({ error: "Locked: unlock with a guardian's PIN to change this", locked: true });
+    }
+    await opts.google!.remove(row.id);
+    return reply.code(204).send();
+  });
 
   registerTasks(app, db);
   registerRewards(app, db);

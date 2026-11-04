@@ -5,7 +5,8 @@ import { useAddMember, useCalendars, useRemoveMember, useSetSetting, useSettings
 import type { Member } from '../lib/types';
 import CalendarList from './CalendarList';
 import ScreenSaverSettings from './ScreenSaverSettings';
-import FamilyPin from './FamilyPin';
+import HouseholdAccess from './HouseholdAccess';
+import GoogleCalendars from './GoogleCalendars';
 import sheet from '../styles/Sheet.module.css';
 import s from '../styles/MembersPanel.module.css';
 
@@ -248,11 +249,10 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
         )}
         </Section>
 
-        {hasCalendars && (
-          <Section title="Calendars">
-            <CalendarList members={members} />
-          </Section>
-        )}
+        <Section title="Calendars">
+          <GoogleCalendars members={members} />
+          {hasCalendars && <CalendarList members={members} />}
+        </Section>
 
         <Section title="Home address" note={homeAddress || "Not set"}>
           <HomeAddress />
@@ -262,8 +262,8 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
           <ScreenSaverSettings bare />
         </Section>
 
-        <Section title="Family PIN">
-          <FamilyPin />
+        <Section title="People and sign-in">
+          <HouseholdAccess />
         </Section>
 
         <Section title="Text size" note={`${Math.round(uiScale * 100)}%`}>

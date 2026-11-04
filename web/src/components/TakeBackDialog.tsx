@@ -12,13 +12,12 @@ interface Props {
 	onClose: () => void;
 }
 
-/** Parents only: takes some of a kid's stars back out of a jar, into their bucket, with the master PIN. */
+/** Parents only: takes some of a kid's stars back out of a jar, into their bucket. */
 export default function TakeBackDialog({ jar, kids, onClose }: Props) {
 	const { takeBack } = useRewardActions();
 	const [whose, setWhose] = useState(0);
 	const { kid, max } = kids[whose];
 	const [n, setN] = useState(1);
-	const [pin, setPin] = useState("");
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -28,7 +27,7 @@ export default function TakeBackDialog({ jar, kids, onClose }: Props) {
 
 	function submit(e: FormEvent) {
 		e.preventDefault();
-		takeBack.mutate({ id: jar.id, memberId: kid.id, stars: n, pin }, { onSuccess: onClose, onError: () => setPin("") });
+		takeBack.mutate({ id: jar.id, memberId: kid.id, stars: n }, { onSuccess: onClose });
 	}
 
 	return (
@@ -53,7 +52,7 @@ export default function TakeBackDialog({ jar, kids, onClose }: Props) {
 					</div>
 				)}
 				<div className={sheet.body}>
-					They go back to {kid.name}'s bucket. Parents only: it needs the master PIN.
+					They go back to {kid.name}'s bucket.
 				</div>
 				<div className={s.stager}>
 					<button type="button" className={s.step} disabled={n <= 1} aria-label="One fewer" onClick={() => setN(n - 1)}>
@@ -66,25 +65,13 @@ export default function TakeBackDialog({ jar, kids, onClose }: Props) {
 						+
 					</button>
 				</div>
-				<input
-					className={s.pin}
-					type="password"
-					inputMode="numeric"
-					autoComplete="off"
-					placeholder="Master PIN"
-					aria-label="Master PIN"
-					maxLength={64}
-					value={pin}
-					autoFocus
-					onChange={(e) => setPin(e.target.value)}
-				/>
 				{takeBack.isError && <div className={s.problem}>{takeBack.error.message}</div>}
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />
 					<button type="button" className={sheet.secondary} onClick={onClose}>
 						Cancel
 					</button>
-					<button type="submit" className={sheet.primary} disabled={!pin || takeBack.isPending}>
+					<button type="submit" className={sheet.primary} disabled={takeBack.isPending}>
 						Take back
 					</button>
 				</div>

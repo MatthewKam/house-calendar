@@ -50,6 +50,9 @@ import { useScreenSaver } from "./lib/useScreenSaver";
 import { useWakeLock } from "./lib/useWakeLock";
 import { useAutoLock, useParent } from "./lib/useParent";
 import ParentUnlock from "./components/ParentUnlock";
+import AccountSheet from "./components/AccountSheet";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "./lib/api";
 import { useCheer } from "./lib/useCheer";
 import TaskDialog from "./components/TaskDialog";
 import { taskProgress, percent, tasksFor } from "./lib/tasks";
@@ -165,6 +168,10 @@ export default function App() {
 	const parentLock = useParent();
 	useAutoLock(saver.on);
 	const [unlocking, setUnlocking] = useState<{ then?: () => void } | null>(null);
+	// Who's signed in here, shown at the bottom of the bar.
+	const auth = useQuery({ queryKey: ["auth"], queryFn: api.authStatus }).data;
+	const signedIn = auth?.signedIn ? auth : null;
+	const [showAccount, setShowAccount] = useState(false);
 	// With the screen saver on, the screen stays on (it takes over instead of the device sleeping),
 	// unless the battery is low.
 	useWakeLock(saver.settings.enabled && saver.photos.length > 0);
@@ -203,6 +210,16 @@ export default function App() {
 		if (selected) setCursor(fromDayKey(selected));
 		setSetting.mutate({ key: "view", value: next });
 	}
+
+	// Back from connecting Google Calendar (…/?calendar=connected, or what went wrong).
+	useEffect(() => {
+		const url = new URL(window.location.href);
+		const result = url.searchParams.get("calendar");
+		if (!result) return;
+		url.searchParams.delete("calendar");
+		history.replaceState(null, "", url.pathname + url.search + url.hash);
+		setToast({ text: result === "connected" ? "Google Calendar connected. Its events will show in a moment." : `Google Calendar: ${result}` });
+	}, []);
 
 	// Any edit that couldn't be saved (it was shown straight away, and has been put back).
 	useEffect(() => {
@@ -352,8 +369,10 @@ export default function App() {
 					onPage={setPage}
 					// Settings is for parents: unlock first if locked.
 					onSettings={() => (parentLock.parent ? setShowMembers(true) : setUnlocking({ then: () => setShowMembers(true) }))}
-					lock={parentLock.pinSet ? {
+					me={signedIn ? { status: signedIn, onTap: () => setShowAccount(true) } : undefined}
+					lock={parentLock.lockable ? {
 						parent: parentLock.parent,
+						by: signedIn?.unlockedBy ?? null,
 						onTap: () => (parentLock.parent ? parentLock.lock.mutate() : setUnlocking({})),
 					} : undefined}
 				/>
@@ -433,7 +452,7 @@ export default function App() {
 					)}
 					{sync?.lastError && (
 						<div className={s.banner}>
-							iCloud sync failed: {sync.lastError}. Showing what was last
+							Calendar sync failed: {sync.lastError}. Showing what was last
 							synced.
 						</div>
 					)}
@@ -518,6 +537,7 @@ export default function App() {
 			)}
 
 			{unlocking && <ParentUnlock onClose={() => setUnlocking(null)} onDone={unlocking.then} />}
+			{showAccount && signedIn && <AccountSheet status={signedIn} onClose={() => setShowAccount(false)} />}
 			{showMembers && (
 				<MembersPanel
 					members={members}

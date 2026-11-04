@@ -1,6 +1,7 @@
 # Wall Calendar
 
-A touch-screen family calendar that runs on your own hardware. No accounts, no subscription.
+A family calendar for the wall and everyone's phone. Each family signs in with Apple, Google or email, with
+guardian and kid roles.
 
 **Status:** shows and edits iCloud calendars next to events added on the display, with Reminders lists, kids'
 tasks and reward jars, a photo album and screen saver. Everything lives in a SQLite file on this machine. Google
@@ -68,6 +69,101 @@ npm start          # http://localhost:3000
 ```
 
 Data lives in `data/calendar.db`. Delete that file to start over.
+
+## Accounts and households
+
+Each family is a **household**; one server holds many. People sign in with **Apple**, **Google** or a **code
+sent by email** (no passwords), and each has a role:
+
+- **Guardians** (parents) start the household, invite each other, and can change anything from their own phone.
+  Each sets a **guardian PIN** in Settings → People and sign-in.
+- **Kids**: an older kid with their own phone and account is invited like a guardian, as a kid. A younger kid's
+  device (an iPad, say) is added with a code and needs no account.
+- **The wall** is added with a code (Settings → **Add a wall display**, then type the code on the wall). It opens
+  with **any guardian's PIN**, and the same PIN unlocks it for changes. **Lock the wall** in Settings sends it back
+  to the PIN screen.
+
+Codes look like `K7QP-3MXD`, work once, and last 7 days (15 minutes for the wall). **Send the link** shares a link
+that opens the app with the code filled in. Settings lists who signs in and how, unused codes, and every signed-in
+device, with **Sign out** for each.
+
+**Your household from before accounts** (`data/calendar.db`) is kept, with everything in it. Until a guardian
+claims it, the server logs a line on each start: `Claim your household: … enter ABCD-EFGH`. Sign in, tap **Join
+with a code**, enter it and pick who you are; then invite your co-parent and add the wall from Settings. The old
+family PIN and master PIN are no longer used. The iCloud and Reminders setup in `.env` stays with this household.
+
+To turn on the sign-in buttons, fill in `.env` (see `.env.example`):
+
+- **Google:** in [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials, create an
+  **OAuth client ID** of type *Web application*, with your site's address (and `http://localhost:5173` while
+  developing) under **Authorized JavaScript origins**. Put it in `GOOGLE_CLIENT_ID`.
+- **Apple:** needs an Apple Developer account and an HTTPS address. Create a **Services ID** with Sign in with Apple
+  turned on, your domain, and `https://<your domain>/` as the return URL. Put it in `APPLE_SERVICE_ID`.
+- **Email:** a [Resend](https://resend.com) key in `RESEND_API_KEY` and a sender in `EMAIL_FROM`. While developing,
+  codes are printed in the server's log instead.
+
+Accounts live in `data/accounts.db`; each new household gets `data/households/<id>/` (its database and photos).
+
+**Who's signed in** shows at the bottom of the left bar: the person's initial in their color (or a screen, on
+the wall). Tap it to see the account and household, switch households, sign out, or lock the wall. When the wall
+or a kid's device is unlocked, the lock shows whose PIN opened it.
+
+## Google Calendar
+
+Each person connects their own: on their phone, **Settings → Calendars → Connect my Google Calendar**. Google
+asks them to let the app see their calendars, then sends them back. Every calendar in that account shows up (the
+person's own main calendar is linked to them; shared ones go **By event**), synced every 5 minutes. A calendar
+two people both have (one shared between parents, say) shows once. Google events are view-only on the wall for
+now: change them in Google Calendar. **Disconnect** removes the account's calendars and tells Google to drop
+the app's access.
+
+Setting it up (once, for the server), in the same Google Cloud project as Google sign-in:
+
+1. **APIs & Services → Library**: enable the **Google Calendar API**.
+2. **OAuth consent screen**: add the scope `.../auth/calendar.readonly`. While the app is in *Testing*, add each
+   person's Gmail address under **Test users** (up to 100). Opening it to everyone needs Google's verification.
+3. **Credentials**, on the Web client used for sign-in: add `http://localhost:5173/api/account/google/callback`
+   (and later `https://<your domain>/api/account/google/callback`) under **Authorized redirect URIs**.
+4. Put the client's secret in `GOOGLE_CLIENT_SECRET` and restart.
+
+Refresh tokens are stored encrypted (`server/secrets.ts`), with the key in `SECRET_KEY` or `data/secret.key`.
+
+## Hosting (Fly.io)
+
+One small always-on server with a disk, about $5–7 a month: a 1 GB server, a 3 GB disk, and a storage bucket
+for backups. The app is at `https://<app>.fly.dev` (a custom domain can be added later).
+
+| File                      | What it does                                                                                    |
+| ------------------------- | ----------------------------------------------------------------------------------------------- |
+| `Dockerfile`              | Builds the app and the web UI, and adds Litestream. Fly builds it, so Docker isn't needed here. |
+| `fly.toml`                | The server: always on, 1 GB, the disk at `/data` (snapshotted daily, kept 14 days), `/health`.  |
+| `deploy/start.sh`         | Starts it: imports uploaded data if there is any, then runs the app under Litestream.           |
+| `deploy/litestream.yml`   | Backs up every database in `/data` (new households too) to the bucket as it changes.            |
+| `deploy/set-secrets.sh`   | Sends the needed `.env` settings (and the token key) to Fly as secrets.                         |
+| `deploy/upload-data.sh`   | Copies this machine's data (accounts, households, photos) up, replacing what's there.           |
+
+Once, to set it up:
+
+```sh
+brew install flyctl && fly auth login
+fly launch --no-deploy --copy-config --name <app>   # picks the nearest region
+fly volumes create household_data --size 3 --yes
+fly storage create --name <app>-backups --yes       # the backup bucket; sets its keys as secrets
+deploy/set-secrets.sh
+fly deploy
+deploy/upload-data.sh                               # stop `npm run dev` first
+```
+
+After that, `fly deploy` ships each change. `fly logs` shows the server's log (sign-in codes too, until email is
+set up), and the Fly dashboard shows memory, CPU and the bill.
+
+- **Moving over:** once the data is uploaded, use the hosted app, not `npm run dev` on the same data: both would
+  sync iCloud and send the wall's edits. The Mac Reminders sync (`REMINDERS_MAC`) doesn't run on the server; the
+  iPhone Shortcut does, now from anywhere, at `https://<app>.fly.dev`.
+- **Google:** add `https://<app>.fly.dev` under Authorized JavaScript origins and
+  `https://<app>.fly.dev/api/account/google/callback` under redirect URIs.
+- **Restoring a backup:** `fly ssh console`, then `litestream restore -config /app/deploy/litestream.yml <path>`
+  for a database. Photos are covered by the disk snapshots (`fly volumes snapshots list`).
 
 ## Connect iCloud
 
@@ -145,12 +241,7 @@ without a connection (showing what it last loaded). Data always comes from the w
    the Mac (`npm run dev`) that's `http://<mac's address>:5173` (the page server follows `HOST` too); on the Pi
    (`npm start`), `http://<pi's address>:3000`.
 
-Set a **family PIN** first (Settings → Family PIN): after that, every device (phones and the wall) signs in with it
-once and stays signed in for a year. Settings lists the devices signed in, with **Sign out** for each, and **Change
-the PIN** (optionally signing out every other device). Five wrong PINs lock that device out for 15 minutes. A **master PIN** (set
-for you) is the one that can change the family PIN, so knowing the family PIN isn't enough; it also signs in. The
-master PIN can't be changed from the app. The
-phones' Reminders Shortcut keeps using `REMINDERS_TOKEN`.
+Sign in as described in "Accounts and households".
 For the offline start (and phone notifications, later), iPhones need the address to be HTTPS. With MagicDNS and HTTPS
 certificates turned on in the Tailscale admin, run `tailscale serve --bg 5173` on the Mac while developing (`--bg 3000`
 on the Pi): the app is then at `https://<machine>.<tailnet>.ts.net`, for your Tailscale devices only. Add it to the
@@ -158,12 +249,12 @@ home screen from that address; it works at home and away.
 
 ## Using it
 
-- **Parent lock:** once a PIN is set, every device starts **locked**: events, tasks, jars, photos, lists and the
-  calendar can be looked at, and kids can still tick tasks, put stars in jars, redeem (and undo it), upload photos and
-  add or tick list items. Adding, changing or deleting anything else needs the **lock** in the left bar (or Settings)
-  and the **master PIN**. It locks itself again after 5 minutes without a touch, or when the screen saver starts;
-  **Keep this device unlocked** is for a parent's own phone. The server checks it too, so a locked device can't
-  change those things any other way.
+- **Parent lock:** a guardian signed in on their own phone can change anything. The wall and kids' devices start
+  **locked**: events, tasks, jars, photos, lists and the calendar can be looked at, and kids can still tick tasks,
+  put stars in jars, redeem (and undo it), upload photos and add or tick list items. Adding, changing or deleting
+  anything else needs the **lock** in the left bar (or Settings) and **any guardian's PIN**. It locks itself again
+  after 5 minutes without a touch, or when the screen saver starts. The server checks it too, so a locked device
+  can't change those things any other way.
 
 - **Month / Week:** switch views at the top left. ‹ › move by a month or a week.
 - **Lists:** the **Lists** page in the left bar (address ends in `#lists`) shows your iCloud Reminders (see "Connect Reminders").
@@ -214,7 +305,7 @@ home screen from that address; it works at home and away.
   - **Missed:** a jar not redeemed by its deadline. Each kid moves their stars back to their bucket or into another
     jar; once it's empty, a parent **Adds it back** (with a new deadline or none) or **Removes** it.
   - Stars not yet redeemed go back to the kids when a jar is deleted, made smaller, or a kid is taken off it.
-    **Take back** (parents only: it asks for the master PIN) moves some of a kid's stars out of a jar into their
+    **Take back** (guardians only) moves some of a kid's stars out of a jar into their
     bucket.
 - **Photos:** the **Photos** page (left bar, `#photos`) is the family album. **Upload photos** takes several at
   once (drag them in, or choose them in Finder; you can also drop photos anywhere on the page); each is shrunk to wall size in the browser first (iPhone photos included).
@@ -252,6 +343,7 @@ home screen from that address; it works at home and away.
 | Part          | Where                                 | Notes                                                                                                                                                          |
 | ------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | API + storage | `server/`                             | Fastify, better-sqlite3. Schema and migrations in `server/db.ts`.                                                                                              |
+| Accounts      | `server/hosted.ts`, `accounts.ts`     | The front server: sign-in, households, invites, PINs, devices (`data/accounts.db`). Passes other calls to the household's own app (`app.ts`), with who's asking. |
 | People        | `server/people.ts`                    | Who each synced event series is for: manual picks, then Claude (`claude-opus-5-5`, structured output) for the rest.                                            |
 | Sync          | `server/sync.ts`, `server/providers/` | Pulls each calendar's events in a date window and replaces the stored copy. iCloud over CalDAV (`caldav.ts`); `ical.ts` expands repeating events with ical.js. |
 | UI            | `web/src/`                            | React 19 + Vite, CSS modules. `App.tsx` is the shell; screens live in `components/`.                                                                           |
@@ -261,4 +353,4 @@ home screen from that address; it works at home and away.
 Checks: `npm test` and `npm run check` (TypeScript for server and UI).
 
 The server listens on localhost only. `HOST=0.0.0.0 npm start` makes it reachable from phones on
-your Wi-Fi; set the family PIN first.
+your Wi-Fi; every device signs in first (see "Accounts and households").

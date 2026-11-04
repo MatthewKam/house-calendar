@@ -1,0 +1,67 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "../lib/api";
+import { ago } from "../lib/dates";
+import type { Member } from "../lib/types";
+import s from "../styles/Account.module.css";
+import panel from "../styles/MembersPanel.module.css";
+
+/**
+ * Settings → Calendars: each person's Google Calendar. Connecting is from your own phone (Google
+ * asks you to allow it, then brings you back); the wall shows who's connected.
+ */
+export default function GoogleCalendars({ members }: { members: Member[] }) {
+	const qc = useQueryClient();
+	const status = useQuery({ queryKey: ["auth"], queryFn: api.authStatus }).data;
+	const list = useQuery({ queryKey: ["connections"], queryFn: api.connections, refetchInterval: 30_000 }).data?.google;
+	const remove = useMutation({
+		mutationFn: api.removeConnection,
+		onSettled: () => {
+			void qc.invalidateQueries({ queryKey: ["connections"] });
+			void qc.invalidateQueries({ queryKey: ["calendars"] });
+		},
+	});
+	// The server has no Google client set up.
+	if (list === undefined || list === null) return null;
+	const ownAccount = status?.signedIn && status.kind === "user";
+	const mine = list.some((c) => c.memberId === (status?.signedIn ? status.memberId : null));
+
+	return (
+		<section className={panel.bare}>
+			{list.length > 0 && (
+				<ul className={s.people}>
+					{list.map((c) => {
+						const who = members.find((m) => m.id === c.memberId);
+						return (
+							<li key={c.id} className={s.person}>
+								<span className={s.dot} style={{ background: who?.color ?? "var(--line)" }} />
+								<span className={s.who}>
+									<span>{who?.name ?? "Someone"}'s Google Calendar</span>
+									<span className={s.how}>
+										{c.account} ·{" "}
+										{c.lastError ? <span className={s.error}>{c.lastError}</span>
+											: c.lastSuccess ? `${c.calendars} calendars, synced ${ago(c.lastSuccess)}` : "Syncing…"}
+									</span>
+								</span>
+								<button type="button" className={panel.textLink}
+									onClick={() => confirm(`Disconnect ${c.account}? Its calendars leave the app.`) && remove.mutate(c.id)}>
+									Disconnect
+								</button>
+							</li>
+						);
+					})}
+				</ul>
+			)}
+			{remove.isError && <p className={s.error}>{remove.error.message}</p>}
+			{ownAccount ? (
+				// A full page visit: Google's pages, then back to the app.
+				<a className={s.primary} href="/api/account/google/connect"
+					style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
+					{mine ? "Connect another Google account" : "Connect my Google Calendar"}
+				</a>
+			) : (
+				<p className={s.hint}>Each person connects their own Google Calendar from Settings on their phone.</p>
+			)}
+			<p className={s.hint}>Google events show here; change them in Google Calendar.</p>
+		</section>
+	);
+}

@@ -458,6 +458,24 @@ const migrations: string[] = [
   `
   ALTER TABLE sessions ADD COLUMN parent_until TEXT;
   `,
+  // Google Calendar, connected by each person with their own Google account. A calendar now notes
+  // which account it comes from (source: 'icloud', or 'google:<connection id>'), so several
+  // accounts sync side by side; a calendar two accounts both see comes from the first.
+  `
+  CREATE TABLE connections (
+    id          TEXT PRIMARY KEY,
+    provider    TEXT NOT NULL CHECK (provider IN ('google')),
+    member_id   TEXT REFERENCES members(id) ON DELETE CASCADE,
+    -- The account's email, to tell connections apart.
+    account     TEXT NOT NULL,
+    -- The refresh token, encrypted (secrets.ts).
+    token       TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    UNIQUE (provider, account)
+  );
+  ALTER TABLE calendars ADD COLUMN source TEXT;
+  UPDATE calendars SET source = provider;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

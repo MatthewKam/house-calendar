@@ -40,7 +40,17 @@
 	background: var(--bg);
 	color: var(--text);
 }
-/* Pushed to the bottom of the bar, with Settings under it. */
+/* Pushed to the bottom of the bar, with Settings under it: who's signed in (or the logo). */
+.me {
+	margin-top: auto;
+	color: var(--text);
+}
+.me .label {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
 .logo {
 	margin-top: auto;
 	width: 2.6rem;
@@ -70,6 +80,11 @@
 	.logo {
 		width: 2rem;
 		height: 2rem;
+	}
+	.me > span:first-child,
+	.me > svg {
+		width: 1.9rem !important;
+		height: 1.9rem !important;
 	}
 }
 

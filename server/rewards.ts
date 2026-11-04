@@ -1,7 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
-import { parentPin } from './auth.ts';
 
 // Reward jars. Each kid has a bucket: every star earned from extras, minus what they've put in jars.
 // Parents make the jars; kids drop stars in and can't take them back out. A jar is
@@ -270,18 +269,14 @@ export function registerRewards(app: FastifyInstance, db: DB) {
   });
 
   // A parent takes some of a kid's stars back out of a jar, into their bucket (newest first). A full
-  // jar not yet redeemed is then filling again.
-  const checkPin = parentPin(db);
-  app.post<{ Params: { id: string }; Body: { memberId: string; stars: number; pin: string } }>('/api/rewards/:id/take-back', {
-    schema: { body: { type: 'object', required: ['memberId', 'stars', 'pin'], additionalProperties: false, properties: {
-      memberId: { type: 'string' }, stars: { type: 'integer', minimum: 1, maximum: 100000 }, pin: { type: 'string', minLength: 1, maxLength: 64 },
+  // jar not yet redeemed is then filling again. Parents only (auth.ts).
+  app.post<{ Params: { id: string }; Body: { memberId: string; stars: number } }>('/api/rewards/:id/take-back', {
+    schema: { body: { type: 'object', required: ['memberId', 'stars'], additionalProperties: false, properties: {
+      memberId: { type: 'string' }, stars: { type: 'integer', minimum: 1, maximum: 100000 },
     } } },
   }, async (req, reply) => {
     const r = get(req.params.id);
     if (!r) return reply.code(404).send({ error: 'Jar not found' });
-    // 403, not 401: a wrong PIN here doesn't sign the device out.
-    const wrong = checkPin(req.body.pin, req.ip);
-    if (wrong) return reply.code(403).send({ error: wrong });
     const { memberId, stars } = req.body;
     try {
       db.transaction(() => {

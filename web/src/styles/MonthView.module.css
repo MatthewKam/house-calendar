@@ -37,11 +37,11 @@
 	opacity: 0.45;
 	filter: saturate(0.4);
 }
-/* Today: the same background; its number in a raised red circle. */
+/* Today: the same background, pressed in; its number in a raised circle. */
 .today {
 	box-shadow:
-		0 0.35rem 1.2rem rgb(0 0 0 / 0.14),
-		0 0 0 1px rgb(0 0 0 / 0.04);
+		inset 0 0.25rem 0.8rem rgb(0 0 0 / 0.12),
+		inset 0 0 0 1px rgb(0 0 0 / 0.05);
 }
 .today .num {
 	align-self: flex-start;

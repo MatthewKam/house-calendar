@@ -65,6 +65,7 @@ function validateTimes(ev: EventInput): string | null {
 
 // Synced events can be changed here only when the calendar service takes edits (iCloud does).
 const READ_ONLY = "This event comes from iCloud. Change it on your iPhone or Mac.";
+const GOOGLE_READ_ONLY = 'This event comes from Google Calendar. Change it there.';
 
 /**
  * Event routes. `syncedEdits` is present when changes to synced events can be sent to iCloud (soon()
@@ -153,6 +154,8 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     return (db.prepare(`SELECT * FROM events WHERE id != ? AND all_day = ? AND start = ? AND end = ? AND sync_state != 'pending_delete'`)
       .all(row.id, row.all_day, row.start, row.end) as EventRow[]).filter((r) => key(r.title) === key(row.title));
   }
+  /** Google events are changed in Google Calendar (read-only here, for now). */
+  const isGoogle = (calendarId: string) => !!db.prepare(`SELECT 1 FROM calendars WHERE id = ? AND provider = 'google'`).get(calendarId);
   const writable = (calendarId: string) =>
     !!opts.syncedEdits && !!db.prepare('SELECT 1 FROM calendars WHERE id = ? AND writable = 1').get(calendarId);
   type Details = { title: string; allDay: boolean; start: string; end: string; location?: string | null };
@@ -165,6 +168,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
   }, async (req, reply) => {
     const row = db.prepare(`${EVENT_SELECT} WHERE e.id = ?`).get(req.params.id) as EventRow | undefined;
     if (!row) return reply.code(404).send({ error: 'Event not found' });
+    if (isGoogle(row.calendar_id)) return reply.code(409).send({ error: GOOGLE_READ_ONLY });
     if (row.calendar_id !== 'local' && !opts.syncedEdits) return reply.code(409).send({ error: READ_ONLY });
     const ev: EventInput = {
       title: req.body.title ?? row.title,
@@ -230,6 +234,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     const row = db.prepare('SELECT * FROM events WHERE id = ?').get(req.params.id) as EventRow | undefined;
     if (!row) return reply.code(404).send({ error: 'Event not found' });
     if (row.calendar_id !== 'local') {
+      if (isGoogle(row.calendar_id)) return reply.code(409).send({ error: GOOGLE_READ_ONLY });
       if (!opts.syncedEdits) return reply.code(409).send({ error: READ_ONLY });
       // Hidden here now; deleted in iCloud after the Undo window.
       if (req.query.scope === 'all' && row.remote_id?.includes('#')) {
