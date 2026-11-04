@@ -385,10 +385,11 @@
 	max-width: 400px;
 	min-width: 0;
 }
-/* A card showing history spans the full width, so a month of days fits. */
+/* A card showing history spans the full width (the other kids' cards move below it), so task
+   names aren't cut off and a month of days fits. */
 .board .kid.wide {
 	flex-basis: 100%;
-	max-width: 400px;
+	max-width: 56rem;
 }
 /* On the right end of the name row. */
 .historyLink {
@@ -407,6 +408,12 @@
 	align-items: center;
 	gap: 0.4rem;
 	flex-wrap: wrap;
+}
+/* ‹ This week ›: kept together, so the arrows never wrap apart from the label. */
+.pager {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
 }
 .rangeLabel {
 	min-width: 8rem;
@@ -515,6 +522,9 @@
 	}
 	.historyTools .periods button {
 		flex: 1;
+	}
+	.pager {
+		flex: 1 0 100%;
 	}
 	.rangeLabel {
 		flex: 1;

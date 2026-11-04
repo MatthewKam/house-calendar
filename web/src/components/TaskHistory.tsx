@@ -70,28 +70,30 @@ export default function TaskHistory({ kid, tasks, today, onEdit }: Props) {
 						</button>
 					))}
 				</div>
-				<button
-					className={s.toolButton}
-					onClick={() => {
-						setBack(back + 1);
-						setPickedDay(null);
-					}}
-					aria-label={`Earlier ${period}`}
-				>
-					‹
-				</button>
-				<span className={s.rangeLabel}>{label}</span>
-				<button
-					className={s.toolButton}
-					onClick={() => {
-						setBack(back - 1);
-						setPickedDay(null);
-					}}
-					disabled={back === 0}
-					aria-label={`Later ${period}`}
-				>
-					›
-				</button>
+				<div className={s.pager}>
+					<button
+						className={s.toolButton}
+						onClick={() => {
+							setBack(back + 1);
+							setPickedDay(null);
+						}}
+						aria-label={`Earlier ${period}`}
+					>
+						‹
+					</button>
+					<span className={s.rangeLabel}>{label}</span>
+					<button
+						className={s.toolButton}
+						onClick={() => {
+							setBack(back - 1);
+							setPickedDay(null);
+						}}
+						disabled={back === 0}
+						aria-label={`Later ${period}`}
+					>
+						›
+					</button>
+				</div>
 			</div>
 			{period === "week" ? (
 				<WeekTable kid={kid} tasks={tasks} today={today} days={rangeDays} done={done} onToggle={toggle} onEdit={onEdit} />
