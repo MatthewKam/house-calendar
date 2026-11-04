@@ -10,7 +10,9 @@ export class ICloudSource implements CalendarSource, CalendarWriter {
   private readonly client: CalDavClient;
   private home: string | null = null;
 
-  constructor(appleId: string, appPassword: string, fetchImpl: typeof fetch = fetch) {
+  /** `key` and `memberId`: for an account connected in the app ('icloud:<connection id>', and who connected it). */
+  constructor(appleId: string, appPassword: string, fetchImpl: typeof fetch = fetch,
+    readonly key?: string, readonly memberId?: string | null) {
     this.client = new CalDavClient(appleId, appPassword, fetchImpl);
   }
 

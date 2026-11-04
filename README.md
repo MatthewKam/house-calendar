@@ -169,10 +169,17 @@ set up), and the Fly dashboard shows memory, CPU and the bill.
 
 ## Connect iCloud
 
+Each person connects their own iCloud Calendar in the app. Nothing goes in `.env`.
+
 1. At [account.apple.com](https://account.apple.com) → Sign-In and Security → **App-Specific Passwords**,
-   create one called "Wall calendar". Your normal Apple password is never used, and you can revoke this one anytime.
-2. Copy `.env.example` to `.env` and fill in your Apple ID and that password. `.env` is git-ignored; keep it that way.
-3. Restart the server. It syncs on start and every 5 minutes, from 3 months back to 13 months ahead.
+   create one called "Sprig". Your normal Apple password is never used, and you can revoke this one anytime.
+2. In Settings → **Calendars**, tap **Connect my iCloud Calendar** and enter your Apple ID and that password. It's
+   checked with iCloud first, then stored encrypted (like Google's tokens, with `SECRET_KEY`).
+3. It syncs right away and every 5 minutes after, from 3 months back to 13 months ahead. **Disconnect** removes its
+   calendars from the app.
+
+Connecting needs a guardian: from their own phone, or on the wall or a kid's device after a guardian's PIN. The
+household from before accounts can still use `ICLOUD_APPLE_ID` and `ICLOUD_APP_PASSWORD` in `.env`.
 
 Tap an iCloud event to see it, edit it or delete it (see "Using it"). In that view you can also pick **who it's for**. The pick is kept on this display, covers every repeat of the event, and
 survives future syncs.

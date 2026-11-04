@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import type { DB } from './db.ts';
 import type { SyncStatus } from './sync.ts';
-import type { GoogleConnection } from './googleSync.ts';
+import type { Connection } from './connections.ts';
 import { applyPeople, forgetMember } from './people.ts';
 import { registerTasks } from './tasks.ts';
 import { registerRewards } from './rewards.ts';
@@ -27,7 +27,13 @@ export function buildApp(db: DB, opts: {
   /** Calendar sync status: one, or worked out on each call when accounts come and go. */
   sync?: SyncStatus | (() => SyncStatus | null);
   /** People's Google Calendar connections; without it, Google Calendar is off. */
-  google?: { list(): GoogleConnection[]; remove(id: string): Promise<boolean> };
+  google?: { list(): Connection[]; remove(id: string): Promise<boolean> };
+  /** People's iCloud connections, made here with an Apple ID and app-specific password. */
+  icloud?: {
+    list(): Connection[]; remove(id: string): Promise<boolean>;
+    /** Throws ICloudLoginError when iCloud doesn't accept them. */
+    connect(c: { memberId: string | null; appleId: string; password: string }): Promise<void>;
+  };
   /** Called after the family list or a calendar link changes, so Claude can sort what is now unassigned. */
   onAssignmentsChanged?: () => void;
   /** Shared secret the phones' Reminders Shortcut sends; without it, Reminders sync is off. */
@@ -143,18 +149,43 @@ export function buildApp(db: DB, opts: {
   // ---- Calendar sync status (null when no account is set up) --------------
   app.get('/api/sync', async () => (typeof opts.sync === 'function' ? opts.sync() : opts.sync) ?? null);
 
-  // ---- Google Calendar connections (connecting is on the front server: /api/account/google/connect)
-  app.get('/api/connections', async () => ({ google: opts.google ? opts.google.list() : null }));
+  // ---- Calendar connections: Google (connecting is on the front server: /api/account/google/connect)
+  // and iCloud (connected here).
+  app.get('/api/connections', async () => ({
+    google: opts.google ? opts.google.list() : null,
+    icloud: opts.icloud ? opts.icloud.list() : null,
+  }));
+
+  // The person connecting is whoever is signed in; a wall unlocked by a parent connects it for no one.
+  app.post<{ Body: { appleId: string; password: string } }>('/api/connections/icloud', {
+    schema: {
+      body: {
+        type: 'object', required: ['appleId', 'password'], additionalProperties: false,
+        properties: { appleId: { type: 'string', minLength: 3, maxLength: 200 }, password: { type: 'string', minLength: 1, maxLength: 100 } },
+      },
+    },
+  }, async (req, reply) => {
+    if (!opts.icloud) return reply.code(404).send({ error: 'Not found' });
+    try {
+      await opts.icloud.connect({ memberId: req.raw.viewer?.memberId ?? null, appleId: req.body.appleId, password: req.body.password });
+    } catch (err) {
+      if (err instanceof Error && err.name === 'ICloudLoginError') return reply.code(400).send({ error: err.message });
+      req.log.error({ err }, 'connecting iCloud failed');
+      return reply.code(502).send({ error: "Couldn't reach iCloud. Try again in a minute." });
+    }
+    return reply.code(204).send();
+  });
 
   // Removing a connection: the person who connected it, or a parent.
   app.delete<{ Params: { id: string } }>('/api/connections/:id', async (req, reply) => {
-    const row = opts.google?.list().find((c) => c.id === req.params.id);
-    if (!row) return reply.code(404).send({ error: 'Not found' });
+    const kind = [opts.google, opts.icloud].find((k) => k?.list().some((c) => c.id === req.params.id));
+    const row = kind?.list().find((c) => c.id === req.params.id);
+    if (!kind || !row) return reply.code(404).send({ error: 'Not found' });
     const viewer = req.raw.viewer;
     if (viewer && !viewer.parent && viewer.memberId !== row.memberId) {
       return reply.code(403).send({ error: "Locked: unlock with a guardian's PIN to change this", locked: true });
     }
-    await opts.google!.remove(row.id);
+    await kind.remove(row.id);
     return reply.code(204).send();
   });
 

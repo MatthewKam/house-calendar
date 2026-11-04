@@ -75,8 +75,9 @@ export const api = {
   unlockParent: (pin: string) => call<AuthStatus>('POST', '/api/auth/parent', { pin }),
   lockParent: () => call<AuthStatus>('POST', '/api/auth/parent/lock'),
   signOutDevice: (id: string) => call<void>('POST', `/api/auth/devices/${id}/sign-out`),
-  /** People's Google Calendar connections; google is null when the server hasn't set Google up. */
-  connections: () => call<{ google: GoogleConnection[] | null }>('GET', '/api/connections'),
+  /** People's calendar connections; google is null when the server hasn't set Google up. */
+  connections: () => call<{ google: GoogleConnection[] | null; icloud: GoogleConnection[] | null }>('GET', '/api/connections'),
+  connectICloud: (c: { appleId: string; password: string }) => call<void>('POST', '/api/connections/icloud', c),
   removeConnection: (id: string) => call<void>('DELETE', `/api/connections/${id}`),
   members: () => call<Member[]>('GET', '/api/members'),
   addMember: (m: { name: string; color: string }) => call<Member>('POST', '/api/members', m),

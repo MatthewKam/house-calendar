@@ -14,6 +14,7 @@ import { adoptLegacy, buildServer } from './hosted.ts';
 import { appleVerifier, googleVerifier, resendSender, type SendCode } from './identity.ts';
 import { googleOAuth } from './providers/google.ts';
 import { googleCalendars } from './googleSync.ts';
+import { icloudCalendars } from './icloudSync.ts';
 import { loadKey, sealer } from './secrets.ts';
 import { combineStatus } from './sync.ts';
 
@@ -44,7 +45,7 @@ const secrets = sealer(loadKey(env.SECRET_KEY, resolve(dataDir, 'secret.key')));
 const households = householdRegistry((h) => {
   const db = openDb(fromStored(dataDir, h.db_file));
   // The household from before accounts keeps the .env iCloud and Reminders setup. Every household
-  // connects its own calendars next (Google sign-in per person, then the phone app).
+  // connects its own: Google sign-in per person, and iCloud with an app-specific password.
   const legacy = h.legacy === 1;
   const sync = legacy && env.ICLOUD_APPLE_ID && env.ICLOUD_APP_PASSWORD
     ? createSync(db, new ICloudSource(env.ICLOUD_APPLE_ID, env.ICLOUD_APP_PASSWORD), classify)
@@ -53,22 +54,36 @@ const households = householdRegistry((h) => {
   // running a Shortcut (REMINDERS_SHORTCUT names it). On the Pi, phones run the Shortcut instead.
   let reminders: ReturnType<typeof syncRunner> | null = null;
   let google: ReturnType<typeof googleCalendars> | null = null;
+  let icloud: ReturnType<typeof icloudCalendars> | null = null;
   const app = buildApp(db, {
     photosDir: fromStored(dataDir, h.photos_dir),
-    sync: () => combineStatus([...(sync ? [sync.status] : []), ...(google?.statuses() ?? [])]),
+    sync: () => combineStatus([...(sync ? [sync.status] : []), ...(google?.statuses() ?? []), ...(icloud?.statuses() ?? [])]),
     // Started just below, once the app's logger exists.
     google: oauth ? { list: () => google?.list() ?? [], remove: (id) => google?.remove(id) ?? Promise.resolve(false) } : undefined,
+    icloud: {
+      list: () => icloud?.list() ?? [],
+      remove: (id) => icloud?.remove(id) ?? Promise.resolve(false),
+      connect: (c) => icloud!.connect(c),
+    },
     onAssignmentsChanged: () => {
       void sync?.assignPeople();
       void google?.assignPeople();
+      void icloud?.assignPeople();
     },
-    syncedEdits: sync?.canWrite ? { soon: () => sync.soon() } : undefined,
+    // Any household can connect iCloud, so edits to its calendars can always be sent back.
+    syncedEdits: {
+      soon: () => {
+        if (sync?.canWrite) sync.soon();
+        icloud?.soon();
+      },
+    },
     remindersToken: legacy ? env.REMINDERS_TOKEN || undefined : undefined,
     onRemindersChanged: () => reminders?.soon(),
     onMemberRemoved: (memberId) => {
       accounts.prepare('DELETE FROM memberships WHERE household_id = ? AND member_id = ?').run(h.id, memberId);
-      // Their Google connection went with them.
+      // Their connections went with them.
       google?.refresh();
+      icloud?.refresh();
     },
     travel,
     places,
@@ -78,6 +93,8 @@ const households = householdRegistry((h) => {
     google = googleCalendars(db, { oauth, sealer: secrets, classify, log: app.log });
     google.refresh();
   }
+  icloud = icloudCalendars(db, { sealer: secrets, classify, log: app.log });
+  icloud.refresh();
   if (legacy && process.platform === 'darwin' && (env.REMINDERS_MAC === '1' || env.REMINDERS_SHORTCUT)) {
     const minutes = Number(env.REMINDERS_MINUTES ?? env.REMINDERS_SHORTCUT_MINUTES) || 5;
     reminders = env.REMINDERS_MAC === '1'
@@ -91,6 +108,7 @@ const households = householdRegistry((h) => {
     async close() {
       sync?.stop();
       google?.stop();
+      icloud?.stop();
       reminders?.stop();
       await app.close();
       db.close();

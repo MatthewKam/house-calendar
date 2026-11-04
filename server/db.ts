@@ -476,6 +476,22 @@ const migrations: string[] = [
   ALTER TABLE calendars ADD COLUMN source TEXT;
   UPDATE calendars SET source = provider;
   `,
+  // iCloud, connected in the app: the Apple ID is the account, and its app-specific password the
+  // token (encrypted). Calendars from it are 'icloud:<connection id>'; the .env one stays 'icloud'.
+  `
+  CREATE TABLE connections_new (
+    id          TEXT PRIMARY KEY,
+    provider    TEXT NOT NULL CHECK (provider IN ('google','icloud')),
+    member_id   TEXT REFERENCES members(id) ON DELETE CASCADE,
+    account     TEXT NOT NULL,
+    token       TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    UNIQUE (provider, account)
+  );
+  INSERT INTO connections_new SELECT * FROM connections;
+  DROP TABLE connections;
+  ALTER TABLE connections_new RENAME TO connections;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

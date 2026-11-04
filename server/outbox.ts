@@ -231,9 +231,11 @@ export function overlayOutbox(db: DB) {
  * Sends waiting edits whose Undo window has passed. Each is checked against iCloud's current
  * version first: if the details being changed were changed there too, it becomes a conflict.
  */
-export async function pushOutbox(db: DB, writer: CalendarWriter, now = new Date()) {
-  const rows = db.prepare(`SELECT * FROM event_outbox WHERE state = 'pending' AND send_after <= ? ORDER BY id`)
-    .all(now.toISOString()) as OutboxRow[];
+export async function pushOutbox(db: DB, writer: CalendarWriter, now = new Date(), source?: string) {
+  // With several accounts, each sends only the edits to its own calendars.
+  const rows = db.prepare(`SELECT * FROM event_outbox WHERE state = 'pending' AND send_after <= ?
+    AND (? IS NULL OR calendar_id IN (SELECT id FROM calendars WHERE source = ?)) ORDER BY id`)
+    .all(now.toISOString(), source ?? null, source ?? null) as OutboxRow[];
   const done = db.prepare('DELETE FROM event_outbox WHERE id = ?');
   const result = { sent: 0, conflicts: 0, failed: 0 };
   for (const r of rows) {

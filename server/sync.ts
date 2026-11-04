@@ -142,7 +142,7 @@ export function createSync(db: DB, source: CalendarSource & Partial<CalendarWrit
     try {
       // Edits from the wall go first, so the snapshot that follows includes them.
       if (writer) {
-        const sent = await pushOutbox(db, writer);
+        const sent = await pushOutbox(db, writer, new Date(), source.key ?? source.id);
         if (sent.sent || sent.conflicts || sent.failed) log.info(sent, 'sent wall edits to iCloud');
       }
       const result = await syncOnce(db, source);

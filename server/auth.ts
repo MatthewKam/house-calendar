@@ -50,7 +50,7 @@ export function deviceLabel(ua = '') {
 type Req = FastifyRequest<{ Params: Record<string, string>; Body: Record<string, unknown> | undefined }>;
 const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean][] = [
   ['POST', '/api/events'], ['PATCH', '/api/events/:id'], ['DELETE', '/api/events/:id'], ['POST', '/api/events/:id/restore'],
-  ['PUT', '/api/events/:id/people'], ['POST', '/api/outbox/:id/resolve'], ['POST', '/api/alerts'], ['DELETE', '/api/alerts/:id'],
+  ['PUT', '/api/events/:id/people'], ['POST', '/api/outbox/:id/resolve'], ['POST', '/api/connections/icloud'], ['POST', '/api/alerts'], ['DELETE', '/api/alerts/:id'],
   ['POST', '/api/tasks'], ['PATCH', '/api/tasks/:id'], ['DELETE', '/api/tasks/:id'], ['PUT', '/api/tasks/order'],
   ['POST', '/api/rewards'], ['PATCH', '/api/rewards/:id'], ['DELETE', '/api/rewards/:id'], ['POST', '/api/rewards/:id/restore'],
   ['POST', '/api/rewards/:id/take-back'],

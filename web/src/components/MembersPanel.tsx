@@ -7,6 +7,7 @@ import CalendarList from './CalendarList';
 import ScreenSaverSettings from './ScreenSaverSettings';
 import HouseholdAccess from './HouseholdAccess';
 import GoogleCalendars from './GoogleCalendars';
+import ICloudCalendars from './ICloudCalendars';
 import sheet from '../styles/Sheet.module.css';
 import s from '../styles/MembersPanel.module.css';
 
@@ -250,6 +251,7 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
         </Section>
 
         <Section title="Calendars">
+          <ICloudCalendars members={members} />
           <GoogleCalendars members={members} />
           {hasCalendars && <CalendarList members={members} />}
         </Section>
