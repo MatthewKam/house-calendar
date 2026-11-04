@@ -492,6 +492,12 @@ const migrations: string[] = [
   DROP TABLE connections;
   ALTER TABLE connections_new RENAME TO connections;
   `,
+  // Stages (stages.ts): a birthdate (YYYY-MM-DD) gives each person a stage; a guardian can choose
+  // a different one (null: from the birthdate).
+  `
+  ALTER TABLE members ADD COLUMN birthdate TEXT;
+  ALTER TABLE members ADD COLUMN stage TEXT CHECK (stage IN ('little','early','middle','tween','teen','adult'));
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

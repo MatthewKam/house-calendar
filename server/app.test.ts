@@ -24,6 +24,23 @@ describe('members', () => {
     expect(json(await app.inject({ method: 'GET', url: '/api/members' }))).toEqual([]);
   });
 
+  it('works out a stage from the birthday, unless a guardian picks one', async () => {
+    const m = json(await app.inject({ method: 'POST', url: '/api/members', payload: { name: 'Sam', color: '#2f7de1' } }));
+    expect(m).toMatchObject({ birthdate: null, stage: null, stageChosen: null });
+    const year = new Date().getFullYear();
+    const three = json(await app.inject({ method: 'PATCH', url: `/api/members/${m.id}`, payload: { birthdate: `${year - 3}-01-01` } }));
+    expect(three).toMatchObject({ birthdate: `${year - 3}-01-01`, stage: 'little', stageChosen: null });
+    const picked = json(await app.inject({ method: 'PATCH', url: `/api/members/${m.id}`, payload: { stage: 'early' } }));
+    expect(picked).toMatchObject({ stage: 'early', stageChosen: 'early' });
+    // Back to the birthday's stage.
+    expect(json(await app.inject({ method: 'PATCH', url: `/api/members/${m.id}`, payload: { stage: null } })).stage).toBe('little');
+
+    for (const birthdate of [`${year + 1}-01-01`, '2020-02-31', '2020-13-45', 'soon']) {
+      expect((await app.inject({ method: 'PATCH', url: `/api/members/${m.id}`, payload: { birthdate } })).statusCode).toBe(400);
+    }
+    expect((await app.inject({ method: 'PATCH', url: `/api/members/${m.id}`, payload: { stage: 'toddler' } })).statusCode).toBe(400);
+  });
+
   it('rejects colors that are not #rrggbb', async () => {
     const res = await app.inject({ method: 'POST', url: '/api/members', payload: { name: 'X', color: 'red' } });
     expect(res.statusCode).toBe(400);

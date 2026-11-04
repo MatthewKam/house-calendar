@@ -16,11 +16,17 @@ import { registerDaily } from './daily.ts';
 import { registerGuard } from './auth.ts';
 import { registerReminders } from './reminders.ts';
 import { registerEvents } from './events.ts';
+import { localDay, stageOf, STAGES } from './stages.ts';
 
 const COLOR = { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' } as const;
 
-interface MemberRow { id: string; name: string; color: string; sort_order: number }
-const toMember = (r: MemberRow) => ({ id: r.id, name: r.name, color: r.color, sortOrder: r.sort_order });
+interface MemberRow { id: string; name: string; color: string; sort_order: number; birthdate: string | null; stage: string | null }
+const toMember = (r: MemberRow) => ({
+  id: r.id, name: r.name, color: r.color, sortOrder: r.sort_order, birthdate: r.birthdate,
+  // The stage in effect, and the one a guardian chose (null: from the birthdate).
+  stage: stageOf(r, localDay()), stageChosen: r.stage,
+});
+const DATE = { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' } as const;
 
 export function buildApp(db: DB, opts: {
   webDist?: string;
@@ -81,15 +87,26 @@ export function buildApp(db: DB, opts: {
     return toMember(db.prepare('SELECT * FROM members WHERE id = ?').get(id) as MemberRow);
   });
 
-  app.patch<{ Params: { id: string }; Body: { name?: string; color?: string; sortOrder?: number } }>('/api/members/:id', {
+  app.patch<{ Params: { id: string }; Body: { name?: string; color?: string; sortOrder?: number; birthdate?: string | null; stage?: string | null } }>('/api/members/:id', {
     schema: { body: { type: 'object', additionalProperties: false, minProperties: 1,
-      properties: { name: { type: 'string', minLength: 1, maxLength: 40 }, color: COLOR, sortOrder: { type: 'integer' } } } },
+      properties: {
+        name: { type: 'string', minLength: 1, maxLength: 40 }, color: COLOR, sortOrder: { type: 'integer' },
+        birthdate: { anyOf: [DATE, { type: 'null' }] }, stage: { anyOf: [{ enum: STAGES }, { type: 'null' }] },
+      } } },
   }, async (req, reply) => {
     const row = db.prepare('SELECT * FROM members WHERE id = ?').get(req.params.id) as MemberRow | undefined;
     if (!row) return reply.code(404).send({ error: 'Member not found' });
-    const { name = row.name, color = row.color, sortOrder = row.sort_order } = req.body;
-    db.prepare('UPDATE members SET name = ?, color = ?, sort_order = ? WHERE id = ?')
-      .run(name.trim(), color.toLowerCase(), sortOrder, row.id);
+    const { name = row.name, color = row.color, sortOrder = row.sort_order, birthdate = row.birthdate, stage = row.stage } = req.body;
+    // A real day (not Feb 31), and not in the future.
+    const realDay = (d: string) => {
+      const t = Date.parse(`${d}T00:00:00Z`);
+      return !Number.isNaN(t) && new Date(t).toISOString().slice(0, 10) === d;
+    };
+    if (birthdate && (!realDay(birthdate) || birthdate > localDay())) {
+      return reply.code(400).send({ error: 'That birthday is not a real past date' });
+    }
+    db.prepare('UPDATE members SET name = ?, color = ?, sort_order = ?, birthdate = ?, stage = ? WHERE id = ?')
+      .run(name.trim(), color.toLowerCase(), sortOrder, birthdate, stage, row.id);
     if (name.trim() !== row.name) opts.onAssignmentsChanged?.();
     return toMember(db.prepare('SELECT * FROM members WHERE id = ?').get(row.id) as MemberRow);
   });

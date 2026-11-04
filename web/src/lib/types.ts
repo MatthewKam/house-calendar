@@ -1,11 +1,19 @@
+export type Stage = 'little' | 'early' | 'middle' | 'tween' | 'teen' | 'adult';
+
 export interface Member {
   id: string;
   name: string;
   color: string;
   sortOrder: number;
+  /** YYYY-MM-DD, when it's been set. */
+  birthdate: string | null;
+  /** The stage in effect: the one a guardian chose, else from the birthdate; null with neither. */
+  stage: Stage | null;
+  /** The stage a guardian chose; null when it comes from the birthdate. */
+  stageChosen: Stage | null;
 }
 
-export type MemberPatch = Partial<Pick<Member, 'name' | 'color'>>;
+export type MemberPatch = Partial<Pick<Member, 'name' | 'color' | 'birthdate'>> & { stage?: Stage | null };
 
 /**
  * A reward jar. Kids put stars from their bucket in it (they can't take them back out); once it's full

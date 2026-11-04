@@ -2,7 +2,9 @@ import { useEffect, useState, type CSSProperties, type FormEvent, type ReactNode
 import { PALETTE } from '../lib/color';
 import { screenSaverSettings } from '../lib/screensaver';
 import { useAddMember, useCalendars, useRemoveMember, useSetSetting, useSettings, useUpdateMember } from '../lib/queries';
-import type { Member } from '../lib/types';
+import type { Member, MemberPatch, Stage } from '../lib/types';
+import { dayKey } from '../lib/dates';
+import { STAGE_AGES, STAGE_LIST, STAGE_NAMES } from '../lib/stages';
 import CalendarList from './CalendarList';
 import ScreenSaverSettings from './ScreenSaverSettings';
 import HouseholdAccess from './HouseholdAccess';
@@ -104,11 +106,11 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
   // null until someone picks a color; then the next unused palette color is offered.
   const [pickedColor, setPickedColor] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
-  // Person being edited (opened with the pencil), one at a time. Name and color are saved together
-  // with Save, and Cancel drops both.
-  const [editing, setEditing] = useState<{ id: string; name: string; color: string } | null>(null);
+  // Person being edited (opened with the pencil), one at a time. Name, color, birthday and stage are
+  // saved together with Save, and Cancel drops them all.
+  const [editing, setEditing] = useState<{ id: string; name: string; color: string; birthdate: string; stage: Stage | null } | null>(null);
   function startEdit(m: Member) {
-    setEditing({ id: m.id, name: m.name, color: m.color });
+    setEditing({ id: m.id, name: m.name, color: m.color, birthdate: m.birthdate ?? '', stage: m.stageChosen });
     setOpenSet(null);
   }
   function stopEdit() {
@@ -117,11 +119,14 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
   }
   function saveEdit(e: FormEvent, m: Member) {
     e.preventDefault();
-    const name = editing?.name.trim();
-    const patch: { name?: string; color?: string } = {};
+    if (!editing) return;
+    const name = editing.name.trim();
+    const patch: MemberPatch = {};
     if (name && name !== m.name) patch.name = name;
-    if (editing && editing.color !== m.color) patch.color = editing.color;
-    if (patch.name || patch.color) updateMember.mutate({ id: m.id, patch });
+    if (editing.color !== m.color) patch.color = editing.color;
+    if ((editing.birthdate || null) !== m.birthdate) patch.birthdate = editing.birthdate || null;
+    if (editing.stage !== m.stageChosen) patch.stage = editing.stage;
+    if (Object.keys(patch).length) updateMember.mutate({ id: m.id, patch });
     stopEdit();
   }
   // Whose color set is showing: a member id, 'new' for the add row, or null.
@@ -173,7 +178,7 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
           <button className={sheet.close} onClick={onClose} aria-label="Close Settings">×</button>
         </header>
         <Section title="Family" note={members.map((m) => m.name).join(", ")}>
-        <p className={s.hint}>Tap the pencil to change a name or color. Colors only change this display.</p>
+        <p className={s.hint}>Tap the pencil to change a name, color or birthday. A birthday sets each kid's stage, which decides how they earn stars.</p>
 
         <ul className={s.list}>
           {members.map((m) => {
@@ -203,7 +208,10 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
                     </form>
                   ) : (
                     <>
-                      <span className={s.nameText}>{m.name}</span>
+                      <span className={s.nameText}>
+                        {m.name}
+                        {m.stage && <span className={s.stageTag}>{STAGE_NAMES[m.stage]}</span>}
+                      </span>
                       <button type="button" className={s.editButton} aria-label={`Edit ${m.name}`}
                         onClick={() => startEdit(m)}>
                         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -219,6 +227,25 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
                     </button>
                   )}
                 </div>
+                {isEditing && (
+                  <div className={s.details}>
+                    <label className={s.detail}>
+                      <span>Birthday</span>
+                      <input type="date" className={s.dateInput} value={editing.birthdate} max={dayKey(new Date())}
+                        onChange={(e) => setEditing({ ...editing, birthdate: e.target.value })} />
+                    </label>
+                    <label className={s.detail}>
+                      <span>Stage</span>
+                      <select className={s.dateInput} value={editing.stage ?? ''}
+                        onChange={(e) => setEditing({ ...editing, stage: (e.target.value || null) as Stage | null })}>
+                        <option value="">From birthday</option>
+                        {STAGE_LIST.map((st) => (
+                          <option key={st} value={st}>{STAGE_NAMES[st]} ({STAGE_AGES[st]})</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                )}
                 {isEditing && openSet === m.id && (
                   <ColorSet value={color} label={`Color for ${m.name}`} onPick={(c, done) => {
                     setEditing({ ...editing, color: c });
