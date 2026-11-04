@@ -1,9 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Android's "maskable" icon: the logo inside the middle 60%, since the edges can be cut to any shape. -->
-  <rect width="64" height="64" fill="#FFFFFF"/>
-  <g transform="translate(32 32) scale(0.6) translate(-30 -33)" fill="none" stroke="#EE7B45" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M29 13C17 13 10 19 10 29C10 37 16 42 24 42H50"/>
-    <path d="M29 13V53"/>
-    <path d="M50 12V53"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Android's "maskable" icon: the sprout inside the middle 60%, since the edges can be cut to any shape. -->
+  <rect width="100" height="100" fill="#22A06B"/>
+  <g transform="translate(26.5 22) scale(.5)"><path d="M50 90C50 74 50 62 50 50" stroke="#fff" stroke-width="7" stroke-linecap="round" fill="none"/><path d="M50 54C33 56 18 45 16 28C33 26 48 36 50 54Z" fill="#fff"/><path d="M50 46C55 27 70 15 88 16C88 35 73 47 50 46Z" fill="#D1FADF"/><circle cx="82.5" cy="19.5" r="8.3" fill="#F97316"/></g>
 </svg>

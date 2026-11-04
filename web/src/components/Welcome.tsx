@@ -26,7 +26,7 @@ export default function Welcome({ status, onDone }: { status: SignedIn; onDone: 
 	return (
 		<main className={s.screen}>
 			<div className={s.column}>
-				<img src="/icon.svg" alt="" className={s.logo} />
+				<img src="/wordmark.svg" alt="Sprig" className={s.wordmark} />
 				<h1 className={s.title}>Hi{status.user?.name ? `, ${status.user.name.split(" ")[0]}` : ""}</h1>
 				<p className={s.lead}>Join your family's household with the code they sent you, or start a new one.</p>
 				<JoinForm signedIn onJoined={onDone} />

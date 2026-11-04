@@ -78,7 +78,7 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 	return (
 		<main className={s.screen}>
 			<div className={s.column}>
-				<img src="/icon.svg" alt="" className={s.logo} />
+				<img src="/wordmark.svg" alt="Sprig" className={s.wordmark} />
 				<h1 className={s.title}>Welcome</h1>
 				<p className={s.lead}>Your family's calendar, tasks and rewards, on everyone's phone and the wall.</p>
 				{config?.apple && (

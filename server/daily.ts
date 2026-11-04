@@ -4,7 +4,7 @@ import type { DB } from './db.ts';
 // A dad joke and a quote, for cards on the calendar page. Each comes from a free service with no
 // key, once a day; the wall is a family screen, so grim jokes are skipped.
 
-const UA = 'Household wall calendar (family use)';
+const UA = 'Sprig family app (family use)';
 const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 
 /** Words that keep a joke off a family wall. */

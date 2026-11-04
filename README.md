@@ -1,6 +1,8 @@
-# Wall Calendar
+# Sprig
 
-A family calendar for the wall and everyone's phone. Each family signs in with Apple, Google or email, with
+![Sprig](web/public/wordmark.svg)
+
+A family app: kids' tasks, stars and rewards first, with a shared family calendar on everyone's phone and the wall. Each family signs in with Apple, Google or email, with
 guardian and kid roles.
 
 **Status:** shows and edits iCloud calendars next to events added on the display, with Reminders lists, kids'

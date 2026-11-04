@@ -1,9 +1,9 @@
 {
-  "name": "wall-calendar",
+  "name": "sprig",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Touch-screen family wall calendar that runs on your own hardware.",
+  "description": "Sprig: a family app for kids' growth and a shared family calendar.",
   "engines": {
     "node": ">=22"
   },

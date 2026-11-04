@@ -171,7 +171,7 @@ export function editSeries(ics: string, changes: SeriesChanges): string {
 export function newEvent(uid: string, d: Details): string {
   const root = new ICAL.Component(['vcalendar', [], []]);
   root.updatePropertyWithValue('version', '2.0');
-  root.updatePropertyWithValue('prodid', '-//Household//Wall Calendar//EN');
+  root.updatePropertyWithValue('prodid', '-//Sprig//Sprig//EN');
   const ev = new ICAL.Component('vevent');
   ev.updatePropertyWithValue('uid', uid);
   ev.updatePropertyWithValue('dtstamp', ICAL.Time.fromJSDate(new Date(), true));
