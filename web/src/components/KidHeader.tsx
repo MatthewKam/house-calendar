@@ -1,7 +1,9 @@
 import { percent, type Progress } from "../lib/tasks";
-import type { Member } from "../lib/types";
+import { momentKind } from "../lib/moments";
+import type { Member, Moment } from "../lib/types";
 import { StarIcon } from "./icons";
 import s from "../styles/Tasks.module.css";
+import m from "../styles/Moments.module.css";
 
 interface Props {
 	kid: Member;
@@ -11,10 +13,16 @@ interface Props {
 	stars: number;
 	showHistory: boolean;
 	onHistory: () => void;
+	/** Today's moments for this kid, shown as stickers. */
+	moments: Moment[];
+	/** Parents: catch a new moment (absent while locked). */
+	onCatch?: () => void;
+	/** Parents: take a moment back (tapped by mistake). */
+	onRemoveMoment?: (moment: Moment) => void;
 }
 
 /** The top of a kid's card: name and today's progress, and the stars in their bucket. */
-export default function KidHeader({ kid, progress: p, stars, showHistory, onHistory }: Props) {
+export default function KidHeader({ kid, progress: p, stars, showHistory, onHistory, moments, onCatch, onRemoveMoment }: Props) {
 	const pct = percent(p);
 	return (
 		<header className={s.kidHead}>
@@ -37,6 +45,27 @@ export default function KidHeader({ kid, progress: p, stars, showHistory, onHist
 					<b>{stars}</b> {stars === 1 ? "star" : "stars"} to spend
 				</span>
 			</div>
+			{(moments.length > 0 || onCatch) && (
+				<div className={m.row}>
+					{moments.map((mo) => {
+						const k = momentKind(mo.kind);
+						const label = `${k.label}${mo.note ? `: ${mo.note}` : ""}`;
+						return onRemoveMoment ? (
+							<button key={mo.id} type="button" className={m.sticker} title={label} aria-label={`${label}. Tap to take it back`}
+								onClick={() => confirm(`Take back this ${k.label.toLowerCase()} moment?`) && onRemoveMoment(mo)}>
+								{k.emoji}
+							</button>
+						) : (
+							<span key={mo.id} className={m.sticker} title={label} role="img" aria-label={label}>{k.emoji}</span>
+						);
+					})}
+					{onCatch && (
+						<button type="button" className={m.catch} onClick={onCatch}>
+							✨ Caught being good
+						</button>
+					)}
+				</div>
+			)}
 		</header>
 	);
 }

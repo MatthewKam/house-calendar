@@ -1,5 +1,21 @@
 export type Stage = 'little' | 'early' | 'middle' | 'tween' | 'teen' | 'adult';
 
+/** The goal groups: body, feelings, thinking, helping others, looking after myself. */
+export type MomentKind = 'body' | 'feelings' | 'thinking' | 'helping' | 'myself';
+
+/** Something good a parent caught a kid doing (server/moments.ts). */
+export interface Moment {
+  id: string;
+  memberId: string;
+  kind: MomentKind;
+  note: string | null;
+  /** What it earned: 0 for a Little kid's sticker, else 1. */
+  stars: number;
+  /** Local day, YYYY-MM-DD. */
+  day: string;
+  createdAt: string;
+}
+
 export interface Member {
   id: string;
   name: string;

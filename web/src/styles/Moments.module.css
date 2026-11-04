@@ -1,0 +1,76 @@
+/* Catching a moment (MomentDialog), and the stickers on a kid's card (KidHeader). */
+.note {
+	font: inherit;
+	font-size: 1.05rem;
+	padding: 0.65rem 0.75rem;
+	border: 1px solid var(--line);
+	border-radius: 0.6rem;
+	background: var(--surface);
+	color: var(--text);
+	min-width: 0;
+}
+/* Big pictures: one tap saves. */
+.kinds {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+	gap: 0.6rem;
+}
+.kind {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.3rem;
+	min-height: 6rem;
+	padding: 0.7rem 0.4rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--bg);
+	font-weight: 600;
+	font-size: 0.9rem;
+	color: var(--text);
+}
+.kind:active {
+	transform: scale(0.97);
+}
+.kindEmoji {
+	font-size: 2.2rem;
+	line-height: 1;
+}
+.problem {
+	margin: 0;
+	color: #b42318;
+	font-size: 0.95rem;
+}
+
+/* On the kid's card: today's stickers, then the button to catch another. */
+.row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+}
+.sticker {
+	display: grid;
+	place-items: center;
+	width: 2.4rem;
+	height: 2.4rem;
+	padding: 0;
+	border-radius: 50%;
+	background: var(--surface);
+	box-shadow: 0 0.1rem 0.35rem rgb(0 0 0 / 0.12);
+	font-size: 1.35rem;
+	line-height: 1;
+}
+.catch {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	min-height: 2.4rem;
+	padding: 0 0.8rem;
+	border: 1px dashed var(--accent);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--accent);
+	font-weight: 600;
+	font-size: 0.9rem;
+}

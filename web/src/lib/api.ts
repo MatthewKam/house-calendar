@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, {
@@ -127,6 +127,9 @@ export const api = {
   rewards: (today: string) => call<Reward[]>('GET', `/api/rewards?${new URLSearchParams({ today })}`),
   rewardHistory: () => call<RewardWin[]>('GET', '/api/rewards/history'),
   buckets: () => call<Bucket[]>('GET', '/api/rewards/buckets'),
+  moments: (from: string, to: string) => call<Moment[]>('GET', `/api/moments?${new URLSearchParams({ from, to })}`),
+  addMoment: (m: { memberId: string; kind: MomentKind; note?: string; day: string }) => call<Moment>('POST', '/api/moments', m),
+  removeMoment: (id: string) => call<void>('DELETE', `/api/moments/${id}`),
   addReward: (r: RewardInput, today: string) => call<Reward>('POST', '/api/rewards', { ...r, today }),
   updateReward: (id: string, r: Partial<RewardInput>, today: string) =>
     call<Reward>('PATCH', `/api/rewards/${id}?${new URLSearchParams({ today })}`, r),

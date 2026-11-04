@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { startOfWeek, fromDayKey } from './dates';
-import { useRewardHistory, useTasks, useTasksDone } from './queries';
+import { useMoments, useRewardHistory, useTasks, useTasksDone } from './queries';
+import { momentKind } from './moments';
 import { requiredDone } from './tasks';
 import type { Member } from './types';
 
@@ -92,6 +93,23 @@ export function useCheer(members: Member[], today: string) {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [history.data]);
+
+  // Moments: one caught since the last look (on any device) cheers here, sticker or star.
+  const moments = useMoments(today);
+  const seenMoments = useRef<{ today: string; ids: Set<string> } | null>(null);
+  useEffect(() => {
+    if (!moments.data || moments.isPlaceholderData) return;
+    const was = seenMoments.current;
+    seenMoments.current = { today, ids: new Set(moments.data.map((m) => m.id)) };
+    if (!was || was.today !== today) return;
+    const fresh = moments.data.filter((m) => !was.ids.has(m.id));
+    const last = fresh.at(-1);
+    const who = members.find((m) => m.id === last?.memberId);
+    if (!last || !who) return;
+    const k = momentKind(last.kind);
+    setCheer({ names: [who.name], emoji: k.emoji, message: `${last.stars ? 'A star' : 'A sticker'} for ${k.cheer}!` });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moments.data]);
 
   return { cheer, done: useCallback(() => setCheer(null), []) };
 }

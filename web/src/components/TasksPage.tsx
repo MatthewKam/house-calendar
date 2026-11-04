@@ -7,6 +7,8 @@ import {
 	useSetTaskDone,
 	useReorderTasks,
 	useBuckets,
+	useMoments,
+	useMomentActions,
 } from "../lib/queries";
 import { taskProgress, tasksFor, percent } from "../lib/tasks";
 import type { Task, Member } from "../lib/types";
@@ -14,6 +16,7 @@ import KidHeader from "./KidHeader";
 import TodayList from "./TodayList";
 import TaskHistory from "./TaskHistory";
 import ConfirmDialog from "./ConfirmDialog";
+import MomentDialog from "./MomentDialog";
 import panel from "../styles/DayPanel.module.css";
 import s from "../styles/Tasks.module.css";
 
@@ -42,6 +45,10 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 	// The day's bar counts required tasks only; extras earn stars instead.
 	const progress = taskProgress(tasks, done, today, members.map((m) => m.id));
 	const buckets = useBuckets().data ?? [];
+	const moments = useMoments(today).data ?? [];
+	const momentActions = useMomentActions();
+	// The kid a moment is being caught for.
+	const [catching, setCatching] = useState<Member | null>(null);
 	// Whose card is showing its history instead of today's list (one at a time).
 	const [historyKid, setHistoryKid] = useState<string | null>(null);
 	// Edit mode lists every task with edit and delete, and hides the tick buttons so nothing gets ticked by accident.
@@ -58,8 +65,9 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 		reorder.mutate(tasks.map((t) => (inGroup.has(t.id) ? groupIds[next++] : t.id)));
 	}
 
-	// Everyone has the shared tasks, so with any of those every member gets a card.
-	const kids = members.filter((m) => tasksFor(tasks, m.id).length > 0);
+	// Everyone has the shared tasks, so with any of those every member gets a card. Kids (anyone with
+	// a stage below adult) always get one, so there's somewhere to catch a moment.
+	const kids = members.filter((m) => tasksFor(tasks, m.id).length > 0 || (m.stage !== null && m.stage !== "adult"));
 
 	return (
 		<section className={s.page} aria-label="Tasks">
@@ -100,6 +108,9 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 									stars={buckets.find((b) => b.memberId === kid.id)?.stars ?? 0}
 									showHistory={showHistory}
 									onHistory={() => setHistoryKid(showHistory ? null : kid.id)}
+									moments={moments.filter((mo) => mo.memberId === kid.id)}
+									onCatch={locked ? undefined : () => setCatching(kid)}
+									onRemoveMoment={locked ? undefined : (mo) => momentActions.remove.mutate(mo.id, { onError: (e) => alert(e.message) })}
 								/>
 								{showHistory ? (
 									<TaskHistory kid={kid} tasks={mine} today={today} onEdit={locked ? undefined : onEdit} />
@@ -153,6 +164,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 						: "This task is shared, so it's removed for everyone, with all their ticks and stars. This can't be undone."}
 				</ConfirmDialog>
 			)}
+			{catching && <MomentDialog kid={catching} today={today} onClose={() => setCatching(null)} />}
 		</section>
 	);
 }

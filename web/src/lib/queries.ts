@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query';
 import { api } from './api';
-import { addDays, dayKey } from './dates';
+import { addDays, dayKey, fromDayKey } from './dates';
 import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, RewardInput, CalEvent, Reward, RewardWin, Bucket, StarPlacing,
   ReminderList, Photo, LeaveAlert, OutboxStatus } from './types';
 
@@ -53,6 +53,8 @@ export const keys = {
   rewards: (today: string) => ['tasksDone', 'rewards', today] as const,
   rewardHistory: ['tasksDone', 'rewards', 'history'] as const,
   buckets: ['tasksDone', 'rewards', 'buckets'] as const,
+  // Under 'tasksDone' too: a moment's star changes the buckets.
+  moments: (today: string) => ['tasksDone', 'moments', today] as const,
 };
 
 export function useMembers() {
@@ -159,6 +161,25 @@ export function useRewardHistory() {
 /** Stars each kid can still put in jars. Ticks refresh them too. */
 export function useBuckets() {
   return useQuery({ queryKey: keys.buckets, queryFn: api.buckets, refetchInterval: REFRESH_MS });
+}
+
+/** Today's moments, for the stickers on each kid's card and the cheer when a new one comes in. */
+export function useMoments(today: string) {
+  return useQuery({
+    queryKey: keys.moments(today),
+    queryFn: () => api.moments(today, dayKey(addDays(fromDayKey(today), 1))),
+    refetchInterval: REFRESH_MS,
+  });
+}
+
+/** Catch a moment, or take one back; both refresh the stickers and the buckets. */
+export function useMomentActions() {
+  const qc = useQueryClient();
+  const onSettled = () => qc.invalidateQueries({ queryKey: keys.tasksDone });
+  return {
+    add: useMutation({ mutationFn: api.addMoment, onSettled }),
+    remove: useMutation({ mutationFn: api.removeMoment, onSettled }),
+  };
 }
 
 /** Add, change, fill, redeem and delete jars; each refreshes the jars, buckets and history afterwards. */

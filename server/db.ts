@@ -498,6 +498,20 @@ const migrations: string[] = [
   ALTER TABLE members ADD COLUMN birthdate TEXT;
   ALTER TABLE members ADD COLUMN stage TEXT CHECK (stage IN ('little','early','middle','tween','teen','adult'));
   `,
+  // Moments (moments.ts): something good a parent caught, on a local day. `stars`: what it earned
+  // (0 for a Little kid's sticker), kept so later stage changes don't change past stars.
+  `
+  CREATE TABLE moments (
+    id          TEXT PRIMARY KEY,
+    member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    kind        TEXT NOT NULL CHECK (kind IN ('body','feelings','thinking','helping','myself')),
+    note        TEXT,
+    stars       INTEGER NOT NULL DEFAULT 0,
+    day         TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX moments_day ON moments(day);
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

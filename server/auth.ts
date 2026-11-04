@@ -53,7 +53,7 @@ const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean]
   ['PUT', '/api/events/:id/people'], ['POST', '/api/outbox/:id/resolve'], ['POST', '/api/connections/icloud'], ['POST', '/api/alerts'], ['DELETE', '/api/alerts/:id'],
   ['POST', '/api/tasks'], ['PATCH', '/api/tasks/:id'], ['DELETE', '/api/tasks/:id'], ['PUT', '/api/tasks/order'],
   ['POST', '/api/rewards'], ['PATCH', '/api/rewards/:id'], ['DELETE', '/api/rewards/:id'], ['POST', '/api/rewards/:id/restore'],
-  ['POST', '/api/rewards/:id/take-back'],
+  ['POST', '/api/rewards/:id/take-back'], ['POST', '/api/moments'], ['DELETE', '/api/moments/:id'],
   ['POST', '/api/members'], ['PATCH', '/api/members/:id'], ['DELETE', '/api/members/:id'], ['PATCH', '/api/calendars/:id'],
   // Month or week is anyone's choice; the rest of Settings isn't.
   ['PUT', '/api/settings/:key', (req) => req.params.key !== 'view'],
