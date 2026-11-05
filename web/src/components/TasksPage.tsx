@@ -98,8 +98,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 						return (
 							<section
 								key={kid.id}
-								// While showing history the card takes the full width, so a whole month fits.
-								className={`${s.kid} ${showHistory ? s.wide : ""}`}
+								className={s.kid}
 								style={{ "--c": kid.color, "--p": `${percent(progress.get(kid.id))}%` } as CSSProperties}
 							>
 								<KidHeader

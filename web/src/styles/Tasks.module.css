@@ -390,12 +390,6 @@
 	max-width: 400px;
 	min-width: 0;
 }
-/* A card showing history spans the full width (the other kids' cards move below it), so task
-   names aren't cut off and a month of days fits. */
-.board .kid.wide {
-	flex-basis: 100%;
-	max-width: 56rem;
-}
 /* On the right end of the name row. */
 .historyLink {
 	margin-left: auto;
@@ -414,14 +408,21 @@
 	gap: 0.4rem;
 	flex-wrap: wrap;
 }
-/* ‹ This week ›: kept together, so the arrows never wrap apart from the label. */
+/* Week | Month on its own row, and ‹ This week › under it, kept together. */
+.historyTools .periods {
+	flex: 1 0 100%;
+}
+.historyTools .periods button {
+	flex: 1;
+}
 .pager {
+	flex: 1 0 100%;
 	display: flex;
 	align-items: center;
 	gap: 0.4rem;
 }
 .rangeLabel {
-	min-width: 8rem;
+	flex: 1;
 	text-align: center;
 	font-weight: 600;
 }
@@ -473,11 +474,30 @@
 	gap: 0.15rem;
 	overflow-x: auto;
 }
+/* Each task: its name with the count right after it, its row of days below. */
 .historyRow {
 	display: grid;
-	grid-template-columns: minmax(8rem, 14rem) max-content 3.5rem;
+	grid-template-columns: minmax(0, max-content) 1fr;
+	grid-template-areas: "name count" "cells cells";
 	align-items: center;
-	gap: 0.6rem;
+	column-gap: 0.6rem;
+	row-gap: 0.2rem;
+	padding: 0.2rem 0;
+}
+.historyRow > :nth-child(1) {
+	grid-area: name;
+}
+.historyRow > :nth-child(2) {
+	grid-area: cells;
+}
+.historyRow > :nth-child(3) {
+	grid-area: count;
+	text-align: left;
+}
+/* The day letters line up over the circles; the head needs no name or count. */
+.historyHead > :nth-child(1),
+.historyHead > :nth-child(3) {
+	display: none;
 }
 .historyHead {
 	color: var(--muted);
@@ -501,38 +521,6 @@
 @media (max-width: 700px) {
 	.pageHead {
 		flex-wrap: wrap;
-	}
-	/* History on phones: the task name and count on one line, its row of days below. */
-	.historyRow {
-		grid-template-columns: 1fr auto;
-		grid-template-areas: "name count" "cells cells";
-		row-gap: 0.2rem;
-		padding: 0.2rem 0;
-	}
-	.historyRow > :nth-child(1) {
-		grid-area: name;
-	}
-	.historyRow > :nth-child(2) {
-		grid-area: cells;
-	}
-	.historyRow > :nth-child(3) {
-		grid-area: count;
-	}
-	.historyHead > :nth-child(3) {
-		display: none;
-	}
-	/* Week | Month gets its own row; ‹ This week › sits under it. */
-	.historyTools .periods {
-		flex: 1 0 100%;
-	}
-	.historyTools .periods button {
-		flex: 1;
-	}
-	.pager {
-		flex: 1 0 100%;
-	}
-	.rangeLabel {
-		flex: 1;
 	}
 	.board .kid {
 		flex-basis: 100%;
