@@ -3,6 +3,7 @@ import { categoryLabel } from "../lib/tasks";
 import type { Task } from "../lib/types";
 import { StarIcon } from "./icons";
 import s from "../styles/Tasks.module.css";
+import g from "../styles/Goals.module.css";
 
 /** A task's icon (if any) and title. */
 export function TaskName({ task }: { task: Task }) {
@@ -24,7 +25,7 @@ export function TaskTags({ task }: { task: Task }) {
 		<>
 			{/* Editing or deleting a shared task changes it for the whole family. */}
 			{!task.memberId && <span className={s.sharedTag}>Everyone</span>}
-			<span className={s.catTag}>{categoryLabel(task.category)}</span>
+			<span className={`${s.catTag} ${task.required ? "" : g.goalTag}`}>{categoryLabel(task.category)}</span>
 			{/* One-time: when it's gone from the list. */}
 			{task.dueBy && (
 				<span className={`${s.catTag} ${s.dueTag}`}>

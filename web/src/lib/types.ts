@@ -7,25 +7,6 @@ export type MomentKind = 'helpful' | 'attitude' | 'bravery' | 'cleanliness' | 'p
 /** `stages`: the ages it suits, empty for any age; `own`: one the family wrote. */
 export interface GoalTemplate { key: string; title: string; emoji: string; kind: MomentKind; stages: Stage[]; own: boolean; hidden: boolean }
 
-/** A skill a kid is working on, or has got (server/goals.ts). Never late or behind: no deadline. */
-export interface Goal {
-  id: string;
-  memberId: string;
-  /** The starter goal it came from; null for a parent's own. */
-  libraryKey: string | null;
-  title: string;
-  emoji: string;
-  kind: MomentKind;
-  startedDay: string;
-  /** When a parent confirmed they got it; null while it's being worked on. */
-  doneDay: string | null;
-  note: string | null;
-  /** What it's worth, picked when it was added. */
-  points: number;
-  /** What it earned: its points once done, 0 before. */
-  stars: number;
-}
-
 /** Something good a parent caught a kid doing (server/moments.ts). */
 export interface Moment {
   id: string;
@@ -169,7 +150,10 @@ export interface Task {
 }
 
 export type TaskTime = 'morning' | 'evening';
-/** Shown as Daily, Chores and Bonus ("non_negotiable" is Daily's stored name). */
+/**
+ * Tasks are required: Daily ("non_negotiable", its stored name) or Chores. A goal ("bonus", its stored
+ * name) is optional, ticked any day it's done for its points.
+ */
 export type TaskCategory = 'non_negotiable' | 'chores' | 'bonus';
 
 export type TaskInput = Pick<Task, 'title' | 'memberId' | 'days' | 'time' | 'category' | 'required' | 'points' | 'icon' | 'dueBy'>;

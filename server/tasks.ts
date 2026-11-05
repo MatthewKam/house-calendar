@@ -2,14 +2,20 @@ import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
 import { bucket, coverShortfall } from './rewards.ts';
+import { localDay } from './stages.ts';
 
 const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 const WEEKDAYS = { type: 'array', minItems: 1, maxItems: 7, items: { type: 'integer', minimum: 0, maximum: 6 } } as const;
 const TITLE = { type: 'string', minLength: 1, maxLength: 80 } as const;
 
 type Time = 'morning' | 'evening';
-/** Shown as Daily, Chores and Bonus. "non_negotiable" is the stored name of Daily. */
+/**
+ * Tasks are required for the day: Daily ("non_negotiable", its stored name) or Chores. Goals
+ * ("bonus", their stored name) are optional, ticked any day they're done for their points.
+ */
 type Category = 'non_negotiable' | 'chores' | 'bonus';
+/** Goals on a kid's list at once, counting ones for everyone. */
+export const MAX_GOALS = 5;
 interface TaskRow {
   id: string; title: string; member_id: string | null; days: string; sort_order: number; created_at: string;
   time: Time | null; category: Category; required: number; points: number; icon: string | null; due_by: string | null;
@@ -37,9 +43,9 @@ const TASK_PROPS = {
   dueBy: { type: ['string', 'null'], pattern: DAY },
 } as const;
 
-/** Daily tasks are always required and bonus tasks never are; only extras carry points. */
-function rules(category: Category, required: boolean, points: number) {
-  const req = category === 'non_negotiable' ? true : category === 'bonus' ? false : required;
+/** Tasks are always required; goals never are, and only goals carry points. */
+function rules(category: Category, points: number) {
+  const req = category !== 'bonus';
   return { required: req, points: req ? 0 : points };
 }
 
@@ -55,6 +61,18 @@ const ALL_DAYS = '0123456';
 const daysText = (days: number[]) => [...new Set(days)].sort().join('');
 
 export function registerTasks(app: FastifyInstance, db: DB) {
+  const GOALS_FULL = `That's ${MAX_GOALS} goals already. Remove one to add another.`;
+  /**
+   * Whether one more goal for `memberId` (null: everyone) would be over MAX_GOALS on someone's list,
+   * not counting `except` (the goal being changed) or one-time goals that are over.
+   */
+  function tooManyGoals(memberId: string | null, except = '') {
+    const count = (m: string) => (db.prepare(`SELECT COUNT(*) n FROM tasks WHERE required = 0 AND id != ?
+      AND (member_id = ? OR member_id IS NULL) AND (due_by IS NULL OR due_by >= ?)`).get(except, m, localDay()) as { n: number }).n;
+    const ids = memberId ? [memberId] : (db.prepare('SELECT id FROM members').all() as { id: string }[]).map((r) => r.id);
+    return ids.some((m) => count(m) >= MAX_GOALS);
+  }
+
   const get = (id: string) => db.prepare('SELECT * FROM tasks WHERE id = ?').get(id) as TaskRow | undefined;
   const memberExists = (id: string | null) => id === null || !!db.prepare('SELECT 1 FROM members WHERE id = ?').get(id);
 
@@ -79,8 +97,9 @@ export function registerTasks(app: FastifyInstance, db: DB) {
     const id = randomUUID();
     const next = (db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 AS n FROM tasks').get() as { n: number }).n;
     const category = req.body.category ?? 'non_negotiable';
-    const r = rules(category, req.body.required ?? true, req.body.points ?? 0);
+    const r = rules(category, req.body.points ?? 0);
     const dueBy = req.body.dueBy ?? null;
+    if (!r.required && tooManyGoals(req.body.memberId)) return reply.code(409).send({ error: GOALS_FULL });
     db.prepare(`INSERT INTO tasks (id, title, member_id, days, sort_order, time, category, required, points, icon, due_by)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
       .run(id, req.body.title.trim(), req.body.memberId, dueBy ? ALL_DAYS : daysText(req.body.days), next,
@@ -102,7 +121,8 @@ export function registerTasks(app: FastifyInstance, db: DB) {
     const time = req.body.time === undefined ? row.time : req.body.time;
     const icon = req.body.icon === undefined ? row.icon : req.body.icon || null;
     const category = req.body.category ?? row.category;
-    const r = rules(category, req.body.required ?? row.required === 1, req.body.points ?? row.points);
+    const r = rules(category, req.body.points ?? row.points);
+    if (!r.required && tooManyGoals(memberId, row.id)) return reply.code(409).send({ error: GOALS_FULL });
     db.transaction(() => {
       db.prepare('UPDATE tasks SET title = ?, member_id = ?, days = ?, time = ?, category = ?, required = ?, points = ?, icon = ?, due_by = ? WHERE id = ?')
         .run(title.trim(), memberId, days, time, category, r.required ? 1 : 0, r.points, icon, dueBy, row.id);

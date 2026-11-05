@@ -24,8 +24,9 @@ suggestions and drive times. After a while idle, the screen saver takes over.
 
 ### Tasks
 
-Daily tasks, chores and bonus tasks for each kid. Bonus tasks earn stars, and finishing the day's tasks gets
-a Hooray. Each kid has a History, and parents can add, edit and reorder tasks, including one-time ones.
+Tasks and goals for each kid. Tasks (daily ones and chores) are required, and finishing the day's tasks gets a
+Hooray. Goals earn stars any day they're done, up to five at a time. Parents catch kids being good for stickers and
+stars. Each kid has a History, and parents can add, edit and reorder tasks and goals, including one-time ones.
 
 ![Tasks walkthrough](docs/media/tasks.gif)
 
@@ -288,23 +289,28 @@ home screen from that address; it works at home and away.
   particular). Tap it again to show all. Each name fills with that person's color as they finish today's tasks.
 - **Tasks:** the **Tasks** page (left bar; **Calendar** goes back; its address ends in `#tasks`, so a refresh or a
   bookmark opens it) shows a card for each kid with today's tasks, each with an optional icon,
-  grouped into Morning, Anytime and Evening. Categories: **Daily** (always required, the default), **Chores**
-  (required or an extra, your choice) and **Bonus** (always an extra). Required tasks fill the kid's bar and name
-  button; extras earn the ★ stars you set, which go in the kid's bucket (the card shows **stars to spend**; they're
-  spent on the Rewards page). Tap the square left of a task's name to give it an icon. **Days**: every day, weekdays,
+  grouped into Morning, Anytime and Evening, then their **Goals**. **+ Add task/goal** opens one dialog with
+  **Task | Goal** at the top. A **task** is required: **Daily** (the default) or **Chores**; tasks fill the kid's bar
+  and name button. A **goal** is ticked any day they do it and earns the ★ stars you set (5 unless changed), which go in
+  the kid's bucket (the card shows **stars to spend**; they're spent on the Rewards page). Pick a goal from the goal
+  list (ones for the kid's age first) or type your own, which joins the list for every kid; **Choose which show** hides
+  the ones you won't use (or all of them, with **Hide all**). A kid has at most five goals at once, counting ones for
+  everyone. **✨ Caught being good** (top of the page) gives a kid a sticker and stars for being helpful, a good
+  attitude, bravery, cleanliness, problem solving or self care; its **History** (and tapping a sticker on a card)
+  takes one back. Tap the square left of a task's name to give it an icon. **Days**: every day, weekdays,
   weekends, chosen weekdays, or **One time**: due by a date (Today, Tomorrow, End of week, or any day), it's on the
   list every day until it's done (shown ticked that day) or its date ends, then it's gone; it's tagged **Today only**
   or **By Sat**. **History** on a card shows a week of ticks per task or a month calendar (tap a day to see and fix
   it). **Edit tasks**: drag ⋮⋮ to reorder within a part of the day, ✎ to change a task, 🗑 to delete (it asks to
-  confirm first). An extra's stars can't be un-ticked once they're in a jar.
-- **Hooray!** When a kid ticks the last of today's _required_ tasks (extras and Bonus don't count; never just from a
+  confirm first). A goal's stars can't be un-ticked once they're in a jar.
+- **Hooray!** When a kid ticks the last of today's _required_ tasks (goals don't count; never just from a
   refresh; unticking takes it back, so a real finish after an accidental tick still cheers, but not twice within two
   minutes), or fills a reward jar, the screen
   fills with confetti and a big "Hooray, Sam!" (with what it's for) for a few seconds (tap to close); Android phones
   buzz too.
 - **Rewards:** the **Rewards** page (gift in the left bar, `#rewards`) is where kids spend their stars on **reward
   jars** that parents set up (the round +; ✎ beside a jar's name changes it). Each kid has a card with their
-  **bucket** (stars earned from extras, not yet spent) and their jars.
+  **bucket** (stars earned from goals and moments, not yet spent) and their jars.
   - **Use stars:** tap a jar to place a star by it (a star flies from the bucket into the jar), − to take one back,
     then **Done** asks to confirm. Once in a jar, stars can't come out. Kids can't spend more than they have.
   - **Jars** can be for several kids: their stars **filled together**, or **each** putting in the full amount. With no

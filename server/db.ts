@@ -590,6 +590,17 @@ const migrations: string[] = [
     SELECT 'own:' || MIN(id), title, emoji, kind FROM goals WHERE library_key IS NULL GROUP BY title;
   UPDATE goals SET library_key = (SELECT key FROM own_goals o WHERE o.title = goals.title) WHERE library_key IS NULL;
   `,
+  // Goals are ticked each day now, for their points: what bonus tasks were. Tasks are the required
+  // ones, so extras of any kind become goals (category 'bonus'), and goals being worked on become
+  // goals on the list every day. Goals already done keep their stars in \`goals\`.
+  `
+  UPDATE tasks SET category = 'bonus' WHERE required = 0;
+  INSERT INTO tasks (id, title, member_id, days, sort_order, time, category, required, points, icon, due_by)
+    SELECT id, title, member_id, '0123456', (SELECT COALESCE(MAX(sort_order), -1) FROM tasks) + ROW_NUMBER() OVER (ORDER BY created_at),
+      NULL, 'bonus', 0, points, emoji, NULL
+    FROM goals WHERE done_day IS NULL;
+  DELETE FROM goals WHERE done_day IS NULL;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

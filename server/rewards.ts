@@ -42,6 +42,7 @@ const sum = (stars: Record<string, number>) => Object.values(stars).reduce((a, n
 export function bucket(db: DB, memberId: string) {
   return (db.prepare(`SELECT (SELECT COALESCE(SUM(points), 0) FROM task_done WHERE member_id = @m)
     + (SELECT COALESCE(SUM(stars), 0) FROM moments WHERE member_id = @m)
+    -- Goals done before goals became daily (now they're ticked like tasks).
     + (SELECT COALESCE(SUM(stars), 0) FROM goals WHERE member_id = @m)
     - (SELECT COALESCE(SUM(stars), 0) FROM jar_stars WHERE member_id = @m) AS n`).get({ m: memberId }) as { n: number }).n;
 }

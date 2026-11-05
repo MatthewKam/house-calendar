@@ -68,7 +68,7 @@ describe('tasks', () => {
       .toEqual([{ taskId: shared.id, memberId: sam, day: '2026-10-06', points: 0 }]);
   });
 
-  it('stores time, category and required-or-extra, enforcing Daily and Bonus', async () => {
+  it('stores time and category: tasks are required, goals ("bonus") are worth points', async () => {
     const add = async (body: object) =>
       json(await app.inject({ method: 'POST', url: '/api/tasks', payload: { title: 'X', memberId: riley, days: [2], ...body } }));
     // Daily is the default, and "everyday" is no longer accepted.
@@ -78,11 +78,11 @@ describe('tasks', () => {
     // Daily ("non_negotiable") is always required, so its points are dropped.
     expect(await add({ category: 'non_negotiable', required: false, points: 5, time: 'morning' }))
       .toMatchObject({ category: 'non_negotiable', required: true, points: 0, time: 'morning' });
-    // Bonus is always an extra.
+    // A goal ("bonus") is never required.
     expect(await add({ category: 'bonus', required: true, points: 3 })).toMatchObject({ required: false, points: 3 });
-    // Chores follow the switch.
+    // Chores are tasks, so they're required too.
     expect(await add({ category: 'chores', required: false, points: 2, time: 'evening' }))
-      .toMatchObject({ required: false, points: 2, time: 'evening' });
+      .toMatchObject({ required: true, points: 0, time: 'evening' });
     const bad = await app.inject({ method: 'POST', url: '/api/tasks', payload: { title: 'X', memberId: riley, days: [2], time: 'noon' } });
     expect(bad.statusCode).toBe(400);
   });

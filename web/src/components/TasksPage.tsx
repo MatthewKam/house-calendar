@@ -9,18 +9,15 @@ import {
 	useBuckets,
 	useMoments,
 	useMomentActions,
-	useGoals,
 } from "../lib/queries";
 import { taskProgress, tasksFor, percent } from "../lib/tasks";
-import type { Task, Member, Goal, Moment } from "../lib/types";
+import type { Task, Member, Moment } from "../lib/types";
 import { momentKind } from "../lib/moments";
 import KidHeader from "./KidHeader";
 import TodayList from "./TodayList";
 import TaskHistory from "./TaskHistory";
 import ConfirmDialog from "./ConfirmDialog";
 import MomentDialog from "./MomentDialog";
-import GoalsSheet from "./GoalsSheet";
-import GoalDoneDialog from "./GoalDoneDialog";
 import panel from "../styles/DayPanel.module.css";
 import s from "../styles/Tasks.module.css";
 
@@ -29,7 +26,8 @@ interface Props {
 	members: Member[];
 	/** Header filter (unused here: every kid with tasks is shown). */
 	focus: string | null;
-	onAdd: (memberId?: string) => void;
+	/** Add a task (or, with `goal`, a goal) for a kid. */
+	onAdd: (memberId?: string, goal?: boolean) => void;
 	onEdit: (task: Task) => void;
 	/** The parent lock is on: tasks can be ticked, but not added, changed or deleted. */
 	locked?: boolean;
@@ -55,10 +53,6 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 	// A sticker tapped on a kid's card, asking whether to take it back.
 	const [unsticking, setUnsticking] = useState<{ kid: Member; moment: Moment } | null>(null);
 	const momentActions = useMomentActions();
-	const goals = useGoals().data ?? [];
-	// The kid whose goals sheet is open, and the goal being marked done.
-	const [goalsKid, setGoalsKid] = useState<Member | null>(null);
-	const [finishing, setFinishing] = useState<{ kid: Member; goal: Goal } | null>(null);
 	// Whose card is showing its history instead of today's list (one at a time).
 	const [historyKid, setHistoryKid] = useState<string | null>(null);
 	// Edit mode lists every task with edit and delete, and hides the tick buttons so nothing gets ticked by accident.
@@ -139,13 +133,11 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 											onEdit={onEdit}
 											onDelete={setToDelete}
 											onReorder={reorderGroup}
-											goals={editing ? [] : goals.filter((gl) => gl.memberId === kid.id && !gl.doneDay)}
-											onGoal={locked ? undefined : (goal) => setFinishing({ kid, goal })}
-											onGoals={locked || editing ? undefined : () => setGoalsKid(kid)}
+											onAddGoal={locked ? undefined : () => onAdd(kid.id, true)}
 										/>
 										{!editing && !locked && (
 											<button className={s.addText} onClick={() => onAdd(kid.id)}>
-												+ Add a task
+												+ Add task/goal
 											</button>
 										)}
 									</>
@@ -198,13 +190,6 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 					{/* Not once its stars are in a jar. */}
 					{momentActions.remove.isError && <p className={s.problem}>{momentActions.remove.error.message}</p>}
 				</ConfirmDialog>
-			)}
-			{goalsKid && (
-				<GoalsSheet kid={goalsKid} goals={goals.filter((gl) => gl.memberId === goalsKid.id)} today={today}
-					onClose={() => setGoalsKid(null)} />
-			)}
-			{finishing && (
-				<GoalDoneDialog kid={finishing.kid} goal={finishing.goal} today={today} onClose={() => setFinishing(null)} />
 			)}
 		</section>
 	);

@@ -100,6 +100,8 @@ export default function App() {
 		blank?: boolean;
 		task?: Task;
 		memberId?: string;
+		/** A new one starts as a goal. */
+		goal?: boolean;
 	} | null>(null);
 	const [showMembers, setShowMembers] = useState(false);
 	// The pop-up of names that aren't shown in the header (people without tasks, and Everyone).
@@ -383,7 +385,7 @@ export default function App() {
 							members={members}
 							focus={focus.length === 1 ? focus[0] : null}
 							locked={!parentLock.parent}
-							onAdd={(memberId) => setTaskDialog({ memberId })}
+							onAdd={(memberId, goal) => setTaskDialog({ memberId, goal })}
 							onEdit={(task) => setTaskDialog({ task })}
 						/>
 					) : page === "lists" ? (
@@ -529,6 +531,7 @@ export default function App() {
 						(focus.length === 1 ? (focus[0] === EVERYONE ? null : focus[0]) : undefined)
 					}
 					blank={taskDialog.blank}
+					goal={taskDialog.goal}
 					members={members}
 					onSave={saveTaskInput}
 					onDelete={removeTask}
@@ -550,7 +553,7 @@ export default function App() {
 			{/* Adding needs a parent (the lock in the left bar). */}
 			{page === "calendar" && parentLock.parent && <Fab label="Add event" onClick={() => setDialog({ day: newEventDay() })} />}
 			{/* Add a task, for no one in particular yet (each kid's card has its own Add a task). */}
-			{page === "tasks" && parentLock.parent && <Fab label="Add a task" onClick={() => setTaskDialog({ blank: true })} />}
+			{page === "tasks" && parentLock.parent && <Fab label="Add a task or goal" onClick={() => setTaskDialog({ blank: true })} />}
 			{saver.on && (
 				<ScreenSaver
 					photos={saver.photos}

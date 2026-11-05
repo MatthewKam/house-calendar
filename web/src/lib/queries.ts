@@ -56,8 +56,6 @@ export const keys = {
   // Under 'tasksDone' too: a moment's star changes the buckets.
   moments: (today: string) => ['tasksDone', 'moments', today] as const,
   momentHistory: (from: string) => ['tasksDone', 'moments', 'history', from] as const,
-  // Under 'tasksDone' too: a goal's stars change the buckets.
-  goals: ['tasksDone', 'goals'] as const,
 };
 
 export function useMembers() {
@@ -183,32 +181,19 @@ export function useMomentHistory(from: string, today: string) {
   });
 }
 
-/** Every kid's goals, being worked on and done. */
-export function useGoals() {
-  return useQuery({ queryKey: keys.goals, queryFn: api.goals, refetchInterval: REFRESH_MS });
-}
-
-/** The starter goals; they only change with the app. */
+/** The goal list to pick from: starter goals and the family's own. */
 export function useGoalLibrary() {
-  return useQuery({ queryKey: ['goalLibrary'], queryFn: api.goalLibrary, staleTime: Infinity });
+  return useQuery({ queryKey: ['goalLibrary'], queryFn: api.goalLibrary });
 }
 
-/** Start a goal, mark it done, or remove it; each refreshes the goals and the buckets. */
+/** The goal list: hide or show goals, all at once too, and save a parent's own to it. */
 export function useGoalActions() {
   const qc = useQueryClient();
-  const onSettled = () => qc.invalidateQueries({ queryKey: keys.tasksDone });
+  const onSettled = () => qc.invalidateQueries({ queryKey: ['goalLibrary'] });
   return {
-    // A new goal of the parent's own joins the library.
-    start: useMutation({
-      mutationFn: api.startGoal,
-      onSettled: () => Promise.all([onSettled(), qc.invalidateQueries({ queryKey: ['goalLibrary'] })]),
-    }),
-    finish: useMutation({ mutationFn: api.finishGoal, onSettled }),
-    remove: useMutation({ mutationFn: api.removeGoal, onSettled }),
-    hide: useMutation({ mutationFn: api.hideGoal, onSettled: () => qc.invalidateQueries({ queryKey: ['goalLibrary'] }) }),
-    hideAll: useMutation({ mutationFn: api.hideAllGoals, onSettled: () => qc.invalidateQueries({ queryKey: ['goalLibrary'] }) }),
-    /** A goal of the parent's own into the list, without starting it for anyone. */
-    save: useMutation({ mutationFn: api.saveOwnGoal, onSettled: () => qc.invalidateQueries({ queryKey: ['goalLibrary'] }) }),
+    hide: useMutation({ mutationFn: api.hideGoal, onSettled }),
+    hideAll: useMutation({ mutationFn: api.hideAllGoals, onSettled }),
+    save: useMutation({ mutationFn: api.saveOwnGoal, onSettled }),
   };
 }
 

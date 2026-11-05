@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, Goal, GoalTemplate } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, GoalTemplate } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, {
@@ -131,14 +131,9 @@ export const api = {
   addMoment: (m: { memberId: string; kind: MomentKind; note?: string; day: string; stars: number }) => call<Moment>('POST', '/api/moments', m),
   removeMoment: (id: string) => call<void>('DELETE', `/api/moments/${id}`),
   goalLibrary: () => call<GoalTemplate[]>('GET', '/api/goals/library'),
-  goals: () => call<Goal[]>('GET', '/api/goals'),
-  startGoal: (g: { memberId: string; day: string; points: number; libraryKey?: string; title?: string; emoji?: string; kind?: MomentKind }) =>
-    call<Goal>('POST', '/api/goals', g),
   hideGoal: ({ key, hidden }: { key: string; hidden: boolean }) => call<void>('PUT', `/api/goals/library/${encodeURIComponent(key)}`, { hidden }),
   hideAllGoals: (hidden: boolean) => call<void>('PUT', '/api/goals/library', { hidden }),
   saveOwnGoal: (g: { title: string; emoji: string; kind: MomentKind }) => call<GoalTemplate>('POST', '/api/goals/library', g),
-  finishGoal: ({ id, ...b }: { id: string; day: string; note?: string }) => call<Goal>('POST', `/api/goals/${id}/done`, b),
-  removeGoal: (id: string) => call<void>('DELETE', `/api/goals/${id}`),
   addReward: (r: RewardInput, today: string) => call<Reward>('POST', '/api/rewards', { ...r, today }),
   updateReward: (id: string, r: Partial<RewardInput>, today: string) =>
     call<Reward>('PATCH', `/api/rewards/${id}?${new URLSearchParams({ today })}`, r),

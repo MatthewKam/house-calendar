@@ -4,9 +4,19 @@ import type { Task, TaskCategory, TaskDone, TaskTime } from './types';
 export const CATEGORIES: { id: TaskCategory; label: string; hint: string }[] = [
   { id: 'non_negotiable', label: 'Daily', hint: 'Must be done every day it\'s due; always counts toward the bar.' },
   { id: 'chores', label: 'Chores', hint: 'Jobs around the house.' },
-  { id: 'bonus', label: 'Bonus', hint: 'Extra jobs for stars; never required.' },
+  // A goal: optional, ticked any day it's done for its stars. Listed in its own Goals section.
+  { id: 'bonus', label: 'Goal', hint: 'Ticked any day they do it, for its stars; never required.' },
 ];
 export const categoryLabel = (c: TaskCategory) => CATEGORIES.find((x) => x.id === c)?.label ?? c;
+/** The kinds of task, without goals. */
+export const TASK_CATEGORIES = CATEGORIES.filter((c) => c.id !== 'bonus');
+
+/** Goals on a kid's list at once, counting ones for everyone (server/tasks.ts). */
+export const MAX_GOALS = 5;
+/** A kid's goals (null: everyone's), not counting `except` or one-time goals that are over. */
+export const goalsOf = (tasks: Task[], memberId: string | null, today: string, except?: string) =>
+  tasks.filter((t) => !t.required && t.id !== except && (memberId === null || t.memberId === memberId || t.memberId === null)
+    && (!t.dueBy || t.dueBy >= today));
 
 /** Parts of the day, in the order the Tasks page lists them. */
 export const TIMES: { id: TaskTime | null; label: string }[] = [

@@ -297,3 +297,45 @@
 	color: #7a4a00;
 	font-size: 0.95rem;
 }
+
+/* The goal list in the Task/Goal dialog (GoalPicker). */
+.picker {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.tilePicked {
+	border-color: var(--accent);
+	background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+	box-shadow: 0 0 0 2px var(--accent);
+}
+/* Task | Goal, at the top of the dialog. */
+.modeSwitch {
+	display: flex;
+	background: var(--bg);
+	border-radius: var(--radius);
+	padding: 0.2rem;
+}
+.modeSwitch button {
+	flex: 1;
+	min-height: 2.75rem;
+	border-radius: calc(var(--radius) - 0.2rem);
+	font-weight: 650;
+	color: var(--muted);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	line-height: 1.15;
+	padding: 0.3rem;
+}
+.modeSwitch button[aria-pressed="true"] {
+	background: var(--surface);
+	color: var(--text);
+	box-shadow: 0 0.1rem 0.3rem rgb(0 0 0 / 0.1);
+}
+.modeHint {
+	font-weight: 400;
+	font-size: 0.78rem;
+	color: var(--muted);
+}
