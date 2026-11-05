@@ -56,8 +56,9 @@
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
+	/* Two lists side by side at most, each up to 450px: one list is a single column, more wrap into rows. */
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+	grid-template-columns: repeat(2, minmax(0, 450px));
 	align-content: start;
 	gap: 0.75rem;
 }
