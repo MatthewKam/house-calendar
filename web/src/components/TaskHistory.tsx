@@ -146,6 +146,13 @@ function WeekTable({ kid, tasks, today, days, done, onToggle, onEdit }: {
 					<div key={c.id} className={s.historyRow}>
 						<button className={s.taskName} onClick={() => onEdit?.(c)} disabled={!onEdit} title={onEdit ? "Change this task" : undefined}>
 							<TaskName task={c} />
+							{/* Today's list groups by part of the day; here a sun or moon tells morning and evening apart. */}
+							{c.time && (
+								<span className={s.partOfDay} title={c.time === "morning" ? "Morning" : "Evening"} role="img"
+									aria-label={c.time === "morning" ? "morning" : "evening"}>
+									{c.time === "morning" ? "☀️" : "🌙"}
+								</span>
+							)}
 						</button>
 						<span className={s.cells} style={cols}>
 							{days.map((d) => {

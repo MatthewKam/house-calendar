@@ -131,6 +131,11 @@
 	flex: 1;
 	min-width: 0;
 }
+/* Sun or moon after a task's name in history: morning or evening. */
+.partOfDay {
+	margin-left: 0.35rem;
+	font-size: 0.85em;
+}
 .cell,
 .notDue {
 	width: 1.8rem;
