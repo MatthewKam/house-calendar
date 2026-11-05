@@ -8,10 +8,12 @@ import {
 	useReorderTasks,
 	useBuckets,
 	useMoments,
+	useMomentActions,
 	useGoals,
 } from "../lib/queries";
 import { taskProgress, tasksFor, percent } from "../lib/tasks";
-import type { Task, Member, Goal } from "../lib/types";
+import type { Task, Member, Goal, Moment } from "../lib/types";
+import { momentKind } from "../lib/moments";
 import KidHeader from "./KidHeader";
 import TodayList from "./TodayList";
 import TaskHistory from "./TaskHistory";
@@ -50,6 +52,9 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 	const moments = useMoments(today).data ?? [];
 	// Caught being good is open.
 	const [catching, setCatching] = useState(false);
+	// A sticker tapped on a kid's card, asking whether to take it back.
+	const [unsticking, setUnsticking] = useState<{ kid: Member; moment: Moment } | null>(null);
+	const momentActions = useMomentActions();
 	const goals = useGoals().data ?? [];
 	// The kid whose goals sheet is open, and the goal being marked done.
 	const [goalsKid, setGoalsKid] = useState<Member | null>(null);
@@ -118,6 +123,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 									showHistory={showHistory}
 									onHistory={() => setHistoryKid(showHistory ? null : kid.id)}
 									moments={moments.filter((mo) => mo.memberId === kid.id)}
+									onMoment={locked ? undefined : (moment) => setUnsticking({ kid, moment })}
 								/>
 								{showHistory ? (
 									<TaskHistory kid={kid} tasks={mine} today={today} onEdit={locked ? undefined : onEdit} />
@@ -175,6 +181,24 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 				</ConfirmDialog>
 			)}
 			{catching && <MomentDialog kids={kids} today={today} onClose={() => setCatching(false)} />}
+			{unsticking && (
+				<ConfirmDialog
+					title={`Remove ${unsticking.kid.name}'s ${momentKind(unsticking.moment.kind).label.toLowerCase()} sticker?`}
+					confirmLabel="Remove"
+					onCancel={() => {
+						momentActions.remove.reset();
+						setUnsticking(null);
+					}}
+					onConfirm={() => momentActions.remove.mutate(unsticking.moment.id, { onSuccess: () => setUnsticking(null) })}
+				>
+					{momentKind(unsticking.moment.kind).emoji}{" "}
+					{unsticking.moment.note ?? "Caught being good today."}
+					{unsticking.moment.stars > 0 &&
+						` Its ${unsticking.moment.stars} ${unsticking.moment.stars === 1 ? "star goes" : "stars go"} too.`}
+					{/* Not once its stars are in a jar. */}
+					{momentActions.remove.isError && <p className={s.problem}>{momentActions.remove.error.message}</p>}
+				</ConfirmDialog>
+			)}
 			{goalsKid && (
 				<GoalsSheet kid={goalsKid} goals={goals.filter((gl) => gl.memberId === goalsKid.id)} today={today}
 					onClose={() => setGoalsKid(null)} />
