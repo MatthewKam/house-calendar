@@ -134,7 +134,9 @@ export const api = {
   goals: () => call<Goal[]>('GET', '/api/goals'),
   startGoal: (g: { memberId: string; day: string; points: number; libraryKey?: string; title?: string; emoji?: string; kind?: MomentKind }) =>
     call<Goal>('POST', '/api/goals', g),
-  hideGoal: ({ key, hidden }: { key: string; hidden: boolean }) => call<void>('PUT', `/api/goals/library/${key}`, { hidden }),
+  hideGoal: ({ key, hidden }: { key: string; hidden: boolean }) => call<void>('PUT', `/api/goals/library/${encodeURIComponent(key)}`, { hidden }),
+  hideAllGoals: (hidden: boolean) => call<void>('PUT', '/api/goals/library', { hidden }),
+  saveOwnGoal: (g: { title: string; emoji: string; kind: MomentKind }) => call<GoalTemplate>('POST', '/api/goals/library', g),
   finishGoal: ({ id, ...b }: { id: string; day: string; note?: string }) => call<Goal>('POST', `/api/goals/${id}/done`, b),
   removeGoal: (id: string) => call<void>('DELETE', `/api/goals/${id}`),
   addReward: (r: RewardInput, today: string) => call<Reward>('POST', '/api/rewards', { ...r, today }),

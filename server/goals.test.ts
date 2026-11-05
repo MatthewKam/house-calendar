@@ -28,8 +28,29 @@ describe('goals', () => {
     expect(bike.statusCode).toBe(201);
     expect(bike.json()).toMatchObject({ memberId: 'sam', libraryKey: 'bike', title: 'Rides a bike', emoji: '🚲', startedDay: DAY, doneDay: null });
     const own = await start(app, { memberId: 'sam', title: ' Ties shoelaces ', emoji: '👞', kind: 'self_care' });
-    expect(own.json()).toMatchObject({ libraryKey: null, title: 'Ties shoelaces' });
+    expect(own.json()).toMatchObject({ title: 'Ties shoelaces' });
     expect((await app.inject({ url: '/api/goals' })).json()).toHaveLength(2);
+  });
+
+  it('keeps a parent\'s own goal in the library for every kid, until it\'s hidden', async () => {
+    const { app } = setup();
+    const own = (await start(app, { memberId: 'sam', title: 'Ties shoelaces', emoji: '👞', kind: 'self_care' })).json();
+    expect(own.libraryKey).toMatch(/^own:/);
+    const library = async () => (await app.inject({ url: '/api/goals/library' })).json() as { key: string; own: boolean; hidden: boolean; stages: string[] }[];
+    expect((await library()).find((g) => g.key === own.libraryKey)).toMatchObject({ title: 'Ties shoelaces', own: true, stages: [], hidden: false });
+    // Mia can start it from the library too; the same name again doesn't make a second one.
+    expect((await start(app, { memberId: 'mia', libraryKey: own.libraryKey })).statusCode).toBe(201);
+    await app.inject({ method: 'DELETE', url: `/api/goals/${own.id}` });
+    await start(app, { memberId: 'sam', title: 'ties shoelaces', emoji: '👞', kind: 'self_care' });
+    expect((await library()).filter((g) => g.own)).toHaveLength(1);
+
+    // Into the list without starting it for anyone.
+    const saved = await app.inject({ method: 'POST', url: '/api/goals/library', payload: { title: 'Feeds the fish', emoji: '🐟', kind: 'helpful' } });
+    expect(saved.statusCode).toBe(201);
+    expect((await library()).filter((g) => g.own)).toHaveLength(2);
+
+    await app.inject({ method: 'PUT', url: `/api/goals/library/${encodeURIComponent(own.libraryKey)}`, payload: { hidden: true } });
+    expect((await library()).find((g) => g.key === own.libraryKey)?.hidden).toBe(true);
   });
 
   it('works on three at most, and not the same one twice', async () => {
@@ -66,6 +87,13 @@ describe('goals', () => {
     await hide('feed-pet', false);
     expect((await pet()).hidden).toBe(false);
     expect((await hide('fly', true)).statusCode).toBe(404);
+
+    // All at once.
+    const all = (hidden: boolean) => app.inject({ method: 'PUT', url: '/api/goals/library', payload: { hidden } });
+    await all(true);
+    expect((await app.inject({ url: '/api/goals/library' })).json().every((g: { hidden: boolean }) => g.hidden)).toBe(true);
+    await all(false);
+    expect((await app.inject({ url: '/api/goals/library' })).json().some((g: { hidden: boolean }) => g.hidden)).toBe(false);
   });
 
   it('removes one, but not once its stars are in a jar', async () => {

@@ -576,6 +576,20 @@ const migrations: string[] = [
 
   CREATE TABLE hidden_goals (library_key TEXT PRIMARY KEY);
   `,
+  // A parent's own goals join the family's library (key 'own:<id>'), for any kid, until hidden.
+  // Own goals made before this are added, one per name.
+  `
+  CREATE TABLE own_goals (
+    key         TEXT PRIMARY KEY,
+    title       TEXT NOT NULL,
+    emoji       TEXT NOT NULL,
+    kind        TEXT NOT NULL CHECK (kind IN ('helpful','attitude','bravery','cleanliness','problem_solving','self_care')),
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  INSERT INTO own_goals (key, title, emoji, kind)
+    SELECT 'own:' || MIN(id), title, emoji, kind FROM goals WHERE library_key IS NULL GROUP BY title;
+  UPDATE goals SET library_key = (SELECT key FROM own_goals o WHERE o.title = goals.title) WHERE library_key IS NULL;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

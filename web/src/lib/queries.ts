@@ -198,10 +198,17 @@ export function useGoalActions() {
   const qc = useQueryClient();
   const onSettled = () => qc.invalidateQueries({ queryKey: keys.tasksDone });
   return {
-    start: useMutation({ mutationFn: api.startGoal, onSettled }),
+    // A new goal of the parent's own joins the library.
+    start: useMutation({
+      mutationFn: api.startGoal,
+      onSettled: () => Promise.all([onSettled(), qc.invalidateQueries({ queryKey: ['goalLibrary'] })]),
+    }),
     finish: useMutation({ mutationFn: api.finishGoal, onSettled }),
     remove: useMutation({ mutationFn: api.removeGoal, onSettled }),
     hide: useMutation({ mutationFn: api.hideGoal, onSettled: () => qc.invalidateQueries({ queryKey: ['goalLibrary'] }) }),
+    hideAll: useMutation({ mutationFn: api.hideAllGoals, onSettled: () => qc.invalidateQueries({ queryKey: ['goalLibrary'] }) }),
+    /** A goal of the parent's own into the list, without starting it for anyone. */
+    save: useMutation({ mutationFn: api.saveOwnGoal, onSettled: () => qc.invalidateQueries({ queryKey: ['goalLibrary'] }) }),
   };
 }
 

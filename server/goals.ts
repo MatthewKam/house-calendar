@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
 import { bucket } from './rewards.ts';
 import { ACTIVITIES } from './activities.ts';
-import { GOAL_LIBRARY } from './goalLibrary.ts';
+import { GOAL_LIBRARY, type GoalTemplate } from './goalLibrary.ts';
 
 // Goals: a skill a kid works on over time (from the starter library, or the parent's own), with no
 // deadline, and a parent confirms when they've got it. The parent picks what it's worth when adding
@@ -25,18 +25,60 @@ const toGoal = (r: GoalRow) => ({
 
 export function registerGoals(app: FastifyInstance, db: DB) {
   const get = (id: string) => db.prepare('SELECT * FROM goals WHERE id = ?').get(id) as GoalRow | undefined;
+  /** The starter goals, then the family's own (oldest first). */
+  /** A parent's own goal into the library; the same name again is the same goal (shown again if it was hidden). */
+  function addOwn(title: string, emoji: string, kind: string) {
+    title = title.trim();
+    let goal = library().find((g) => g.own && g.title.toLowerCase() === title.toLowerCase());
+    if (!goal) {
+      const key = `own:${randomUUID()}`;
+      db.prepare('INSERT INTO own_goals (key, title, emoji, kind) VALUES (?, ?, ?, ?)').run(key, title, emoji, kind);
+      goal = library().find((g) => g.key === key)!;
+    }
+    db.prepare('DELETE FROM hidden_goals WHERE library_key = ?').run(goal.key);
+    return goal;
+  }
+  const library = (): (GoalTemplate & { own: boolean })[] => [
+    ...GOAL_LIBRARY.map((g) => ({ ...g, own: false })),
+    ...(db.prepare('SELECT key, title, emoji, kind FROM own_goals ORDER BY created_at').all() as Omit<GoalTemplate, 'stages'>[])
+      .map((g) => ({ ...g, stages: [], own: true })),
+  ];
 
   // The starter goals, each marked hidden if the family has hidden it.
   app.get('/api/goals/library', async () => {
     const hidden = new Set((db.prepare('SELECT library_key FROM hidden_goals').all() as { library_key: string }[]).map((r) => r.library_key));
-    return GOAL_LIBRARY.map((g) => ({ ...g, hidden: hidden.has(g.key) }));
+    return library().map((g) => ({ ...g, hidden: hidden.has(g.key) }));
+  });
+
+  // A parent's own goal into the library without starting it (a kid already working on three, say).
+  app.post<{ Body: { title: string; emoji: string; kind: string } }>('/api/goals/library', {
+    schema: { body: { type: 'object', required: ['title', 'emoji', 'kind'], additionalProperties: false,
+      properties: {
+        title: { type: 'string', minLength: 1, maxLength: 80 }, emoji: { type: 'string', minLength: 1, maxLength: 16 }, kind: { enum: ACTIVITIES },
+      } } },
+  }, async (req, reply) => {
+    if (!req.body.title.trim()) return reply.code(400).send({ error: 'A goal needs a name' });
+    reply.code(201);
+    return { ...addOwn(req.body.title, req.body.emoji, req.body.kind), hidden: false };
+  });
+
+  // Hide every goal in the library, or show them all again.
+  app.put<{ Body: { hidden: boolean } }>('/api/goals/library', {
+    schema: { body: { type: 'object', required: ['hidden'], additionalProperties: false, properties: { hidden: { type: 'boolean' } } } },
+  }, async (req, reply) => {
+    const keys = library().map((g) => g.key);
+    db.transaction(() => {
+      db.prepare('DELETE FROM hidden_goals').run();
+      if (req.body.hidden) for (const k of keys) db.prepare('INSERT INTO hidden_goals (library_key) VALUES (?)').run(k);
+    })();
+    return reply.code(204).send();
   });
 
   // Hide a starter goal the family won't use, or show it again.
   app.put<{ Params: { key: string }; Body: { hidden: boolean } }>('/api/goals/library/:key', {
     schema: { body: { type: 'object', required: ['hidden'], additionalProperties: false, properties: { hidden: { type: 'boolean' } } } },
   }, async (req, reply) => {
-    if (!GOAL_LIBRARY.some((g) => g.key === req.params.key)) return reply.code(404).send({ error: 'Unknown goal' });
+    if (!library().some((g) => g.key === req.params.key)) return reply.code(404).send({ error: 'Unknown goal' });
     if (req.body.hidden) db.prepare('INSERT INTO hidden_goals (library_key) VALUES (?) ON CONFLICT DO NOTHING').run(req.params.key);
     else db.prepare('DELETE FROM hidden_goals WHERE library_key = ?').run(req.params.key);
     return reply.code(204).send();
@@ -47,7 +89,8 @@ export function registerGoals(app: FastifyInstance, db: DB) {
     (db.prepare('SELECT * FROM goals ORDER BY done_day IS NOT NULL, COALESCE(done_day, \'\') DESC, created_at').all() as GoalRow[])
       .map(toGoal));
 
-  // Start one: from the library (`libraryKey`), or the parent's own (`title`, `emoji`, `kind`).
+  // Start one: from the library (`libraryKey`), or a new one of the parent's own (`title`, `emoji`,
+  // `kind`), which joins the library for every kid.
   app.post<{ Body: { memberId: string; day: string; libraryKey?: string; title?: string; emoji?: string; kind?: string; points?: number } }>('/api/goals', {
     schema: { body: { type: 'object', required: ['memberId', 'day'], additionalProperties: false,
       properties: {
@@ -58,13 +101,17 @@ export function registerGoals(app: FastifyInstance, db: DB) {
   }, async (req, reply) => {
     const { memberId, day, libraryKey } = req.body;
     if (!db.prepare('SELECT 1 FROM members WHERE id = ?').get(memberId)) return reply.code(400).send({ error: 'Unknown member' });
-    const from = libraryKey ? GOAL_LIBRARY.find((g) => g.key === libraryKey) : null;
-    if (libraryKey && !from) return reply.code(400).send({ error: 'Unknown goal' });
-    const goal = from ?? { key: null, title: req.body.title?.trim(), emoji: req.body.emoji, kind: req.body.kind };
-    if (!goal.title || !goal.emoji || !goal.kind) return reply.code(400).send({ error: 'A goal needs a name, a picture and a group' });
     const working = (db.prepare('SELECT COUNT(*) n FROM goals WHERE member_id = ? AND done_day IS NULL').get(memberId) as { n: number }).n;
     if (working >= MAX_WORKING) return reply.code(409).send({ error: `Working on ${MAX_WORKING} goals at once is plenty. Finish or remove one first.` });
-    if (from && db.prepare('SELECT 1 FROM goals WHERE member_id = ? AND library_key = ? AND done_day IS NULL').get(memberId, from.key)) {
+    let from = libraryKey ? library().find((g) => g.key === libraryKey) : null;
+    if (libraryKey && !from) return reply.code(400).send({ error: 'Unknown goal' });
+    if (!from) {
+      const { title, emoji, kind } = req.body;
+      if (!title?.trim() || !emoji || !kind) return reply.code(400).send({ error: 'A goal needs a name, a picture and a group' });
+      from = addOwn(title, emoji, kind);
+    }
+    const goal = from;
+    if (db.prepare('SELECT 1 FROM goals WHERE member_id = ? AND library_key = ? AND done_day IS NULL').get(memberId, goal.key)) {
       return reply.code(409).send({ error: 'Already working on that one' });
     }
     const id = randomUUID();

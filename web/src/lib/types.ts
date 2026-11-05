@@ -4,7 +4,8 @@ export type Stage = 'little' | 'early' | 'middle' | 'tween' | 'teen' | 'adult';
 export type MomentKind = 'helpful' | 'attitude' | 'bravery' | 'cleanliness' | 'problem_solving' | 'self_care';
 
 /** A starter goal from the library (server/goalLibrary.ts). */
-export interface GoalTemplate { key: string; title: string; emoji: string; kind: MomentKind; stages: Stage[]; hidden: boolean }
+/** `stages`: the ages it suits, empty for any age; `own`: one the family wrote. */
+export interface GoalTemplate { key: string; title: string; emoji: string; kind: MomentKind; stages: Stage[]; own: boolean; hidden: boolean }
 
 /** A skill a kid is working on, or has got (server/goals.ts). Never late or behind: no deadline. */
 export interface Goal {

@@ -29,7 +29,9 @@ interface Props {
  */
 export default function GoalsSheet({ kid, goals, today, onClose }: Props) {
 	const library = useGoalLibrary().data ?? [];
-	const { start, remove, hide } = useGoalActions();
+	const { start, remove, hide, hideAll, save } = useGoalActions();
+	// Shown when a goal is picked while they're already working on the most: remove one first.
+	const [fullNotice, setFullNotice] = useState<string | null>(null);
 	const [showAll, setShowAll] = useState(false);
 	// Choosing which starter goals show: every one, tapped to hide or show it.
 	const [choosing, setChoosing] = useState(false);
@@ -48,8 +50,8 @@ export default function GoalsSheet({ kid, goals, today, onClose }: Props) {
 	const done = goals.filter((g) => g.doneDay);
 	const full = working.length >= MAX_WORKING;
 	const taken = new Set(working.map((g) => g.libraryKey));
-	// Starter goals for their stage first; the rest behind "Show goals for every age".
-	const forAge = (showAll || !kid.stage ? library : library.filter((g) => g.stages.includes(kid.stage!)));
+	// Starter goals for their stage (and the family's own, for any age) first; the rest behind "Show goals for every age".
+	const forAge = showAll || !kid.stage ? library : library.filter((g) => g.stages.length === 0 || g.stages.includes(kid.stage!));
 	const shown = choosing ? library : forAge.filter((g) => !g.hidden && !taken.has(g.key));
 	const hiddenCount = library.filter((g) => g.hidden).length;
 	const problem = start.error?.message ?? remove.error?.message;
@@ -62,7 +64,12 @@ export default function GoalsSheet({ kid, goals, today, onClose }: Props) {
 					: `Stop working on "${g.title}"?`}
 				busy={remove.isPending}
 				onCancel={() => setConfirmId(null)}
-				onConfirm={() => remove.mutate(g.id, { onSuccess: () => setConfirmId(null) })}
+				onConfirm={() => remove.mutate(g.id, {
+					onSuccess: () => {
+						setConfirmId(null);
+						setFullNotice(null);
+					},
+				})}
 			/>
 		);
 
@@ -99,21 +106,45 @@ export default function GoalsSheet({ kid, goals, today, onClose }: Props) {
 
 				<h3 className={s.subhead}>{choosing ? "Choose which goals show" : "Add a goal"}</h3>
 				{choosing ? (
-					<p className={s.hint}>Tap a goal to hide it from the list, or tap it again to bring it back.</p>
+					<>
+						<p className={s.hint}>Tap a goal to hide it from the list, or tap it again to bring it back. Your own goals stay here until you hide them.</p>
+						<div className={s.allButtons}>
+							<button type="button" className={s.allButton} disabled={hideAll.isPending || hiddenCount === 0}
+								onClick={() => hideAll.mutate(false)}>
+								Show all
+							</button>
+							<button type="button" className={s.allButton} disabled={hideAll.isPending || hiddenCount === library.length}
+								onClick={() => hideAll.mutate(true)}>
+								Hide all
+							</button>
+						</div>
+					</>
 				) : full ? (
-					<p className={s.hint}>{MAX_WORKING} at once is plenty. Mark one done or remove one to add another.</p>
+					<p className={s.warning} role="status">
+						{fullNotice ?? `${kid.name} is working on ${MAX_WORKING} goals, the most at once. Remove one above to add another. You can still add goals to the list.`}
+					</p>
 				) : (
 					<div className={s.worth}>
 						<span>Worth</span>
 						<PointsStepper value={points} onChange={setPoints} max={50} />
 					</div>
 				)}
-				{!choosing && !full && own ? (
+				{!choosing && own ? (
 					<form className={s.own} onSubmit={(e) => {
 						e.preventDefault();
 						if (!own.title.trim() || !own.emoji) return;
-						start.mutate({ memberId: kid.id, day: today, points, title: own.title.trim(), emoji: own.emoji, kind: own.kind },
-							{ onSuccess: () => setOwn(null) });
+						const goal = { title: own.title.trim(), emoji: own.emoji, kind: own.kind };
+						// Full: into the list only, for when one of theirs is done or removed.
+						if (full) {
+							save.mutate(goal, {
+								onSuccess: () => {
+									setOwn(null);
+									setFullNotice(`"${goal.title}" is in the list. Remove one of ${kid.name}'s goals above to add it.`);
+								},
+							});
+						} else {
+							start.mutate({ memberId: kid.id, day: today, points, ...goal }, { onSuccess: () => setOwn(null) });
+						}
 					}}>
 						<input className={s.input} placeholder="What are they working on?" aria-label="Goal" maxLength={80} autoFocus
 							value={own.title} onChange={(e) => setOwn({ ...own, title: e.target.value })} />
@@ -129,21 +160,23 @@ export default function GoalsSheet({ kid, goals, today, onClose }: Props) {
 						<div className={sheet.actions}>
 							<span className={sheet.spacer} />
 							<button type="button" className={sheet.secondary} onClick={() => setOwn(null)}>Cancel</button>
-							<button type="submit" className={sheet.primary} disabled={!own.title.trim() || !own.emoji || start.isPending}>
-								Add
+							<button type="submit" className={sheet.primary} disabled={!own.title.trim() || !own.emoji || start.isPending || save.isPending}>
+								{full ? "Add to the list" : "Add"}
 							</button>
 						</div>
 					</form>
-				) : (choosing || !full) && (
+				) : (
 					<>
 						<div className={s.library}>
 							{shown.map((g) => (
 								<button key={g.key} type="button" className={`${s.tile} ${choosing && g.hidden ? s.tileHidden : ""}`}
-									disabled={start.isPending || hide.isPending}
+									disabled={start.isPending || hide.isPending || hideAll.isPending}
 									aria-pressed={choosing ? !g.hidden : undefined}
 									onClick={() => choosing
 										? hide.mutate({ key: g.key, hidden: !g.hidden })
-										: start.mutate({ memberId: kid.id, day: today, points, libraryKey: g.key })}>
+										: full
+											? setFullNotice(`To add "${g.title}", remove one of ${kid.name}'s ${MAX_WORKING} goals above first.`)
+											: start.mutate({ memberId: kid.id, day: today, points, libraryKey: g.key })}>
 									<span className={s.tileEmoji} aria-hidden="true">{g.emoji}</span>
 									<span>{g.title}</span>
 									{choosing && <span className={s.tileState}>{g.hidden ? "Hidden" : "Showing"}</span>}

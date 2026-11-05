@@ -269,3 +269,31 @@
 	align-self: flex-start;
 	padding: 0.3rem 0.2rem;
 }
+
+/* Choosing which show: Show all · Hide all. */
+.allButtons {
+	display: flex;
+	gap: 0.5rem;
+}
+.allButton {
+	min-height: 2.5rem;
+	padding: 0 1rem;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	background: var(--surface);
+	font-weight: 600;
+}
+.allButton:disabled {
+	opacity: 0.4;
+}
+
+/* A kid working on the most goals at once: remove one to add another. */
+.warning {
+	margin: 0;
+	padding: 0.6rem 0.8rem;
+	border-radius: 0.7rem;
+	background: #fffaeb;
+	border: 1px solid #fedf89;
+	color: #7a4a00;
+	font-size: 0.95rem;
+}

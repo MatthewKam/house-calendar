@@ -5,6 +5,7 @@ import type { Activity } from './activities.ts';
 // and confirmed by a parent once a kid has them. Encouragement, not a checklist of milestones: no
 // medical claims, and nothing is ever late or behind. Parents can add their own too.
 
+/** `stages`: the ages it suits; empty for any age (a parent's own). */
 export interface GoalTemplate { key: string; title: string; emoji: string; kind: Activity; stages: Stage[] }
 
 const both: Stage[] = ['little', 'early'];
