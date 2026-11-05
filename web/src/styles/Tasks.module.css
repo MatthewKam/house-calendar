@@ -474,15 +474,20 @@
 	gap: 0.15rem;
 	overflow-x: auto;
 }
-/* Each task: its name with the count right after it, its row of days below. */
+/* Each task: its name and count on one line, its row of days below, and a line under it all. */
 .historyRow {
 	display: grid;
-	grid-template-columns: minmax(0, max-content) 1fr;
+	grid-template-columns: 1fr auto;
 	grid-template-areas: "name count" "cells cells";
 	align-items: center;
 	column-gap: 0.6rem;
 	row-gap: 0.2rem;
-	padding: 0.2rem 0;
+	padding: 0.35rem 0 0.5rem;
+	border-bottom: 1px solid var(--line);
+}
+.historyRow:last-child,
+.historyHead {
+	border-bottom: none;
 }
 .historyRow > :nth-child(1) {
 	grid-area: name;
@@ -492,7 +497,6 @@
 }
 .historyRow > :nth-child(3) {
 	grid-area: count;
-	text-align: left;
 }
 /* The day letters line up over the circles; the head needs no name or count. */
 .historyHead > :nth-child(1),
