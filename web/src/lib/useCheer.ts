@@ -107,7 +107,8 @@ export function useCheer(members: Member[], today: string) {
     const who = members.find((m) => m.id === last?.memberId);
     if (!last || !who) return;
     const k = momentKind(last.kind);
-    setCheer({ names: [who.name], emoji: k.emoji, message: `${last.stars ? 'A star' : 'A sticker'} for ${k.cheer}!` });
+    const earned = last.stars === 0 ? 'A sticker' : last.stars === 1 ? 'A star' : `${last.stars} stars`;
+    setCheer({ names: [who.name], emoji: k.emoji, message: `${earned} for ${k.cheer}!` });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moments.data]);
 
@@ -123,7 +124,7 @@ export function useCheer(members: Member[], today: string) {
     const last = fresh.at(-1);
     const who = members.find((m) => m.id === last?.memberId);
     if (!last || !who) return;
-    setCheer({ names: [who.name], emoji: last.emoji, message: `${last.title}! ${last.stars ? `${last.stars} stars!` : 'A big sticker!'}` });
+    setCheer({ names: [who.name], emoji: last.emoji, message: `${last.title}! ${last.stars ? `${last.stars} ${last.stars === 1 ? 'star' : 'stars'}!` : 'A big sticker!'}` });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [goals.data]);
 

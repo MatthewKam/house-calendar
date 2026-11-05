@@ -1,10 +1,10 @@
 export type Stage = 'little' | 'early' | 'middle' | 'tween' | 'teen' | 'adult';
 
-/** The goal groups: body, feelings, thinking, helping others, looking after myself. */
-export type MomentKind = 'body' | 'feelings' | 'thinking' | 'helping' | 'myself';
+/** The six activities moments and goals are grouped by (server/activities.ts). */
+export type MomentKind = 'helpful' | 'attitude' | 'bravery' | 'cleanliness' | 'problem_solving' | 'self_care';
 
 /** A starter goal from the library (server/goalLibrary.ts). */
-export interface GoalTemplate { key: string; title: string; emoji: string; kind: MomentKind; stages: Stage[] }
+export interface GoalTemplate { key: string; title: string; emoji: string; kind: MomentKind; stages: Stage[]; hidden: boolean }
 
 /** A skill a kid is working on, or has got (server/goals.ts). Never late or behind: no deadline. */
 export interface Goal {
@@ -19,7 +19,9 @@ export interface Goal {
   /** When a parent confirmed they got it; null while it's being worked on. */
   doneDay: string | null;
   note: string | null;
-  /** What it earned when done: 0 for a Little kid's sticker. */
+  /** What it's worth, picked when it was added. */
+  points: number;
+  /** What it earned: its points once done, 0 before. */
   stars: number;
 }
 
@@ -29,7 +31,7 @@ export interface Moment {
   memberId: string;
   kind: MomentKind;
   note: string | null;
-  /** What it earned: 0 for a Little kid's sticker, else 1. */
+  /** What it earned, as the parent picked: 0 is just a sticker. */
   stars: number;
   /** Local day, YYYY-MM-DD. */
   day: string;

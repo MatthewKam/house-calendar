@@ -7,7 +7,7 @@ const DAY = '2026-11-04';
 
 function setup() {
   const db = openDb(':memory:');
-  // Mia is 2 (Little), Sam is 5 (Early).
+  // Mia is 2 (Little), Sam is 5 (Early): points are the same for every age.
   db.prepare(`INSERT INTO members (id, name, color, birthdate) VALUES ('mia', 'Mia', '#000000', '2024-05-01'),
     ('sam', 'Sam', '#000000', '2021-03-01')`).run();
   return { db, app: buildApp(db) };
@@ -22,12 +22,12 @@ describe('goals', () => {
   it('starts a goal from the library or a parent\'s own, and lists them', async () => {
     const { app } = setup();
     const lib = (await app.inject({ url: '/api/goals/library' })).json();
-    expect(lib.find((g: { key: string }) => g.key === 'bike')).toMatchObject({ title: 'Rides a bike', kind: 'body', stages: ['early'] });
+    expect(lib.find((g: { key: string }) => g.key === 'bike')).toMatchObject({ title: 'Rides a bike', kind: 'bravery', stages: ['early'], hidden: false });
 
     const bike = await start(app, { memberId: 'sam', libraryKey: 'bike' });
     expect(bike.statusCode).toBe(201);
     expect(bike.json()).toMatchObject({ memberId: 'sam', libraryKey: 'bike', title: 'Rides a bike', emoji: '🚲', startedDay: DAY, doneDay: null });
-    const own = await start(app, { memberId: 'sam', title: ' Ties shoelaces ', emoji: '👞', kind: 'myself' });
+    const own = await start(app, { memberId: 'sam', title: ' Ties shoelaces ', emoji: '👞', kind: 'self_care' });
     expect(own.json()).toMatchObject({ libraryKey: null, title: 'Ties shoelaces' });
     expect((await app.inject({ url: '/api/goals' })).json()).toHaveLength(2);
   });
@@ -40,19 +40,32 @@ describe('goals', () => {
     expect((await start(app, { memberId: 'mia', libraryKey: 'spoon' })).statusCode).toBe(409);
   });
 
-  it('gives five stars when done, or a sticker for a Little kid', async () => {
+  it('earns the points picked when it was added, five unless changed', async () => {
     const { db, app } = setup();
     const bike = (await start(app, { memberId: 'sam', libraryKey: 'bike' })).json();
+    expect(bike).toMatchObject({ points: 5, stars: 0 });
     expect((await done(app, bike.id, ' No training wheels! ')).json()).toMatchObject({ doneDay: '2026-11-20', note: 'No training wheels!', stars: 5 });
     // Twice is the same as once.
     await done(app, bike.id);
     expect(bucket(db, 'sam')).toBe(5);
 
-    const spoon = (await start(app, { memberId: 'mia', libraryKey: 'spoon' })).json();
-    expect((await done(app, spoon.id)).json().stars).toBe(0);
-    expect(bucket(db, 'mia')).toBe(0);
+    const spoon = (await app.inject({ method: 'POST', url: '/api/goals', payload: { day: DAY, memberId: 'mia', libraryKey: 'spoon', points: 2 } })).json();
+    expect((await done(app, spoon.id)).json().stars).toBe(2);
+    expect(bucket(db, 'mia')).toBe(2);
     // Done ones don't count toward the three.
     for (const key of ['swim', 'hop', 'letters']) expect((await start(app, { memberId: 'sam', libraryKey: key })).statusCode).toBe(201);
+  });
+
+  it('hides starter goals the family won\'t use, and shows them again', async () => {
+    const { app } = setup();
+    const hide = (key: string, hidden: boolean) => app.inject({ method: 'PUT', url: `/api/goals/library/${key}`, payload: { hidden } });
+    expect((await hide('feed-pet', true)).statusCode).toBe(204);
+    await hide('feed-pet', true);
+    const pet = async () => (await app.inject({ url: '/api/goals/library' })).json().find((g: { key: string }) => g.key === 'feed-pet');
+    expect((await pet()).hidden).toBe(true);
+    await hide('feed-pet', false);
+    expect((await pet()).hidden).toBe(false);
+    expect((await hide('fly', true)).statusCode).toBe(404);
   });
 
   it('removes one, but not once its stars are in a jar', async () => {

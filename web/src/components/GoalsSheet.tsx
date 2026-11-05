@@ -3,11 +3,15 @@ import { useGoalActions, useGoalLibrary } from "../lib/queries";
 import { MOMENT_KINDS } from "../lib/moments";
 import type { Goal, Member, MomentKind } from "../lib/types";
 import IconPicker from "./IconPicker";
+import PointsStepper from "./PointsStepper";
+import ConfirmBelow from "./ConfirmBelow";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Goals.module.css";
 
 /** Working on a few at a time keeps it focused (server/goals.ts). */
 const MAX_WORKING = 3;
+/** What a goal is worth unless the parent changes it: more than a moment, since it takes weeks. */
+const GOAL_STARS = 5;
 const OWN_ICONS = ["⭐", "🌱", "🎯", "🧠", "❤️", "🏃", "🎵", "📚", "🧹", "🍎", "🛁", "😴"];
 
 interface Props {
@@ -20,13 +24,19 @@ interface Props {
 
 /**
  * Parents only: a kid's goals. What they're working on, starter goals for their stage to add (or
- * one of your own), and the ones they've got.
+ * one of your own) at the stars you pick, and the ones they've got. Starter goals the family won't
+ * use can be hidden from the list.
  */
 export default function GoalsSheet({ kid, goals, today, onClose }: Props) {
 	const library = useGoalLibrary().data ?? [];
-	const { start, remove } = useGoalActions();
+	const { start, remove, hide } = useGoalActions();
 	const [showAll, setShowAll] = useState(false);
+	// Choosing which starter goals show: every one, tapped to hide or show it.
+	const [choosing, setChoosing] = useState(false);
+	const [points, setPoints] = useState(GOAL_STARS);
 	const [own, setOwn] = useState<{ title: string; emoji: string | null; kind: MomentKind } | null>(null);
+	// The goal asking "Remove?" below itself.
+	const [confirmId, setConfirmId] = useState<string | null>(null);
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -38,10 +48,23 @@ export default function GoalsSheet({ kid, goals, today, onClose }: Props) {
 	const done = goals.filter((g) => g.doneDay);
 	const full = working.length >= MAX_WORKING;
 	const taken = new Set(working.map((g) => g.libraryKey));
-	// Starter goals for their stage first; the rest behind "Show all".
-	const forStage = library.filter((g) => !kid.stage || g.stages.includes(kid.stage));
-	const shown = (showAll || !kid.stage ? library : forStage).filter((g) => !taken.has(g.key));
+	// Starter goals for their stage first; the rest behind "Show goals for every age".
+	const forAge = (showAll || !kid.stage ? library : library.filter((g) => g.stages.includes(kid.stage!)));
+	const shown = choosing ? library : forAge.filter((g) => !g.hidden && !taken.has(g.key));
+	const hiddenCount = library.filter((g) => g.hidden).length;
 	const problem = start.error?.message ?? remove.error?.message;
+
+	const removeRow = (g: Goal) =>
+		confirmId === g.id && (
+			<ConfirmBelow
+				text={g.doneDay
+					? `Remove "${g.title}" from Did it!?${g.stars ? ` Its ${g.stars} ★ go too.` : ""}`
+					: `Stop working on "${g.title}"?`}
+				busy={remove.isPending}
+				onCancel={() => setConfirmId(null)}
+				onConfirm={() => remove.mutate(g.id, { onSuccess: () => setConfirmId(null) })}
+			/>
+		);
 
 	return (
 		<>
@@ -58,32 +81,43 @@ export default function GoalsSheet({ kid, goals, today, onClose }: Props) {
 				) : (
 					<ul className={s.list}>
 						{working.map((g) => (
-							<li key={g.id} className={s.item}>
-								<span className={s.itemEmoji} aria-hidden="true">{g.emoji}</span>
-								<span className={s.itemTitle}>{g.title}</span>
-								<button type="button" className={s.textButton}
-									onClick={() => confirm(`Stop working on "${g.title}"?`) && remove.mutate(g.id)}>
-									Remove
-								</button>
+							<li key={g.id}>
+								<div className={s.item}>
+									<span className={s.itemEmoji} aria-hidden="true">{g.emoji}</span>
+									<span className={s.itemTitle}>
+										{g.title}
+										<span className={s.itemNote}>Worth {g.points ? `${g.points} ★` : "a sticker"}</span>
+									</span>
+									<button type="button" className={s.textButton} onClick={() => setConfirmId(g.id)}>Remove</button>
+								</div>
+								{removeRow(g)}
 							</li>
 						))}
 					</ul>
 				)}
 				{problem && <p className={s.problem}>{problem}</p>}
 
-				<h3 className={s.subhead}>Add a goal</h3>
-				{full ? (
+				<h3 className={s.subhead}>{choosing ? "Choose which goals show" : "Add a goal"}</h3>
+				{choosing ? (
+					<p className={s.hint}>Tap a goal to hide it from the list, or tap it again to bring it back.</p>
+				) : full ? (
 					<p className={s.hint}>{MAX_WORKING} at once is plenty. Mark one done or remove one to add another.</p>
-				) : own ? (
+				) : (
+					<div className={s.worth}>
+						<span>Worth</span>
+						<PointsStepper value={points} onChange={setPoints} max={50} />
+					</div>
+				)}
+				{!choosing && !full && own ? (
 					<form className={s.own} onSubmit={(e) => {
 						e.preventDefault();
 						if (!own.title.trim() || !own.emoji) return;
-						start.mutate({ memberId: kid.id, day: today, title: own.title.trim(), emoji: own.emoji, kind: own.kind },
+						start.mutate({ memberId: kid.id, day: today, points, title: own.title.trim(), emoji: own.emoji, kind: own.kind },
 							{ onSuccess: () => setOwn(null) });
 					}}>
 						<input className={s.input} placeholder="What are they working on?" aria-label="Goal" maxLength={80} autoFocus
 							value={own.title} onChange={(e) => setOwn({ ...own, title: e.target.value })} />
-						<div className={s.kindChoices} role="group" aria-label="Group">
+						<div className={s.kindChoices} role="group" aria-label="Activity">
 							{MOMENT_KINDS.map((k) => (
 								<button key={k.kind} type="button" className={s.kindChoice} aria-pressed={own.kind === k.kind}
 									onClick={() => setOwn({ ...own, kind: k.kind })}>
@@ -100,27 +134,39 @@ export default function GoalsSheet({ kid, goals, today, onClose }: Props) {
 							</button>
 						</div>
 					</form>
-				) : (
+				) : (choosing || !full) && (
 					<>
 						<div className={s.library}>
 							{shown.map((g) => (
-								<button key={g.key} type="button" className={s.tile} disabled={start.isPending}
-									onClick={() => start.mutate({ memberId: kid.id, day: today, libraryKey: g.key })}>
+								<button key={g.key} type="button" className={`${s.tile} ${choosing && g.hidden ? s.tileHidden : ""}`}
+									disabled={start.isPending || hide.isPending}
+									aria-pressed={choosing ? !g.hidden : undefined}
+									onClick={() => choosing
+										? hide.mutate({ key: g.key, hidden: !g.hidden })
+										: start.mutate({ memberId: kid.id, day: today, points, libraryKey: g.key })}>
 									<span className={s.tileEmoji} aria-hidden="true">{g.emoji}</span>
 									<span>{g.title}</span>
+									{choosing && <span className={s.tileState}>{g.hidden ? "Hidden" : "Showing"}</span>}
 								</button>
 							))}
-							<button type="button" className={`${s.tile} ${s.ownTile}`}
-								onClick={() => setOwn({ title: "", emoji: null, kind: "myself" })}>
-								<span className={s.tileEmoji} aria-hidden="true">✏️</span>
-								<span>Your own</span>
+							{!choosing && (
+								<button type="button" className={`${s.tile} ${s.ownTile}`}
+									onClick={() => setOwn({ title: "", emoji: null, kind: "self_care" })}>
+									<span className={s.tileEmoji} aria-hidden="true">✏️</span>
+									<span>Your own</span>
+								</button>
+							)}
+						</div>
+						<div className={s.libraryLinks}>
+							{!choosing && kid.stage && (
+								<button type="button" className={s.textButton} onClick={() => setShowAll(!showAll)}>
+									{showAll ? "Just ones for their age" : "Show goals for every age"}
+								</button>
+							)}
+							<button type="button" className={s.textButton} onClick={() => setChoosing(!choosing)}>
+								{choosing ? "Done" : `Choose which show${hiddenCount ? ` (${hiddenCount} hidden)` : ""}`}
 							</button>
 						</div>
-						{kid.stage && forStage.length < library.length && (
-							<button type="button" className={s.textButton} onClick={() => setShowAll(!showAll)}>
-								{showAll ? "Just ones for their age" : "Show goals for every age"}
-							</button>
-						)}
 					</>
 				)}
 
@@ -129,20 +175,20 @@ export default function GoalsSheet({ kid, goals, today, onClose }: Props) {
 						<h3 className={s.subhead}>Did it! 🏆</h3>
 						<ul className={s.list}>
 							{done.map((g) => (
-								<li key={g.id} className={s.item}>
-									<span className={s.itemEmoji} aria-hidden="true">{g.emoji}</span>
-									<span className={s.itemTitle}>
-										{g.title}
-										<span className={s.itemNote}>
-											{new Date(`${g.doneDay}T12:00`).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
-											{g.note && ` · ${g.note}`}
+								<li key={g.id}>
+									<div className={s.item}>
+										<span className={s.itemEmoji} aria-hidden="true">{g.emoji}</span>
+										<span className={s.itemTitle}>
+											{g.title}
+											<span className={s.itemNote}>
+												{new Date(`${g.doneDay}T12:00`).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
+												{g.stars ? ` · ${g.stars} ★` : ""}
+												{g.note && ` · ${g.note}`}
+											</span>
 										</span>
-									</span>
-									<button type="button" className={s.textButton}
-										onClick={() => confirm(`Remove "${g.title}" from the Did it! list?${g.stars ? ` Its ${g.stars} stars go too.` : ""}`)
-											&& remove.mutate(g.id)}>
-										Remove
-									</button>
+										<button type="button" className={s.textButton} onClick={() => setConfirmId(g.id)}>Remove</button>
+									</div>
+									{removeRow(g)}
 								</li>
 							))}
 						</ul>

@@ -12,7 +12,7 @@
 /* Big pictures: one tap saves. */
 .kinds {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
 	gap: 0.6rem;
 }
 .kind {
@@ -32,6 +32,40 @@
 .kind:active {
 	transform: scale(0.97);
 }
+.kind[aria-pressed="true"] {
+	border-color: var(--accent);
+	background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+	box-shadow: 0 0 0 2px var(--accent);
+}
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.kids {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+/* Catch one | History */
+.tabs {
+	display: flex;
+	background: var(--bg);
+	border-radius: var(--radius);
+	padding: 0.2rem;
+}
+.tabs button {
+	flex: 1;
+	min-height: 2.5rem;
+	border-radius: calc(var(--radius) - 0.2rem);
+	font-weight: 600;
+	color: var(--muted);
+}
+.tabs button[aria-selected="true"] {
+	background: var(--surface);
+	color: var(--text);
+	box-shadow: 0 0.1rem 0.3rem rgb(0 0 0 / 0.1);
+}
 .kindEmoji {
 	font-size: 2.2rem;
 	line-height: 1;
@@ -42,7 +76,7 @@
 	font-size: 0.95rem;
 }
 
-/* On the kid's card: today's stickers, then the button to catch another. */
+/* On the kid's card: today's stickers. */
 .row {
 	display: flex;
 	align-items: center;
@@ -60,17 +94,4 @@
 	box-shadow: 0 0.1rem 0.35rem rgb(0 0 0 / 0.12);
 	font-size: 1.35rem;
 	line-height: 1;
-}
-.catch {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.3rem;
-	min-height: 2.4rem;
-	padding: 0 0.8rem;
-	border: 1px dashed var(--accent);
-	border-radius: 999px;
-	background: transparent;
-	color: var(--accent);
-	font-weight: 600;
-	font-size: 0.9rem;
 }

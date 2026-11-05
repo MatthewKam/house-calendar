@@ -2,15 +2,13 @@ import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
 import { bucket } from './rewards.ts';
-import { stageOf } from './stages.ts';
+import { ACTIVITIES } from './activities.ts';
 
 // Moments: a parent catches a kid doing something good, unplanned, in a couple of taps
-// (docs/product-plan.md, "Three ways to earn"). Little kids (2–3) get a sticker and a cheer, with no
-// saving up; everyone older gets a star in their bucket too.
+// (docs/product-plan.md, "Three ways to earn"): which kid, which of the six activities, and how many
+// stars (0 is a sticker and a cheer, with nothing to save up).
 
 const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
-/** The goal groups from the plan: body, feelings, thinking, helping others, looking after myself. */
-export const KINDS = ['body', 'feelings', 'thinking', 'helping', 'myself'] as const;
 
 interface MomentRow { id: string; member_id: string; kind: string; note: string | null; stars: number; day: string; created_at: string }
 const toMoment = (r: MomentRow) => ({ id: r.id, memberId: r.member_id, kind: r.kind, note: r.note, stars: r.stars, day: r.day, createdAt: r.created_at });
@@ -24,18 +22,15 @@ export function registerMoments(app: FastifyInstance, db: DB) {
     (db.prepare('SELECT * FROM moments WHERE day >= ? AND day < ? ORDER BY created_at').all(req.query.from, req.query.to) as MomentRow[])
       .map(toMoment));
 
-  app.post<{ Body: { memberId: string; kind: string; note?: string; day: string } }>('/api/moments', {
+  app.post<{ Body: { memberId: string; kind: string; note?: string; day: string; stars?: number } }>('/api/moments', {
     schema: { body: { type: 'object', required: ['memberId', 'kind', 'day'], additionalProperties: false,
       properties: {
-        memberId: { type: 'string' }, kind: { enum: KINDS }, note: { type: 'string', maxLength: 300 },
-        day: { type: 'string', pattern: DAY },
+        memberId: { type: 'string' }, kind: { enum: ACTIVITIES }, note: { type: 'string', maxLength: 300 },
+        day: { type: 'string', pattern: DAY }, stars: { type: 'integer', minimum: 0, maximum: 20 },
       } } },
   }, async (req, reply) => {
-    const m = db.prepare('SELECT birthdate, stage FROM members WHERE id = ?').get(req.body.memberId) as
-      { birthdate: string | null; stage: string | null } | undefined;
-    if (!m) return reply.code(400).send({ error: 'Unknown member' });
-    // Kept with the moment, so a birthday or stage change later doesn't change past stars.
-    const stars = stageOf(m, req.body.day) === 'little' ? 0 : 1;
+    if (!db.prepare('SELECT 1 FROM members WHERE id = ?').get(req.body.memberId)) return reply.code(400).send({ error: 'Unknown member' });
+    const stars = req.body.stars ?? 1;
     const id = randomUUID();
     db.prepare('INSERT INTO moments (id, member_id, kind, note, stars, day) VALUES (?, ?, ?, ?, ?, ?)')
       .run(id, req.body.memberId, req.body.kind, req.body.note?.trim() || null, stars, req.body.day);

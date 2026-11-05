@@ -2,32 +2,45 @@ import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
 import { bucket } from './rewards.ts';
-import { stageOf } from './stages.ts';
+import { ACTIVITIES } from './activities.ts';
 import { GOAL_LIBRARY } from './goalLibrary.ts';
 
 // Goals: a skill a kid works on over time (from the starter library, or the parent's own), with no
-// deadline, and a parent confirms when they've got it. Little kids then get a sticker and a cheer;
-// everyone older gets GOAL_STARS as well, since a goal takes weeks where a moment is one act.
+// deadline, and a parent confirms when they've got it. The parent picks what it's worth when adding
+// it (GOAL_STARS unless they change it; more than a moment, since a goal takes weeks), earned when done.
 
 const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
-const KINDS = ['body', 'feelings', 'thinking', 'helping', 'myself'] as const;
 export const GOAL_STARS = 5;
 /** Working on a few at a time keeps it focused. */
 export const MAX_WORKING = 3;
 
 interface GoalRow {
   id: string; member_id: string; library_key: string | null; title: string; emoji: string; kind: string;
-  started_day: string; done_day: string | null; note: string | null; stars: number; created_at: string;
+  started_day: string; done_day: string | null; note: string | null; points: number; stars: number; created_at: string;
 }
 const toGoal = (r: GoalRow) => ({
   id: r.id, memberId: r.member_id, libraryKey: r.library_key, title: r.title, emoji: r.emoji, kind: r.kind,
-  startedDay: r.started_day, doneDay: r.done_day, note: r.note, stars: r.stars,
+  startedDay: r.started_day, doneDay: r.done_day, note: r.note, points: r.points, stars: r.stars,
 });
 
 export function registerGoals(app: FastifyInstance, db: DB) {
   const get = (id: string) => db.prepare('SELECT * FROM goals WHERE id = ?').get(id) as GoalRow | undefined;
 
-  app.get('/api/goals/library', async () => GOAL_LIBRARY);
+  // The starter goals, each marked hidden if the family has hidden it.
+  app.get('/api/goals/library', async () => {
+    const hidden = new Set((db.prepare('SELECT library_key FROM hidden_goals').all() as { library_key: string }[]).map((r) => r.library_key));
+    return GOAL_LIBRARY.map((g) => ({ ...g, hidden: hidden.has(g.key) }));
+  });
+
+  // Hide a starter goal the family won't use, or show it again.
+  app.put<{ Params: { key: string }; Body: { hidden: boolean } }>('/api/goals/library/:key', {
+    schema: { body: { type: 'object', required: ['hidden'], additionalProperties: false, properties: { hidden: { type: 'boolean' } } } },
+  }, async (req, reply) => {
+    if (!GOAL_LIBRARY.some((g) => g.key === req.params.key)) return reply.code(404).send({ error: 'Unknown goal' });
+    if (req.body.hidden) db.prepare('INSERT INTO hidden_goals (library_key) VALUES (?) ON CONFLICT DO NOTHING').run(req.params.key);
+    else db.prepare('DELETE FROM hidden_goals WHERE library_key = ?').run(req.params.key);
+    return reply.code(204).send();
+  });
 
   // Every kid's goals: being worked on first (oldest first), then done (newest first).
   app.get('/api/goals', async () =>
@@ -35,11 +48,12 @@ export function registerGoals(app: FastifyInstance, db: DB) {
       .map(toGoal));
 
   // Start one: from the library (`libraryKey`), or the parent's own (`title`, `emoji`, `kind`).
-  app.post<{ Body: { memberId: string; day: string; libraryKey?: string; title?: string; emoji?: string; kind?: string } }>('/api/goals', {
+  app.post<{ Body: { memberId: string; day: string; libraryKey?: string; title?: string; emoji?: string; kind?: string; points?: number } }>('/api/goals', {
     schema: { body: { type: 'object', required: ['memberId', 'day'], additionalProperties: false,
       properties: {
         memberId: { type: 'string' }, day: { type: 'string', pattern: DAY }, libraryKey: { type: 'string' },
-        title: { type: 'string', minLength: 1, maxLength: 80 }, emoji: { type: 'string', minLength: 1, maxLength: 16 }, kind: { enum: KINDS },
+        title: { type: 'string', minLength: 1, maxLength: 80 }, emoji: { type: 'string', minLength: 1, maxLength: 16 },
+        kind: { enum: ACTIVITIES }, points: { type: 'integer', minimum: 0, maximum: 50 },
       } } },
   }, async (req, reply) => {
     const { memberId, day, libraryKey } = req.body;
@@ -54,8 +68,8 @@ export function registerGoals(app: FastifyInstance, db: DB) {
       return reply.code(409).send({ error: 'Already working on that one' });
     }
     const id = randomUUID();
-    db.prepare('INSERT INTO goals (id, member_id, library_key, title, emoji, kind, started_day) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .run(id, memberId, goal.key, goal.title, goal.emoji, goal.kind, day);
+    db.prepare('INSERT INTO goals (id, member_id, library_key, title, emoji, kind, started_day, points) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(id, memberId, goal.key, goal.title, goal.emoji, goal.kind, day, req.body.points ?? GOAL_STARS);
     reply.code(201);
     return toGoal(get(id)!);
   });
@@ -68,10 +82,7 @@ export function registerGoals(app: FastifyInstance, db: DB) {
     const row = get(req.params.id);
     if (!row) return reply.code(404).send({ error: 'Not found' });
     if (row.done_day) return toGoal(row);
-    const m = db.prepare('SELECT birthdate, stage FROM members WHERE id = ?').get(row.member_id) as { birthdate: string | null; stage: string | null };
-    // Kept with the goal, so a later stage change doesn't change past stars.
-    const stars = stageOf(m, req.body.day) === 'little' ? 0 : GOAL_STARS;
-    db.prepare('UPDATE goals SET done_day = ?, note = ?, stars = ? WHERE id = ?').run(req.body.day, req.body.note?.trim() || null, stars, row.id);
+    db.prepare('UPDATE goals SET done_day = ?, note = ?, stars = points WHERE id = ?').run(req.body.day, req.body.note?.trim() || null, row.id);
     return toGoal(get(row.id)!);
   });
 

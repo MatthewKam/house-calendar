@@ -8,7 +8,6 @@ import {
 	useReorderTasks,
 	useBuckets,
 	useMoments,
-	useMomentActions,
 	useGoals,
 } from "../lib/queries";
 import { taskProgress, tasksFor, percent } from "../lib/tasks";
@@ -49,9 +48,8 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 	const progress = taskProgress(tasks, done, today, members.map((m) => m.id));
 	const buckets = useBuckets().data ?? [];
 	const moments = useMoments(today).data ?? [];
-	const momentActions = useMomentActions();
-	// The kid a moment is being caught for.
-	const [catching, setCatching] = useState<Member | null>(null);
+	// Caught being good is open.
+	const [catching, setCatching] = useState(false);
 	const goals = useGoals().data ?? [];
 	// The kid whose goals sheet is open, and the goal being marked done.
 	const [goalsKid, setGoalsKid] = useState<Member | null>(null);
@@ -73,7 +71,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 	}
 
 	// Everyone has the shared tasks, so with any of those every member gets a card. Kids (anyone with
-	// a stage below adult) always get one, so there's somewhere to catch a moment.
+	// a stage below adult) always get one, for their goals and stickers.
 	const kids = members.filter((m) => tasksFor(tasks, m.id).length > 0 || (m.stage !== null && m.stage !== "adult"));
 
 	return (
@@ -89,6 +87,11 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 						})}
 					</div>
 				</div>
+				{!locked && kids.length > 0 && (
+					<button className={s.catchButton} onClick={() => setCatching(true)}>
+						✨ Caught being good
+					</button>
+				)}
 			</header>
 
 			<div className={s.scroll}>
@@ -115,11 +118,6 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 									showHistory={showHistory}
 									onHistory={() => setHistoryKid(showHistory ? null : kid.id)}
 									moments={moments.filter((mo) => mo.memberId === kid.id)}
-									onCatch={locked ? undefined : () => setCatching(kid)}
-									onRemoveMoment={locked ? undefined : (mo) => momentActions.remove.mutate(mo.id, { onError: (e) => alert(e.message) })}
-									goals={goals.filter((gl) => gl.memberId === kid.id && !gl.doneDay)}
-									onGoal={locked ? undefined : (goal) => setFinishing({ kid, goal })}
-									onGoals={locked ? undefined : () => setGoalsKid(kid)}
 								/>
 								{showHistory ? (
 									<TaskHistory kid={kid} tasks={mine} today={today} onEdit={locked ? undefined : onEdit} />
@@ -135,6 +133,9 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 											onEdit={onEdit}
 											onDelete={setToDelete}
 											onReorder={reorderGroup}
+											goals={editing ? [] : goals.filter((gl) => gl.memberId === kid.id && !gl.doneDay)}
+											onGoal={locked ? undefined : (goal) => setFinishing({ kid, goal })}
+											onGoals={locked || editing ? undefined : () => setGoalsKid(kid)}
 										/>
 										{!editing && !locked && (
 											<button className={s.addText} onClick={() => onAdd(kid.id)}>
@@ -173,7 +174,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 						: "This task is shared, so it's removed for everyone, with all their ticks and stars. This can't be undone."}
 				</ConfirmDialog>
 			)}
-			{catching && <MomentDialog kid={catching} today={today} onClose={() => setCatching(null)} />}
+			{catching && <MomentDialog kids={kids} today={today} onClose={() => setCatching(false)} />}
 			{goalsKid && (
 				<GoalsSheet kid={goalsKid} goals={goals.filter((gl) => gl.memberId === goalsKid.id)} today={today}
 					onClose={() => setGoalsKid(null)} />

@@ -8,8 +8,14 @@
   display: flex; flex-direction: column; gap: 0.8rem; box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.25);
 }
 .heading { margin: 0; font-size: 1.3rem; }
-/* Title row with an × to close. */
-.head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+/* Title row with an × to close. It stays at the top while the rest scrolls under it: pulled out to
+   the sheet's edges (over its padding), with the sheet's background behind it. */
+.head {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;
+  position: sticky; top: -1.4rem; z-index: 2; flex: none;
+  margin: -1.4rem -1.4rem 0; padding: 1.4rem 1.4rem 0.6rem;
+  background: var(--surface); border-bottom: 1px solid transparent;
+}
 .close { font-size: 1.6rem; color: var(--muted); margin: -0.5rem -0.6rem 0 0; }
 .actions { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
 .spacer { flex: 1; }

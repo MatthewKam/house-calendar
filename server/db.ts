@@ -530,6 +530,52 @@ const migrations: string[] = [
   );
   CREATE INDEX goals_member ON goals(member_id);
   `,
+  // Moments and goals share six activities now (helpful, attitude, bravery, cleanliness, problem
+  // solving, self care), each moved to the closest. A parent picks the points: a moment's when it's
+  // caught, a goal's (`points`) when it's added, earned as `stars` when it's done. Starter goals a
+  // family never uses can be hidden from the library (`hidden_goals`).
+  `
+  CREATE TABLE moments_new (
+    id          TEXT PRIMARY KEY,
+    member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    kind        TEXT NOT NULL CHECK (kind IN ('helpful','attitude','bravery','cleanliness','problem_solving','self_care')),
+    note        TEXT,
+    stars       INTEGER NOT NULL DEFAULT 0,
+    day         TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  INSERT INTO moments_new SELECT id, member_id,
+    CASE kind WHEN 'helping' THEN 'helpful' WHEN 'feelings' THEN 'attitude' WHEN 'body' THEN 'bravery'
+      WHEN 'thinking' THEN 'problem_solving' ELSE 'self_care' END,
+    note, stars, day, created_at FROM moments;
+  DROP TABLE moments;
+  ALTER TABLE moments_new RENAME TO moments;
+  CREATE INDEX moments_day ON moments(day);
+
+  CREATE TABLE goals_new (
+    id          TEXT PRIMARY KEY,
+    member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    library_key TEXT,
+    title       TEXT NOT NULL,
+    emoji       TEXT NOT NULL,
+    kind        TEXT NOT NULL CHECK (kind IN ('helpful','attitude','bravery','cleanliness','problem_solving','self_care')),
+    started_day TEXT NOT NULL,
+    done_day    TEXT,
+    note        TEXT,
+    points      INTEGER NOT NULL DEFAULT 5,
+    stars       INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  INSERT INTO goals_new SELECT id, member_id, library_key, title, emoji,
+    CASE kind WHEN 'helping' THEN 'helpful' WHEN 'feelings' THEN 'attitude' WHEN 'body' THEN 'bravery'
+      WHEN 'thinking' THEN 'problem_solving' ELSE 'self_care' END,
+    started_day, done_day, note, CASE WHEN done_day IS NULL THEN 5 ELSE stars END, stars, created_at FROM goals;
+  DROP TABLE goals;
+  ALTER TABLE goals_new RENAME TO goals;
+  CREATE INDEX goals_member ON goals(member_id);
+
+  CREATE TABLE hidden_goals (library_key TEXT PRIMARY KEY);
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

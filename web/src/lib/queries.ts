@@ -55,6 +55,7 @@ export const keys = {
   buckets: ['tasksDone', 'rewards', 'buckets'] as const,
   // Under 'tasksDone' too: a moment's star changes the buckets.
   moments: (today: string) => ['tasksDone', 'moments', today] as const,
+  momentHistory: (from: string) => ['tasksDone', 'moments', 'history', from] as const,
   // Under 'tasksDone' too: a goal's stars change the buckets.
   goals: ['tasksDone', 'goals'] as const,
 };
@@ -174,6 +175,14 @@ export function useMoments(today: string) {
   });
 }
 
+/** Moments from `from` up to today, newest first: the history to take one back from. */
+export function useMomentHistory(from: string, today: string) {
+  return useQuery({
+    queryKey: keys.momentHistory(from),
+    queryFn: async () => (await api.moments(from, dayKey(addDays(fromDayKey(today), 1)))).reverse(),
+  });
+}
+
 /** Every kid's goals, being worked on and done. */
 export function useGoals() {
   return useQuery({ queryKey: keys.goals, queryFn: api.goals, refetchInterval: REFRESH_MS });
@@ -192,6 +201,7 @@ export function useGoalActions() {
     start: useMutation({ mutationFn: api.startGoal, onSettled }),
     finish: useMutation({ mutationFn: api.finishGoal, onSettled }),
     remove: useMutation({ mutationFn: api.removeGoal, onSettled }),
+    hide: useMutation({ mutationFn: api.hideGoal, onSettled: () => qc.invalidateQueries({ queryKey: ['goalLibrary'] }) }),
   };
 }
 

@@ -169,3 +169,103 @@
 	font-size: 2.6rem;
 	line-height: 1;
 }
+
+/* − 1 ★ + (PointsStepper). */
+.stepper {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.step {
+	width: 2.75rem;
+	height: 2.75rem;
+	padding: 0;
+	border: 1px solid var(--line);
+	border-radius: 50%;
+	background: var(--surface);
+	font-size: 1.3rem;
+	font-weight: 600;
+}
+.step:disabled {
+	opacity: 0.35;
+}
+.stepValue {
+	min-width: 4.5rem;
+	text-align: center;
+	font-weight: 700;
+	font-size: 1.05rem;
+}
+
+/* Remove? Cancel · Remove, right under the item (ConfirmBelow). */
+.confirmBelow {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin: 0.3rem 0 0 2.8rem;
+	padding: 0.5rem 0.7rem;
+	border-radius: 0.7rem;
+	background: #fef3f2;
+	border: 1px solid #fecdca;
+}
+.confirmText {
+	flex: 1;
+	min-width: 10rem;
+	font-size: 0.9rem;
+	color: #7a271a;
+}
+.confirmCancel {
+	min-height: 2.4rem;
+	padding: 0 0.9rem;
+	border-radius: 0.6rem;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	font-weight: 600;
+}
+.confirmYes {
+	min-height: 2.4rem;
+	padding: 0 0.9rem;
+	border-radius: 0.6rem;
+	background: #b42318;
+	color: #fff;
+	font-weight: 650;
+}
+
+/* Adding: what it's worth, then the library. */
+.worth {
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	font-weight: 600;
+	color: var(--muted);
+}
+.libraryLinks {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 0.4rem;
+}
+/* Choosing which show: a hidden goal is faded and dashed. */
+.tileHidden {
+	opacity: 0.45;
+	border-style: dashed;
+	background: transparent;
+}
+.tileState {
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--muted);
+}
+
+/* On the kid's list: the GOAL tag and what it's worth. */
+.goalTag {
+	color: #1a7f4b;
+	border-color: #b7e4cb;
+	background: #ecfbf3;
+}
+.addGoal {
+	composes: textButton from "./Buttons.module.css";
+	align-self: flex-start;
+	padding: 0.3rem 0.2rem;
+}

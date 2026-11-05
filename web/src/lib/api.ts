@@ -128,12 +128,13 @@ export const api = {
   rewardHistory: () => call<RewardWin[]>('GET', '/api/rewards/history'),
   buckets: () => call<Bucket[]>('GET', '/api/rewards/buckets'),
   moments: (from: string, to: string) => call<Moment[]>('GET', `/api/moments?${new URLSearchParams({ from, to })}`),
-  addMoment: (m: { memberId: string; kind: MomentKind; note?: string; day: string }) => call<Moment>('POST', '/api/moments', m),
+  addMoment: (m: { memberId: string; kind: MomentKind; note?: string; day: string; stars: number }) => call<Moment>('POST', '/api/moments', m),
   removeMoment: (id: string) => call<void>('DELETE', `/api/moments/${id}`),
   goalLibrary: () => call<GoalTemplate[]>('GET', '/api/goals/library'),
   goals: () => call<Goal[]>('GET', '/api/goals'),
-  startGoal: (g: { memberId: string; day: string; libraryKey?: string; title?: string; emoji?: string; kind?: MomentKind }) =>
+  startGoal: (g: { memberId: string; day: string; points: number; libraryKey?: string; title?: string; emoji?: string; kind?: MomentKind }) =>
     call<Goal>('POST', '/api/goals', g),
+  hideGoal: ({ key, hidden }: { key: string; hidden: boolean }) => call<void>('PUT', `/api/goals/library/${key}`, { hidden }),
   finishGoal: ({ id, ...b }: { id: string; day: string; note?: string }) => call<Goal>('POST', `/api/goals/${id}/done`, b),
   removeGoal: (id: string) => call<void>('DELETE', `/api/goals/${id}`),
   addReward: (r: RewardInput, today: string) => call<Reward>('POST', '/api/rewards', { ...r, today }),

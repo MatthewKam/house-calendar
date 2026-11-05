@@ -721,3 +721,18 @@
 .scroll {
 	padding-bottom: calc(5rem + env(safe-area-inset-bottom));
 }
+
+/* Top right of the Tasks page: Caught being good, for any kid. */
+.catchButton {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	min-height: 2.75rem;
+	padding: 0 1.1rem;
+	border: 1px dashed var(--accent);
+	border-radius: 999px;
+	background: var(--surface);
+	color: var(--accent);
+	font-weight: 650;
+	flex: none;
+}
