@@ -1,0 +1,220 @@
+/* Today (TodayPage): what's next for me, the kids, and what needs me. A single column of cards,
+   phone first; wider screens keep it a readable width. */
+.page {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+}
+.head {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+}
+.hello {
+	margin: 0;
+	font-size: 2rem;
+}
+.date {
+	color: var(--muted);
+	font-size: 0.95rem;
+}
+.scroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+	max-width: 40rem;
+	padding-bottom: 1rem;
+}
+.card {
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	padding: 0.9rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.cardTop {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+.cardHead {
+	margin: 0;
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--muted);
+}
+details > summary.cardHead {
+	cursor: pointer;
+	min-height: 2rem;
+	display: flex;
+	align-items: center;
+}
+.subHead {
+	margin: 0.3rem 0 0;
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--muted);
+}
+.none {
+	margin: 0;
+	color: var(--muted);
+}
+
+/* Events: time, what and where, and when to leave. */
+.events,
+.kids,
+.needs {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+}
+.event {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	text-align: left;
+	padding: 0.55rem 0.7rem;
+	border-radius: 0.8rem;
+	border-left: 0.35rem solid var(--c);
+	background: var(--bg);
+	min-height: 3.2rem;
+}
+.when {
+	flex: none;
+	width: 5.5rem;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--muted);
+	font-variant-numeric: tabular-nums;
+}
+.what {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+.title {
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+.where {
+	font-size: 0.85rem;
+	color: var(--muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.leave {
+	flex: none;
+	padding: 0.2rem 0.55rem;
+	border-radius: 999px;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	font-size: 0.8rem;
+	font-weight: 650;
+	white-space: nowrap;
+}
+.leaveSoon {
+	background: #fff1e6;
+	border-color: #f3c79f;
+	color: #9a4a00;
+}
+
+/* The kids: name, a bar filling with their color, then tasks, stickers and stars. */
+.catch {
+	min-height: 2.5rem;
+	padding: 0 0.9rem;
+	border: 1px dashed var(--accent);
+	border-radius: 999px;
+	background: var(--surface);
+	color: var(--accent);
+	font-weight: 650;
+	font-size: 0.9rem;
+}
+.kid {
+	width: 100%;
+	display: grid;
+	grid-template-columns: auto 1fr;
+	grid-template-areas: "name bar" "meta meta";
+	align-items: center;
+	gap: 0.35rem 0.8rem;
+	text-align: left;
+	padding: 0.6rem 0.7rem;
+	border-radius: 0.8rem;
+	background: color-mix(in srgb, var(--c) 10%, white);
+	border: 2px solid color-mix(in srgb, var(--c) 35%, white);
+}
+.kidName {
+	grid-area: name;
+	font-weight: 700;
+	font-size: 1.1rem;
+}
+.kidBar {
+	grid-area: bar;
+	height: 0.6rem;
+	border-radius: 999px;
+	background: white;
+	overflow: hidden;
+}
+.kidBar > span {
+	display: block;
+	height: 100%;
+	width: var(--p);
+	background: var(--c);
+	border-radius: inherit;
+}
+.kidMeta {
+	grid-area: meta;
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+	flex-wrap: wrap;
+	font-size: 0.9rem;
+	color: var(--muted);
+}
+.stickers {
+	font-size: 1.1rem;
+	letter-spacing: 0.1em;
+}
+.stars {
+	margin-left: auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.2rem;
+	font-weight: 700;
+	color: var(--text);
+}
+.star {
+	width: 1rem;
+	height: 1rem;
+	color: #e3a21a;
+}
+
+/* Needs you. */
+.need {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	text-align: left;
+	min-height: 2.9rem;
+	padding: 0.4rem 0.7rem;
+	border-radius: 0.8rem;
+	background: var(--bg);
+	font-weight: 600;
+}

@@ -32,6 +32,7 @@ import MonthView from "./components/MonthView";
 import DayPanel from "./components/DayPanel";
 import EventDialog from "./components/EventDialog";
 import TasksPage from "./components/TasksPage";
+import TodayPage from "./components/TodayPage";
 import NavBar from "./components/NavBar";
 import LeaveAlerts from "./components/LeaveAlerts";
 import NowLine from "./components/NowLine";
@@ -379,7 +380,16 @@ export default function App() {
 					} : undefined}
 				/>
 				<div className={s.shell}>
-					{page === "tasks" ? (
+					{page === "today" ? (
+						<TodayPage
+							today={today}
+							members={members}
+							me={signedIn?.memberId ?? null}
+							parent={parentLock.parent}
+							onPage={setPage}
+							onOpenEvent={(event) => setDialog({ day: event.allDay ? event.start : dayKey(new Date(event.start)), event })}
+						/>
+					) : page === "tasks" ? (
 						<TasksPage
 							today={today}
 							members={members}

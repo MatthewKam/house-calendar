@@ -266,6 +266,11 @@ home screen from that address; it works at home and away.
   after 5 minutes without a touch, or when the screen saver starts. The server checks it too, so a locked device
   can't change those things any other way.
 
+- **Today:** the first page in the left bar (`#today`), and where phones open. **Up next** lists your events for the
+  rest of the day (yours, shared ones and family ones; the whole family's on the wall), with **Leave by** when it has an
+  address, and tomorrow's first event. **The kids today** shows each kid's tasks, stickers and stars (tap to go to
+  Tasks), with **✨ Caught being good**. **Needs you** appears when something's waiting: a calendar change that
+  clashes, a reward to hand over, or items on a list. The rest of the family's day is folded at the bottom.
 - **Month / Week:** switch views at the top left. ‹ › move by a month or a week.
 - **Lists:** the **Lists** page in the left bar (address ends in `#lists`) shows your iCloud Reminders (see "Connect Reminders").
   Each list's items are shown in its color; tap the dot by a list's name to pick another. Drag an item by its ⋮⋮ to
