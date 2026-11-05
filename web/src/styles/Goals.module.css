@@ -1,0 +1,171 @@
+/* A kid's goals: on their card (KidHeader), the goals sheet (GoalsSheet) and "They did it!" (GoalDoneDialog). */
+
+/* On the card: what they're working on, as big pictures (kids 2–6 read pictures, not words). */
+.row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+.goal {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.15rem;
+	width: 5.2rem;
+	padding: 0.45rem 0.3rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--bg);
+	font-size: 0.75rem;
+	font-weight: 600;
+	line-height: 1.15;
+	text-align: center;
+	color: var(--text);
+}
+.goalEmoji {
+	font-size: 1.9rem;
+	line-height: 1;
+}
+.goalsButton {
+	align-self: center;
+	min-height: 2.4rem;
+	padding: 0 0.8rem;
+	border: 1px dashed var(--line);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--muted);
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
+/* The sheet. */
+.subhead {
+	margin: 0.4rem 0 0;
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--muted);
+}
+.hint {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.95rem;
+}
+.problem {
+	margin: 0;
+	color: #b42318;
+	font-size: 0.95rem;
+}
+.list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.item {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+}
+.itemEmoji {
+	font-size: 1.6rem;
+	width: 2.2rem;
+	text-align: center;
+	flex: none;
+}
+.itemTitle {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	font-weight: 600;
+}
+.itemNote {
+	font-weight: 400;
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+.textButton {
+	composes: textButton from "./Buttons.module.css";
+	padding: 0.3rem;
+	align-self: flex-start;
+}
+.item .textButton {
+	align-self: center;
+}
+.library {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+	gap: 0.5rem;
+}
+.tile {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.3rem;
+	min-height: 5.5rem;
+	padding: 0.6rem 0.4rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--bg);
+	font-size: 0.85rem;
+	font-weight: 600;
+	line-height: 1.2;
+	text-align: center;
+	color: var(--text);
+}
+.tileEmoji {
+	font-size: 1.8rem;
+	line-height: 1;
+}
+.ownTile {
+	border-style: dashed;
+	background: transparent;
+}
+.own {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.input {
+	font: inherit;
+	font-size: 1.05rem;
+	padding: 0.65rem 0.75rem;
+	border: 1px solid var(--line);
+	border-radius: 0.6rem;
+	background: var(--surface);
+	color: var(--text);
+	min-width: 0;
+}
+.kindChoices {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+.kindChoice {
+	min-height: 2.4rem;
+	padding: 0 0.8rem;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	background: var(--surface);
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+.kindChoice[aria-pressed="true"] {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--surface);
+}
+
+/* "They did it!" */
+.doneHead {
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+}
+.doneEmoji {
+	font-size: 2.6rem;
+	line-height: 1;
+}

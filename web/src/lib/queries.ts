@@ -55,6 +55,8 @@ export const keys = {
   buckets: ['tasksDone', 'rewards', 'buckets'] as const,
   // Under 'tasksDone' too: a moment's star changes the buckets.
   moments: (today: string) => ['tasksDone', 'moments', today] as const,
+  // Under 'tasksDone' too: a goal's stars change the buckets.
+  goals: ['tasksDone', 'goals'] as const,
 };
 
 export function useMembers() {
@@ -170,6 +172,27 @@ export function useMoments(today: string) {
     queryFn: () => api.moments(today, dayKey(addDays(fromDayKey(today), 1))),
     refetchInterval: REFRESH_MS,
   });
+}
+
+/** Every kid's goals, being worked on and done. */
+export function useGoals() {
+  return useQuery({ queryKey: keys.goals, queryFn: api.goals, refetchInterval: REFRESH_MS });
+}
+
+/** The starter goals; they only change with the app. */
+export function useGoalLibrary() {
+  return useQuery({ queryKey: ['goalLibrary'], queryFn: api.goalLibrary, staleTime: Infinity });
+}
+
+/** Start a goal, mark it done, or remove it; each refreshes the goals and the buckets. */
+export function useGoalActions() {
+  const qc = useQueryClient();
+  const onSettled = () => qc.invalidateQueries({ queryKey: keys.tasksDone });
+  return {
+    start: useMutation({ mutationFn: api.startGoal, onSettled }),
+    finish: useMutation({ mutationFn: api.finishGoal, onSettled }),
+    remove: useMutation({ mutationFn: api.removeGoal, onSettled }),
+  };
 }
 
 /** Catch a moment, or take one back; both refresh the stickers and the buckets. */

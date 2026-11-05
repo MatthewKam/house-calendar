@@ -3,6 +3,26 @@ export type Stage = 'little' | 'early' | 'middle' | 'tween' | 'teen' | 'adult';
 /** The goal groups: body, feelings, thinking, helping others, looking after myself. */
 export type MomentKind = 'body' | 'feelings' | 'thinking' | 'helping' | 'myself';
 
+/** A starter goal from the library (server/goalLibrary.ts). */
+export interface GoalTemplate { key: string; title: string; emoji: string; kind: MomentKind; stages: Stage[] }
+
+/** A skill a kid is working on, or has got (server/goals.ts). Never late or behind: no deadline. */
+export interface Goal {
+  id: string;
+  memberId: string;
+  /** The starter goal it came from; null for a parent's own. */
+  libraryKey: string | null;
+  title: string;
+  emoji: string;
+  kind: MomentKind;
+  startedDay: string;
+  /** When a parent confirmed they got it; null while it's being worked on. */
+  doneDay: string | null;
+  note: string | null;
+  /** What it earned when done: 0 for a Little kid's sticker. */
+  stars: number;
+}
+
 /** Something good a parent caught a kid doing (server/moments.ts). */
 export interface Moment {
   id: string;

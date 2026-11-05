@@ -9,14 +9,17 @@ import {
 	useBuckets,
 	useMoments,
 	useMomentActions,
+	useGoals,
 } from "../lib/queries";
 import { taskProgress, tasksFor, percent } from "../lib/tasks";
-import type { Task, Member } from "../lib/types";
+import type { Task, Member, Goal } from "../lib/types";
 import KidHeader from "./KidHeader";
 import TodayList from "./TodayList";
 import TaskHistory from "./TaskHistory";
 import ConfirmDialog from "./ConfirmDialog";
 import MomentDialog from "./MomentDialog";
+import GoalsSheet from "./GoalsSheet";
+import GoalDoneDialog from "./GoalDoneDialog";
 import panel from "../styles/DayPanel.module.css";
 import s from "../styles/Tasks.module.css";
 
@@ -49,6 +52,10 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 	const momentActions = useMomentActions();
 	// The kid a moment is being caught for.
 	const [catching, setCatching] = useState<Member | null>(null);
+	const goals = useGoals().data ?? [];
+	// The kid whose goals sheet is open, and the goal being marked done.
+	const [goalsKid, setGoalsKid] = useState<Member | null>(null);
+	const [finishing, setFinishing] = useState<{ kid: Member; goal: Goal } | null>(null);
 	// Whose card is showing its history instead of today's list (one at a time).
 	const [historyKid, setHistoryKid] = useState<string | null>(null);
 	// Edit mode lists every task with edit and delete, and hides the tick buttons so nothing gets ticked by accident.
@@ -110,6 +117,9 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 									moments={moments.filter((mo) => mo.memberId === kid.id)}
 									onCatch={locked ? undefined : () => setCatching(kid)}
 									onRemoveMoment={locked ? undefined : (mo) => momentActions.remove.mutate(mo.id, { onError: (e) => alert(e.message) })}
+									goals={goals.filter((gl) => gl.memberId === kid.id && !gl.doneDay)}
+									onGoal={locked ? undefined : (goal) => setFinishing({ kid, goal })}
+									onGoals={locked ? undefined : () => setGoalsKid(kid)}
 								/>
 								{showHistory ? (
 									<TaskHistory kid={kid} tasks={mine} today={today} onEdit={locked ? undefined : onEdit} />
@@ -164,6 +174,13 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 				</ConfirmDialog>
 			)}
 			{catching && <MomentDialog kid={catching} today={today} onClose={() => setCatching(null)} />}
+			{goalsKid && (
+				<GoalsSheet kid={goalsKid} goals={goals.filter((gl) => gl.memberId === goalsKid.id)} today={today}
+					onClose={() => setGoalsKid(null)} />
+			)}
+			{finishing && (
+				<GoalDoneDialog kid={finishing.kid} goal={finishing.goal} today={today} onClose={() => setFinishing(null)} />
+			)}
 		</section>
 	);
 }

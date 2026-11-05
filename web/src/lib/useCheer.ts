@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { startOfWeek, fromDayKey } from './dates';
-import { useMoments, useRewardHistory, useTasks, useTasksDone } from './queries';
+import { useGoals, useMoments, useRewardHistory, useTasks, useTasksDone } from './queries';
 import { momentKind } from './moments';
 import { requiredDone } from './tasks';
 import type { Member } from './types';
@@ -110,6 +110,22 @@ export function useCheer(members: Member[], today: string) {
     setCheer({ names: [who.name], emoji: k.emoji, message: `${last.stars ? 'A star' : 'A sticker'} for ${k.cheer}!` });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moments.data]);
+
+  // Goals: one marked done since the last look (on any device) gets the biggest cheer.
+  const goals = useGoals();
+  const doneGoals = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (!goals.data) return;
+    const was = doneGoals.current;
+    doneGoals.current = new Set(goals.data.filter((g) => g.doneDay).map((g) => g.id));
+    if (!was) return;
+    const fresh = goals.data.filter((g) => g.doneDay && !was.has(g.id));
+    const last = fresh.at(-1);
+    const who = members.find((m) => m.id === last?.memberId);
+    if (!last || !who) return;
+    setCheer({ names: [who.name], emoji: last.emoji, message: `${last.title}! ${last.stars ? `${last.stars} stars!` : 'A big sticker!'}` });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [goals.data]);
 
   return { cheer, done: useCallback(() => setCheer(null), []) };
 }

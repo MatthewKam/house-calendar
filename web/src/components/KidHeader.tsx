@@ -1,9 +1,10 @@
 import { percent, type Progress } from "../lib/tasks";
 import { momentKind } from "../lib/moments";
-import type { Member, Moment } from "../lib/types";
+import type { Goal, Member, Moment } from "../lib/types";
 import { StarIcon } from "./icons";
 import s from "../styles/Tasks.module.css";
 import m from "../styles/Moments.module.css";
+import g from "../styles/Goals.module.css";
 
 interface Props {
 	kid: Member;
@@ -19,10 +20,16 @@ interface Props {
 	onCatch?: () => void;
 	/** Parents: take a moment back (tapped by mistake). */
 	onRemoveMoment?: (moment: Moment) => void;
+	/** Goals this kid is working on. */
+	goals: Goal[];
+	/** Parents: a goal tapped, to mark it done. */
+	onGoal?: (goal: Goal) => void;
+	/** Parents: open the kid's goals, to add or remove some. */
+	onGoals?: () => void;
 }
 
 /** The top of a kid's card: name and today's progress, and the stars in their bucket. */
-export default function KidHeader({ kid, progress: p, stars, showHistory, onHistory, moments, onCatch, onRemoveMoment }: Props) {
+export default function KidHeader({ kid, progress: p, stars, showHistory, onHistory, moments, onCatch, onRemoveMoment, goals, onGoal, onGoals }: Props) {
 	const pct = percent(p);
 	return (
 		<header className={s.kidHead}>
@@ -62,6 +69,29 @@ export default function KidHeader({ kid, progress: p, stars, showHistory, onHist
 					{onCatch && (
 						<button type="button" className={m.catch} onClick={onCatch}>
 							✨ Caught being good
+						</button>
+					)}
+				</div>
+			)}
+			{(goals.length > 0 || onGoals) && (
+				<div className={g.row} aria-label="Working on">
+					{goals.map((goal) =>
+						onGoal ? (
+							<button key={goal.id} type="button" className={g.goal} onClick={() => onGoal(goal)}
+								aria-label={`Working on: ${goal.title}. Tap when they've got it`}>
+								<span className={g.goalEmoji} aria-hidden="true">{goal.emoji}</span>
+								{goal.title}
+							</button>
+						) : (
+							<span key={goal.id} className={g.goal}>
+								<span className={g.goalEmoji} aria-hidden="true">{goal.emoji}</span>
+								{goal.title}
+							</span>
+						),
+					)}
+					{onGoals && (
+						<button type="button" className={g.goalsButton} onClick={onGoals}>
+							🎯 {goals.length ? "Goals" : "Add a goal"}
 						</button>
 					)}
 				</div>

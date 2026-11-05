@@ -9,6 +9,7 @@ import { applyPeople, forgetMember } from './people.ts';
 import { registerTasks } from './tasks.ts';
 import { registerRewards } from './rewards.ts';
 import { registerMoments } from './moments.ts';
+import { registerGoals } from './goals.ts';
 import { registerTravel, type Estimator } from './travel.ts';
 import { registerPlaces, type PlaceSearch } from './places.ts';
 import { registerWeather } from './weather.ts';
@@ -210,6 +211,7 @@ export function buildApp(db: DB, opts: {
   registerTasks(app, db);
   registerRewards(app, db);
   registerMoments(app, db);
+  registerGoals(app, db);
   registerTravel(app, db, opts.travel);
   registerPlaces(app, db, opts.places);
   registerWeather(app, db, opts.weatherFetch);

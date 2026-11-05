@@ -512,6 +512,24 @@ const migrations: string[] = [
   );
   CREATE INDEX moments_day ON moments(day);
   `,
+  // Goals (goals.ts): worked on from `started_day`, done when a parent confirms (`done_day`).
+  // `library_key`: the starter goal it came from (goalLibrary.ts), null for a parent's own.
+  `
+  CREATE TABLE goals (
+    id          TEXT PRIMARY KEY,
+    member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    library_key TEXT,
+    title       TEXT NOT NULL,
+    emoji       TEXT NOT NULL,
+    kind        TEXT NOT NULL CHECK (kind IN ('body','feelings','thinking','helping','myself')),
+    started_day TEXT NOT NULL,
+    done_day    TEXT,
+    note        TEXT,
+    stars       INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX goals_member ON goals(member_id);
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */
