@@ -56,9 +56,9 @@
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
-	/* A column per list, as many as fit, each up to 450px: two lists are two columns, with no empty ones. */
+	/* A column per list, as many as fit at 400–450px each; the next list wraps to a new row. No empty columns. */
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(18rem, 450px));
+	grid-template-columns: repeat(auto-fit, minmax(400px, 450px));
 	align-content: start;
 	gap: 0.75rem;
 }
