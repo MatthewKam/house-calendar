@@ -7,3 +7,8 @@ data/
 *.db
 *.db-*
 *.log
+
+# Private planning docs and brand work: kept on this computer, never pushed.
+CLAUDE.md
+docs/*.md
+docs/brand/
