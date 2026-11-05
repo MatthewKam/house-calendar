@@ -25,7 +25,7 @@
 .day:nth-child(7) {
 	border-radius: 0 var(--radius) var(--radius) 0;
 }
-/* Today: the same background, pressed in a little below the rest. */
+/* Today: a light green tint. */
 .today {
 	background-color: #38766a14;
 }

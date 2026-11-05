@@ -37,7 +37,7 @@
 	opacity: 0.45;
 	filter: saturate(0.4);
 }
-/* Today: the same background, pressed in; its number in a raised circle. */
+/* Today: a light green tint; its number in a raised circle. */
 .today {
 	background-color: #38766a14;
 }
