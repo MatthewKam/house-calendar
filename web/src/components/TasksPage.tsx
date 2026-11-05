@@ -133,7 +133,6 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 											onEdit={onEdit}
 											onDelete={setToDelete}
 											onReorder={reorderGroup}
-											onAddGoal={locked ? undefined : () => onAdd(kid.id, true)}
 										/>
 										{!editing && !locked && (
 											<button className={s.addText} onClick={() => onAdd(kid.id)}>

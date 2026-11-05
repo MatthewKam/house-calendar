@@ -19,8 +19,6 @@ interface Props {
 	onDelete: (task: Task) => void;
 	/** A group (one part of the day) was dragged into a new order. */
 	onReorder: (ids: string[]) => void;
-	/** Parents: add a goal for this kid (shown when they have none yet). */
-	onAddGoal?: () => void;
 }
 
 /** Required tasks by part of the day, then goals in their own section. */
@@ -33,7 +31,7 @@ const GROUPS: { label: string; has: (c: Task) => boolean }[] = [
  * A kid's tasks for today by part of the day, then their goals (ticked any day they do them, for
  * stars), or (editing) all of them, in order.
  */
-export default function TodayList({ kid, tasks, done, today, editing, onTick, onEdit, onDelete, onReorder, onAddGoal }: Props) {
+export default function TodayList({ kid, tasks, done, today, editing, onTick, onEdit, onDelete, onReorder }: Props) {
 	if (editing) {
 		// Drag a row by its handle to reorder it within its part of the day.
 		return (
@@ -94,14 +92,6 @@ export default function TodayList({ kid, tasks, done, today, editing, onTick, on
 				);
 			})}
 			{dueToday.length === 0 && <p className={s.none}>Nothing due today.</p>}
-			{onAddGoal && !dueToday.some((c) => !c.required) && (
-				<div className={s.timeGroup}>
-					<h3 className={s.timeHead}>Goals</h3>
-					<button className={s.addText} onClick={onAddGoal}>
-						+ Add a goal
-					</button>
-				</div>
-			)}
 		</>
 	);
 }
