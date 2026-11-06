@@ -46,7 +46,7 @@ const partOfDay = (iso: string) => {
 };
 
 /**
- * Kid mode's Today: the kid's events (and the whole family's) as big pictures, today first, with
+ * Kid mode's Today: the kid's own events as big pictures, today first, with
  * what's next picked out. Older kids see more days ahead.
  */
 export default function KidToday({ today, kid }: { today: string; kid: Member }) {
@@ -54,7 +54,8 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 	const from = useMemo(() => fromDayKey(today), [today]);
 	const events = useRangeEvents(from, days).data ?? [];
 	const now = Date.now();
-	const mine = events.filter((e) => !e.busy && (e.memberIds.length === 0 || e.memberIds.includes(kid.id)));
+	// Only the ones they're on (not ones for everyone or no one in particular).
+	const mine = events.filter((e) => !e.busy && e.memberIds.includes(kid.id));
 	const next = mine
 		.filter((e) => !e.allDay && Date.parse(e.end) > now)
 		.sort((a, b) => a.start.localeCompare(b.start))[0];
