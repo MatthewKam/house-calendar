@@ -69,7 +69,7 @@ export default function LeaveAlerts() {
 								{leaveNow ? "Time to leave" : `Leave in ${Math.max(1, Math.round((Date.parse(a.leaveAt) - now) / 60_000))} min`} for {a.title}
 							</div>
 							<div className={s.detail}>
-								{a.driveMinutes} min drive to arrive by {timeLabel(a.arriveBy)} · leave by {timeLabel(a.leaveAt)}
+								{a.driveMinutes} min drive, there 10 min before {timeLabel(a.arriveBy)} · leave by {timeLabel(a.leaveAt)}
 							</div>
 						</div>
 						<button className={s.ok} onClick={() => dismiss.mutate(a.id)}>

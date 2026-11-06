@@ -227,7 +227,7 @@ Lists can be hidden from the wall with **Choose lists** on the Lists page.
 ## Travel times
 
 Events with an address (iCloud's location, or the **Address** field on events added here) get a **Travel time**
-button: the drive from home with predicted traffic, and when to leave to arrive on time. From there,
+button: the drive from home with predicted traffic, and when to leave to be there 10 minutes early (for parking and walking in). From there,
 **Remind me** sets a "time to leave" alert on the wall (at leave time, or 10 or 15 minutes before), with a chime.
 Traffic is checked again about 30 minutes before leaving, and the alert moves if the drive got longer.
 

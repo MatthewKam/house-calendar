@@ -34,6 +34,8 @@ interface Props {
 }
 
 const isKid = (m: Member) => m.stage !== null && m.stage !== "adult";
+/** Be there this many minutes before it starts, for parking and walking in (as server/travel.ts plans). */
+const ARRIVE_EARLY_MINUTES = 10;
 
 /** "Good morning", "Good afternoon" or "Good evening". */
 function greeting(now: Date) {
@@ -93,7 +95,7 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 	const eventRow = (e: CalEvent, showLeave: boolean) => {
 		const people = who(e);
 		const drive = drives[e.id];
-		const leaveAt = showLeave && !e.allDay && drive ? new Date(Date.parse(e.start) - drive * 60_000) : null;
+		const leaveAt = showLeave && !e.allDay && drive ? new Date(Date.parse(e.start) - (drive + ARRIVE_EARLY_MINUTES) * 60_000) : null;
 		const soon = leaveAt && leaveAt.getTime() - now.getTime() < 30 * 60_000;
 		return (
 			<li key={e.id}>

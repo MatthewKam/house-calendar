@@ -68,11 +68,16 @@ function withinTime<T>(work: Promise<T>, ms = LOOKUP_MS): Promise<T> {
   ]).finally(() => clearTimeout(timer));
 }
 
-export async function planTrip(estimate: Estimator, origin: string, destination: string, arriveBy: Date | null, now = new Date()) {
-  if (!arriveBy || arriveBy <= now) {
+/** Minutes to be there before an event starts: parking and walking in. */
+export const ARRIVE_EARLY_MINUTES = 10;
+
+/** `start`: when the event starts; the plan gets there ARRIVE_EARLY_MINUTES before it. */
+export async function planTrip(estimate: Estimator, origin: string, destination: string, start: Date | null, now = new Date()) {
+  if (!start || start <= now) {
     const r = await estimate(origin, destination, now);
     return { minutes: Math.round(r.seconds / 60), meters: r.meters, leaveAt: null, late: false };
   }
+  const arriveBy = new Date(start.getTime() - ARRIVE_EARLY_MINUTES * 60_000);
   const first = await estimate(origin, destination, new Date(Math.max(now.getTime(), arriveBy.getTime() - 30 * 60_000)));
   const guess = new Date(arriveBy.getTime() - first.seconds * 1000);
   const final = guess > now ? await estimate(origin, destination, guess) : first;

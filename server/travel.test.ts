@@ -17,9 +17,10 @@ describe('planTrip', () => {
   it('works back from the arrival time using the traffic when you would leave', async () => {
     const calls: Date[] = [];
     const trip = await planTrip(traffic(calls), 'Home', 'Dentist', start, now);
-    // Leaving 30 min before (21:30) is rush hour: 40 min. Leaving at 21:20 is still rush hour: 40 min.
-    expect(calls.map((d) => d.toISOString())).toEqual(['2026-10-06T21:30:00.000Z', '2026-10-06T21:20:00.000Z']);
-    expect(trip).toEqual({ minutes: 40, meters: 16_000, leaveAt: '2026-10-06T21:20:00.000Z', late: false });
+    // There by 21:50, 10 min early. Leaving 30 min before that (21:20) is rush hour: 40 min. Leaving at
+    // 21:10 is still rush hour: 40 min.
+    expect(calls.map((d) => d.toISOString())).toEqual(['2026-10-06T21:20:00.000Z', '2026-10-06T21:10:00.000Z']);
+    expect(trip).toEqual({ minutes: 40, meters: 16_000, leaveAt: '2026-10-06T21:10:00.000Z', late: false });
   });
 
   it('says it is late when the leave time has passed, and just times the drive for all-day events', async () => {
@@ -71,7 +72,7 @@ describe('GET /api/events/:id/travel', () => {
     await app.inject({ method: 'PUT', url: '/api/settings/homeAddress', payload: { value: '1 Home Rd' } });
     const ok = JSON.parse((await app.inject({ url: `/api/events/${ev.id}/travel` })).body);
     expect(ok).toMatchObject({ minutes: 20, origin: '1 Home Rd', destination: '123 Main St', late: false });
-    expect(Date.parse(ok.leaveAt)).toBe(Date.parse('2099-01-01T09:40:00.000Z'));
+    expect(Date.parse(ok.leaveAt)).toBe(Date.parse('2099-01-01T09:30:00.000Z'));
   });
 
   it('reuses a recent answer instead of asking again', async () => {
@@ -97,11 +98,11 @@ describe('leave alerts', () => {
   it('sets an alert a chosen time before leaving, one per event, until dismissed', async () => {
     const { app, ev } = await setup(traffic());
     const alert = JSON.parse((await app.inject({ method: 'POST', url: '/api/alerts', payload: { eventId: ev.id, minutesBefore: 10 } })).body);
-    expect(alert).toMatchObject({ title: 'Dentist', driveMinutes: 20, leaveAt: '2099-01-01T09:40:00.000Z', remindAt: '2099-01-01T09:30:00.000Z' });
+    expect(alert).toMatchObject({ title: 'Dentist', driveMinutes: 20, leaveAt: '2099-01-01T09:30:00.000Z', remindAt: '2099-01-01T09:20:00.000Z' });
     // Setting another replaces it.
     await app.inject({ method: 'POST', url: '/api/alerts', payload: { eventId: ev.id, minutesBefore: 0 } });
     const list = JSON.parse((await app.inject({ url: '/api/alerts' })).body);
-    expect(list.map((a: any) => a.remindAt)).toEqual(['2099-01-01T09:40:00.000Z']);
+    expect(list.map((a: any) => a.remindAt)).toEqual(['2099-01-01T09:30:00.000Z']);
     await app.inject({ method: 'POST', url: `/api/alerts/${list[0].id}/dismiss` });
     expect(JSON.parse((await app.inject({ url: '/api/alerts' })).body)).toEqual([]);
   });
@@ -131,7 +132,7 @@ describe('leave alerts', () => {
     // 20 minutes before: traffic got worse, so leave and remind earlier.
     await travel.refreshSoon(new Date('2099-01-01T09:20:00.000Z'));
     expect(db.prepare('SELECT drive_minutes, leave_at, remind_at FROM leave_alerts').get())
-      .toEqual({ drive_minutes: 35, leave_at: '2099-01-01T09:25:00.000Z', remind_at: '2099-01-01T09:20:00.000Z' });
+      .toEqual({ drive_minutes: 35, leave_at: '2099-01-01T09:15:00.000Z', remind_at: '2099-01-01T09:10:00.000Z' });
     await app.close();
   });
 

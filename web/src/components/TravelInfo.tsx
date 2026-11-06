@@ -74,7 +74,7 @@ export default function TravelInfo({ event, showAddress = true, locked }: {
 							? "Leaving now"
 							: trip.late
 								? `Leave now: you needed to go at ${timeLabel(trip.leaveAt)}`
-								: `Leave by ${timeLabel(trip.leaveAt)} to arrive on time`}
+								: `Leave by ${timeLabel(trip.leaveAt)} to be there 10 min early`}
 					</div>
 				</div>
 			)}
