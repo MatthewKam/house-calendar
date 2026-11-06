@@ -18,7 +18,7 @@ import { textOn } from "../lib/color";
 import KidJars from "./KidJars";
 import KidToday from "./KidToday";
 import { RewardsIcon, TasksIcon, TodayIcon } from "./NavBar";
-import PinPad from "./PinPad";
+import PinPad, { pinSheet } from "./PinPad";
 import PottyCard from "./PottyCard";
 import { StarIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
@@ -286,7 +286,7 @@ export function GrownUpPin({ title, body, okLabel, onClose, onOk }: {
 	return (
 		<>
 			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<form className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-modal="true" aria-label={title} onSubmit={submit}>
+			<form className={`${sheet.sheet} ${sheet.confirm} ${pinSheet}`} role="dialog" aria-modal="true" aria-label={title} onSubmit={submit}>
 				<h2 className={sheet.heading}>{title}</h2>
 				<div className={sheet.body}>{body}</div>
 				<PinPad value={pin} onChange={setPin} onEnter={(typed) => submit(undefined, typed)} />

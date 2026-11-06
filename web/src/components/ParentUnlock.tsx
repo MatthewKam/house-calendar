@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useParent } from "../lib/useParent";
-import PinPad from "./PinPad";
+import PinPad, { pinSheet } from "./PinPad";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Rewards.module.css";
 
@@ -33,7 +33,7 @@ export default function ParentUnlock({ onClose, onDone }: { onClose: () => void;
 	return (
 		<>
 			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<form className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-modal="true" aria-label="Parent unlock" onSubmit={submit}>
+			<form className={`${sheet.sheet} ${sheet.confirm} ${pinSheet}`} role="dialog" aria-modal="true" aria-label="Parent unlock" onSubmit={submit}>
 				<h2 className={sheet.heading}>Guardians only</h2>
 				<div className={sheet.body}>
 					Unlock to add, change or delete events, tasks, jars, photos, lists and settings. It locks again after a few

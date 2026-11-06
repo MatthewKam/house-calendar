@@ -3,6 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import s from "../styles/PinPad.module.css";
 
+/** For the dialog the pad is in: on a phone on its side, the words and buttons go beside the pad. */
+export const pinSheet = s.sheet;
+
 /** Guardian PINs are 4 to 8 digits (server/hosted.ts). */
 const MAX = 8;
 const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "back"];
