@@ -262,14 +262,18 @@
 	border: 1px solid var(--line);
 	border-radius: 0.6rem;
 }
+/* Add: the list's color once there's something to add, gray until then. */
 .add button {
-	background: var(--accent);
+	background: var(--c, var(--accent));
 	color: var(--surface);
 	font-weight: 650;
 	padding: 0 1rem;
+	border-radius: 0.6rem;
 }
 .add button:disabled {
-	opacity: 0.4;
+	background: var(--line);
+	color: var(--muted);
+	cursor: default;
 }
 
 .add button.iconAdd {

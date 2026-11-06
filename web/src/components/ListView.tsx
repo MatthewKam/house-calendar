@@ -235,7 +235,7 @@ function ListCard({ list, members, color, onColor, order, onReorder }: CardProps
 				</button>
 			)}
 			{list.items.length === 0 && <p className={s.empty}>Nothing here.</p>}
-			<form className={s.add} onSubmit={submit}>
+			<form className={s.add} onSubmit={submit} style={{ "--c": color } as CSSProperties}>
 				<button
 					type="button"
 					className={`${s.iconSpot} ${s.iconAdd} ${newIcon === undefined && !typed.icon && addIcon ? s.suggested : ""} ${!addIcon ? s.noIcon : ""}`}
