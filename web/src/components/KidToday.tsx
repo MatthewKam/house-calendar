@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { addDays, dayKey, fromDayKey, timeLabel } from "../lib/dates";
+import { factFor } from "../lib/kidFacts";
 import { useRangeEvents } from "../lib/queries";
 import type { CalEvent, Member, Stage } from "../lib/types";
 import s from "../styles/KidMode.module.css";
@@ -76,7 +77,12 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 				return (
 					<section key={key} className={s.group} aria-label={label}>
 						<h2 className={s.groupHead}>{label}</h2>
-						{list.length === 0 && <p className={s.none}>Nothing on the calendar. 🌈</p>}
+						{list.length === 0 && (
+							<>
+								<p className={s.none}>Nothing on the calendar today. 🌈</p>
+								<FunFact day={today} />
+							</>
+						)}
 						<ul className={s.events}>
 							{list.map((e) => <KidEvent key={e.id} event={e} next={e === next} over={!e.allDay && Date.parse(e.end) <= now} />)}
 						</ul>
@@ -84,6 +90,33 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 				);
 			})}
 		</>
+	);
+}
+
+/** Something fun to know, for a day with nothing on: a big picture, and 🔊 reads it aloud. */
+function FunFact({ day }: { day: string }) {
+	const fact = factFor(day);
+	const speech = typeof window !== "undefined" && "speechSynthesis" in window ? window.speechSynthesis : null;
+	function say() {
+		if (!speech) return;
+		speech.cancel();
+		const words = new SpeechSynthesisUtterance(`Did you know? ${fact.text}`);
+		words.rate = 0.9;
+		speech.speak(words);
+	}
+	return (
+		<div className={s.fact}>
+			<span className={s.factPicture} aria-hidden="true">{fact.picture}</span>
+			<span className={s.factText}>
+				<span className={s.nextLabel}>Did you know?</span>
+				{fact.text}
+			</span>
+			{speech && (
+				<button type="button" className={s.factSay} onClick={say} aria-label="Read it to me">
+					<span aria-hidden="true">🔊</span>
+				</button>
+			)}
+		</div>
 	);
 }
 

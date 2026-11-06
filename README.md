@@ -356,7 +356,8 @@ alert opens Sprig on Lists (or Today). Kids' devices and the wall don't get aler
 - **Kid mode:** **Kid mode** in the bar on the left (in **More** on phones, or under your avatar) turns this device
   into one kid's screen, with its own tabs (down the left, or along the bottom on phones) and no settings:
   **📅 Today**, the events they're on (picked in **Who**) as big pictures with the next one picked out (today for Little,
-  today and tomorrow for Early, the week from Middle on); **⭐ Tasks**, their tasks and goals as big picture tiles
+  today and tomorrow for Early, the week from Middle on), and on a day with nothing on, a fun fact with a big
+  picture and 🔊 to hear it; **⭐ Tasks**, their tasks and goals as big picture tiles
   (tap again to untick), stars and stickers; and **🫙 Rewards**, their jars. Putting stars in jars asks for a guardian's PIN first. **All kids** switches between them on a shared tablet. To leave, hold the exit
   button in the corner for two seconds and type a guardian's PIN. A kid's own device (added by code) is always in kid mode;
   the PIN unlocks the whole app until it locks again.
