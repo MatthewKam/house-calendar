@@ -18,6 +18,8 @@ interface Props {
 	jars: Reward[];
 	/** Changing a jar, and a missed one's Add back and Remove (missing while the parent lock is on). */
 	onEdit?: (jar: Reward) => void;
+	/** Kid mode: a grown-up says OK (their PIN) before stars move, then `then` goes ahead. */
+	askFirst?: (then: () => void) => void;
 }
 
 /**
@@ -53,6 +55,7 @@ export default function KidJars({
 	bucket,
 	jars,
 	onEdit,
+	askFirst,
 }: Props) {
 	const { place, restore, remove } = useRewardActions();
 	const [stage, setStage] = useState<Stage | null>(null);
@@ -62,6 +65,7 @@ export default function KidJars({
 		deadline: string;
 	} | null>(null);
 	const [removing, setRemoving] = useState<Reward | null>(null);
+	const grownUp = (then: () => void) => (askFirst ? askFirst(then) : then());
 	// Parents only: the jar a kid's stars are being taken back out of, and how many of theirs are in it.
 
 
@@ -147,7 +151,7 @@ export default function KidJars({
 				) : (
 					filling.length > 0 &&
 					bucket > 0 && (
-						<button className={s.use} onClick={() => setStage({ counts: {} })}>
+						<button className={s.use} onClick={() => grownUp(() => setStage({ counts: {} }))}>
 							Use stars
 						</button>
 					)
@@ -182,12 +186,14 @@ export default function KidJars({
 								<button
 									className={s.quiet}
 									onClick={() =>
-										place.mutate({
-											memberId: kid.id,
-											today,
-											from: j.id,
-											places: [],
-										})
+										grownUp(() =>
+											place.mutate({
+												memberId: kid.id,
+												today,
+												from: j.id,
+												places: [],
+											}),
+										)
 									}
 								>
 									Back to my bucket
@@ -195,7 +201,7 @@ export default function KidJars({
 								{filling.length > 0 && (
 									<button
 										className={s.use}
-										onClick={() => setStage({ from: j, counts: {} })}
+										onClick={() => grownUp(() => setStage({ from: j, counts: {} }))}
 									>
 										Move to another jar
 									</button>

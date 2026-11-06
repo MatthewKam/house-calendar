@@ -52,7 +52,7 @@ import { useWakeLock } from "./lib/useWakeLock";
 import { useAutoLock, useParent } from "./lib/useParent";
 import ParentUnlock from "./components/ParentUnlock";
 import AccountSheet from "./components/AccountSheet";
-import KidMode, { KidExit, KidModeStart } from "./components/KidMode";
+import KidMode, { GrownUpPin, KidModeStart } from "./components/KidMode";
 import { useKidMode } from "./lib/useKidMode";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./lib/api";
@@ -389,11 +389,15 @@ export default function App() {
 		return (
 			<>
 				{/* Wait for the family, so it doesn't flash "No kids yet". */}
-				{members.length > 0 && <KidMode today={today} kids={kidView} members={members} onLeave={leaveKidMode} />}
+				{members.length > 0 && <KidMode today={today} kids={kidView} members={members} onLeave={leaveKidMode}
+					askPin={!!signedIn && signedIn.guardianPins > 0} />}
 				{leavingKidMode && (
-					<KidExit
+					<GrownUpPin
+						title="Leave kid mode"
+						body="Type a guardian's PIN to go back to the whole app."
+						okLabel="Leave"
 						onClose={() => setLeavingKidMode(false)}
-						onLeft={() => {
+						onOk={() => {
 							setLeavingKidMode(false);
 							setKidMode(null);
 						}}

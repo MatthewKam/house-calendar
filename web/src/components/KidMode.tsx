@@ -33,6 +33,8 @@ interface Props {
 	members: Member[];
 	/** The corner button was held: a grown-up wants out. */
 	onLeave: () => void;
+	/** Putting stars in jars needs a guardian's PIN first (false: there's no PIN to ask for). */
+	askPin: boolean;
 }
 
 /** Required tasks by part of the day, then goals: as on the Tasks page. */
@@ -47,7 +49,7 @@ const GROUPS: { label: string; has: (t: Task) => boolean }[] = [
  * Tapping a done task again unticks it, so nothing can go wrong. A grown-up holds the corner button
  * to leave.
  */
-export default function KidMode({ today, kids, members, onLeave }: Props) {
+export default function KidMode({ today, kids, members, onLeave, askPin }: Props) {
 	const [pickedId, setPickedId] = useState(kids[0]?.id ?? null);
 	const kid = kids.find((k) => k.id === pickedId) ?? kids[0];
 	const day = fromDayKey(today);
@@ -62,6 +64,9 @@ export default function KidMode({ today, kids, members, onLeave }: Props) {
 	const potty = usePotty().data ?? [];
 	// The tile just ticked, for its little pop.
 	const [popped, setPopped] = useState<string | null>(null);
+	// A grown-up typed their PIN so this kid can put stars in jars (until they switch kids or leave).
+	const [jarsFor, setJarsFor] = useState<string | null>(null);
+	const [asking, setAsking] = useState<(() => void) | null>(null);
 
 	if (!kid) {
 		return (
@@ -173,8 +178,22 @@ export default function KidMode({ today, kids, members, onLeave }: Props) {
 					today={today}
 					bucket={stars}
 					jars={jars.filter((j) => j.status !== "earned" && j.memberIds.includes(kid.id))}
+					askFirst={askPin && jarsFor !== kid.id ? (then) => setAsking(() => then) : undefined}
 				/>
 			</div>
+			{asking && (
+				<GrownUpPin
+					title="Ask a grown-up"
+					body="A grown-up types their PIN to put stars in jars."
+					okLabel="OK"
+					onClose={() => setAsking(null)}
+					onOk={() => {
+						setJarsFor(kid.id);
+						asking();
+						setAsking(null);
+					}}
+				/>
+			)}
 		</main>
 	);
 }
@@ -210,8 +229,14 @@ function LeaveButton({ onLeave }: { onLeave: () => void }) {
 	);
 }
 
-/** Leaving kid mode on a parent's device: any guardian's PIN (checked, nothing else changes). */
-export function KidExit({ onClose, onLeft }: { onClose: () => void; onLeft: () => void }) {
+/** A guardian's PIN, checked (nothing else changes): to leave kid mode, or let a kid put stars in jars. */
+export function GrownUpPin({ title, body, okLabel, onClose, onOk }: {
+	title: string;
+	body: string;
+	okLabel: string;
+	onClose: () => void;
+	onOk: () => void;
+}) {
 	const [pin, setPin] = useState("");
 	const check = useMutation({ mutationFn: api.checkPin, meta: { inline: true } });
 
@@ -223,22 +248,22 @@ export function KidExit({ onClose, onLeft }: { onClose: () => void; onLeft: () =
 
 	function submit(e: FormEvent) {
 		e.preventDefault();
-		check.mutate(pin, { onSuccess: onLeft, onError: () => setPin("") });
+		check.mutate(pin, { onSuccess: onOk, onError: () => setPin("") });
 	}
 
 	return (
 		<>
 			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<form className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-modal="true" aria-label="Leave kid mode" onSubmit={submit}>
-				<h2 className={sheet.heading}>Leave kid mode</h2>
-				<div className={sheet.body}>Type a guardian's PIN to go back to the whole app.</div>
+			<form className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-modal="true" aria-label={title} onSubmit={submit}>
+				<h2 className={sheet.heading}>{title}</h2>
+				<div className={sheet.body}>{body}</div>
 				<input className={r.pin} type="password" inputMode="numeric" autoComplete="off" placeholder="Guardian PIN"
 					aria-label="Guardian PIN" maxLength={12} value={pin} autoFocus onChange={(e) => setPin(e.target.value)} />
 				{check.isError && <div className={r.problem}>{check.error.message}</div>}
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />
-					<button type="button" className={sheet.secondary} onClick={onClose}>Stay</button>
-					<button type="submit" className={sheet.primary} disabled={!pin || check.isPending}>Leave</button>
+					<button type="button" className={sheet.secondary} onClick={onClose}>Cancel</button>
+					<button type="submit" className={sheet.primary} disabled={!pin || check.isPending}>{okLabel}</button>
 				</div>
 			</form>
 		</>
