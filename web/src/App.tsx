@@ -453,6 +453,7 @@ export default function App() {
 					phone={phoneBar}
 					center={<QuickAdd actions={quickActions} />}
 					onKidMode={kids.length ? () => setStartingKidMode(true) : undefined}
+					capture={parentLock.parent && captureOn ? { onSay: () => setCapture({}), onSnap: (photo) => setCapture({ photo }) } : undefined}
 					page={page}
 					settingsOpen={showMembers}
 					onPage={setPage}
