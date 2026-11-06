@@ -136,11 +136,6 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 				</div>
 			)}
 
-			{potty.some((c) => c.memberId === kid.id) && (
-				<PottyCard key={kid.id} kid={kid} chart={potty.find((c) => c.memberId === kid.id)!} canEdit
-					askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
-			)}
-
 			{GROUPS.map((g) => {
 				const group = dueToday.filter(g.has);
 				if (group.length === 0) return null;
@@ -168,6 +163,11 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 				);
 			})}
 			{dueToday.length === 0 && <p className={s.none}>Nothing to do today. Have fun! 🌈</p>}
+
+			{potty.some((c) => c.memberId === kid.id) && (
+				<PottyCard key={kid.id} kid={kid} chart={potty.find((c) => c.memberId === kid.id)!} canEdit
+					askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
+			)}
 
 			<div>
 				<KidJars
