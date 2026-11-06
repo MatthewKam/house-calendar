@@ -22,6 +22,7 @@ import { registerReminders } from './reminders.ts';
 import { registerLists } from './lists.ts';
 import { registerPush, type Pusher } from './push.ts';
 import { registerCapture, type Understand } from './capture.ts';
+import { registerLearn } from './learn.ts';
 import { registerEvents } from './events.ts';
 import { localDay, stageOf, STAGES } from './stages.ts';
 
@@ -235,6 +236,7 @@ export function buildApp(db: DB, opts: {
   registerLists(app, db);
   registerPush(app, db, opts.push);
   registerCapture(app, db, opts.understand);
+  registerLearn(app, db);
 
   // ---- Display settings (key/value, for things like UI scale) -------------
   app.get('/api/settings', async () => {

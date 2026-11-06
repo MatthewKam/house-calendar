@@ -324,6 +324,13 @@ describe('privacy', () => {
     expect((await wall.post('/api/push', sub('wall'))).status).toBe(403);
     // Saying and snapping are a grown-up's too.
     expect((await ipad.post('/api/capture', { text: 'Milk', timeZone: 'UTC' })).status).toBe(403);
+    // Learning: a guardian turns it on; Sam's device plays as Sam, and only Sam.
+    const today = new Date().toISOString().slice(0, 10);
+    expect((await ipad.put(`/api/learn/${id('Sam')}`, { today, enabled: true })).status).toBe(403);
+    expect((await alex.put(`/api/learn/${id('Sam')}`, { today, enabled: true })).body.enabled).toBe(true);
+    const played = { today, skill: 'counting', level: 1, rounds: 3, firstTry: 3 };
+    expect((await ipad.post(`/api/learn/${id('Sam')}/done`, played)).status).toBe(200);
+    expect((await ipad.post(`/api/learn/${id('Alex')}/done`, played)).status).toBe(403);
 
     // A kid's own device puts stars in jars only with a parent there.
     const place = await ipad.post('/api/rewards/place', { memberId: id('Sam'), today: '2099-01-01', places: [] });
