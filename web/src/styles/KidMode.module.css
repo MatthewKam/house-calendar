@@ -508,3 +508,21 @@
 		font-size: 1.15rem;
 	}
 }
+
+/* A phone on its side: four tabs down the left still fit. */
+@media (orientation: landscape) and (max-height: 500px) {
+	.kidNav {
+		gap: 0.3rem;
+		padding-top: max(0.5rem, env(safe-area-inset-top));
+		padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+	}
+	.kidTab {
+		min-height: 0;
+		flex: 1;
+		font-size: 0.9rem;
+	}
+	.kidTab svg {
+		width: 1.8rem;
+		height: 1.8rem;
+	}
+}

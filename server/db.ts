@@ -702,6 +702,34 @@ const migrations: string[] = [
   ALTER TABLE events ADD COLUMN photo_id TEXT REFERENCES photos(id) ON DELETE SET NULL;
   ALTER TABLE photos ADD COLUMN flyer INTEGER NOT NULL DEFAULT 0;
   `,
+  // Learning (learn.ts): on or off and leveling up per kid (a guardian's choice), each kid's level per
+  // skill, and the activities they've finished (the day's first earns its star).
+  `
+  CREATE TABLE learn_kids (
+    member_id  TEXT PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
+    enabled    INTEGER NOT NULL DEFAULT 0,
+    level_up   INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE TABLE learn_levels (
+    member_id  TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    skill      TEXT NOT NULL,
+    level      INTEGER NOT NULL,
+    PRIMARY KEY (member_id, skill)
+  );
+  CREATE TABLE learn_sessions (
+    id         TEXT PRIMARY KEY,
+    member_id  TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    day        TEXT NOT NULL,
+    skill      TEXT NOT NULL,
+    level      INTEGER NOT NULL,
+    rounds     INTEGER NOT NULL,
+    first_try  INTEGER NOT NULL,
+    stars      INTEGER NOT NULL DEFAULT 0,
+    done_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  -- At most one star a day.
+  CREATE UNIQUE INDEX learn_star_a_day ON learn_sessions(member_id, day) WHERE stars > 0;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

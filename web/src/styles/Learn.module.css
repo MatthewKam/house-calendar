@@ -1,0 +1,318 @@
+/* Kid mode's Learn tab (components/learn): one activity a day, big pictures in the kid's color (--c). */
+.start {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1rem;
+	padding: 1.5rem 1rem;
+	border-radius: 1.6rem;
+	background: var(--surface);
+	text-align: center;
+}
+.startPicture {
+	font-size: 7rem;
+	line-height: 1;
+}
+.startTitle {
+	margin: 0;
+	font-size: 1.8rem;
+}
+.go {
+	min-width: 13rem;
+	min-height: 4.4rem;
+	padding: 0 2rem;
+	border-radius: 999px;
+	background: var(--c, var(--accent));
+	color: var(--on, var(--surface));
+	font-size: 1.6rem;
+	font-weight: 800;
+}
+.quiet {
+	min-height: 3.2rem;
+	padding: 0 1.4rem;
+	border-radius: 999px;
+	border: 2px solid color-mix(in srgb, var(--c, var(--accent)) 50%, white);
+	background: var(--surface);
+	font-size: 1.15rem;
+	font-weight: 700;
+}
+.note {
+	margin: 0;
+	color: var(--muted);
+	font-size: 1.05rem;
+}
+
+/* An activity. */
+.board {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+.dots {
+	display: flex;
+	gap: 0.5rem;
+}
+.dot {
+	width: 1.1rem;
+	height: 1.1rem;
+	border-radius: 50%;
+	border: 3px solid var(--c, var(--accent));
+	box-sizing: border-box;
+}
+.dotOn {
+	background: var(--c, var(--accent));
+}
+.prompt {
+	margin: 0;
+	font-size: 1.7rem;
+	font-weight: 800;
+	text-align: center;
+	line-height: 1.25;
+	min-height: 2.2em;
+}
+.say {
+	margin: 0;
+	font-size: 3.6rem;
+	font-weight: 800;
+	text-align: center;
+	line-height: 1.1;
+	color: var(--c, var(--accent));
+}
+.hint {
+	margin: 0;
+	text-align: center;
+	color: var(--muted);
+	font-size: 1.1rem;
+	min-height: 1.4em;
+}
+.tiles {
+	display: grid;
+	grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+	gap: 0.9rem;
+}
+.tile {
+	min-height: 9rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.3rem;
+	padding: 0.5rem;
+	border-radius: 1.6rem;
+	border: 4px solid transparent;
+	background: var(--surface);
+	box-shadow: 0 0.4rem 1.2rem rgb(29 31 35 / 0.07);
+	font-size: 1.3rem;
+	font-weight: 700;
+}
+.tilePicture {
+	font-size: 5rem;
+	line-height: 1;
+}
+.tileRight {
+	border-color: var(--c, var(--accent));
+	background: color-mix(in srgb, var(--c, var(--accent)) 14%, var(--surface));
+}
+.letter {
+	font-size: 4.2rem;
+	font-weight: 800;
+	color: var(--c, var(--accent));
+}
+.numbers {
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	gap: 0.8rem;
+}
+.number {
+	width: 5.2rem;
+	height: 5.2rem;
+	border-radius: 1.3rem;
+	border: 4px solid var(--c, var(--accent));
+	background: var(--surface);
+	font-size: 2.4rem;
+	font-weight: 800;
+}
+/* Things to count, or a row of a pattern. */
+.things {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 1rem;
+	border-radius: 1.6rem;
+	background: var(--surface);
+}
+.thing {
+	position: relative;
+	width: 5.4rem;
+	height: 5.4rem;
+	display: grid;
+	place-items: center;
+	border-radius: 1.2rem;
+	background: color-mix(in srgb, var(--text) 4%, var(--surface));
+	font-size: 3.4rem;
+	line-height: 1;
+}
+.counted {
+	background: color-mix(in srgb, var(--c, var(--accent)) 16%, var(--surface));
+}
+.badge {
+	position: absolute;
+	top: -0.5rem;
+	right: -0.5rem;
+	width: 2.1rem;
+	height: 2.1rem;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	background: var(--c, var(--accent));
+	color: var(--on, var(--surface));
+	font-size: 1.1rem;
+	font-weight: 800;
+}
+.gap {
+	border: 3px dashed var(--c, var(--accent));
+	background: var(--surface);
+	font-size: 2.4rem;
+	font-weight: 800;
+	color: var(--c, var(--accent));
+}
+.sum {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.6rem;
+	font-size: 3rem;
+	font-weight: 800;
+	color: var(--c, var(--accent));
+}
+.group {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0.3rem;
+	max-width: 13rem;
+	padding: 0.7rem;
+	border-radius: 1.3rem;
+	background: var(--surface);
+	font-size: 2.6rem;
+	line-height: 1;
+}
+.next {
+	align-self: center;
+	min-width: 11rem;
+	min-height: 4rem;
+	border-radius: 999px;
+	background: var(--c, var(--accent));
+	color: var(--on, var(--surface));
+	font-size: 1.5rem;
+	font-weight: 800;
+}
+.nextSpace {
+	min-height: 4rem;
+	display: flex;
+	justify-content: center;
+}
+/* A picture story: one page at a time. */
+.page {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+.pageBody {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.8rem;
+	padding: 1.2rem;
+	border-radius: 1.8rem;
+	background: var(--surface);
+	text-align: center;
+}
+.pagePicture {
+	font-size: 9rem;
+	line-height: 1;
+	background: none;
+	border: none;
+	padding: 0;
+}
+.pageLine {
+	margin: 0;
+	font-size: 1.7rem;
+	font-weight: 800;
+}
+.arrow {
+	flex: none;
+	width: 4.4rem;
+	height: 4.4rem;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	background: var(--surface);
+	color: var(--text);
+}
+.arrowGo {
+	background: var(--c, var(--accent));
+	color: var(--on, var(--surface));
+}
+.arrow svg {
+	width: 2rem;
+	height: 2rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.6;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.arrow:disabled {
+	opacity: 0.35;
+}
+
+.yes {
+	animation: yes 0.45s ease;
+}
+@keyframes yes {
+	45% { transform: translateY(-0.8rem) scale(1.06); }
+}
+.nope {
+	animation: nope 0.4s ease;
+}
+@keyframes nope {
+	25%, 75% { transform: translateX(-0.4rem); }
+	50% { transform: translateX(0.4rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.yes,
+	.nope {
+		animation: none;
+	}
+}
+@media (max-width: 700px) {
+	.tile {
+		min-height: 7rem;
+	}
+	.tilePicture {
+		font-size: 3.6rem;
+	}
+	.prompt {
+		font-size: 1.35rem;
+	}
+	.thing {
+		width: 4.2rem;
+		height: 4.2rem;
+		font-size: 2.6rem;
+	}
+	.pagePicture {
+		font-size: 6rem;
+	}
+}

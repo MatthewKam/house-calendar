@@ -4,6 +4,7 @@ import { fromDayKey, startOfWeek } from "../lib/dates";
 import { api } from "../lib/api";
 import {
 	useBuckets,
+	useLearn,
 	useMoments,
 	usePotty,
 	useRewards,
@@ -17,6 +18,7 @@ import type { Member, Task } from "../lib/types";
 import { textOn } from "../lib/color";
 import KidJars from "./KidJars";
 import KidToday from "./KidToday";
+import LearnTab from "./learn/LearnTab";
 import { RewardsIcon, TasksIcon, TodayIcon } from "./NavBar";
 import PinPad, { pinSheet } from "./PinPad";
 import PottyCard from "./PottyCard";
@@ -44,24 +46,36 @@ const GROUPS: { label: string; has: (t: Task) => boolean }[] = [
 	{ label: "Goals", has: (c: Task) => !c.required },
 ];
 
-/** Kid mode's own tabs, with the main nav's icons. */
-type KidTab = "today" | "tasks" | "rewards";
+/** Learn: a lightbulb, drawn like the main nav's icons. */
+const LearnIcon = () => (
+	<svg viewBox="0 0 24 24" aria-hidden="true">
+		<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z" />
+	</svg>
+);
+
+/** Kid mode's own tabs, with the main nav's icons. Learn shows once a guardian turns it on. */
+type KidTab = "today" | "tasks" | "learn" | "rewards";
 const TABS: { id: KidTab; Icon: () => ReactNode; label: string }[] = [
 	{ id: "today", Icon: TodayIcon, label: "Today" },
 	{ id: "tasks", Icon: TasksIcon, label: "Tasks" },
+	{ id: "learn", Icon: LearnIcon, label: "Learn" },
 	{ id: "rewards", Icon: RewardsIcon, label: "Rewards" },
 ];
 
 /**
  * Kid mode: one kid's world as big pictures (ages 2–6 first), with its own tabs. Today: their
  * calendar (more days as they grow). Tasks: their tasks and goals to tap, and today's stickers.
- * Rewards: their stars and jars. No settings or anyone else's things. Tapping a done task again
+ * Learn (when it's on): the day's activity. Rewards: their stars and jars. No settings or anyone else's things. Tapping a done task again
  * unticks it, so nothing can go wrong. A grown-up holds the corner button to leave.
  */
 export default function KidMode({ today, kids, members, onLeave, askPin }: Props) {
 	const [pickedId, setPickedId] = useState(kids[0]?.id ?? null);
 	const kid = kids.find((k) => k.id === pickedId) ?? kids[0];
-	const [tab, setTab] = useState<KidTab>("today");
+	const [picked, setTab] = useState<KidTab>("today");
+	const learning = useLearn(today).data?.find((l) => l.memberId === kid?.id && l.enabled);
+	const tabs = TABS.filter((t) => t.id !== "learn" || learning);
+	// Learn for a kid without it (switched kids): back to Today.
+	const tab = tabs.some((t) => t.id === picked) ? picked : "today";
 	const day = fromDayKey(today);
 	const thisWeek = useMemo(() => startOfWeek(day), [today]); // eslint-disable-line react-hooks/exhaustive-deps
 	const tasks = useTasks().data ?? [];
@@ -133,7 +147,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 		return (
 			<div className={s.shell} style={{ "--c": kid.color, "--on": textOn(kid.color), "--p": `${pct}%` } as CSSProperties}>
 			<nav className={s.kidNav} aria-label="Kid mode">
-				{TABS.map((t) => (
+				{tabs.map((t) => (
 					<button key={t.id} type="button" className={s.kidTab} aria-current={tab === t.id ? "page" : undefined}
 						onClick={() => setTab(t.id)}>
 						<t.Icon />
@@ -193,6 +207,8 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 					);
 				})}
 				{tab === "tasks" && dueToday.length === 0 && <p className={s.none}>Nothing to do today. Have fun! 🌈</p>}
+
+				{tab === "learn" && learning && <LearnTab key={kid.id} kid={kid} today={today} learn={learning} />}
 
 				{tab === "rewards" && (
 					<KidJars

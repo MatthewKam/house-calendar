@@ -45,6 +45,8 @@ export function bucket(db: DB, memberId: string) {
     + (SELECT COALESCE(SUM(stars), 0) FROM moments WHERE member_id = @m)
     -- Goals done before goals became daily (now they're ticked like tasks).
     + (SELECT COALESCE(SUM(stars), 0) FROM goals WHERE member_id = @m)
+    -- Learning: the day's finished activity.
+    + (SELECT COALESCE(SUM(stars), 0) FROM learn_sessions WHERE member_id = @m)
     -- Potty charts: a star for each full row.
     + (SELECT COUNT(*) FROM (SELECT 1 FROM potty_punches WHERE member_id = @m GROUP BY card_id, step HAVING COUNT(*) >= ${ROW_PUNCHES}))
     - (SELECT COALESCE(SUM(stars), 0) FROM jar_stars WHERE member_id = @m) AS n`).get({ m: memberId }) as { n: number }).n;
