@@ -222,9 +222,10 @@ function LeaveButton({ onLeave }: { onLeave: () => void }) {
 			onKeyDown={(e) => e.key === "Enter" && !e.repeat && start()} onKeyUp={stop}
 			style={{ "--hold": `${HOLD_MS}ms` } as CSSProperties}>
 			<svg viewBox="0 0 24 24" aria-hidden="true">
-				{/* An open door with an arrow out. */}
-				<path d="M13 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h7" />
-				<path d="M10 12h10M17 9l3 3-3 3" />
+				{/* A door: its frame, the door standing ajar, and the knob. */}
+				<path d="M4 21h16M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17" />
+				<path d="M6 3.2l7 2.3v15.5" />
+				<circle cx="11" cy="12.5" r="0.9" fill="currentColor" stroke="none" />
 			</svg>
 		</button>
 	);
