@@ -17,6 +17,7 @@ import type { Member, Task } from "../lib/types";
 import { textOn } from "../lib/color";
 import KidJars from "./KidJars";
 import KidToday from "./KidToday";
+import PinPad from "./PinPad";
 import PottyCard from "./PottyCard";
 import { StarIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
@@ -276,9 +277,9 @@ export function GrownUpPin({ title, body, okLabel, onClose, onOk }: {
 		return () => window.removeEventListener("keydown", onKey);
 	}, [onClose]);
 
-	function submit(e: FormEvent) {
-		e.preventDefault();
-		check.mutate(pin, { onSuccess: onOk, onError: () => setPin("") });
+	function submit(e?: FormEvent) {
+		e?.preventDefault();
+		if (pin && !check.isPending) check.mutate(pin, { onSuccess: onOk, onError: () => setPin("") });
 	}
 
 	return (
@@ -287,8 +288,7 @@ export function GrownUpPin({ title, body, okLabel, onClose, onOk }: {
 			<form className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-modal="true" aria-label={title} onSubmit={submit}>
 				<h2 className={sheet.heading}>{title}</h2>
 				<div className={sheet.body}>{body}</div>
-				<input className={r.pin} type="password" inputMode="numeric" autoComplete="off" placeholder="Guardian PIN"
-					aria-label="Guardian PIN" maxLength={12} value={pin} autoFocus onChange={(e) => setPin(e.target.value)} />
+				<PinPad value={pin} onChange={setPin} onEnter={submit} />
 				{check.isError && <div className={r.problem}>{check.error.message}</div>}
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />
