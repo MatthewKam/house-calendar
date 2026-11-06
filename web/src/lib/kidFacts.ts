@@ -1,5 +1,5 @@
 // Fun facts for kid mode's Today when nothing's on: a big picture and one short sentence a grown-up
-// (or the 🔊 button) can read aloud. Written here, not fetched, so every one suits a 2-year-old.
+// can read aloud. Written here, not fetched, so every one suits a 2-year-old.
 
 export interface KidFact { picture: string; text: string }
 

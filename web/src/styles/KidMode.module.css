@@ -477,7 +477,7 @@
 	white-space: nowrap;
 }
 
-/* A fun fact on a day with nothing on: a big picture, the fact, and a button that reads it aloud. */
+/* A fun fact on a day with nothing on: a big picture and the fact. */
 .fact {
 	display: flex;
 	align-items: center;
@@ -499,17 +499,6 @@
 	gap: 0.2rem;
 	font-size: 1.35rem;
 	font-weight: 650;
-}
-.factSay {
-	flex: none;
-	width: 4.2rem;
-	height: 4.2rem;
-	border-radius: 50%;
-	background: var(--c);
-	color: var(--on);
-	font-size: 2rem;
-	display: grid;
-	place-items: center;
 }
 @media (max-width: 700px) {
 	.factPicture {
