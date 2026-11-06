@@ -16,11 +16,13 @@ const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "back"];
  * length, there's a dot for each digit and it's checked as the last one goes in. `error`: what was
  * wrong with the last try ("Wrong PIN"), shown under the dots (with a shake) until typing starts again.
  */
-export default function PinPad({ value, onChange, onEnter, error }: {
+export default function PinPad({ value, onChange, onEnter, error, done = "OK" }: {
 	value: string;
 	onChange: (pin: string) => void;
 	onEnter: (pin: string) => void;
 	error?: string | null;
+	/** The dialog's button that checks it, for the hint when the PIN's length isn't known. */
+	done?: string;
 }) {
 	// Each new error shakes the dots once.
 	const [shakes, setShakes] = useState(0);
@@ -30,8 +32,16 @@ export default function PinPad({ value, onChange, onEnter, error }: {
 	const status = useQuery({ queryKey: ["auth"], queryFn: api.authStatus }).data;
 	const length = status?.signedIn ? status.pinLength : null;
 	const max = length ?? MAX;
+	// Tried to type past the longest a PIN can be.
+	const [tooLong, setTooLong] = useState(false);
+	useEffect(() => {
+		if (value.length < max) setTooLong(false);
+	}, [value, max]);
 	function type(digit: string) {
-		if (value.length >= max) return;
+		if (value.length >= max) {
+			if (!length) setTooLong(true);
+			return;
+		}
 		const next = value + digit;
 		onChange(next);
 		if (next.length === length) onEnter(next);
@@ -61,6 +71,12 @@ export default function PinPad({ value, onChange, onEnter, error }: {
 				))}
 			</div>
 			{error && !value && <p className={s.error} role="alert">{error}</p>}
+			{tooLong ? (
+				<p className={s.error} role="alert">PINs are 4 to 8 digits</p>
+			) : (
+				// Not knowing how long the PIN is, it can't check by itself (it learns once one is right).
+				!length && value.length >= 4 && <p className={s.hint}>Then tap {done}</p>
+			)}
 			<div className={s.keys}>
 				{KEYS.map((k, i) =>
 					k === "" ? (
@@ -73,7 +89,7 @@ export default function PinPad({ value, onChange, onEnter, error }: {
 							</svg>
 						</button>
 					) : (
-						<button key={i} type="button" className={s.key} disabled={value.length >= max} onClick={() => type(k)}>
+						<button key={i} type="button" className={s.key} disabled={!!length && value.length >= max} onClick={() => type(k)}>
 							{k}
 						</button>
 					),

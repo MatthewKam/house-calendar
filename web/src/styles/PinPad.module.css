@@ -28,6 +28,10 @@
 	color: #b42318;
 	font-weight: 600;
 }
+.hint {
+	margin: -0.4rem 0 0;
+	color: var(--muted);
+}
 .shake {
 	animation: shake 0.4s ease-in-out;
 }

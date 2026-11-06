@@ -38,7 +38,7 @@ export default function ParentUnlock({ onClose, onDone }: { onClose: () => void;
 					Unlock to add, change or delete events, tasks, jars, photos, lists and settings. It locks again after a few
 					minutes, or when the screen saver comes on.
 				</div>
-				<PinPad value={pin} onChange={setPin} onEnter={(typed) => submit(undefined, typed)} error={unlock.error?.message} />
+				<PinPad value={pin} onChange={setPin} onEnter={(typed) => submit(undefined, typed)} error={unlock.error?.message} done="Unlock" />
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />
 					<button type="button" className={sheet.secondary} onClick={onClose}>
