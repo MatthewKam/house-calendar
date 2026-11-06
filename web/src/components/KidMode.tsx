@@ -158,7 +158,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 				<div className={s.hero}>
 					{/* Daily tasks: how far through today's required ones. */}
 					<div className={s.stat}>
-						<span className={s.statLabel}>✅ Daily tasks</span>
+						<span className={s.statLabel}>Daily tasks</span>
 						<div className={s.heroRow}>
 							<span className={s.bar} aria-hidden="true"><span /></span>
 							<span className={s.statValue}>{!p ? "None today" : pct === 100 ? "All done! 🎉" : `${p.done} of ${p.due} done`}</span>
@@ -166,7 +166,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 					</div>
 					{/* Stars: what's in their bucket to put in jars. */}
 					<div className={s.stat}>
-						<span className={s.statLabel}>⭐ Stars to spend</span>
+						<span className={s.statLabel}>Stars to spend</span>
 						<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
 							<StarIcon className={s.star} /> {stars}
 						</span>
