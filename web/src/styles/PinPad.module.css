@@ -61,11 +61,12 @@
 @media (max-height: 500px) {
 	.sheet.sheet {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-columns: minmax(10rem, 14rem) auto;
 		/* The title, the words, any problem, then the buttons at the bottom. */
 		grid-template-rows: auto auto 1fr auto;
-		column-gap: 1.75rem;
-		width: min(40rem, 94vw);
+		column-gap: 1.5rem;
+		width: auto;
+		max-width: 94vw;
 	}
 	.sheet > :not(.pad) {
 		grid-column: 1;
