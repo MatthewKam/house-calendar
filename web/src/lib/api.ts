@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility, SprigList, SprigItem } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, {
@@ -161,6 +161,16 @@ export const api = {
   addReminder: (list: string, title: string) => call<{ lists: ReminderList[] }>('POST', '/api/reminders', { list, title }),
   setReminderDone: (id: string, done: boolean) => call<{ lists: ReminderList[] }>('PATCH', `/api/reminders/${id}`, { done }),
   renameReminder: (id: string, title: string) => call<{ lists: ReminderList[] }>('PATCH', `/api/reminders/${id}`, { title }),
+  lists: () => call<SprigList[]>('GET', '/api/lists'),
+  addList: (title: string) => call<SprigList[]>('POST', '/api/lists', { title }),
+  renameList: (id: string, title: string) => call<SprigList[]>('PATCH', `/api/lists/${id}`, { title }),
+  deleteList: (id: string) => call<SprigList[]>('DELETE', `/api/lists/${id}`),
+  clearDone: (id: string) => call<SprigList[]>('DELETE', `/api/lists/${id}/done`),
+  addListItem: (listId: string, item: { title: string; due?: string | null; memberId?: string | null }) =>
+    call<SprigList[]>('POST', `/api/lists/${listId}/items`, item),
+  updateListItem: (id: string, patch: Partial<Pick<SprigItem, 'title' | 'done' | 'due' | 'memberId'>>) =>
+    call<SprigList[]>('PATCH', `/api/lists/items/${id}`, patch),
+  deleteListItem: (id: string) => call<SprigList[]>('DELETE', `/api/lists/items/${id}`),
 
   settings: () => call<Record<string, unknown>>('GET', '/api/settings'),
   setSetting: (key: string, value: unknown) => call('PUT', `/api/settings/${key}`, { value }),

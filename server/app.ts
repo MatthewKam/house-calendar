@@ -19,6 +19,7 @@ import { registerDaily } from './daily.ts';
 import { registerGuard } from './auth.ts';
 import { registerPrivacyGuard, VISIBILITIES, type Visibility } from './privacy.ts';
 import { registerReminders } from './reminders.ts';
+import { registerLists } from './lists.ts';
 import { registerEvents } from './events.ts';
 import { localDay, stageOf, STAGES } from './stages.ts';
 
@@ -225,6 +226,7 @@ export function buildApp(db: DB, opts: {
   registerDaily(app, db, opts.dailyFetch);
   if (opts.photosDir) registerPhotos(app, db, opts.photosDir);
   registerReminders(app, db, opts.remindersToken, opts.onRemindersChanged);
+  registerLists(app, db);
 
   // ---- Display settings (key/value, for things like UI scale) -------------
   app.get('/api/settings', async () => {

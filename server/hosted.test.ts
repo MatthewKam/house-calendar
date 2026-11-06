@@ -300,6 +300,15 @@ describe('privacy', () => {
     expect((await alex.put(`/api/events/${work.id}/visibility`, { visibility: null })).body.visibility).toBe('everyone');
     expect(await seen(wall)).toEqual(['Work call', 'Park']);
 
+    // Lists: a kid adds and ticks, but naming and the when and who are a parent's.
+    const groceries = (await alex.post('/api/lists', { title: 'Groceries' })).body[0];
+    expect((await ipad.post('/api/lists', { title: 'Mine' })).status).toBe(403);
+    const milk = (await ipad.post(`/api/lists/${groceries.id}/items`, { title: 'Milk' })).body[0].items[0];
+    expect((await ipad.patch(`/api/lists/items/${milk.id}`, { done: true })).status).toBe(200);
+    expect((await ipad.patch(`/api/lists/items/${milk.id}`, { title: 'Chocolate milk' })).status).toBe(403);
+    expect((await ipad.patch(`/api/lists/items/${milk.id}`, { due: '2099-01-01' })).status).toBe(403);
+    expect((await ipad.del(`/api/lists/items/${milk.id}`)).status).toBe(403);
+
     // A kid's own device puts stars in jars only with a parent there.
     const place = await ipad.post('/api/rewards/place', { memberId: id('Sam'), today: '2099-01-01', places: [] });
     expect(place).toMatchObject({ status: 403, body: { locked: true } });

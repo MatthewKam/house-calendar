@@ -5,6 +5,7 @@ import {
 	useMoments,
 	useOutbox,
 	useRangeEvents,
+	useLists,
 	useReminders,
 	useRewardHistory,
 	useTasks,
@@ -13,6 +14,7 @@ import {
 	useWeather,
 } from "../lib/queries";
 import { momentKind } from "../lib/moments";
+import { dueLabel, isDue, isLate } from "../lib/lists";
 import { percent, taskProgress, tasksFor } from "../lib/tasks";
 import type { CalEvent, Member } from "../lib/types";
 import type { Page } from "./NavBar";
@@ -75,9 +77,13 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 	// Needs you: only what's waiting.
 	const outbox = useOutbox().data;
 	const toHandOver = (useRewardHistory().data ?? []).filter((w) => !w.givenAt && !w.missedOn);
-	const lists = (useReminders().data?.lists ?? []).map((l) => ({ title: l.title, open: l.items.filter((i) => !i.done).length })).filter((l) => l.open > 0);
+	const own = useLists().data ?? [];
+	// Reminders due now (or late) on Sprig's lists, for me or for anyone.
+	const due = own.flatMap((l) => l.items.filter((i) => !i.done && i.due && isDue(i.due, now) && (!me || !i.memberId || i.memberId === me)));
+	const lists = [...own, ...(useReminders().data?.lists ?? [])]
+		.map((l) => ({ title: l.title, open: l.items.filter((i) => !i.done).length })).filter((l) => l.open > 0);
 	const clashes = outbox?.conflicts.length ?? 0;
-	const needs = clashes + toHandOver.length + lists.length;
+	const needs = clashes + toHandOver.length + due.length + lists.length;
 
 	const who = (e: CalEvent) =>
 		e.memberIds.length === 0 ? [] : members.filter((m) => e.memberIds.includes(m.id));
@@ -197,6 +203,17 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 									<button type="button" className={s.need} onClick={() => onPage("rewards")}>
 										<span aria-hidden="true">🎁</span>
 										{w.title} is earned: hand it over
+									</button>
+								</li>
+							))}
+							{due.map((i) => (
+								<li key={i.id}>
+									<button type="button" className={s.need} onClick={() => onPage("lists")}>
+										<span aria-hidden="true">⏰</span>
+										<span className={s.needText}>
+											{i.title}
+											<span className={isLate(i.due!, now) ? s.late : s.dueWhen}>{dueLabel(i.due!, now)}</span>
+										</span>
 									</button>
 								</li>
 							))}

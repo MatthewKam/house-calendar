@@ -66,6 +66,9 @@ const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean]
   ['PATCH', '/api/photos/:id'], ['DELETE', '/api/photos/:id'], ['POST', '/api/photos/slideshow'], ['POST', '/api/photos/delete'],
   // Ticking a list item is fine; renaming it (or its icon) isn't.
   ['PATCH', '/api/reminders/:id', (req) => req.body?.title !== undefined],
+  // Sprig's own lists: adding and ticking are anyone's; the rest is a parent's.
+  ['POST', '/api/lists'], ['PATCH', '/api/lists/:id'], ['DELETE', '/api/lists/:id'], ['DELETE', '/api/lists/items/:id'],
+  ['PATCH', '/api/lists/items/:id', (req) => Object.keys(req.body ?? {}).some((k) => k !== 'done')],
 ];
 const needsParent = (req: Req) =>
   PARENT_ONLY.some(([method, route, when]) => req.method === method && req.routeOptions.url === route && (!when || when(req)));

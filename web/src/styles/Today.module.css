@@ -218,3 +218,20 @@ details > summary.cardHead {
 	background: var(--bg);
 	font-weight: 600;
 }
+
+/* A reminder that's due: its name, then when (red once it's late). */
+.needText {
+	display: flex;
+	flex-direction: column;
+}
+.needText .dueWhen,
+.needText .late {
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+.needText .dueWhen {
+	color: var(--muted);
+}
+.needText .late {
+	color: #b42318;
+}

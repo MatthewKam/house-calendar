@@ -272,7 +272,11 @@ home screen from that address; it works at home and away.
   Tasks), with **✨ Caught being good**. **Needs you** appears when something's waiting: a calendar change that
   clashes, a reward to hand over, or items on a list. The rest of the family's day is folded at the bottom.
 - **Month / Week:** switch views at the top left. ‹ › move by a month or a week.
-- **Lists:** the **Lists** page in the left bar (address ends in `#lists`) shows your iCloud Reminders (see "Connect Reminders").
+- **Lists:** the **Lists** page in the left bar (address ends in `#lists`) has the family's own lists, kept in
+  Sprig (**+ New list**: groceries, to-dos, packing), and your iCloud Reminders if they're connected (see "Connect
+  Reminders"). Anyone adds items and ticks them off. On Sprig's lists a parent's **⋯** on an item gives it a day
+  (and a time, if it matters) and who it's for: once it's due it shows under **Needs you** on Today, in red when
+  late. **⋯** by a list's name renames or deletes it, and **Clear done** takes ticked items off.
   Each list's items are shown in its color; tap the dot by a list's name to pick another. Drag an item by its ⋮⋮ to
   put it in order of importance (the color and order are kept on the wall; Reminders on the phones keeps its own order).
   Tap the spot before an item to give it an icon (search or **Show more** for every icon); it's added to the start of

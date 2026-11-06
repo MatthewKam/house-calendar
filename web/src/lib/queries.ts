@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClie
 import { api } from './api';
 import { addDays, dayKey, fromDayKey } from './dates';
 import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, RewardInput, CalEvent, Reward, RewardWin, Bucket, StarPlacing,
-  ReminderList, Photo, LeaveAlert, OutboxStatus, PottyChart, Visibility } from './types';
+  ReminderList, Photo, LeaveAlert, OutboxStatus, PottyChart, Visibility, SprigList, SprigItem } from './types';
 
 // ---- Edits show straight away ---------------------------------------------------------------
 // Every edit changes what's on screen first (the cached data), then saves in the background. If
@@ -345,6 +345,44 @@ export function useChangeReminders() {
       onError: putBack(qc),
       onSuccess: replace,
     }),
+  };
+}
+
+/** Sprig's own lists. */
+export function useLists() {
+  return useQuery({ queryKey: ['lists'], queryFn: api.lists, refetchInterval: 30_000 });
+}
+
+/**
+ * Changing Sprig's lists: each answer is every list, which replaces the cache. Adding and ticking
+ * show straight away.
+ */
+export function useListActions() {
+  const qc = useQueryClient();
+  const key = ['lists'];
+  const replace = (lists: SprigList[]) => qc.setQueryData(key, lists);
+  const items = (apply: (l: SprigList) => SprigList): Patch => ({ key, apply: (lists: SprigList[]) => lists.map(apply) });
+  const plain = <V>(mutationFn: (v: V) => Promise<SprigList[]>) => useMutation({ mutationFn, onSuccess: replace });
+  return {
+    addList: plain(api.addList),
+    renameList: plain(({ id, title }: { id: string; title: string }) => api.renameList(id, title)),
+    deleteList: plain(api.deleteList),
+    clearDone: plain(api.clearDone),
+    add: useMutation({
+      mutationFn: ({ listId, ...item }: { listId: string; title: string; due?: string | null; memberId?: string | null }) => api.addListItem(listId, item),
+      onMutate: ({ listId, title, due = null, memberId = null }) => showNow(qc, [items((l) => (l.id === listId
+        ? { ...l, items: [...l.items.filter((i) => !i.done), { id: newId('item'), title, done: false, due, memberId, doneAt: null }, ...l.items.filter((i) => i.done)] }
+        : l))]),
+      onError: putBack(qc),
+      onSuccess: replace,
+    }),
+    update: useMutation({
+      mutationFn: ({ id, ...patch }: { id: string } & Partial<Pick<SprigItem, 'title' | 'done' | 'due' | 'memberId'>>) => api.updateListItem(id, patch),
+      onMutate: ({ id, ...patch }) => showNow(qc, [items((l) => ({ ...l, items: l.items.map((i) => (i.id === id ? { ...i, ...patch } : i)) }))]),
+      onError: putBack(qc),
+      onSuccess: replace,
+    }),
+    remove: plain(api.deleteListItem),
   };
 }
 

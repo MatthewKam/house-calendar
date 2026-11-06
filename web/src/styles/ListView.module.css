@@ -237,6 +237,8 @@
 }
 .text {
 	flex: 1;
+	display: flex;
+	flex-direction: column;
 	overflow-wrap: anywhere;
 }
 .pending {
@@ -331,4 +333,72 @@
 .iconSpot:disabled:hover {
 	background: none;
 	box-shadow: none;
+}
+
+/* Sprig's own lists: + New list in the page head, ⋯ for a list or an item, when and who under an
+   item's name, and Clear done. */
+.spacer {
+	flex: 1;
+}
+.more {
+	flex: none;
+	min-width: 2.2rem;
+	min-height: 2.2rem;
+	padding: 0;
+	border-radius: 50%;
+	color: var(--muted);
+	font-size: 1.2rem;
+	font-weight: 800;
+	line-height: 1;
+}
+.meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.2rem 0.7rem;
+	margin-top: 0.1rem;
+	font-size: 0.82rem;
+	color: #4a4f57;
+}
+.late {
+	color: #b42318;
+	font-weight: 700;
+}
+.clearDone {
+	align-self: flex-start;
+	min-height: 0;
+	padding: 0.2rem 0.3rem;
+	color: var(--muted);
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+.nameInput {
+	font-size: 1.1rem;
+	padding: 0.6rem 0.7rem;
+	border: 1px solid var(--line);
+	border-radius: 0.6rem;
+}
+.whenRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.8rem;
+}
+.whenRow label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+.whenRow input {
+	font-size: 1.05rem;
+	padding: 0.5rem;
+	border: 1px solid var(--line);
+	border-radius: 0.6rem;
+	color: var(--text);
+}
+.whoRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
 }
