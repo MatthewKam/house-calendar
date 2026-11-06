@@ -140,9 +140,13 @@ describe('invites', () => {
     const wall = device();
     expect((await wall.post('/api/account/join', { code: wallCode })).body).toMatchObject({ kind: 'wall', entered: false });
     expect((await wall.get('/api/members')).status).toBe(401);
+    // A PIN from before lengths were kept is learned the first time it's typed right.
+    accounts.prepare(`UPDATE memberships SET pin_length = NULL`).run();
+    expect((await alex.get('/api/auth/status')).body.pinLength).toBe(null);
     expect((await wall.post('/api/auth/enter', { pin: '0000' })).body).toEqual({ error: 'Wrong PIN' });
     // Either guardian's PIN. Entering also unlocks it for changes.
     expect((await wall.post('/api/auth/enter', { pin: '2468' })).body).toMatchObject({ entered: true, parent: true, parentAlways: false, role: 'wall', me: null, unlockedBy: 'Jordan' });
+    expect((accounts.prepare(`SELECT pin_length FROM memberships WHERE pin_length IS NOT NULL`).all())).toEqual([{ pin_length: 4 }]);
     expect((await wall.post('/api/events', event)).status).toBe(201);
     await wall.post('/api/auth/parent/lock');
     const locked = await wall.post('/api/events', event);

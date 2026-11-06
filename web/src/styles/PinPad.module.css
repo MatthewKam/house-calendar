@@ -56,3 +56,24 @@
 .back:disabled {
 	opacity: 0.35;
 }
+
+/* Short screens (a phone on its side): the keys in two rows, 1–6 and 7–0 with delete, so OK and
+   Cancel stay on screen. */
+@media (max-height: 500px) {
+	.pad {
+		gap: 0.6rem;
+		margin-top: 0;
+	}
+	.keys {
+		grid-template-columns: repeat(6, 2.9rem);
+		gap: 0.4rem 0.6rem;
+	}
+	.keys > span {
+		display: none;
+	}
+	.key {
+		width: 2.9rem;
+		height: 2.9rem;
+		font-size: 1.25rem;
+	}
+}

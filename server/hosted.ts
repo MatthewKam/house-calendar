@@ -579,11 +579,13 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
   function checkPin(s: SessionRow, pin: string): { by: string } | { error: string } {
     const blocked = pinTries.blocked(s.token_hash);
     if (blocked) return { error: blocked };
-    const pins = accounts.prepare(`SELECT id, pin_hash FROM memberships WHERE household_id = ? AND role = 'guardian' AND pin_hash IS NOT NULL`)
-      .all(s.household_id) as { id: string; pin_hash: string }[];
+    const pins = accounts.prepare(`SELECT id, pin_hash, pin_length FROM memberships WHERE household_id = ? AND role = 'guardian' AND pin_hash IS NOT NULL`)
+      .all(s.household_id) as { id: string; pin_hash: string; pin_length: number | null }[];
     const match = pins.find((p) => pinMatches(pin, p.pin_hash));
     if (match) {
       pinTries.clear(s.token_hash);
+      // A PIN set before lengths were kept: learn it now, so the number pad can check it as it's typed.
+      if (match.pin_length === null) accounts.prepare('UPDATE memberships SET pin_length = ? WHERE id = ?').run(pin.length, match.id);
       return { by: match.id };
     }
     return { error: pinTries.wrong(s.token_hash) ? 'Too many wrong tries. Try again in 15 min.' : 'Wrong PIN' };
