@@ -30,6 +30,13 @@
 	max-width: 40rem;
 	padding-bottom: 1rem;
 }
+/* It scrolls by touch or wheel; no bar beside the cards. */
+.scroll {
+	scrollbar-width: none;
+}
+.scroll::-webkit-scrollbar {
+	display: none;
+}
 .card {
 	background: var(--surface);
 	border: 1px solid var(--line);
