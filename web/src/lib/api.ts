@@ -37,6 +37,8 @@ export type AuthStatus = { signedIn: false } | {
   parent: boolean; parentAlways: boolean;
   /** This guardian has set their PIN; how many guardians have. */
   hasPin: boolean; guardianPins: number;
+  /** Every guardian's PIN has this many digits (null: they differ, or aren't known). */
+  pinLength: number | null;
 };
 export type SignedIn = Extract<AuthStatus, { signedIn: true }>;
 export interface GoogleConnection {

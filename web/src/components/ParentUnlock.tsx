@@ -15,11 +15,11 @@ export default function ParentUnlock({ onClose, onDone }: { onClose: () => void;
 		return () => window.removeEventListener("keydown", onKey);
 	}, [onClose]);
 
-	function submit(e?: FormEvent) {
+	function submit(e?: FormEvent, typed = pin) {
 		e?.preventDefault();
-		if (!pin || unlock.isPending) return;
+		if (!typed || unlock.isPending) return;
 		unlock.mutate(
-			{ pin },
+			{ pin: typed },
 			{
 				onSuccess: () => {
 					onClose();
@@ -39,7 +39,7 @@ export default function ParentUnlock({ onClose, onDone }: { onClose: () => void;
 					Unlock to add, change or delete events, tasks, jars, photos, lists and settings. It locks again after a few
 					minutes, or when the screen saver comes on.
 				</div>
-				<PinPad value={pin} onChange={setPin} onEnter={submit} />
+				<PinPad value={pin} onChange={setPin} onEnter={(typed) => submit(undefined, typed)} />
 				{unlock.isError && <div className={s.problem}>{unlock.error.message}</div>}
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />

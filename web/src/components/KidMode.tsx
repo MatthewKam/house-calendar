@@ -277,9 +277,9 @@ export function GrownUpPin({ title, body, okLabel, onClose, onOk }: {
 		return () => window.removeEventListener("keydown", onKey);
 	}, [onClose]);
 
-	function submit(e?: FormEvent) {
+	function submit(e?: FormEvent, typed = pin) {
 		e?.preventDefault();
-		if (pin && !check.isPending) check.mutate(pin, { onSuccess: onOk, onError: () => setPin("") });
+		if (typed && !check.isPending) check.mutate(typed, { onSuccess: onOk, onError: () => setPin("") });
 	}
 
 	return (
@@ -288,7 +288,7 @@ export function GrownUpPin({ title, body, okLabel, onClose, onOk }: {
 			<form className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-modal="true" aria-label={title} onSubmit={submit}>
 				<h2 className={sheet.heading}>{title}</h2>
 				<div className={sheet.body}>{body}</div>
-				<PinPad value={pin} onChange={setPin} onEnter={submit} />
+				<PinPad value={pin} onChange={setPin} onEnter={(typed) => submit(undefined, typed)} />
 				{check.isError && <div className={r.problem}>{check.error.message}</div>}
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />

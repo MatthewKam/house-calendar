@@ -307,8 +307,10 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
     const user = s.user_id ? accounts.prepare('SELECT name, email FROM users WHERE id = ?').get(s.user_id) as { name: string; email: string | null } : null;
     const theirs = s.user_id ? accounts.prepare(`SELECT h.id, h.name, m.role FROM memberships m JOIN households h ON h.id = m.household_id
       WHERE m.user_id = ? ORDER BY h.name`).all(s.user_id) as { id: string; name: string; role: string }[] : [];
-    const guardianPins = c.household ? (accounts.prepare(`SELECT COUNT(*) n FROM memberships
-      WHERE household_id = ? AND role = 'guardian' AND pin_hash IS NOT NULL`).get(c.household.id) as { n: number }).n : 0;
+    const pinLengths = c.household ? (accounts.prepare(`SELECT pin_length FROM memberships
+      WHERE household_id = ? AND role = 'guardian' AND pin_hash IS NOT NULL`).all(c.household.id) as { pin_length: number | null }[])
+      .map((r) => r.pin_length) : [];
+    const guardianPins = pinLengths.length;
     // Who this device is, as the app shows them, and whose PIN has it unlocked.
     const people = c.household ? await membersOf(c.household) : [];
     const person = people.find((m) => m.id === c.membership?.member_id);
@@ -333,6 +335,8 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
       parentAlways: ownParent(c),
       hasPin: !!c.membership?.pin_hash,
       guardianPins,
+      /** How long every guardian's PIN is, when they're all the same (and known): the pad checks it at that length. */
+      pinLength: pinLengths.length && pinLengths.every((n) => n !== null && n === pinLengths[0]) ? pinLengths[0] : null,
     };
   }
   app.get('/api/auth/status', async (req) => status(req));
@@ -564,7 +568,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
     if (!s) return;
     const c = contextOf(s);
     if (c.role !== 'guardian' || !c.membership) return reply.code(403).send({ error: 'Only guardians have a PIN' });
-    accounts.prepare('UPDATE memberships SET pin_hash = ? WHERE id = ?').run(hashPin(req.body.pin), c.membership.id);
+    accounts.prepare('UPDATE memberships SET pin_hash = ?, pin_length = ? WHERE id = ?').run(hashPin(req.body.pin), req.body.pin.length, c.membership.id);
     return status(req);
   });
 
