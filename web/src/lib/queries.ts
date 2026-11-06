@@ -58,6 +58,8 @@ export const keys = {
   momentHistory: (from: string) => ['tasksDone', 'moments', 'history', from] as const,
   // Under 'tasksDone' too: a full row is a star in the bucket.
   potty: ['tasksDone', 'potty'] as const,
+  // Under 'tasksDone' too: finishing an activity can earn a star.
+  learn: (today: string) => ['tasksDone', 'learn', today] as const,
 };
 
 export function useMembers() {
@@ -447,6 +449,20 @@ export function useSetPeople() {
     onMutate: ({ id, memberIds }) => showNow(qc, [{ key: keys.events, apply: (list: CalEvent[]) => list.map((e) => (e.id === id ? { ...e, memberIds } : e)) }]),
     onError: putBack(qc),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.events }),
+  });
+}
+
+/** Each kid's learning (on or off, levels, today's activity). */
+export function useLearn(today: string) {
+  return useQuery({ queryKey: keys.learn(today), queryFn: () => api.learn(today) });
+}
+
+/** A guardian turning learning or leveling up on or off for a kid. */
+export function useSetLearn(today: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ memberId, ...p }: { memberId: string; enabled?: boolean; levelUp?: boolean }) => api.setLearn(memberId, today, p),
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.learn(today) }),
   });
 }
 
