@@ -46,7 +46,7 @@ beforeEach(async () => {
   accounts = openAccounts(':memory:');
   const households = householdRegistry((h) => {
     const db = openDb(resolve(dir, h.db_file));
-    const app = buildApp(db);
+    const app = buildApp(db, { push: { publicKey: 'key', send: async () => {} } });
     return { app, db, google: { connect: (c) => void connected.push(c) }, close: async () => { await app.close(); db.close(); } };
   });
   server = buildServer(accounts, households, {
@@ -308,6 +308,12 @@ describe('privacy', () => {
     expect((await ipad.patch(`/api/lists/items/${milk.id}`, { title: 'Chocolate milk' })).status).toBe(403);
     expect((await ipad.patch(`/api/lists/items/${milk.id}`, { due: '2099-01-01' })).status).toBe(403);
     expect((await ipad.del(`/api/lists/items/${milk.id}`)).status).toBe(403);
+
+    // Alerts on phones are for grown-ups.
+    const sub = (n: string) => ({ subscription: { endpoint: `https://push.test/${n}`, keys: { p256dh: 'p', auth: 'a' } }, timeZone: 'America/Los_Angeles' });
+    expect((await alex.post('/api/push', sub('alex'))).status).toBe(204);
+    expect((await ipad.post('/api/push', sub('ipad'))).status).toBe(403);
+    expect((await wall.post('/api/push', sub('wall'))).status).toBe(403);
 
     // A kid's own device puts stars in jars only with a parent there.
     const place = await ipad.post('/api/rewards/place', { memberId: id('Sam'), today: '2099-01-01', places: [] });

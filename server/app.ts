@@ -20,6 +20,7 @@ import { registerGuard } from './auth.ts';
 import { registerPrivacyGuard, VISIBILITIES, type Visibility } from './privacy.ts';
 import { registerReminders } from './reminders.ts';
 import { registerLists } from './lists.ts';
+import { registerPush, type Pusher } from './push.ts';
 import { registerEvents } from './events.ts';
 import { localDay, stageOf, STAGES } from './stages.ts';
 
@@ -68,6 +69,8 @@ export function buildApp(db: DB, opts: {
   weatherFetch?: typeof fetch;
   /** Called after a person is removed, so their sign-ins to this household go too. */
   onMemberRemoved?: (memberId: string) => void;
+  /** Alerts on people's phones (web push); without it, they're off. */
+  push?: Pusher;
 } = {}) {
   // trustProxy: behind Tailscale's HTTPS (tailscale serve), so the device's address and https are seen.
   const app = Fastify({ logger: process.env.NODE_ENV !== 'test' && { level: 'info' }, trustProxy: 'loopback' });
@@ -227,6 +230,7 @@ export function buildApp(db: DB, opts: {
   if (opts.photosDir) registerPhotos(app, db, opts.photosDir);
   registerReminders(app, db, opts.remindersToken, opts.onRemindersChanged);
   registerLists(app, db);
+  registerPush(app, db, opts.push);
 
   // ---- Display settings (key/value, for things like UI scale) -------------
   app.get('/api/settings', async () => {

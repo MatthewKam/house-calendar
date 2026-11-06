@@ -16,6 +16,7 @@ import { googleOAuth } from './providers/google.ts';
 import { googleCalendars } from './googleSync.ts';
 import { icloudCalendars } from './icloudSync.ts';
 import { loadKey, sealer } from './secrets.ts';
+import { loadVapid, webPusher } from './push.ts';
 import { combineStatus } from './sync.ts';
 
 const root = resolve(import.meta.dirname, '..');
@@ -41,6 +42,9 @@ const places = env.GOOGLE_MAPS_API_KEY ? googlePlaces(env.GOOGLE_MAPS_API_KEY) :
 // Each person connects their own Google Calendar: the same Google client as signing in, plus its secret.
 const oauth = env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? googleOAuth(env.GOOGLE_CLIENT_ID, env.GOOGLE_CLIENT_SECRET) : undefined;
 const secrets = sealer(loadKey(env.SECRET_KEY, resolve(dataDir, 'secret.key')));
+// Alerts on phones: the server's own push keys (VAPID_*), or a key file made on first start.
+const push = webPusher(loadVapid({ publicKey: env.VAPID_PUBLIC_KEY, privateKey: env.VAPID_PRIVATE_KEY }, resolve(dataDir, 'vapid.json')),
+  env.VAPID_SUBJECT || (env.PUBLIC_URL?.startsWith('https://') ? env.PUBLIC_URL : 'mailto:alerts@sprig.example'));
 
 const households = householdRegistry((h) => {
   const db = openDb(fromStored(dataDir, h.db_file));
@@ -87,6 +91,7 @@ const households = householdRegistry((h) => {
     },
     travel,
     places,
+    push,
   });
   sync?.start(app.log);
   if (oauth) {

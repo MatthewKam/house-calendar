@@ -677,6 +677,24 @@ const migrations: string[] = [
   );
   CREATE INDEX list_items_list ON list_items(list_id);
   `,
+  // Phones and browsers that turned alerts on (push.ts), and which alerts each has had, so none
+  // comes twice. The time zone says when "8 AM" is for a reminder that has a day but no time.
+  `
+  CREATE TABLE push_devices (
+    id            TEXT PRIMARY KEY,
+    endpoint      TEXT NOT NULL UNIQUE,
+    subscription  TEXT NOT NULL,
+    member_id     TEXT REFERENCES members(id) ON DELETE CASCADE,
+    time_zone     TEXT NOT NULL,
+    created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE TABLE push_sent (
+    device_id  TEXT NOT NULL REFERENCES push_devices(id) ON DELETE CASCADE,
+    key        TEXT NOT NULL,
+    sent_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    PRIMARY KEY (device_id, key)
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */
