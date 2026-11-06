@@ -5,6 +5,7 @@ import { api } from "../lib/api";
 import {
 	useBuckets,
 	useMoments,
+	usePotty,
 	useRangeEvents,
 	useRewards,
 	useSetTaskDone,
@@ -16,6 +17,7 @@ import { didTask, dueOn, percent, taskProgress, tasksFor, TIMES } from "../lib/t
 import type { Member, Task } from "../lib/types";
 import { textOn } from "../lib/color";
 import KidJars from "./KidJars";
+import PottyCard from "./PottyCard";
 import { StarIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
 import r from "../styles/Rewards.module.css";
@@ -57,6 +59,7 @@ export default function KidMode({ today, kids, members, onLeave }: Props) {
 	const buckets = useBuckets().data ?? [];
 	const jars = useRewards(today).data ?? [];
 	const events = useRangeEvents(day, 1).data ?? [];
+	const potty = usePotty().data ?? [];
 	// The tile just ticked, for its little pop.
 	const [popped, setPopped] = useState<string | null>(null);
 
@@ -129,6 +132,10 @@ export default function KidMode({ today, kids, members, onLeave }: Props) {
 					<span className={s.nextTitle}>{next.title}</span>
 					<span className={s.nextTime}>{timeLabel(next.start)}</span>
 				</div>
+			)}
+
+			{potty.some((c) => c.memberId === kid.id) && (
+				<PottyCard kid={kid} chart={potty.find((c) => c.memberId === kid.id)!} parent={false} big />
 			)}
 
 			{GROUPS.map((g) => {

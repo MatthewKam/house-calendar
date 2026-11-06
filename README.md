@@ -313,6 +313,15 @@ home screen from that address; it works at home and away.
   minutes), or fills a reward jar, the screen
   fills with confetti and a big "Hooray, Sam!" (with what it's for) for a few seconds (tap to close); Android phones
   buzz too.
+- **Kid mode:** **🧸 Kid mode** at the top of Tasks (or under your avatar) turns this device into one kid's screen:
+  their tasks and goals as big picture tiles (tap again to untick), stars, stickers, jars and what's next for them,
+  with no calendar or settings. **All kids** switches between them on a shared tablet. To leave, hold the lock in
+  the corner for two seconds and type a guardian's PIN. A kid's own device (added by code) is always in kid mode;
+  the PIN unlocks the whole app until it locks again.
+- **Potty chart:** **🚽 Start potty chart** under a kid's tasks. The card has a row for each step (said I need to
+  go, sat on the potty, went pee or poo, wiped and flushed, washed hands); **Potty time!** punches the steps they
+  did. Seven punches fill a row, and a full row is a star. When every row is full, Hooray, and a fresh card starts.
+  Parents can take a row's last punch back (↶) or stop the chart (the card is kept).
 - **Rewards:** the **Rewards** page (gift in the left bar, `#rewards`) is where kids spend their stars on **reward
   jars** that parents set up (the round +; ✎ beside a jar's name changes it). Each kid has a card with their
   **bucket** (stars earned from goals and moments, not yet spent) and their jars.

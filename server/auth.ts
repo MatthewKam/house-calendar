@@ -54,6 +54,8 @@ const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean]
   ['POST', '/api/tasks'], ['PATCH', '/api/tasks/:id'], ['DELETE', '/api/tasks/:id'], ['PUT', '/api/tasks/order'],
   ['POST', '/api/rewards'], ['PATCH', '/api/rewards/:id'], ['DELETE', '/api/rewards/:id'], ['POST', '/api/rewards/:id/restore'],
   ['POST', '/api/rewards/:id/take-back'], ['POST', '/api/moments'], ['DELETE', '/api/moments/:id'],
+  // Kids punch their own potty card; starting, stopping and taking a punch back are a parent's.
+  ['PUT', '/api/potty/:memberId'], ['DELETE', '/api/potty/:memberId/:step'],
   ['PUT', '/api/goals/library/:key'], ['PUT', '/api/goals/library'], ['POST', '/api/goals/library'],
   ['POST', '/api/members'], ['PATCH', '/api/members/:id'], ['DELETE', '/api/members/:id'], ['PATCH', '/api/calendars/:id'],
   // Month or week is anyone's choice; the rest of Settings isn't.

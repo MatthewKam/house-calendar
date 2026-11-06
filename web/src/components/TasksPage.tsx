@@ -9,6 +9,8 @@ import {
 	useBuckets,
 	useMoments,
 	useMomentActions,
+	usePotty,
+	usePottyActions,
 } from "../lib/queries";
 import { taskProgress, tasksFor, percent } from "../lib/tasks";
 import type { Task, Member, Moment } from "../lib/types";
@@ -18,6 +20,7 @@ import TodayList from "./TodayList";
 import TaskHistory from "./TaskHistory";
 import ConfirmDialog from "./ConfirmDialog";
 import MomentDialog from "./MomentDialog";
+import PottyCard from "./PottyCard";
 import panel from "../styles/DayPanel.module.css";
 import s from "../styles/Tasks.module.css";
 
@@ -55,6 +58,8 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked, onKid
 	// A sticker tapped on a kid's card, asking whether to take it back.
 	const [unsticking, setUnsticking] = useState<{ kid: Member; moment: Moment } | null>(null);
 	const momentActions = useMomentActions();
+	const potty = usePotty().data ?? [];
+	const pottyActions = usePottyActions();
 	// Whose card is showing its history instead of today's list (one at a time).
 	const [historyKid, setHistoryKid] = useState<string | null>(null);
 	// Edit mode lists every task with edit and delete, and hides the tick buttons so nothing gets ticked by accident.
@@ -128,6 +133,9 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked, onKid
 									moments={moments.filter((mo) => mo.memberId === kid.id)}
 									onMoment={locked ? undefined : (moment) => setUnsticking({ kid, moment })}
 								/>
+								{!showHistory && potty.some((c) => c.memberId === kid.id) && (
+									<PottyCard kid={kid} chart={potty.find((c) => c.memberId === kid.id)!} parent={!locked} />
+								)}
 								{showHistory ? (
 									<TaskHistory kid={kid} tasks={mine} today={today} onEdit={locked ? undefined : onEdit} />
 								) : (
@@ -144,9 +152,17 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked, onKid
 											onReorder={reorderGroup}
 										/>
 										{!editing && !locked && (
-											<button className={s.addText} onClick={() => onAdd(kid.id)}>
-												+ Add task/goal
-											</button>
+											<div className={s.addRow}>
+												<button className={s.addText} onClick={() => onAdd(kid.id)}>
+													+ Add task/goal
+												</button>
+												{kid.stage !== null && kid.stage !== "adult" && !potty.some((c) => c.memberId === kid.id) && (
+													<button className={s.addText} disabled={pottyActions.setOn.isPending}
+														onClick={() => pottyActions.setOn.mutate({ memberId: kid.id, on: true })}>
+														🚽 Start potty chart
+													</button>
+												)}
+											</div>
 										)}
 									</>
 								)}

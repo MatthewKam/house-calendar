@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClie
 import { api } from './api';
 import { addDays, dayKey, fromDayKey } from './dates';
 import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, RewardInput, CalEvent, Reward, RewardWin, Bucket, StarPlacing,
-  ReminderList, Photo, LeaveAlert, OutboxStatus } from './types';
+  ReminderList, Photo, LeaveAlert, OutboxStatus, PottyChart } from './types';
 
 // ---- Edits show straight away ---------------------------------------------------------------
 // Every edit changes what's on screen first (the cached data), then saves in the background. If
@@ -56,6 +56,8 @@ export const keys = {
   // Under 'tasksDone' too: a moment's star changes the buckets.
   moments: (today: string) => ['tasksDone', 'moments', today] as const,
   momentHistory: (from: string) => ['tasksDone', 'moments', 'history', from] as const,
+  // Under 'tasksDone' too: a full row is a star in the bucket.
+  potty: ['tasksDone', 'potty'] as const,
 };
 
 export function useMembers() {
@@ -194,6 +196,27 @@ export function useGoalActions() {
     hide: useMutation({ mutationFn: api.hideGoal, onSettled }),
     hideAll: useMutation({ mutationFn: api.hideAllGoals, onSettled }),
     save: useMutation({ mutationFn: api.saveOwnGoal, onSettled }),
+  };
+}
+
+/** Every kid on a potty chart, with their card. */
+export function usePotty() {
+  return useQuery({ queryKey: keys.potty, queryFn: api.potty, refetchInterval: REFRESH_MS });
+}
+
+/** Start or stop a chart, punch a row, or take a punch back; each refreshes the cards and the buckets. */
+export function usePottyActions() {
+  const qc = useQueryClient();
+  const onSettled = () => qc.invalidateQueries({ queryKey: keys.tasksDone });
+  return {
+    setOn: useMutation({ mutationFn: ({ memberId, on }: { memberId: string; on: boolean }) => api.setPotty(memberId, on), onSettled }),
+    punch: useMutation({
+      mutationFn: api.punch,
+      // The card shows the punch straight away.
+      onSuccess: ({ chart }) => qc.setQueryData<PottyChart[]>(keys.potty, (list = []) => list.map((c) => (c.memberId === chart.memberId ? chart : c))),
+      onSettled,
+    }),
+    takeBack: useMutation({ mutationFn: api.takeBackPunch, onSettled }),
   };
 }
 

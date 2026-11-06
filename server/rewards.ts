@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
+import { ROW_PUNCHES } from './potty.ts';
 
 // Reward jars. Each kid has a bucket: every star earned from extras, minus what they've put in jars.
 // Parents make the jars; kids drop stars in and can't take them back out. A jar is
@@ -38,12 +39,14 @@ const TODAY = { type: 'string', pattern: DAY } as const;
 const dayOr = (d?: string) => (d && new RegExp(DAY).test(d) ? d : new Date().toISOString().slice(0, 10));
 const sum = (stars: Record<string, number>) => Object.values(stars).reduce((a, n) => a + n, 0);
 
-/** Stars a kid can still put in jars: everything earned from extras, moments and goals, minus what's in jars. */
+/** Stars a kid can still put in jars: everything earned from extras, moments, goals and potty rows, minus what's in jars. */
 export function bucket(db: DB, memberId: string) {
   return (db.prepare(`SELECT (SELECT COALESCE(SUM(points), 0) FROM task_done WHERE member_id = @m)
     + (SELECT COALESCE(SUM(stars), 0) FROM moments WHERE member_id = @m)
     -- Goals done before goals became daily (now they're ticked like tasks).
     + (SELECT COALESCE(SUM(stars), 0) FROM goals WHERE member_id = @m)
+    -- Potty charts: a star for each full row.
+    + (SELECT COUNT(*) FROM (SELECT 1 FROM potty_punches WHERE member_id = @m GROUP BY card_id, step HAVING COUNT(*) >= ${ROW_PUNCHES}))
     - (SELECT COALESCE(SUM(stars), 0) FROM jar_stars WHERE member_id = @m) AS n`).get({ m: memberId }) as { n: number }).n;
 }
 

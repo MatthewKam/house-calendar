@@ -7,6 +7,15 @@ export type MomentKind = 'helpful' | 'attitude' | 'bravery' | 'cleanliness' | 'p
 /** `stages`: the ages it suits, empty for any age; `own`: one the family wrote. */
 export interface GoalTemplate { key: string; title: string; emoji: string; kind: MomentKind; stages: Stage[]; own: boolean; hidden: boolean }
 
+/** One step of a potty trip, each with its own row on the card (server/potty.ts). */
+export type PottyStep = 'ask' | 'sit' | 'go' | 'wipe' | 'wash';
+/** A kid's potty chart: the card being filled (each row's punches; the go row says pee or poo), and cards filled before. */
+export interface PottyChart {
+  memberId: string;
+  card: { id: string; startedAt: string; rows: Record<PottyStep, ('pee' | 'poo' | null)[]> };
+  filled: { startedAt: string; finishedAt: string }[];
+}
+
 /** Something good a parent caught a kid doing (server/moments.ts). */
 export interface Moment {
   id: string;

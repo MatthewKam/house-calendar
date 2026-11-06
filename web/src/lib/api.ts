@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, GoalTemplate } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, GoalTemplate, PottyChart, PottyStep } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, {
@@ -131,6 +131,11 @@ export const api = {
   moments: (from: string, to: string) => call<Moment[]>('GET', `/api/moments?${new URLSearchParams({ from, to })}`),
   addMoment: (m: { memberId: string; kind: MomentKind; note?: string; day: string; stars: number }) => call<Moment>('POST', '/api/moments', m),
   removeMoment: (id: string) => call<void>('DELETE', `/api/moments/${id}`),
+  potty: () => call<PottyChart[]>('GET', '/api/potty'),
+  setPotty: (memberId: string, on: boolean) => call<void>('PUT', `/api/potty/${memberId}`, { on }),
+  punch: ({ memberId, step, kind }: { memberId: string; step: PottyStep; kind?: 'pee' | 'poo' }) =>
+    call<{ rowFull: boolean; cardFull: boolean; chart: PottyChart }>('POST', `/api/potty/${memberId}`, { step, ...(kind ? { kind } : {}) }),
+  takeBackPunch: ({ memberId, step }: { memberId: string; step: PottyStep }) => call<void>('DELETE', `/api/potty/${memberId}/${step}`),
   goalLibrary: () => call<GoalTemplate[]>('GET', '/api/goals/library'),
   hideGoal: ({ key, hidden }: { key: string; hidden: boolean }) => call<void>('PUT', `/api/goals/library/${encodeURIComponent(key)}`, { hidden }),
   hideAllGoals: (hidden: boolean) => call<void>('PUT', '/api/goals/library', { hidden }),

@@ -601,6 +601,32 @@ const migrations: string[] = [
     FROM goals WHERE done_day IS NULL;
   DELETE FROM goals WHERE done_day IS NULL;
   `,
+  // Potty charts: for each kid on one, a card with a row of punches per step (said I need to go,
+  // sat on the potty, went, wiped and flushed, washed hands). A full row is a star; a full card
+  // starts the next one.
+  `
+  CREATE TABLE potty_kids (
+    member_id   TEXT PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
+    started_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE TABLE potty_cards (
+    id          TEXT PRIMARY KEY,
+    member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    started_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    finished_at TEXT
+  );
+  CREATE INDEX potty_cards_member ON potty_cards(member_id);
+  CREATE TABLE potty_punches (
+    id          TEXT PRIMARY KEY,
+    card_id     TEXT NOT NULL REFERENCES potty_cards(id) ON DELETE CASCADE,
+    member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    step        TEXT NOT NULL CHECK (step IN ('ask','sit','go','wipe','wash')),
+    -- The go row: which it was.
+    kind        TEXT CHECK (kind IN ('pee','poo')),
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX potty_punches_card ON potty_punches(card_id);
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

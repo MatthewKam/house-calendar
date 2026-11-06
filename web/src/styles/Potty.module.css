@@ -1,0 +1,245 @@
+/* Potty chart (PottyCard): a punch card with a row per step, and Potty time's big step buttons. */
+.card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	padding: 0.8rem;
+	border-radius: 1rem;
+	background: color-mix(in srgb, var(--c) 8%, var(--surface));
+	border: 1.5px solid color-mix(in srgb, var(--c) 35%, white);
+}
+.head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+.title {
+	margin: 0;
+	font-size: 1.05rem;
+}
+.go {
+	min-height: 2.75rem;
+	padding: 0 1.2rem;
+	border-radius: 999px;
+	border: none;
+	background: var(--c);
+	color: var(--on);
+	font-weight: 750;
+	font-size: 1rem;
+}
+.rows {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.rowLabel {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+.rowEmoji {
+	font-size: 1.4rem;
+	flex: none;
+}
+.rowText {
+	font-size: 0.85rem;
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.holes {
+	display: flex;
+	gap: 0.2rem;
+	flex: none;
+}
+.hole {
+	width: 1.5rem;
+	height: 1.5rem;
+	display: grid;
+	place-items: center;
+	border-radius: 50%;
+	border: 2px dashed color-mix(in srgb, var(--c) 45%, white);
+	background: var(--surface);
+	font-size: 0.85rem;
+	box-sizing: border-box;
+}
+.punched {
+	border: 2px solid var(--c);
+	background: color-mix(in srgb, var(--c) 45%, white);
+	animation: punch 0.35s ease;
+}
+@keyframes punch {
+	50% {
+		transform: scale(1.25);
+	}
+}
+.star {
+	flex: none;
+	display: inline-flex;
+	opacity: 0.25;
+	filter: grayscale(1);
+}
+.star svg {
+	width: 1.5rem;
+	height: 1.5rem;
+}
+.starOn {
+	opacity: 1;
+	filter: none;
+}
+.undo {
+	flex: none;
+	width: 2rem;
+	height: 2rem;
+	min-height: 0;
+	padding: 0;
+	border-radius: 50%;
+	border: 1px solid var(--line);
+	background: var(--surface);
+	color: var(--muted);
+	font-size: 1rem;
+}
+.undo:disabled {
+	opacity: 0.35;
+}
+.foot {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+.foot:empty {
+	display: none;
+}
+.spacer {
+	flex: 1;
+}
+.textButton {
+	min-height: 0;
+	padding: 0.2rem 0.3rem;
+	border: none;
+	background: none;
+	color: var(--muted);
+	font-weight: 600;
+	font-size: 0.85rem;
+}
+.problem {
+	margin: 0;
+	color: #b42318;
+	font-size: 0.9rem;
+}
+
+/* Kid mode: bigger holes and words. */
+.big {
+	padding: 1rem 1.2rem;
+	border-radius: 1.4rem;
+	border-width: 3px;
+	background: var(--surface);
+}
+.big .title {
+	font-size: 1.3rem;
+}
+.big .go {
+	min-height: 3.6rem;
+	padding: 0 1.6rem;
+	font-size: 1.3rem;
+}
+.big .rowEmoji {
+	font-size: 2rem;
+}
+.big .rowText {
+	font-size: 1rem;
+}
+.big .hole {
+	width: 2.4rem;
+	height: 2.4rem;
+	font-size: 1.3rem;
+}
+.big .star svg {
+	width: 2.2rem;
+	height: 2.2rem;
+}
+/* Phones: the holes need the room; the picture says which row. */
+@media (max-width: 700px) {
+	.rowText {
+		display: none;
+	}
+	.big .hole {
+		width: 2rem;
+		height: 2rem;
+	}
+}
+
+/* Potty time: one big button per step. */
+.steps {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.step {
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	min-height: 4.2rem;
+	padding: 0.5rem 1rem;
+	border-radius: 1.2rem;
+	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
+	background: var(--surface);
+	font-size: 1.15rem;
+	font-weight: 700;
+	text-align: left;
+}
+.step:disabled {
+	opacity: 1;
+}
+.stepDone {
+	background: color-mix(in srgb, var(--c) 30%, white);
+	border-color: var(--c);
+}
+.stepEmoji {
+	font-size: 2.4rem;
+	line-height: 1;
+}
+.stepLabel {
+	flex: 1;
+}
+.stepNote {
+	font-size: 0.9rem;
+	color: #9a6a00;
+}
+.goStep {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	padding: 0.6rem;
+	border-radius: 1.2rem;
+	background: color-mix(in srgb, var(--c) 10%, var(--surface));
+}
+.goStep > .stepLabel {
+	font-weight: 700;
+	font-size: 1.05rem;
+	padding-left: 0.3rem;
+}
+.goPicks {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.5rem;
+}
+@media (prefers-reduced-motion: reduce) {
+	.punched {
+		animation: none;
+	}
+}

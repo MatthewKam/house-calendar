@@ -755,3 +755,9 @@
 	font-weight: 650;
 	flex: none;
 }
+/* Under a kid's list: Add task/goal, and Start potty chart. */
+.addRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem 1rem;
+}
