@@ -314,7 +314,8 @@ alert opens Sprig on Lists (or Today). Kids' devices and the wall don't get aler
 - **Say it and Snap a flyer** (with `ANTHROPIC_API_KEY`; in the phone's **+**, or **Say it** and **Snap** in the left
   bar on tablets and computers): say or type something like "remind me to call the
   dentist Friday at 10, and add milk to Groceries", or take a photo of a school flyer or invitation (or pick one
-  from your photos; on a computer, a file). Claude works out the
+  from your photos; on a computer, a file, or drag the
+  flyer's photo onto any page but Photos). Claude works out the
   list items (reminders with a when), events and kid tasks, and each shows as a card to change (title, list, day,
   time, who) or leave out (×); nothing is added until **Add**. Sent to the Anthropic API: the words or photo, today's
   date, the family's names and the list names, never anything from the calendar. A flyer's events get its other
