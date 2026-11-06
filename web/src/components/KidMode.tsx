@@ -198,7 +198,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	);
 }
 
-/** A small corner button: hold it for two seconds (a ring fills) to ask for a grown-up. */
+/** A small exit button in the corner: hold it for two seconds (a ring fills) to ask for a grown-up. */
 function LeaveButton({ onLeave }: { onLeave: () => void }) {
 	const [holding, setHolding] = useState(false);
 	const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -222,8 +222,9 @@ function LeaveButton({ onLeave }: { onLeave: () => void }) {
 			onKeyDown={(e) => e.key === "Enter" && !e.repeat && start()} onKeyUp={stop}
 			style={{ "--hold": `${HOLD_MS}ms` } as CSSProperties}>
 			<svg viewBox="0 0 24 24" aria-hidden="true">
-				<rect x="5" y="11" width="14" height="9" rx="2" />
-				<path d="M8 11V8a4 4 0 0 1 8 0v3" />
+				{/* An open door with an arrow out. */}
+				<path d="M13 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h7" />
+				<path d="M10 12h10M17 9l3 3-3 3" />
 			</svg>
 		</button>
 	);
@@ -298,7 +299,7 @@ export function KidModeStart({ kids, needsPin, onPick, onClose }: {
 				) : (
 					<>
 						<div className={sheet.body}>
-							Just their tasks, stars and jars, in big pictures. To leave, hold the lock in the corner and type a guardian's PIN.
+							Just their tasks, stars and jars, in big pictures. To leave, hold the exit button in the corner and type a guardian's PIN.
 						</div>
 						<div className={s.startPicks}>
 							{kids.map((k) => (
