@@ -290,6 +290,12 @@ home screen from that address; it works at home and away.
   or tap a day, then **+ Add event** in the day panel.
 - **Who:** an event can be for any number of people: tap each person in **Who** (tap again to remove), or
   **Everyone** for no one in particular. Shared events get a bar split into each person's color.
+- **Who sees it:** each event is for **👥 Everyone**, **⏳ Busy** or **🔒 Private**. Busy: anyone not on it sees a
+  striped "Busy" block at that time, with no title or place, and can't open it. Private: anyone not on it doesn't
+  see it at all. The people on an event always see it, and guardians see their kids' events in full; the wall is
+  no one in particular. Each Google or iCloud calendar has a default in Settings (**Sees**), and an event can
+  differ (it covers every repeat). The server leaves hidden details out, so they never reach another device, and
+  private events are never sent to Claude. A kid's own device puts stars in jars only with a parent's PIN.
 - **People:** tap a name at the top to show only their events (including ones they share) (or **Everyone** for events not for anyone in
   particular). Tap it again to show all. Each name fills with that person's color as they finish today's tasks.
 - **Tasks:** the **Tasks** page (left bar; **Calendar** goes back; its address ends in `#tasks`, so a refresh or a

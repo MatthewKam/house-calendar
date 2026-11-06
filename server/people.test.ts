@@ -43,6 +43,18 @@ async function setup() {
 const swim = [ev('cal/swim.ics#2026-10-06T16:00:00', 'Sam - swim class', 6), ev('cal/swim.ics#2026-10-13T16:00:00', 'Sam - swim class', 13)];
 
 describe('assigning people to synced events', () => {
+  it('never sends private events to AI: one by one, or a whole calendar', async () => {
+    const { db, app } = await setup();
+    await syncOnce(db, source([...swim, ev('cal/bill.ics', 'AT&T bill')]), now);
+    const swimId = (db.prepare(`SELECT id FROM events WHERE title = 'Sam - swim class' LIMIT 1`).get() as { id: string }).id;
+    await app.inject({ method: 'PUT', url: `/api/events/${swimId}/visibility`, payload: { visibility: 'private' } });
+    expect(pendingSeries(db).map((p) => p.title)).toEqual(['AT&T bill']);
+    const cal = (db.prepare(`SELECT calendar_id FROM events WHERE id = ?`).get(swimId) as { calendar_id: string }).calendar_id;
+    const patched = await app.inject({ method: 'PATCH', url: `/api/calendars/${cal}`, payload: { visibility: 'private' } });
+    expect(patched.json().visibility).toBe('private');
+    expect(pendingSeries(db)).toEqual([]);
+  });
+
   it('asks once per series and applies the pick to every repeat', async () => {
     const { db, add, memberOf } = await setup();
     const sam = await add('Sam');

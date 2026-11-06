@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, GoalTemplate, PottyChart, PottyKind, PottyStep } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, {
@@ -115,10 +115,11 @@ export const api = {
   resolveConflict: (id: number, keep: 'mine' | 'theirs') => call<OutboxStatus>('POST', `/api/outbox/${id}/resolve`, { keep }),
   /** Who a synced event is for; covers every repeat of it. */
   setPeople: (id: string, memberIds: string[]) => call<CalEvent>('PUT', `/api/events/${id}/people`, { memberIds }),
+  setVisibility: (id: string, visibility: Visibility | null) => call<CalEvent>('PUT', `/api/events/${id}/visibility`, { visibility }),
 
   sync: () => call<SyncStatus | null>('GET', '/api/sync'),
   calendars: () => call<SyncedCalendar[]>('GET', '/api/calendars'),
-  updateCalendar: (id: string, patch: Partial<Pick<SyncedCalendar, 'memberId' | 'hidden'>>) =>
+  updateCalendar: (id: string, patch: Partial<Pick<SyncedCalendar, 'memberId' | 'hidden' | 'visibility'>>) =>
     call<SyncedCalendar>('PATCH', `/api/calendars/${id}`, patch),
 
   tasks: () => call<Task[]>('GET', '/api/tasks'),

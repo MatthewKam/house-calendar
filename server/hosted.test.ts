@@ -32,6 +32,7 @@ function device() {
     raw: (url: string) => inject(server.handle, { url, headers: cookie ? { cookie } : {} }),
     post: (url: string, payload: object = {}) => call('POST', url, payload),
     put: (url: string, payload: object) => call('PUT', url, payload),
+    patch: (url: string, payload: object) => call('PATCH', url, payload),
     del: (url: string) => call('DELETE', url),
     async signIn(email: string) {
       await call('POST', '/api/account/email/start', { email });
@@ -248,5 +249,59 @@ describe('the household from before accounts', () => {
     logged = '';
     adoptLegacy(accounts, dir, file, join(dir, 'photos'), (m) => (logged = m));
     expect(logged).toBe('');
+  });
+});
+
+describe('privacy', () => {
+  const range = '/api/events?from=2099-01-01T00:00:00Z&to=2099-01-02T00:00:00Z&fromDay=2099-01-01&toDay=2099-01-02';
+  const at = (h: number) => `2099-01-01T${String(h).padStart(2, '0')}:00:00.000Z`;
+
+  it("shows each person, kid and the wall only what they may see", async () => {
+    const alex = await guardian();
+    await alex.put('/api/account/pin', { pin: '1357' });
+    // Jordan, a second guardian; Sam, a kid on their own device; and the wall.
+    const jordan = device();
+    await jordan.signIn('jordan@example.com');
+    await jordan.post('/api/account/join', { code: (await alex.post('/api/account/invites', { kind: 'guardian', name: 'Jordan' })).body.code });
+    const ipad = device();
+    await ipad.post('/api/account/join', { code: (await alex.post('/api/account/invites', { kind: 'kid', name: 'Sam' })).body.code });
+    const wall = device();
+    await wall.post('/api/account/join', { code: (await alex.post('/api/account/invites', { kind: 'wall' })).body.code });
+    await wall.post('/api/auth/enter', { pin: '1357' });
+    await wall.post('/api/auth/parent/lock');
+
+    const people = (await alex.get('/api/members')).body as { id: string; name: string }[];
+    const id = (name: string) => people.find((p) => p.name === name)!.id;
+    // Sam is a kid (born a few years ago).
+    const born = `${new Date().getFullYear() - 4}-01-01`;
+    expect((await alex.patch(`/api/members/${id('Sam')}`, { birthdate: born })).status).toBe(200);
+
+    const add = (title: string, h: number, memberIds: string[], visibility?: string) =>
+      alex.post('/api/events', { title, allDay: false, start: at(h), end: at(h + 1), memberIds, location: '1 Main St', ...(visibility ? { visibility } : {}) });
+    const therapy = (await add('Therapy', 9, [id('Alex')], 'private')).body;
+    const work = (await add('Work call', 11, [id('Alex')], 'busy')).body;
+    await add("Sam's doctor", 13, [id('Sam')], 'private');
+    await add('Park', 15, []);
+
+    const seen = async (who: ReturnType<typeof device>) =>
+      ((await who.get(range)).body as { title: string; location: string | null; busy?: boolean }[]).map((e) => (e.busy ? `busy:${e.location}` : e.title));
+    expect(await seen(alex)).toEqual(['Therapy', 'Work call', "Sam's doctor", 'Park']);
+    // Another guardian: not Alex's private event, Alex's busy time, but all of the kids' events.
+    expect(await seen(jordan)).toEqual(['busy:null', "Sam's doctor", 'Park']);
+    expect(await seen(ipad)).toEqual(['busy:null', "Sam's doctor", 'Park']);
+    // The wall is no one in particular.
+    expect(await seen(wall)).toEqual(['busy:null', 'Park']);
+
+    // What can't be seen can't be opened or changed.
+    expect((await jordan.patch(`/api/events/${therapy.id}`, { title: 'x' })).status).toBe(404);
+    expect((await jordan.patch(`/api/events/${work.id}`, { title: 'x' })).status).toBe(403);
+    expect((await jordan.put(`/api/events/${work.id}/visibility`, { visibility: 'everyone' })).status).toBe(403);
+    // Alex makes it everyone's again.
+    expect((await alex.put(`/api/events/${work.id}/visibility`, { visibility: null })).body.visibility).toBe('everyone');
+    expect(await seen(wall)).toEqual(['Work call', 'Park']);
+
+    // A kid's own device puts stars in jars only with a parent there.
+    const place = await ipad.post('/api/rewards/place', { memberId: id('Sam'), today: '2099-01-01', places: [] });
+    expect(place).toMatchObject({ status: 403, body: { locked: true } });
   });
 });

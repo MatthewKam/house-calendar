@@ -64,7 +64,7 @@ export default function DayTimeline({ day, today, events, members, onOpen }: Pro
 						return (
 							<li key={ev.id}>
 								<button className={s.allDayEvent} style={{ ...paint.vars, color: paint.text } as CSSProperties}
-									onClick={() => onOpen(ev)}>
+									data-busy={ev.busy || undefined} onClick={() => onOpen(ev)}>
 									{ev.title}
 								</button>
 							</li>
@@ -98,6 +98,7 @@ export default function DayTimeline({ day, today, events, members, onOpen }: Pro
 										width: `calc(${100 / p.cols}% - 3px)`,
 									} as CSSProperties
 								}
+								data-busy={p.ev.busy || undefined}
 								onClick={() => onOpen(p.ev)}
 								title={`${p.ev.title}, ${timeLabel(p.ev.start)} – ${timeLabel(p.ev.end)}`}
 							>

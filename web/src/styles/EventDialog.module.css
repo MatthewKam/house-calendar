@@ -57,3 +57,9 @@
 /* Travel time: the button, and Cancel while it's checking. */
 .travelRow { display: flex; align-items: center; gap: 0.6rem; }
 .travelCancel { composes: quiet from "./Buttons.module.css"; font-weight: 400; }
+
+/* Who sees it: three choices side by side, the picked one filled. */
+.seen { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.seenOption { flex: 1; min-width: 7rem; padding: 0 0.8rem; background: var(--bg); border: 1px solid var(--line); font-weight: 600; }
+.seenOption[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.seenHint { margin-top: -0.4rem; color: var(--muted); font-size: 0.9rem; }

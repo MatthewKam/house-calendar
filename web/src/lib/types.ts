@@ -93,6 +93,9 @@ export interface Bucket { memberId: string; stars: number }
 /** Stars a kid puts in jars at once; with `from`, taken out of that missed jar first. */
 export interface StarPlacing { memberId: string; today: string; from?: string; places: { rewardId: string; stars: number }[] }
 
+/** Who sees an event: everyone; busy (others see "Busy" at that time); private (others don't see it). */
+export type Visibility = 'everyone' | 'busy' | 'private';
+
 export interface CalEvent {
   id: string;
   calendarId: string;
@@ -110,6 +113,10 @@ export interface CalEvent {
   location: string | null;
   /** One day of a repeating iCloud event: edits here change that day only. */
   repeats: boolean;
+  /** Who sees it: its own setting, else its calendar's (server/privacy.ts). */
+  visibility: Visibility;
+  /** Someone else's Busy time: no title or place, and it can't be opened. */
+  busy?: boolean;
 }
 
 /** A "time to leave" alert the wall shows at `remindAt`. */
@@ -186,6 +193,8 @@ export interface SyncedCalendar {
   events: number;
   /** New events can be added to it from the wall. */
   writable: boolean;
+  /** Who sees its events, unless an event says otherwise. */
+  visibility: Visibility;
   /** A few upcoming titles, to tell same-named calendars apart. */
   sample: string[];
 }
@@ -241,6 +250,8 @@ export type EventInput = Pick<CalEvent, 'title' | 'memberIds' | 'allDay' | 'star
   location?: string | null;
   /** New events only: the iCloud calendar to add it to; left out, it stays on the wall. */
   calendarId?: string;
+  /** New events only: who sees it (existing ones change it with setVisibility). */
+  visibility?: Visibility;
   /** Changing a repeating iCloud event: just the day opened, or every day. */
   scope?: Scope;
 };

@@ -17,6 +17,7 @@ import { registerWeather } from './weather.ts';
 import { registerPhotos } from './photos.ts';
 import { registerDaily } from './daily.ts';
 import { registerGuard } from './auth.ts';
+import { registerPrivacyGuard, VISIBILITIES, type Visibility } from './privacy.ts';
 import { registerReminders } from './reminders.ts';
 import { registerEvents } from './events.ts';
 import { localDay, stageOf, STAGES } from './stages.ts';
@@ -72,6 +73,8 @@ export function buildApp(db: DB, opts: {
 
   // Parent-only changes need a guardian (or a device unlocked with a guardian's PIN).
   registerGuard(app);
+  // Events someone can't see (privacy.ts) can't be opened or changed either.
+  registerPrivacyGuard(app, db);
 
   // ---- Members -----------------------------------------------------------
   app.get('/api/members', async () =>
@@ -132,9 +135,11 @@ export function buildApp(db: DB, opts: {
   registerEvents(app, db, opts.syncedEdits);
 
   // ---- Synced calendars: who each is for, and whether it shows ------------
-  interface CalendarRow { id: string; provider: string; name: string; color: string | null; member_id: string | null; hidden: number; writable: number }
+  interface CalendarRow { id: string; provider: string; name: string; color: string | null; member_id: string | null; hidden: number; writable: number; visibility: Visibility }
   const calendarSummary = (c: CalendarRow) => ({
     id: c.id, provider: c.provider, name: c.name, color: c.color, memberId: c.member_id, hidden: c.hidden === 1,
+    // Who sees its events, unless an event says otherwise (privacy.ts).
+    visibility: c.visibility,
     // New events can be added to it from the wall.
     writable: c.writable === 1 && !!opts.syncedEdits,
     events: (db.prepare('SELECT COUNT(DISTINCT series_id) n FROM events WHERE calendar_id = ?').get(c.id) as { n: number }).n,
@@ -147,18 +152,18 @@ export function buildApp(db: DB, opts: {
   app.get('/api/calendars', async () =>
     (db.prepare("SELECT * FROM calendars WHERE provider != 'local' ORDER BY name, id").all() as CalendarRow[]).map(calendarSummary));
 
-  app.patch<{ Params: { id: string }; Body: { memberId?: string | null; hidden?: boolean } }>('/api/calendars/:id', {
+  app.patch<{ Params: { id: string }; Body: { memberId?: string | null; hidden?: boolean; visibility?: Visibility } }>('/api/calendars/:id', {
     schema: { body: { type: 'object', additionalProperties: false, minProperties: 1,
-      properties: { memberId: { type: ['string', 'null'] }, hidden: { type: 'boolean' } } } },
+      properties: { memberId: { type: ['string', 'null'] }, hidden: { type: 'boolean' }, visibility: { enum: VISIBILITIES } } } },
   }, async (req, reply) => {
     const row = db.prepare("SELECT * FROM calendars WHERE id = ? AND provider != 'local'").get(req.params.id) as CalendarRow | undefined;
     if (!row) return reply.code(404).send({ error: 'Calendar not found' });
-    const { memberId = row.member_id, hidden = row.hidden === 1 } = req.body;
+    const { memberId = row.member_id, hidden = row.hidden === 1, visibility = row.visibility } = req.body;
     if (memberId && !db.prepare('SELECT 1 FROM members WHERE id = ?').get(memberId)) {
       return reply.code(400).send({ error: 'Unknown member' });
     }
     db.transaction(() => {
-      db.prepare('UPDATE calendars SET member_id = ?, hidden = ? WHERE id = ?').run(memberId, hidden ? 1 : 0, row.id);
+      db.prepare('UPDATE calendars SET member_id = ?, hidden = ?, visibility = ? WHERE id = ?').run(memberId, hidden ? 1 : 0, visibility, row.id);
       applyPeople(db, row.id);
     })();
     // Unlinking or showing a calendar can leave events for Claude to sort.

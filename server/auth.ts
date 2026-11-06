@@ -53,7 +53,10 @@ const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean]
   ['PUT', '/api/events/:id/people'], ['POST', '/api/outbox/:id/resolve'], ['POST', '/api/connections/icloud'], ['POST', '/api/alerts'], ['DELETE', '/api/alerts/:id'],
   ['POST', '/api/tasks'], ['PATCH', '/api/tasks/:id'], ['DELETE', '/api/tasks/:id'], ['PUT', '/api/tasks/order'],
   ['POST', '/api/rewards'], ['PATCH', '/api/rewards/:id'], ['DELETE', '/api/rewards/:id'], ['POST', '/api/rewards/:id/restore'],
-  ['POST', '/api/rewards/:id/take-back'], ['POST', '/api/moments'], ['DELETE', '/api/moments/:id'],
+  ['POST', '/api/rewards/:id/take-back'],
+  // A kid's own device puts stars in jars only with a parent there.
+  ['POST', '/api/rewards/place', (req) => req.raw.viewer?.role === 'kid'],
+  ['PUT', '/api/events/:id/visibility'], ['POST', '/api/moments'], ['DELETE', '/api/moments/:id'],
   // Kids punch their own potty card; starting, stopping and taking a punch back are a parent's.
   ['PUT', '/api/potty/:memberId'], ['DELETE', '/api/potty/:memberId/:step'],
   ['PUT', '/api/goals/library/:key'], ['PUT', '/api/goals/library'], ['POST', '/api/goals/library'],

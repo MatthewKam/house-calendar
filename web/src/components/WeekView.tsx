@@ -102,6 +102,7 @@ export default function WeekView({
 													color: ev.allDay ? paint.text : undefined,
 												} as CSSProperties
 											}
+											data-busy={ev.busy || undefined}
 											onClick={(e) => {
 												e.stopPropagation();
 												onOpen(ev, key);

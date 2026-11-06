@@ -1,9 +1,9 @@
 import { useCalendars, useUpdateCalendar } from '../lib/queries';
 import { UNASSIGNED } from '../lib/color';
-import type { Member } from '../lib/types';
+import type { Member, Visibility } from '../lib/types';
 import s from '../styles/CalendarList.module.css';
 
-/** Synced calendars: whose each one is, and whether it shows on the wall. */
+/** Synced calendars: whose each one is, who sees its events, and whether it shows on the wall. */
 export default function CalendarList({ members }: { members: Member[] }) {
   const calendars = useCalendars().data ?? [];
   const update = useUpdateCalendar();
@@ -13,7 +13,8 @@ export default function CalendarList({ members }: { members: Member[] }) {
     <section className={s.section}>
       <p className={s.hint}>
         Link a calendar to a person and all its events are theirs. Leave it on <b>By event</b> to pick per event,
-        with Claude sorting new ones by title.
+        with Claude sorting new ones by title. <b>Sees</b> is who sees its events unless an event says otherwise:
+        Busy shows others only the time; Private hides them from anyone not on them (guardians still see the kids').
       </p>
       <ul className={s.list}>
         {calendars.map((c) => (
@@ -27,6 +28,12 @@ export default function CalendarList({ members }: { members: Member[] }) {
               onChange={(e) => update.mutate({ id: c.id, patch: { memberId: e.target.value || null } })}>
               <option value="">By event</option>
               {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
+            <select className={s.who} value={c.visibility} disabled={c.hidden} aria-label={`Who sees ${c.name}'s events`}
+              onChange={(e) => update.mutate({ id: c.id, patch: { visibility: e.target.value as Visibility } })}>
+              <option value="everyone">Sees: everyone</option>
+              <option value="busy">Sees: busy only</option>
+              <option value="private">Sees: private</option>
             </select>
             <label className={s.show}>
               <input type="checkbox" checked={!c.hidden}

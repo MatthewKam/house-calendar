@@ -91,7 +91,7 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 		const soon = leaveAt && leaveAt.getTime() - now.getTime() < 30 * 60_000;
 		return (
 			<li key={e.id}>
-				<button type="button" className={s.event} onClick={() => onOpenEvent(e)}
+				<button type="button" className={s.event} data-busy={e.busy || undefined} onClick={() => onOpenEvent(e)}
 					style={{ "--c": people[0]?.color ?? "var(--line)" } as CSSProperties}>
 					<span className={s.when}>{when(e)}</span>
 					<span className={s.what}>

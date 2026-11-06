@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClie
 import { api } from './api';
 import { addDays, dayKey, fromDayKey } from './dates';
 import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, RewardInput, CalEvent, Reward, RewardWin, Bucket, StarPlacing,
-  ReminderList, Photo, LeaveAlert, OutboxStatus, PottyChart } from './types';
+  ReminderList, Photo, LeaveAlert, OutboxStatus, PottyChart, Visibility } from './types';
 
 // ---- Edits show straight away ---------------------------------------------------------------
 // Every edit changes what's on screen first (the cached data), then saves in the background. If
@@ -91,7 +91,7 @@ export function useCalendars() {
 export function useUpdateCalendar() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: Partial<Pick<SyncedCalendar, 'memberId' | 'hidden'>> }) =>
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<Pick<SyncedCalendar, 'memberId' | 'hidden' | 'visibility'>> }) =>
       api.updateCalendar(id, patch),
     onMutate: ({ id, patch }) =>
       qc.setQueryData(keys.calendars, (list: SyncedCalendar[] = []) => list.map((c) => (c.id === id ? { ...c, ...patch } : c))),
@@ -393,6 +393,7 @@ export function useSaveEvent() {
         ? list.map((e) => (e.id === id ? { ...e, ...details, location: details.location ?? null,
           syncState: e.calendarId === 'local' ? e.syncState : 'pending_update' } : e))
         : [...list, { ...details, id: newId('event'), calendarId: calendarId ?? 'local', location: details.location ?? null,
+          visibility: details.visibility ?? 'everyone',
           syncState: calendarId && calendarId !== 'local' ? 'pending_create' : 'synced', repeats: false }] }]);
     },
     onError: putBack(qc),
@@ -406,6 +407,17 @@ export function useSetPeople() {
   return useMutation({
     mutationFn: ({ id, memberIds }: { id: string; memberIds: string[] }) => api.setPeople(id, memberIds),
     onMutate: ({ id, memberIds }) => showNow(qc, [{ key: keys.events, apply: (list: CalEvent[]) => list.map((e) => (e.id === id ? { ...e, memberIds } : e)) }]),
+    onError: putBack(qc),
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.events }),
+  });
+}
+
+/** Who sees an event (every repeat of it): everyone, busy or private. */
+export function useSetVisibility() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, visibility }: { id: string; visibility: Visibility }) => api.setVisibility(id, visibility),
+    onMutate: ({ id, visibility }) => showNow(qc, [{ key: keys.events, apply: (list: CalEvent[]) => list.map((e) => (e.id === id ? { ...e, visibility } : e)) }]),
     onError: putBack(qc),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.events }),
   });

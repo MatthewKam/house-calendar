@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { addDays, dayKey, fromDayKey, hhmm, timeLabel, toInstant } from '../lib/dates';
 import { UNASSIGNED } from '../lib/color';
-import { useCalendars, useSetPeople, useSetSetting, useSettings } from '../lib/queries';
-import type { CalEvent, EventInput, Member, Scope } from '../lib/types';
+import { useCalendars, useSetPeople, useSetSetting, useSettings, useSetVisibility } from '../lib/queries';
+import type { CalEvent, EventInput, Member, Scope, Visibility } from '../lib/types';
 import { PencilIcon } from './icons';
 import TravelInfo from './TravelInfo';
 import AddressInput from './AddressInput';
@@ -50,6 +50,28 @@ function WhoPicker({ members, value, onChange }: { members: Member[]; value: str
   );
 }
 
+const SEEN: { id: Visibility; label: string; hint: string }[] = [
+  { id: 'everyone', label: '👥 Everyone', hint: 'The whole family sees it.' },
+  { id: 'busy', label: '⏳ Busy', hint: "Anyone not on it sees “Busy” at that time, without the details." },
+  { id: 'private', label: '🔒 Private', hint: "Only the people on it see it (and guardians, for the kids')." },
+];
+
+/** Who sees an event: everyone, busy or private (server/privacy.ts). */
+function SeenPicker({ value, onChange }: { value: Visibility; onChange: (v: Visibility) => void }) {
+  return (
+    <>
+      <div className={s.label}>Who sees it</div>
+      <div className={s.seen} role="radiogroup" aria-label="Who sees it">
+        {SEEN.map((o) => (
+          <button key={o.id} type="button" role="radio" aria-checked={value === o.id} className={s.seenOption}
+            onClick={() => onChange(o.id)}>{o.label}</button>
+        ))}
+      </div>
+      <div className={s.seenHint}>{SEEN.find((o) => o.id === value)?.hint}</div>
+    </>
+  );
+}
+
 /**
  * iCloud events open as a summary, where you can pick who it's for; Edit event (when iCloud takes
  * edits) opens the full form.
@@ -58,14 +80,19 @@ function SyncedEvent({ event, members, onClose, onEdit, locked }: {
   event: CalEvent; members: Member[]; onClose: () => void; onEdit?: () => void; locked?: boolean;
 }) {
   const setPeople = useSetPeople();
-  // Who it's for is locked until Edit; Save applies it to every repeat of this event.
+  const setVisibility = useSetVisibility();
+  // Who it's for and who sees it are locked until Edit; Save applies them to every repeat of this event.
   const [memberIds, setMemberIds] = useState(event.memberIds);
   const [draft, setDraft] = useState<string[] | null>(null);
+  const [seen, setSeen] = useState(event.visibility);
+  const [seenDraft, setSeenDraft] = useState(event.visibility);
   function save() {
     if (!draft) return;
-    setPeople.mutate({ id: event.id, memberIds: draft });
+    if (draft.join() !== memberIds.join()) setPeople.mutate({ id: event.id, memberIds: draft });
+    if (seenDraft !== seen) setVisibility.mutate({ id: event.id, visibility: seenDraft });
     // Shown straight away; it's put back (with a message) if the save fails.
     setMemberIds(draft);
+    setSeen(seenDraft);
     setDraft(null);
   }
   const people = members.filter((m) => memberIds.includes(m.id));
@@ -86,7 +113,10 @@ function SyncedEvent({ event, members, onClose, onEdit, locked }: {
         <div>{when}</div>
         <TravelInfo event={event} locked={locked} />
         {draft ? (
-          <WhoPicker members={members} value={draft} onChange={setDraft} />
+          <>
+            <WhoPicker members={members} value={draft} onChange={setDraft} />
+            <SeenPicker value={seenDraft} onChange={setSeenDraft} />
+          </>
         ) : (
           <>
             <div className={s.label}>Who</div>
@@ -97,19 +127,22 @@ function SyncedEvent({ event, members, onClose, onEdit, locked }: {
                 ))}
               </div>
               {!locked && (
-                <button type="button" className={s.editWho} onClick={() => setDraft(memberIds)}>
+                <button type="button" className={s.editWho} onClick={() => { setDraft(memberIds); setSeenDraft(seen); }}>
                   <PencilIcon /> Edit
                 </button>
               )}
             </div>
+            <div className={s.label}>Who sees it</div>
+            <div>{SEEN.find((o) => o.id === seen)?.label}</div>
           </>
         )}
         {setPeople.isError && <div className={s.problem}>Couldn't save: {setPeople.error.message}</div>}
+        {setVisibility.isError && <div className={s.problem}>Couldn't save: {setVisibility.error.message}</div>}
         {event.syncState !== 'synced' && <p className={s.pendingNote}>↻ Your change is waiting to be sent to iCloud.</p>}
         {locked ? (
           <p className={s.note}>Locked: a parent can unlock (the lock in the left bar) to change it.</p>
         ) : (
-          <p className={s.note}>From iCloud. Who it's for is kept on this display and applies every time it repeats.
+          <p className={s.note}>From {event.calendarId.startsWith('google') ? 'Google' : 'iCloud'}. Who it's for and who sees it are kept here and apply every time it repeats.
             {onEdit ? ' Changes to the event itself are sent to iCloud.' : ' To change the event itself, use Calendar on your iPhone or Mac.'}</p>
         )}
         <div className={sheet.actions}>
@@ -159,6 +192,8 @@ function useNewEventCalendar(enabled: boolean) {
 }
 
 function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSynced }: Props) {
+  const setVisibility = useSetVisibility();
+  const calendars = useCalendars().data ?? [];
   // Form starts from the event being edited, or a one-hour slot on the tapped day.
   // The parent remounts this dialog (via key) for each open, so initial state is enough.
   const firstDate = event ? (event.allDay ? event.start : dayKey(new Date(event.start))) : day;
@@ -179,6 +214,9 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
   // null until picked, so the remembered choice can arrive after the form opens.
   const [calendarId, setCalendarId] = useState<string | null>(null);
   const chosenCalendar = calendarId ?? target.initial;
+  // Who sees it: as picked, else the event's own, else (new) the chosen calendar's default.
+  const [seenPick, setSeenPick] = useState<Visibility | null>(null);
+  const seen = seenPick ?? event?.visibility ?? calendars.find((c) => c.id === chosenCalendar)?.visibility ?? 'everyone';
 
   const problem =
     !title.trim() ? 'Add a title'
@@ -192,8 +230,11 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
     const t = title.trim();
     const place = location.trim() || null;
     // Only new events choose a calendar.
-    const where = !event && target.options.length ? { calendarId: chosenCalendar } : {};
+    const where: Pick<EventInput, 'calendarId' | 'visibility'> = !event && target.options.length ? { calendarId: chosenCalendar } : {};
     if (!event && target.options.length) target.remember(chosenCalendar);
+    // A new event says who sees it when it's picked; an existing one changes it on its own.
+    if (!event && seenPick) where.visibility = seenPick;
+    if (event && seenPick && seenPick !== event.visibility) setVisibility.mutate({ id: event.id, visibility: seenPick });
     const input: EventInput = allDay
       ? { title: t, memberIds, allDay, start: date, end: dayKey(addDays(fromDayKey(lastDate), 1)), location: place, ...where }
       : { title: t, memberIds, allDay, start: toInstant(date, startTime), end: toInstant(date, endTime), location: place, ...where };
@@ -219,6 +260,7 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
         )}
 
         <WhoPicker members={members} value={memberIds} onChange={setMemberIds} />
+        <SeenPicker value={seen} onChange={setSeenPick} />
 
         {target.options.length > 0 && (
           <label className={s.calendarPick}>

@@ -308,15 +308,18 @@ async function pushSeries(db: DB, writer: CalendarWriter, r: OutboxRow, res: { d
   return (await writer.writeEvent(r.remote_id, res!.etag, editSeries(res!.data, edit))) ? 'sent' : 'retry';
 }
 
-/** Edits waiting to be sent, and conflicts waiting for a choice, for the wall's notices. */
-export function outboxStatus(db: DB) {
+/**
+ * Edits waiting to be sent, and conflicts waiting for a choice, for the wall's notices. `shows`
+ * leaves out conflicts the viewer can't see (privacy.ts).
+ */
+export function outboxStatus(db: DB, shows: (calendarId: string, remoteId: string) => boolean = () => true) {
   const rows = db.prepare('SELECT * FROM event_outbox ORDER BY id').all() as OutboxRow[];
   const pending = rows.filter((r) => r.state === 'pending');
   return {
     pending: pending.length,
     // The newest problem sending, if edits are stuck (offline, or iCloud refusing).
     lastError: pending.filter((r) => r.error).at(-1)?.error ?? null,
-    conflicts: rows.filter((r) => r.state === 'conflict').map((r) => {
+    conflicts: rows.filter((r) => r.state === 'conflict' && shows(r.calendar_id, r.remote_id)).map((r) => {
       const before = JSON.parse(r.before) as Details;
       const changes = JSON.parse(r.changes) as Partial<Details>;
       return {

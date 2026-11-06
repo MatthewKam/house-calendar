@@ -84,6 +84,9 @@ export function pendingSeries(db: DB): Pending[] {
     LEFT JOIN event_people p ON p.calendar_id = e.calendar_id AND p.series_id = e.series_id
     WHERE e.series_id IS NOT NULL AND c.member_id IS NULL AND c.hidden = 0
       AND (p.series_id IS NULL OR (p.source = 'ai' AND p.basis IS NOT ?))
+      -- Private events are never sent to AI (privacy.ts).
+      AND COALESCE((SELECT v.visibility FROM event_privacy v WHERE v.calendar_id = e.calendar_id AND v.series_key = e.series_id),
+        c.visibility) != 'private'
     GROUP BY e.calendar_id, e.series_id
     ORDER BY e.calendar_id, e.series_id`).all(basisOf(members(db))) as Pending[];
 }

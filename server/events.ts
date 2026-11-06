@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
 import { assignManually } from './people.ts';
 import { cancelDelete, diff, outboxStatus, queueCreate, queueEdit, queueSeries, resolveConflict } from './outbox.ts';
+import type { Viewer } from './auth.ts';
+import { accessFor, eventAccess, kidIds, setVisibility, VISIBILITIES, VISIBILITY_SQL, type Access, type Visibility } from './privacy.ts';
 
 // Events on the wall: its own, and synced ones (iCloud), whose edits go through the outbox
 // (outbox.ts) and are sent to iCloud shortly after.
@@ -14,13 +16,16 @@ interface EventRow {
   all_day: number; start: string; end: string; sync_state: string; location: string | null;
   /** JSON array of member ids, in family order; [] means everyone. */
   member_ids: string;
+  /** Who sees it (privacy.ts): its own setting, else its calendar's. */
+  visibility: Visibility;
 }
 
-// Event columns plus who it's for, from event_members.
+// Event columns plus who it's for, from event_members, and who sees it.
 const EVENT_SELECT = `
   SELECT e.*, (SELECT json_group_array(member_id) FROM (
     SELECT em.member_id FROM event_members em JOIN members m ON m.id = em.member_id
-    WHERE em.event_id = e.id ORDER BY m.sort_order, m.created_at)) AS member_ids
+    WHERE em.event_id = e.id ORDER BY m.sort_order, m.created_at)) AS member_ids,
+    ${VISIBILITY_SQL} AS visibility
   FROM events e`;
 
 const toEvent = (r: EventRow) => ({
@@ -28,15 +33,19 @@ const toEvent = (r: EventRow) => ({
   allDay: r.all_day === 1, start: r.start, end: r.end, syncState: r.sync_state, location: r.location,
   // One day of a repeating iCloud event; edits here change that day only.
   repeats: !!r.remote_id?.includes('#'),
+  visibility: r.visibility,
 });
+/** A Busy event someone else is on: just the time and who, never its title or place. */
+const asBusy = (r: EventRow) => ({ ...toEvent(r), title: 'Busy', location: null, busy: true });
 
 /**
  * The same event often sits in two calendars (a shared family calendar and a personal one), so
  * show it once: same title (ignoring case and spacing) and same start and end. Of the copies, keep
  * one that says who it's for, then one added on the wall (those can be edited here).
  */
-function dedupe(rows: EventRow[]): EventRow[] {
-  const rank = (r: EventRow) => (r.member_ids !== '[]' ? 0 : 2) + (r.calendar_id === 'local' ? 0 : 1);
+function dedupe(rows: EventRow[], access?: Map<EventRow, Access>): EventRow[] {
+  // A copy the viewer sees in full beats one they only see as Busy.
+  const rank = (r: EventRow) => (access?.get(r) === 'busy' ? 4 : 0) + (r.member_ids !== '[]' ? 0 : 2) + (r.calendar_id === 'local' ? 0 : 1);
   const best = new Map<string, EventRow>();
   for (const r of rows) {
     const key = [r.title.trim().toLowerCase().replace(/\s+/g, ' '), r.all_day, r.start, r.end].join('\n');
@@ -110,12 +119,17 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
         AND ((e.all_day = 0 AND e.start < @to AND e.end > @from)
           OR (e.all_day = 1 AND e.start < @toDay AND e.end > @fromDay))
       ORDER BY e.all_day DESC, e.start`).all({ from, to, fromDay, toDay }) as EventRow[];
-    return dedupe(rows).map(toEvent);
+    // Only what this viewer may see: Busy ones as just their time, and none they can't.
+    const kids = kidIds(db);
+    const access = new Map(rows.map((r) => [r, accessFor(req.raw.viewer, kids, r.visibility, JSON.parse(r.member_ids))]));
+    return dedupe(rows.filter((r) => access.get(r) !== 'none'), access)
+      .map((r) => (access.get(r) === 'busy' ? asBusy(r) : toEvent(r)));
   });
 
   // calendarId: an iCloud calendar to add it to (sent there shortly); left out, it stays on the wall.
-  app.post<{ Body: EventInput & { calendarId?: string } }>('/api/events', {
-    schema: { body: { ...eventBody, properties: { ...eventBody.properties, calendarId: { type: 'string' } },
+  // visibility: who sees it, when not its calendar's default.
+  app.post<{ Body: EventInput & { calendarId?: string; visibility?: Visibility } }>('/api/events', {
+    schema: { body: { ...eventBody, properties: { ...eventBody.properties, calendarId: { type: 'string' }, visibility: { enum: VISIBILITIES } },
       required: ['title', 'allDay', 'start', 'end'] } },
   }, async (req, reply) => {
     const ev = { ...req.body, memberIds: req.body.memberIds ?? [] };
@@ -131,6 +145,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
         location: ev.location?.trim() || null });
       // Who it's for is kept on this display, like any iCloud event.
       if (ev.memberIds.length) assignManually(db, id, ev.memberIds);
+      if (req.body.visibility) setVisibility(db, id, req.body.visibility);
       opts.syncedEdits.soon();
       reply.code(201);
       return getEvent(id);
@@ -140,6 +155,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
       db.prepare(`INSERT INTO events (id, calendar_id, title, all_day, start, end, location) VALUES (?, 'local', ?, ?, ?, ?, ?)`)
         .run(id, ev.title.trim(), ev.allDay ? 1 : 0, ev.start, ev.end, ev.location?.trim() || null);
       setMembers(id, ev.memberIds);
+      if (req.body.visibility) setVisibility(db, id, req.body.visibility);
     })();
     reply.code(201);
     return getEvent(id);
@@ -249,7 +265,10 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
       opts.syncedEdits.soon();
       return reply.code(204).send();
     }
-    db.prepare('DELETE FROM events WHERE id = ?').run(req.params.id);
+    db.transaction(() => {
+      setVisibility(db, req.params.id, null);
+      db.prepare('DELETE FROM events WHERE id = ?').run(req.params.id);
+    })();
     return reply.code(204).send();
   });
 
@@ -266,7 +285,17 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
   });
 
   // ---- Edits waiting for iCloud ---------------------------------------------------
-  app.get('/api/outbox', async () => outboxStatus(db));
+  /** Edits waiting and conflicts, leaving out conflicts over events this viewer can't see in full. */
+  function visibleOutbox(viewer: Viewer | undefined) {
+    if (!viewer) return outboxStatus(db);
+    const eventOf = db.prepare('SELECT id FROM events WHERE calendar_id = ? AND remote_id = ?');
+    return outboxStatus(db, (calendarId, remoteId) => {
+      const ev = eventOf.get(calendarId, remoteId) as { id: string } | undefined;
+      // Deleted in iCloud: only guardians sort those out.
+      return ev ? eventAccess(db, viewer, ev.id) === 'full' : viewer.role === 'guardian';
+    });
+  }
+  app.get('/api/outbox', async (req) => visibleOutbox(req.raw.viewer));
 
   app.post<{ Params: { id: string }; Body: { keep: 'mine' | 'theirs' } }>('/api/outbox/:id/resolve', {
     schema: { body: { type: 'object', required: ['keep'], additionalProperties: false,
@@ -274,7 +303,16 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
   }, async (req, reply) => {
     if (!resolveConflict(db, Number(req.params.id), req.body.keep)) return reply.code(404).send({ error: 'Already settled' });
     if (req.body.keep === 'mine') opts.syncedEdits?.soon();
-    return outboxStatus(db);
+    return visibleOutbox(req.raw.viewer);
+  });
+
+  // Who sees an event (every repeat of it): everyone, busy or private; null goes back to its calendar's default.
+  app.put<{ Params: { id: string }; Body: { visibility: Visibility | null } }>('/api/events/:id/visibility', {
+    schema: { body: { type: 'object', required: ['visibility'], additionalProperties: false,
+      properties: { visibility: { enum: [...VISIBILITIES, null] } } } },
+  }, async (req, reply) => {
+    if (!setVisibility(db, req.params.id, req.body.visibility)) return reply.code(404).send({ error: 'Event not found' });
+    return getEvent(req.params.id);
   });
 
   // Who a synced event is for (none = everyone). Applies to every repeat of it and survives future syncs.

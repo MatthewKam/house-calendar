@@ -46,7 +46,7 @@ export default function MonthView({ days, month, today, selected, events, member
               {list.slice(0, extra > 0 ? MAX_SHOWN - 1 : MAX_SHOWN).map((ev) => (
                 <li key={ev.id}>
                   <button className={`${s.ev} ${ev.allDay ? s.allday : ''} ${isOver(ev, now) ? s.past : ''}`} style={eventPaint(ev, members).vars}
-                    onClick={(e) => { e.stopPropagation(); onOpen(ev, key); }}>
+                    data-busy={ev.busy || undefined} onClick={(e) => { e.stopPropagation(); onOpen(ev, key); }}>
                     {!ev.allDay && Date.parse(ev.start) >= day.getTime() && (
                       <span className={s.time}>{timeLabel(ev.start)}</span>
                     )}

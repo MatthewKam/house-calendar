@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
+import { eventAccess } from './privacy.ts';
 
 // Drive time from home to an event's location, and when to leave to arrive on time.
 
@@ -136,7 +137,7 @@ export function registerTravel(app: FastifyInstance, db: DB, estimate: Estimator
   // screen saver. One Google request each, kept a while: events in the next few hours are checked
   // every 30 minutes (traffic changes), later ones every 6 hours.
   const drives = new Map<string, { at: number; minutes: number }>();
-  app.get('/api/travel/times', async (_req, reply) => {
+  app.get('/api/travel/times', async (req, reply) => {
     if (!estimate) return reply.code(503).send({ error: 'Travel times need GOOGLE_MAPS_API_KEY in .env (see README)' });
     const origin = home();
     if (!origin) return {};
@@ -146,8 +147,9 @@ export function registerTravel(app: FastifyInstance, db: DB, estimate: Estimator
       WHERE location IS NOT NULL AND trim(location) != '' AND end > ? AND start < ? ORDER BY start LIMIT 60`)
       .all(now.toISOString().slice(0, 10), until.toISOString()) as
       { id: string; all_day: number; start: string; end: string; location: string }[])
-      // Timed events not started yet; all-day ones from today on.
-      .filter((r) => (r.all_day ? r.end > localDay(now) : Date.parse(r.start) > now.getTime()));
+      // Timed events not started yet; all-day ones from today on. Only ones this viewer sees in full.
+      .filter((r) => (r.all_day ? r.end > localDay(now) : Date.parse(r.start) > now.getTime()))
+      .filter((r) => eventAccess(db, req.raw.viewer, r.id) === 'full');
     const out: Record<string, number> = {};
     await Promise.all(rows.map(async (r) => {
       const arriveBy = r.all_day ? null : new Date(r.start);
@@ -175,9 +177,12 @@ export function registerTravel(app: FastifyInstance, db: DB, estimate: Estimator
 
   // ---- "Time to leave" alerts on the wall ------------------------------------------
   // Active alerts (not dismissed, and not for an event that started over an hour ago).
-  app.get('/api/alerts', async () =>
+  // Not for events this viewer can't see in full.
+  app.get('/api/alerts', async (req) =>
     (db.prepare(`SELECT * FROM leave_alerts WHERE dismissed_at IS NULL AND arrive_by > ? ORDER BY remind_at`)
-      .all(new Date(Date.now() - 3_600_000).toISOString()) as AlertRow[]).map(toAlert));
+      .all(new Date(Date.now() - 3_600_000).toISOString()) as AlertRow[])
+      .filter((a) => (eventAccess(db, req.raw.viewer, a.event_id) ?? 'full') === 'full')
+      .map(toAlert));
 
   app.post<{ Body: { eventId: string; minutesBefore: number } }>('/api/alerts', {
     schema: { body: { type: 'object', required: ['eventId', 'minutesBefore'], additionalProperties: false,

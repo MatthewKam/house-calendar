@@ -643,6 +643,19 @@ const migrations: string[] = [
   ALTER TABLE potty_punches_new RENAME TO potty_punches;
   CREATE INDEX potty_punches_card ON potty_punches(card_id);
   `,
+  // Privacy: who sees an event. everyone; busy (others see "Busy" at that time); private (others
+  // don't see it). Each calendar has a default; an event (every repeat of it) can have its own.
+  `
+  ALTER TABLE calendars ADD COLUMN visibility TEXT NOT NULL DEFAULT 'everyone'
+    CHECK (visibility IN ('everyone','busy','private'));
+  CREATE TABLE event_privacy (
+    calendar_id TEXT NOT NULL REFERENCES calendars(id) ON DELETE CASCADE,
+    -- The series (every repeat), or the event's own id when it doesn't repeat.
+    series_key  TEXT NOT NULL,
+    visibility  TEXT NOT NULL CHECK (visibility IN ('everyone','busy','private')),
+    PRIMARY KEY (calendar_id, series_key)
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

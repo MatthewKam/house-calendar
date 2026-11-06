@@ -101,3 +101,11 @@ input {
 :root[data-notch="right"] {
 	--inset-left: 0px;
 }
+
+/* Someone else's Busy time (server/privacy.ts): just the time, faded and striped, and it doesn't open. */
+[data-busy] {
+	opacity: 0.6;
+	font-style: italic;
+	cursor: default;
+	background-image: repeating-linear-gradient(135deg, transparent 0 6px, rgb(0 0 0 / 0.06) 6px 12px);
+}

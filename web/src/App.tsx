@@ -257,6 +257,11 @@ export default function App() {
 		document.documentElement.style.fontSize = `${18 * uiScale}px`;
 	}, [uiScale]);
 
+	/** Opens an event, unless it's someone else's Busy time (nothing to show). */
+	function openEvent(event: CalEvent, day: string) {
+		if (!event.busy) setDialog({ day, event });
+	}
+
 	function save(input: EventInput) {
 		const id = dialog?.event?.id;
 		setDialog(null);
@@ -435,7 +440,7 @@ export default function App() {
 							me={signedIn?.memberId ?? null}
 							parent={parentLock.parent}
 							onPage={setPage}
-							onOpenEvent={(event) => setDialog({ day: event.allDay ? event.start : dayKey(new Date(event.start)), event })}
+							onOpenEvent={(event) => openEvent(event, event.allDay ? event.start : dayKey(new Date(event.start)))}
 						/>
 					) : page === "tasks" ? (
 						<TasksPage
@@ -535,7 +540,7 @@ export default function App() {
 								events={events}
 								members={members}
 								onSelect={setSelected}
-								onOpen={(event, day) => setDialog({ day, event })}
+								onOpen={openEvent}
 							/>
 						) : (
 							<WeekView
@@ -545,7 +550,7 @@ export default function App() {
 								events={events}
 								members={members}
 								onSelect={setSelected}
-								onOpen={(event, day) => setDialog({ day, event })}
+								onOpen={openEvent}
 								footer={view === "week" && narrow ? cards : undefined}
 							/>
 						)}
@@ -556,7 +561,7 @@ export default function App() {
 								today={today}
 								members={members}
 								onAdd={parentLock.parent ? (day) => setDialog({ day }) : undefined}
-								onOpen={(event, day) => setDialog({ day, event })}
+								onOpen={openEvent}
 								onClose={() => setSelected(null)}
 							/>
 						)}
@@ -641,7 +646,7 @@ export default function App() {
 					onOpenEvent={(event, day) => {
 						saver.hide();
 						setPage("calendar");
-						setDialog({ day, event });
+						openEvent(event, day);
 					}}
 				/>
 			)}
