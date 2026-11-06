@@ -91,3 +91,20 @@
 @keyframes fade {
 	from { opacity: 0; }
 }
+
+/* A phone on its side: the + sits in the bar on the left, and the actions open beside it in two
+   columns (one would run off the short screen). */
+@media (orientation: landscape) and (max-height: 500px) {
+	.plus {
+		margin-top: 0;
+	}
+	.stack {
+		left: calc(5.5rem + var(--inset-left));
+		right: auto;
+		top: 0;
+		bottom: 0;
+		display: grid;
+		grid-template-columns: repeat(2, auto);
+		align-content: center;
+	}
+}
