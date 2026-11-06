@@ -120,7 +120,8 @@ details > summary.cardHead {
 	white-space: nowrap;
 }
 .leave {
-	flex: none;
+	align-self: flex-start;
+	margin-top: 0.35rem;
 	padding: 0.2rem 0.55rem;
 	border-radius: 999px;
 	background: var(--surface);

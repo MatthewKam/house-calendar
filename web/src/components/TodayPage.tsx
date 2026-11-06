@@ -104,12 +104,13 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 						<span className={s.title}>{e.title}</span>
 						{e.location && <span className={s.where}>{e.location}</span>}
 						{people.length > 0 && <span className={s.where}>{people.map((p) => p.name).join(", ")}</span>}
+						{/* Under the event, so the title keeps the row's width on a phone. */}
+						{leaveAt && (
+							<span className={`${s.leave} ${soon ? s.leaveSoon : ""}`}>
+								{leaveAt.getTime() <= now.getTime() ? "Leave now" : `Leave by ${timeLabel(leaveAt)}`}
+							</span>
+						)}
 					</span>
-					{leaveAt && (
-						<span className={`${s.leave} ${soon ? s.leaveSoon : ""}`}>
-							{leaveAt.getTime() <= now.getTime() ? "Leave now" : `Leave by ${timeLabel(leaveAt)}`}
-						</span>
-					)}
 				</button>
 			</li>
 		);
