@@ -744,6 +744,12 @@ export function openDb(file: string, upTo = migrations.length): DB {
 
 function migrate(db: DB, upTo: number) {
   const current = db.pragma('user_version', { simple: true }) as number;
+  // Upgraded by newer code (another branch, say): this code's upgrades past `upTo` would be skipped
+  // without a word, so say so.
+  if (current > migrations.length) {
+    console.warn(`This database is at version ${current}, but this code only knows ${migrations.length} upgrades. ` +
+      'It was probably upgraded by another branch; anything this branch adds since then is missing until that\'s sorted out.');
+  }
   for (let v = current; v < upTo; v++) {
     db.transaction(() => {
       db.exec(migrations[v]);
