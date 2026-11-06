@@ -364,6 +364,12 @@ alert opens Sprig on Lists (or Today). Kids' devices and the wall don't get aler
   (tap again to untick), stars and stickers; and **Rewards**, their jars. Putting stars in jars asks for a guardian's PIN first. **All kids** switches between them on a shared tablet. To leave, hold the exit
   button in the corner for two seconds and type a guardian's PIN. A kid's own device (added by code) is always in kid mode;
   the PIN unlocks the whole app until it locks again.
+- **Learn:** turn it on per kid in **Settings → Learning**, and kid mode gets a **Learn** tab with one short activity
+  a day: big pictures, no wrong answers, no sound. Little (2–3): **Who says that?** (animal sounds) and **picture
+  stories** with a question for the grown-up to ask. Early (4–6): **counting**, **letters**, **feelings** and
+  **patterns**, taking turns. Finishing earns 1 star a day (from Early); playing again is free play. Everyone starts
+  at level 1. From age 3 a guardian can turn on **Can level up**; then each skill moves up by itself after 3 days of
+  getting it all right (counting → adding, letters → which letter starts a word, patterns → ABB and ABC).
 - **Potty chart:** **🚽 Start potty chart** under a kid's tasks. The card has a big row for each step (said I need
   to go, sat on the potty, went pee or poop, wiped and flushed, washed hands). Tap the glowing spot after a row's last
   sticker to add one (the pee or poop row asks which, with two big pictures; tap both for both); tap a new sticker again to take it off; stickers already saved do nothing. Each
