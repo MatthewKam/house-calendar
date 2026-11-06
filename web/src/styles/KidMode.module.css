@@ -10,7 +10,8 @@
 	gap: 1rem;
 	background: color-mix(in srgb, var(--c, var(--accent)) 8%, var(--bg));
 }
-.page > * {
+/* Not the pop-ups (and their dimmed backdrop), which sit over the page at their own size. */
+.page > :not([role="dialog"], [role="presentation"]) {
 	width: 100%;
 	max-width: 56rem;
 	margin-inline: auto;
@@ -329,12 +330,6 @@
 }
 
 /* Their jars (the Rewards page's card). */
-.jars {
-	padding: 0.4rem 1rem 1rem;
-	border-radius: 1.4rem;
-	background: var(--surface);
-}
-
 /* Starting kid mode: big name buttons. */
 .startPicks {
 	display: flex;

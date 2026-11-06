@@ -469,3 +469,62 @@
 	width: 1.2rem;
 	height: 1.2rem;
 }
+
+/* Kid mode (KidJars big): the jars as big tiles, like the task tiles above, under a JARS heading
+   with the stars and Use stars. */
+.big {
+	max-width: none;
+	padding: 0;
+	background: none;
+	border: none;
+	gap: 0.6rem;
+}
+.big .sub {
+	order: -1;
+	margin: 0;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+}
+.big .kidName {
+	display: none;
+}
+.big .bucket b {
+	font-size: 1.8rem;
+}
+.big .bucket .star {
+	width: 1.8rem;
+	height: 1.8rem;
+}
+.big .use {
+	min-height: 3.2rem;
+	padding: 0 1.5rem;
+	border-radius: 999px;
+	font-size: 1.15rem;
+}
+.big .list {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+	gap: 0.8rem;
+}
+.big .row {
+	padding: 1rem 1.1rem;
+	border-radius: 1.4rem;
+	background: var(--surface);
+	border: 3px solid color-mix(in srgb, var(--c) 35%, white);
+	box-shadow: 0 0.3rem 0 color-mix(in srgb, var(--c) 35%, white);
+}
+.big .rowTitle {
+	font-size: 1.3rem;
+	font-weight: 750;
+}
+.big .rowSub {
+	font-size: 0.95rem;
+}
+.big .picking {
+	border-style: dashed;
+	border-color: var(--c);
+}
+.big .picked {
+	border-style: solid;
+	box-shadow: 0 0.3rem 0 var(--c);
+}

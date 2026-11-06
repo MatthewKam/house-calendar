@@ -20,6 +20,8 @@ interface Props {
 	onEdit?: (jar: Reward) => void;
 	/** Kid mode: a grown-up says OK (their PIN) before stars move, then `then` goes ahead. */
 	askFirst?: (then: () => void) => void;
+	/** Kid mode: jars as big tiles like the tasks above, without the name (it's at the top). */
+	big?: boolean;
 }
 
 /**
@@ -56,6 +58,7 @@ export default function KidJars({
 	jars,
 	onEdit,
 	askFirst,
+	big,
 }: Props) {
 	const { place, restore, remove } = useRewardActions();
 	const [stage, setStage] = useState<Stage | null>(null);
@@ -124,7 +127,7 @@ export default function KidJars({
 	return (
 		<section
 			ref={sectionRef}
-			className={s.kid}
+			className={`${s.kid} ${big ? s.big : ""}`}
 			style={{ "--c": kid.color } as CSSProperties}
 			aria-label={kid.name}
 		>

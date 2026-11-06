@@ -169,8 +169,9 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 			})}
 			{dueToday.length === 0 && <p className={s.none}>Nothing to do today. Have fun! 🌈</p>}
 
-			<div className={s.jars}>
+			<div>
 				<KidJars
+					big
 					kid={kid}
 					members={members}
 					today={today}
