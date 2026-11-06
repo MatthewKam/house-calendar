@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import s from "../styles/PinPad.module.css";
@@ -13,9 +13,20 @@ const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "back"];
 /**
  * A guardian's PIN on a number pad, like a phone's lock screen: dots for the digits typed, and big keys.
  * A keyboard works too (digits, Backspace, Enter for `onEnter`). When every guardian's PIN is the same
- * length, there's a dot for each digit and it's checked as the last one goes in.
+ * length, there's a dot for each digit and it's checked as the last one goes in. `error`: what was
+ * wrong with the last try ("Wrong PIN"), shown under the dots (with a shake) until typing starts again.
  */
-export default function PinPad({ value, onChange, onEnter }: { value: string; onChange: (pin: string) => void; onEnter: (pin: string) => void }) {
+export default function PinPad({ value, onChange, onEnter, error }: {
+	value: string;
+	onChange: (pin: string) => void;
+	onEnter: (pin: string) => void;
+	error?: string | null;
+}) {
+	// Each new error shakes the dots once.
+	const [shakes, setShakes] = useState(0);
+	useEffect(() => {
+		if (error) setShakes((n) => n + 1);
+	}, [error]);
 	const status = useQuery({ queryKey: ["auth"], queryFn: api.authStatus }).data;
 	const length = status?.signedIn ? status.pinLength : null;
 	const max = length ?? MAX;
@@ -43,11 +54,13 @@ export default function PinPad({ value, onChange, onEnter }: { value: string; on
 	return (
 		<div className={s.pad}>
 			{/* A dot for each digit of the PIN; or, not knowing its length, four to start and more as it's typed. */}
-			<div className={s.dots} role="status" aria-label={`${value.length} ${value.length === 1 ? "digit" : "digits"} typed`}>
+			<div key={shakes} className={`${s.dots} ${shakes ? s.shake : ""}`} role="status"
+				aria-label={`${value.length} ${value.length === 1 ? "digit" : "digits"} typed`}>
 				{Array.from({ length: length ?? Math.max(4, value.length) }, (_, i) => (
 					<span key={i} className={`${s.dot} ${i < value.length ? s.filled : ""}`} />
 				))}
 			</div>
+			{error && !value && <p className={s.error} role="alert">{error}</p>}
 			<div className={s.keys}>
 				{KEYS.map((k, i) =>
 					k === "" ? (

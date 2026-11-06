@@ -22,6 +22,24 @@
 	background: var(--text);
 	border-color: var(--text);
 }
+/* A wrong PIN: the message under the dots, and the dots shake. */
+.error {
+	margin: -0.4rem 0 0;
+	color: #b42318;
+	font-weight: 600;
+}
+.shake {
+	animation: shake 0.4s ease-in-out;
+}
+@keyframes shake {
+	20%, 60% { transform: translateX(-0.5rem); }
+	40%, 80% { transform: translateX(0.5rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.shake {
+		animation: none;
+	}
+}
 .keys {
 	display: grid;
 	grid-template-columns: repeat(3, 4.2rem);
@@ -62,8 +80,8 @@
 	.sheet.sheet {
 		display: grid;
 		grid-template-columns: minmax(10rem, 14rem) auto;
-		/* The title, the words, any problem, then the buttons at the bottom. */
-		grid-template-rows: auto auto 1fr auto;
+		/* The title, the words, then the buttons at the bottom. */
+		grid-template-rows: auto 1fr auto;
 		column-gap: 1.5rem;
 		width: auto;
 		max-width: 94vw;
@@ -73,7 +91,7 @@
 		align-self: start;
 	}
 	.sheet > :last-child {
-		grid-row: 4;
+		grid-row: 3;
 		align-self: end;
 	}
 	.sheet > .pad {

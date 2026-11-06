@@ -22,7 +22,6 @@ import PinPad, { pinSheet } from "./PinPad";
 import PottyCard from "./PottyCard";
 import { StarIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
-import r from "../styles/Rewards.module.css";
 import s from "../styles/KidMode.module.css";
 
 /** Holding the corner button this long asks for a grown-up. */
@@ -289,8 +288,7 @@ export function GrownUpPin({ title, body, okLabel, onClose, onOk }: {
 			<form className={`${sheet.sheet} ${sheet.confirm} ${pinSheet}`} role="dialog" aria-modal="true" aria-label={title} onSubmit={submit}>
 				<h2 className={sheet.heading}>{title}</h2>
 				<div className={sheet.body}>{body}</div>
-				<PinPad value={pin} onChange={setPin} onEnter={(typed) => submit(undefined, typed)} />
-				{check.isError && <div className={r.problem}>{check.error.message}</div>}
+				<PinPad value={pin} onChange={setPin} onEnter={(typed) => submit(undefined, typed)} error={check.error?.message} />
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />
 					<button type="button" className={sheet.secondary} onClick={onClose}>Cancel</button>

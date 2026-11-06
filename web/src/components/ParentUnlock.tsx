@@ -2,7 +2,6 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useParent } from "../lib/useParent";
 import PinPad, { pinSheet } from "./PinPad";
 import sheet from "../styles/Sheet.module.css";
-import s from "../styles/Rewards.module.css";
 
 /** Unlocks this device for parent changes with any guardian's PIN (then `onDone`, e.g. opening Settings). */
 export default function ParentUnlock({ onClose, onDone }: { onClose: () => void; onDone?: () => void }) {
@@ -39,8 +38,7 @@ export default function ParentUnlock({ onClose, onDone }: { onClose: () => void;
 					Unlock to add, change or delete events, tasks, jars, photos, lists and settings. It locks again after a few
 					minutes, or when the screen saver comes on.
 				</div>
-				<PinPad value={pin} onChange={setPin} onEnter={(typed) => submit(undefined, typed)} />
-				{unlock.isError && <div className={s.problem}>{unlock.error.message}</div>}
+				<PinPad value={pin} onChange={setPin} onEnter={(typed) => submit(undefined, typed)} error={unlock.error?.message} />
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />
 					<button type="button" className={sheet.secondary} onClick={onClose}>
