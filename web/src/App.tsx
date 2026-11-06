@@ -450,6 +450,7 @@ export default function App() {
 				<NavBar
 					phone={phone}
 					center={<QuickAdd actions={quickActions} />}
+					onKidMode={kids.length ? () => setStartingKidMode(true) : undefined}
 					page={page}
 					settingsOpen={showMembers}
 					onPage={setPage}
@@ -478,7 +479,6 @@ export default function App() {
 							members={members}
 							focus={focus.length === 1 ? focus[0] : null}
 							locked={!parentLock.parent}
-							onKidMode={() => setStartingKidMode(true)}
 							onAdd={(memberId, goal) => setTaskDialog({ memberId, goal })}
 							onEdit={(task) => setTaskDialog({ task })}
 						/>

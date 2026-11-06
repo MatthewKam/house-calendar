@@ -18,6 +18,8 @@ interface Props {
 	phone?: boolean;
 	/** The quick-add button in the middle of the phone bar. */
 	center?: ReactNode;
+	/** Starts kid mode on this device (when there are kids). */
+	onKidMode?: () => void;
 }
 
 // Simple line icons, drawn in the current text color.
@@ -60,6 +62,14 @@ const PhotosIcon = () => (
 		<path d="M4 17l5-4.5 3.5 3 3-2.5 4.5 4" />
 	</svg>
 );
+const KidModeIcon = () => (
+	<svg viewBox="0 0 24 24" aria-hidden="true">
+		<circle cx="12" cy="13" r="7.5" />
+		<circle cx="6" cy="5.8" r="2.3" />
+		<circle cx="18" cy="5.8" r="2.3" />
+		<path d="M9.6 12v.3M14.4 12v.3M9.5 15.6c1.4 1.2 3.6 1.2 5 0" />
+	</svg>
+);
 const MoreIcon = () => (
 	<svg viewBox="0 0 24 24" aria-hidden="true">
 		<circle cx="5" cy="12" r="1.4" />
@@ -80,7 +90,10 @@ const SettingsIcon = () => (
 	</svg>
 );
 
-/** Bar down the left edge: the Today, Calendar, Tasks, Rewards, Lists and Photos pages, and the logo and Settings at the bottom. */
+/**
+ * Bar down the left edge: the Today, Calendar, Tasks, Lists, Rewards and Photos pages, Kid mode, and the
+ * logo and Settings at the bottom.
+ */
 export default function NavBar({
 	page,
 	settingsOpen,
@@ -90,8 +103,9 @@ export default function NavBar({
 	me,
 	phone,
 	center,
+	onKidMode,
 }: Props) {
-	if (phone) return <BottomBar {...{ page, settingsOpen, onPage, onSettings, lock, me, center }} />;
+	if (phone) return <BottomBar {...{ page, settingsOpen, onPage, onSettings, lock, me, center, onKidMode }} />;
 	const item = (p: Page, label: string, icon: ReactNode) => (
 		<button
 			className={`${s.item} ${page === p ? s.on : ""}`}
@@ -111,6 +125,12 @@ export default function NavBar({
 			{item("lists", "Lists", <ListsIcon />)}
 			{item("rewards", "Rewards", <RewardsIcon />)}
 			{item("photos", "Photos", <PhotosIcon />)}
+			{onKidMode && (
+				<button className={s.item} onClick={onKidMode} aria-label="Kid mode">
+					<KidModeIcon />
+					<span className={s.label}>Kid mode</span>
+				</button>
+			)}
 			{/* Pinned to the bottom of the bar: who's signed in, the parent lock, then Settings. */}
 			{me ? (
 				<button className={`${s.item} ${s.me}`} onClick={me.onTap}
@@ -155,7 +175,7 @@ const MORE: [Page, string, () => ReactNode][] = [
  * Phones: Today, Calendar, the quick-add button, Tasks and More along the bottom, in thumb's reach.
  * More holds the other pages, who's signed in, the parent lock and Settings.
  */
-function BottomBar({ page, settingsOpen, onPage, onSettings, lock, me, center }: Omit<Props, "phone">) {
+function BottomBar({ page, settingsOpen, onPage, onSettings, lock, me, center, onKidMode }: Omit<Props, "phone">) {
 	const [more, setMore] = useState(false);
 	const inMore = MORE.some(([p]) => p === page);
 	const tab = (p: Page, label: string, icon: ReactNode) => (
@@ -193,6 +213,12 @@ function BottomBar({ page, settingsOpen, onPage, onSettings, lock, me, center }:
 								{label}
 							</button>
 						))}
+						{onKidMode && (
+							<button className={s.moreItem} onClick={then(onKidMode)}>
+								<KidModeIcon />
+								Kid mode
+							</button>
+						)}
 						<hr className={s.moreRule} />
 						{me && (
 							<button className={s.moreItem} onClick={then(me.onTap)}>
