@@ -237,7 +237,8 @@ Traffic is checked again about 30 minutes before leaving, and the alert moves if
 3. Put it after `GOOGLE_MAPS_API_KEY=` in `.env` and restart. Set your home address in **Settings**.
 
 Each tap asks Google twice (to match traffic to when you'd leave); answers are reused for 10 minutes. Alerts show on
-the wall, not on phones.
+the wall, and on the phones of who the event is for (everyone's grown-ups when it's for anyone or a kid) if they have
+**Alerts** on (see "Alerts on phones").
 
 ## On phones (home-screen app)
 
@@ -252,10 +253,25 @@ without a connection (showing what it last loaded). Data always comes from the w
    (`npm start`), `http://<pi's address>:3000`.
 
 Sign in as described in "Accounts and households".
-For the offline start (and phone notifications, later), iPhones need the address to be HTTPS. With MagicDNS and HTTPS
+For the offline start and alerts, iPhones need the address to be HTTPS. With MagicDNS and HTTPS
 certificates turned on in the Tailscale admin, run `tailscale serve --bg 5173` on the Mac while developing (`--bg 3000`
 on the Pi): the app is then at `https://<machine>.<tailnet>.ts.net`, for your Tailscale devices only. Add it to the
 home screen from that address; it works at home and away.
+
+### Alerts on phones
+
+In **Settings → Alerts**, a grown-up turns on **Alerts on this device**. Sprig then alerts that phone when a reminder
+on its lists comes due (at its time, or 8 AM on the phone's clock for a reminder with only a day), and when it's time
+to leave for an event. Reminders go to who they're for; ones for anyone, or for a kid, go to every grown-up with
+alerts on. Each comes once (again if it's moved or unticked), and nothing older than 12 hours is sent. Tapping an
+alert opens Sprig on Lists (or Today). Kids' devices and the wall don't get alerts.
+
+- On iPhone and iPad (iOS 16.4 or later), alerts need Sprig added to the Home Screen and opened from there, over
+  HTTPS (above). Android and desktop browsers need HTTPS too (`localhost` is fine on a computer).
+- Alerts need the built app (`npm start`), since `npm run dev` doesn't run the service worker.
+- The server's push keys are made in `data/vapid.json` on first start; keep it with the data. When hosting, set
+  `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (`npx web-push generate-vapid-keys`) and `VAPID_SUBJECT` (an https URL or
+  `mailto:`) in `.env` instead.
 
 ## Using it
 
@@ -276,7 +292,7 @@ home screen from that address; it works at home and away.
   Sprig (**+ New list**: groceries, to-dos, packing), and your iCloud Reminders if they're connected (see "Connect
   Reminders"). Anyone adds items and ticks them off. On Sprig's lists a parent's **⋯** on an item gives it a day
   (and a time, if it matters) and who it's for: once it's due it shows under **Needs you** on Today, in red when
-  late. **⋯** by a list's name renames or deletes it, and **Clear done** takes ticked items off.
+  late, and alerts phones that have alerts on. **⋯** by a list's name renames or deletes it, and **Clear done** takes ticked items off.
   Each list's items are shown in its color; tap the dot by a list's name to pick another. Drag an item by its ⋮⋮ to
   put it in order of importance (the color and order are kept on the wall; Reminders on the phones keeps its own order).
   Tap the spot before an item to give it an icon (search or **Show more** for every icon); it's added to the start of

@@ -6,9 +6,9 @@ import webpush from 'web-push';
 import type { DB } from './db.ts';
 import { kidIds } from './privacy.ts';
 
-// Alerts on people's phones (web push). A grown-up turns them on per device; the browser gives a
-// subscription, kept here with whose device it is and its time zone. Kid and wall devices don't get
-// them. Sending is replaced in tests.
+// Alerts on people's phones (web push): reminders on Sprig's lists as they come due, and time to
+// leave. A grown-up turns them on per device; the browser gives a subscription, kept here with whose
+// device it is and its time zone. Kid and wall devices don't get them. Sending is replaced in tests.
 
 /** A browser's push subscription, as PushSubscription.toJSON() gives it. */
 export interface Subscription { endpoint: string; keys: { p256dh: string; auth: string } }
@@ -86,7 +86,10 @@ function devicesFor(db: DB, memberIds: string[]) {
 /** When a reminder comes due on this device. */
 const dueAt = (due: string, d: DeviceRow) => (due.length === 10 ? atLocal(due, DAY_HOUR, d.time_zone) : Date.parse(due));
 
-/** Sends what has come due: reminders on Sprig's lists. Run every minute. */
+/** A time to leave is sent only this soon after it comes up (the wall shows it until the event). */
+const LEAVE_STALE = 30 * 60_000;
+
+/** Sends what has come due: reminders on Sprig's lists, and time to leave. Run every minute. */
 export async function sendDue(db: DB, pusher: Pusher, now = new Date(), log?: FastifyInstance['log']) {
   const t = now.getTime();
   // Noted sends are kept a month (long after anything could come due again).
@@ -105,6 +108,23 @@ export async function sendDue(db: DB, pusher: Pusher, now = new Date(), log?: Fa
     await sendOnce(db, pusher, ready, `item:${it.id}:${it.due}`, {
       title: `⏰ ${it.title}`, body: it.name ? `${it.list} · ${it.name}` : it.list, url: '/#lists', tag: `item:${it.id}`,
     }, log);
+  }
+  // Time to leave (travel.ts), to the phones of who the event is for.
+  const leaving = db.prepare(`SELECT a.id, a.event_id, a.title, a.destination, a.drive_minutes, a.leave_at, a.remind_at,
+      (SELECT json_group_array(member_id) FROM event_members WHERE event_id = a.event_id) AS member_ids
+    FROM leave_alerts a WHERE a.dismissed_at IS NULL AND a.remind_at <= ? AND a.remind_at > ? AND a.arrive_by > ?`)
+    .all(now.toISOString(), new Date(t - LEAVE_STALE).toISOString(), now.toISOString()) as
+    { id: string; title: string; destination: string; drive_minutes: number; leave_at: string; remind_at: string; member_ids: string }[];
+  for (const a of leaving) {
+    for (const d of devicesFor(db, JSON.parse(a.member_ids) as string[])) {
+      if (Date.parse(a.remind_at) < Date.parse(d.created_at)) continue;
+      // The leave time on each phone's own clock.
+      const by = new Intl.DateTimeFormat('en-US', { timeZone: d.time_zone, hour: 'numeric', minute: '2-digit' }).format(new Date(a.leave_at));
+      await sendOnce(db, pusher, [d], `leave:${a.id}`, {
+        title: `🚗 Time to leave for ${a.title}`, body: `Leave by ${by} · ${a.drive_minutes} min to ${a.destination}`,
+        url: '/#today', tag: `leave:${a.id}`,
+      }, log);
+    }
   }
 }
 

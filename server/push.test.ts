@@ -120,4 +120,36 @@ describe('push', () => {
     await sendDue(db, pusher, new Date('2026-07-01T14:05:00.000Z'));
     expect(sent.map((s) => s.alert.title)).toEqual(['⏰ Just now']);
   });
+
+  it('sends time to leave to who the event is for, once, on their own clock', async () => {
+    const { db, call, pusher, sent } = setup();
+    db.prepare(`INSERT INTO members (id, name, color) VALUES ('jordan', 'Jordan', '#111111')`).run();
+    await call('POST', '/api/push', sub('alex'));
+    await call('POST', '/api/push', sub('jordan', 'America/New_York'));
+    db.prepare(`UPDATE push_devices SET member_id = substr(endpoint, 19), created_at = '2000-01-01T00:00:00.000Z'`).run();
+    const leave = async (id: string, remindAt: string, memberIds: string[]) => {
+      const ev = (await call('POST', '/api/events', { title: 'Swim', allDay: false, start: '2026-07-01T17:00:00.000Z', end: '2026-07-01T18:00:00.000Z', memberIds })).body;
+      db.prepare(`INSERT INTO leave_alerts (id, event_id, title, destination, arrive_by, drive_minutes, leave_at, remind_at)
+        VALUES (?, ?, 'Swim', 'The pool', '2026-07-01T17:00:00.000Z', 20, '2026-07-01T16:40:00.000Z', ?)`).run(id, ev.id, remindAt);
+    };
+    await leave('a1', '2026-07-01T16:30:00.000Z', ['alex']);
+    await leave('a2', '2026-07-01T16:30:00.000Z', []);
+    await leave('a3', '2026-07-01T16:31:00.000Z', ['jordan']);
+    db.prepare(`UPDATE leave_alerts SET dismissed_at = '2026-07-01T16:00:00.000Z' WHERE id = 'a3'`).run();
+
+    await sendDue(db, pusher, new Date('2026-07-01T16:29:00.000Z'));
+    expect(sent).toEqual([]);
+    await sendDue(db, pusher, new Date('2026-07-01T16:30:00.000Z'));
+    await sendDue(db, pusher, new Date('2026-07-01T16:31:00.000Z'));
+    expect(sent.map((s) => `${s.endpoint.slice(18)}: ${s.alert.title} (${s.alert.body})`).sort()).toEqual([
+      'alex: 🚗 Time to leave for Swim (Leave by 9:40 AM · 20 min to The pool)',
+      'alex: 🚗 Time to leave for Swim (Leave by 9:40 AM · 20 min to The pool)',
+      'jordan: 🚗 Time to leave for Swim (Leave by 12:40 PM · 20 min to The pool)',
+    ]);
+    // Too long after it came up: not sent.
+    sent.length = 0;
+    await leave('a4', '2026-07-01T15:00:00.000Z', []);
+    await sendDue(db, pusher, new Date('2026-07-01T16:32:00.000Z'));
+    expect(sent).toEqual([]);
+  });
 });
