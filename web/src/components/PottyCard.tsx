@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { usePottyActions } from "../lib/queries";
 import { PEE_POO, POTTY_STEPS, ROW_PUNCHES } from "../lib/potty";
 import type { Member, PottyChart, PottyStep } from "../lib/types";
@@ -10,13 +10,15 @@ import { StarIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Potty.module.css";
 
+type Kind = "pee" | "poo" | null;
+
 interface Props {
 	kid: Member;
 	chart: PottyChart;
-	/** A parent may take a punch back and stop the chart. */
-	parent: boolean;
-	/** Kid mode: bigger. */
-	big?: boolean;
+	/** Edit is offered (parents; in kid mode it asks for a PIN first). */
+	canEdit: boolean;
+	/** A grown-up says OK (their PIN) before editing, then `then` goes ahead. */
+	askFirst?: (then: () => void) => void;
 }
 
 /** "took 6 days", from a card's start to when it filled. */
@@ -25,66 +27,175 @@ function took(c: { startedAt: string; finishedAt: string }) {
 	return `took ${days} ${days === 1 ? "day" : "days"}`;
 }
 
+const none = (): Record<PottyStep, Kind[]> => ({ ask: [], sit: [], go: [], wipe: [], wash: [] });
+const zero = (): Record<PottyStep, number> => ({ ask: 0, sit: 0, go: 0, wipe: 0, wash: 0 });
+
 /**
- * A kid's potty chart: a punch card with a row per step of a trip (7 punches fill a row, and a full
- * row is a star), and "Potty time!" to punch the steps they did. A full card cheers and a fresh one
- * starts. Parents can take a row's last punch back, or stop the chart.
+ * A kid's potty chart, sized for a toddler: a row per step of a trip (7 stickers fill a row, and a
+ * full row is a star). Tapping the empty spot after the last sticker adds one (the go row asks pee or
+ * poo); stickers already there do nothing. New stickers wait for Save. Parents' Edit takes stickers
+ * back (a row's last one first) or stops the chart.
  */
-export default function PottyCard({ kid, chart, parent, big }: Props) {
-	const { setOn, takeBack } = usePottyActions();
-	const [trip, setTrip] = useState(false);
+export default function PottyCard({ kid, chart, canEdit, askFirst }: Props) {
+	const { setOn, punch, takeBack } = usePottyActions();
+	// Stickers added and not saved yet, per row.
+	const [adding, setAdding] = useState(none);
+	// Editing: how many of each row's last stickers come off on Save.
+	const [editing, setEditing] = useState(false);
+	const [removing, setRemoving] = useState(zero);
+	// The go row's next spot was tapped: pee or poo?
+	const [choosing, setChoosing] = useState(false);
+	const [saving, setSaving] = useState(false);
+	const [problem, setProblem] = useState<string | null>(null);
 	const [cheer, setCheer] = useState<Cheer | null>(null);
 	const [stopping, setStopping] = useState(false);
 	const last = chart.filled[0];
 
+	// Another kid on the same card (kid mode's switch): start clean.
+	useEffect(() => {
+		setAdding(none());
+		setRemoving(zero());
+		setEditing(false);
+	}, [kid.id]);
+
+	const changed = POTTY_STEPS.some(({ step }) => adding[step].length > 0 || removing[step] > 0);
+	const add = (step: PottyStep, kind: Kind) => setAdding((a) => ({ ...a, [step]: [...a[step], kind] }));
+
+	function tapSpot(step: PottyStep, i: number) {
+		const saved = chart.card.rows[step].length;
+		const kept = saved - removing[step];
+		if (editing) {
+			// The last sticker kept comes off; the first one coming off stays after all.
+			if (i === kept - 1) setRemoving((r) => ({ ...r, [step]: r[step] + 1 }));
+			else if (i === kept && removing[step] > 0) setRemoving((r) => ({ ...r, [step]: r[step] - 1 }));
+			return;
+		}
+		// Only the spot right after the last sticker adds one.
+		if (i !== saved + adding[step].length) return;
+		if (step === "go") setChoosing(true);
+		else add(step, null);
+	}
+
+	function cancel() {
+		setAdding(none());
+		setRemoving(zero());
+		setEditing(false);
+		setProblem(null);
+	}
+
+	async function save() {
+		setSaving(true);
+		setProblem(null);
+		let star = false;
+		let card = false;
+		try {
+			for (const { step } of POTTY_STEPS) {
+				for (let n = 0; n < removing[step]; n++) await takeBack.mutateAsync({ memberId: kid.id, step });
+				for (const kind of adding[step]) {
+					const r = await punch.mutateAsync({ memberId: kid.id, step, kind: kind ?? undefined });
+					star ||= r.rowFull;
+					card ||= r.cardFull;
+				}
+			}
+			cancel();
+		} catch (e) {
+			setProblem((e as Error).message);
+		} finally {
+			setSaving(false);
+		}
+		if (card) setCheer({ names: [kid.name], emoji: "🏆", message: "The whole potty card is full! Here's a new one." });
+		else if (star) setCheer({ names: [kid.name], emoji: "⭐", message: "A full row: that's a star!" });
+	}
+
 	return (
-		<section className={`${s.card} ${big ? s.big : ""}`} style={{ "--c": kid.color, "--on": textOn(kid.color) } as CSSProperties}
+		<section className={`${s.card} ${editing ? s.editing : ""}`} style={{ "--c": kid.color, "--on": textOn(kid.color) } as CSSProperties}
 			aria-label={`${kid.name}'s potty chart`}>
 			<div className={s.head}>
-				<h3 className={s.title}>🚽 Potty chart</h3>
-				<button type="button" className={s.go} onClick={() => setTrip(true)}>Potty time!</button>
+				<h3 className={s.title}>
+					<span className={s.logo} aria-hidden="true">🚽</span> Potty chart
+				</h3>
+				{canEdit && !editing && !changed && (
+					<button type="button" className={s.edit} onClick={() => (askFirst ? askFirst(() => setEditing(true)) : setEditing(true))}>
+						Edit
+					</button>
+				)}
 			</div>
-			<ul className={s.rows}>
-				{POTTY_STEPS.map(({ step, emoji, label }) => {
-					const punches = chart.card.rows[step];
-					const full = punches.length >= ROW_PUNCHES;
-					return (
-						<li key={step} className={s.row}>
-							<span className={s.rowLabel} title={label}>
-								<span className={s.rowEmoji} aria-hidden="true">{emoji}</span>
-								<span className={s.rowText}>{label}</span>
-							</span>
-							<span className={s.holes} aria-label={`${punches.length} of ${ROW_PUNCHES}`}>
-								{Array.from({ length: ROW_PUNCHES }, (_, i) => (
-									<span key={i} className={`${s.hole} ${i < punches.length ? s.punched : ""}`} aria-hidden="true">
-										{punches[i] ? PEE_POO[punches[i]] : ""}
-									</span>
-								))}
-							</span>
+			{editing && <p className={s.hint}>Tap a row's last sticker to take it off, then Save.</p>}
+
+			{POTTY_STEPS.map(({ step, emoji, label }) => {
+				const saved = chart.card.rows[step];
+				const kept = saved.length - removing[step];
+				const spots: { kind: Kind; state: "saved" | "off" | "new" }[] = [
+					...saved.map((kind, i) => ({ kind, state: i < kept ? ("saved" as const) : ("off" as const) })),
+					...adding[step].map((kind) => ({ kind, state: "new" as const })),
+				];
+				const next = editing ? -1 : spots.length;
+				const full = kept + adding[step].length >= ROW_PUNCHES;
+				return (
+					<div key={step} className={s.row}>
+						<div className={s.rowLabel}>
+							<span className={s.rowEmoji} aria-hidden="true">{emoji}</span>
+							{label}
+						</div>
+						<div className={s.spots}>
+							{Array.from({ length: ROW_PUNCHES }, (_, i) => {
+								const spot = spots[i];
+								const sticker = spot ? (spot.kind ? PEE_POO[spot.kind] : emoji) : "";
+								const tappable = editing ? i === kept - 1 || (i === kept && removing[step] > 0) : i === next;
+								return (
+									<button key={i} type="button"
+										className={`${s.spot} ${spot ? s[spot.state] : ""} ${i === next ? s.next : ""}`}
+										aria-label={spot ? `${label}: sticker ${i + 1}${spot.state === "off" ? ", coming off" : ""}` : i === next ? `Add a sticker: ${label}` : `Spot ${i + 1}`}
+										tabIndex={tappable ? 0 : -1}
+										onClick={() => tapSpot(step, i)}>
+										{sticker || (i === next ? "+" : "")}
+									</button>
+								);
+							})}
 							<span className={`${s.star} ${full ? s.starOn : ""}`} aria-label={full ? "Star earned" : "No star yet"}>
 								<StarIcon />
 							</span>
-							{parent && (
-								<button type="button" className={s.undo} disabled={!punches.length || takeBack.isPending}
-									aria-label={`Take back a punch from ${label}`} title="Take back the last punch"
-									onClick={() => takeBack.mutate({ memberId: kid.id, step })}>
-									↶
-								</button>
-							)}
-						</li>
-					);
-				})}
-			</ul>
-			{takeBack.isError && <p className={s.problem}>{takeBack.error.message}</p>}
-			<div className={s.foot}>
-				{last && <span>Cards filled: {chart.filled.length} (the last {took(last)})</span>}
-				<span className={s.spacer} />
-				{parent && !big && (
-					<button type="button" className={s.textButton} onClick={() => setStopping(true)}>Stop chart</button>
-				)}
-			</div>
+						</div>
+					</div>
+				);
+			})}
 
-			{trip && <PottyTrip kid={kid} chart={chart} onCheer={setCheer} onClose={() => setTrip(false)} />}
+			{problem && <p className={s.problem}>{problem}</p>}
+			{(changed || editing) && (
+				<div className={s.actions}>
+					{editing && (
+						<button type="button" className={s.stop} onClick={() => setStopping(true)}>Stop chart</button>
+					)}
+					<span className={s.spacer} />
+					<button type="button" className={s.cancel} onClick={cancel} disabled={saving}>Cancel</button>
+					<button type="button" className={s.save} onClick={() => void save()} disabled={!changed || saving}>Save ✓</button>
+				</div>
+			)}
+			{last && <div className={s.foot}>Cards filled: {chart.filled.length} (the last {took(last)})</div>}
+
+			{choosing && (
+				<>
+					<div className={sheet.scrim} onClick={() => setChoosing(false)} role="presentation" />
+					<div className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-modal="true" aria-label="Pee or poo?">
+						<div className={sheet.head}>
+							<h2 className={s.chooseHeading}>Pee or poo?</h2>
+							<button type="button" className={sheet.close} onClick={() => setChoosing(false)} aria-label="Close">×</button>
+						</div>
+						<div className={s.choices}>
+							{(["pee", "poo"] as const).map((k) => (
+								<button key={k} type="button" className={s.choice}
+									onClick={() => {
+										add("go", k);
+										setChoosing(false);
+									}}>
+									<span className={s.choiceEmoji} aria-hidden="true">{PEE_POO[k]}</span>
+									{k === "pee" ? "Pee" : "Poo"}
+								</button>
+							))}
+						</div>
+					</div>
+				</>
+			)}
 			{cheer && <Celebration cheer={cheer} onDone={() => setCheer(null)} />}
 			{stopping && (
 				<ConfirmDialog
@@ -95,81 +206,12 @@ export default function PottyCard({ kid, chart, parent, big }: Props) {
 					onConfirm={() => {
 						setOn.mutate({ memberId: kid.id, on: false });
 						setStopping(false);
+						cancel();
 					}}
 				>
 					Their card and stars are kept. Start it again any time to pick up where they left off.
 				</ConfirmDialog>
 			)}
 		</section>
-	);
-}
-
-/** One potty trip: the five steps as big buttons, each punching its row once. The go step asks pee or poo. */
-function PottyTrip({ kid, chart, onCheer, onClose }: {
-	kid: Member;
-	chart: PottyChart;
-	onCheer: (cheer: Cheer) => void;
-	onClose: () => void;
-}) {
-	const { punch } = usePottyActions();
-	// Steps punched on this trip.
-	const [done, setDone] = useState<PottyStep[]>([]);
-
-	function tap(step: PottyStep, kind?: "pee" | "poo") {
-		setDone((d) => [...d, step]);
-		punch.mutate({ memberId: kid.id, step, kind }, {
-			onSuccess: ({ rowFull, cardFull }) => {
-				if (cardFull) onCheer({ names: [kid.name], emoji: "🏆", message: "The whole potty card is full! Here's a new one." });
-				else if (rowFull) onCheer({ names: [kid.name], emoji: "⭐", message: "A full row: that's a star!" });
-			},
-			onError: () => setDone((d) => d.filter((x) => x !== step)),
-		});
-	}
-
-	return (
-		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<div className={sheet.sheet} role="dialog" aria-modal="true" aria-label="Potty time"
-				style={{ "--c": kid.color, "--on": textOn(kid.color) } as CSSProperties}>
-				<div className={sheet.head}>
-					<h2 className={sheet.heading}>🚽 Potty time, {kid.name}!</h2>
-					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">×</button>
-				</div>
-				<div className={s.steps}>
-					{POTTY_STEPS.map(({ step, emoji, label }) => {
-						const full = chart.card.rows[step].length >= ROW_PUNCHES;
-						const did = done.includes(step);
-						if (step === "go" && !did && !full) {
-							return (
-								<div key={step} className={s.goStep}>
-									<span className={s.stepLabel}>{label}</span>
-									<div className={s.goPicks}>
-										{(["pee", "poo"] as const).map((k) => (
-											<button key={k} type="button" className={s.step} onClick={() => tap("go", k)}>
-												<span className={s.stepEmoji} aria-hidden="true">{PEE_POO[k]}</span>
-												{k === "pee" ? "Pee" : "Poo"}
-											</button>
-										))}
-									</div>
-								</div>
-							);
-						}
-						return (
-							<button key={step} type="button" className={`${s.step} ${did ? s.stepDone : ""}`}
-								disabled={did || full} aria-pressed={did} onClick={() => tap(step)}>
-								<span className={s.stepEmoji} aria-hidden="true">{did ? "✅" : full ? "⭐" : emoji}</span>
-								<span className={s.stepLabel}>{label}</span>
-								{full && !did && <span className={s.stepNote}>Row full!</span>}
-							</button>
-						);
-					})}
-				</div>
-				{punch.isError && <p className={s.problem}>{punch.error.message}</p>}
-				<div className={sheet.actions}>
-					<span className={sheet.spacer} />
-					<button type="button" className={sheet.primary} onClick={onClose}>{done.length ? "All done 🎉" : "Close"}</button>
-				</div>
-			</div>
-		</>
 	);
 }

@@ -318,10 +318,12 @@ home screen from that address; it works at home and away.
   with no calendar or settings. Putting stars in jars asks for a guardian's PIN first. **All kids** switches between them on a shared tablet. To leave, hold the exit
   button in the corner for two seconds and type a guardian's PIN. A kid's own device (added by code) is always in kid mode;
   the PIN unlocks the whole app until it locks again.
-- **Potty chart:** **🚽 Start potty chart** under a kid's tasks. The card has a row for each step (said I need to
-  go, sat on the potty, went pee or poo, wiped and flushed, washed hands); **Potty time!** punches the steps they
-  did. Seven punches fill a row, and a full row is a star. When every row is full, Hooray, and a fresh card starts.
-  Parents can take a row's last punch back (↶) or stop the chart (the card is kept).
+- **Potty chart:** **🚽 Start potty chart** under a kid's tasks. The card has a big row for each step (said I need
+  to go, sat on the potty, went pee or poo, wiped and flushed, washed hands). Tap the glowing spot after a row's last
+  sticker to add one (the pee or poo row asks which, with two big pictures); stickers already there do nothing. New
+  stickers wait for **Save ✓**. Seven fill a row, and a full row is a star; when every row is full, Hooray, and a
+  fresh card starts. **Edit** (parents; a guardian's PIN in kid mode) takes a row's last stickers off, or stops the
+  chart (the card is kept).
 - **Rewards:** the **Rewards** page (gift in the left bar, `#rewards`) is where kids spend their stars on **reward
   jars** that parents set up (the round +; ✎ beside a jar's name changes it). Each kid has a card with their
   **bucket** (stars earned from goals and moments, not yet spent) and their jars.

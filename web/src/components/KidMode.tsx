@@ -66,7 +66,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	const [popped, setPopped] = useState<string | null>(null);
 	// A grown-up typed their PIN so this kid can put stars in jars (until they switch kids or leave).
 	const [jarsFor, setJarsFor] = useState<string | null>(null);
-	const [asking, setAsking] = useState<(() => void) | null>(null);
+	const [asking, setAsking] = useState<{ body: string; then: () => void } | null>(null);
 
 	if (!kid) {
 		return (
@@ -97,9 +97,9 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 		<main className={s.page} style={{ "--c": kid.color, "--on": textOn(kid.color), "--p": `${pct}%` } as CSSProperties}>
 			<div className={s.top}>
 				{kids.length > 1 ? (
-					<div className={s.faces} role="group" aria-label="Who's playing">
+					<div className={s.faces} role="radiogroup" aria-label="Who's playing">
 						{kids.map((k) => (
-							<button key={k.id} type="button" className={s.face} aria-pressed={k.id === kid.id}
+							<button key={k.id} type="button" role="radio" className={s.face} aria-checked={k.id === kid.id}
 								style={{ "--c": k.color, "--on": textOn(k.color) } as CSSProperties}
 								onClick={() => setPickedId(k.id)}>
 								<span className={s.faceDot} aria-hidden="true">{k.name.slice(0, 1)}</span>
@@ -140,7 +140,8 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 			)}
 
 			{potty.some((c) => c.memberId === kid.id) && (
-				<PottyCard kid={kid} chart={potty.find((c) => c.memberId === kid.id)!} parent={false} big />
+				<PottyCard key={kid.id} kid={kid} chart={potty.find((c) => c.memberId === kid.id)!} canEdit
+					askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
 			)}
 
 			{GROUPS.map((g) => {
@@ -178,18 +179,22 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 					today={today}
 					bucket={stars}
 					jars={jars.filter((j) => j.status !== "earned" && j.memberIds.includes(kid.id))}
-					askFirst={askPin && jarsFor !== kid.id ? (then) => setAsking(() => then) : undefined}
+					askFirst={askPin && jarsFor !== kid.id
+						? (then) => setAsking({ body: "A grown-up types their PIN to put stars in jars.", then: () => {
+							setJarsFor(kid.id);
+							then();
+						} })
+						: undefined}
 				/>
 			</div>
 			{asking && (
 				<GrownUpPin
 					title="Ask a grown-up"
-					body="A grown-up types their PIN to put stars in jars."
+					body={asking.body}
 					okLabel="OK"
 					onClose={() => setAsking(null)}
 					onOk={() => {
-						setJarsFor(kid.id);
-						asking();
+						asking.then();
 						setAsking(null);
 					}}
 				/>
