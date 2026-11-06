@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { fromDayKey, startOfWeek, timeLabel } from "../lib/dates";
+import { fromDayKey, startOfWeek } from "../lib/dates";
 import { api } from "../lib/api";
 import {
 	useBuckets,
 	useMoments,
 	usePotty,
-	useRangeEvents,
 	useRewards,
 	useSetTaskDone,
 	useTasks,
@@ -17,6 +16,7 @@ import { didTask, dueOn, percent, taskProgress, tasksFor, TIMES } from "../lib/t
 import type { Member, Task } from "../lib/types";
 import { textOn } from "../lib/color";
 import KidJars from "./KidJars";
+import KidToday from "./KidToday";
 import PottyCard from "./PottyCard";
 import { StarIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
@@ -43,15 +43,24 @@ const GROUPS: { label: string; has: (t: Task) => boolean }[] = [
 	{ label: "Goals", has: (c: Task) => !c.required },
 ];
 
+/** Kid mode's own tabs, as pictures with one word. */
+type KidTab = "today" | "tasks" | "rewards";
+const TABS: { id: KidTab; icon: string; label: string }[] = [
+	{ id: "today", icon: "📅", label: "Today" },
+	{ id: "tasks", icon: "⭐", label: "Tasks" },
+	{ id: "rewards", icon: "🫙", label: "Rewards" },
+];
+
 /**
- * Kid mode: one kid's day as big pictures (ages 2–6 first). Their tasks to tap, their goals, today's
- * stickers, stars and jars, and what's next for them. No calendar, settings or anyone else's things.
- * Tapping a done task again unticks it, so nothing can go wrong. A grown-up holds the corner button
- * to leave.
+ * Kid mode: one kid's world as big pictures (ages 2–6 first), with its own tabs. Today: their
+ * calendar (more days as they grow). Tasks: their tasks and goals to tap, and today's stickers.
+ * Rewards: their stars and jars. No settings or anyone else's things. Tapping a done task again
+ * unticks it, so nothing can go wrong. A grown-up holds the corner button to leave.
  */
 export default function KidMode({ today, kids, members, onLeave, askPin }: Props) {
 	const [pickedId, setPickedId] = useState(kids[0]?.id ?? null);
 	const kid = kids.find((k) => k.id === pickedId) ?? kids[0];
+	const [tab, setTab] = useState<KidTab>("today");
 	const day = fromDayKey(today);
 	const thisWeek = useMemo(() => startOfWeek(day), [today]); // eslint-disable-line react-hooks/exhaustive-deps
 	const tasks = useTasks().data ?? [];
@@ -60,7 +69,6 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	const moments = useMoments(today).data ?? [];
 	const buckets = useBuckets().data ?? [];
 	const jars = useRewards(today).data ?? [];
-	const events = useRangeEvents(day, 1).data ?? [];
 	const potty = usePotty().data ?? [];
 	// The tile just ticked, for its little pop.
 	const [popped, setPopped] = useState<string | null>(null);
@@ -70,154 +78,151 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 
 	if (!kid) {
 		return (
-			<main className={s.page}>
-				<p className={s.none}>No kids yet. A grown-up adds them in Settings.</p>
-				<LeaveButton onLeave={onLeave} />
-			</main>
-		);
-	}
+				<main className={s.page}>
+					<p className={s.none}>No kids yet. A grown-up adds them in Settings.</p>
+					<LeaveButton onLeave={onLeave} />
+				</main>
+			);
+		}
 
-	const p = taskProgress(tasks, done, today, [kid.id]).get(kid.id);
-	const pct = percent(p);
-	const dueToday = tasksFor(tasks, kid.id).filter((t) => dueOn(t, day, kid.id));
-	const stickers = moments.filter((m) => m.memberId === kid.id);
-	const stars = buckets.find((b) => b.memberId === kid.id)?.stars ?? 0;
-	const chart = potty.find((c) => c.memberId === kid.id);
-	const now = Date.now();
-	const next = events
-		.filter((e) => !e.allDay && e.memberIds.includes(kid.id) && Date.parse(e.end) > now)
-		.sort((a, b) => a.start.localeCompare(b.start))[0];
+		const p = taskProgress(tasks, done, today, [kid.id]).get(kid.id);
+		const pct = percent(p);
+		const dueToday = tasksFor(tasks, kid.id).filter((t) => dueOn(t, day, kid.id));
+		const stickers = moments.filter((m) => m.memberId === kid.id);
+		const stars = buckets.find((b) => b.memberId === kid.id)?.stars ?? 0;
+		const chart = potty.find((c) => c.memberId === kid.id);
 
-	function tick(t: Task) {
-		const ticked = didTask(done, t, kid.id, today);
-		if (!ticked) setPopped(t.id);
-		setDone.mutate({ taskId: t.id, memberId: kid.id, day: today, done: !ticked });
-	}
+		function tick(t: Task) {
+			const ticked = didTask(done, t, kid.id, today);
+			if (!ticked) setPopped(t.id);
+			setDone.mutate({ taskId: t.id, memberId: kid.id, day: today, done: !ticked });
+		}
 
-	// My day: under the name, or (with a potty chart up top) just above the jars.
-	const myDay = (
-		<section className={s.group} aria-label="My day">
-			<h2 className={s.groupHead}>My day</h2>
-			<div className={s.hero}>
-				{/* Daily tasks: how far through today's required ones. */}
-				<div className={s.stat}>
-					<span className={s.statLabel}>Daily tasks</span>
-					<div className={s.heroRow}>
-						<span className={s.bar} aria-hidden="true"><span /></span>
-						<span className={s.statValue}>{!p ? "None today" : pct === 100 ? "All done! 🎉" : `${p.done} of ${p.due} done`}</span>
+		const myDay = (
+			<section className={s.group} aria-label="My day">
+				<h2 className={s.groupHead}>My day</h2>
+				<div className={s.hero}>
+					{/* Daily tasks: how far through today's required ones. */}
+					<div className={s.stat}>
+						<span className={s.statLabel}>Daily tasks</span>
+						<div className={s.heroRow}>
+							<span className={s.bar} aria-hidden="true"><span /></span>
+							<span className={s.statValue}>{!p ? "None today" : pct === 100 ? "All done! 🎉" : `${p.done} of ${p.due} done`}</span>
+						</div>
+					</div>
+					{/* Stars: what's in their bucket to put in jars. */}
+					<div className={s.stat}>
+						<span className={s.statLabel}>Stars to spend</span>
+						<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
+							<StarIcon className={s.star} /> {stars}
+						</span>
+						{stickers.length > 0 && (
+							<span className={s.caught}>
+								Caught being good:{" "}
+								<span className={s.stickers} aria-label={`${stickers.length} today`}>
+									{stickers.map((m) => momentKind(m.kind).emoji).join("")}
+								</span>
+							</span>
+						)}
 					</div>
 				</div>
-				{/* Stars: what's in their bucket to put in jars. */}
-				<div className={s.stat}>
-					<span className={s.statLabel}>Stars to spend</span>
-					<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
-						<StarIcon className={s.star} /> {stars}
-					</span>
-					{stickers.length > 0 && (
-						<span className={s.caught}>
-							Caught being good:{" "}
-							<span className={s.stickers} aria-label={`${stickers.length} today`}>
-								{stickers.map((m) => momentKind(m.kind).emoji).join("")}
-							</span>
-						</span>
-					)}
+			</section>
+		);
+
+		return (
+			<div className={s.shell} style={{ "--c": kid.color, "--on": textOn(kid.color), "--p": `${pct}%` } as CSSProperties}>
+			<nav className={s.kidNav} aria-label="Kid mode">
+				{TABS.map((t) => (
+					<button key={t.id} type="button" className={s.kidTab} aria-current={tab === t.id ? "page" : undefined}
+						onClick={() => setTab(t.id)}>
+						<span className={s.kidTabIcon} aria-hidden="true">{t.icon}</span>
+						{t.label}
+					</button>
+				))}
+			</nav>
+			<main className={s.page}>
+				<div className={s.top}>
+					{/* Each kid's name is a switch: the one showing is on (with one kid, it's always on). */}
+					<div className={s.faces} role="radiogroup" aria-label="Who's playing">
+						{kids.map((k) => (
+							<button key={k.id} type="button" role="radio" className={s.face} aria-checked={k.id === kid.id}
+								style={{ "--c": k.color, "--on": textOn(k.color) } as CSSProperties}
+								onClick={() => setPickedId(k.id)}>
+								{k.name}
+								<span className={s.knob} aria-hidden="true" />
+							</button>
+						))}
+					</div>
+					<LeaveButton onLeave={onLeave} />
 				</div>
-			</div>
-		</section>
-	);
 
-	return (
-		<main className={s.page} style={{ "--c": kid.color, "--on": textOn(kid.color), "--p": `${pct}%` } as CSSProperties}>
-			<div className={s.top}>
-				{/* Each kid's name is a switch: the one showing is on (with one kid, it's always on). */}
-				<div className={s.faces} role="radiogroup" aria-label="Who's playing">
-					{kids.map((k) => (
-						<button key={k.id} type="button" role="radio" className={s.face} aria-checked={k.id === kid.id}
-							style={{ "--c": k.color, "--on": textOn(k.color) } as CSSProperties}
-							onClick={() => setPickedId(k.id)}>
-							{k.name}
-							<span className={s.knob} aria-hidden="true" />
-						</button>
-					))}
-				</div>
-				<LeaveButton onLeave={onLeave} />
-			</div>
+				<h1 className={s.name}>{kid.name}</h1>
 
-			<h1 className={s.name}>{kid.name}</h1>
+				{tab === "today" && <KidToday today={today} kid={kid} />}
 
-			{!chart && myDay}
-			{chart && (
-				<PottyCard key={kid.id} kid={kid} chart={chart} canEdit
-					askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
-			)}
+				{tab === "tasks" && chart && (
+					<PottyCard key={kid.id} kid={kid} chart={chart} canEdit
+						askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
+				)}
+				{tab === "tasks" && myDay}
+				{tab === "tasks" && GROUPS.map((g) => {
+					const group = dueToday.filter(g.has);
+					if (group.length === 0) return null;
+					return (
+						<section key={g.label} className={s.group} aria-label={g.label}>
+							<h2 className={s.groupHead}>{g.label}</h2>
+							<div className={s.tiles}>
+								{group.map((t) => {
+									const ticked = didTask(done, t, kid.id, today);
+									return (
+										<button key={t.id} type="button" aria-pressed={ticked}
+											className={`${s.tile} ${ticked ? s.ticked : ""} ${ticked && popped === t.id ? s.pop : ""}`}
+											onClick={() => tick(t)}>
+											<span className={s.tileIcon} aria-hidden="true">{t.icon ?? (t.required ? "✅" : "⭐")}</span>
+											<span className={s.tileTitle}>{t.title}</span>
+											{!t.required && t.points > 0 && (
+												<span className={s.tileStars}>+{t.points} <StarIcon className={s.tileStar} /></span>
+											)}
+											{ticked && <span className={s.check} aria-hidden="true">✓</span>}
+										</button>
+									);
+								})}
+							</div>
+						</section>
+					);
+				})}
+				{tab === "tasks" && dueToday.length === 0 && <p className={s.none}>Nothing to do today. Have fun! 🌈</p>}
 
-			{next && (
-				<div className={s.next}>
-					<span className={s.nextLabel}>Next</span>
-					<span className={s.nextTitle}>{next.title}</span>
-					<span className={s.nextTime}>{timeLabel(next.start)}</span>
-				</div>
-			)}
-
-			{GROUPS.map((g) => {
-				const group = dueToday.filter(g.has);
-				if (group.length === 0) return null;
-				return (
-					<section key={g.label} className={s.group} aria-label={g.label}>
-						<h2 className={s.groupHead}>{g.label}</h2>
-						<div className={s.tiles}>
-							{group.map((t) => {
-								const ticked = didTask(done, t, kid.id, today);
-								return (
-									<button key={t.id} type="button" aria-pressed={ticked}
-										className={`${s.tile} ${ticked ? s.ticked : ""} ${ticked && popped === t.id ? s.pop : ""}`}
-										onClick={() => tick(t)}>
-										<span className={s.tileIcon} aria-hidden="true">{t.icon ?? (t.required ? "✅" : "⭐")}</span>
-										<span className={s.tileTitle}>{t.title}</span>
-										{!t.required && t.points > 0 && (
-											<span className={s.tileStars}>+{t.points} <StarIcon className={s.tileStar} /></span>
-										)}
-										{ticked && <span className={s.check} aria-hidden="true">✓</span>}
-									</button>
-								);
-							})}
-						</div>
-					</section>
-				);
-			})}
-			{dueToday.length === 0 && <p className={s.none}>Nothing to do today. Have fun! 🌈</p>}
-
-			{chart && myDay}
-
-			<div>
-				<KidJars
-					big
-					kid={kid}
-					members={members}
-					today={today}
-					bucket={stars}
-					jars={jars.filter((j) => j.status !== "earned" && j.memberIds.includes(kid.id))}
-					askFirst={askPin && jarsFor !== kid.id
-						? (then) => setAsking({ body: "A grown-up types their PIN to put stars in jars.", then: () => {
-							setJarsFor(kid.id);
-							then();
-						} })
-						: undefined}
-				/>
-			</div>
-			{asking && (
-				<GrownUpPin
-					title="Ask a grown-up"
-					body={asking.body}
-					okLabel="OK"
-					onClose={() => setAsking(null)}
-					onOk={() => {
-						asking.then();
-						setAsking(null);
-					}}
-				/>
-			)}
-		</main>
+				{tab === "rewards" && (
+					<KidJars
+						big
+						kid={kid}
+						members={members}
+						today={today}
+						bucket={stars}
+						jars={jars.filter((j) => j.status !== "earned" && j.memberIds.includes(kid.id))}
+						askFirst={askPin && jarsFor !== kid.id
+							? (then) => setAsking({ body: "A grown-up types their PIN to put stars in jars.", then: () => {
+								setJarsFor(kid.id);
+								then();
+							} })
+							: undefined}
+					/>
+				)}
+				{asking && (
+					<GrownUpPin
+						title="Ask a grown-up"
+						body={asking.body}
+						okLabel="OK"
+						onClose={() => setAsking(null)}
+						onOk={() => {
+							asking.then();
+							setAsking(null);
+						}}
+					/>
+				)}
+			</main>
+		</div>
 	);
 }
 

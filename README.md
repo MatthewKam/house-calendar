@@ -353,9 +353,11 @@ alert opens Sprig on Lists (or Today). Kids' devices and the wall don't get aler
   minutes), or fills a reward jar, the screen
   fills with confetti and a big "Hooray, Sam!" (with what it's for) for a few seconds (tap to close); Android phones
   buzz too.
-- **Kid mode:** **🧸 Kid mode** at the top of Tasks (or under your avatar) turns this device into one kid's screen:
-  their tasks and goals as big picture tiles (tap again to untick), stars, stickers, jars and what's next for them,
-  with no calendar or settings. Putting stars in jars asks for a guardian's PIN first. **All kids** switches between them on a shared tablet. To leave, hold the exit
+- **Kid mode:** **Kid mode** in the bar on the left (in **More** on phones, or under your avatar) turns this device
+  into one kid's screen, with its own tabs (down the left, or along the bottom on phones) and no settings:
+  **📅 Today**, their events and the family's as big pictures with the next one picked out (today for Little,
+  today and tomorrow for Early, the week from Middle on); **⭐ Tasks**, their tasks and goals as big picture tiles
+  (tap again to untick), stars and stickers; and **🫙 Rewards**, their jars. Putting stars in jars asks for a guardian's PIN first. **All kids** switches between them on a shared tablet. To leave, hold the exit
   button in the corner for two seconds and type a guardian's PIN. A kid's own device (added by code) is always in kid mode;
   the PIN unlocks the whole app until it locks again.
 - **Potty chart:** **🚽 Start potty chart** under a kid's tasks. The card has a big row for each step (said I need
