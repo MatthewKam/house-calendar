@@ -30,52 +30,54 @@
 	justify-content: space-between;
 	gap: 0.6rem;
 }
-/* Who's playing: a switch per kid, the one showing on (in their color). */
+/* Who's playing: each kid's name is a switch. Off: the name, then a white circle. On: the circle
+   slides to the other side and the button fills with their color. */
 .faces {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.5rem;
 }
 .face {
+	--knob: 2.4rem;
+	position: relative;
 	display: flex;
 	align-items: center;
-	gap: 0.7rem;
-	min-height: 3.5rem;
-	padding: 0.3rem 0.5rem 0.3rem 1.1rem;
+	min-height: 3.2rem;
+	padding: 0.3rem calc(var(--knob) + 0.8rem) 0.3rem 1.2rem;
 	border-radius: 999px;
-	border: 2px solid color-mix(in srgb, var(--c) 40%, white);
-	background: var(--surface);
+	border: 2px solid color-mix(in srgb, var(--c) 45%, white);
+	background: color-mix(in srgb, var(--text) 7%, var(--surface));
+	color: var(--text);
 	font-weight: 700;
 	font-size: 1.2rem;
+	transition: background 0.25s ease, color 0.25s ease, padding 0.25s ease, border-color 0.25s ease;
 }
-.switch {
-	width: 3.6rem;
-	height: 2.1rem;
-	flex: none;
-	display: flex;
-	align-items: center;
-	padding: 0.2rem;
-	box-sizing: border-box;
-	border-radius: 999px;
-	background: color-mix(in srgb, var(--text) 18%, var(--surface));
-	transition: background 0.2s ease;
-}
-.switch > span {
-	width: 1.7rem;
-	height: 1.7rem;
+.knob {
+	position: absolute;
+	top: 50%;
+	left: calc(100% - var(--knob) - 0.35rem);
+	width: var(--knob);
+	height: var(--knob);
 	border-radius: 50%;
 	background: white;
-	box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
-	transition: transform 0.2s ease;
+	box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+	transform: translateY(-50%);
+	transition: left 0.25s ease;
 }
 .face[aria-checked="true"] {
-	border-color: var(--c);
-}
-.face[aria-checked="true"] .switch {
+	padding: 0.3rem 1.2rem 0.3rem calc(var(--knob) + 0.8rem);
 	background: var(--c);
+	border-color: var(--c);
+	color: var(--on);
 }
-.face[aria-checked="true"] .switch > span {
-	transform: translateX(1.5rem);
+.face[aria-checked="true"] .knob {
+	left: 0.35rem;
+}
+@media (prefers-reduced-motion: reduce) {
+	.face,
+	.knob {
+		transition: none;
+	}
 }
 .faceDot {
 	opacity: 0.55;
