@@ -27,7 +27,8 @@ describe('potty charts', () => {
     expect((await punch(app, 'go')).statusCode).toBe(400);
     expect((await punch(app, 'sit', 'pee')).statusCode).toBe(400);
     expect((await punch(app, 'go', 'poo')).json()).toMatchObject({ rowFull: false, cardFull: false });
-    expect((await chart(app)).card.rows.go).toEqual(['poo']);
+    expect((await punch(app, 'go', 'both')).statusCode).toBe(200);
+    expect((await chart(app)).card.rows.go).toEqual(['poo', 'both']);
 
     for (let i = 0; i < ROW_PUNCHES; i++) expect((await punch(app, 'wash')).json().rowFull).toBe(i === ROW_PUNCHES - 1);
     expect(bucket(db, 'mia')).toBe(1);

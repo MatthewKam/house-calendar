@@ -9,10 +9,12 @@ export interface GoalTemplate { key: string; title: string; emoji: string; kind:
 
 /** One step of a potty trip, each with its own row on the card (server/potty.ts). */
 export type PottyStep = 'ask' | 'sit' | 'go' | 'wipe' | 'wash';
-/** A kid's potty chart: the card being filled (each row's punches; the go row says pee or poo), and cards filled before. */
+/** What the go row says it was. */
+export type PottyKind = 'pee' | 'poo' | 'both';
+/** A kid's potty chart: the card being filled (each row's punches; the go row says which), and cards filled before. */
 export interface PottyChart {
   memberId: string;
-  card: { id: string; startedAt: string; rows: Record<PottyStep, ('pee' | 'poo' | null)[]> };
+  card: { id: string; startedAt: string; rows: Record<PottyStep, (PottyKind | null)[]> };
   filled: { startedAt: string; finishedAt: string }[];
 }
 

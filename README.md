@@ -319,8 +319,8 @@ home screen from that address; it works at home and away.
   button in the corner for two seconds and type a guardian's PIN. A kid's own device (added by code) is always in kid mode;
   the PIN unlocks the whole app until it locks again.
 - **Potty chart:** **🚽 Start potty chart** under a kid's tasks. The card has a big row for each step (said I need
-  to go, sat on the potty, went pee or poo, wiped and flushed, washed hands). Tap the glowing spot after a row's last
-  sticker to add one (the pee or poo row asks which, with two big pictures); stickers already there do nothing. Each
+  to go, sat on the potty, went pee or poop, wiped and flushed, washed hands). Tap the glowing spot after a row's last
+  sticker to add one (the pee or poop row asks which, with two big pictures; tap both for both); tap a new sticker again to take it off; stickers already saved do nothing. Each
   row takes one new sticker at a time, kept with **Save ✓**. Seven fill a row, and a full row is a star; when every row is full, Hooray, and a
   fresh card starts. **Edit** (parents; a guardian's PIN in kid mode) takes a row's last stickers off, or stops the
   chart (the card is kept).

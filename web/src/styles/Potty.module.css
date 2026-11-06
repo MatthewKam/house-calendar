@@ -115,6 +115,7 @@
 }
 /* Added, waiting for Save. */
 .new {
+	cursor: pointer;
 	border: 3px dashed var(--c);
 	background: color-mix(in srgb, var(--c) 18%, white);
 	animation: stick 0.35s ease;
@@ -196,6 +197,10 @@
 	margin: 0;
 	font-size: 2rem;
 }
+/* Pee or poop: two big toggles (both on is both), then OK. */
+.chooser {
+	width: min(32rem, 94vw);
+}
 .choices {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -207,16 +212,40 @@
 	align-items: center;
 	justify-content: center;
 	gap: 0.4rem;
+	position: relative;
 	min-height: 11rem;
+	padding: 0.5rem 0.3rem;
 	border-radius: 1.4rem;
 	border: 3px solid color-mix(in srgb, var(--c, var(--accent)) 40%, white);
 	background: var(--surface);
 	font-size: 2rem;
 	font-weight: 800;
 }
+.choice[aria-pressed="true"] {
+	border-color: var(--c, var(--accent));
+	background: color-mix(in srgb, var(--c, var(--accent)) 25%, white);
+}
 .choiceEmoji {
 	font-size: 5.5rem;
 	line-height: 1;
+}
+.choiceCheck {
+	position: absolute;
+	top: 0.5rem;
+	right: 0.5rem;
+	width: 2.2rem;
+	height: 2.2rem;
+	display: grid;
+	place-items: center;
+	border-radius: 50%;
+	background: var(--c, var(--accent));
+	color: var(--on, white);
+	font-size: 1.3rem;
+}
+/* Both pictures in one spot. */
+.both {
+	font-size: clamp(0.8rem, 3.4vw, 1.3rem);
+	letter-spacing: -0.1em;
 }
 
 @media (prefers-reduced-motion: reduce) {

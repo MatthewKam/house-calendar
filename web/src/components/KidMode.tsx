@@ -110,23 +110,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 				<LeaveButton onLeave={onLeave} />
 			</div>
 
-			<header className={s.hero}>
-				<h1 className={s.name}>{kid.name}</h1>
-				<div className={s.heroRow}>
-					<span className={s.bar} aria-hidden="true"><span /></span>
-					<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
-						<StarIcon className={s.star} /> {stars}
-					</span>
-				</div>
-				<div className={s.status}>
-					{!p ? "" : pct === 100 ? "All done! 🎉" : `${p.done} of ${p.due} done`}
-					{stickers.length > 0 && (
-						<span className={s.stickers} aria-label={`${stickers.length} caught being good`}>
-							{stickers.map((m) => momentKind(m.kind).emoji).join("")}
-						</span>
-					)}
-				</div>
-			</header>
+			<h1 className={s.name}>{kid.name}</h1>
 
 			{potty.some((c) => c.memberId === kid.id) && (
 				<PottyCard key={kid.id} kid={kid} chart={potty.find((c) => c.memberId === kid.id)!} canEdit
@@ -168,6 +152,24 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 				);
 			})}
 			{dueToday.length === 0 && <p className={s.none}>Nothing to do today. Have fun! 🌈</p>}
+
+			<section className={s.hero} aria-label="Stars earned">
+				<h2 className={s.heroHead}>Stars earned</h2>
+				<div className={s.heroRow}>
+					<span className={s.bar} aria-hidden="true"><span /></span>
+					<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
+						<StarIcon className={s.star} /> {stars}
+					</span>
+				</div>
+				<div className={s.status}>
+					{!p ? "" : pct === 100 ? "All done! 🎉" : `${p.done} of ${p.due} done`}
+					{stickers.length > 0 && (
+						<span className={s.stickers} aria-label={`${stickers.length} caught being good`}>
+							{stickers.map((m) => momentKind(m.kind).emoji).join("")}
+						</span>
+					)}
+				</div>
+			</section>
 
 			<div>
 				<KidJars

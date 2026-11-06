@@ -4,7 +4,7 @@ import type { DB } from './db.ts';
 import { bucket } from './rewards.ts';
 
 // Potty charts, a punch card for potty training. Each step of a trip has its own row: said I need to
-// go, sat on the potty, went (pee or poo), wiped and flushed (with help), washed hands. Seven punches
+// go, sat on the potty, went (pee, poop or both), wiped and flushed (with help), washed hands. Seven punches
 // fill a row, and a full row is a star in the kid's bucket. When every row is full the card is done
 // (a celebration) and a fresh one starts. Accidents aren't recorded: the card only goes forward.
 
@@ -12,9 +12,12 @@ export const STEPS = ['ask', 'sit', 'go', 'wipe', 'wash'] as const;
 export type Step = (typeof STEPS)[number];
 /** Punches to fill a row (and earn its star). */
 export const ROW_PUNCHES = 7;
+/** What the go row says it was. */
+export const KINDS = ['pee', 'poo', 'both'] as const;
+export type Kind = (typeof KINDS)[number];
 
 interface CardRow { id: string; member_id: string; started_at: string; finished_at: string | null }
-interface PunchRow { step: Step; kind: 'pee' | 'poo' | null }
+interface PunchRow { step: Step; kind: Kind | null }
 
 /** The kid's card being filled, started if there isn't one. */
 function currentCard(db: DB, memberId: string): CardRow {
@@ -28,7 +31,7 @@ function currentCard(db: DB, memberId: string): CardRow {
 /** Each row's punches, oldest first: the kind for the go row, otherwise null. */
 function rows(db: DB, cardId: string) {
   const punches = db.prepare('SELECT step, kind FROM potty_punches WHERE card_id = ? ORDER BY created_at, rowid').all(cardId) as PunchRow[];
-  return Object.fromEntries(STEPS.map((s) => [s, punches.filter((p) => p.step === s).map((p) => p.kind)])) as Record<Step, ('pee' | 'poo' | null)[]>;
+  return Object.fromEntries(STEPS.map((s) => [s, punches.filter((p) => p.step === s).map((p) => p.kind)])) as Record<Step, (Kind | null)[]>;
 }
 
 function chart(db: DB, memberId: string) {
@@ -62,14 +65,14 @@ export function registerPotty(app: FastifyInstance, db: DB) {
   });
 
   // One step done: a punch in its row. Says whether that filled the row (a star) and the card.
-  app.post<{ Params: { memberId: string }; Body: { step: Step; kind?: 'pee' | 'poo' } }>('/api/potty/:memberId', {
+  app.post<{ Params: { memberId: string }; Body: { step: Step; kind?: Kind } }>('/api/potty/:memberId', {
     schema: { body: { type: 'object', required: ['step'], additionalProperties: false,
-      properties: { step: { enum: STEPS }, kind: { enum: ['pee', 'poo'] } } } },
+      properties: { step: { enum: STEPS }, kind: { enum: KINDS } } } },
   }, async (req, reply) => {
     const { memberId } = req.params;
     const { step, kind } = req.body;
     if (!isKid(memberId)) return reply.code(404).send({ error: "They aren't on a potty chart" });
-    if ((step === 'go') !== !!kind) return reply.code(400).send({ error: step === 'go' ? 'Pee or poo?' : 'Only the go row says pee or poo' });
+    if ((step === 'go') !== !!kind) return reply.code(400).send({ error: step === 'go' ? 'Pee, poop or both?' : 'Only the go row says pee or poop' });
     const result = db.transaction(() => {
       const card = currentCard(db, memberId);
       const before = rows(db, card.id);

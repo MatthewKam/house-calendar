@@ -153,10 +153,15 @@
 	background: var(--surface);
 	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
 }
+/* The kid's name, on its own at the top. */
 .name {
 	margin: 0;
-	font-size: 2.4rem;
+	font-size: 2.8rem;
 	line-height: 1.1;
+}
+.heroHead {
+	margin: 0;
+	font-size: 1.5rem;
 }
 .heroRow {
 	display: flex;

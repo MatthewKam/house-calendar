@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { usePottyActions } from "../lib/queries";
-import { PEE_POO, POTTY_STEPS, ROW_PUNCHES } from "../lib/potty";
-import type { Member, PottyChart, PottyStep } from "../lib/types";
+import { peePoo, POTTY_STEPS, ROW_PUNCHES } from "../lib/potty";
+import type { Member, PottyChart, PottyKind, PottyStep } from "../lib/types";
 import type { Cheer } from "../lib/useCheer";
 import { textOn } from "../lib/color";
 import Celebration from "./Celebration";
@@ -10,7 +10,7 @@ import { StarIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Potty.module.css";
 
-type Kind = "pee" | "poo" | null;
+type Kind = PottyKind | null;
 
 interface Props {
 	kid: Member;
@@ -32,9 +32,9 @@ const zero = (): Record<PottyStep, number> => ({ ask: 0, sit: 0, go: 0, wipe: 0,
 
 /**
  * A kid's potty chart, sized for a toddler: a row per step of a trip (7 stickers fill a row, and a
- * full row is a star). Tapping the empty spot after the last sticker adds one (the go row asks pee or
- * poo); stickers already there do nothing. A row takes one new sticker at a time, kept on Save. Parents' Edit takes stickers
- * back (a row's last one first) or stops the chart.
+ * full row is a star). Tapping the empty spot after the last sticker adds one (the go row asks pee,
+ * poop or both); stickers already there do nothing. A row takes one new sticker at a time, kept on
+ * Save. Parents' Edit takes stickers back (a row's last one first) or stops the chart.
  */
 export default function PottyCard({ kid, chart, canEdit, askFirst }: Props) {
 	const { setOn, punch, takeBack } = usePottyActions();
@@ -43,8 +43,11 @@ export default function PottyCard({ kid, chart, canEdit, askFirst }: Props) {
 	// Editing: how many of each row's last stickers come off on Save.
 	const [editing, setEditing] = useState(false);
 	const [removing, setRemoving] = useState(zero);
-	// The go row's next spot was tapped: pee or poo?
+	// The go row's next spot was tapped: pee, poop or both?
 	const [choosing, setChoosing] = useState(false);
+	// Picked in it: pee, poop, or both (each a toggle).
+	const [pee, setPee] = useState(false);
+	const [poo, setPoo] = useState(false);
 	const [saving, setSaving] = useState(false);
 	const [problem, setProblem] = useState<string | null>(null);
 	const [cheer, setCheer] = useState<Cheer | null>(null);
@@ -70,9 +73,18 @@ export default function PottyCard({ kid, chart, canEdit, askFirst }: Props) {
 			else if (i === kept && removing[step] > 0) setRemoving((r) => ({ ...r, [step]: r[step] - 1 }));
 			return;
 		}
+		// A new sticker (not saved yet) tapped again comes back off.
+		if (i === saved && adding[step].length > 0) {
+			setAdding((a) => ({ ...a, [step]: [] }));
+			return;
+		}
 		// Only the spot right after the last sticker adds one, and one per row until Save.
-		if (adding[step].length > 0 || i !== saved) return;
-		if (step === "go") setChoosing(true);
+		if (i !== saved) return;
+		if (step === "go") {
+			setPee(false);
+			setPoo(false);
+			setChoosing(true);
+		}
 		else add(step, null);
 	}
 
@@ -112,7 +124,7 @@ export default function PottyCard({ kid, chart, canEdit, askFirst }: Props) {
 			aria-label={`${kid.name}'s potty chart`}>
 			<div className={s.head}>
 				<h3 className={s.title}>
-					<span className={s.logo} aria-hidden="true">🚽</span> Potty chart
+					Potty chart <span className={s.logo} aria-hidden="true">🚽</span>
 				</h3>
 				{canEdit && !editing && !changed && (
 					<button type="button" className={s.edit} onClick={() => (askFirst ? askFirst(() => setEditing(true)) : setEditing(true))}>
@@ -141,12 +153,12 @@ export default function PottyCard({ kid, chart, canEdit, askFirst }: Props) {
 						<div className={s.spots}>
 							{Array.from({ length: ROW_PUNCHES }, (_, i) => {
 								const spot = spots[i];
-								const sticker = spot ? (spot.kind ? PEE_POO[spot.kind] : emoji) : "";
-								const tappable = editing ? i === kept - 1 || (i === kept && removing[step] > 0) : i === next;
+								const sticker = spot ? (spot.kind ? peePoo(spot.kind).emoji : emoji) : "";
+								const tappable = editing ? i === kept - 1 || (i === kept && removing[step] > 0) : i === next || spot?.state === "new";
 								return (
 									<button key={i} type="button"
-										className={`${s.spot} ${spot ? s[spot.state] : ""} ${i === next ? s.next : ""}`}
-										aria-label={spot ? `${label}: sticker ${i + 1}${spot.state === "off" ? ", coming off" : ""}` : i === next ? `Add a sticker: ${label}` : `Spot ${i + 1}`}
+										className={`${s.spot} ${spot ? s[spot.state] : ""} ${spot?.kind === "both" ? s.both : ""} ${i === next ? s.next : ""}`}
+										aria-label={spot ? `${label}: sticker ${i + 1}${spot.state === "off" ? ", coming off" : spot.state === "new" ? ", tap to take it off" : ""}` : i === next ? `Add a sticker: ${label}` : `Spot ${i + 1}`}
 										tabIndex={tappable ? 0 : -1}
 										onClick={() => tapSpot(step, i)}>
 										{sticker || (i === next ? "+" : "")}
@@ -177,22 +189,30 @@ export default function PottyCard({ kid, chart, canEdit, askFirst }: Props) {
 			{choosing && (
 				<>
 					<div className={sheet.scrim} onClick={() => setChoosing(false)} role="presentation" />
-					<div className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-modal="true" aria-label="Pee or poo?">
+					<div className={`${sheet.sheet} ${s.chooser}`} role="dialog" aria-modal="true" aria-label="Pee or poop?">
 						<div className={sheet.head}>
-							<h2 className={s.chooseHeading}>Pee or poo?</h2>
+							<h2 className={s.chooseHeading}>Pee or poop?</h2>
 							<button type="button" className={sheet.close} onClick={() => setChoosing(false)} aria-label="Close">×</button>
 						</div>
+						{/* Each one toggles; both on is both. */}
 						<div className={s.choices}>
-							{(["pee", "poo"] as const).map((k) => (
-								<button key={k} type="button" className={s.choice}
-									onClick={() => {
-										add("go", k);
-										setChoosing(false);
-									}}>
-									<span className={s.choiceEmoji} aria-hidden="true">{PEE_POO[k]}</span>
-									{k === "pee" ? "Pee" : "Poo"}
+							{([[peePoo("pee"), pee, setPee], [peePoo("poo"), poo, setPoo]] as const).map(([k, on, set]) => (
+								<button key={k.kind} type="button" className={s.choice} aria-pressed={on} onClick={() => set(!on)}>
+									<span className={s.choiceEmoji} aria-hidden="true">{k.emoji}</span>
+									{k.label}
+									{on && <span className={s.choiceCheck} aria-hidden="true">✓</span>}
 								</button>
 							))}
+						</div>
+						<div className={sheet.actions}>
+							<span className={sheet.spacer} />
+							<button type="button" className={s.save} disabled={!pee && !poo}
+								onClick={() => {
+									add("go", pee && poo ? "both" : pee ? "pee" : "poo");
+									setChoosing(false);
+								}}>
+								OK ✓
+							</button>
 						</div>
 					</div>
 				</>

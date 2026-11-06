@@ -627,6 +627,22 @@ const migrations: string[] = [
   );
   CREATE INDEX potty_punches_card ON potty_punches(card_id);
   `,
+  // The go row can be both, too.
+  `
+  CREATE TABLE potty_punches_new (
+    id          TEXT PRIMARY KEY,
+    card_id     TEXT NOT NULL REFERENCES potty_cards(id) ON DELETE CASCADE,
+    member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    step        TEXT NOT NULL CHECK (step IN ('ask','sit','go','wipe','wash')),
+    kind        TEXT CHECK (kind IN ('pee','poo','both')),
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  INSERT INTO potty_punches_new (rowid, id, card_id, member_id, step, kind, created_at)
+    SELECT rowid, id, card_id, member_id, step, kind, created_at FROM potty_punches;
+  DROP TABLE potty_punches;
+  ALTER TABLE potty_punches_new RENAME TO potty_punches;
+  CREATE INDEX potty_punches_card ON potty_punches(card_id);
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */
