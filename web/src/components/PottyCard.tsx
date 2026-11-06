@@ -33,7 +33,7 @@ const zero = (): Record<PottyStep, number> => ({ ask: 0, sit: 0, go: 0, wipe: 0,
 /**
  * A kid's potty chart, sized for a toddler: a row per step of a trip (7 stickers fill a row, and a
  * full row is a star). Tapping the empty spot after the last sticker adds one (the go row asks pee or
- * poo); stickers already there do nothing. New stickers wait for Save. Parents' Edit takes stickers
+ * poo); stickers already there do nothing. A row takes one new sticker at a time, kept on Save. Parents' Edit takes stickers
  * back (a row's last one first) or stops the chart.
  */
 export default function PottyCard({ kid, chart, canEdit, askFirst }: Props) {
@@ -70,8 +70,8 @@ export default function PottyCard({ kid, chart, canEdit, askFirst }: Props) {
 			else if (i === kept && removing[step] > 0) setRemoving((r) => ({ ...r, [step]: r[step] - 1 }));
 			return;
 		}
-		// Only the spot right after the last sticker adds one.
-		if (i !== saved + adding[step].length) return;
+		// Only the spot right after the last sticker adds one, and one per row until Save.
+		if (adding[step].length > 0 || i !== saved) return;
 		if (step === "go") setChoosing(true);
 		else add(step, null);
 	}
@@ -129,7 +129,8 @@ export default function PottyCard({ kid, chart, canEdit, askFirst }: Props) {
 					...saved.map((kind, i) => ({ kind, state: i < kept ? ("saved" as const) : ("off" as const) })),
 					...adding[step].map((kind) => ({ kind, state: "new" as const })),
 				];
-				const next = editing ? -1 : spots.length;
+				// One new sticker per row each Save.
+				const next = editing || adding[step].length > 0 ? -1 : spots.length;
 				const full = kept + adding[step].length >= ROW_PUNCHES;
 				return (
 					<div key={step} className={s.row}>
