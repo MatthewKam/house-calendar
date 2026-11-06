@@ -96,20 +96,17 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	return (
 		<main className={s.page} style={{ "--c": kid.color, "--on": textOn(kid.color), "--p": `${pct}%` } as CSSProperties}>
 			<div className={s.top}>
-				{kids.length > 1 ? (
-					<div className={s.faces} role="radiogroup" aria-label="Who's playing">
-						{kids.map((k) => (
-							<button key={k.id} type="button" role="radio" className={s.face} aria-checked={k.id === kid.id}
-								style={{ "--c": k.color, "--on": textOn(k.color) } as CSSProperties}
-								onClick={() => setPickedId(k.id)}>
-								<span className={s.faceDot} aria-hidden="true">{k.name.slice(0, 1)}</span>
-								{k.name}
-							</button>
-						))}
-					</div>
-				) : (
-					<span />
-				)}
+				{/* A switch per kid: the one showing is on (with one kid, it's always on). */}
+				<div className={s.faces} role="radiogroup" aria-label="Who's playing">
+					{kids.map((k) => (
+						<button key={k.id} type="button" role="radio" className={s.face} aria-checked={k.id === kid.id}
+							style={{ "--c": k.color, "--on": textOn(k.color) } as CSSProperties}
+							onClick={() => setPickedId(k.id)}>
+							{k.name}
+							<span className={s.switch} aria-hidden="true"><span /></span>
+						</button>
+					))}
+				</div>
 				<LeaveButton onLeave={onLeave} />
 			</div>
 
