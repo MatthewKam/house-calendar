@@ -83,6 +83,8 @@
 .spot {
 	aspect-ratio: 1;
 	width: 100%;
+	/* Not the usual button minimum: a spot is as wide as its column, so they never overlap. */
+	min-width: 0;
 	min-height: 0;
 	padding: 0;
 	display: grid;
@@ -307,8 +309,8 @@
 	font-size: 1.3rem;
 }
 .compact .spots {
-	grid-template-columns: repeat(8, minmax(0, 2.4rem));
-	gap: 0.3rem;
+	grid-template-columns: repeat(8, minmax(0, 2.6rem));
+	gap: 0.5rem;
 	padding: 0;
 	background: none;
 }
