@@ -166,8 +166,9 @@
 }
 .leave {
 	flex: none;
-	width: 3.6rem;
-	height: 3.6rem;
+	/* As tall as the name switches beside it. */
+	width: 3.2rem;
+	height: 3.2rem;
 	min-height: 0;
 	padding: 0;
 	display: grid;
@@ -183,9 +184,9 @@
 	-webkit-touch-callout: none;
 }
 .leave svg {
-	width: 3rem;
-	height: 3rem;
-	padding: 0.5rem;
+	width: 2.75rem;
+	height: 2.75rem;
+	padding: 0.45rem;
 	box-sizing: border-box;
 	border-radius: 50%;
 	background: var(--surface);
