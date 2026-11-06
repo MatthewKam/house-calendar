@@ -608,6 +608,15 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
     return status(req);
   });
 
+  // Kid mode: leaving it takes a guardian's PIN, even on a guardian's own phone. Checks it and changes nothing.
+  app.post<{ Body: { pin: string } }>('/api/auth/check-pin', pinBody, async (req, reply) => {
+    const s = sessionOf(req);
+    if (!s || !contextOf(s).household) return reply.code(401).send({ error: 'Sign in first' });
+    const pin = checkPin(s, req.body.pin);
+    if ('error' in pin) return reply.code(403).send(pin);
+    return reply.code(204).send();
+  });
+
   app.post('/api/auth/parent/lock', async (req) => {
     const s = sessionOf(req);
     if (s) setParentUntil(s, null);

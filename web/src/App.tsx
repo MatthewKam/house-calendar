@@ -52,6 +52,8 @@ import { useWakeLock } from "./lib/useWakeLock";
 import { useAutoLock, useParent } from "./lib/useParent";
 import ParentUnlock from "./components/ParentUnlock";
 import AccountSheet from "./components/AccountSheet";
+import KidMode, { KidExit, KidModeStart } from "./components/KidMode";
+import { useKidMode } from "./lib/useKidMode";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./lib/api";
 import { useCheer } from "./lib/useCheer";
@@ -175,6 +177,26 @@ export default function App() {
 	const auth = useQuery({ queryKey: ["auth"], queryFn: api.authStatus }).data;
 	const signedIn = auth?.signedIn ? auth : null;
 	const [showAccount, setShowAccount] = useState(false);
+	// Kid mode: turned on for this device by a parent, or a kid's own device (added by code) while it's locked.
+	const [kidModeFor, setKidMode] = useKidMode();
+	const [startingKidMode, setStartingKidMode] = useState(false);
+	const [leavingKidMode, setLeavingKidMode] = useState(false);
+	const kids = members.filter((m) => m.stage !== null && m.stage !== "adult");
+	const kidDevice = signedIn?.kind === "device" && signedIn.role === "kid" && !parentLock.parent ? signedIn.memberId : null;
+	const kidView = kidModeFor
+		? kidModeFor === "all" || !members.some((m) => m.id === kidModeFor)
+			? kids
+			: members.filter((m) => m.id === kidModeFor)
+		: kidDevice
+			? members.filter((m) => m.id === kidDevice)
+			: null;
+	// Leaving: a kid's own device unlocks for a parent (and comes back when it locks again); anywhere
+	// else a guardian's PIN turns it off, or just the hold when there's no PIN to ask for.
+	function leaveKidMode() {
+		if (!kidModeFor) setUnlocking({});
+		else if (signedIn && signedIn.guardianPins > 0) setLeavingKidMode(true);
+		else setKidMode(null);
+	}
 	// With the screen saver on, the screen stays on (it takes over instead of the device sleeping),
 	// unless the battery is low.
 	useWakeLock(saver.settings.enabled && saver.photos.length > 0);
@@ -363,6 +385,28 @@ export default function App() {
 			: `${monthName(days[0])} – ${monthName(days[6])}`;
 	const unit = view === "month" ? "month" : "week";
 
+	if (kidView) {
+		return (
+			<>
+				{/* Wait for the family, so it doesn't flash "No kids yet". */}
+				{members.length > 0 && <KidMode today={today} kids={kidView} members={members} onLeave={leaveKidMode} />}
+				{leavingKidMode && (
+					<KidExit
+						onClose={() => setLeavingKidMode(false)}
+						onLeft={() => {
+							setLeavingKidMode(false);
+							setKidMode(null);
+						}}
+					/>
+				)}
+				{unlocking && <ParentUnlock onClose={() => setUnlocking(null)} onDone={unlocking.then} />}
+				{saver.on && <ScreenSaver photos={saver.photos} settings={saver.settings} onClose={saver.hide} onOpenEvent={saver.hide} />}
+				{cheer.cheer && <Celebration cheer={cheer.cheer} onDone={cheer.done} />}
+				{toast && <Toast message={toast} onDone={closeToast} />}
+			</>
+		);
+	}
+
 	return (
 		<>
 			<div className={s.app}>
@@ -395,6 +439,7 @@ export default function App() {
 							members={members}
 							focus={focus.length === 1 ? focus[0] : null}
 							locked={!parentLock.parent}
+							onKidMode={() => setStartingKidMode(true)}
 							onAdd={(memberId, goal) => setTaskDialog({ memberId, goal })}
 							onEdit={(task) => setTaskDialog({ task })}
 						/>
@@ -550,7 +595,27 @@ export default function App() {
 			)}
 
 			{unlocking && <ParentUnlock onClose={() => setUnlocking(null)} onDone={unlocking.then} />}
-			{showAccount && signedIn && <AccountSheet status={signedIn} onClose={() => setShowAccount(false)} />}
+			{showAccount && signedIn && (
+				<AccountSheet
+					status={signedIn}
+					onClose={() => setShowAccount(false)}
+					onKidMode={() => {
+						setShowAccount(false);
+						setStartingKidMode(true);
+					}}
+				/>
+			)}
+			{startingKidMode && (
+				<KidModeStart
+					kids={kids}
+					needsPin={!!signedIn && signedIn.guardianPins === 0}
+					onPick={(id) => {
+						setStartingKidMode(false);
+						setKidMode(id);
+					}}
+					onClose={() => setStartingKidMode(false)}
+				/>
+			)}
 			{showMembers && (
 				<MembersPanel
 					members={members}

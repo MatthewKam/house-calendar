@@ -74,6 +74,7 @@ export const api = {
   lockWall: () => call<AuthStatus>('POST', '/api/auth/lock-wall'),
   unlockParent: (pin: string) => call<AuthStatus>('POST', '/api/auth/parent', { pin }),
   lockParent: () => call<AuthStatus>('POST', '/api/auth/parent/lock'),
+  checkPin: (pin: string) => call<void>('POST', '/api/auth/check-pin', { pin }),
   signOutDevice: (id: string) => call<void>('POST', `/api/auth/devices/${id}/sign-out`),
   /** People's calendar connections; google is null when the server hasn't set Google up. */
   connections: () => call<{ google: GoogleConnection[] | null; icloud: GoogleConnection[] | null }>('GET', '/api/connections'),

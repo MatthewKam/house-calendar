@@ -179,6 +179,16 @@ describe('invites', () => {
     expect((await ipad.get('/api/auth/status')).body).toEqual({ signedIn: false });
   });
 
+  it("checks a guardian's PIN for leaving kid mode, even on a guardian's own phone", async () => {
+    const alex = await guardian();
+    await alex.put('/api/account/pin', { pin: '1357' });
+    expect((await alex.post('/api/auth/check-pin', { pin: '0000' })).status).toBe(403);
+    expect((await alex.post('/api/auth/check-pin', { pin: '1357' })).status).toBe(204);
+    // Nothing else changes: still a guardian's own phone.
+    expect((await alex.get('/api/auth/status')).body).toMatchObject({ parent: true, parentAlways: true });
+    expect((await device().post('/api/auth/check-pin', { pin: '1357' })).status).toBe(401);
+  });
+
   it('locks out a device after five wrong PINs', async () => {
     const alex = await guardian();
     await alex.put('/api/account/pin', { pin: '1357' });

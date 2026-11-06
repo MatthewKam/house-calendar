@@ -736,3 +736,22 @@
 	font-weight: 650;
 	flex: none;
 }
+/* Beside Caught being good: kid mode for this device. */
+.headButtons {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+}
+.kidModeButton {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	min-height: 2.75rem;
+	padding: 0 1.1rem;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	background: var(--surface);
+	font-weight: 650;
+	flex: none;
+}

@@ -7,7 +7,7 @@ import s from "../styles/Account.module.css";
 const ROLE = { guardian: "Guardian", kid: "Kid", wall: "The family wall" };
 
 /** Who this device is signed in as, from the bar's avatar: switch household, sign out, or lock the wall. */
-export default function AccountSheet({ status, onClose }: { status: SignedIn; onClose: () => void }) {
+export default function AccountSheet({ status, onClose, onKidMode }: { status: SignedIn; onClose: () => void; onKidMode?: () => void }) {
 	const qc = useQueryClient();
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -60,6 +60,10 @@ export default function AccountSheet({ status, onClose }: { status: SignedIn; on
 						</button>
 					)}
 					<span className={sheet.spacer} />
+					{/* A kid's own device is in kid mode already. */}
+					{onKidMode && status.role !== "kid" && (
+						<button type="button" className={sheet.secondary} onClick={onKidMode}>Kid mode</button>
+					)}
 					<button type="button" className={sheet.primary} onClick={onClose}>Done</button>
 				</div>
 			</div>
