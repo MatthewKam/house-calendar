@@ -324,7 +324,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 						<span className={sheet.spacer} />
 						<button type="button" className={sheet.secondary} onClick={onClose}>Cancel</button>
 						<button type="button" className={sheet.primary} disabled={!ready.length || adding} onClick={() => void addAll()}>
-							{adding ? "Adding…" : ready.length ? `Add ${ready.length}` : "Add"}
+							{adding ? "Adding…" : "Add"}
 						</button>
 					</div>
 				)}
