@@ -78,15 +78,25 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
     else removePhoto(r.id);
   }
 
-  // Newest first (by when they were taken, else added).
+  // Newest first (by when they were taken, else added). Flyers stay with their events.
   app.get('/api/photos', async () =>
-    (db.prepare('SELECT * FROM photos ORDER BY COALESCE(taken_at, created_at) DESC').all() as PhotoRow[]).map(toPhoto));
+    (db.prepare('SELECT * FROM photos WHERE flyer = 0 ORDER BY COALESCE(taken_at, created_at) DESC').all() as PhotoRow[]).map(toPhoto));
 
-  app.post<{ Querystring: { width: number; height: number; takenAt?: string; memberId?: string; inSlideshow?: boolean } }>('/api/photos', {
+  // A flyer (from Snap a flyer) is kept for the events read from it; once none are left, it goes.
+  function sweepFlyers() {
+    const gone = db.prepare(`SELECT id FROM photos WHERE flyer = 1 AND created_at < strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-1 day')
+      AND id NOT IN (SELECT photo_id FROM events WHERE photo_id IS NOT NULL)`).all() as { id: string }[];
+    for (const r of gone) removePhoto(r.id);
+  }
+  sweepFlyers();
+  setInterval(sweepFlyers, 6 * 3_600_000).unref();
+
+  // flyer: a photo of a flyer, kept for its events but not shown in the album or screen saver.
+  app.post<{ Querystring: { width: number; height: number; takenAt?: string; memberId?: string; inSlideshow?: boolean; flyer?: boolean } }>('/api/photos', {
     bodyLimit: MAX_BYTES,
     schema: { querystring: { type: 'object', required: ['width', 'height'], properties: {
       width: { type: 'integer', minimum: 1, maximum: 20000 }, height: { type: 'integer', minimum: 1, maximum: 20000 },
-      takenAt: { type: 'string', maxLength: 40 }, memberId: { type: 'string' }, inSlideshow: { type: 'boolean' } } } },
+      takenAt: { type: 'string', maxLength: 40 }, memberId: { type: 'string' }, inSlideshow: { type: 'boolean' }, flyer: { type: 'boolean' } } } },
   }, async (req, reply) => {
     const body = req.body as Buffer;
     if (!Buffer.isBuffer(body) || !isJpeg(body)) return reply.code(415).send({ error: 'Photos are uploaded as JPEG' });
@@ -96,8 +106,9 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
     const id = randomUUID();
     writeFileSync(file(id), body);
     // New photos go into the screen saver unless the upload says otherwise.
-    db.prepare('INSERT INTO photos (id, width, height, taken_at, member_id, in_slideshow) VALUES (?, ?, ?, ?, ?, ?)')
-      .run(id, req.query.width, req.query.height, takenAt, memberId ?? null, req.query.inSlideshow === false ? 0 : 1);
+    const flyer = req.query.flyer === true;
+    db.prepare('INSERT INTO photos (id, width, height, taken_at, member_id, in_slideshow, flyer) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(id, req.query.width, req.query.height, takenAt, memberId ?? null, flyer || req.query.inSlideshow === false ? 0 : 1, flyer ? 1 : 0);
     reply.code(201);
     return toPhoto(get(id)!);
   });

@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility, SprigList, SprigItem } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility, SprigList, SprigItem, Proposal } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, {
@@ -172,6 +172,9 @@ export const api = {
     call<SprigList[]>('PATCH', `/api/lists/items/${id}`, patch),
   deleteListItem: (id: string) => call<SprigList[]>('DELETE', `/api/lists/items/${id}`),
 
+  captureOn: () => call<{ on: boolean }>('GET', '/api/capture'),
+  capture: (input: { text: string } | { image: { mediaType: string; data: string } }) =>
+    call<{ proposals: Proposal[] }>('POST', '/api/capture', { ...input, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
   pushKey: () => call<{ publicKey: string }>('GET', '/api/push/key'),
   pushOn: (subscription: PushSubscriptionJSON, timeZone: string) => call<void>('POST', '/api/push', { subscription, timeZone }),
   pushOff: (endpoint: string) => call<void>('DELETE', '/api/push', { endpoint }),

@@ -695,6 +695,13 @@ const migrations: string[] = [
     PRIMARY KEY (device_id, key)
   );
   `,
+  // Notes on Sprig's own events, and the flyer photo an event was read from (Snap a flyer). Flyers are
+  // kept with the photos but stay out of the album and screen saver.
+  `
+  ALTER TABLE events ADD COLUMN notes TEXT;
+  ALTER TABLE events ADD COLUMN photo_id TEXT REFERENCES photos(id) ON DELETE SET NULL;
+  ALTER TABLE photos ADD COLUMN flyer INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

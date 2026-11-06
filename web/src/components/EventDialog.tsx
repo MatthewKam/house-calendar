@@ -206,6 +206,8 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
   const [startTime, setStartTime] = useState(event && !event.allDay ? hhmm(event.start) : '09:00');
   const [endTime, setEndTime] = useState(event && !event.allDay ? hhmm(event.end) : '10:00');
   const [location, setLocation] = useState(event?.location ?? '');
+  const [notes, setNotes] = useState(event?.notes ?? '');
+  const [keepPhoto, setKeepPhoto] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
   // A repeating iCloud event asks "this day or every day?" before saving.
   const [askScope, setAskScope] = useState<EventInput | null>(null);
@@ -217,6 +219,8 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
   // Who sees it: as picked, else the event's own, else (new) the chosen calendar's default.
   const [seenPick, setSeenPick] = useState<Visibility | null>(null);
   const seen = seenPick ?? event?.visibility ?? calendars.find((c) => c.id === chosenCalendar)?.visibility ?? 'everyone';
+  // Notes are kept on Sprig's own events (iCloud ones have nowhere for them yet).
+  const ownEvent = event ? event.calendarId === 'local' : !target.options.length || chosenCalendar === 'local';
 
   const problem =
     !title.trim() ? 'Add a title'
@@ -230,11 +234,15 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
     const t = title.trim();
     const place = location.trim() || null;
     // Only new events choose a calendar.
-    const where: Pick<EventInput, 'calendarId' | 'visibility'> = !event && target.options.length ? { calendarId: chosenCalendar } : {};
+    const where: Pick<EventInput, 'calendarId' | 'visibility' | 'notes' | 'photoId'> = !event && target.options.length ? { calendarId: chosenCalendar } : {};
     if (!event && target.options.length) target.remember(chosenCalendar);
     // A new event says who sees it when it's picked; an existing one changes it on its own.
     if (!event && seenPick) where.visibility = seenPick;
     if (event && seenPick && seenPick !== event.visibility) setVisibility.mutate({ id: event.id, visibility: seenPick });
+    if (ownEvent) {
+      where.notes = notes.trim() || null;
+      if (!keepPhoto) where.photoId = null;
+    }
     const input: EventInput = allDay
       ? { title: t, memberIds, allDay, start: date, end: dayKey(addDays(fromDayKey(lastDate), 1)), location: place, ...where }
       : { title: t, memberIds, allDay, start: toInstant(date, startTime), end: toInstant(date, endTime), location: place, ...where };
@@ -275,6 +283,18 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
         <AddressInput value={location} onChange={setLocation} />
         {/* Travel time for the saved address (the field above already shows it). */}
         {event?.location && event.location === location.trim() && <TravelInfo event={event} showAddress={false} />}
+
+        {ownEvent && (
+          <textarea className={s.notes} placeholder="Notes" aria-label="Notes" value={notes} maxLength={4000}
+            rows={Math.min(8, Math.max(2, notes.split('\n').length))} onChange={(e) => setNotes(e.target.value)} />
+        )}
+        {event?.photoUrl && keepPhoto && (
+          // The flyer it was read from (Snap a flyer): tap for the full photo.
+          <div className={s.flyer}>
+            <a href={event.photoUrl} target="_blank" rel="noreferrer"><img src={event.photoUrl} alt="The flyer" /></a>
+            <button type="button" className={sheet.secondary} onClick={() => setKeepPhoto(false)}>Remove photo</button>
+          </div>
+        )}
 
         <label className={s.toggle}>
           <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} /> All day

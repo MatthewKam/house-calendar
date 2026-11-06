@@ -55,10 +55,10 @@ const realZone = (tz: string) => {
   }
 };
 
-/** The instant it's `hour`:00 on `day` (YYYY-MM-DD) in time zone `tz`. */
-export function atLocal(day: string, hour: number, tz: string) {
+/** The instant it's `hour`:`minute` on `day` (YYYY-MM-DD) in time zone `tz`. */
+export function atLocal(day: string, hour: number, tz: string, minute = 0) {
   const [y, m, d] = day.split('-').map(Number);
-  const guess = Date.UTC(y, m - 1, d, hour);
+  const guess = Date.UTC(y, m - 1, d, hour, minute);
   // How far the zone's clock is from UTC near then (worked out twice, for a day the clocks change).
   const offset = (t: number) => {
     const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23',

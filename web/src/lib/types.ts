@@ -115,6 +115,9 @@ export interface CalEvent {
   repeats: boolean;
   /** Who sees it: its own setting, else its calendar's (server/privacy.ts). */
   visibility: Visibility;
+  /** Sprig's own events: notes, and the flyer photo it was read from (Snap a flyer). */
+  notes: string | null;
+  photoUrl: string | null;
   /** Someone else's Busy time: no title or place, and it can't be opened. */
   busy?: boolean;
 }
@@ -266,6 +269,10 @@ export interface OutboxStatus {
 
 export type EventInput = Pick<CalEvent, 'title' | 'memberIds' | 'allDay' | 'start' | 'end'> & {
   location?: string | null;
+  /** Kept on Sprig's own events only. */
+  notes?: string | null;
+  /** A flyer photo (uploadFlyer) to keep with it; null takes it off. */
+  photoId?: string | null;
   /** New events only: the iCloud calendar to add it to; left out, it stays on the wall. */
   calendarId?: string;
   /** New events only: who sees it (existing ones change it with setVisibility). */
@@ -339,3 +346,9 @@ export interface Daily {
   joke: { text: string } | null;
   quote: { text: string; author: string } | null;
 }
+
+/** Something Say it or Snap a flyer found, shown as a card to check (server/capture.ts). */
+export type Proposal =
+  | { kind: 'item'; title: string; list: string; due: string | null; memberId: string | null }
+  | { kind: 'event'; title: string; allDay: boolean; start: string; end: string; memberIds: string[]; location: string | null; notes: string | null }
+  | { kind: 'task'; title: string; memberId: string; day: string };
