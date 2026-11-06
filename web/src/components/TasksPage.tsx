@@ -134,7 +134,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked, onKid
 									onMoment={locked ? undefined : (moment) => setUnsticking({ kid, moment })}
 								/>
 								{!showHistory && potty.some((c) => c.memberId === kid.id) && (
-									<PottyCard kid={kid} chart={potty.find((c) => c.memberId === kid.id)!} canEdit={!locked} />
+									<PottyCard kid={kid} chart={potty.find((c) => c.memberId === kid.id)!} canEdit={!locked} compact />
 								)}
 								{showHistory ? (
 									<TaskHistory kid={kid} tasks={mine} today={today} onEdit={locked ? undefined : onEdit} />

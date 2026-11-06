@@ -19,6 +19,8 @@ interface Props {
 	canEdit: boolean;
 	/** A grown-up says OK (their PIN) before editing, then `then` goes ahead. */
 	askFirst?: (then: () => void) => void;
+	/** The Tasks page: small, like the task rows around it (kid mode's is big, for toddlers). */
+	compact?: boolean;
 }
 
 /** "took 6 days", from a card's start to when it filled. */
@@ -36,7 +38,7 @@ const zero = (): Record<PottyStep, number> => ({ ask: 0, sit: 0, go: 0, wipe: 0,
  * poop or both); stickers already there do nothing. A row takes one new sticker at a time, kept on
  * Save. Parents' Edit takes stickers back (a row's last one first) or stops the chart.
  */
-export default function PottyCard({ kid, chart, canEdit, askFirst }: Props) {
+export default function PottyCard({ kid, chart, canEdit, askFirst, compact }: Props) {
 	const { setOn, punch, takeBack } = usePottyActions();
 	// Stickers added and not saved yet, per row.
 	const [adding, setAdding] = useState(none);
@@ -120,7 +122,7 @@ export default function PottyCard({ kid, chart, canEdit, askFirst }: Props) {
 	}
 
 	return (
-		<section className={`${s.card} ${editing ? s.editing : ""}`} style={{ "--c": kid.color, "--on": textOn(kid.color) } as CSSProperties}
+		<section className={`${s.card} ${compact ? s.compact : ""} ${editing ? s.editing : ""}`} style={{ "--c": kid.color, "--on": textOn(kid.color) } as CSSProperties}
 			aria-label={`${kid.name}'s potty chart`}>
 			<div className={s.head}>
 				<h3 className={s.title}>
