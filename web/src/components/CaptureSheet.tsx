@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { textOn } from "../lib/color";
@@ -126,8 +126,14 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 	const rec = useRef<Recognition | null>(null);
 	// The flyer's photo, uploaded once for all its events (and kept if one fails, for trying again).
 	const flyerId = useRef<Promise<string> | null>(null);
-	const preview = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo]);
-	useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+	// Made here rather than in a memo, so a remount (React's dev mode) never keeps a revoked one.
+	const [preview, setPreview] = useState<string | null>(null);
+	useEffect(() => {
+		if (!photo) return;
+		const url = URL.createObjectURL(photo);
+		setPreview(url);
+		return () => URL.revokeObjectURL(url);
+	}, [photo]);
 	function flyer() {
 		flyerId.current ??= uploadFlyer(photo!).then((p) => p.id, (e) => {
 			flyerId.current = null;
