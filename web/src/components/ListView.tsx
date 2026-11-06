@@ -21,6 +21,7 @@ import sheet from "../styles/Sheet.module.css";
 import { ago } from "../lib/dates";
 import s from "../styles/ListView.module.css";
 import { useParent } from "../lib/useParent";
+import { textOn } from "../lib/color";
 
 /** Soft colors for a list's rows, light enough for dark text. */
 const LIST_COLORS = ["#f2dcb3", "#ecb0ea", "#c9dcf7", "#cdebd3", "#ddd3f5", "#f8cfb8", "#f6e7a1", "#c3ece4", "#e4e4e4"];
@@ -235,7 +236,7 @@ function ListCard({ list, members, color, onColor, order, onReorder }: CardProps
 				</button>
 			)}
 			{list.items.length === 0 && <p className={s.empty}>Nothing here.</p>}
-			<form className={s.add} onSubmit={submit} style={{ "--c": color } as CSSProperties}>
+			<form className={s.add} onSubmit={submit} style={{ "--c": color, "--on": textOn(color) } as CSSProperties}>
 				<button
 					type="button"
 					className={`${s.iconSpot} ${s.iconAdd} ${newIcon === undefined && !typed.icon && addIcon ? s.suggested : ""} ${!addIcon ? s.noIcon : ""}`}

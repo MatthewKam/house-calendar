@@ -262,10 +262,10 @@
 	border: 1px solid var(--line);
 	border-radius: 0.6rem;
 }
-/* Add: the list's color once there's something to add, gray until then. */
+/* Add: the list's color once there's something to add, gray until then. Its text is dark on a light color. */
 .add button {
 	background: var(--c, var(--accent));
-	color: var(--surface);
+	color: var(--on, var(--surface));
 	font-weight: 650;
 	padding: 0 1rem;
 	border-radius: 0.6rem;
