@@ -1,9 +1,9 @@
 // Lets the app open without a connection (showing the last thing it loaded) and start fast.
 // The app's files are kept; /api calls always go to the server, so data is never stale.
-const CACHE = 'sprig-v1';
+const CACHE = 'sprig-v2';
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['/', '/manifest.webmanifest', '/icon-192.png'])));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['/', '/manifest.webmanifest?v=2', '/icon-192.png?v=2'])));
   self.skipWaiting();
 });
 
