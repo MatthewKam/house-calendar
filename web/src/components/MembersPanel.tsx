@@ -13,6 +13,10 @@ import ICloudCalendars from './ICloudCalendars';
 import sheet from '../styles/Sheet.module.css';
 import s from '../styles/MembersPanel.module.css';
 import DateInput from './DateInput';
+import AlertsSetting, { ALERTS_NOTE } from './AlertsSetting';
+import { usePush } from '../lib/usePush';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../lib/api';
 
 interface Props { members: Member[]; uiScale: number; onClose: () => void }
 
@@ -141,6 +145,10 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
   const settings = useSettings().data;
   const homeAddress = ((settings?.homeAddress as string | undefined) ?? '').trim();
   const saver = screenSaverSettings(settings?.screensaver);
+  // Alerts are a grown-up's own phone's (not the wall's or a kid's device).
+  const auth = useQuery({ queryKey: ['auth'], queryFn: api.authStatus }).data;
+  const grownUp = !!auth?.signedIn && auth.role === 'guardian' && auth.kind === 'user';
+  const push = usePush();
   const hasCalendars = (useCalendars().data ?? []).length > 0;
 
   useEffect(() => {
@@ -283,6 +291,12 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
           <GoogleCalendars members={members} />
           {hasCalendars && <CalendarList members={members} />}
         </Section>
+
+        {grownUp && (
+          <Section title="Alerts" note={ALERTS_NOTE[push.state]}>
+            <AlertsSetting push={push} />
+          </Section>
+        )}
 
         <Section title="Home address" note={homeAddress || "Not set"}>
           <HomeAddress />

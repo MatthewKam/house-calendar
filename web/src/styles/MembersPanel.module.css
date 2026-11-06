@@ -1,5 +1,6 @@
 .section { margin: 0; font-size: 1.05rem; }
 .hint { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.error { margin: 0; color: #b42318; font-size: 0.9rem; }
 .list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
 .row { display: flex; gap: 0.6rem; align-items: center; }
 .member { display: flex; flex-direction: column; gap: 0.5rem; }

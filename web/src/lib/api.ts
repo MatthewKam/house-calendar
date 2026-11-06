@@ -172,6 +172,10 @@ export const api = {
     call<SprigList[]>('PATCH', `/api/lists/items/${id}`, patch),
   deleteListItem: (id: string) => call<SprigList[]>('DELETE', `/api/lists/items/${id}`),
 
+  pushKey: () => call<{ publicKey: string }>('GET', '/api/push/key'),
+  pushOn: (subscription: PushSubscriptionJSON, timeZone: string) => call<void>('POST', '/api/push', { subscription, timeZone }),
+  pushOff: (endpoint: string) => call<void>('DELETE', '/api/push', { endpoint }),
+
   settings: () => call<Record<string, unknown>>('GET', '/api/settings'),
   setSetting: (key: string, value: unknown) => call('PUT', `/api/settings/${key}`, { value }),
 };

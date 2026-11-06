@@ -32,3 +32,28 @@ self.addEventListener('fetch', (e) => {
     }).catch(() => caches.match('/')));
   }
 });
+
+// Alerts from the server (server/push.ts): a reminder come due, or time to leave.
+self.addEventListener('push', (e) => {
+  let alert = { title: 'Sprig', body: '', url: '/', tag: undefined };
+  try {
+    alert = { ...alert, ...e.data.json() };
+  } catch {
+    // Not one of ours: the plain title.
+  }
+  e.waitUntil(self.registration.showNotification(alert.title, {
+    body: alert.body, tag: alert.tag, data: { url: alert.url }, icon: '/icon-192.png', badge: '/icon-192.png',
+  }));
+});
+
+// Tapped: Sprig, on the alert's page (an open window if there is one).
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const url = new URL(e.notification.data?.url ?? '/', location.origin).href;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (wins) => {
+    const win = wins.find((w) => new URL(w.url).origin === location.origin);
+    if (!win) return self.clients.openWindow(url);
+    await win.focus();
+    return win.navigate(url).catch(() => {});
+  }));
+});
