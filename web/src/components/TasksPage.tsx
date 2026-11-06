@@ -34,15 +34,13 @@ interface Props {
 	onEdit: (task: Task) => void;
 	/** The parent lock is on: tasks can be ticked, but not added, changed or deleted. */
 	locked?: boolean;
-	/** Turn on kid mode for this device. */
-	onKidMode: () => void;
 }
 
 /**
  * The Tasks page (in place of the calendar): every kid's tasks for today, side by side.
  * Each card's History link swaps its checklist for a week or month report, where missed days can still be ticked.
  */
-export default function TasksPage({ today, members, onAdd, onEdit, locked, onKidMode }: Props) {
+export default function TasksPage({ today, members, onAdd, onEdit, locked }: Props) {
 	const thisWeek = useMemo(() => startOfWeek(fromDayKey(today)), [today]);
 	const tasks = useTasks().data ?? [];
 	const done = useTasksDone(thisWeek).data ?? [];
@@ -94,11 +92,6 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked, onKid
 					</div>
 				</div>
 				<div className={s.headButtons}>
-					{kids.length > 0 && (
-						<button className={s.kidModeButton} onClick={onKidMode}>
-							🧸 Kid mode
-						</button>
-					)}
 					{!locked && kids.length > 0 && (
 						<button className={s.catchButton} onClick={() => setCatching(true)}>
 							✨ Caught being good

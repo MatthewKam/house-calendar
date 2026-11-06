@@ -130,7 +130,11 @@ describe('invites', () => {
     expect((await alex.post('/api/account/invites', { kind: 'wall' })).status).toBe(400);
     expect((await jordan.put('/api/account/pin', { pin: '12' })).status).toBe(400);
     await jordan.put('/api/account/pin', { pin: '2468' });
+    await alex.put('/api/account/pin', { pin: '13579' });
+    // Different lengths: the number pad can't check as the last digit goes in. The same: it can.
+    expect((await alex.get('/api/auth/status')).body).toMatchObject({ guardianPins: 2, pinLength: null });
     await alex.put('/api/account/pin', { pin: '1357' });
+    expect((await alex.get('/api/auth/status')).body).toMatchObject({ guardianPins: 2, pinLength: 4 });
     const wallCode = (await alex.post('/api/account/invites', { kind: 'wall' })).body.code;
 
     const wall = device();

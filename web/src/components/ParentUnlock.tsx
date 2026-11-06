@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useParent } from "../lib/useParent";
+import PinPad from "./PinPad";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Rewards.module.css";
 
@@ -14,10 +15,11 @@ export default function ParentUnlock({ onClose, onDone }: { onClose: () => void;
 		return () => window.removeEventListener("keydown", onKey);
 	}, [onClose]);
 
-	function submit(e: FormEvent) {
-		e.preventDefault();
+	function submit(e?: FormEvent, typed = pin) {
+		e?.preventDefault();
+		if (!typed || unlock.isPending) return;
 		unlock.mutate(
-			{ pin },
+			{ pin: typed },
 			{
 				onSuccess: () => {
 					onClose();
@@ -37,18 +39,7 @@ export default function ParentUnlock({ onClose, onDone }: { onClose: () => void;
 					Unlock to add, change or delete events, tasks, jars, photos, lists and settings. It locks again after a few
 					minutes, or when the screen saver comes on.
 				</div>
-				<input
-					className={s.pin}
-					type="password"
-					inputMode="numeric"
-					autoComplete="off"
-					placeholder="Guardian PIN"
-					aria-label="Guardian PIN"
-					maxLength={64}
-					value={pin}
-					autoFocus
-					onChange={(e) => setPin(e.target.value)}
-				/>
+				<PinPad value={pin} onChange={setPin} onEnter={(typed) => submit(undefined, typed)} />
 				{unlock.isError && <div className={s.problem}>{unlock.error.message}</div>}
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />

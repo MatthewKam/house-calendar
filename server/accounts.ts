@@ -97,6 +97,11 @@ const migrations: string[] = [
   `
   ALTER TABLE sessions ADD COLUMN parent_by TEXT REFERENCES memberships(id) ON DELETE SET NULL;
   `,
+  // How many digits a guardian's PIN has, so the number pad can check it as the last one goes in
+  // (unknown for PINs set before this).
+  `
+  ALTER TABLE memberships ADD COLUMN pin_length INTEGER;
+  `,
 ];
 
 export function openAccounts(file: string): AccountsDB {

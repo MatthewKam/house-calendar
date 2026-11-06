@@ -18,10 +18,12 @@ interface Props {
 	phone?: boolean;
 	/** The quick-add button in the middle of the phone bar. */
 	center?: ReactNode;
+	/** Starts kid mode on this device (when there are kids). */
+	onKidMode?: () => void;
 }
 
 // Simple line icons, drawn in the current text color.
-const TodayIcon = () => (
+export const TodayIcon = () => (
 	<svg viewBox="0 0 24 24" aria-hidden="true">
 		<circle cx="12" cy="12" r="4" />
 		<path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" />
@@ -33,13 +35,13 @@ const CalendarIcon = () => (
 		<path d="M3.5 10h17M8 3v4M16 3v4" />
 	</svg>
 );
-const TasksIcon = () => (
+export const TasksIcon = () => (
 	<svg viewBox="0 0 24 24" aria-hidden="true">
 		<rect x="4" y="3" width="16" height="18" rx="2.5" />
 		<path d="M8 8.5l1.5 1.5L12 7.5M8 14.5l1.5 1.5 2.5-2.5M14.5 9h2M14.5 15h2" />
 	</svg>
 );
-const RewardsIcon = () => (
+export const RewardsIcon = () => (
 	<svg viewBox="0 0 24 24" aria-hidden="true">
 		<rect x="3.5" y="8" width="17" height="4" rx="1" />
 		<path d="M5 12v8h14v-8M12 8v12M12 8c-1.5-3-5-3.5-5-1.2C7 8 9.5 8 12 8zm0 0c1.5-3 5-3.5 5-1.2C17 8 14.5 8 12 8z" />
@@ -58,6 +60,14 @@ const PhotosIcon = () => (
 		<rect x="3.5" y="5" width="17" height="14" rx="2.5" />
 		<circle cx="9" cy="10" r="1.6" />
 		<path d="M4 17l5-4.5 3.5 3 3-2.5 4.5 4" />
+	</svg>
+);
+const KidModeIcon = () => (
+	<svg viewBox="0 0 24 24" aria-hidden="true">
+		<circle cx="12" cy="13" r="7.5" />
+		<circle cx="6" cy="5.8" r="2.3" />
+		<circle cx="18" cy="5.8" r="2.3" />
+		<path d="M9.6 12v.3M14.4 12v.3M9.5 15.6c1.4 1.2 3.6 1.2 5 0" />
 	</svg>
 );
 const MoreIcon = () => (
@@ -80,7 +90,10 @@ const SettingsIcon = () => (
 	</svg>
 );
 
-/** Bar down the left edge: the Today, Calendar, Tasks, Rewards, Lists and Photos pages, and the logo and Settings at the bottom. */
+/**
+ * Bar down the left edge: the Today, Calendar, Tasks, Lists, Rewards and Photos pages, Kid mode, and the
+ * logo and Settings at the bottom.
+ */
 export default function NavBar({
 	page,
 	settingsOpen,
@@ -90,8 +103,9 @@ export default function NavBar({
 	me,
 	phone,
 	center,
+	onKidMode,
 }: Props) {
-	if (phone) return <BottomBar {...{ page, settingsOpen, onPage, onSettings, lock, me, center }} />;
+	if (phone) return <BottomBar {...{ page, settingsOpen, onPage, onSettings, lock, me, center, onKidMode }} />;
 	const item = (p: Page, label: string, icon: ReactNode) => (
 		<button
 			className={`${s.item} ${page === p ? s.on : ""}`}
@@ -111,6 +125,12 @@ export default function NavBar({
 			{item("lists", "Lists", <ListsIcon />)}
 			{item("rewards", "Rewards", <RewardsIcon />)}
 			{item("photos", "Photos", <PhotosIcon />)}
+			{onKidMode && (
+				<button className={s.item} onClick={onKidMode} aria-label="Kid mode">
+					<KidModeIcon />
+					<span className={s.label}>Kid mode</span>
+				</button>
+			)}
 			{/* Pinned to the bottom of the bar: who's signed in, the parent lock, then Settings. */}
 			{me ? (
 				<button className={`${s.item} ${s.me}`} onClick={me.onTap}
@@ -155,7 +175,7 @@ const MORE: [Page, string, () => ReactNode][] = [
  * Phones: Today, Calendar, the quick-add button, Tasks and More along the bottom, in thumb's reach.
  * More holds the other pages, who's signed in, the parent lock and Settings.
  */
-function BottomBar({ page, settingsOpen, onPage, onSettings, lock, me, center }: Omit<Props, "phone">) {
+function BottomBar({ page, settingsOpen, onPage, onSettings, lock, me, center, onKidMode }: Omit<Props, "phone">) {
 	const [more, setMore] = useState(false);
 	const inMore = MORE.some(([p]) => p === page);
 	const tab = (p: Page, label: string, icon: ReactNode) => (
@@ -193,6 +213,12 @@ function BottomBar({ page, settingsOpen, onPage, onSettings, lock, me, center }:
 								{label}
 							</button>
 						))}
+						{onKidMode && (
+							<button className={s.moreItem} onClick={then(onKidMode)}>
+								<KidModeIcon />
+								Kid mode
+							</button>
+						)}
 						<hr className={s.moreRule} />
 						{me && (
 							<button className={s.moreItem} onClick={then(me.onTap)}>

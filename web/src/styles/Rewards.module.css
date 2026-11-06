@@ -242,16 +242,6 @@
 	composes: quiet from "./Buttons.module.css";
 	font-size: 0.85rem;
 }
-.pin {
-	font-size: 1.2rem;
-	letter-spacing: 0.3em;
-	text-align: center;
-	padding: 0.55rem 0.7rem;
-	border: 1px solid var(--line);
-	border-radius: 0.6rem;
-	color: var(--text);
-	background: var(--surface);
-}
 .problem {
 	color: #b42318;
 	font-size: 0.95rem;

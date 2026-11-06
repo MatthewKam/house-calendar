@@ -66,7 +66,7 @@ import Celebration from "./components/Celebration";
 import MembersPanel from "./components/MembersPanel";
 import Toast, { type ToastMessage } from "./components/Toast";
 import { UNASSIGNED } from "./lib/color";
-import { PHONE, useMediaQuery } from "./lib/useMediaQuery";
+import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from "./lib/useMediaQuery";
 import s from "./styles/App.module.css";
 
 /** Today's date key, updated when the clock passes midnight. */
@@ -153,6 +153,8 @@ export default function App() {
 	const eventsQuery = useRangeEvents(days[0], days.length);
 	// Phones show Month as the same day-by-day list as Week, just for every day of the month.
 	const phone = useMediaQuery(PHONE);
+	// The phone's bar (and its +): along the bottom, or down the left with the phone on its side.
+	const phoneBar = useMediaQuery(PHONE_SIDEWAYS) || phone;
 	// Below 960px the week is one scrolling list of days, and the weather scrolls at its end.
 	const narrow = useMediaQuery("(max-width: 959.98px)");
 	const listDays =
@@ -448,8 +450,9 @@ export default function App() {
 		<>
 			<div className={s.app}>
 				<NavBar
-					phone={phone}
+					phone={phoneBar}
 					center={<QuickAdd actions={quickActions} />}
+					onKidMode={kids.length ? () => setStartingKidMode(true) : undefined}
 					page={page}
 					settingsOpen={showMembers}
 					onPage={setPage}
@@ -478,7 +481,6 @@ export default function App() {
 							members={members}
 							focus={focus.length === 1 ? focus[0] : null}
 							locked={!parentLock.parent}
-							onKidMode={() => setStartingKidMode(true)}
 							onAdd={(memberId, goal) => setTaskDialog({ memberId, goal })}
 							onEdit={(task) => setTaskDialog({ task })}
 						/>
@@ -669,9 +671,9 @@ export default function App() {
 
 			{/* The round + at the bottom right: add an event or a task (phones have the bar's + instead). */}
 			{/* Adding needs a parent (the lock in the left bar). */}
-			{!phone && page === "calendar" && parentLock.parent && <Fab label="Add event" onClick={() => setDialog({ day: newEventDay() })} />}
+			{!phoneBar && page === "calendar" && parentLock.parent && <Fab label="Add event" onClick={() => setDialog({ day: newEventDay() })} />}
 			{/* Add a task, for no one in particular yet (each kid's card has its own Add a task). */}
-			{!phone && page === "tasks" && parentLock.parent && <Fab label="Add a task or goal" onClick={() => setTaskDialog({ blank: true })} />}
+			{!phoneBar && page === "tasks" && parentLock.parent && <Fab label="Add a task or goal" onClick={() => setTaskDialog({ blank: true })} />}
 			{saver.on && (
 				<ScreenSaver
 					photos={saver.photos}
