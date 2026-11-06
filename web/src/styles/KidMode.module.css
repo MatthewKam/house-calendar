@@ -350,3 +350,32 @@
 	font-size: 1.1rem;
 	text-align: left;
 }
+
+/* My day: daily tasks done, and stars to spend, each with its own label. */
+.stat {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.stat + .stat {
+	padding-top: 0.8rem;
+	border-top: 2px solid color-mix(in srgb, var(--c) 15%, white);
+}
+.statLabel {
+	font-size: 1.15rem;
+	font-weight: 750;
+}
+.statValue {
+	flex: none;
+	font-size: 1.2rem;
+	font-weight: 750;
+	color: var(--muted);
+}
+.caught {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	flex-wrap: wrap;
+	font-weight: 650;
+	color: var(--muted);
+}

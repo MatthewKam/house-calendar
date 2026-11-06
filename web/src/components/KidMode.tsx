@@ -153,20 +153,29 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 			})}
 			{dueToday.length === 0 && <p className={s.none}>Nothing to do today. Have fun! 🌈</p>}
 
-			<section className={s.group} aria-label="Stars earned">
-				<h2 className={s.groupHead}>Stars earned</h2>
+			<section className={s.group} aria-label="My day">
+				<h2 className={s.groupHead}>My day</h2>
 				<div className={s.hero}>
-					<div className={s.heroRow}>
-						<span className={s.bar} aria-hidden="true"><span /></span>
+					{/* Daily tasks: how far through today's required ones. */}
+					<div className={s.stat}>
+						<span className={s.statLabel}>✅ Daily tasks</span>
+						<div className={s.heroRow}>
+							<span className={s.bar} aria-hidden="true"><span /></span>
+							<span className={s.statValue}>{!p ? "None today" : pct === 100 ? "All done! 🎉" : `${p.done} of ${p.due} done`}</span>
+						</div>
+					</div>
+					{/* Stars: what's in their bucket to put in jars. */}
+					<div className={s.stat}>
+						<span className={s.statLabel}>⭐ Stars to spend</span>
 						<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
 							<StarIcon className={s.star} /> {stars}
 						</span>
-					</div>
-					<div className={s.status}>
-						{!p ? "" : pct === 100 ? "All done! 🎉" : `${p.done} of ${p.due} done`}
 						{stickers.length > 0 && (
-							<span className={s.stickers} aria-label={`${stickers.length} caught being good`}>
-								{stickers.map((m) => momentKind(m.kind).emoji).join("")}
+							<span className={s.caught}>
+								Caught being good:{" "}
+								<span className={s.stickers} aria-label={`${stickers.length} today`}>
+									{stickers.map((m) => momentKind(m.kind).emoji).join("")}
+								</span>
 							</span>
 						)}
 					</div>
