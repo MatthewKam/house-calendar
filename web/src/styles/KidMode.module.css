@@ -30,8 +30,8 @@
 	justify-content: space-between;
 	gap: 0.6rem;
 }
-/* Who's playing: each kid's name is a switch. Off: the name, then a white circle. On: the circle
-   slides to the other side and the button fills with their color. */
+/* Who's playing: each kid's name is a switch. Off: a white circle, then the name. On: the circle
+   slides to the right and the button fills with their color. */
 .faces {
 	display: flex;
 	flex-wrap: wrap;
@@ -43,7 +43,7 @@
 	display: flex;
 	align-items: center;
 	min-height: 3.2rem;
-	padding: 0.3rem calc(var(--knob) + 0.8rem) 0.3rem 1.2rem;
+	padding: 0.3rem 1.2rem 0.3rem calc(var(--knob) + 0.8rem);
 	border-radius: 999px;
 	border: 2px solid color-mix(in srgb, var(--c) 45%, white);
 	background: color-mix(in srgb, var(--text) 7%, var(--surface));
@@ -55,7 +55,7 @@
 .knob {
 	position: absolute;
 	top: 50%;
-	left: calc(100% - var(--knob) - 0.35rem);
+	left: 0.35rem;
 	width: var(--knob);
 	height: var(--knob);
 	border-radius: 50%;
@@ -65,13 +65,13 @@
 	transition: left 0.25s ease;
 }
 .face[aria-checked="true"] {
-	padding: 0.3rem 1.2rem 0.3rem calc(var(--knob) + 0.8rem);
+	padding: 0.3rem calc(var(--knob) + 0.8rem) 0.3rem 1.2rem;
 	background: var(--c);
 	border-color: var(--c);
 	color: var(--on);
 }
 .face[aria-checked="true"] .knob {
-	left: 0.35rem;
+	left: calc(100% - var(--knob) - 0.35rem);
 }
 @media (prefers-reduced-motion: reduce) {
 	.face,
