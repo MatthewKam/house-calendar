@@ -314,6 +314,8 @@ describe('privacy', () => {
     expect((await alex.post('/api/push', sub('alex'))).status).toBe(204);
     expect((await ipad.post('/api/push', sub('ipad'))).status).toBe(403);
     expect((await wall.post('/api/push', sub('wall'))).status).toBe(403);
+    // Saying and snapping are a grown-up's too.
+    expect((await ipad.post('/api/capture', { text: 'Milk', timeZone: 'UTC' })).status).toBe(403);
 
     // A kid's own device puts stars in jars only with a parent there.
     const place = await ipad.post('/api/rewards/place', { memberId: id('Sam'), today: '2099-01-01', places: [] });

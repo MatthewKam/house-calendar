@@ -21,6 +21,7 @@ import { registerPrivacyGuard, VISIBILITIES, type Visibility } from './privacy.t
 import { registerReminders } from './reminders.ts';
 import { registerLists } from './lists.ts';
 import { registerPush, type Pusher } from './push.ts';
+import { registerCapture, type Understand } from './capture.ts';
 import { registerEvents } from './events.ts';
 import { localDay, stageOf, STAGES } from './stages.ts';
 
@@ -71,6 +72,8 @@ export function buildApp(db: DB, opts: {
   onMemberRemoved?: (memberId: string) => void;
   /** Alerts on people's phones (web push); without it, they're off. */
   push?: Pusher;
+  /** Reads what's said or a flyer's photo into things to add (Claude); without it, Say it and Snap are off. */
+  understand?: Understand;
 } = {}) {
   // trustProxy: behind Tailscale's HTTPS (tailscale serve), so the device's address and https are seen.
   const app = Fastify({ logger: process.env.NODE_ENV !== 'test' && { level: 'info' }, trustProxy: 'loopback' });
@@ -231,6 +234,7 @@ export function buildApp(db: DB, opts: {
   registerReminders(app, db, opts.remindersToken, opts.onRemindersChanged);
   registerLists(app, db);
   registerPush(app, db, opts.push);
+  registerCapture(app, db, opts.understand);
 
   // ---- Display settings (key/value, for things like UI scale) -------------
   app.get('/api/settings', async () => {
