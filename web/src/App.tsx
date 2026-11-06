@@ -43,7 +43,9 @@ import OutboxNotices from "./components/OutboxNotices";
 import Fab from "./components/Fab";
 import { FilterChip } from "./components/NameChip";
 import { usePage } from "./lib/usePage";
-import ListView from "./components/ListView";
+import ListView, { AddToListSheet } from "./components/ListView";
+import QuickAdd, { type QuickAction } from "./components/QuickAdd";
+import MomentDialog from "./components/MomentDialog";
 import RewardsPage from "./components/RewardsPage";
 import PhotosPage from "./components/PhotosPage";
 import ScreenSaver from "./components/ScreenSaver";
@@ -182,6 +184,10 @@ export default function App() {
 	const [startingKidMode, setStartingKidMode] = useState(false);
 	const [leavingKidMode, setLeavingKidMode] = useState(false);
 	const kids = members.filter((m) => m.stage !== null && m.stage !== "adult");
+	// Phones: what the + in the bottom bar opened (Add to a list, Caught being good), and photos it
+	// picked, on their way to the Photos page.
+	const [quick, setQuick] = useState<"list" | "good" | null>(null);
+	const [pickedPhotos, setPickedPhotos] = useState<File[] | null>(null);
 	const kidDevice = signedIn?.kind === "device" && signedIn.role === "kid" && !parentLock.parent ? signedIn.memberId : null;
 	const kidView = kidModeFor
 		? kidModeFor === "all" || !members.some((m) => m.id === kidModeFor)
@@ -416,10 +422,25 @@ export default function App() {
 		);
 	}
 
+	// The phone's +, top of the stack first. Adding events, tasks and moments needs a parent; anyone
+	// adds to a list or a photo.
+	const quickActions: QuickAction[] = [
+		...(parentLock.parent ? [{ kind: "event" as const, onPick: () => setDialog({ day: page === "calendar" ? newEventDay() : today }) }] : []),
+		{ kind: "list", onPick: () => setQuick("list") },
+		...(parentLock.parent && kids.length ? [{ kind: "good" as const, onPick: () => setQuick("good") }] : []),
+		...(parentLock.parent ? [{ kind: "task" as const, onPick: () => setTaskDialog({ blank: true }) }] : []),
+		{ kind: "photo", files: (files) => {
+			setPickedPhotos(files);
+			setPage("photos");
+		} },
+	];
+
 	return (
 		<>
 			<div className={s.app}>
 				<NavBar
+					phone={phone}
+					center={<QuickAdd actions={quickActions} />}
 					page={page}
 					settingsOpen={showMembers}
 					onPage={setPage}
@@ -457,7 +478,7 @@ export default function App() {
 					) : page === "rewards" ? (
 						<RewardsPage today={today} members={members} />
 					) : page === "photos" ? (
-						<PhotosPage onPreview={saver.show} />
+						<PhotosPage onPreview={saver.show} incoming={pickedPhotos} onTaken={() => setPickedPhotos(null)} />
 					) : (<>
 					<div className={s.monthHeaderTitle}>
 						<div>
@@ -633,11 +654,14 @@ export default function App() {
 				/>
 			)}
 
-			{/* The round + at the bottom right: add an event or a task. */}
+			{quick === "list" && <AddToListSheet onClose={() => setQuick(null)} onNewList={() => { setQuick(null); setPage("lists"); }} />}
+			{quick === "good" && <MomentDialog kids={kids} today={today} onClose={() => setQuick(null)} />}
+
+			{/* The round + at the bottom right: add an event or a task (phones have the bar's + instead). */}
 			{/* Adding needs a parent (the lock in the left bar). */}
-			{page === "calendar" && parentLock.parent && <Fab label="Add event" onClick={() => setDialog({ day: newEventDay() })} />}
+			{!phone && page === "calendar" && parentLock.parent && <Fab label="Add event" onClick={() => setDialog({ day: newEventDay() })} />}
 			{/* Add a task, for no one in particular yet (each kid's card has its own Add a task). */}
-			{page === "tasks" && parentLock.parent && <Fab label="Add a task or goal" onClick={() => setTaskDialog({ blank: true })} />}
+			{!phone && page === "tasks" && parentLock.parent && <Fab label="Add a task or goal" onClick={() => setTaskDialog({ blank: true })} />}
 			{saver.on && (
 				<ScreenSaver
 					photos={saver.photos}

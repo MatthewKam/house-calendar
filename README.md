@@ -306,6 +306,11 @@ alert opens Sprig on Lists (or Today). Kids' devices and the wall don't get aler
 - **Round + buttons:** Calendar, Tasks, Rewards and Photos each have one at the bottom right (add an event, a task, a
   reward jar, or upload photos). A task or jar started there has no one picked yet; each kid's task card has its own
   **+ Add a task**.
+- **On phones** the bar runs along the bottom: **Today, Calendar, +, Tasks, More** (More has Lists, Rewards, Photos,
+  who's signed in, the lock and Settings). The **+** in the middle turns into an ✕ and opens a stack of quick adds,
+  on every page: **New event, Add to a list, Caught being good, Add a task, Add a photo** (to the album and screen
+  saver). Locked, a kid's device only gets Add to a list and Add a photo. Tablets and computers keep the bar on the
+  left.
 - **Add:** the round **+** at the bottom right of the calendar (it starts on the day open in the day panel, else today),
   or tap a day, then **+ Add event** in the day panel.
 - **Who:** an event can be for any number of people: tap each person in **Who** (tap again to remove), or

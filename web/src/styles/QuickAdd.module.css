@@ -1,0 +1,93 @@
+/* The round + raised out of the middle of the phone's bottom bar; open, it turns into a dark ✕. */
+.plus {
+	width: 3.6rem;
+	height: 3.6rem;
+	min-height: 0;
+	min-width: 0;
+	margin-top: -1.5rem;
+	padding: 0;
+	border-radius: 50%;
+	border: 0.25rem solid var(--bg);
+	display: grid;
+	place-items: center;
+	background: var(--accent);
+	color: var(--surface);
+	box-shadow: 0 0.4rem 1rem rgb(20 108 67 / 0.35);
+	position: relative;
+	z-index: 16;
+	transition: transform 0.2s, background 0.2s;
+}
+.plus svg {
+	width: 1.7rem;
+	height: 1.7rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.4;
+	stroke-linecap: round;
+}
+.open {
+	background: var(--text);
+	transform: rotate(45deg);
+}
+.open:active {
+	transform: rotate(45deg) scale(0.97);
+}
+
+/* The page fades behind the stack. */
+.scrim {
+	position: fixed;
+	inset: 0;
+	z-index: 15;
+	background: rgb(246 245 242 / 0.9);
+	animation: fade 0.2s;
+}
+.stack {
+	position: fixed;
+	z-index: 16;
+	left: 0;
+	right: 0;
+	bottom: calc(5.4rem + env(safe-area-inset-bottom));
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.6rem;
+}
+.action {
+	min-width: 15rem;
+	min-height: 3.25rem;
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0 1.25rem 0 0.5rem;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	background: var(--surface);
+	color: var(--text);
+	font-size: 1.05rem;
+	font-weight: 700;
+	box-shadow: 0 0.25rem 0.9rem rgb(29 31 35 / 0.08);
+	animation: pop 0.2s ease-out both;
+}
+.icon {
+	width: 2.4rem;
+	height: 2.4rem;
+	flex: none;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+}
+.icon svg {
+	width: 1.3rem;
+	height: 1.3rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+@keyframes pop {
+	from { opacity: 0; transform: translateY(1rem) scale(0.96); }
+}
+@keyframes fade {
+	from { opacity: 0; }
+}

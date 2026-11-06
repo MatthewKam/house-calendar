@@ -456,6 +456,65 @@ function NewListSheet({ onClose }: { onClose: () => void }) {
 	);
 }
 
+/**
+ * Add to a list from anywhere (the phone's +): type it, pick the list, Add. It stays open for the next
+ * one, so a few groceries go in one after another.
+ */
+export function AddToListSheet({ onClose, onNewList }: { onClose: () => void; /** No lists yet: go make one. */ onNewList: () => void }) {
+	const lists = useLists().data;
+	const { add } = useListActions();
+	const [title, setTitle] = useState("");
+	const [listId, setListId] = useState<string | null>(null);
+	const [added, setAdded] = useState<string | null>(null);
+	const chosen = lists?.find((l) => l.id === listId) ?? lists?.[0];
+	return (
+		<>
+			<div className={sheet.scrim} onClick={onClose} role="presentation" />
+			<form className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-label="Add to a list"
+				onSubmit={(e) => {
+					e.preventDefault();
+					if (!chosen || !title.trim()) return;
+					add.mutate({ listId: chosen.id, title: title.trim() });
+					setAdded(`${title.trim()} → ${chosen.title}`);
+					setTitle("");
+				}}>
+				<header className={sheet.head}>
+					<h2 className={sheet.heading}>Add to a list</h2>
+					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">×</button>
+				</header>
+				{lists && lists.length === 0 ? (
+					<>
+						<p className={sheet.body}>No lists yet. Make one on the Lists page first: Groceries, To do, Packing…</p>
+						<div className={sheet.actions}>
+							<span className={sheet.spacer} />
+							<button type="button" className={sheet.primary} onClick={onNewList}>Go to Lists</button>
+						</div>
+					</>
+				) : (
+					<>
+						<input className={s.nameInput} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Milk, call the dentist…"
+							maxLength={300} autoFocus aria-label="What to add" />
+						<div className={s.listPicks} role="radiogroup" aria-label="Which list">
+							{lists?.map((l) => (
+								<button key={l.id} type="button" role="radio" aria-checked={l.id === chosen?.id}
+									className={`${s.listPick} ${l.id === chosen?.id ? s.listPicked : ""}`} onClick={() => setListId(l.id)}>
+									{l.title}
+								</button>
+							))}
+						</div>
+						{added && <p className={s.added}>✓ {added}</p>}
+						<div className={sheet.actions}>
+							<span className={sheet.spacer} />
+							<button type="button" className={sheet.secondary} onClick={onClose}>Done</button>
+							<button type="submit" className={sheet.primary} disabled={!title.trim() || !chosen}>Add</button>
+						</div>
+					</>
+				)}
+			</form>
+		</>
+	);
+}
+
 /** A list of Sprig's own: rename it, or delete it with everything on it. */
 function ListSheet({ list, onClose }: { list: CardList; onClose: () => void }) {
 	const { renameList, deleteList } = useListActions();

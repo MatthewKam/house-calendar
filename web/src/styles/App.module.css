@@ -243,7 +243,14 @@
 @media (max-width: 700px) {
 	/* Phones: the page runs to the bottom edge of the screen; scrolling lists keep their own room
 	   for the home bar at their end. */
+	/* The page above, the bar along the bottom (NavBar). */
+	.app {
+		flex-direction: column;
+	}
 	.shell {
+		height: auto;
+		flex: 1;
+		min-height: 0;
 		padding: calc(0.6rem + env(safe-area-inset-top)) max(0.75rem, var(--inset-right)) 0 0.75rem;
 		gap: 0.5rem;
 	}

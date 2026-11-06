@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { SignedIn } from "../lib/api";
 import { Avatar } from "./AccountSheet";
 import s from "../styles/NavBar.module.css";
@@ -14,6 +14,10 @@ interface Props {
 	lock?: { parent: boolean; by: string | null; onTap: () => void };
 	/** Who's signed in here: their initial in their color (or the wall), opening who and Sign out. */
 	me?: { status: SignedIn; onTap: () => void };
+	/** Phones: a bar along the bottom (Today, Calendar, this in the middle, Tasks, More). */
+	phone?: boolean;
+	/** The quick-add button in the middle of the phone bar. */
+	center?: ReactNode;
 }
 
 // Simple line icons, drawn in the current text color.
@@ -56,6 +60,13 @@ const PhotosIcon = () => (
 		<path d="M4 17l5-4.5 3.5 3 3-2.5 4.5 4" />
 	</svg>
 );
+const MoreIcon = () => (
+	<svg viewBox="0 0 24 24" aria-hidden="true">
+		<circle cx="5" cy="12" r="1.4" />
+		<circle cx="12" cy="12" r="1.4" />
+		<circle cx="19" cy="12" r="1.4" />
+	</svg>
+);
 const LockIcon = ({ open }: { open: boolean }) => (
 	<svg viewBox="0 0 24 24" aria-hidden="true">
 		<rect x="5" y="11" width="14" height="10" rx="2.2" />
@@ -77,7 +88,10 @@ export default function NavBar({
 	onSettings,
 	lock,
 	me,
+	phone,
+	center,
 }: Props) {
+	if (phone) return <BottomBar {...{ page, settingsOpen, onPage, onSettings, lock, me, center }} />;
 	const item = (p: Page, label: string, icon: ReactNode) => (
 		<button
 			className={`${s.item} ${page === p ? s.on : ""}`}
@@ -127,5 +141,78 @@ export default function NavBar({
 				<span className={s.label}>Settings</span>
 			</button>
 		</nav>
+	);
+}
+
+/** Pages behind More on a phone. */
+const MORE: [Page, string, () => ReactNode][] = [
+	["lists", "Lists", ListsIcon],
+	["rewards", "Rewards", RewardsIcon],
+	["photos", "Photos", PhotosIcon],
+];
+
+/**
+ * Phones: Today, Calendar, the quick-add button, Tasks and More along the bottom, in thumb's reach.
+ * More holds the other pages, who's signed in, the parent lock and Settings.
+ */
+function BottomBar({ page, settingsOpen, onPage, onSettings, lock, me, center }: Omit<Props, "phone">) {
+	const [more, setMore] = useState(false);
+	const inMore = MORE.some(([p]) => p === page);
+	const tab = (p: Page, label: string, icon: ReactNode) => (
+		<button className={`${s.tab} ${page === p ? s.tabOn : ""}`} aria-current={page === p ? "page" : undefined}
+			onClick={() => onPage(p)}>
+			{icon}
+			<span>{label}</span>
+		</button>
+	);
+	// Picking from More closes it.
+	const then = (act: () => void) => () => {
+		setMore(false);
+		act();
+	};
+	return (
+		<>
+			<nav className={s.bar} aria-label="Main">
+				{tab("today", "Today", <TodayIcon />)}
+				{tab("calendar", "Calendar", <CalendarIcon />)}
+				<div className={s.center}>{center}</div>
+				{tab("tasks", "Tasks", <TasksIcon />)}
+				<button className={`${s.tab} ${inMore || more || settingsOpen ? s.tabOn : ""}`} aria-expanded={more}
+					onClick={() => setMore(!more)}>
+					<MoreIcon />
+					<span>More</span>
+				</button>
+			</nav>
+			{more && (
+				<>
+					<div className={s.moreScrim} onClick={() => setMore(false)} role="presentation" />
+					<div className={s.moreSheet} role="dialog" aria-label="More">
+						{MORE.map(([p, label, Icon]) => (
+							<button key={p} className={`${s.moreItem} ${page === p ? s.moreOn : ""}`} onClick={then(() => onPage(p))}>
+								<Icon />
+								{label}
+							</button>
+						))}
+						<hr className={s.moreRule} />
+						{me && (
+							<button className={s.moreItem} onClick={then(me.onTap)}>
+								<span className={s.moreAvatar}><Avatar status={me.status} /></span>
+								{me.status.me?.name ?? "The wall"}
+							</button>
+						)}
+						{lock && (
+							<button className={`${s.moreItem} ${lock.parent ? s.unlocked : ""}`} onClick={then(lock.onTap)}>
+								<LockIcon open={lock.parent} />
+								{lock.parent ? `Unlocked${lock.by ? ` by ${lock.by}` : ""}: tap to lock` : "Locked: unlock for grown-ups"}
+							</button>
+						)}
+						<button className={s.moreItem} onClick={then(onSettings)}>
+							<SettingsIcon />
+							Settings
+						</button>
+					</div>
+				</>
+			)}
+		</>
 	);
 }

@@ -407,3 +407,27 @@
 	flex-wrap: wrap;
 	gap: 0.5rem;
 }
+
+/* Add to a list (the phone's +): which list, as buttons; and what was just added. */
+.listPicks {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+.listPick {
+	padding: 0 1rem;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	background: var(--surface);
+	font-weight: 600;
+}
+.listPicked {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--surface);
+}
+.added {
+	margin: 0;
+	color: var(--accent);
+	font-weight: 600;
+}

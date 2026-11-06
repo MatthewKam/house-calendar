@@ -19,6 +19,13 @@
 .fab:active {
 	transform: scale(0.94);
 }
+/* Phones: above the bottom bar. */
+@media (max-width: 700px) {
+	.fab {
+		right: calc(1rem + var(--inset-right));
+		bottom: calc(5.5rem + env(safe-area-inset-bottom));
+	}
+}
 .fab svg {
 	width: 1.7rem;
 	height: 1.7rem;

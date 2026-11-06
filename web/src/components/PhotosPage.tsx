@@ -13,6 +13,9 @@ import s from "../styles/Photos.module.css";
 interface Props {
 	/** Starts the screen saver now (to see how it looks). */
 	onPreview: () => void;
+	/** Picked with the phone's + (Add a photo): uploaded here, then onTaken. */
+	incoming?: File[] | null;
+	onTaken?: () => void;
 }
 
 interface Upload {
@@ -81,7 +84,7 @@ function UploadStatus({ upload: u, video }: { upload: Upload; video?: Photo }) {
 	);
 }
 
-export default function PhotosPage({ onPreview }: Props) {
+export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 	const photos = usePhotos().data ?? [];
 	const { refresh, update, remove, setSlideshow } = usePhotoActions();
 	const [show, setShow] = useState<Show>("all");
@@ -221,6 +224,13 @@ export default function PhotosPage({ onPreview }: Props) {
 		);
 		if (input.current) input.current.value = "";
 	}
+
+	// Photos picked with the phone's +: uploaded like any others, once.
+	useEffect(() => {
+		if (!incoming?.length) return;
+		onTaken?.();
+		void add(incoming);
+	}, [incoming]);
 
 	// Arrow keys and Escape in the viewer.
 	useEffect(() => {

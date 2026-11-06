@@ -61,34 +61,115 @@
 	font-weight: 600;
 }
 
-/* Phones: a narrow bar of icons only. */
-@media (max-width: 700px) {
-	.nav {
-		padding: calc(0.6rem + env(safe-area-inset-top)) 0.25rem calc(0.6rem + env(safe-area-inset-bottom))
-			max(0.25rem, var(--inset-left));
-	}
-	.item {
-		width: 2.75rem;
-	}
-	.item svg {
-		width: 1.5rem;
-		height: 1.5rem;
-	}
-	.label {
-		display: none;
-	}
-	.logo {
-		width: 2rem;
-		height: 2rem;
-	}
-	.me > span:first-child,
-	.me > svg {
-		width: 1.9rem !important;
-		height: 1.9rem !important;
-	}
-}
-
 /* The parent lock while unlocked: in green, so a parent sees it's open. */
 .unlocked {
 	color: #1f8a4c;
+}
+
+/* Phones: the bar along the bottom, above the home bar, with the quick-add button raised in the
+   middle (QuickAdd). */
+.bar {
+	order: 2;
+	flex: none;
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	align-items: start;
+	padding: 0.3rem max(0.25rem, var(--inset-right)) calc(0.3rem + env(safe-area-inset-bottom)) max(0.25rem, var(--inset-left));
+	background: var(--surface);
+	border-top: 1px solid var(--line);
+	position: relative;
+	z-index: 14;
+}
+.tab {
+	min-width: 0;
+	min-height: 3.2rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.15rem;
+	color: var(--muted);
+	font-size: 0.72rem;
+	font-weight: 550;
+}
+.tab svg {
+	width: 1.6rem;
+	height: 1.6rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.7;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.tabOn {
+	color: var(--accent);
+	font-weight: 700;
+}
+.center {
+	display: flex;
+	justify-content: center;
+}
+.moreScrim {
+	position: fixed;
+	inset: 0;
+	z-index: 13;
+	background: rgb(0 0 0 / 0.3);
+}
+/* More: a sheet rising from just above the bar. */
+.moreSheet {
+	position: fixed;
+	z-index: 13;
+	left: 0;
+	right: 0;
+	bottom: calc(3.8rem + env(safe-area-inset-bottom));
+	padding: 0.6rem max(0.75rem, var(--inset-right)) 0.6rem max(0.75rem, var(--inset-left));
+	background: var(--surface);
+	border-radius: 1.2rem 1.2rem 0 0;
+	box-shadow: 0 -0.5rem 1.5rem rgb(0 0 0 / 0.12);
+	display: flex;
+	flex-direction: column;
+	animation: rise 0.2s ease-out;
+}
+@keyframes rise {
+	from { transform: translateY(1.5rem); opacity: 0; }
+}
+.moreItem {
+	display: flex;
+	align-items: center;
+	gap: 0.9rem;
+	min-height: 3.3rem;
+	padding: 0 0.6rem;
+	border-radius: 0.8rem;
+	font-size: 1.05rem;
+	font-weight: 600;
+	text-align: left;
+}
+.moreItem svg {
+	width: 1.6rem;
+	height: 1.6rem;
+	flex: none;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.7;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.moreOn {
+	color: var(--accent);
+	background: var(--bg);
+}
+.moreAvatar {
+	display: flex;
+	width: 1.6rem;
+	height: 1.6rem;
+}
+.moreAvatar > * {
+	width: 1.6rem !important;
+	height: 1.6rem !important;
+}
+.moreRule {
+	width: 100%;
+	border: 0;
+	border-top: 1px solid var(--line);
+	margin: 0.3rem 0;
 }
