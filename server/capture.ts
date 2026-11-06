@@ -10,7 +10,8 @@ import { atLocal } from './push.ts';
 // 10") or a photo of a flyer becomes proposed list items, events and kid tasks. Nothing is saved
 // here: the app shows them as cards, a grown-up checks them, and the app adds the ones kept through
 // the usual routes. Sent to Claude: the words or photo, today's date, the family's names (and who's
-// a kid) and the list names; nothing from the calendar. Photos aren't kept.
+// a kid) and the list names; nothing from the calendar. A flyer's photo is kept by the app, with the
+// events read from it (photos.ts), not here.
 
 /** What Claude found, before names and times are checked. */
 const Found = z.object({
@@ -29,6 +30,8 @@ const Found = z.object({
     /** Family members' names it's for. */
     people: z.array(z.string()),
     location: z.string().nullable(),
+    /** event: other details worth keeping, from a flyer or what was said. */
+    notes: z.string().nullable(),
   })),
 });
 export type Found = z.infer<typeof Found>['items'];
@@ -50,7 +53,7 @@ export type Understand = (input: CaptureInput, ctx: CaptureContext) => Promise<F
 /** A card the app shows: what to add, with names already matched to people. */
 export type Proposal =
   | { kind: 'item'; title: string; list: string; due: string | null; memberId: string | null }
-  | { kind: 'event'; title: string; allDay: boolean; start: string; end: string; memberIds: string[]; location: string | null }
+  | { kind: 'event'; title: string; allDay: boolean; start: string; end: string; memberIds: string[]; location: string | null; notes: string | null }
   | { kind: 'task'; title: string; memberId: string; day: string };
 
 const SYSTEM = `You help a busy family add things to their family app from something a parent said, or a photo of
@@ -65,7 +68,9 @@ a flyer, invitation, school notice or appointment card. Turn it into a list of t
 Dates are YYYY-MM-DD and times HH:MM (24-hour), in the family's own time; work out "Friday", "tomorrow" and "the
 14th" from today's date (the next one coming). "Me" and "I" are the speaker. people: names of family members it's
 for, as given; leave it empty when it's for everyone or no one in particular. Keep titles short, the way a person
-would write them, without the date or names already in other fields. Leave out anything that isn't something to
+would write them, without the date or names already in other fields. notes (events only): the other details worth
+keeping, as short lines: what to bring or wear, cost, how to RSVP and by when, a contact, a website; null when
+there are none. Leave out anything that isn't something to
 add; an empty list is fine.`;
 
 /** Claude: reads the words or the photo. Sent to the Anthropic API. */
@@ -120,6 +125,7 @@ export function toProposals(found: Found, members: { id: string; name: string; k
     const title = f.title.trim().replace(/\s+/g, ' ').slice(0, 300);
     if (!title) continue;
     const people = [...new Set(f.people.map(person).filter((m) => !!m))];
+    const notes = f.notes?.trim().slice(0, 4000) || null;
     if (f.kind === 'item') {
       const due = realDay(f.date) ? instant(f.date, f.time, tz) ?? f.date : null;
       out.push({ kind: 'item', title, list: listName(f.list), due, memberId: people[0]?.id ?? null });
@@ -130,9 +136,10 @@ export function toProposals(found: Found, members: { id: string; name: string; k
       if (start) {
         const end = instant(endDay, f.endTime, tz);
         out.push({ kind: 'event', title, allDay: false, start, end: end && end > start ? end : new Date(Date.parse(start) + 3_600_000).toISOString(),
-          memberIds: people.map((m) => m.id), location: f.location?.trim() || null });
+          memberIds: people.map((m) => m.id), location: f.location?.trim() || null, notes });
       } else {
-        out.push({ kind: 'event', title, allDay: true, start: f.date, end: nextDay(endDay), memberIds: people.map((m) => m.id), location: f.location?.trim() || null });
+        out.push({ kind: 'event', title, allDay: true, start: f.date, end: nextDay(endDay), memberIds: people.map((m) => m.id),
+          location: f.location?.trim() || null, notes });
       }
     } else {
       const kid = people.find((m) => m.kid);
@@ -188,6 +195,11 @@ export function registerCapture(app: FastifyInstance, db: DB, understand?: Under
         { ...localNow(new Date(), timeZone), timeZone, speaker, family: members.map((m) => ({ name: m.name, kid: m.kid })), lists });
     } catch (err) {
       req.log.warn({ err }, 'Capture failed');
+      // A key that's wrong or revoked won't come right by trying again.
+      const status = (err as { status?: number }).status;
+      if (status === 401 || status === 403) {
+        return reply.code(502).send({ error: "Sprig's Claude key isn't working. Check ANTHROPIC_API_KEY on the server." });
+      }
       return reply.code(502).send({ error: "Sprig couldn't work that out just now. Try again in a moment." });
     }
     return { proposals: toProposals(found, members, timeZone, lists) };

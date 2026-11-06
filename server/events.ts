@@ -14,6 +14,7 @@ const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 interface EventRow {
   id: string; calendar_id: string; title: string; remote_id: string | null; series_id: string | null;
   all_day: number; start: string; end: string; sync_state: string; location: string | null;
+  notes: string | null; photo_id: string | null;
   /** JSON array of member ids, in family order; [] means everyone. */
   member_ids: string;
   /** Who sees it (privacy.ts): its own setting, else its calendar's. */
@@ -34,9 +35,12 @@ const toEvent = (r: EventRow) => ({
   // One day of a repeating iCloud event; edits here change that day only.
   repeats: !!r.remote_id?.includes('#'),
   visibility: r.visibility,
+  // Sprig's own events only: notes, and the flyer it was read from.
+  notes: r.notes,
+  photoUrl: r.photo_id && `/api/photos/${r.photo_id}/full`,
 });
 /** A Busy event someone else is on: just the time and who, never its title or place. */
-const asBusy = (r: EventRow) => ({ ...toEvent(r), title: 'Busy', location: null, busy: true });
+const asBusy = (r: EventRow) => ({ ...toEvent(r), title: 'Busy', location: null, notes: null, photoUrl: null, busy: true });
 
 /**
  * The same event often sits in two calendars (a shared family calendar and a personal one), so
@@ -58,7 +62,11 @@ function dedupe(rows: EventRow[], access?: Map<EventRow, Access>): EventRow[] {
 }
 
 /** memberIds: who it's for; empty means everyone. */
-interface EventInput { title: string; memberIds: string[]; allDay: boolean; start: string; end: string; location?: string | null }
+interface EventInput {
+  title: string; memberIds: string[]; allDay: boolean; start: string; end: string; location?: string | null;
+  /** Kept on Sprig's own events only (iCloud has nowhere for them yet). */
+  notes?: string | null; photoId?: string | null;
+}
 
 function validateTimes(ev: EventInput): string | null {
   if (ev.allDay) {
@@ -86,6 +94,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
   const getEvent = (id: string) => toEvent(db.prepare(`${EVENT_SELECT} WHERE e.id = ?`).get(id) as EventRow);
   const allMembers = (ids: string[]) =>
     ids.every((id) => db.prepare('SELECT 1 FROM members WHERE id = ?').get(id));
+  const knownPhoto = (id?: string | null) => !id || !!db.prepare('SELECT 1 FROM photos WHERE id = ?').get(id);
   /** Replaces who a wall event is for. */
   function setMembers(eventId: string, memberIds: string[]) {
     db.prepare('DELETE FROM event_members WHERE event_id = ?').run(eventId);
@@ -99,6 +108,8 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
       title: { type: 'string', minLength: 1, maxLength: 200 },
       memberIds: { type: 'array', maxItems: 20, items: { type: 'string' } },
       location: { type: ['string', 'null'], maxLength: 300 },
+      notes: { type: ['string', 'null'], maxLength: 4000 },
+      photoId: { type: ['string', 'null'] },
       allDay: { type: 'boolean' },
       start: { type: 'string' },
       end: { type: 'string' },
@@ -136,6 +147,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     const err = validateTimes(ev);
     if (err) return reply.code(400).send({ error: err });
     if (!allMembers(ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!knownPhoto(ev.photoId)) return reply.code(400).send({ error: 'Unknown photo' });
     if (req.body.calendarId && req.body.calendarId !== 'local') {
       const cal = db.prepare(`SELECT id, remote_id, writable FROM calendars WHERE id = ? AND provider != 'local'`)
         .get(req.body.calendarId) as { id: string; remote_id: string; writable: number } | undefined;
@@ -152,8 +164,8 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     }
     const id = randomUUID();
     db.transaction(() => {
-      db.prepare(`INSERT INTO events (id, calendar_id, title, all_day, start, end, location) VALUES (?, 'local', ?, ?, ?, ?, ?)`)
-        .run(id, ev.title.trim(), ev.allDay ? 1 : 0, ev.start, ev.end, ev.location?.trim() || null);
+      db.prepare(`INSERT INTO events (id, calendar_id, title, all_day, start, end, location, notes, photo_id) VALUES (?, 'local', ?, ?, ?, ?, ?, ?, ?)`)
+        .run(id, ev.title.trim(), ev.allDay ? 1 : 0, ev.start, ev.end, ev.location?.trim() || null, ev.notes?.trim() || null, ev.photoId ?? null);
       setMembers(id, ev.memberIds);
       if (req.body.visibility) setVisibility(db, id, req.body.visibility);
     })();
@@ -193,10 +205,13 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
       start: req.body.start ?? row.start,
       end: req.body.end ?? row.end,
       location: req.body.location === undefined ? row.location : req.body.location,
+      notes: req.body.notes === undefined ? row.notes : req.body.notes?.trim() || null,
+      photoId: req.body.photoId === undefined ? row.photo_id : req.body.photoId,
     };
     const err = validateTimes(ev);
     if (err) return reply.code(400).send({ error: err });
     if (!allMembers(ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!knownPhoto(ev.photoId)) return reply.code(400).send({ error: 'Unknown photo' });
     const next = details(ev);
     if (row.calendar_id !== 'local' && req.body.scope === 'all' && row.remote_id?.includes('#')) {
       // Every day of a repeating event: a new title or address, and the same move for every day.
@@ -227,6 +242,8 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
         db.prepare(`UPDATE events SET title = ?, all_day = ?, start = ?, end = ?, location = ?,
                     updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`)
           .run(next.title, next.allDay ? 1 : 0, next.start, next.end, next.location, r.id);
+        // Notes and the flyer belong to the one opened, not its copies.
+        if (r.id === row.id) db.prepare('UPDATE events SET notes = ?, photo_id = ? WHERE id = ?').run(ev.notes ?? null, ev.photoId ?? null, r.id);
       } else if (r.id === row.id || writable(r.calendar_id)) {
         const changes = diff(rowDetails(r), next);
         if (Object.keys(changes).length) queueEdit(db, r, 'update', changes);

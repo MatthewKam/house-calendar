@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { textOn } from "../lib/color";
 import { addDays, dayKey, fromDayKey, hhmm, toInstant } from "../lib/dates";
 import { isDay } from "../lib/lists";
-import { flyerImage } from "../lib/photos";
+import { flyerImage, uploadFlyer } from "../lib/photos";
 import { useLists } from "../lib/queries";
 import type { Member, Proposal } from "../lib/types";
 import DateInput from "./DateInput";
@@ -26,13 +26,15 @@ interface Card {
 	endTime: string;
 	who: string[];
 	location: string | null;
+	/** Event: other details, from the flyer or what was said. */
+	notes: string;
 }
 
 const nextDay = (d: string) => dayKey(addDays(fromDayKey(d), 1));
 const prevDay = (d: string) => dayKey(addDays(fromDayKey(d), -1));
 
 function toCard(p: Proposal, id: number): Card {
-	const base = { id, kind: p.kind, title: p.title, list: "", day: "", time: "", endDay: "", endTime: "", who: [] as string[], location: null };
+	const base = { id, kind: p.kind, title: p.title, list: "", day: "", time: "", endDay: "", endTime: "", who: [] as string[], location: null, notes: "" };
 	if (p.kind === "item") {
 		const due = p.due;
 		return { ...base, list: p.list, who: p.memberId ? [p.memberId] : [],
@@ -40,8 +42,8 @@ function toCard(p: Proposal, id: number): Card {
 	}
 	if (p.kind === "event") {
 		return p.allDay
-			? { ...base, who: p.memberIds, location: p.location, day: p.start, endDay: prevDay(p.end) }
-			: { ...base, who: p.memberIds, location: p.location, day: dayKey(new Date(p.start)), time: hhmm(p.start),
+			? { ...base, who: p.memberIds, location: p.location, notes: p.notes ?? "", day: p.start, endDay: prevDay(p.end) }
+			: { ...base, who: p.memberIds, location: p.location, notes: p.notes ?? "", day: dayKey(new Date(p.start)), time: hhmm(p.start),
 				endDay: dayKey(new Date(p.end)), endTime: hhmm(p.end) };
 	}
 	return { ...base, who: [p.memberId], day: p.day };
@@ -49,8 +51,11 @@ function toCard(p: Proposal, id: number): Card {
 
 const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
 
-/** Adds one card through the usual routes (the server checks it like any other add). */
-async function addCard(c: Card, lists: { id: string; title: string }[]) {
+/**
+ * Adds one card through the usual routes (the server checks it like any other add). flyer: the
+ * flyer's photo id, uploaded the first time an event needs it.
+ */
+async function addCard(c: Card, lists: { id: string; title: string }[], flyer?: () => Promise<string>) {
 	const title = c.title.trim();
 	if (c.kind === "item") {
 		let list = lists.find((l) => l.title.toLowerCase() === c.list.trim().toLowerCase());
@@ -59,12 +64,13 @@ async function addCard(c: Card, lists: { id: string; title: string }[]) {
 		await api.addListItem(list.id, { title, due: c.day ? (c.time ? toInstant(c.day, c.time) : c.day) : null, memberId: c.who[0] ?? null });
 	} else if (c.kind === "event") {
 		const endDay = c.endDay && c.endDay >= c.day ? c.endDay : c.day;
+		const extra = { location: c.location, notes: c.notes.trim() || null, photoId: flyer ? await flyer() : null };
 		if (!c.time) {
-			await api.addEvent({ title, memberIds: c.who, allDay: true, start: c.day, end: nextDay(endDay), location: c.location });
+			await api.addEvent({ title, memberIds: c.who, allDay: true, start: c.day, end: nextDay(endDay), ...extra });
 		} else {
 			const start = toInstant(c.day, c.time);
 			const end = c.endTime ? toInstant(endDay, c.endTime) : "";
-			await api.addEvent({ title, memberIds: c.who, allDay: false, start, location: c.location,
+			await api.addEvent({ title, memberIds: c.who, allDay: false, start, ...extra,
 				end: end > start ? end : new Date(Date.parse(start) + 3_600_000).toISOString() });
 		}
 	} else {
@@ -118,6 +124,17 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 	const [cards, setCards] = useState<Card[] | null>(null);
 	const [adding, setAdding] = useState(false);
 	const rec = useRef<Recognition | null>(null);
+	// The flyer's photo, uploaded once for all its events (and kept if one fails, for trying again).
+	const flyerId = useRef<Promise<string> | null>(null);
+	const preview = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo]);
+	useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+	function flyer() {
+		flyerId.current ??= uploadFlyer(photo!).then((p) => p.id, (e) => {
+			flyerId.current = null;
+			throw e;
+		});
+		return flyerId.current;
+	}
 
 	async function understand(input: Parameters<typeof api.capture>[0]) {
 		setWorking(true);
@@ -178,7 +195,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 		let added = 0;
 		for (const c of ready) {
 			try {
-				await addCard(c, lists);
+				await addCard(c, lists, photo ? flyer : undefined);
 				added++;
 			} catch (e) {
 				left.push(c);
@@ -246,6 +263,12 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 						{photo ? "Sprig didn't find any dates or things to add on that photo." : 'Sprig didn\'t catch anything to add. Try "Add milk to Groceries".'}
 					</p>
 				)}
+				{cards && cards.some((c) => c.kind === "event") && preview && (
+					<p className={s.kept}>
+						<img src={preview} alt="" />
+						The photo is saved with the events, in their notes.
+					</p>
+				)}
 				{cards && cards.length > 0 && (
 					<ul className={s.cards}>
 						{cards.map((c) => (
@@ -279,6 +302,10 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 									{c.kind === "item" && !c.day && <span className={s.note}>No day: just on the list</span>}
 								</div>
 								{c.kind === "task" ? whoPick(c, kids, true) : whoPick(c, members, c.kind === "item")}
+								{c.kind === "event" && (
+									<textarea className={s.notes} value={c.notes} onChange={(e) => set(c.id, { notes: e.target.value })}
+										rows={Math.min(5, Math.max(2, c.notes.split("\n").length))} maxLength={4000} placeholder="Notes" aria-label="Notes" />
+								)}
 							</li>
 						))}
 					</ul>

@@ -146,3 +146,28 @@
 	background: var(--surface);
 	font-weight: 600;
 }
+
+.notes {
+	font: inherit;
+	font-size: 0.95rem;
+	padding: 0.45rem 0.6rem;
+	border: 1px solid var(--line);
+	border-radius: 0.6rem;
+	resize: vertical;
+}
+/* The flyer, shown small above the cards. */
+.kept {
+	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.kept img {
+	width: 3rem;
+	height: 3rem;
+	object-fit: cover;
+	border-radius: 0.5rem;
+	border: 1px solid var(--line);
+}

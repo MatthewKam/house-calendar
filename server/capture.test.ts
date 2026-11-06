@@ -4,7 +4,7 @@ import { buildApp } from './app.ts';
 import type { CaptureContext, CaptureInput, Found } from './capture.ts';
 
 const item = (f: Partial<Found[number]>): Found[number] =>
-  ({ kind: 'item', title: '', list: null, date: null, time: null, endDate: null, endTime: null, people: [], location: null, ...f });
+  ({ kind: 'item', title: '', list: null, date: null, time: null, endDate: null, endTime: null, people: [], location: null, notes: null, ...f });
 
 function setup(found: Found | Error | null) {
   const db = openDb(':memory:');
@@ -42,7 +42,7 @@ describe('capture', () => {
       item({ title: 'Milk', list: 'groceries' }),
       item({ title: 'Sunscreen', list: 'Costco' }),
       item({ title: 'Library books', date: '2026-11-14' }),
-      item({ kind: 'event', title: 'Swim', date: '2026-11-14', time: '9:00', people: ['sam'], location: 'The Y' }),
+      item({ kind: 'event', title: 'Swim', date: '2026-11-14', time: '9:00', people: ['sam'], location: 'The Y', notes: ' Bring a towel ' }),
       item({ kind: 'event', title: 'Book fair', date: '2026-11-16', endDate: '2026-11-18' }),
       item({ kind: 'event', title: 'No date' }),
       item({ kind: 'task', title: 'Return library book', date: '2026-11-14', people: ['Sam'] }),
@@ -57,8 +57,8 @@ describe('capture', () => {
       { kind: 'item', title: 'Milk', list: 'Groceries', due: null, memberId: null },
       { kind: 'item', title: 'Sunscreen', list: 'Costco', due: null, memberId: null },
       { kind: 'item', title: 'Library books', list: 'To do', due: '2026-11-14', memberId: null },
-      { kind: 'event', title: 'Swim', allDay: false, start: '2026-11-14T17:00:00.000Z', end: '2026-11-14T18:00:00.000Z', memberIds: ['sam'], location: 'The Y' },
-      { kind: 'event', title: 'Book fair', allDay: true, start: '2026-11-16', end: '2026-11-19', memberIds: [], location: null },
+      { kind: 'event', title: 'Swim', allDay: false, start: '2026-11-14T17:00:00.000Z', end: '2026-11-14T18:00:00.000Z', memberIds: ['sam'], location: 'The Y', notes: 'Bring a towel' },
+      { kind: 'event', title: 'Book fair', allDay: true, start: '2026-11-16', end: '2026-11-19', memberIds: [], location: null, notes: null },
       { kind: 'task', title: 'Return library book', memberId: 'sam', day: '2026-11-14' },
     ]);
     // What Claude was given: the words, the day, the family and the lists; nothing from the calendar.
@@ -78,5 +78,7 @@ describe('capture', () => {
 
     const failing = setup(new Error('overloaded'));
     expect((await failing.call('POST', '/api/capture', { text: 'Milk', timeZone: tz })).status).toBe(502);
+    const badKey = setup(Object.assign(new Error('invalid x-api-key'), { status: 401 }));
+    expect((await badKey.call('POST', '/api/capture', { text: 'Milk', timeZone: tz })).body.error).toMatch(/key isn't working/);
   });
 });

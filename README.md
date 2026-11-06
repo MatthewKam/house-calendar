@@ -315,10 +315,13 @@ alert opens Sprig on Lists (or Today). Kids' devices and the wall don't get aler
   dentist Friday at 10, and add milk to Groceries", or photograph a school flyer or invitation. Claude works out the
   list items (reminders with a when), events and kid tasks, and each shows as a card to change (title, list, day,
   time, who) or leave out (×); nothing is added until **Add**. Sent to the Anthropic API: the words or photo, today's
-  date, the family's names and the list names, never anything from the calendar. Photos aren't kept. Talking uses
+  date, the family's names and the list names, never anything from the calendar. A flyer's events get its other
+  details (what to bring, cost, how to RSVP) as notes, and the photo is kept with them: open the event to see it
+  (it stays out of the album, and goes once its events are deleted). Talking uses
   the browser's speech recognition where there is one; elsewhere, type or use the keyboard's 🎤.
 - **Add:** the round **+** at the bottom right of the calendar (it starts on the day open in the day panel, else today),
   or tap a day, then **+ Add event** in the day panel.
+- **Notes:** events kept in Sprig have a Notes box (iCloud and Google events don't, yet).
 - **Who:** an event can be for any number of people: tap each person in **Who** (tap again to remove), or
   **Everyone** for no one in particular. Shared events get a bar split into each person's color.
 - **Who sees it:** each event is for **👥 Everyone**, **⏳ Busy** or **🔒 Private**. Busy: anyone not on it sees a

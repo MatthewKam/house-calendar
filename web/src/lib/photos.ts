@@ -83,6 +83,13 @@ export async function uploadPhoto(p: Prepared, inSlideshow: boolean, onProgress:
   return photo;
 }
 
+/** A flyer's photo (Snap a flyer), kept with the events read from it rather than in the album. */
+export async function uploadFlyer(file: File): Promise<Photo> {
+  const p = await preparePhoto(file);
+  const query = new URLSearchParams({ width: String(p.width), height: String(p.height), takenAt: p.takenAt, flyer: 'true' });
+  return send(`/api/photos?${query}`, 'image/jpeg', p.full, () => {});
+}
+
 /** POSTs a file with upload progress (fetch can't report it). */
 function send(url: string, type: string, body: Blob, onProgress: (f: number) => void): Promise<Photo> {
   return new Promise((resolve, reject) => {

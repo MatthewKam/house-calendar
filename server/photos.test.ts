@@ -61,4 +61,27 @@ describe('photo album', () => {
     expect((await app.inject({ url: '/api/photos' })).json().map((p: any) => p.id)).toEqual([b.id]);
     expect(existsSync(join(dir, `${a.id}.jpg`))).toBe(false);
   });
+
+  it('keeps a flyer with the events read from it, out of the album, until they are gone', async () => {
+    const db = openDb(':memory:');
+    app = buildApp(db, { photosDir: dir });
+    const flyer = (await upload('width=10&height=10&flyer=true')).json();
+    expect(flyer.inSlideshow).toBe(false);
+    expect((await app.inject({ url: '/api/photos' })).json()).toEqual([]);
+    const event = { title: 'Swim meet', allDay: true, start: '2026-11-14', end: '2026-11-15' };
+    expect((await app.inject({ method: 'POST', url: '/api/events', payload: { ...event, photoId: 'nope' } })).statusCode).toBe(400);
+    const ev = (await app.inject({ method: 'POST', url: '/api/events',
+      payload: { ...event, notes: ' Bring a towel ', photoId: flyer.id } })).json();
+    expect(ev).toMatchObject({ notes: 'Bring a towel', photoUrl: `/api/photos/${flyer.id}/full` });
+    const edited = (await app.inject({ method: 'PATCH', url: `/api/events/${ev.id}`, payload: { notes: 'Bring goggles' } })).json();
+    expect(edited).toMatchObject({ notes: 'Bring goggles', photoUrl: `/api/photos/${flyer.id}/full` });
+
+    // A day on, it's kept while an event has it, and goes once none do.
+    db.prepare(`UPDATE photos SET created_at = '2026-01-01T00:00:00.000Z'`).run();
+    buildApp(db, { photosDir: dir });
+    expect(existsSync(join(dir, `${flyer.id}.jpg`))).toBe(true);
+    await app.inject({ method: 'DELETE', url: `/api/events/${ev.id}` });
+    buildApp(db, { photosDir: dir });
+    expect(existsSync(join(dir, `${flyer.id}.jpg`))).toBe(false);
+  });
 });
