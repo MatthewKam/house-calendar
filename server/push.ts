@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import webpush from 'web-push';
 import type { DB } from './db.ts';
+import { kidIds } from './privacy.ts';
 
 // Alerts on people's phones (web push). A grown-up turns them on per device; the browser gives a
 // subscription, kept here with whose device it is and its time zone. Kid and wall devices don't get
@@ -54,6 +55,59 @@ const realZone = (tz: string) => {
   }
 };
 
+/** The instant it's `hour`:00 on `day` (YYYY-MM-DD) in time zone `tz`. */
+export function atLocal(day: string, hour: number, tz: string) {
+  const [y, m, d] = day.split('-').map(Number);
+  const guess = Date.UTC(y, m - 1, d, hour);
+  // How far the zone's clock is from UTC near then (worked out twice, for a day the clocks change).
+  const offset = (t: number) => {
+    const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23',
+      year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' })
+      .formatToParts(t).map((x) => [x.type, Number(x.value)]));
+    return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - t;
+  };
+  const first = guess - offset(guess);
+  return guess - offset(first);
+}
+
+/** A reminder with a day but no time comes due at this hour, on each phone's own clock. */
+export const DAY_HOUR = 8;
+/** One that came due longer ago than this isn't sent (the server was off, or it was set late). */
+const STALE = 12 * 3_600_000;
+
+/** Who gets an alert about something for `memberIds`: those grown-ups, or every one when it's for anyone or a kid. */
+function devicesFor(db: DB, memberIds: string[]) {
+  const all = db.prepare('SELECT * FROM push_devices').all() as DeviceRow[];
+  const kids = kidIds(db);
+  if (memberIds.length === 0 || memberIds.some((id) => kids.has(id))) return all;
+  return all.filter((d) => d.member_id && memberIds.includes(d.member_id));
+}
+
+/** When a reminder comes due on this device. */
+const dueAt = (due: string, d: DeviceRow) => (due.length === 10 ? atLocal(due, DAY_HOUR, d.time_zone) : Date.parse(due));
+
+/** Sends what has come due: reminders on Sprig's lists. Run every minute. */
+export async function sendDue(db: DB, pusher: Pusher, now = new Date(), log?: FastifyInstance['log']) {
+  const t = now.getTime();
+  // Noted sends are kept a month (long after anything could come due again).
+  db.prepare('DELETE FROM push_sent WHERE sent_at < ?').run(new Date(t - 30 * 86_400_000).toISOString());
+
+  const items = db.prepare(`SELECT i.id, i.title, i.due, i.member_id, l.title AS list, m.name
+    FROM list_items i JOIN lists l ON l.id = i.list_id LEFT JOIN members m ON m.id = i.member_id
+    WHERE i.done = 0 AND i.due IS NOT NULL`).all() as { id: string; title: string; due: string; member_id: string | null; list: string; name: string | null }[];
+  for (const it of items) {
+    const ready = devicesFor(db, it.member_id ? [it.member_id] : []).filter((d) => {
+      const at = dueAt(it.due, d);
+      return at <= t && t - at < STALE && at >= Date.parse(d.created_at);
+    });
+    if (!ready.length) continue;
+    // The when is in the key, so moving it sends it again.
+    await sendOnce(db, pusher, ready, `item:${it.id}:${it.due}`, {
+      title: `⏰ ${it.title}`, body: it.name ? `${it.list} · ${it.name}` : it.list, url: '/#lists', tag: `item:${it.id}`,
+    }, log);
+  }
+}
+
 /**
  * Sends `alert` to each device that hasn't had `key` yet, and notes it. Devices the push service says
  * are gone are forgotten.
@@ -74,6 +128,17 @@ export async function sendOnce(db: DB, pusher: Pusher, devices: DeviceRow[], key
 }
 
 export function registerPush(app: FastifyInstance, db: DB, pusher?: Pusher) {
+  if (pusher) {
+    let running = false;
+    const timer = setInterval(() => {
+      if (running) return;
+      running = true;
+      sendDue(db, pusher, new Date(), app.log).catch((err) => app.log.error(err)).finally(() => { running = false; });
+    }, 60_000);
+    timer.unref();
+    app.addHook('onClose', async () => clearInterval(timer));
+  }
+
   app.get('/api/push/key', async (_req, reply) =>
     pusher ? { publicKey: pusher.publicKey } : reply.code(404).send({ error: 'Alerts are off on this server' }));
 

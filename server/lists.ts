@@ -27,6 +27,10 @@ export function allLists(db: DB) {
   return lists.map((l) => ({ id: l.id, title: l.title, items: items.filter((i) => i.list_id === l.id).map(toItem) }));
 }
 
+/** Its alerts were sent (push.ts): forgotten, so it can alert again. */
+const forgetAlerts = (db: DB, itemId: string) => db.prepare(`DELETE FROM push_sent WHERE key LIKE ? ESCAPE '\\'`)
+  .run(`item:${itemId.replace(/[\\%_]/g, '\\$&')}:%`);
+
 export function registerLists(app: FastifyInstance, db: DB) {
   const memberOk = (id: string | null | undefined) => !id || !!db.prepare('SELECT 1 FROM members WHERE id = ?').get(id);
 
@@ -94,6 +98,8 @@ export function registerLists(app: FastifyInstance, db: DB) {
     if (b.due && !validDue(b.due)) return reply.code(400).send({ error: 'When should be a day or a time' });
     if (!memberOk(b.memberId)) return reply.code(400).send({ error: 'Unknown member' });
     const done = b.done ?? row.done === 1;
+    // Unticked: its alert can come again.
+    if (!done && row.done === 1) forgetAlerts(db, row.id);
     db.prepare(`UPDATE list_items SET title = ?, done = ?, due = ?, member_id = ?,
       done_at = CASE WHEN ? THEN COALESCE(done_at, strftime('%Y-%m-%dT%H:%M:%fZ','now')) END WHERE id = ?`)
       .run(b.title !== undefined ? tidy(b.title) : row.title, done ? 1 : 0, b.due !== undefined ? b.due : row.due,
@@ -103,6 +109,7 @@ export function registerLists(app: FastifyInstance, db: DB) {
 
   app.delete<{ Params: { id: string } }>('/api/lists/items/:id', async (req, reply) => {
     if (!db.prepare('DELETE FROM list_items WHERE id = ?').run(req.params.id).changes) return reply.code(404).send({ error: 'Item not found' });
+    forgetAlerts(db, req.params.id);
     return allLists(db);
   });
 }
