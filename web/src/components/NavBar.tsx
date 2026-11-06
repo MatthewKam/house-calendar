@@ -23,7 +23,7 @@ interface Props {
 }
 
 // Simple line icons, drawn in the current text color.
-const TodayIcon = () => (
+export const TodayIcon = () => (
 	<svg viewBox="0 0 24 24" aria-hidden="true">
 		<circle cx="12" cy="12" r="4" />
 		<path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" />
@@ -35,13 +35,13 @@ const CalendarIcon = () => (
 		<path d="M3.5 10h17M8 3v4M16 3v4" />
 	</svg>
 );
-const TasksIcon = () => (
+export const TasksIcon = () => (
 	<svg viewBox="0 0 24 24" aria-hidden="true">
 		<rect x="4" y="3" width="16" height="18" rx="2.5" />
 		<path d="M8 8.5l1.5 1.5L12 7.5M8 14.5l1.5 1.5 2.5-2.5M14.5 9h2M14.5 15h2" />
 	</svg>
 );
-const RewardsIcon = () => (
+export const RewardsIcon = () => (
 	<svg viewBox="0 0 24 24" aria-hidden="true">
 		<rect x="3.5" y="8" width="17" height="4" rx="1" />
 		<path d="M5 12v8h14v-8M12 8v12M12 8c-1.5-3-5-3.5-5-1.2C7 8 9.5 8 12 8zm0 0c1.5-3 5-3.5 5-1.2C17 8 14.5 8 12 8z" />

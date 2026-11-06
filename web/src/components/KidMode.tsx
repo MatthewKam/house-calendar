@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { fromDayKey, startOfWeek } from "../lib/dates";
 import { api } from "../lib/api";
@@ -17,6 +17,7 @@ import type { Member, Task } from "../lib/types";
 import { textOn } from "../lib/color";
 import KidJars from "./KidJars";
 import KidToday from "./KidToday";
+import { RewardsIcon, TasksIcon, TodayIcon } from "./NavBar";
 import PinPad from "./PinPad";
 import PottyCard from "./PottyCard";
 import { StarIcon } from "./icons";
@@ -44,12 +45,12 @@ const GROUPS: { label: string; has: (t: Task) => boolean }[] = [
 	{ label: "Goals", has: (c: Task) => !c.required },
 ];
 
-/** Kid mode's own tabs, as pictures with one word. */
+/** Kid mode's own tabs, with the main nav's icons. */
 type KidTab = "today" | "tasks" | "rewards";
-const TABS: { id: KidTab; icon: string; label: string }[] = [
-	{ id: "today", icon: "📅", label: "Today" },
-	{ id: "tasks", icon: "⭐", label: "Tasks" },
-	{ id: "rewards", icon: "🫙", label: "Rewards" },
+const TABS: { id: KidTab; Icon: () => ReactNode; label: string }[] = [
+	{ id: "today", Icon: TodayIcon, label: "Today" },
+	{ id: "tasks", Icon: TasksIcon, label: "Tasks" },
+	{ id: "rewards", Icon: RewardsIcon, label: "Rewards" },
 ];
 
 /**
@@ -136,7 +137,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 				{TABS.map((t) => (
 					<button key={t.id} type="button" className={s.kidTab} aria-current={tab === t.id ? "page" : undefined}
 						onClick={() => setTab(t.id)}>
-						<span className={s.kidTabIcon} aria-hidden="true">{t.icon}</span>
+						<t.Icon />
 						{t.label}
 					</button>
 				))}
