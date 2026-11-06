@@ -82,6 +82,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	const dueToday = tasksFor(tasks, kid.id).filter((t) => dueOn(t, day, kid.id));
 	const stickers = moments.filter((m) => m.memberId === kid.id);
 	const stars = buckets.find((b) => b.memberId === kid.id)?.stars ?? 0;
+	const chart = potty.find((c) => c.memberId === kid.id);
 	const now = Date.now();
 	const next = events
 		.filter((e) => !e.allDay && e.memberIds.includes(kid.id) && Date.parse(e.end) > now)
@@ -92,6 +93,38 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 		if (!ticked) setPopped(t.id);
 		setDone.mutate({ taskId: t.id, memberId: kid.id, day: today, done: !ticked });
 	}
+
+	// My day: under the name, or (with a potty chart up top) just above the jars.
+	const myDay = (
+		<section className={s.group} aria-label="My day">
+			<h2 className={s.groupHead}>My day</h2>
+			<div className={s.hero}>
+				{/* Daily tasks: how far through today's required ones. */}
+				<div className={s.stat}>
+					<span className={s.statLabel}>Daily tasks</span>
+					<div className={s.heroRow}>
+						<span className={s.bar} aria-hidden="true"><span /></span>
+						<span className={s.statValue}>{!p ? "None today" : pct === 100 ? "All done! 🎉" : `${p.done} of ${p.due} done`}</span>
+					</div>
+				</div>
+				{/* Stars: what's in their bucket to put in jars. */}
+				<div className={s.stat}>
+					<span className={s.statLabel}>Stars to spend</span>
+					<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
+						<StarIcon className={s.star} /> {stars}
+					</span>
+					{stickers.length > 0 && (
+						<span className={s.caught}>
+							Caught being good:{" "}
+							<span className={s.stickers} aria-label={`${stickers.length} today`}>
+								{stickers.map((m) => momentKind(m.kind).emoji).join("")}
+							</span>
+						</span>
+					)}
+				</div>
+			</div>
+		</section>
+	);
 
 	return (
 		<main className={s.page} style={{ "--c": kid.color, "--on": textOn(kid.color), "--p": `${pct}%` } as CSSProperties}>
@@ -112,8 +145,9 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 
 			<h1 className={s.name}>{kid.name}</h1>
 
-			{potty.some((c) => c.memberId === kid.id) && (
-				<PottyCard key={kid.id} kid={kid} chart={potty.find((c) => c.memberId === kid.id)!} canEdit
+			{!chart && myDay}
+			{chart && (
+				<PottyCard key={kid.id} kid={kid} chart={chart} canEdit
 					askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
 			)}
 
@@ -153,34 +187,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 			})}
 			{dueToday.length === 0 && <p className={s.none}>Nothing to do today. Have fun! 🌈</p>}
 
-			<section className={s.group} aria-label="My day">
-				<h2 className={s.groupHead}>My day</h2>
-				<div className={s.hero}>
-					{/* Daily tasks: how far through today's required ones. */}
-					<div className={s.stat}>
-						<span className={s.statLabel}>Daily tasks</span>
-						<div className={s.heroRow}>
-							<span className={s.bar} aria-hidden="true"><span /></span>
-							<span className={s.statValue}>{!p ? "None today" : pct === 100 ? "All done! 🎉" : `${p.done} of ${p.due} done`}</span>
-						</div>
-					</div>
-					{/* Stars: what's in their bucket to put in jars. */}
-					<div className={s.stat}>
-						<span className={s.statLabel}>Stars to spend</span>
-						<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
-							<StarIcon className={s.star} /> {stars}
-						</span>
-						{stickers.length > 0 && (
-							<span className={s.caught}>
-								Caught being good:{" "}
-								<span className={s.stickers} aria-label={`${stickers.length} today`}>
-									{stickers.map((m) => momentKind(m.kind).emoji).join("")}
-								</span>
-							</span>
-						)}
-					</div>
-				</div>
-			</section>
+			{chart && myDay}
 
 			<div>
 				<KidJars
