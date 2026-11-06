@@ -309,8 +309,14 @@ alert opens Sprig on Lists (or Today). Kids' devices and the wall don't get aler
 - **On phones** the bar runs along the bottom: **Today, Calendar, +, Tasks, More** (More has Lists, Rewards, Photos,
   who's signed in, the lock and Settings). The **+** in the middle turns into an ✕ and opens a stack of quick adds,
   on every page: **New event, Add to a list, Caught being good, Add a task, Add a photo** (to the album and screen
-  saver). Locked, a kid's device only gets Add to a list and Add a photo. Tablets and computers keep the bar on the
-  left.
+  saver), **Snap a flyer** and **Say it**. Locked, a kid's device only gets Add to a list and Add a photo. Tablets
+  and computers keep the bar on the left.
+- **Say it and Snap a flyer** (phones, with `ANTHROPIC_API_KEY`): say or type something like "remind me to call the
+  dentist Friday at 10, and add milk to Groceries", or photograph a school flyer or invitation. Claude works out the
+  list items (reminders with a when), events and kid tasks, and each shows as a card to change (title, list, day,
+  time, who) or leave out (×); nothing is added until **Add**. Sent to the Anthropic API: the words or photo, today's
+  date, the family's names and the list names, never anything from the calendar. Photos aren't kept. Talking uses
+  the browser's speech recognition where there is one; elsewhere, type or use the keyboard's 🎤.
 - **Add:** the round **+** at the bottom right of the calendar (it starts on the day open in the day panel, else today),
   or tap a day, then **+ Add event** in the day panel.
 - **Who:** an event can be for any number of people: tap each person in **Who** (tap again to remove), or

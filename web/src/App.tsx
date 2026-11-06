@@ -46,6 +46,7 @@ import { usePage } from "./lib/usePage";
 import ListView, { AddToListSheet } from "./components/ListView";
 import QuickAdd, { type QuickAction } from "./components/QuickAdd";
 import MomentDialog from "./components/MomentDialog";
+import CaptureSheet from "./components/CaptureSheet";
 import RewardsPage from "./components/RewardsPage";
 import PhotosPage from "./components/PhotosPage";
 import ScreenSaver from "./components/ScreenSaver";
@@ -188,6 +189,9 @@ export default function App() {
 	// picked, on their way to the Photos page.
 	const [quick, setQuick] = useState<"list" | "good" | null>(null);
 	const [pickedPhotos, setPickedPhotos] = useState<File[] | null>(null);
+	// Say it, or Snap a flyer (with its photo); on when the server has Claude.
+	const [capture, setCapture] = useState<{ photo?: File } | null>(null);
+	const captureOn = useQuery({ queryKey: ["capture"], queryFn: api.captureOn, staleTime: Infinity }).data?.on ?? false;
 	const kidDevice = signedIn?.kind === "device" && signedIn.role === "kid" && !parentLock.parent ? signedIn.memberId : null;
 	const kidView = kidModeFor
 		? kidModeFor === "all" || !members.some((m) => m.id === kidModeFor)
@@ -433,6 +437,11 @@ export default function App() {
 			setPickedPhotos(files);
 			setPage("photos");
 		} },
+		// Nearest the thumb.
+		...(parentLock.parent && captureOn ? [
+			{ kind: "snap" as const, files: (files: File[]) => setCapture({ photo: files[0] }) },
+			{ kind: "say" as const, onPick: () => setCapture({}) },
+		] : []),
 	];
 
 	return (
@@ -656,6 +665,7 @@ export default function App() {
 
 			{quick === "list" && <AddToListSheet onClose={() => setQuick(null)} onNewList={() => { setQuick(null); setPage("lists"); }} />}
 			{quick === "good" && <MomentDialog kids={kids} today={today} onClose={() => setQuick(null)} />}
+			{capture && <CaptureSheet photo={capture.photo} members={members} onClose={() => setCapture(null)} onAdded={(text) => setToast({ text })} />}
 
 			{/* The round + at the bottom right: add an event or a task (phones have the bar's + instead). */}
 			{/* Adding needs a parent (the lock in the left bar). */}

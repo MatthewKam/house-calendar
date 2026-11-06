@@ -339,3 +339,9 @@ export interface Daily {
   joke: { text: string } | null;
   quote: { text: string; author: string } | null;
 }
+
+/** Something Say it or Snap a flyer found, shown as a card to check (server/capture.ts). */
+export type Proposal =
+  | { kind: 'item'; title: string; list: string; due: string | null; memberId: string | null }
+  | { kind: 'event'; title: string; allDay: boolean; start: string; end: string; memberIds: string[]; location: string | null }
+  | { kind: 'task'; title: string; memberId: string; day: string };

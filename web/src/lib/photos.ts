@@ -135,3 +135,22 @@ export function preload(p: Photo): Promise<void> {
 /** How long a slide stays up: a video plays through once (45 seconds at most); a photo, `photoSeconds`. */
 export const slideSeconds = (p: Photo, photoSeconds: number) =>
   p.kind === 'video' && p.seconds ? Math.max(3, p.seconds) : photoSeconds;
+
+/** A flyer's photo for Snap (server/capture.ts): turned upright and shrunk, as base64 JPEG. */
+export async function flyerImage(file: File): Promise<{ mediaType: 'image/jpeg'; data: string }> {
+  let image: ImageBitmap;
+  try {
+    image = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch {
+    throw new Error("Can't read that photo (try a JPEG or PNG)");
+  }
+  try {
+    const { blob } = await shrink(image, 1600, 0.85);
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let raw = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) raw += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return { mediaType: 'image/jpeg', data: btoa(raw) };
+  } finally {
+    image.close();
+  }
+}

@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import s from "../styles/QuickAdd.module.css";
 
-export type QuickKind = "event" | "list" | "good" | "task" | "photo";
+export type QuickKind = "event" | "list" | "good" | "task" | "photo" | "snap" | "say";
+/** The ones that open the phone's picker (Snap: the camera) and get what was picked. */
+type Picking = "photo" | "snap";
 
-/** One thing the + adds. A photo opens the phone's picker and gets what was picked. */
+/** One thing the + adds. */
 export type QuickAction =
-	| { kind: Exclude<QuickKind, "photo">; onPick: () => void }
-	| { kind: "photo"; files: (files: File[]) => void };
+	| { kind: Exclude<QuickKind, Picking>; onPick: () => void }
+	| { kind: Picking; files: (files: File[]) => void };
 
 const line = (d: string) => (
 	<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -41,6 +43,16 @@ const LOOK: Record<QuickKind, { label: string; icon: ReactNode; tint: string; in
 		icon: line("M6 5h12a2.5 2.5 0 0 1 2.5 2.5v9A2.5 2.5 0 0 1 18 19H6a2.5 2.5 0 0 1-2.5-2.5v-9A2.5 2.5 0 0 1 6 5zM9 8.4a1.6 1.6 0 1 1 0 3.2a1.6 1.6 0 1 1 0-3.2zM4 17l5-4.5 3.5 3 3-2.5 4.5 4"),
 		tint: "#e8f1fd", ink: "#1d4f91",
 	},
+	snap: {
+		label: "Snap a flyer",
+		icon: line("M4 8h3l1.5-2.5h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zM12 10a3.5 3.5 0 1 1 0 7a3.5 3.5 0 1 1 0-7z"),
+		tint: "#fff1e6", ink: "#9a4a00",
+	},
+	say: {
+		label: "Say it",
+		icon: line("M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"),
+		tint: "#146c43", ink: "#ffffff",
+	},
 };
 
 /**
@@ -49,8 +61,7 @@ const LOOK: Record<QuickKind, { label: string; icon: ReactNode; tint: string; in
  */
 export default function QuickAdd({ actions }: { actions: QuickAction[] }) {
 	const [open, setOpen] = useState(false);
-	const picker = useRef<HTMLInputElement>(null);
-	const photo = actions.find((a) => a.kind === "photo");
+	const pickers = { photo: useRef<HTMLInputElement>(null), snap: useRef<HTMLInputElement>(null) };
 
 	useEffect(() => {
 		if (!open) return;
@@ -62,7 +73,7 @@ export default function QuickAdd({ actions }: { actions: QuickAction[] }) {
 	function pick(a: QuickAction) {
 		setOpen(false);
 		// The picker opens from the tap itself, as phones require.
-		if (a.kind === "photo") picker.current?.click();
+		if ("files" in a) pickers[a.kind].current?.click();
 		else a.onPick();
 	}
 
@@ -74,14 +85,16 @@ export default function QuickAdd({ actions }: { actions: QuickAction[] }) {
 					<path d="M12 5v14M5 12h14" />
 				</svg>
 			</button>
-			{photo?.kind === "photo" && (
-				<input ref={picker} type="file" accept="image/*,video/*" multiple hidden
+			{actions.map((a) => "files" in a && (
+				// Snap opens the camera; Add a photo, the photo library.
+				<input key={a.kind} ref={pickers[a.kind]} type="file" hidden
+					{...(a.kind === "snap" ? { accept: "image/*", capture: "environment" } : { accept: "image/*,video/*", multiple: true })}
 					onChange={(e) => {
 						const files = [...(e.target.files ?? [])];
 						e.target.value = "";
-						if (files.length) photo.files(files);
+						if (files.length) a.files(files);
 					}} />
-			)}
+			))}
 			{open && (
 				<>
 					<div className={s.scrim} onClick={() => setOpen(false)} role="presentation" />
