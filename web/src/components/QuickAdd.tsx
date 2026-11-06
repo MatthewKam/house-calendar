@@ -86,9 +86,10 @@ export default function QuickAdd({ actions }: { actions: QuickAction[] }) {
 				</svg>
 			</button>
 			{actions.map((a) => "files" in a && (
-				// Snap opens the camera; Add a photo, the photo library.
+				// Snap: one picture, taken now or from the phone's photos (the phone asks which); Add a photo:
+				// any number from the library.
 				<input key={a.kind} ref={pickers[a.kind]} type="file" hidden
-					{...(a.kind === "snap" ? { accept: "image/*", capture: "environment" } : { accept: "image/*,video/*", multiple: true })}
+					{...(a.kind === "snap" ? { accept: "image/*" } : { accept: "image/*,video/*", multiple: true })}
 					onChange={(e) => {
 						const files = [...(e.target.files ?? [])];
 						e.target.value = "";

@@ -67,6 +67,7 @@ import MembersPanel from "./components/MembersPanel";
 import Toast, { type ToastMessage } from "./components/Toast";
 import { UNASSIGNED } from "./lib/color";
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from "./lib/useMediaQuery";
+import { useFlyerDrop } from "./lib/useFlyerDrop";
 import s from "./styles/App.module.css";
 
 /** Today's date key, updated when the clock passes midnight. */
@@ -195,6 +196,11 @@ export default function App() {
 	const [capture, setCapture] = useState<{ photo?: File } | null>(null);
 	const captureOn = useQuery({ queryKey: ["capture"], queryFn: api.captureOn, staleTime: Infinity }).data?.on ?? false;
 	const kidDevice = signedIn?.kind === "device" && signedIn.role === "kid" && !parentLock.parent ? signedIn.memberId : null;
+	// A flyer's photo dragged onto the page is read like Snap a flyer (on Photos, a drop adds to the album).
+	const takeFlyer = useCallback((photo: File) => setCapture({ photo }), []);
+	const notAPhoto = useCallback(() => setToast({ text: "Drop a photo of the flyer (a JPEG, PNG or HEIC)" }), []);
+	const draggingFlyer = useFlyerDrop(parentLock.parent && captureOn && !kidModeFor && !kidDevice && page !== "photos" && !capture,
+		takeFlyer, notAPhoto);
 	const kidView = kidModeFor
 		? kidModeFor === "all" || !members.some((m) => m.id === kidModeFor)
 			? kids
@@ -453,6 +459,7 @@ export default function App() {
 					phone={phoneBar}
 					center={<QuickAdd actions={quickActions} />}
 					onKidMode={kids.length ? () => setStartingKidMode(true) : undefined}
+					capture={parentLock.parent && captureOn ? { onSay: () => setCapture({}), onSnap: (photo) => setCapture({ photo }) } : undefined}
 					page={page}
 					settingsOpen={showMembers}
 					onPage={setPage}
@@ -667,6 +674,11 @@ export default function App() {
 
 			{quick === "list" && <AddToListSheet onClose={() => setQuick(null)} onNewList={() => { setQuick(null); setPage("lists"); }} />}
 			{quick === "good" && <MomentDialog kids={kids} today={today} onClose={() => setQuick(null)} />}
+			{draggingFlyer && (
+				<div className={s.flyerDrop} aria-live="polite">
+					<span className={s.flyerDropBox}>Drop the flyer to read it</span>
+				</div>
+			)}
 			{capture && <CaptureSheet photo={capture.photo} members={members} onClose={() => setCapture(null)} onAdded={(text) => setToast({ text })} />}
 
 			{/* The round + at the bottom right: add an event or a task (phones have the bar's + instead). */}

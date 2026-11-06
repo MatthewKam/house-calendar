@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import type { SignedIn } from "../lib/api";
 import { Avatar } from "./AccountSheet";
 import s from "../styles/NavBar.module.css";
@@ -20,6 +20,8 @@ interface Props {
 	center?: ReactNode;
 	/** Starts kid mode on this device (when there are kids). */
 	onKidMode?: () => void;
+	/** Say it and Snap a flyer (grown-ups, with Claude on the server); phones have them in the +. */
+	capture?: { onSay: () => void; onSnap: (photo: File) => void };
 }
 
 // Simple line icons, drawn in the current text color.
@@ -70,6 +72,17 @@ const KidModeIcon = () => (
 		<path d="M9.6 12v.3M14.4 12v.3M9.5 15.6c1.4 1.2 3.6 1.2 5 0" />
 	</svg>
 );
+const MicIcon = () => (
+	<svg viewBox="0 0 24 24" aria-hidden="true">
+		<path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" />
+	</svg>
+);
+const SnapIcon = () => (
+	<svg viewBox="0 0 24 24" aria-hidden="true">
+		<path d="M4 8h3l1.5-2.5h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" />
+		<circle cx="12" cy="13.5" r="3.5" />
+	</svg>
+);
 const MoreIcon = () => (
 	<svg viewBox="0 0 24 24" aria-hidden="true">
 		<circle cx="5" cy="12" r="1.4" />
@@ -91,8 +104,8 @@ const SettingsIcon = () => (
 );
 
 /**
- * Bar down the left edge: the Today, Calendar, Tasks, Lists, Rewards and Photos pages, Kid mode, and the
- * logo and Settings at the bottom.
+ * Bar down the left edge: the Today, Calendar, Tasks, Lists, Rewards and Photos pages, Say it and Snap
+ * (grown-ups), Kid mode, and the logo and Settings at the bottom.
  */
 export default function NavBar({
 	page,
@@ -104,7 +117,9 @@ export default function NavBar({
 	phone,
 	center,
 	onKidMode,
+	capture,
 }: Props) {
+	const snap = useRef<HTMLInputElement>(null);
 	if (phone) return <BottomBar {...{ page, settingsOpen, onPage, onSettings, lock, me, center, onKidMode }} />;
 	const item = (p: Page, label: string, icon: ReactNode) => (
 		<button
@@ -125,6 +140,24 @@ export default function NavBar({
 			{item("lists", "Lists", <ListsIcon />)}
 			{item("rewards", "Rewards", <RewardsIcon />)}
 			{item("photos", "Photos", <PhotosIcon />)}
+			{capture && (
+				<>
+					<button className={s.item} onClick={capture.onSay} aria-label="Say it">
+						<MicIcon />
+						<span className={s.label}>Say it</span>
+					</button>
+					{/* A tablet asks: take a photo, or pick one; a computer opens its files. */}
+					<button className={s.item} onClick={() => snap.current?.click()} aria-label="Snap a flyer">
+						<SnapIcon />
+						<span className={s.label}>Snap</span>
+					</button>
+					<input ref={snap} type="file" accept="image/*" hidden onChange={(e) => {
+						const photo = e.target.files?.[0];
+						e.target.value = "";
+						if (photo) capture.onSnap(photo);
+					}} />
+				</>
+			)}
 			{onKidMode && (
 				<button className={s.item} onClick={onKidMode} aria-label="Kid mode">
 					<KidModeIcon />

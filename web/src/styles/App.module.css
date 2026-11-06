@@ -282,3 +282,23 @@
 		margin-left: 0;
 	}
 }
+
+/* A flyer's photo being dragged over the page (Snap a flyer by dropping it). */
+.flyerDrop {
+	position: fixed;
+	inset: 0;
+	z-index: 30;
+	display: grid;
+	place-items: center;
+	background: rgb(246 245 242 / 0.85);
+	pointer-events: none;
+}
+.flyerDropBox {
+	padding: 2.5rem 3.5rem;
+	border: 3px dashed var(--accent);
+	border-radius: 1.5rem;
+	background: var(--surface);
+	font-size: 1.4rem;
+	font-weight: 700;
+	color: var(--accent);
+}
