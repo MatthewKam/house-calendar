@@ -23,7 +23,8 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
       <p className={s.hint}>
         Games in kid mode's Learn tab: pictures and sounds, no wrong answers, and no stars. A game moves up a level by
         itself after 3 perfect plays in a row; Math and Pairs after 5 perfect or 20 plays at a level, Maze after 20
-        plays.
+        plays. When one reaches its top level, it says so here and your phone gets a heads-up, so you can ask for
+        more levels.
       </p>
       {kids.map((k) => {
         const kid = members.find((m) => m.id === k.memberId);
@@ -37,7 +38,11 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
             </label>
             {k.enabled && k.games.map(({ game, level, maxLevel }) => (
               <div key={game} className={s.learnGame}>
-                <span>{GAMES[game].title}</span>
+                <span>
+                  {GAMES[game].title}
+                  {/* At the top: time to ask for more levels. */}
+                  {level >= maxLevel && <span className={s.learnTop}>Top level</span>}
+                </span>
                 <button type="button" className={s.learnStep} aria-label={`${GAMES[game].title}: down a level`}
                   disabled={level <= 1 || set.isPending}
                   onClick={() => set.mutate({ memberId: k.memberId, levels: { [game]: level - 1 } })}>−</button>
