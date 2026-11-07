@@ -178,10 +178,6 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 							</button>
 						))}
 					</div>
-					{/* On a short screen (a phone on its side) the name's left out, so the stars sit by the switches. */}
-					<span className={`${s.stars} ${s.topStars}`} aria-hidden="true">
-						<StarIcon className={s.star} /> {stars}
-					</span>
 				</div>
 
 				{/* Their name, with the stars they have to put in jars. */}
@@ -243,27 +239,14 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	);
 }
 
-/** Task blocks are never smaller than this (px), for little fingers; more go onto another page. */
-const SMALLEST_BLOCK = 112;
 const BLOCK_GAP = 12;
 /** How much of the next page peeks in (px). */
 const PEEK = 36;
 
-/** The biggest square blocks `n` can be in a box, and how many across. */
-function blocksFor(n: number, w: number, h: number) {
-	let best = { cols: 1, size: 0 };
-	for (let cols = 1; cols <= n; cols++) {
-		const rows = Math.ceil(n / cols);
-		const size = Math.min((w - BLOCK_GAP * (cols - 1)) / cols, (h - BLOCK_GAP * (rows - 1)) / rows, 320);
-		if (size > best.size) best = { cols, size: Math.floor(size) };
-	}
-	return best;
-}
-
 /**
  * Today's tasks as pages to swipe between, a page at a time: daily tasks then goals, each page of
- * blocks sized so they all fit (no scrolling up and down). Too many to fit at a good size and they carry
- * on to another page. The next page peeks in at the side, and dots underneath show which page it's on.
+ * blocks sized so they all fit (no scrolling up and down). Upright, six to a page, goals starting their
+ * own; on its side, four to a page, one run of them. The next page peeks in at the side, and dots underneath show which page it's on.
  * It opens at the page with the first one not done yet.
  */
 function TaskPages({ kidId, pages }: { kidId: string; pages: { label: string; tiles: ReactNode[] }[] }) {
@@ -296,22 +279,18 @@ function TaskPages({ kidId, pages }: { kidId: string; pages: { label: string; ti
 		const w = box.w - (peek ? PEEK : 0);
 		// Room under the blocks for their raised edge.
 		const h = box.h - 6;
-		return filled.flatMap((p) => {
-			const one = blocksFor(p.tiles.length, w, h);
-			if (one.size >= SMALLEST_BLOCK || p.tiles.length === 1) return [{ label: p.label, tiles: p.tiles, ...one }];
-			// Too many for one page: as many rows as fit, blocks as big as the height allows but filling the
-			// width (at least two across), and the rest carry on to the next page.
-			const rows = Math.max(1, Math.floor((h + BLOCK_GAP) / (SMALLEST_BLOCK + BLOCK_GAP)));
-			const tall = Math.min(220, (h - BLOCK_GAP * (rows - 1)) / rows);
-			const across = (cols: number) => (w - BLOCK_GAP * (cols - 1)) / cols;
-			let cols = Math.max(2, Math.ceil((w + BLOCK_GAP) / (tall + BLOCK_GAP)));
-			if (Math.min(tall, across(cols)) < SMALLEST_BLOCK) cols = Math.max(2, cols - 1);
-			const size = Math.min(tall, across(cols));
+		// Upright, six to a page (two across, three down); on its side, four in a row. The next peeks in.
+		const pagesOf = (label: string, tiles: ReactNode[]) => {
+			const [cols, rows] = box.h > box.w ? [2, 3] : [4, 1];
+			const size = Math.floor(Math.min((w - BLOCK_GAP * (cols - 1)) / cols, (h - BLOCK_GAP * (rows - 1)) / rows, 280));
 			const per = cols * rows;
-			return Array.from({ length: Math.ceil(p.tiles.length / per) }, (_, i) => ({
-				label: `${p.label} ${i + 1}`, tiles: p.tiles.slice(i * per, (i + 1) * per), cols, size: Math.floor(size),
+			return Array.from({ length: Math.ceil(tiles.length / per) }, (_, i) => ({
+				label: `${label} ${i + 1}`, tiles: tiles.slice(i * per, (i + 1) * per), cols, size,
 			}));
-		});
+		};
+		// Upright, goals start their own page; on its side, they follow straight on from the daily tasks.
+		if (box.h > box.w) return filled.flatMap((p) => pagesOf(p.label, p.tiles));
+		return pagesOf("Tasks", filled.flatMap((p) => p.tiles));
 	};
 	const once = lay(false);
 	const shown = once.length > 1 ? lay(true) : once;

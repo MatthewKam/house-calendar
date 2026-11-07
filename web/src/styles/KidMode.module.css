@@ -600,12 +600,6 @@
 	}
 }
 
-/* The stars by the switches: only on a short screen, where the name's left out. */
-.topStars {
-	display: none;
-	margin-right: auto;
-}
-
 /* A phone on its side: four tabs down the left still fit, and the tasks get the height. */
 @media (orientation: landscape) and (max-height: 500px) {
 	.page {
@@ -613,16 +607,11 @@
 		padding-top: max(0.6rem, env(safe-area-inset-top));
 		padding-bottom: 0.6rem;
 	}
-	.nameRow {
-		display: none;
+	.name {
+		font-size: 2rem;
 	}
-	.topStars {
-		display: inline-flex;
+	.nameRow .stars {
 		font-size: 1.5rem;
-	}
-	.top {
-		justify-content: flex-start;
-		gap: 1.2rem;
 	}
 	.daily {
 		flex-direction: row;
