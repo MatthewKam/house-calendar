@@ -27,7 +27,7 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 	peekaboo: { title: "Peekaboo farm", picture: "bush", Play: Peekaboo, how: [
 		"Not a game to win, just fun: tap a bush (or haystack, tractor or barn window: a new place each time) and an animal pops up with its name, making its noise. Tap it again to hear it again.",
 		"A couple of seconds later it ducks back down, and someone new is hiding there.",
-		"When every animal has had its turn, night falls and it's the end. A new set of animals each time.",
+		"When every animal has had its turn, there's a cheer and it's the end. A new set of animals each time.",
 	] },
 	findIt: { title: "Find it!", picture: "teddy", Play: FindIt, how: [
 		"The pictures at the top show what to find, and how many.",

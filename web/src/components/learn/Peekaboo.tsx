@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Pic } from "./art";
 import { Board, fit } from "./parts";
 import { ANIMALS, type Animal } from "./things";
-import { at, fresh, type GameProps } from "./rounds";
+import { at, CHEER_MS, fresh, type GameProps } from "./rounds";
 import { noise } from "./sound";
 import s from "../../styles/Learn.module.css";
 
@@ -20,7 +20,6 @@ const SKIES = [
 	{ sky: "#ffd1dc", hill: "#8cc98a", light: "#ff8c69" },
 	{ sky: "#d9f2e6", hill: "#b5e08a", light: "#fff07a" },
 ];
-const NIGHT = { sky: "#26305e", hill: "#3f6b4a", light: "#f4f1ec" };
 
 /** Where the animals hide each play, and the scene around them: a different one each time. */
 const PLACES = [
@@ -38,8 +37,8 @@ interface Bush { animal: Animal | null; out: boolean; taps: number }
  * Peekaboo farm (age 2): not a game to win, just fun. Tap a bush (or a haystack, a tractor, a barn
  * window: a different place and scene each play) and an animal pops up, its name in front, making its
  * noise (tap it again to hear it again). A couple of seconds after, it ducks back down and someone new
- * is hiding there. When every animal's had its turn, night falls and that's the end. A new set of
- * animals each play.
+ * is hiding there. When every animal's had its turn, the mascot cheers with confetti and that's the
+ * end. A new set of animals each play.
  */
 export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 	const look = useMemo(() => fresh("peekaboo.skies", SKIES, 1, (x) => x.sky)[0], []);
@@ -51,7 +50,8 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 	const queue = useMemo(() => fresh("peekaboo.animals", ANIMALS, Math.max(bushCount, at(ANIMALS_PER_PLAY, level)), (a) => a.id), [level, bushCount]);
 	const next = useRef(bushCount);
 	const [bushes, setBushes] = useState<Bush[]>(() => queue.slice(0, bushCount).map((animal) => ({ animal, out: false, taps: 0 })));
-	const [night, setNight] = useState(false);
+	// Everyone's had their turn: the cheer, then the end.
+	const [finished, setFinished] = useState(false);
 	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 	const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(fn, ms));
 	useEffect(() => () => timers.current.forEach(clearTimeout), []);
@@ -59,17 +59,17 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 	const hideTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 	useEffect(() => () => Object.values(hideTimers.current).forEach(clearTimeout), []);
 
-	// Once nobody's left hiding or out: night, then the end.
+	// Once nobody's left hiding or out: the mascot and confetti, then the end.
 	useEffect(() => {
-		if (night || bushes.some((b) => b.animal)) return;
-		later(() => setNight(true), 600);
-		later(() => onDone(1, 1), 3600);
+		if (finished || bushes.some((b) => b.animal)) return;
+		later(() => setFinished(true), 400);
+		later(() => onDone(1, 1), 400 + CHEER_MS + 600);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [bushes]);
 
 	function tap(i: number) {
 		const bush = bushes[i];
-		if (night || !bush.animal) return;
+		if (finished || !bush.animal) return;
 		const animal = bush.animal;
 		setBushes((all) => all.map((b, j) => (j === i ? { ...b, out: true, taps: b.taps + 1 } : b)));
 		clearTimeout(hideTimers.current[i]);
@@ -83,16 +83,15 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 		});
 	}
 
-	const colors = night ? NIGHT : look;
 	return (
-		<Board onBack={onBack}>
+		<Board onBack={onBack} cheer={finished}>
 			{(box) => {
 				// Each bush has room above it for its animal to pop all the way up.
 				const shape = inside ? 0.85 : 0.62;
 				const grid = fit(bushes.length, { w: box.w - 24, h: box.h * (inside ? 0.8 : 0.66) }, { gap: 12, shape, most: 240 });
 				return (
-					<div className={s.farm} style={{ "--sky": colors.sky, "--hill": colors.hill, "--light": colors.light } as CSSProperties}>
-						<Scenery scene={place.scene} night={night} />
+					<div className={s.farm} style={{ "--sky": look.sky, "--hill": look.hill, "--light": look.light } as CSSProperties}>
+						<Scenery scene={place.scene} />
 						<div className={`${s.bushes} ${inside ? s.windows : ""}`} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)` }}>
 							{bushes.map((b, i) => (
 								<button key={i} type="button" className={s.bushSpot} onClick={() => tap(i)}
@@ -120,28 +119,18 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 	);
 }
 
-/** The scene behind the hiding places: the sky (sun or moon, clouds or stars), then the place. */
-function Scenery({ scene, night }: { scene: Scene; night: boolean }) {
+/** The scene behind the hiding places: the sky (sun and clouds), then the place. */
+function Scenery({ scene }: { scene: Scene }) {
 	return (
 		<svg className={s.farmBack} viewBox="0 0 1000 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
 			<rect width="1000" height="600" style={{ fill: "var(--sky)" }} />
 			<circle cx="860" cy="90" r="50" style={{ fill: "var(--light)" }} />
-			{!night ? (
-				<g fill="#fff" opacity=".9">
-					<ellipse cx="200" cy="90" rx="70" ry="26" />
-					<ellipse cx="250" cy="72" rx="50" ry="30" />
-					<ellipse cx="560" cy="130" rx="60" ry="22" />
-					<ellipse cx="600" cy="116" rx="40" ry="24" />
-				</g>
-			) : (
-				<g fill="#fff">
-					<circle cx="120" cy="60" r="3" />
-					<circle cx="300" cy="120" r="2.5" />
-					<circle cx="480" cy="50" r="3" />
-					<circle cx="650" cy="150" r="2" />
-					<circle cx="740" cy="40" r="2.5" />
-				</g>
-			)}
+			<g fill="#fff" opacity=".9">
+				<ellipse cx="200" cy="90" rx="70" ry="26" />
+				<ellipse cx="250" cy="72" rx="50" ry="30" />
+				<ellipse cx="560" cy="130" rx="60" ry="22" />
+				<ellipse cx="600" cy="116" rx="40" ry="24" />
+			</g>
 			{scene === "farm" && (
 				<>
 					<path d="M0 300 C200 240 420 290 600 270 C780 250 900 240 1000 255 V600 H0z" style={{ fill: "var(--hill)" }} opacity=".75" />
@@ -175,7 +164,6 @@ function Scenery({ scene, night }: { scene: Scene; night: boolean }) {
 						{Array.from({ length: 20 }, (_, i) => <path key={i} d={`M${i * 52 + 20} 150 V600`} />)}
 					</g>
 					<path d="M0 150 H1000 V176 H0z" fill="#7a2620" />
-					{night && <rect y="150" width="1000" height="450" fill="#101633" opacity=".45" />}
 				</>
 			)}
 		</svg>
