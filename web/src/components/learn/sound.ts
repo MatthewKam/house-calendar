@@ -1,5 +1,5 @@
 // The games' sound: animals' noises (a grown-up's own recording if there is one, Settings → Learning,
-// or the built-in one in web/public/sounds, credited in CREDITS.md there), and Counting's numbers said
+// or the built-in one in web/public/sounds, recorded by the household), and Counting's numbers said
 // out loud. Nothing else is spoken.
 
 /** Animals with a built-in noise in web/public/sounds/animals (`<id>.m4a`). */
