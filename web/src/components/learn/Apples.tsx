@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Pic } from "./art";
 import { Board, Next } from "./parts";
-import { FRUIT, NUMBER_WORDS } from "./things";
+import { FRUIT } from "./things";
 import { at, between, pick, shuffle, useRounds, type GameProps } from "./rounds";
-import { say } from "./sound";
 import s from "../../styles/Learn.module.css";
 
 /** The most there can be, by level. From level 3 there's a "How many?" after counting. */
@@ -12,8 +11,8 @@ const ASK_FROM = 3;
 const ROUNDS = 3;
 
 /**
- * Count the apples (age 2): tap each one to count it, and its number shows under it, said aloud. Once
- * they're all counted it says how many; from level 3 the kid picks how many (a wrong pick clears the
+ * Count the apples (age 2): tap each one to count it, and its number shows under it. Once they're all
+ * counted, the number shows big; from level 3 the kid picks how many (a wrong pick clears the
  * numbers, to count again together). Different fruit each round.
  */
 export default function Apples({ level, onDone, onBack }: GameProps) {
@@ -41,12 +40,10 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 		const number = done + 1;
 		setCounted({ ...counted, [i]: number });
 		setWrong(null);
-		say(NUMBER_WORDS[number]);
 		if (number === n && !asking) rounds.tap(true);
 	}
 	function answer(x: number) {
 		if (x === n) {
-			say(`Yes! ${NUMBER_WORDS[n]} ${fruit.many}!`);
 			rounds.tap(true);
 		} else {
 			// Count again, together, rather than guess.

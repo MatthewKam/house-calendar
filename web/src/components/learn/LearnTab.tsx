@@ -14,7 +14,7 @@ import Peekaboo from "./Peekaboo";
 import Sounds from "./Sounds";
 import { HowTo } from "./parts";
 import type { GameProps } from "./rounds";
-import { hush, say } from "./sound";
+import { hush } from "./sound";
 import s from "../../styles/Learn.module.css";
 
 /** Each game: its name, its picture, and how to play it (for a grown-up to explain). */
@@ -25,36 +25,36 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 		"Higher levels: more animals to choose from, then pets and wild animals too.",
 	] },
 	peekaboo: { title: "Peekaboo farm", picture: "bush", Play: Peekaboo, how: [
-		"Tap a bush and an animal pops out to say hello. Tap it again to hear it again.",
+		"Tap a bush and an animal pops out, making its noise. Tap it again to hear it again.",
 		"Once everyone's out, the farm goes to sleep.",
 		"From level 4: listen to the noise (the play button plays it again), then find the bush hiding that animal.",
 	] },
 	findIt: { title: "Find it!", picture: "teddy", Play: FindIt, how: [
 		"The pictures at the top show what to find, and how many.",
-		"Tap each one in the room. Each one found is counted out loud.",
+		"Tap each one in the room. The pictures at the top fill in as they're found.",
 		"From level 3, some are hiding under other things: tap a toy to lift it and look underneath.",
 	] },
 	apples: { title: "Count the apples", picture: "apple", Play: Apples, how: [
-		"Tap each fruit to count it. Its number shows under it and is said out loud.",
+		"Tap each fruit to count it, and its number shows under it. Count out loud together.",
 		"From level 3, pick how many there are. A wrong number clears the count, so you count again together.",
 		"Higher levels: more fruit to count.",
 	] },
-	adding: { title: "Add them up", picture: "orange", Play: Adding, how: [
+	adding: { title: "Math", picture: "math", Play: Adding, how: [
 		"Each plate has a number on its sign. Tap the basket under a plate to put a fruit on it; tap a fruit to take it off.",
 		"When both plates match their signs, pick how many there are in all.",
 		"From level 4, type the total on the number pad. Higher levels: bigger numbers.",
 	] },
-	maze: { title: "Bear's way home", picture: "bear", Play: Maze, how: [
+	maze: { title: "Maze", picture: "maze", Play: Maze, how: [
 		"Tap the square next to Bear to take a step. Find the way to his house.",
 		"Water, bushes and snow can't be crossed, so a dead end means turning back.",
 		"From level 3, a locked gate is in the way: find the key first. Higher levels: bigger maps and two gates.",
 	] },
-	letters: { title: "First letters", picture: "cat", Play: Letters, how: [
-		"The word for the picture is said out loud, with its first letter missing. Tap the picture to hear it again.",
+	letters: { title: "Letters", picture: "letters", Play: Letters, how: [
+		"A picture and its word, with the first letter missing. Say the word together.",
 		"Tap the letter that goes in the gap.",
 		"Higher levels: letters that look alike (b, d, p), small letters, then longer words.",
 	] },
-	memory: { title: "Find the pairs", picture: "star", Play: Memory, how: [
+	memory: { title: "Pairs", picture: "pairs", Play: Memory, how: [
 		"All the cards are face down. Tap two to turn them over.",
 		"Two the same stay face up. Two different ones turn back over, so remember where they were.",
 		"Higher levels: more cards.",
@@ -74,10 +74,7 @@ export default function LearnTab({ kid, today, learn }: { kid: Member; today: st
 	const done = useMutation({
 		mutationFn: ({ game, level, rounds, firstTry }: { game: Game; level: number; rounds: number; firstTry: number }) =>
 			api.learnDone(kid.id, { today, game, level, rounds, firstTry }),
-		onSuccess: (r, { game }) => {
-			setResult({ game, leveledUp: r.leveledUp });
-			if (r.leveledUp) say("New level! It gets a little trickier.");
-		},
+		onSuccess: (r, { game }) => setResult({ game, leveledUp: r.leveledUp }),
 		onSettled: () => qc.invalidateQueries({ queryKey: keys.learn(today) }),
 	});
 	const levelOf = (game: Game) => learn.games.find((g) => g.game === game)?.level ?? 1;
@@ -103,7 +100,6 @@ export default function LearnTab({ kid, today, learn }: { kid: Member; today: st
 				onDone={(rounds, firstTry) => {
 					setPlaying(null);
 					setResult({ game: playing, leveledUp: false });
-					say("You did it!");
 					done.mutate({ game: playing, level, rounds, firstTry });
 				}} />
 			</HowTo.Provider>

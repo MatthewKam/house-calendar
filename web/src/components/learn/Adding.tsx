@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pic } from "./art";
 import { Board, Next } from "./parts";
-import { FRUIT, NUMBER_WORDS } from "./things";
+import { FRUIT } from "./things";
 import { at, between, pick, shuffle, useRounds, type GameProps } from "./rounds";
-import { say } from "./sound";
 import s from "../../styles/Learn.module.css";
 
 /** Each side's smallest and biggest number, by level. From level 4 the total goes in on a number pad. */
@@ -13,11 +12,9 @@ const PAD_FROM = 4;
 const CHOICES = [3, 4, 4];
 const ROUNDS = 3;
 
-const said = (n: number) => NUMBER_WORDS[n] ?? String(n);
-
 /**
  * Add them up (age 4): two plates, each with a number on its sign. Tap a plate's basket to put a fruit
- * on it (tap a fruit to take it off) until each plate has its number, then say how many in all: pick
+ * on it (tap a fruit to take it off) until each plate has its number, then how many in all: pick
  * the number, or from level 4, type it on a number pad. Too many on a plate shows it in yellow.
  */
 export default function Adding({ level, onDone, onBack }: GameProps) {
@@ -52,11 +49,9 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 		const [n, set] = side === "a" ? [left, setLeft] : [right, setRight];
 		const next = Math.max(0, n + change);
 		set(next);
-		say(said(next));
 	}
 	function answer(x: number) {
 		if (x === total) {
-			say(`Yes! ${said(r.a)} and ${said(r.b)} make ${said(total)}!`);
 			rounds.tap(true);
 		} else {
 			setWrong(x);

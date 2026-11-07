@@ -151,6 +151,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 						{t.label}
 					</button>
 				))}
+				<LeaveButton onLeave={onLeave} inNav />
 			</nav>
 			<main className={s.page}>
 				<div className={s.top}>
@@ -165,7 +166,6 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 							</button>
 						))}
 					</div>
-					<LeaveButton onLeave={onLeave} />
 				</div>
 
 				<h1 className={s.name}>{kid.name}</h1>
@@ -240,17 +240,18 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	);
 }
 
-/** A small exit button in the corner: it asks for a grown-up's PIN. */
-function LeaveButton({ onLeave }: { onLeave: () => void }) {
+/** The way out: it asks for a grown-up's PIN. Last in the nav, or (with no kids, so no nav) a small button. */
+function LeaveButton({ onLeave, inNav }: { onLeave: () => void; inNav?: boolean }) {
 	return (
-		<button type="button" className={s.leave} aria-label="Grown-ups: leave kid mode" title="Grown-ups: leave kid mode"
-			onClick={onLeave}>
+		<button type="button" className={inNav ? `${s.kidTab} ${s.leaveTab}` : s.leave} aria-label="Grown-ups: leave kid mode"
+			title="Grown-ups: leave kid mode" onClick={onLeave}>
 			<svg viewBox="0 0 24 24" aria-hidden="true">
 				{/* A door: its frame, the door standing ajar, and the knob. */}
 				<path d="M4 21h16M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17" />
 				<path d="M6 3.2l7 2.3v15.5" />
 				<circle cx="11" cy="12.5" r="0.9" fill="currentColor" stroke="none" />
 			</svg>
+			{inNav && "Exit"}
 		</button>
 	);
 }

@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Pic } from "./art";
 import { Board } from "./parts";
-import { NUMBER_WORDS, TOYS } from "./things";
+import { TOYS } from "./things";
 import { any, at, between, pick, shuffle, type GameProps } from "./rounds";
-import { say } from "./sound";
 import s from "../../styles/Learn.module.css";
 
 /** Things in the room, how many to find, and how many of those hide under something, by level. */
@@ -48,8 +47,8 @@ function roomFor(level: number, find: string) {
 
 /**
  * Find it! (age 2): a room full of toys. Find the 2 socks, then the 3 teddy bears. Each one found hops
- * and fills in its outline at the top (the outlines show what to find), counted aloud. From level 3 some are hiding under other things:
- * tap the teddy and it lifts, and there's the sock. Anything else just says what it is.
+ * and fills in its outline at the top (the outlines show what to find) From level 3 some are hiding under other things:
+ * tap the teddy and it lifts, and there's the sock. Anything else just wiggles.
  */
 export default function FindIt({ level, onDone, onBack }: GameProps) {
 	const total = at(ROUNDS, level);
@@ -84,7 +83,6 @@ export default function FindIt({ level, onDone, onBack }: GameProps) {
 			if (found.includes(keyOf(i, underneath))) return;
 			const now = [...found, keyOf(i, underneath)];
 			setFound(now);
-			say(`${NUMBER_WORDS[now.length]}!`);
 			if (now.length === want) {
 				const right = firstTry + (slips <= SLIPS ? 1 : 0);
 				setFirstTry(right);
@@ -92,15 +90,12 @@ export default function FindIt({ level, onDone, onBack }: GameProps) {
 			}
 			return;
 		}
-		const name = TOYS.find((t) => t.id === kind)?.one ?? kind;
-		// Something with a thing under it lifts to show it; anything else is just named.
+		// Something with a thing under it lifts to show it; anything else wiggles.
 		if (p.under && !lifted.includes(i)) {
 			setLifted([...lifted, i]);
-			say(`Under the ${name}!`);
 			return;
 		}
 		setSlips((n) => n + 1);
-		say(`That's a ${name}.`);
 	}
 
 	return (

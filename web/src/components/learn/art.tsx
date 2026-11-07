@@ -436,6 +436,55 @@ const ART: Record<string, ReactNode> = {
 			<rect x="48" y="54" width="24" height="22" rx="5" fill="#e0a800" />
 		</>
 	),
+	// The games' own pictures, for their tiles.
+	math: (
+		<>
+			<rect x="8" y="8" width="50" height="50" rx="12" fill="#3d7bd9" />
+			<rect x="62" y="8" width="50" height="50" rx="12" fill="#e8707c" />
+			<rect x="8" y="62" width="50" height="50" rx="12" fill="#f4a020" />
+			<rect x="62" y="62" width="50" height="50" rx="12" fill="#5cb85c" />
+			<g stroke="#fff" strokeWidth="7" strokeLinecap="round">
+				<path d="M33 21 V45 M21 33 H45" />
+				<path d="M75 33 H99" />
+				<path d="M24 78 L42 96 M42 78 L24 96" />
+				<path d="M75 87 H99" />
+			</g>
+			<circle cx="87" cy="76" r="4.5" fill="#fff" />
+			<circle cx="87" cy="98" r="4.5" fill="#fff" />
+		</>
+	),
+	maze: (
+		<>
+			<rect x="8" y="8" width="104" height="104" rx="16" fill="#4a90c8" />
+			<path d="M24 24 H96 V44 H44 V64 H96 V96 H24 V76 H76" fill="none" stroke="#cfc6b4" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round" />
+			<circle cx="24" cy="24" r="9" fill="#b47a4c" />
+			<path d="M64 76 L76 66 L88 76 V88 H64z" fill="#d0473b" />
+		</>
+	),
+	letters: (
+		<>
+			<rect x="6" y="40" width="40" height="40" rx="8" fill="#e03a2f" />
+			<rect x="40" y="16" width="40" height="40" rx="8" fill="#3d7bd9" />
+			<rect x="74" y="44" width="40" height="40" rx="8" fill="#5cb85c" />
+			<g fill="#fff" fontFamily="Georgia, serif" fontWeight="800" fontSize="30" textAnchor="middle">
+				<text x="26" y="71">A</text>
+				<text x="60" y="47">B</text>
+				<text x="94" y="75">C</text>
+			</g>
+		</>
+	),
+	pairs: (
+		<>
+			<g transform="rotate(-10 38 62)">
+				<rect x="10" y="22" width="56" height="78" rx="10" fill="#fff" stroke="#7a5cc8" strokeWidth="5" />
+				<path d="M38 44 C30 34 16 42 22 54 L38 72 L54 54 C60 42 46 34 38 44z" fill="#e8313e" />
+			</g>
+			<g transform="rotate(10 82 62)">
+				<rect x="54" y="22" width="56" height="78" rx="10" fill="#fff" stroke="#7a5cc8" strokeWidth="5" />
+				<path d="M82 44 C74 34 60 42 66 54 L82 72 L98 54 C104 42 90 34 82 44z" fill="#e8313e" />
+			</g>
+		</>
+	),
 	bush: (
 		<>
 			<g fill="#4c9a4c">

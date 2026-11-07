@@ -3,7 +3,7 @@ import { Pic } from "./art";
 import { Board, Hear } from "./parts";
 import { animalsUpTo } from "./things";
 import { any, at, pick, type GameProps } from "./rounds";
-import { noise, say } from "./sound";
+import { noise } from "./sound";
 import s from "../../styles/Learn.module.css";
 
 /** Bushes, by level. Up to 3, everyone just says hello; from 4, find who made the noise. */
@@ -53,10 +53,7 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 	}, [ask]);
 
 	function finish(rounds: number, right: number) {
-		later(() => {
-			setNight(true);
-			say("Night night, farm.");
-		}, 1800);
+		later(() => setNight(true), 1800);
 		later(() => onDone(rounds, right), 4500);
 	}
 

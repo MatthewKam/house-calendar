@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pic } from "./art";
-import { Board, Hear, Next } from "./parts";
+import { Board, Next } from "./parts";
 import { LOOK_ALIKE, WORDS } from "./things";
 import { at, pick, shuffle, useRounds, type GameProps } from "./rounds";
-import { say } from "./sound";
 import s from "../../styles/Learn.module.css";
 
 /** Letters to choose from, the longest word, whether look-alike letters are offered, and capitals, by level. */
@@ -15,8 +14,8 @@ const ROUNDS = 4;
 const ABC = "abcdefghijklmnopqrstuvwxyz";
 
 /**
- * The missing first letter (age 4): a picture and its word with the first letter gone ("_at"), said
- * aloud (tap the picture to hear it again). Tap the letter that goes in the gap. Short words and very different letters first; then
+ * The missing first letter (age 4): a picture and its word with the first letter gone ("_at"). Tap the
+ * letter that goes in the gap. Short words and very different letters first; then
  * look-alikes (b, d, p), small letters, and longer words.
  */
 export default function Letters({ level, onDone, onBack }: GameProps) {
@@ -38,32 +37,22 @@ export default function Letters({ level, onDone, onBack }: GameProps) {
 	const [tapped, setTapped] = useState<{ letter: string; n: number } | null>(null);
 	const show = (text: string) => (caps ? text.toUpperCase() : text);
 
-	const hear = () => say(r.word);
-	useEffect(() => {
-		setTapped(null);
-		const t = setTimeout(() => say(r.word), 400);
-		return () => clearTimeout(t);
-	}, [r]);
+	useEffect(() => setTapped(null), [r]);
 
 	function choose(letter: string) {
 		if (rounds.got) return;
 		setTapped((t) => ({ letter, n: (t?.n ?? 0) + 1 }));
-		if (letter === r.first) say(`Yes! ${letter.toUpperCase()}. ${r.word}!`);
-		else say(letter.toUpperCase());
 		rounds.tap(letter === r.first);
 	}
 
 	return (
 		<Board onBack={onBack} total={ROUNDS} done={rounds.round + (rounds.got ? 1 : 0)}>
 			<div className={s.wordCard}>
-				<button type="button" className={s.wordPic} onClick={hear} aria-label={`Hear the word: ${r.word}`}>
-					<Pic id={r.pic} />
-				</button>
+				<span className={s.wordPic}><Pic id={r.pic} label={r.word} /></span>
 				<div className={s.word} aria-label={rounds.got ? r.word : `blank, then ${r.word.slice(1)}`}>
 					<span className={`${s.gap} ${rounds.got ? `${s.gapFilled} ${s.pop}` : ""}`}>{rounds.got ? show(r.first) : ""}</span>
 					{show(r.word.slice(1))}
 				</div>
-				<Hear onTap={hear} label="Hear the word" />
 			</div>
 			<div className={s.choices}>
 				{r.choices.map((l) => (

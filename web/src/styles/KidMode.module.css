@@ -38,6 +38,10 @@
 	stroke-linecap: round;
 	stroke-linejoin: round;
 }
+/* Leaving: at the foot of the nav, away from the tabs. */
+.leaveTab {
+	margin-top: auto;
+}
 .kidTab[aria-current="page"] {
 	background: var(--c);
 	color: var(--on);
@@ -67,6 +71,9 @@
 		width: 2rem;
 		height: 2rem;
 	}
+	.leaveTab {
+		margin-top: 0;
+	}
 }
 
 .page {
@@ -94,7 +101,7 @@
 	color: var(--muted);
 }
 
-/* Switching kids (all kids), and the grown-ups' lock. */
+/* Switching kids (all kids). */
 .top {
 	display: flex;
 	align-items: center;
@@ -170,7 +177,7 @@
 }
 .leave {
 	flex: none;
-	/* As tall as the name switches beside it. */
+	/* With no kids yet (so no nav): a small button. */
 	width: 3.2rem;
 	height: 3.2rem;
 	min-height: 0;

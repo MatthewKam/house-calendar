@@ -3,7 +3,7 @@ import { Pic } from "./art";
 import { Board } from "./parts";
 import { ANIMALS, FRUIT, TOYS } from "./things";
 import { any, at, pick, shuffle, type GameProps } from "./rounds";
-import { noise, say } from "./sound";
+import { noise } from "./sound";
 import s from "../../styles/Learn.module.css";
 
 /** Pairs on the table, by level. */
@@ -17,8 +17,7 @@ const SETS = [
 ];
 
 /**
- * Card matching (age 4): cards face down. Tap two to turn them over; a match stays face up (an animal
- * says hello), and two that don't match turn back over. More cards as it levels up, and a new set each
+ * Card matching (age 4): cards face down. Tap two to turn them over; a match stays face up (an animal makes its noise), and two that don't match turn back over. More cards as it levels up, and a new set each
  * play. First try is finding them all without too many misses (one per pair).
  */
 export default function Memory({ level, onDone, onBack }: GameProps) {
@@ -37,7 +36,7 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 		const animal = ANIMALS.find((a) => a.id === card.id);
 		if (up.length === 0) {
 			setUp([i]);
-			say(card.name);
+			if (animal) noise(animal);
 			return;
 		}
 		const other = up[0];
@@ -49,12 +48,11 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 				setUp([]);
 			}, 500));
 			if (animal) noise(animal);
-			else say(`Two ${card.name}s!`);
 			if (now.length === cards.length) {
 				timers.current.push(setTimeout(() => onDone(1, misses <= pairs ? 1 : 0), 3200));
 			}
 		} else {
-			say(card.name);
+			if (animal) noise(animal);
 			setMisses(misses + 1);
 			timers.current.push(setTimeout(() => setUp([]), 1300));
 		}

@@ -3,7 +3,6 @@ import { Pic } from "./art";
 import { Board } from "./parts";
 import { makeMap } from "./mazeMap";
 import { any, at, type GameProps } from "./rounds";
-import { say } from "./sound";
 import s from "../../styles/Learn.module.css";
 
 /** The map's size in stops (rows, columns) and its keys and gates, by level. */
@@ -13,9 +12,9 @@ const SLIPS = 1;
 
 /** Different looks each play: stepping stones over a pond, a path through the woods, a snowy trail. */
 const LOOKS = [
-	{ name: "pond", wall: "#4a90c8", path: "#cfc6b4", been: "#e9e2d4", oops: "Splash!" },
-	{ name: "woods", wall: "#3f7d3f", path: "#d9b98a", been: "#efdcb8", oops: "Too prickly!" },
-	{ name: "snow", wall: "#9cc3e6", path: "#ffffff", been: "#e6f1fb", oops: "Brr!" },
+	{ name: "pond", wall: "#4a90c8", path: "#cfc6b4", been: "#e9e2d4" },
+	{ name: "woods", wall: "#3f7d3f", path: "#d9b98a", been: "#efdcb8" },
+	{ name: "snow", wall: "#9cc3e6", path: "#ffffff", been: "#e6f1fb" },
 ];
 
 /**
@@ -41,30 +40,26 @@ export default function Maze({ level, onDone, onBack }: GameProps) {
 		const key = `${r},${c}`;
 		const cell = grid[r][c];
 		const next = Math.abs(bear[0] - r) + Math.abs(bear[1] - c) === 1;
-		const oops = (words: string, counts: boolean) => {
+		const oops = (counts: boolean) => {
 			setBump((b) => ({ at: key, n: (b?.n ?? 0) + 1 }));
 			if (counts) setSlips((n) => n + 1);
-			if (words) say(words);
 		};
 		if (r === bear[0] && c === bear[1]) return;
-		if (cell === "#") return oops(look.oops, next);
-		if (!next) return oops("", false);
+		if (cell === "#") return oops(next);
+		if (!next) return oops(false);
 		if (cell === "G" && !opened.includes(key)) {
-			if (keysHeld === 0) return oops("Locked!", true);
+			if (keysHeld === 0) return oops(true);
 			setKeysHeld(keysHeld - 1);
 			setOpened([...opened, key]);
-			say("Open!");
 		}
 		if (cell === "K" && !taken.includes(key)) {
 			setTaken([...taken, key]);
 			setKeysHeld(keysHeld + 1);
-			say("A key!");
 		}
 		setTrail([...trail, bear.join()]);
 		setBear([r, c]);
 		if (cell === "H") {
 			setHome(true);
-			say("Home!");
 			setTimeout(() => onDone(1, slips <= SLIPS ? 1 : 0), 2600);
 		}
 	}
