@@ -244,9 +244,9 @@ const BLOCK_GAP = 12;
 const PEEK = 36;
 
 /**
- * Today's tasks as pages to swipe between, a page at a time: daily tasks then goals, each page of
- * blocks sized so they all fit (no scrolling up and down). Upright, six to a page, goals starting their
- * own; on its side, four to a page, one run of them. The next page peeks in at the side, and dots underneath show which page it's on.
+ * Today's tasks as pages to swipe between, a page at a time, each page of
+ * blocks sized so they all fit (no scrolling up and down), goals straight after the daily tasks. Upright,
+ * six to a page; on its side, four. The next page peeks in at the side, and dots underneath show which page it's on.
  * It opens at the page with the first one not done yet.
  */
 function TaskPages({ kidId, pages }: { kidId: string; pages: { label: string; tiles: ReactNode[] }[] }) {
@@ -288,8 +288,7 @@ function TaskPages({ kidId, pages }: { kidId: string; pages: { label: string; ti
 				label: `${label} ${i + 1}`, tiles: tiles.slice(i * per, (i + 1) * per), cols, size,
 			}));
 		};
-		// Upright, goals start their own page; on its side, they follow straight on from the daily tasks.
-		if (box.h > box.w) return filled.flatMap((p) => pagesOf(p.label, p.tiles));
+		// One run: daily tasks, then goals straight after.
 		return pagesOf("Tasks", filled.flatMap((p) => p.tiles));
 	};
 	const once = lay(false);
