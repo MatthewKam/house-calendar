@@ -209,7 +209,7 @@ export default function App() {
 			? members.filter((m) => m.id === kidDevice)
 			: null;
 	// Leaving: a kid's own device unlocks for a parent (and comes back when it locks again); anywhere
-	// else a guardian's PIN turns it off, or just the hold when there's no PIN to ask for.
+	// else a guardian's PIN turns it off, or just the tap when there's no PIN to ask for.
 	function leaveKidMode() {
 		if (!kidModeFor) setUnlocking({});
 		else if (signedIn && signedIn.guardianPins > 0) setLeavingKidMode(true);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { fromDayKey, startOfWeek } from "../lib/dates";
 import { api } from "../lib/api";
@@ -25,9 +25,6 @@ import PottyCard from "./PottyCard";
 import { StarIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/KidMode.module.css";
-
-/** Holding the corner button this long asks for a grown-up. */
-const HOLD_MS = 2000;
 
 interface Props {
 	today: string;
@@ -66,7 +63,7 @@ const TABS: { id: KidTab; Icon: () => ReactNode; label: string }[] = [
  * Kid mode: one kid's world as big pictures (ages 2–6 first), with its own tabs. Today: their
  * calendar (more days as they grow). Tasks: their tasks and goals to tap, and today's stickers.
  * Learn (when it's on): the day's activity. Rewards: their stars and jars. No settings or anyone else's things. Tapping a done task again
- * unticks it, so nothing can go wrong. A grown-up holds the corner button to leave.
+ * unticks it, so nothing can go wrong. A grown-up taps the corner button (and types a PIN) to leave.
  */
 export default function KidMode({ today, kids, members, onLeave, askPin }: Props) {
 	const [pickedId, setPickedId] = useState(kids[0]?.id ?? null);
@@ -243,29 +240,11 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	);
 }
 
-/** A small exit button in the corner: hold it for two seconds (a ring fills) to ask for a grown-up. */
+/** A small exit button in the corner: it asks for a grown-up's PIN. */
 function LeaveButton({ onLeave }: { onLeave: () => void }) {
-	const [holding, setHolding] = useState(false);
-	const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-	const stop = () => {
-		clearTimeout(timer.current);
-		setHolding(false);
-	};
-	const start = () => {
-		setHolding(true);
-		timer.current = setTimeout(() => {
-			setHolding(false);
-			onLeave();
-		}, HOLD_MS);
-	};
-	useEffect(() => () => clearTimeout(timer.current), []);
 	return (
-		<button type="button" className={`${s.leave} ${holding ? s.holding : ""}`}
-			aria-label="Grown-ups: hold to leave kid mode" title="Grown-ups: hold to leave"
-			onPointerDown={start} onPointerUp={stop} onPointerLeave={stop} onPointerCancel={stop}
-			onContextMenu={(e) => e.preventDefault()}
-			onKeyDown={(e) => e.key === "Enter" && !e.repeat && start()} onKeyUp={stop}
-			style={{ "--hold": `${HOLD_MS}ms` } as CSSProperties}>
+		<button type="button" className={s.leave} aria-label="Grown-ups: leave kid mode" title="Grown-ups: leave kid mode"
+			onClick={onLeave}>
 			<svg viewBox="0 0 24 24" aria-hidden="true">
 				{/* A door: its frame, the door standing ajar, and the knob. */}
 				<path d="M4 21h16M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17" />
@@ -295,7 +274,10 @@ export function GrownUpPin({ title, body, okLabel, onClose, onOk }: {
 
 	function submit(e?: FormEvent, typed = pin) {
 		e?.preventDefault();
-		if (typed && !check.isPending) check.mutate(typed, { onSuccess: onOk, onError: () => setPin("") });
+		if (!typed || check.isPending) return;
+		// Awaited rather than mutate's callbacks, which are dropped if the dialog re-renders from new while
+		// the PIN is checked (it stayed open, with the button off, on phones).
+		check.mutateAsync(typed).then(onOk, () => setPin(""));
 	}
 
 	return (
@@ -343,7 +325,7 @@ export function KidModeStart({ kids, needsPin, onPick, onClose }: {
 				) : (
 					<>
 						<div className={sheet.body}>
-							Just their tasks, stars and jars, in big pictures. To leave, hold the exit button in the corner and type a guardian's PIN.
+							Just their tasks, stars and jars, in big pictures. To leave, tap the exit button in the corner and type a guardian's PIN.
 						</div>
 						<div className={s.startPicks}>
 							{kids.map((k) => (

@@ -17,15 +17,14 @@ export default function ParentUnlock({ onClose, onDone }: { onClose: () => void;
 	function submit(e?: FormEvent, typed = pin) {
 		e?.preventDefault();
 		if (!typed || unlock.isPending) return;
-		unlock.mutate(
-			{ pin: typed },
-			{
-				onSuccess: () => {
-					onClose();
-					onDone?.();
-				},
-				onError: () => setPin(""),
+		// Awaited rather than mutate's callbacks, which are dropped if the dialog re-renders from new while
+		// the PIN is checked (it stayed open, with the button off, on phones).
+		unlock.mutateAsync({ pin: typed }).then(
+			() => {
+				onClose();
+				onDone?.();
 			},
+			() => setPin(""),
 		);
 	}
 
