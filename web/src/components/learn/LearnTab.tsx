@@ -42,11 +42,11 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 	adding: { title: "Math", picture: "math", Play: Adding, how: [
 		"Each plate has a number on its sign. Tap the basket under a plate to put a fruit on it; tap a fruit to take it off.",
 		"When both plates match their signs, pick how many there are in all.",
-		"From level 4, type the total on the number pad. Higher levels: bigger numbers.",
+		"From level 4, some are take-away: tap fruit on the plate to move them to the bowl until it has its number, then pick how many are left. From level 5, type the answer on the number pad. Higher levels: bigger numbers.",
 	] },
 	maze: { title: "Maze", picture: "maze", Play: Maze, how: [
-		"Tap the square next to Bear to take a step. Find the way to his house.",
-		"Water, bushes and snow can't be crossed, so a dead end means turning back.",
+		"Tap a square in a straight line from Bear and he walks there. Find the way to his house.",
+		"He can't cross water, bushes or snow, so a dead end means turning back.",
 		"From level 3, a locked gate is in the way: find the key first. Higher levels: bigger maps and two gates.",
 	] },
 	letters: { title: "Letters", picture: "letters", Play: Letters, how: [

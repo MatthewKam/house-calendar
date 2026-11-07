@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Pic } from "./art";
-import { Board, Hear } from "./parts";
+import { Board, fit, Hear } from "./parts";
 import { animalsUpTo } from "./things";
 import { any, at, pick, type GameProps } from "./rounds";
 import { noise } from "./sound";
@@ -32,12 +32,15 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 	// Listening: who to find each round.
 	const asks = useMemo(() => pick(hiding, Math.min(LISTEN_ROUNDS, hiding.length)), [hiding]);
 	const [out, setOut] = useState<number[]>([]);
+	const outNow = useRef<number[]>([]);
 	const [peeking, setPeeking] = useState<number | null>(null);
 	const [taps, setTaps] = useState<{ i: number; n: number } | null>(null);
 	const [round, setRound] = useState(0);
 	const [firstTry, setFirstTry] = useState(0);
 	const [missed, setMissed] = useState(false);
 	const [night, setNight] = useState(false);
+	// Listening: the cheer, while the one found shows.
+	const [cheering, setCheering] = useState(false);
 	// Timers for what comes next, all stopped if they leave.
 	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 	const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(fn, ms));
@@ -63,10 +66,11 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 		noise(a);
 		setTaps((t) => ({ i, n: (t?.n ?? 0) + 1 }));
 		if (!listening) {
-			if (out.includes(i)) return;
-			const now = [...out, i];
-			setOut(now);
-			if (now.length === hiding.length) finish(1, 1);
+			// Read and kept in a ref too, so quick taps in a row each count.
+			if (outNow.current.includes(i)) return;
+			outNow.current = [...outNow.current, i];
+			setOut(outNow.current);
+			if (outNow.current.length === hiding.length) finish(1, 1);
 			return;
 		}
 		if (out.includes(i) || !ask) return;
@@ -78,11 +82,14 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 			unpeek.current = setTimeout(() => setPeeking(null), 1500);
 			return;
 		}
-		setOut([...out, i]);
+		outNow.current = [...outNow.current, i];
+		setOut(outNow.current);
 		setPeeking(null);
 		const right = firstTry + (missed ? 0 : 1);
 		setFirstTry(right);
 		setMissed(false);
+		setCheering(true);
+		later(() => setCheering(false), 1600);
 		if (round + 1 >= asks.length) finish(asks.length, right);
 		else later(() => setRound(round + 1), 1800);
 	}
@@ -90,34 +97,81 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 	const colors = night ? NIGHT : look;
 	return (
 		<Board onBack={onBack} total={listening ? asks.length : undefined} done={listening ? out.length : undefined}
-			className={s.scene}>
-			<div className={s.farm} style={{ "--sky": colors.sky, "--hill": colors.hill, "--light": colors.light } as CSSProperties}>
-				<span className={s.farmLight} aria-hidden="true" />
-				{listening && !night && (
-					<div className={s.farmAsk}>
-						<Hear big onTap={() => ask && noise(ask)} label="Hear who's hiding" />
+			cheer={cheering}>
+			{(box) => {
+				// Each bush has room above it for its animal to pop up.
+				const grid = fit(hiding.length, { w: box.w - 24, h: box.h * 0.62 }, { gap: 12, shape: 0.8, most: 260 });
+				return (
+					<div className={s.farm} style={{ "--sky": colors.sky, "--hill": colors.hill, "--light": colors.light } as CSSProperties}>
+						<Farm night={night} />
+						{listening && !night && (
+							<div className={s.farmAsk}>
+								<Hear size={Math.min(100, Math.max(68, box.h * 0.15))} onTap={() => ask && noise(ask)} label="Hear who's hiding" />
+							</div>
+						)}
+						<div className={s.bushes} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)` }}>
+							{hiding.map((a, i) => {
+								const shown = out.includes(i) || peeking === i;
+								const tapped = taps?.i === i;
+								return (
+									<button key={i} type="button" className={s.bushSpot} onClick={() => tap(i)}
+										style={{ width: grid.size, height: grid.size * 1.25 }}
+										aria-label={shown ? `${a.name}: tap to hear it again` : "A bush. Who's hiding?"}>
+										{shown && (
+											<span key={tapped ? taps.n : 0} className={`${s.peeker} ${night ? s.snore : s.peek}`}>
+												<Pic id={a.id} />
+											</span>
+										)}
+										<span key={`b${tapped ? taps.n : 0}`} className={`${s.bush} ${tapped ? s.rustle : ""}`}>
+											<Pic id="bush" />
+										</span>
+									</button>
+								);
+							})}
+						</div>
 					</div>
-				)}
-				<div className={s.bushes} style={{ "--n": hiding.length } as CSSProperties}>
-					{hiding.map((a, i) => {
-						const shown = out.includes(i) || peeking === i;
-						const tapped = taps?.i === i;
-						return (
-							<button key={i} type="button" className={s.bushSpot} onClick={() => tap(i)}
-								aria-label={shown ? `${a.name}: tap to hear it again` : "A bush. Who's hiding?"}>
-								{shown && (
-									<span key={tapped ? taps.n : 0} className={`${s.peeker} ${night ? s.snore : s.peek}`}>
-										<Pic id={a.id} />
-									</span>
-								)}
-								<span key={`b${tapped ? taps.n : 0}`} className={`${s.bush} ${tapped ? s.rustle : ""}`}>
-									<Pic id="bush" />
-								</span>
-							</button>
-						);
-					})}
-				</div>
-			</div>
+				);
+			}}
 		</Board>
+	);
+}
+
+/** The farm behind the bushes: sun or moon, clouds, hills, the barn and a fence. */
+function Farm({ night }: { night: boolean }) {
+	return (
+		<svg className={s.farmBack} viewBox="0 0 1000 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+			<rect width="1000" height="600" style={{ fill: "var(--sky)" }} />
+			<circle cx="860" cy="90" r="50" style={{ fill: "var(--light)" }} />
+			{!night && (
+				<g fill="#fff" opacity=".9">
+					<ellipse cx="200" cy="90" rx="70" ry="26" />
+					<ellipse cx="250" cy="72" rx="50" ry="30" />
+					<ellipse cx="560" cy="130" rx="60" ry="22" />
+					<ellipse cx="600" cy="116" rx="40" ry="24" />
+				</g>
+			)}
+			{night && (
+				<g fill="#fff">
+					<circle cx="120" cy="60" r="3" />
+					<circle cx="300" cy="120" r="2.5" />
+					<circle cx="480" cy="50" r="3" />
+					<circle cx="650" cy="150" r="2" />
+					<circle cx="740" cy="40" r="2.5" />
+				</g>
+			)}
+			<path d="M0 300 C200 240 420 290 600 270 C780 250 900 240 1000 255 V600 H0z" style={{ fill: "var(--hill)" }} opacity=".75" />
+			<g transform="translate(700 150)">
+				<path d="M0 90 L120 20 L240 90z" fill="#a8322a" />
+				<rect x="12" y="88" width="216" height="150" fill="#d0473b" />
+				<rect x="90" y="150" width="60" height="88" fill="#f4f1ec" />
+				<path d="M90 150 L150 238 M150 150 L90 238" stroke="#d0473b" strokeWidth="7" />
+				<rect x="100" y="104" width="40" height="30" fill="#f4f1ec" />
+			</g>
+			<path d="M0 340 C250 310 700 330 1000 320 V600 H0z" style={{ fill: "var(--hill)" }} />
+			<g stroke="#f4f1ec" strokeWidth="9" strokeLinecap="round">
+				<path d="M0 350 H1000 M0 380 H1000" />
+				{Array.from({ length: 11 }, (_, i) => <path key={i} d={`M${i * 100 + 20} 330 V400`} />)}
+			</g>
+		</svg>
 	);
 }

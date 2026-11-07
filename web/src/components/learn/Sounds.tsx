@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pic } from "./art";
-import { Board, Hear, Next } from "./parts";
+import { Board, fit, Hear } from "./parts";
 import { animalsUpTo, type Animal } from "./things";
 import { at, pick, shuffle, useRounds, type GameProps } from "./rounds";
 import { noise } from "./sound";
@@ -43,24 +43,29 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 	}
 
 	return (
-		<Board onBack={onBack} total={total} done={rounds.round + (rounds.got ? 1 : 0)}>
-			<div className={s.ask}>
-				<Hear big onTap={() => noise(answer)} label="Hear the animal again" />
-			</div>
-			<div className={s.tiles} style={{ "--cols": Math.min(choices.length, 3) } as React.CSSProperties}>
-				{choices.map((a) => {
-					const isTapped = tapped?.id === a.id;
-					const right = rounds.got && a.id === answer.id;
-					return (
-						<button key={`${a.id}-${isTapped ? tapped.n : 0}`} type="button" aria-label={a.name}
-							className={`${s.tile} ${right ? `${s.tileRight} ${s.hop}` : isTapped ? s.wiggle : ""}`}
-							onClick={() => tap(a)}>
-							<Pic id={a.id} className={s.tilePic} />
-						</button>
-					);
-				})}
-			</div>
-			<Next show={rounds.got} onNext={rounds.next} last={rounds.round + 1 >= total} />
+		<Board onBack={onBack} total={total} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got}>
+			{(box) => {
+				const button = Math.min(110, Math.max(72, box.h * 0.18));
+				const grid = fit(choices.length, { w: box.w, h: box.h - button - 24 }, { gap: 16, most: 300 });
+				return (
+					<div className={s.column}>
+						<Hear size={button} onTap={() => noise(answer)} label="Hear the animal again" />
+						<div className={s.grid} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 16 }}>
+							{choices.map((a) => {
+								const isTapped = tapped?.id === a.id;
+								const right = rounds.got && a.id === answer.id;
+								return (
+									<button key={`${a.id}-${isTapped ? tapped.n : 0}`} type="button" aria-label={a.name}
+										className={`${s.tile} ${right ? `${s.tileRight} ${s.hop}` : isTapped ? s.wiggle : ""}`}
+										style={{ width: grid.size, height: grid.size }} onClick={() => tap(a)}>
+										<Pic id={a.id} />
+									</button>
+								);
+							})}
+						</div>
+					</div>
+				);
+			}}
 		</Board>
 	);
 }

@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pic } from "./art";
-import { Board, Next } from "./parts";
+import { Board, fit } from "./parts";
 import { FRUIT } from "./things";
 import { at, between, pick, shuffle, useRounds, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
@@ -12,8 +12,8 @@ const ROUNDS = 3;
 
 /**
  * Count the apples (age 2): tap each one to count it, and its number shows under it. Once they're all
- * counted, the number shows big; from level 3 the kid picks how many (a wrong pick clears the
- * numbers, to count again together). Different fruit each round.
+ * counted, the cheer; from level 3 the kid picks how many first (a wrong pick clears the numbers, to
+ * count again together). Different fruit each round.
  */
 export default function Apples({ level, onDone, onBack }: GameProps) {
 	const rounds = useRounds(ROUNDS, onDone);
@@ -43,36 +43,45 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 		if (number === n && !asking) rounds.tap(true);
 	}
 	function answer(x: number) {
-		if (x === n) {
-			rounds.tap(true);
-		} else {
-			// Count again, together, rather than guess.
-			setWrong(x);
-			setCounted({});
-			rounds.tap(false);
-		}
+		if (x === n) return rounds.tap(true);
+		// Count again, together, rather than guess.
+		setWrong(x);
+		setCounted({});
+		rounds.tap(false);
 	}
 
 	return (
-		<Board onBack={onBack} total={ROUNDS} done={rounds.round + (rounds.got ? 1 : 0)}>
-			<div className={s.fruitRow} style={{ "--n": n } as CSSProperties}>
-				{Array.from({ length: n }, (_, i) => (
-					<button key={i} type="button" className={`${s.fruit} ${counted[i] !== undefined ? s.counted : ""}`}
-						onClick={() => count(i)} aria-label={counted[i] !== undefined ? `${fruit.one} ${counted[i]}` : `${fruit.one}, not counted yet`}>
-						<Pic id={fruit.id} className={counted[i] !== undefined ? s.pop : ""} />
-						<span className={s.fruitNumber}>{counted[i] ?? ""}</span>
-					</button>
-				))}
-			</div>
-			{asking && all && !rounds.got && (
-				<div className={s.choices}>
-					{options.map((x) => (
-						<button key={x} type="button" className={`${s.choice} ${wrong === x ? s.wiggle : ""}`} onClick={() => answer(x)}>{x}</button>
-					))}
-				</div>
-			)}
-			{rounds.got && <p className={s.big}>{n}</p>}
-			<Next show={rounds.got} onNext={rounds.next} last={rounds.round + 1 >= ROUNDS} />
+		<Board onBack={onBack} total={ROUNDS} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got}>
+			{(box) => {
+				// Room under the fruit for the numbers to pick (from level 3).
+				const below = asking ? Math.min(110, box.h * 0.22) : 0;
+				const grid = fit(n, { w: box.w, h: box.h - below }, { gap: 12, shape: 0.8, most: 220 });
+				return (
+					<div className={s.column}>
+						<div className={s.grid} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 12 }}>
+							{Array.from({ length: n }, (_, i) => (
+								<button key={i} type="button" className={`${s.fruit} ${counted[i] !== undefined ? s.counted : ""}`}
+									style={{ width: grid.size, height: grid.size / 0.8 }} onClick={() => count(i)}
+									aria-label={counted[i] !== undefined ? `${fruit.one} ${counted[i]}` : `${fruit.one}, not counted yet`}>
+									<Pic id={fruit.id} className={counted[i] !== undefined ? s.pop : ""} />
+									<span className={s.fruitNumber} style={{ fontSize: grid.size * 0.26 }}>{counted[i] ?? ""}</span>
+								</button>
+							))}
+						</div>
+						{asking && (
+							<div className={s.choices} style={{ minHeight: below }}>
+								{all && options.map((x) => (
+									<button key={x} type="button" disabled={rounds.got} onClick={() => answer(x)}
+										className={`${s.choice} ${rounds.got && x === n ? s.choiceRight : wrong === x ? s.wiggle : ""}`}
+										style={{ width: below * 0.8, height: below * 0.8, fontSize: below * 0.4 }}>
+										{x}
+									</button>
+								))}
+							</div>
+						)}
+					</div>
+				);
+			}}
 		</Board>
 	);
 }

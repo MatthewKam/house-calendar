@@ -59,16 +59,16 @@ export const FRUIT = [
 	{ id: "cherry", one: "cherry", many: "cherries" },
 ];
 
-/** Words with a picture, for the missing first letter. Short ones first. */
+/** Words with a picture, for the missing first letter. Short ones first. Only pictures that say one word clearly (a cup could be a mug). */
 export const WORDS = [
 	{ word: "cat", pic: "cat" }, { word: "dog", pic: "dog" }, { word: "pig", pic: "pig" }, { word: "cow", pic: "cow" },
-	{ word: "sun", pic: "sun" }, { word: "hat", pic: "hat" }, { word: "cup", pic: "cup" }, { word: "bee", pic: "bee" },
-	{ word: "owl", pic: "owl" }, { word: "egg", pic: "egg" }, { word: "car", pic: "car" }, { word: "key", pic: "key" },
+	{ word: "sun", pic: "sun" }, { word: "hat", pic: "hat" }, { word: "bee", pic: "bee" },
+	{ word: "egg", pic: "egg" }, { word: "car", pic: "car" }, { word: "key", pic: "key" },
 	{ word: "ball", pic: "ball" }, { word: "fish", pic: "fish" }, { word: "duck", pic: "duck" }, { word: "frog", pic: "frog" },
 	{ word: "moon", pic: "moon" }, { word: "star", pic: "star" }, { word: "tree", pic: "tree" }, { word: "sock", pic: "sock" },
 	{ word: "book", pic: "book" }, { word: "goat", pic: "goat" }, { word: "lion", pic: "lion" }, { word: "bear", pic: "bear" },
 	{ word: "apple", pic: "apple" }, { word: "horse", pic: "horse" }, { word: "mouse", pic: "mouse" }, { word: "sheep", pic: "sheep" },
-	{ word: "lemon", pic: "lemon" }, { word: "house", pic: "house" }, { word: "monkey", pic: "monkey" }, { word: "banana", pic: "banana" },
+	{ word: "house", pic: "house" }, { word: "monkey", pic: "monkey" }, { word: "banana", pic: "banana" },
 	{ word: "orange", pic: "orange" }, { word: "umbrella", pic: "umbrella" }, { word: "elephant", pic: "elephant" }, { word: "cherry", pic: "cherry" },
 ];
 

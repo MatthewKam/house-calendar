@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Pic } from "./art";
-import { Board } from "./parts";
+import { Board, fit } from "./parts";
 import { ANIMALS, FRUIT, TOYS } from "./things";
 import { any, at, pick, shuffle, type GameProps } from "./rounds";
 import { noise } from "./sound";
@@ -58,23 +58,29 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 		}
 	}
 
-	const cols = cards.length <= 6 ? 3 : cards.length <= 16 ? 4 : 6;
 	return (
-		<Board onBack={onBack}>
-			<div className={s.cards} style={{ "--cols": cols, "--back": set.back } as CSSProperties}>
-				{cards.map((c, i) => {
-					const face = up.includes(i) || matched.includes(i);
-					return (
-						<button key={i} type="button" className={`${s.card} ${face ? s.cardUp : ""} ${matched.includes(i) ? s.cardMatched : ""}`}
-							onClick={() => flip(i)} aria-label={face ? c.name : "A card, face down"}>
-							<span className={s.cardInner}>
-								<span className={s.cardBack} aria-hidden="true" />
-								<span className={s.cardFace}><Pic id={c.id} /></span>
-							</span>
-						</button>
-					);
-				})}
-			</div>
+		<Board onBack={onBack} cheer={matched.length === cards.length}>
+			{(box) => {
+				const grid = fit(cards.length, box, { gap: 10, shape: 0.75, most: 170 });
+				return (
+					<div className={s.column}>
+						<div className={s.grid} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 10, "--back": set.back } as CSSProperties}>
+							{cards.map((c, i) => {
+								const face = up.includes(i) || matched.includes(i);
+								return (
+									<button key={i} type="button" className={`${s.card} ${face ? s.cardUp : ""} ${matched.includes(i) ? s.cardMatched : ""}`}
+										style={{ width: grid.size, height: grid.size / 0.75 }} onClick={() => flip(i)} aria-label={face ? c.name : "A card, face down"}>
+										<span className={s.cardInner}>
+											<span className={s.cardBack} aria-hidden="true" />
+											<span className={s.cardFace}><Pic id={c.id} /></span>
+										</span>
+									</button>
+								);
+							})}
+						</div>
+					</div>
+				);
+			}}
 		</Board>
 	);
 }

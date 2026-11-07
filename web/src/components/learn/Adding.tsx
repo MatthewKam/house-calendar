@@ -1,113 +1,169 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pic } from "./art";
-import { Board, Next } from "./parts";
+import { Board } from "./parts";
 import { FRUIT } from "./things";
 import { at, between, pick, shuffle, useRounds, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
-/** Each side's smallest and biggest number, by level. From level 4 the total goes in on a number pad. */
+/** Each side's smallest and biggest number, by level. */
 const SIDES: [number, number][] = [[1, 3], [1, 4], [2, 5], [2, 5], [3, 7], [4, 10]];
-const PAD_FROM = 4;
+/** From level 4 some rounds are take-away; from level 5 the answer goes in on a number pad. */
+const TAKE_FROM = 4;
+const PAD_FROM = 5;
 /** Numbers to choose from, before the pad. */
-const CHOICES = [3, 4, 4];
+const CHOICES = [3, 4, 4, 4];
 const ROUNDS = 3;
+const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "back", "0", "ok"];
+
+interface Round { take: boolean; a: number; b: number; fa: { id: string; one: string }; fb: { id: string; one: string } }
 
 /**
- * Add them up (age 4): two plates, each with a number on its sign. Tap a plate's basket to put a fruit
- * on it (tap a fruit to take it off) until each plate has its number, then how many in all: pick
- * the number, or from level 4, type it on a number pad. Too many on a plate shows it in yellow.
+ * Math (age 4). Adding: two plates, each with a number on its sign. Tap a plate's basket to put a fruit
+ * on it (tap a fruit to take it off) until each plate has its number, then how many in all. Take-away
+ * (from level 4): the plate starts full; tap fruit to move them to the "take away" bowl until it has
+ * its number, then how many are left. The answer's picked from a few numbers, or from level 5 typed on
+ * a number pad. Too many on a plate shows in yellow.
  */
 export default function Adding({ level, onDone, onBack }: GameProps) {
 	const rounds = useRounds(ROUNDS, onDone);
 	const pad = level >= PAD_FROM;
-	const plan = useMemo(() => Array.from({ length: ROUNDS }, () => {
+	const plan = useMemo<Round[]>(() => Array.from({ length: ROUNDS }, (_, i) => {
 		const [lo, hi] = at(SIDES, level);
-		const [a, b] = pick(FRUIT, 2);
-		return { a: between(lo, hi), b: between(lo, hi), fa: a, fb: b };
+		const [fa, fb] = pick(FRUIT, 2);
+		// From level 4, the middle round (and sometimes another) takes away.
+		const take = level >= TAKE_FROM && (i === 1 || Math.random() < 0.3);
+		if (take) {
+			const a = between(Math.max(3, lo + 1), hi + 2);
+			return { take, a, b: between(1, a - 1), fa, fb: fa };
+		}
+		return { take, a: between(lo, hi), b: between(lo, hi), fa, fb };
 	}), [level]);
 	const r = plan[rounds.round];
-	const total = r.a + r.b;
+	const answerIs = r.take ? r.a - r.b : r.a + r.b;
+	// Adding: how many on each plate. Taking away: how many are left on the plate, and in the bowl.
 	const [left, setLeft] = useState(0);
 	const [right, setRight] = useState(0);
 	const [typed, setTyped] = useState("");
 	const [wrong, setWrong] = useState<number | null>(null);
-	const filled = left === r.a && right === r.b;
+	const ready = r.take ? right === r.b : left === r.a && right === r.b;
 	const options = useMemo(() => {
-		const near = shuffle([total - 2, total - 1, total + 1, total + 2].filter((x) => x > 0));
-		return shuffle([total, ...near.slice(0, at(CHOICES, level) - 1)]);
-	}, [total, level]);
+		const near = shuffle([answerIs - 2, answerIs - 1, answerIs + 1, answerIs + 2].filter((x) => x >= 0));
+		return shuffle([answerIs, ...near.slice(0, at(CHOICES, level) - 1)]);
+	}, [answerIs, level]);
 
 	useEffect(() => {
-		setLeft(0);
+		setLeft(r.take ? r.a : 0);
 		setRight(0);
 		setTyped("");
 		setWrong(null);
-	}, [rounds.round]);
+	}, [r]);
 
 	function put(side: "a" | "b", change: 1 | -1) {
 		if (rounds.got) return;
-		const [n, set] = side === "a" ? [left, setLeft] : [right, setRight];
-		const next = Math.max(0, n + change);
-		set(next);
+		if (r.take) {
+			// Taking away moves fruit between the plate and the bowl.
+			const moved = Math.max(0, Math.min(r.a, right + change));
+			setRight(moved);
+			setLeft(r.a - moved);
+			return;
+		}
+		(side === "a" ? setLeft : setRight)((n) => Math.max(0, n + change));
 	}
 	function answer(x: number) {
-		if (x === total) {
-			rounds.tap(true);
-		} else {
-			setWrong(x);
-			setTyped("");
-			rounds.tap(false);
-		}
+		if (x === answerIs) return rounds.tap(true);
+		setWrong(x);
+		setTyped("");
+		rounds.tap(false);
 	}
 
-	const plate = (side: "a" | "b") => {
-		const [n, want, fruit] = side === "a" ? [left, r.a, r.fa] : [right, r.b, r.fb];
-		return (
-			<div className={s.side}>
-				<span className={`${s.sign} ${n === want ? s.signDone : ""}`} aria-label={`The sign says ${want}`}>{want}</span>
-				<div className={`${s.plate} ${n > want ? s.plateOver : ""}`} aria-label={`${n} on this plate`}>
-					{Array.from({ length: n }, (_, i) => (
-						<button key={i} type="button" className={s.onPlate} onClick={() => put(side, -1)} aria-label={`Take a ${fruit.one} off`}>
-							<Pic id={fruit.id} />
-						</button>
-					))}
-				</div>
-				<button type="button" className={s.basket} onClick={() => put(side, 1)} disabled={rounds.got} aria-label={`Put a ${fruit.one} on`}>
-					<Pic id={fruit.id} />
-					<span aria-hidden="true">+</span>
-				</button>
-			</div>
-		);
-	};
-
 	return (
-		<Board onBack={onBack} total={ROUNDS} done={rounds.round + (rounds.got ? 1 : 0)}>
-			<div className={s.plates}>
-				{plate("a")}
-				<span className={s.plus} aria-hidden="true">+</span>
-				{plate("b")}
-				<span className={s.plus} aria-hidden="true">=</span>
-				<span className={`${s.answer} ${rounds.got ? s.answerGot : ""}`}>{rounds.got ? total : typed || "?"}</span>
-			</div>
-			{filled && !rounds.got && (pad ? (
-				<div className={s.numPad}>
-					{["1", "2", "3", "4", "5", "6", "7", "8", "9", "back", "0", "ok"].map((k) => (
-						<button key={k} type="button" className={`${s.choice} ${k === "ok" ? s.choiceGo : ""}`}
-							disabled={(k === "ok" || k === "back") && !typed}
-							aria-label={k === "back" ? "Delete" : k === "ok" ? "That's it" : k}
-							onClick={() => k === "back" ? setTyped(typed.slice(0, -1)) : k === "ok" ? answer(Number(typed)) : typed.length < 2 && setTyped(typed + k)}>
-							{k === "back" ? "⌫" : k === "ok" ? "✓" : k}
-						</button>
-					))}
-				</div>
-			) : (
-				<div className={s.choices}>
-					{options.map((x) => (
-						<button key={x} type="button" className={`${s.choice} ${wrong === x ? s.wiggle : ""}`} onClick={() => answer(x)}>{x}</button>
-					))}
-				</div>
-			))}
-			<Next show={rounds.got} onNext={rounds.next} last={rounds.round + 1 >= ROUNDS} />
+		<Board onBack={onBack} total={ROUNDS} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got}>
+			{(box) => {
+				const wide = box.w > box.h * 1.15;
+				// The answer area: a row of numbers, or the pad (beside the plates when there's room).
+				const keyRows = pad ? 4 : 1;
+				const keySize = Math.floor(Math.min(
+					84,
+					wide ? (box.h - 90 - (keyRows - 1) * 8) / keyRows : (box.h * 0.42 - 70 - (keyRows - 1) * 8) / keyRows,
+					(box.w - 40) / (pad ? 3.4 : options.length + 0.6),
+				));
+				const answerW = wide ? (pad ? keySize * 3 + 16 : keySize * 1.4) + 24 : 0;
+				const plateW = Math.floor(Math.min(300, (box.w - answerW - 60) / 2, (wide ? box.h - 140 : box.h * 0.58 - 140) / 0.72));
+				const plate = (side: "a" | "b") => {
+					const n = side === "a" ? left : right;
+					const want = side === "a" ? r.a : r.b;
+					const fruit = side === "a" ? r.fa : r.fb;
+					const bowl = r.take && side === "b";
+					const over = !r.take && n > want;
+					const most = Math.max(n, r.take ? r.a : want);
+					const item = Math.floor(plateW / (most > 12 ? 5.4 : most > 8 ? 4.4 : most > 4 ? 3.6 : 2.8));
+					return (
+						<div className={s.side} style={{ width: plateW }}>
+							<span className={`${s.sign} ${n === want && (bowl || !r.take) ? s.signDone : ""}`} style={{ fontSize: Math.max(24, plateW * 0.15) }}>
+								{bowl ? `− ${want}` : want}
+							</span>
+							<div className={`${bowl ? s.bowl : s.plate} ${over ? s.plateOver : ""}`} style={{ width: plateW, height: plateW * 0.72 }}>
+								{Array.from({ length: n }, (_, i) => (
+									<button key={i} type="button" className={s.onPlate} style={{ width: item, height: item }}
+										onClick={() => put(side, r.take ? (bowl ? -1 : 1) : -1)}
+										aria-label={bowl ? `Put a ${fruit.one} back` : r.take ? `Take a ${fruit.one} away` : `Take a ${fruit.one} off`}>
+										<Pic id={fruit.id} />
+									</button>
+								))}
+							</div>
+							{!r.take && (
+								<button type="button" className={s.basket} onClick={() => put(side, 1)} disabled={rounds.got} aria-label={`Put a ${fruit.one} on`}
+									style={{ width: Math.min(80, plateW * 0.3), height: Math.min(80, plateW * 0.3) }}>
+									<Pic id={fruit.id} />
+									<span aria-hidden="true">+</span>
+								</button>
+							)}
+						</div>
+					);
+				};
+				const picking = ready && !rounds.got;
+				const answers = pad ? (
+					<div className={s.numPad} style={{ gridTemplateColumns: `repeat(3, ${keySize}px)`, opacity: picking ? 1 : 0.35 }}>
+						{KEYS.map((k) => (
+							<button key={k} type="button" className={`${s.choice} ${k === "ok" ? s.choiceGo : ""}`}
+								style={{ width: keySize, height: keySize, fontSize: keySize * 0.42 }}
+								disabled={!picking || ((k === "ok" || k === "back") && !typed)}
+								aria-label={k === "back" ? "Delete" : k === "ok" ? "That's it" : k}
+								onClick={() => (k === "back" ? setTyped(typed.slice(0, -1)) : k === "ok" ? answer(Number(typed)) : typed.length < 2 && setTyped(typed + k))}>
+								{k === "back" ? "⌫" : k === "ok" ? "✓" : k}
+							</button>
+						))}
+					</div>
+				) : (
+					<div className={s.choices} style={{ flexDirection: wide ? "column" : "row", opacity: picking || rounds.got ? 1 : 0.35 }}>
+						{options.map((x) => (
+							<button key={x} type="button" disabled={!picking} onClick={() => answer(x)}
+								className={`${s.choice} ${rounds.got && x === answerIs ? s.choiceRight : wrong === x ? s.wiggle : ""}`}
+								style={{ width: keySize, height: keySize, fontSize: keySize * 0.45 }}>
+								{x}
+							</button>
+						))}
+					</div>
+				);
+				return (
+					<div className={wide ? s.row : s.column}>
+						<div className={s.plates}>
+							{plate("a")}
+							{!r.take && <span className={s.plus} aria-hidden="true">+</span>}
+							{plate("b")}
+						</div>
+						<div className={s.answerArea}>
+							<div className={s.equals}>
+								<span className={s.plus} aria-hidden="true">=</span>
+								<span className={`${s.answer} ${rounds.got ? s.answerGot : ""}`} style={{ fontSize: Math.max(28, keySize * 0.5), minWidth: keySize * 1.2 }}>
+									{rounds.got ? answerIs : typed || "?"}
+								</span>
+							</div>
+							{answers}
+						</div>
+					</div>
+				);
+			}}
 		</Board>
 	);
 }
