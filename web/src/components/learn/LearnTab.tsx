@@ -1,7 +1,7 @@
-import { useState, type ComponentType } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api";
-import { keys } from "../../lib/queries";
+import { keys, useLearnSounds } from "../../lib/queries";
 import type { Game, LearnState, Member } from "../../lib/types";
 import { Pic } from "./art";
 import Adding from "./Adding";
@@ -14,7 +14,7 @@ import Peekaboo from "./Peekaboo";
 import Sounds from "./Sounds";
 import { HowTo } from "./parts";
 import type { GameProps } from "./rounds";
-import { hush } from "./sound";
+import { hush, setRecorded } from "./sound";
 import s from "../../styles/Learn.module.css";
 
 /** Each game: its name, its picture, and how to play it (for a grown-up to explain). */
@@ -77,6 +77,9 @@ export default function LearnTab({ kid, today, learn }: { kid: Member; today: st
 		onSuccess: (r, { game }) => setResult({ game, leveledUp: r.leveledUp }),
 		onSettled: () => qc.invalidateQueries({ queryKey: keys.learn(today) }),
 	});
+	// A grown-up's own animal noises, played instead of the built-in ones.
+	const sounds = useLearnSounds().data;
+	useEffect(() => setRecorded(sounds ?? []), [sounds]);
 	const levelOf = (game: Game) => learn.games.find((g) => g.game === game)?.level ?? 1;
 
 	function start(game: Game) {

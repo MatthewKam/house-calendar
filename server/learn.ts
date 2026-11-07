@@ -26,12 +26,20 @@ const GAMES_FOR: Record<'little' | 'early', Game[]> = {
 };
 export const gamesFor = (stage: Stage | null) => GAMES_FOR[stage === 'little' || stage === null ? 'little' : 'early'];
 
+/** The animals with a noise (web/src/components/learn/things.ts), which a grown-up can record their own of. */
+export const ANIMALS = ['cow', 'pig', 'duck', 'sheep', 'horse', 'chicken', 'goat', 'dog', 'cat', 'mouse', 'frog', 'owl', 'bee', 'lion', 'elephant', 'monkey'];
+/** A recorded noise is a few seconds: well under this. */
+const MAX_SOUND_BYTES = 1024 * 1024;
+
 /** Perfect plays in a row, at a level, before the game moves up. */
 export const PLAYS_TO_LEVEL_UP = 3;
 
 interface KidRow { id: string; birthdate: string | null; stage: string | null; enabled: number | null }
 
 export function registerLearn(app: FastifyInstance, db: DB) {
+  // Recorded noises arrive as the audio itself (Safari records audio/mp4, most others audio/webm).
+  app.addContentTypeParser(/^audio\//, { parseAs: 'buffer', bodyLimit: MAX_SOUND_BYTES }, (_req, body, done) => done(null, body));
+
   const kid = (id: string) => db.prepare(`SELECT m.id, m.birthdate, m.stage, k.enabled
     FROM members m LEFT JOIN learn_kids k ON k.member_id = m.id WHERE m.id = ?`).get(id) as KidRow | undefined;
   const stored = (memberId: string) => Object.fromEntries((db.prepare('SELECT skill, level FROM learn_levels WHERE member_id = ?')
@@ -120,4 +128,32 @@ export function registerLearn(app: FastifyInstance, db: DB) {
       })();
       return { leveledUp, ...state(kid(r.id)!, today) };
     });
+
+  // Animal noises a grown-up recorded: which, and when (so a new recording isn't the old one cached).
+  app.get('/api/learn/sounds', async () =>
+    db.prepare('SELECT animal, updated_at AS version FROM learn_sounds ORDER BY animal').all());
+
+  app.get<{ Params: { animal: string } }>('/api/learn/sounds/:animal', async (req, reply) => {
+    const row = db.prepare('SELECT mime, audio FROM learn_sounds WHERE animal = ?').get(req.params.animal) as { mime: string; audio: Buffer } | undefined;
+    if (!row) return reply.code(404).send({ error: 'Not recorded' });
+    return reply.type(row.mime).header('cache-control', 'private, max-age=31536000, immutable').send(row.audio);
+  });
+
+  // A grown-up records one (the body is the audio), or deletes it to go back to the built-in noise.
+  app.put<{ Params: { animal: string } }>('/api/learn/sounds/:animal', { bodyLimit: MAX_SOUND_BYTES }, async (req, reply) => {
+    if (!ANIMALS.includes(req.params.animal)) return reply.code(404).send({ error: 'No such animal' });
+    const mime = String(req.headers['content-type'] ?? '').split(';')[0];
+    if (!/^audio\/[\w.+-]+$/.test(mime) || !Buffer.isBuffer(req.body) || req.body.length === 0) {
+      return reply.code(400).send({ error: 'Send the recording as audio' });
+    }
+    db.prepare(`INSERT INTO learn_sounds (animal, mime, audio) VALUES (?, ?, ?)
+      ON CONFLICT (animal) DO UPDATE SET mime = excluded.mime, audio = excluded.audio, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')`)
+      .run(req.params.animal, mime, req.body);
+    return db.prepare('SELECT animal, updated_at AS version FROM learn_sounds WHERE animal = ?').get(req.params.animal);
+  });
+
+  app.delete<{ Params: { animal: string } }>('/api/learn/sounds/:animal', async (req, reply) => {
+    db.prepare('DELETE FROM learn_sounds WHERE animal = ?').run(req.params.animal);
+    return reply.code(204).send();
+  });
 }

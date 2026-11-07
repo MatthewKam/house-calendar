@@ -100,3 +100,20 @@
 }
 .learnStep:disabled { opacity: 0.35; }
 .learnLevel { min-width: 6.5rem; text-align: center; color: var(--muted); font-size: 0.9rem; }
+/* Learning's animal sounds: each animal, its sound to hear, and recording your own. */
+.soundsHead { margin: 0.6rem 0 0; font-size: 1rem; }
+.soundList { display: flex; flex-direction: column; }
+.soundRow {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-top: 1px solid var(--line);
+}
+.soundRow > :nth-child(5) { grid-column: 2 / -1; justify-self: start; }
+.soundPic { width: 2.4rem; height: 2.4rem; }
+.soundName { display: flex; flex-direction: column; font-weight: 600; }
+.soundName small { color: var(--muted); font-weight: 400; }
+.recording { background: #b42318; color: #fff; }
+.recordDot { color: #b42318; }

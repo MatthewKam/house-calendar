@@ -1,4 +1,5 @@
 import { GAMES } from './learn/LearnTab';
+import LearnSounds from './LearnSounds';
 import { useLearn, useSetLearn } from '../lib/queries';
 import type { LearnState, Member } from '../lib/types';
 import s from '../styles/MembersPanel.module.css';
@@ -49,6 +50,8 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
         );
       })}
       {set.isError && <p className={s.error}>{set.error.message}</p>}
+      <h3 className={s.soundsHead}>Animal sounds</h3>
+      <LearnSounds />
     </section>
   );
 }

@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, LearnState, Game, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility, SprigList, SprigItem, Proposal } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, LearnState, LearnSound, Game, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility, SprigList, SprigItem, Proposal } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, {
@@ -91,6 +91,14 @@ export const api = {
     call<LearnState>('PUT', `/api/learn/${memberId}`, { ...p, today }),
   learnDone: (memberId: string, p: { today: string; game: Game; level: number; rounds: number; firstTry: number }) =>
     call<LearnState & { leveledUp: boolean }>('POST', `/api/learn/${memberId}/done`, p),
+  /** Animal noises a grown-up recorded, and when (for each one's address, so a new one isn't cached). */
+  learnSounds: () => call<LearnSound[]>('GET', '/api/learn/sounds'),
+  recordLearnSound: async (animal: string, audio: Blob) => {
+    const res = await fetch(`/api/learn/sounds/${animal}`, { method: 'PUT', headers: { 'content-type': audio.type || 'audio/webm' }, body: audio });
+    if (!res.ok) throw new Error(await res.json().then((j) => j.error ?? j.message, () => res.statusText));
+    return (await res.json()) as LearnSound;
+  },
+  deleteLearnSound: (animal: string) => call<void>('DELETE', `/api/learn/sounds/${animal}`),
   photos: () => call<Photo[]>('GET', '/api/photos'),
   updatePhoto: (id: string, p: { inSlideshow?: boolean; memberId?: string | null }) => call<Photo>('PATCH', `/api/photos/${id}`, p),
   deletePhoto: (id: string) => call<void>('DELETE', `/api/photos/${id}`),

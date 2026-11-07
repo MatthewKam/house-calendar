@@ -457,6 +457,23 @@ export function useLearn(today: string) {
   return useQuery({ queryKey: keys.learn(today), queryFn: () => api.learn(today) });
 }
 
+/** Animal noises a grown-up recorded for the games. */
+export function useLearnSounds() {
+  return useQuery({ queryKey: ['learnSounds'], queryFn: api.learnSounds });
+}
+
+/** Recording an animal's noise (or deleting it, to go back to the built-in one). */
+export function useSetLearnSound() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ animal, audio }: { animal: string; audio: Blob | null }) => {
+      if (audio) await api.recordLearnSound(animal, audio);
+      else await api.deleteLearnSound(animal);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['learnSounds'] }),
+  });
+}
+
 /** A guardian turning learning on or off for a kid, or moving a game's level. */
 export function useSetLearn(today: string) {
   const qc = useQueryClient();

@@ -736,6 +736,15 @@ const migrations: string[] = [
   `
   ALTER TABLE learn_levels ADD COLUMN since_play INTEGER NOT NULL DEFAULT 0;
   `,
+  // Learning's animal noises, recorded by a grown-up (learn.ts): played instead of the built-in ones.
+  `
+  CREATE TABLE learn_sounds (
+    animal     TEXT PRIMARY KEY,
+    mime       TEXT NOT NULL,
+    audio      BLOB NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

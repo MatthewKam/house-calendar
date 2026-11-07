@@ -356,6 +356,12 @@ export type Proposal =
 /** Learning's games (server/learn.ts): Little's four, then Early's. */
 export type Game = 'sounds' | 'peekaboo' | 'findIt' | 'apples' | 'adding' | 'maze' | 'letters' | 'memory';
 
+/** An animal noise a grown-up recorded for the games (server/learn.ts), and when. */
+export interface LearnSound {
+  animal: string;
+  version: string;
+}
+
 /** A kid's learning: on or off, and their stage's games, each at the level they play it. */
 export interface LearnState {
   memberId: string;

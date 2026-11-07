@@ -70,4 +70,22 @@ describe('learning', () => {
     await call('PUT', '/api/learn/nolan', { today: TODAY, levels: { apples: 6 } });
     for (let i = 0; i < 3; i++) expect((await play(3, 6)).body.leveledUp).toBe(false);
   });
+
+  it("keeps a grown-up's recorded animal noises", async () => {
+    const { db } = setup();
+    const app = buildApp(db);
+    const put = (animal: string, body: Buffer, type = 'audio/webm;codecs=opus') =>
+      app.inject({ method: 'PUT', url: `/api/learn/sounds/${animal}`, payload: body, headers: { 'content-type': type } });
+    const moo = Buffer.from('moo moo');
+    expect((await put('dragon', moo)).statusCode).toBe(404);
+    expect((await put('cow', moo, 'text/plain')).statusCode).toBe(400);
+    const saved = await put('cow', moo);
+    expect(saved.statusCode).toBe(200);
+    expect((await app.inject({ method: 'GET', url: '/api/learn/sounds' })).json()).toEqual([{ animal: 'cow', version: saved.json().version }]);
+    const got = await app.inject({ method: 'GET', url: '/api/learn/sounds/cow' });
+    expect(got.headers['content-type']).toBe('audio/webm');
+    expect(got.rawPayload.equals(moo)).toBe(true);
+    expect((await app.inject({ method: 'DELETE', url: '/api/learn/sounds/cow' })).statusCode).toBe(204);
+    expect((await app.inject({ method: 'GET', url: '/api/learn/sounds/cow' })).statusCode).toBe(404);
+  });
 });
