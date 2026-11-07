@@ -38,6 +38,7 @@ interface Props {
 }
 
 /** Required tasks by part of the day, then goals: as on the Tasks page. */
+/** Today's tasks in order: morning, anytime, evening, then goals. */
 const GROUPS: { label: string; has: (t: Task) => boolean }[] = [
 	...TIMES.map((t) => ({ label: t.label, has: (c: Task) => c.required && c.time === t.id })),
 	{ label: "Goals", has: (c: Task) => !c.required },
@@ -179,30 +180,21 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 				{tab === "tasks" && daily}
 				{tab === "tasks" && dueToday.length > 0 && (
 					<TaskCarousel kidId={kid.id}>
-						{GROUPS.map((g) => {
-							const group = dueToday.filter(g.has);
-							if (group.length === 0) return null;
+						{GROUPS.flatMap((g) => dueToday.filter(g.has)).map((t) => {
+							const ticked = didTask(done, t, kid.id, today);
 							return (
-								<section key={g.label} className={s.carGroup} aria-label={g.label}>
-									<h2 className={s.groupHead}>{g.label}</h2>
-									<div className={s.carRow}>
-										{group.map((t) => {
-											const ticked = didTask(done, t, kid.id, today);
-											return (
-												<button key={t.id} type="button" aria-pressed={ticked} data-todo={ticked ? undefined : ""}
-													className={`${s.tile} ${ticked ? s.ticked : ""} ${ticked && popped === t.id ? s.pop : ""}`}
-													onClick={() => tick(t)}>
-													<span className={s.tileIcon} aria-hidden="true">{t.icon ?? (t.required ? "✅" : "⭐")}</span>
-													<span className={s.tileTitle}>{t.title}</span>
-													{!t.required && t.points > 0 && (
-														<span className={s.tileStars}>+{t.points} <StarIcon className={s.tileStar} /></span>
-													)}
-													{ticked && <span className={s.check} aria-hidden="true">✓</span>}
-												</button>
-											);
-										})}
-									</div>
-								</section>
+								<button key={t.id} type="button" aria-pressed={ticked} data-todo={ticked ? undefined : ""}
+									className={`${s.tile} ${ticked ? s.ticked : ""} ${ticked && popped === t.id ? s.pop : ""}`}
+									onClick={() => tick(t)}>
+									<span className={s.tileIcon} aria-hidden="true">{t.icon ?? (t.required ? "✅" : "⭐")}</span>
+									<span className={s.tileTitle}>{t.title}</span>
+									{!t.required && t.points > 0 && (
+										<span className={s.tileStars}>+{t.points} <StarIcon className={s.tileStar} /></span>
+									)}
+									{/* Morning or evening, in the corner (anytime ones and goals have none). */}
+									{t.required && t.time && <span className={s.tileWhen}>{t.time === "morning" ? "AM" : "PM"}</span>}
+									{ticked && <span className={s.check} aria-hidden="true">✓</span>}
+								</button>
 							);
 						})}
 					</TaskCarousel>
