@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEven
 import { useMutation } from "@tanstack/react-query";
 import { fromDayKey, startOfWeek } from "../lib/dates";
 import { api } from "../lib/api";
+import { useMediaQuery } from "../lib/useMediaQuery";
 import {
 	useBuckets,
 	useLearn,
@@ -38,6 +39,10 @@ interface Props {
 }
 
 /** Required tasks by part of the day, then goals: as on the Tasks page. */
+/** Daily tasks in the order of the day: morning, anytime, then evening. */
+const ORDER = { morning: 0, evening: 2 } as Record<string, number>;
+const byTime = (a: Task, b: Task) => (ORDER[a.time ?? ""] ?? 1) - (ORDER[b.time ?? ""] ?? 1);
+
 /** Today's tasks in order: morning, anytime, evening, then goals. */
 const GROUPS: { label: string; has: (t: Task) => boolean }[] = [
 	...TIMES.map((t) => ({ label: t.label, has: (c: Task) => c.required && c.time === t.id })),
@@ -68,6 +73,8 @@ const TABS: { id: KidTab; Icon: () => ReactNode; label: string }[] = [
  */
 export default function KidMode({ today, kids, members, onLeave, askPin }: Props) {
 	const [pickedId, setPickedId] = useState(kids[0]?.id ?? null);
+	// Upright, the tasks wrap (with goals a page over); on its side they're one row.
+	const portrait = useMediaQuery("(orientation: portrait)");
 	const kid = kids.find((k) => k.id === pickedId) ?? kids[0];
 	const [picked, setTab] = useState<KidTab>("today");
 	const learning = useLearn(today).data?.find((l) => l.memberId === kid?.id && l.enabled);
@@ -104,6 +111,26 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 		const stickers = moments.filter((m) => m.memberId === kid.id);
 		const stars = buckets.find((b) => b.memberId === kid.id)?.stars ?? 0;
 		const chart = potty.find((c) => c.memberId === kid.id);
+
+		/** A task's tile: tap to tick it (or untick it). */
+		const tile = (t: Task) => {
+			const ticked = didTask(done, t, kid.id, today);
+			return (
+				<button key={t.id} type="button" aria-pressed={ticked} data-todo={ticked ? undefined : ""}
+					className={`${s.tile} ${ticked ? s.ticked : ""} ${ticked && popped === t.id ? s.pop : ""}`}
+					onClick={() => tick(t)}>
+					<span className={s.tileIcon} aria-hidden="true">{t.icon ?? (t.required ? "✅" : "⭐")}</span>
+					<span className={s.tileTitle}>{t.title}</span>
+					{!t.required && t.points > 0 && (
+						<span className={s.tileStars}>+{t.points} <StarIcon className={s.tileStar} /></span>
+					)}
+					{/* In the corner: a goal says so; a daily task, morning or evening (anytime ones have none). */}
+					{!t.required ? <span className={s.tileWhen}>Goal</span>
+						: t.time && <span className={s.tileWhen}>{t.time === "morning" ? "AM" : "PM"}</span>}
+					{ticked && <span className={s.check} aria-hidden="true">✓</span>}
+				</button>
+			);
+		};
 
 		function tick(t: Task) {
 			const ticked = didTask(done, t, kid.id, today);
@@ -178,28 +205,16 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 						askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
 				)}
 				{tab === "tasks" && daily}
-				{tab === "tasks" && dueToday.length > 0 && (
-					<TaskCarousel kidId={kid.id}>
-						{GROUPS.flatMap((g) => dueToday.filter(g.has)).map((t) => {
-							const ticked = didTask(done, t, kid.id, today);
-							return (
-								<button key={t.id} type="button" aria-pressed={ticked} data-todo={ticked ? undefined : ""}
-									className={`${s.tile} ${ticked ? s.ticked : ""} ${ticked && popped === t.id ? s.pop : ""}`}
-									onClick={() => tick(t)}>
-									<span className={s.tileIcon} aria-hidden="true">{t.icon ?? (t.required ? "✅" : "⭐")}</span>
-									<span className={s.tileTitle}>{t.title}</span>
-									{!t.required && t.points > 0 && (
-										<span className={s.tileStars}>+{t.points} <StarIcon className={s.tileStar} /></span>
-									)}
-									{/* In the corner: a goal says so; a daily task, morning or evening (anytime ones have none). */}
-									{!t.required ? <span className={s.tileWhen}>Goal</span>
-										: t.time && <span className={s.tileWhen}>{t.time === "morning" ? "AM" : "PM"}</span>}
-									{ticked && <span className={s.check} aria-hidden="true">✓</span>}
-								</button>
-							);
-						})}
-					</TaskCarousel>
-				)}
+				{tab === "tasks" && dueToday.length > 0 && (portrait ? (
+					// Upright: daily tasks as blocks that wrap, and goals on a second page to swipe to.
+					<TaskPages kidId={kid.id} pages={[
+						{ label: "Daily tasks", tiles: dueToday.filter((t) => t.required).sort(byTime).map(tile) },
+						{ label: "Goals", tiles: dueToday.filter((t) => !t.required).map(tile) },
+					]} />
+				) : (
+					// On its side: one row of big tiles, goals at the end.
+					<TaskCarousel kidId={kid.id}>{GROUPS.flatMap((g) => dueToday.filter(g.has)).map(tile)}</TaskCarousel>
+				))}
 				{tab === "tasks" && dueToday.length === 0 && <p className={s.none}>Nothing to do today. Have fun! 🌈</p>}
 
 				{tab === "learn" && learning && <LearnTab key={kid.id} kid={kid} today={today} learn={learning} />}
@@ -252,6 +267,53 @@ function TaskCarousel({ kidId, children }: { kidId: string; children: ReactNode 
 	return (
 		<div ref={row} className={s.carousel}>
 			{children}
+		</div>
+	);
+}
+
+/**
+ * Upright: pages to swipe between (Daily tasks, then Goals), each a page of blocks that wrap. The
+ * buttons on top show which page it's on (and go to the other); the next page peeks in at the side.
+ * Pages with nothing on them are left out.
+ */
+function TaskPages({ kidId, pages }: { kidId: string; pages: { label: string; tiles: ReactNode[] }[] }) {
+	const shown = pages.filter((p) => p.tiles.length > 0);
+	const row = useRef<HTMLDivElement>(null);
+	const [at, setAt] = useState(0);
+	// Each kid starts on the first page.
+	useEffect(() => {
+		row.current?.scrollTo({ left: 0 });
+		setAt(0);
+	}, [kidId]);
+	const go = (i: number) => {
+		const el = row.current;
+		const page = el?.children[i] as HTMLElement | undefined;
+		if (el && page) el.scrollTo({ left: page.offsetLeft - el.offsetLeft, behavior: "smooth" });
+	};
+	return (
+		<div className={s.pages}>
+			{shown.length > 1 && (
+				<div className={s.pageTabs} role="tablist">
+					{shown.map((p, i) => (
+						<button key={p.label} type="button" role="tab" aria-selected={at === i} className={s.pageTab} onClick={() => go(i)}>
+							{p.label}
+							<span className={s.pageCount}>{p.tiles.length}</span>
+						</button>
+					))}
+				</div>
+			)}
+			<div ref={row} className={s.pageRow}
+				onScroll={(e) => {
+					const el = e.currentTarget;
+					const width = (el.firstElementChild as HTMLElement | null)?.offsetWidth ?? el.clientWidth;
+					setAt(Math.min(shown.length - 1, Math.round(el.scrollLeft / width)));
+				}}>
+				{shown.map((p) => (
+					<section key={p.label} className={`${s.taskPage} ${shown.length > 1 ? s.peek : ""}`} aria-label={p.label}>
+						<div className={s.blocks}>{p.tiles}</div>
+					</section>
+				))}
+			</div>
 		</div>
 	);
 }
