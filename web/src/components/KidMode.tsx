@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { useMutation } from "@tanstack/react-query";
 import { fromDayKey, startOfWeek } from "../lib/dates";
 import { api } from "../lib/api";
+import { useMediaQuery } from "../lib/useMediaQuery";
 import {
 	useBuckets,
 	useLearn,
@@ -87,6 +88,8 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	// A grown-up typed their PIN so this kid can put stars in jars (until they switch kids or leave).
 	const [jarsFor, setJarsFor] = useState<string | null>(null);
 	const [asking, setAsking] = useState<{ body: string; then: () => void } | null>(null);
+	// The potty chart starts folded away (it's a tap to open).
+	const [pottyOpen, setPottyOpen] = useState(false);
 
 	if (!kid) {
 		return (
@@ -190,10 +193,6 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 
 				{tab === "today" && <KidToday today={today} kid={kid} />}
 
-				{tab === "tasks" && chart && (
-					<PottyCard key={kid.id} kid={kid} chart={chart} canEdit
-						askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
-				)}
 				{tab === "tasks" && daily}
 				{tab === "tasks" && dueToday.length > 0 && (
 					// Pages to swipe between: daily tasks (morning to evening), then goals.
@@ -203,6 +202,19 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 					]} />
 				)}
 				{tab === "tasks" && dueToday.length === 0 && <p className={s.none}>Nothing to do today. Have fun! 🌈</p>}
+				{/* The potty chart, under the tasks: folded away until it's tapped open. */}
+				{tab === "tasks" && chart && (
+					<section className={s.pottyFold}>
+						<button type="button" className={s.pottyToggle} aria-expanded={pottyOpen} onClick={() => setPottyOpen(!pottyOpen)}>
+							<span aria-hidden="true">🚽</span> Potty chart
+							<svg className={s.pottyChevron} viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+						</button>
+						{pottyOpen && (
+							<PottyCard key={kid.id} kid={kid} chart={chart} canEdit
+								askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
+						)}
+					</section>
+				)}
 
 				{tab === "learn" && learning && <LearnTab key={kid.id} kid={kid} today={today} learn={learning} />}
 
@@ -252,6 +264,8 @@ const PEEK = 36;
 function TaskPages({ kidId, pages }: { kidId: string; pages: { label: string; tiles: ReactNode[] }[] }) {
 	const row = useRef<HTMLDivElement>(null);
 	const [box, setBox] = useState({ w: 0, h: 0 });
+	// The screen's way up (not the pages' own box, which the potty chart under it can make wide).
+	const upright = useMediaQuery("(orientation: portrait)");
 	const [at, setAt] = useState(0);
 	useLayoutEffect(() => {
 		const el = row.current;
@@ -281,7 +295,7 @@ function TaskPages({ kidId, pages }: { kidId: string; pages: { label: string; ti
 		const h = box.h - 6;
 		// Upright, six to a page (two across, three down); on its side, four in a row. The next peeks in.
 		const pagesOf = (label: string, tiles: ReactNode[]) => {
-			const [cols, rows] = box.h > box.w ? [2, 3] : [4, 1];
+			const [cols, rows] = upright ? [2, 3] : [4, 1];
 			const size = Math.floor(Math.min((w - BLOCK_GAP * (cols - 1)) / cols, (h - BLOCK_GAP * (rows - 1)) / rows, 280));
 			const per = cols * rows;
 			return Array.from({ length: Math.ceil(tiles.length / per) }, (_, i) => ({
@@ -302,7 +316,9 @@ function TaskPages({ kidId, pages }: { kidId: string; pages: { label: string; ti
 					setAt(Math.min(shown.length - 1, Math.round(el.scrollLeft / (width + BLOCK_GAP))));
 				}}>
 				{box.w > 0 && shown.map((p) => (
-					<section key={p.label} className={s.taskPage} style={{ flexBasis: shown.length > 1 ? box.w - PEEK : box.w }} aria-label={p.label}>
+					<section key={p.label} className={s.taskPage} aria-label={p.label}
+						// As wide as its blocks, so the next page's follow on (and peek in) right after.
+						style={{ flexBasis: p.cols * p.size + (p.cols - 1) * BLOCK_GAP }}>
 						<div className={s.blocks} style={{ gridTemplateColumns: `repeat(${p.cols}, ${p.size}px)`, "--size": `${p.size}px` } as CSSProperties}>
 							{p.tiles}
 						</div>
