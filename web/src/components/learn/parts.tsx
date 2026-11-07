@@ -25,8 +25,9 @@ export function Board({ onBack, total, done, children, cheer, style }: {
 	total?: number;
 	done?: number;
 	children: (box: Box) => ReactNode;
-	/** A round just got: the cheer shows over the game ("slide": the mascot slides across instead). */
-	cheer?: boolean | "slide";
+	/** A round just got: the cheer shows over the game ("slide": the mascot slides across instead; "fall":
+	    it falls from the top). */
+	cheer?: boolean | "slide" | "fall";
 	style?: CSSProperties;
 }) {
 	const howTo = useContext(HowTo);
@@ -46,7 +47,7 @@ export function Board({ onBack, total, done, children, cheer, style }: {
 			<div ref={stage} className={s.stage}>
 				{box.w > 0 && children(box)}
 			</div>
-			{cheer && <Cheer slide={cheer === "slide"} />}
+			{cheer && <Cheer move={cheer === true ? undefined : cheer} />}
 			{showHow && howTo && <HowToPlay {...howTo} onClose={() => setShowHow(false)} />}
 		</section>
 	);
@@ -86,16 +87,18 @@ export function fit(n: number, box: Box, { gap = 12, shape = 1, most = 260 }: { 
 	return { ...best, size: Math.max(0, Math.floor(best.size)) };
 }
 
-/** How long the mascot takes to slide across (a game's rounds wait this long before the next). */
+/** How long the mascot takes to slide across or fall (a game's rounds wait this long before the next). */
 export const SLIDE_MS = 2600;
 
 /**
- * A big cheer when a round's got: the mascot pops up with a burst of confetti; or (`slide`) slides
- * across from left to right, wiping the game clean, with confetti all the way. No sound.
+ * A big cheer when a round's got: the mascot pops up with a burst of confetti; or slides across from
+ * left to right (`slide`), or falls from the top with the confetti (`fall`), clearing the game away,
+ * confetti all the way. No sound.
  */
-export function Cheer({ slide }: { slide?: boolean }) {
+export function Cheer({ move }: { move?: "slide" | "fall" }) {
+	const slide = !!move;
 	return (
-		<div className={`${s.cheer} ${slide ? s.cheerSlide : ""}`} aria-hidden="true" style={{ "--slide": `${SLIDE_MS}ms` } as CSSProperties}>
+		<div className={`${s.cheer} ${move === "slide" ? s.cheerSlide : move === "fall" ? s.cheerFall : ""}`} aria-hidden="true" style={{ "--slide": `${SLIDE_MS}ms` } as CSSProperties}>
 			<span className={s.confetti}>
 				{Array.from({ length: slide ? 28 : 18 }, (_, i) => (
 					// Spread across the top, each falling at its own speed, drift and spin (the slide's keep coming).

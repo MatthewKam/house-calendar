@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Pic } from "./art";
-import { Board, type Box } from "./parts";
+import { Board, SLIDE_MS, type Box } from "./parts";
 import { makeMap } from "./mazeMap";
-import { any, at, CHEER_MS, type GameProps } from "./rounds";
+import { any, at, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
 /** The map's size in stops (rows, columns) and its keys and gates, by level. Level 1 is already a real maze. */
@@ -40,7 +40,8 @@ export default function Maze({ level, onDone, onBack }: GameProps) {
 	const firstTry = useRef(0);
 	const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 	useEffect(() => () => clearTimeout(timer.current), []);
-	// There: the cheer, then the next maze (or the end).
+	// There: the mascot falls through with the confetti, clearing the maze away, then the next maze (or
+	// the end).
 	function home(perfect: boolean) {
 		if (perfect) firstTry.current += 1;
 		setCheering(true);
@@ -48,17 +49,17 @@ export default function Maze({ level, onDone, onBack }: GameProps) {
 			setCheering(false);
 			if (round + 1 >= ROUNDS) onDone(ROUNDS, firstTry.current);
 			else setRound(round + 1);
-		}, CHEER_MS);
+		}, SLIDE_MS);
 	}
 	return (
-		<Board onBack={onBack} total={ROUNDS} done={round + (cheering ? 1 : 0)} cheer={cheering}>
-			{(box) => <OneMaze key={round} level={level} box={box} onHome={home} />}
+		<Board onBack={onBack} total={ROUNDS} done={round + (cheering ? 1 : 0)} cheer={cheering && "fall"}>
+			{(box) => <OneMaze key={round} level={level} box={box} onHome={home} clearing={cheering} />}
 		</Board>
 	);
 }
 
-/** One maze: a new animal, what it wants and a map. `onHome` once it's there (perfect: few bumps). */
-function OneMaze({ level, box, onHome }: { level: number; box: Box; onHome: (perfect: boolean) => void }) {
+/** One maze: a new animal, what it wants and a map. `onHome` once it's there (perfect: few bumps); `clearing`, it's cleared away. */
+function OneMaze({ level, box, onHome, clearing }: { level: number; box: Box; onHome: (perfect: boolean) => void; clearing: boolean }) {
 	const [levelRows, levelCols, keys] = at(SIZES, level);
 	const look = useMemo(() => any(QUESTS), []);
 	// The level's size, but never so big a square's too small to tap on this screen (a phone on its side):
@@ -160,7 +161,7 @@ function OneMaze({ level, box, onHome }: { level: number; box: Box; onHome: (per
 						{Array.from({ length: keys }, (_, i) => <span key={i} className={i < keysHeld ? "" : s.keyEmpty}><Pic id="key" /></span>)}
 					</span>
 				)}
-				<div className={s.map} style={{ gridTemplateColumns: `repeat(${shown[0].length}, ${square}px)`, "--wall": look.wall, "--path": look.path, "--been": look.been } as CSSProperties}>
+				<div className={`${s.map} ${clearing ? s.cleared : ""}`} style={{ gridTemplateColumns: `repeat(${shown[0].length}, ${square}px)`, "--wall": look.wall, "--path": look.path, "--been": look.been } as CSSProperties}>
 					{shown.map((row, i) => row.map((cell, j) => {
 						const [r, c] = turned ? [j, i] : [i, j];
 						const key = `${r},${c}`;
@@ -170,11 +171,17 @@ function OneMaze({ level, box, onHome }: { level: number; box: Box; onHome: (per
 						return (
 							<button key={`${key}-${bump?.at === key ? bump.n : 0}`} type="button" aria-label={label} onClick={() => tap(r, c)}
 								style={{ width: square, height: square }}
-								className={`${s.square} ${cell === "#" ? s.wall : trail.includes(key) ? s.been : ""} ${bump?.at === key ? s.wiggle : ""}`}>
+								className={`${s.square} ${cell === "#" ? s.wall : trail.includes(key) ? s.been : ""} ${cell === "H" ? s.goalSquare : ""} ${bump?.at === key ? s.wiggle : ""}`}>
 								{cell === "H" && <Pic id={look.wants} label={look.what} />}
 								{cell === "K" && !taken.includes(key) && <Pic id="key" />}
 								{cell === "G" && !opened.includes(key) && <Pic id="gate" />}
 								{here && <span key={trail.length} className={`${s.walker} ${home ? s.hopForever : s.step}`}><Pic id={look.who} label={look.name} /></span>}
+								{/* Where to start: an arrow bobbing at the animal until its first step. */}
+								{here && trail.length === 0 && (
+									<span className={s.startArrow} aria-hidden="true">
+										<svg viewBox="0 0 24 24"><path d="M12 3v14M6 11l6 6 6-6" /></svg>
+									</span>
+								)}
 							</button>
 						);
 					}))}
