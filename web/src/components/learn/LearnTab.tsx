@@ -20,7 +20,7 @@ import s from "../../styles/Learn.module.css";
 /** Each game: its name, its picture, and how to play it (for a grown-up to explain). */
 export const GAMES: Record<Game, { title: string; picture: string; how: string[]; Play: ComponentType<GameProps> }> = {
 	sounds: { title: "Who says that?", picture: "cow", Play: Sounds, how: [
-		"An animal makes its noise. Tap the play button to hear it again.",
+		"An animal's noise is written at the top (\"Moo!\"). Read it together, or tap the play button beside it to hear it.",
 		"Tap the animal that made it. Every animal tapped makes its own noise.",
 		"Higher levels: more animals to choose from, then pets and wild animals too.",
 	] },

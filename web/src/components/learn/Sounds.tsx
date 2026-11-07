@@ -11,8 +11,8 @@ const CHOICES = [2, 3, 3, 4, 4, 6];
 const ROUNDS = [3, 3, 3, 4, 4, 4];
 
 /**
- * Who says that? (age 2): an animal's noise plays (and again with the big play button); tap who made
- * it. Every animal tapped makes its own noise. Farm animals first, then pets, then wild ones, and more
+ * Who says that? (age 2): an animal's noise as a word ("Moo!"), with a play button beside it to hear it
+ * (nothing plays by itself); tap who says it. Every animal tapped makes its own noise. Farm animals first, then pets, then wild ones, and more
  * to choose from as it levels up.
  */
 export default function Sounds({ level, onDone, onBack }: GameProps) {
@@ -29,12 +29,7 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 	const { answer, choices } = plan[rounds.round];
 	const [tapped, setTapped] = useState<{ id: string; n: number } | null>(null);
 
-	// Each round starts by playing the noise.
-	useEffect(() => {
-		setTapped(null);
-		const t = setTimeout(() => noise(answer), 400);
-		return () => clearTimeout(t);
-	}, [answer]);
+	useEffect(() => setTapped(null), [answer]);
 
 	function tap(a: Animal) {
 		noise(a);
@@ -45,11 +40,15 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 	return (
 		<Board onBack={onBack} total={total} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got}>
 			{(box) => {
-				const button = Math.min(110, Math.max(72, box.h * 0.18));
-				const grid = fit(choices.length, { w: box.w, h: box.h - button - 24 }, { gap: 16, most: 300 });
+				const prompt = Math.min(110, Math.max(64, box.h * 0.16));
+				const grid = fit(choices.length, { w: box.w, h: box.h - prompt - 24 }, { gap: 16, most: 300 });
 				return (
 					<div className={s.column}>
-						<Hear size={button} onTap={() => noise(answer)} label="Hear the animal again" />
+						{/* The noise as a word, and the play button beside it if they need to hear it. */}
+						<div className={s.sayRow} style={{ height: prompt }}>
+							<span className={s.sayWord} style={{ fontSize: prompt * 0.62 }}>{answer.says}!</span>
+							<Hear size={prompt * 0.8} onTap={() => noise(answer)} label="Hear it" />
+						</div>
 						<div className={s.grid} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 16 }}>
 							{choices.map((a) => {
 								const isTapped = tapped?.id === a.id;

@@ -17,7 +17,7 @@ export const ANIMALS: Animal[] = [
 	{ id: "sheep", name: "sheep", says: "Baa", home: "farm" },
 	{ id: "horse", name: "horse", says: "Neigh", home: "farm" },
 	{ id: "chicken", name: "chicken", says: "Cluck cluck", home: "farm" },
-	{ id: "goat", name: "goat", says: "Meh", home: "farm" },
+	{ id: "goat", name: "goat", says: "Maa", home: "farm" },
 	{ id: "dog", name: "dog", says: "Woof", home: "house" },
 	{ id: "cat", name: "cat", says: "Meow", home: "house" },
 	{ id: "mouse", name: "mouse", says: "Squeak", home: "house" },

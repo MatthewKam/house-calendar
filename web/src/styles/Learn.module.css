@@ -397,6 +397,19 @@
 	}
 }
 
+/* Who says that?: the noise as a word, and its play button. */
+.sayRow {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+}
+.sayWord {
+	font-weight: 800;
+	line-height: 1;
+	color: var(--c, var(--accent));
+}
+
 /* Pictures to tap (who says that?). */
 .tile {
 	display: grid;
