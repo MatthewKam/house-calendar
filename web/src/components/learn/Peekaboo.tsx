@@ -94,9 +94,12 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 						<Scenery scene={place.scene} />
 						<div className={`${s.bushes} ${inside ? s.windows : ""}`} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)` }}>
 							{bushes.map((b, i) => (
-								<button key={i} type="button" className={s.bushSpot} onClick={() => tap(i)}
+								// With nobody left to hide there, it sinks away (and can't be tapped).
+								<button key={i} type="button" className={`${s.bushSpot} ${b.animal ? "" : s.gone}`} onClick={() => tap(i)}
+									disabled={!b.animal}
 									style={{ width: grid.size, height: grid.size / shape }}
-									aria-label={b.out && b.animal ? `${b.animal.name}: tap to hear it again` : b.animal ? `A ${place.name}. Who's hiding?` : `A ${place.name}`}>
+									aria-hidden={!b.animal}
+									aria-label={b.out && b.animal ? `${b.animal.name}: tap to hear it again` : `A ${place.name}. Who's hiding?`}>
 									{/* A window: the room behind it, dark until someone looks out. */}
 									{inside && <span className={s.room} style={{ left: grid.size * 0.25, top: grid.size * 0.25, width: grid.size * 0.5, height: grid.size * 0.57 }} />}
 									{b.out && b.animal && (
