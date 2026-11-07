@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { fromDayKey, startOfWeek } from "../lib/dates";
 import { api } from "../lib/api";
+import { useMediaQuery } from "../lib/useMediaQuery";
 import {
 	useBuckets,
 	useLearn,
@@ -13,7 +14,7 @@ import {
 	useTasksDone,
 } from "../lib/queries";
 import { momentKind } from "../lib/moments";
-import { didTask, dueOn, percent, taskProgress, tasksFor, TIMES } from "../lib/tasks";
+import { didTask, dueOn, percent, taskProgress, tasksFor } from "../lib/tasks";
 import type { Member, Task } from "../lib/types";
 import { textOn } from "../lib/color";
 import KidJars from "./KidJars";
@@ -38,10 +39,10 @@ interface Props {
 }
 
 /** Required tasks by part of the day, then goals: as on the Tasks page. */
-const GROUPS: { label: string; has: (t: Task) => boolean }[] = [
-	...TIMES.map((t) => ({ label: t.label, has: (c: Task) => c.required && c.time === t.id })),
-	{ label: "Goals", has: (c: Task) => !c.required },
-];
+/** Daily tasks in the order of the day: morning, anytime, then evening. */
+const ORDER = { morning: 0, evening: 2 } as Record<string, number>;
+const byTime = (a: Task, b: Task) => (ORDER[a.time ?? ""] ?? 1) - (ORDER[b.time ?? ""] ?? 1);
+
 
 /** Learn: a lightbulb, drawn like the main nav's icons. */
 const LearnIcon = () => (
@@ -87,6 +88,15 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	// A grown-up typed their PIN so this kid can put stars in jars (until they switch kids or leave).
 	const [jarsFor, setJarsFor] = useState<string | null>(null);
 	const [asking, setAsking] = useState<{ body: string; then: () => void } | null>(null);
+	// The potty chart starts folded away (it's a tap to open).
+	const [pottyOpen, setPottyOpen] = useState(false);
+	const pottyRef = useRef<HTMLElement>(null);
+	// The potty chart header's pencil: a count, bumped each tap.
+	const [pottyEdit, setPottyEdit] = useState(0);
+	// Opening it scrolls down to it.
+	useEffect(() => {
+		if (pottyOpen) pottyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+	}, [pottyOpen]);
 
 	if (!kid) {
 		return (
@@ -104,45 +114,57 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 		const stars = buckets.find((b) => b.memberId === kid.id)?.stars ?? 0;
 		const chart = potty.find((c) => c.memberId === kid.id);
 
+		/** A task's tile: tap to tick it (or untick it). */
+		const tile = (t: Task) => {
+			const ticked = didTask(done, t, kid.id, today);
+			return (
+				<button key={t.id} type="button" aria-pressed={ticked} data-todo={ticked ? undefined : ""}
+					className={`${s.tile} ${ticked ? s.ticked : ""} ${ticked && popped === t.id ? s.pop : ""}`}
+					onClick={() => tick(t)}>
+					<span className={s.tileIcon} aria-hidden="true">{t.icon ?? (t.required ? "✅" : "⭐")}</span>
+					<span className={s.tileTitle}>{t.title}</span>
+					{!t.required && t.points > 0 && (
+						<span className={s.tileStars}>+{t.points} <StarIcon className={s.tileStar} /></span>
+					)}
+					{/* In the corner: a goal says so; a daily task, morning or evening (anytime ones have none). */}
+					{!t.required ? <span className={s.tileWhen}>Goal</span>
+						: t.time && <span className={s.tileWhen}>{t.time === "morning" ? "AM" : "PM"}</span>}
+					{ticked && <span className={s.check} aria-hidden="true">✓</span>}
+				</button>
+			);
+		};
+
 		function tick(t: Task) {
 			const ticked = didTask(done, t, kid.id, today);
 			if (!ticked) setPopped(t.id);
 			setDone.mutate({ taskId: t.id, memberId: kid.id, day: today, done: !ticked });
 		}
 
-		const myDay = (
-			<section className={s.group} aria-label="My day">
-				<h2 className={s.groupHead}>My day</h2>
-				<div className={s.hero}>
-					{/* Daily tasks: how far through today's required ones. */}
-					<div className={s.stat}>
-						<span className={s.statLabel}>Daily tasks</span>
-						<div className={s.heroRow}>
-							<span className={s.bar} aria-hidden="true"><span /></span>
-							<span className={s.statValue}>{!p ? "None today" : pct === 100 ? "All done! 🎉" : `${p.done} of ${p.due} done`}</span>
-						</div>
-					</div>
-					{/* Stars: what's in their bucket to put in jars. */}
-					<div className={s.stat}>
-						<span className={s.statLabel}>Stars to spend</span>
-						<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
-							<StarIcon className={s.star} /> {stars}
+		// Daily tasks: a punch card, a circle for each of today's required tasks, filled in as they're done.
+		const daily = p && (
+			<section className={s.daily} aria-label="Daily tasks">
+				<h2 className={s.groupHead}>Daily tasks</h2>
+				<div className={s.punches} role="img" aria-label={`${p.done} of ${p.due} done`}>
+					{Array.from({ length: p.due }, (_, i) => (
+						<span key={i} className={`${s.punch} ${i < p.done ? s.punched : ""}`}>
+							{i < p.done && <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
 						</span>
-						{stickers.length > 0 && (
-							<span className={s.caught}>
-								Caught being good:{" "}
-								<span className={s.stickers} aria-label={`${stickers.length} today`}>
-									{stickers.map((m) => momentKind(m.kind).emoji).join("")}
-								</span>
-							</span>
-						)}
-					</div>
+					))}
+					{pct === 100 && <span className={s.allDone}>All done! 🎉</span>}
 				</div>
+				{stickers.length > 0 && (
+					<span className={s.caught}>
+						Caught being good:{" "}
+						<span className={s.stickers} aria-label={`${stickers.length} today`}>
+							{stickers.map((m) => momentKind(m.kind).emoji).join("")}
+						</span>
+					</span>
+				)}
 			</section>
 		);
 
 		return (
-			<div className={s.shell} style={{ "--c": kid.color, "--on": textOn(kid.color), "--p": `${pct}%` } as CSSProperties}>
+			<div className={s.shell} style={{ "--c": kid.color, "--on": textOn(kid.color) } as CSSProperties}>
 			<nav className={s.kidNav} aria-label="Kid mode">
 				{tabs.map((t) => (
 					<button key={t.id} type="button" className={s.kidTab} aria-current={tab === t.id ? "page" : undefined}
@@ -151,6 +173,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 						{t.label}
 					</button>
 				))}
+				<LeaveButton onLeave={onLeave} inNav />
 			</nav>
 			<main className={s.page}>
 				<div className={s.top}>
@@ -165,45 +188,51 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 							</button>
 						))}
 					</div>
-					<LeaveButton onLeave={onLeave} />
 				</div>
 
-				<h1 className={s.name}>{kid.name}</h1>
+				{/* Their name, with the stars they have to put in jars. */}
+				<div className={s.nameRow}>
+					<h1 className={s.name}>{kid.name}</h1>
+					<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
+						<StarIcon className={s.star} /> {stars}
+					</span>
+				</div>
 
 				{tab === "today" && <KidToday today={today} kid={kid} />}
 
-				{tab === "tasks" && chart && (
-					<PottyCard key={kid.id} kid={kid} chart={chart} canEdit
-						askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
+				{tab === "tasks" && daily}
+				{tab === "tasks" && dueToday.length > 0 && (
+					// Pages to swipe between: daily tasks (morning to evening), then goals.
+					<TaskPages kidId={kid.id} hold={pottyOpen} pages={[
+						{ label: "Daily tasks", tiles: dueToday.filter((t) => t.required).sort(byTime).map(tile) },
+						{ label: "Goals", tiles: dueToday.filter((t) => !t.required).map(tile) },
+					]} />
 				)}
-				{tab === "tasks" && myDay}
-				{tab === "tasks" && GROUPS.map((g) => {
-					const group = dueToday.filter(g.has);
-					if (group.length === 0) return null;
-					return (
-						<section key={g.label} className={s.group} aria-label={g.label}>
-							<h2 className={s.groupHead}>{g.label}</h2>
-							<div className={s.tiles}>
-								{group.map((t) => {
-									const ticked = didTask(done, t, kid.id, today);
-									return (
-										<button key={t.id} type="button" aria-pressed={ticked}
-											className={`${s.tile} ${ticked ? s.ticked : ""} ${ticked && popped === t.id ? s.pop : ""}`}
-											onClick={() => tick(t)}>
-											<span className={s.tileIcon} aria-hidden="true">{t.icon ?? (t.required ? "✅" : "⭐")}</span>
-											<span className={s.tileTitle}>{t.title}</span>
-											{!t.required && t.points > 0 && (
-												<span className={s.tileStars}>+{t.points} <StarIcon className={s.tileStar} /></span>
-											)}
-											{ticked && <span className={s.check} aria-hidden="true">✓</span>}
-										</button>
-									);
-								})}
-							</div>
-						</section>
-					);
-				})}
 				{tab === "tasks" && dueToday.length === 0 && <p className={s.none}>Nothing to do today. Have fun! 🌈</p>}
+				{/* The potty chart, under the tasks: folded away until it's tapped open. */}
+				{tab === "tasks" && chart && (
+					<section ref={pottyRef} className={s.pottyFold}>
+						{/* The header: tap it to open or close; open, a pencil edits the chart (asking for a PIN). */}
+						<div className={`${s.pottyHead} ${pottyOpen ? s.pottyHeadOpen : ""}`}>
+							<button type="button" className={s.pottyToggle} aria-expanded={pottyOpen} onClick={() => setPottyOpen(!pottyOpen)}>
+								<span aria-hidden="true">🚽</span> Potty chart
+							</button>
+							{pottyOpen && (
+								<button type="button" className={s.pottyIcon} aria-label="Edit the potty chart" onClick={() => setPottyEdit((n) => n + 1)}>
+									<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" /></svg>
+								</button>
+							)}
+							<button type="button" className={s.pottyIcon} aria-label={pottyOpen ? "Close the potty chart" : "Open the potty chart"}
+								onClick={() => setPottyOpen(!pottyOpen)}>
+								<svg className={s.pottyChevron} viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+							</button>
+						</div>
+						{pottyOpen && (
+							<PottyCard key={kid.id} kid={kid} chart={chart} canEdit attached editAsked={pottyEdit}
+								askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
+						)}
+					</section>
+				)}
 
 				{tab === "learn" && learning && <LearnTab key={kid.id} kid={kid} today={today} learn={learning} />}
 
@@ -240,17 +269,108 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	);
 }
 
-/** A small exit button in the corner: it asks for a grown-up's PIN. */
-function LeaveButton({ onLeave }: { onLeave: () => void }) {
+const BLOCK_GAP = 12;
+/** How much of the next page peeks in (px). */
+const PEEK = 36;
+
+/**
+ * Today's tasks as pages to swipe between, a page at a time, each page of
+ * blocks sized so they all fit (no scrolling up and down), goals straight after the daily tasks. Upright,
+ * six to a page; on its side, four. The next page peeks in at the side, and dots underneath show which page it's on.
+ * It opens at the page with the first one not done yet.
+ */
+function TaskPages({ kidId, pages, hold }: {
+	kidId: string;
+	pages: { label: string; tiles: ReactNode[] }[];
+	/** Keep the size they are (the potty chart's opened under them: the screen scrolls to it instead). */
+	hold: boolean;
+}) {
+	const row = useRef<HTMLDivElement>(null);
+	const [box, setBox] = useState({ w: 0, h: 0 });
+	const holding = useRef(hold);
+	holding.current = hold;
+	// The screen's way up (not the pages' own box, which the potty chart under it can make wide).
+	const upright = useMediaQuery("(orientation: portrait)");
+	const [at, setAt] = useState(0);
+	useLayoutEffect(() => {
+		const el = row.current;
+		if (!el) return;
+		const measure = () => setBox((b) => (holding.current ? { ...b, w: el.clientWidth } : { w: el.clientWidth, h: el.clientHeight }));
+		measure();
+		const watch = new ResizeObserver(measure);
+		watch.observe(el);
+		return () => watch.disconnect();
+	}, []);
+	// Opening (or switching kids): the page with the first one not done yet.
+	const laidOut = box.w > 0;
+	useEffect(() => {
+		const el = row.current;
+		if (!el || !laidOut) return;
+		const pageOf = el.querySelector("[data-todo]")?.closest("section") as HTMLElement | null;
+		el.scrollTo({ left: pageOf?.offsetLeft ?? 0 });
+		// Not as each one's ticked, or when the screen turns.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [kidId, laidOut]);
+
+	// Lay each out: as one page if its blocks are big enough, or split over as many pages as it takes.
+	const filled = pages.filter((p) => p.tiles.length > 0);
+	const lay = (peek: boolean) => {
+		const w = box.w - (peek ? PEEK : 0);
+		// Room under the blocks for their raised edge.
+		const h = box.h - 6;
+		// Upright, six to a page (two across, three down); on its side, four in a row. The next peeks in.
+		const pagesOf = (label: string, tiles: ReactNode[]) => {
+			const [cols, rows] = upright ? [2, 3] : [4, 1];
+			const size = Math.floor(Math.min((w - BLOCK_GAP * (cols - 1)) / cols, (h - BLOCK_GAP * (rows - 1)) / rows, 280));
+			const per = cols * rows;
+			return Array.from({ length: Math.ceil(tiles.length / per) }, (_, i) => ({
+				label: `${label} ${i + 1}`, tiles: tiles.slice(i * per, (i + 1) * per), cols, size,
+			}));
+		};
+		// One run: daily tasks, then goals straight after.
+		return pagesOf("Tasks", filled.flatMap((p) => p.tiles));
+	};
+	const once = lay(false);
+	const shown = once.length > 1 ? lay(true) : once;
 	return (
-		<button type="button" className={s.leave} aria-label="Grown-ups: leave kid mode" title="Grown-ups: leave kid mode"
-			onClick={onLeave}>
+		<div className={s.pages} style={hold && box.h ? { flex: "none" } : undefined}>
+			<div ref={row} className={s.pageRow} style={hold && box.h ? { flex: "none", height: box.h } : undefined}
+				onScroll={(e) => {
+					const el = e.currentTarget;
+					const width = (el.firstElementChild as HTMLElement | null)?.offsetWidth ?? el.clientWidth;
+					setAt(Math.min(shown.length - 1, Math.round(el.scrollLeft / (width + BLOCK_GAP))));
+				}}>
+				{box.w > 0 && shown.map((p) => (
+					<section key={p.label} className={s.taskPage} aria-label={p.label}
+						// As wide as its blocks, so the next page's follow on (and peek in) right after.
+						style={{ flexBasis: p.cols * p.size + (p.cols - 1) * BLOCK_GAP }}>
+						<div className={s.blocks} style={{ gridTemplateColumns: `repeat(${p.cols}, ${p.size}px)`, "--size": `${p.size}px` } as CSSProperties}>
+							{p.tiles}
+						</div>
+					</section>
+				))}
+			</div>
+			{shown.length > 1 && (
+				<div className={s.pageDots} aria-hidden="true">
+					{shown.map((p, i) => <span key={p.label} className={at === i ? s.pageDotOn : ""} />)}
+				</div>
+			)}
+		</div>
+	);
+}
+
+/** The way out: it asks for a grown-up's PIN. Last in the nav, or (with no kids, so no nav) a small button. */
+function LeaveButton({ onLeave, inNav }: { onLeave: () => void; inNav?: boolean }) {
+	return (
+		<button type="button" className={inNav ? `${s.kidTab} ${s.leaveTab}` : s.leave} aria-label="Grown-ups: leave kid mode"
+			title="Grown-ups: leave kid mode" onClick={onLeave}>
 			<svg viewBox="0 0 24 24" aria-hidden="true">
 				{/* A door: its frame, the door standing ajar, and the knob. */}
 				<path d="M4 21h16M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17" />
 				<path d="M6 3.2l7 2.3v15.5" />
 				<circle cx="11" cy="12.5" r="0.9" fill="currentColor" stroke="none" />
 			</svg>
+			{inNav && "Exit"}
 		</button>
 	);
 }

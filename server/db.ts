@@ -730,6 +730,21 @@ const migrations: string[] = [
   -- At most one star a day.
   CREATE UNIQUE INDEX learn_star_a_day ON learn_sessions(member_id, day) WHERE stars > 0;
   `,
+  // Learning's games (learn.ts): the last play (learn_sessions rowid) when each level was set or moved
+  // up to, so only plays after count toward moving up again. (learn_levels.skill and
+  // learn_sessions.skill now hold the game.)
+  `
+  ALTER TABLE learn_levels ADD COLUMN since_play INTEGER NOT NULL DEFAULT 0;
+  `,
+  // Learning's animal noises, recorded by a grown-up (learn.ts): played instead of the built-in ones.
+  `
+  CREATE TABLE learn_sounds (
+    animal     TEXT PRIMARY KEY,
+    mime       TEXT NOT NULL,
+    audio      BLOB NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

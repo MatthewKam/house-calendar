@@ -1,10 +1,8 @@
+import { GAMES } from './learn/LearnTab';
+import LearnSounds from './LearnSounds';
 import { useLearn, useSetLearn } from '../lib/queries';
-import type { LearnState, Member, Skill } from '../lib/types';
+import type { LearnState, Member } from '../lib/types';
 import s from '../styles/MembersPanel.module.css';
-
-const SKILL_NAMES: Record<Skill, string> = {
-  animals: 'Animal sounds', story: 'Picture stories', counting: 'Counting', letters: 'Letters', feelings: 'Feelings', patterns: 'Patterns',
-};
 
 /** The word beside Learning in Settings while it's folded: who has it on. */
 export function learnNote(kids: LearnState[], members: Member[]) {
@@ -13,9 +11,8 @@ export function learnNote(kids: LearnState[], members: Member[]) {
 }
 
 /**
- * Learning in kid mode, for each kid: on or off, and (from age 3) whether they can level up. With
- * leveling up on, each skill moves up by itself after a few days of getting it right; the levels show
- * here.
+ * Learning in kid mode, for each kid: on or off, and each of their games' level. A game moves up by
+ * itself after 3 perfect plays in a row; here a grown-up can move it up or down.
  */
 export default function LearnSettings({ members, today }: { members: Member[]; today: string }) {
   const kids = useLearn(today).data ?? [];
@@ -23,7 +20,10 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
   if (kids.length === 0) return <p className={s.hint}>Add a kid with a birthday first.</p>;
   return (
     <section className={s.bare}>
-      <p className={s.hint}>A short activity a day in kid mode's Learn tab: pictures, no wrong answers. Finishing earns a star (from age 4).</p>
+      <p className={s.hint}>
+        Games in kid mode's Learn tab: pictures and sounds, no wrong answers, and no stars. A game moves up a level by
+        itself after 3 perfect plays in a row.
+      </p>
       {kids.map((k) => {
         const kid = members.find((m) => m.id === k.memberId);
         if (!kid) return null;
@@ -34,29 +34,24 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
                 onChange={(e) => set.mutate({ memberId: k.memberId, enabled: e.target.checked })} />
               <b>{kid.name}</b>: Learn in kid mode
             </label>
-            {k.enabled && (
-              <>
-                <label className={s.saverRow}>
-                  <input type="checkbox" checked={k.levelUp} disabled={!k.canLevelUp || set.isPending}
-                    onChange={(e) => set.mutate({ memberId: k.memberId, levelUp: e.target.checked })} />
-                  Can level up
-                </label>
-                <p className={s.hint}>
-                  {!k.canLevelUp ? 'Leveling up opens at age 3. Until then, everything stays at level 1.'
-                    : k.levelUp ? 'Each skill moves up by itself after 3 days of getting it all right.'
-                    : 'Off: everything stays at level 1.'}
-                </p>
-                {k.levelUp && (
-                  <p className={s.hint}>
-                    {Object.entries(k.levels).map(([skill, level]) => `${SKILL_NAMES[skill as Skill]}: level ${level}`).join(' · ')}
-                  </p>
-                )}
-              </>
-            )}
+            {k.enabled && k.games.map(({ game, level, maxLevel }) => (
+              <div key={game} className={s.learnGame}>
+                <span>{GAMES[game].title}</span>
+                <button type="button" className={s.learnStep} aria-label={`${GAMES[game].title}: down a level`}
+                  disabled={level <= 1 || set.isPending}
+                  onClick={() => set.mutate({ memberId: k.memberId, levels: { [game]: level - 1 } })}>−</button>
+                <span className={s.learnLevel}>Level {level} of {maxLevel}</span>
+                <button type="button" className={s.learnStep} aria-label={`${GAMES[game].title}: up a level`}
+                  disabled={level >= maxLevel || set.isPending}
+                  onClick={() => set.mutate({ memberId: k.memberId, levels: { [game]: level + 1 } })}>+</button>
+              </div>
+            ))}
           </div>
         );
       })}
       {set.isError && <p className={s.error}>{set.error.message}</p>}
+      <h3 className={s.soundsHead}>Animal sounds</h3>
+      <LearnSounds />
     </section>
   );
 }

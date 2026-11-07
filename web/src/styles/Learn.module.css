@@ -1,4 +1,52 @@
-/* Kid mode's Learn tab (components/learn): one activity a day, big pictures in the kid's color (--c). */
+/* Kid mode's Learn tab (components/learn): big pictures and big buttons in the kid's color (--c). */
+
+/* The games to pick from. */
+.menu {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1rem;
+}
+.gameTile {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 1rem 0.6rem 0.8rem;
+	border-radius: 1.6rem;
+	background: var(--surface);
+	box-shadow: 0 0.4rem 1.2rem rgb(29 31 35 / 0.08);
+	transition: transform 0.15s ease;
+}
+.gameTile:active {
+	transform: scale(0.96);
+}
+.gamePic {
+	width: min(9rem, 30vw);
+	height: min(9rem, 30vw);
+}
+.gameName {
+	font-size: 1.25rem;
+	font-weight: 800;
+	text-align: center;
+}
+.gameLevel {
+	display: flex;
+	gap: 0.3rem;
+	min-height: 0.7rem;
+}
+.levelDot {
+	width: 0.7rem;
+	height: 0.7rem;
+	border-radius: 50%;
+	background: var(--c, var(--accent));
+}
+@media (min-width: 900px) {
+	.menu {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
+/* Well done. */
 .start {
 	display: flex;
 	flex-direction: column;
@@ -9,16 +57,23 @@
 	background: var(--surface);
 	text-align: center;
 }
-.startPicture {
-	font-size: 7rem;
-	line-height: 1;
+.mascot {
+	width: 11rem;
+	height: auto;
+	border-radius: 1.2rem;
 }
 .startTitle {
 	margin: 0;
-	font-size: 1.8rem;
+	font-size: 2rem;
+}
+.startButtons {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0.8rem;
 }
 .go {
-	min-width: 13rem;
+	min-width: 12rem;
 	min-height: 4.4rem;
 	padding: 0 2rem;
 	border-radius: 999px;
@@ -28,35 +83,97 @@
 	font-weight: 800;
 }
 .quiet {
-	min-height: 3.2rem;
-	padding: 0 1.4rem;
+	min-height: 4.4rem;
+	padding: 0 1.6rem;
 	border-radius: 999px;
-	border: 2px solid color-mix(in srgb, var(--c, var(--accent)) 50%, white);
+	border: 3px solid color-mix(in srgb, var(--c, var(--accent)) 50%, white);
 	background: var(--surface);
-	font-size: 1.15rem;
-	font-weight: 700;
+	font-size: 1.3rem;
+	font-weight: 800;
 }
 .note {
 	margin: 0;
 	color: var(--muted);
-	font-size: 1.05rem;
+	font-size: 1.1rem;
 }
 
-/* An activity. */
+/* A game: the whole screen, over kid mode's nav and name switches. */
 .board {
+	position: fixed;
+	inset: 0;
+	z-index: 15;
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: 0.6rem;
+	padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) max(0.75rem, env(safe-area-inset-bottom))
+		max(0.75rem, env(safe-area-inset-left));
+	box-sizing: border-box;
+	background: color-mix(in srgb, var(--c, var(--accent)) 8%, var(--bg));
+	overflow: hidden;
 }
 .top {
+	flex: none;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
 	gap: 1rem;
+}
+.stage {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+	display: flex;
+}
+.back {
+	width: 3.2rem;
+	height: 3.2rem;
+	flex: none;
+	display: grid;
+	place-items: center;
+	border-radius: 50%;
+	background: var(--surface);
+	box-shadow: 0 0.2rem 0.6rem rgb(29 31 35 / 0.1);
+}
+.back svg {
+	width: 1.8rem;
+	height: 1.8rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 3;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.howLink {
+	margin-right: auto;
+	padding: 0.4rem 0.6rem;
+	background: none;
+	color: var(--muted);
+	font-size: 1rem;
+	font-weight: 700;
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+.howHead {
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+}
+.howMascot {
+	width: 4rem;
+	height: auto;
+	flex: none;
+}
+.howList {
+	margin: 0;
+	padding-left: 1.2rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	line-height: 1.4;
 }
 .dots {
 	display: flex;
 	gap: 0.5rem;
+	margin-left: auto;
 }
 .dot {
 	width: 1.1rem;
@@ -68,251 +185,654 @@
 .dotOn {
 	background: var(--c, var(--accent));
 }
-.prompt {
-	margin: 0;
-	font-size: 1.7rem;
-	font-weight: 800;
-	text-align: center;
-	line-height: 1.25;
-	min-height: 2.2em;
+
+/* The games size their own pieces, so not the app's usual smallest button height. */
+.board button {
+	min-height: 0;
 }
-.say {
-	margin: 0;
-	font-size: 3.6rem;
-	font-weight: 800;
-	text-align: center;
-	line-height: 1.1;
-	color: var(--c, var(--accent));
-}
-.hint {
-	margin: 0;
-	text-align: center;
-	color: var(--muted);
-	font-size: 1.1rem;
-	min-height: 1.4em;
-}
-.tiles {
-	display: grid;
-	grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
-	gap: 0.9rem;
-}
-.tile {
-	min-height: 9rem;
+
+/* Layouts inside the stage (each game sizes its pieces to the stage). */
+.column,
+.row {
+	flex: 1;
+	min-width: 0;
 	display: flex;
-	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	gap: 0.3rem;
-	padding: 0.5rem;
+	gap: 1rem;
+}
+.column {
+	flex-direction: column;
+}
+.row {
+	gap: 1.5rem;
+}
+.columnTight,
+.rowTight {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.8rem;
+}
+.columnTight {
+	flex-direction: column;
+}
+.rowTight {
+	gap: 2rem;
+}
+.grid {
+	display: grid;
+	justify-content: center;
+}
+
+/* The play button: hear it again. */
+.hear {
+	flex: none;
+	display: grid;
+	place-items: center;
+	border-radius: 50%;
+	background: var(--c, var(--accent));
+	color: var(--on, var(--surface));
+	box-shadow: 0 0.3rem 0 color-mix(in srgb, var(--c, var(--accent)) 60%, black);
+}
+.hear:active {
+	transform: translateY(0.2rem);
+	box-shadow: none;
+}
+.hear svg {
+	width: 55%;
+	height: 55%;
+	fill: currentColor;
+	margin-left: 8%;
+}
+
+/* The cheer: the mascot pops up with confetti, over the game, for a moment. */
+.cheer {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	display: grid;
+	place-items: center;
+	z-index: 5;
+}
+.cheerMascot {
+	width: min(44vmin, 18rem);
+	height: auto;
+	border-radius: 1.6rem;
+	box-shadow: 0 1rem 3rem rgb(29 31 35 / 0.25);
+	animation: cheer 1.6s cubic-bezier(0.3, 1.5, 0.5, 1) forwards;
+}
+@keyframes cheer {
+	0% {
+		transform: scale(0.2) rotate(-12deg);
+		opacity: 0;
+	}
+	20% {
+		transform: scale(1.05) rotate(4deg);
+		opacity: 1;
+	}
+	30%,
+	80% {
+		transform: scale(1) rotate(0);
+		opacity: 1;
+	}
+	100% {
+		transform: scale(0.9);
+		opacity: 0;
+	}
+}
+.confetti {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+}
+.confetti i {
+	position: absolute;
+	width: 0.9rem;
+	height: 1.3rem;
+	border-radius: 0.2rem;
+	background: hsl(calc(var(--i) * 47deg) 80% 58%);
+	animation: burst 1.3s ease-out forwards;
+	--a: calc(var(--i) * 25.7deg);
+}
+@keyframes burst {
+	from {
+		transform: rotate(var(--a)) translateY(0) rotate(0);
+		opacity: 1;
+	}
+	to {
+		transform: rotate(var(--a)) translateY(-38vmin) rotate(540deg);
+		opacity: 0;
+	}
+}
+
+/* Pictures to tap (who says that?). */
+.tile {
+	display: grid;
+	place-items: center;
+	padding: 8%;
 	border-radius: 1.6rem;
 	border: 4px solid transparent;
 	background: var(--surface);
 	box-shadow: 0 0.4rem 1.2rem rgb(29 31 35 / 0.07);
-	font-size: 1.3rem;
-	font-weight: 700;
 }
-.tilePicture {
-	font-size: 5rem;
-	line-height: 1;
+.tile svg {
+	width: 100%;
+	height: 100%;
 }
 .tileRight {
 	border-color: var(--c, var(--accent));
 	background: color-mix(in srgb, var(--c, var(--accent)) 14%, var(--surface));
 }
-.letter {
-	font-size: 4.2rem;
-	font-weight: 800;
-	color: var(--c, var(--accent));
-}
-.numbers {
-	display: flex;
-	justify-content: center;
-	flex-wrap: wrap;
-	gap: 0.8rem;
-}
-.number {
-	width: 5.2rem;
-	height: 5.2rem;
-	border-radius: 1.3rem;
-	border: 4px solid var(--c, var(--accent));
-	background: var(--surface);
-	font-size: 2.4rem;
-	font-weight: 800;
-}
-/* Things to count, or a row of a pattern. */
-.things {
+
+/* Numbers and letters to pick. */
+.choices {
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: center;
 	align-items: center;
-	gap: 0.6rem;
-	padding: 1rem;
-	border-radius: 1.6rem;
-	background: var(--surface);
+	justify-content: center;
+	gap: 0.8rem;
+	transition: opacity 0.2s ease;
 }
-.thing {
-	position: relative;
-	width: 5.4rem;
-	height: 5.4rem;
+.choice {
 	display: grid;
 	place-items: center;
+	padding: 0;
 	border-radius: 1.2rem;
-	background: color-mix(in srgb, var(--text) 4%, var(--surface));
-	font-size: 3.4rem;
+	border: 3px solid color-mix(in srgb, var(--c, var(--accent)) 45%, white);
+	background: var(--surface);
+	font-weight: 800;
 	line-height: 1;
+}
+.choice:disabled {
+	cursor: default;
+}
+.choiceGo {
+	background: var(--c, var(--accent));
+	border-color: var(--c, var(--accent));
+	color: var(--on, var(--surface));
+}
+.choiceRight {
+	background: color-mix(in srgb, var(--c, var(--accent)) 18%, var(--surface));
+	border-color: var(--c, var(--accent));
+}
+.numPad {
+	display: grid;
+	gap: 8px;
+	justify-content: center;
+	transition: opacity 0.2s ease;
+}
+
+/* Count the apples. */
+.fruit {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 6%;
+	box-sizing: border-box;
+	border-radius: 1.2rem;
+	background: var(--surface);
+	box-shadow: 0 0.3rem 0.8rem rgb(29 31 35 / 0.06);
+}
+.fruit svg {
+	width: 100%;
+	flex: 1;
+	min-height: 0;
 }
 .counted {
 	background: color-mix(in srgb, var(--c, var(--accent)) 16%, var(--surface));
 }
-.badge {
-	position: absolute;
-	top: -0.5rem;
-	right: -0.5rem;
-	width: 2.1rem;
-	height: 2.1rem;
-	border-radius: 50%;
-	display: grid;
-	place-items: center;
-	background: var(--c, var(--accent));
-	color: var(--on, var(--surface));
-	font-size: 1.1rem;
+.fruitNumber {
 	font-weight: 800;
-}
-.gap {
-	border: 3px dashed var(--c, var(--accent));
-	background: var(--surface);
-	font-size: 2.4rem;
-	font-weight: 800;
+	line-height: 1.1;
+	min-height: 1.1em;
 	color: var(--c, var(--accent));
 }
-.sum {
+
+/* Math. */
+.plates {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	gap: 0.6rem;
-	font-size: 3rem;
-	font-weight: 800;
-	color: var(--c, var(--accent));
 }
-.group {
+.side {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+}
+.sign {
+	min-width: 2em;
+	padding: 0 0.4em;
+	border-radius: 0.5em;
+	background: #f6e3c0;
+	border: 3px solid #8a5a3b;
+	font-weight: 800;
+	text-align: center;
+	line-height: 1.3;
+}
+.signDone {
+	background: color-mix(in srgb, var(--c, var(--accent)) 20%, white);
+	border-color: var(--c, var(--accent));
+}
+.plate,
+.bowl {
 	display: flex;
 	flex-wrap: wrap;
+	align-content: center;
 	justify-content: center;
-	gap: 0.3rem;
-	max-width: 13rem;
-	padding: 0.7rem;
-	border-radius: 1.3rem;
+	gap: 2px;
+	padding: 6%;
+	box-sizing: border-box;
+	border-radius: 50%;
 	background: var(--surface);
-	font-size: 2.6rem;
-	line-height: 1;
+	box-shadow: inset 0 0 0 0.5rem color-mix(in srgb, var(--text) 6%, var(--surface)), 0 0.3rem 0.8rem rgb(29 31 35 / 0.1);
 }
-.next {
-	align-self: center;
-	min-width: 11rem;
-	min-height: 4rem;
-	border-radius: 999px;
+.bowl {
+	border-radius: 0 0 50% 50% / 0 0 70% 70%;
+	background: color-mix(in srgb, #8a5a3b 18%, var(--surface));
+}
+.plateOver {
+	box-shadow: inset 0 0 0 0.5rem #f4c430, 0 0.3rem 0.8rem rgb(29 31 35 / 0.1);
+}
+.onPlate {
+	padding: 0;
+	background: none;
+}
+.onPlate svg,
+.basket svg {
+	width: 100%;
+	height: 100%;
+}
+.basket {
+	position: relative;
+	padding: 0.5rem;
+	border-radius: 1.2rem;
+	background: #e8c48a;
+	box-shadow: 0 0.3rem 0 #b48a4c;
+}
+.basket span {
+	position: absolute;
+	right: -0.5rem;
+	top: -0.5rem;
+	width: 1.8rem;
+	height: 1.8rem;
+	display: grid;
+	place-items: center;
+	border-radius: 50%;
 	background: var(--c, var(--accent));
 	color: var(--on, var(--surface));
-	font-size: 1.5rem;
+	font-size: 1.4rem;
 	font-weight: 800;
+	line-height: 1;
 }
-.nextSpace {
-	min-height: 4rem;
-	display: flex;
-	justify-content: center;
+.plus {
+	font-size: 2.4rem;
+	font-weight: 800;
+	color: var(--muted);
 }
-/* A picture story: one page at a time. */
-.page {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
-}
-.pageBody {
-	flex: 1;
-	min-width: 0;
+.answerArea {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	gap: 0.8rem;
-	padding: 1.2rem;
-	border-radius: 1.8rem;
-	background: var(--surface);
-	text-align: center;
 }
-.pagePicture {
-	font-size: 9rem;
-	line-height: 1;
-	background: none;
-	border: none;
-	padding: 0;
+.equals {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
 }
-.pageLine {
-	margin: 0;
-	font-size: 1.7rem;
+.answer {
+	padding: 0.1em 0.3em;
+	border-radius: 1rem;
+	border: 3px dashed var(--muted);
 	font-weight: 800;
+	text-align: center;
+	line-height: 1.2;
 }
-.arrow {
-	flex: none;
-	width: 4.4rem;
-	height: 4.4rem;
-	border-radius: 50%;
-	display: grid;
-	place-items: center;
-	background: var(--surface);
-	color: var(--text);
-}
-.arrowGo {
-	background: var(--c, var(--accent));
-	color: var(--on, var(--surface));
-}
-.arrow svg {
-	width: 2rem;
-	height: 2rem;
-	fill: none;
-	stroke: currentColor;
-	stroke-width: 2.6;
-	stroke-linecap: round;
-	stroke-linejoin: round;
-}
-.arrow:disabled {
-	opacity: 0.35;
+.answerGot {
+	border-style: solid;
+	border-color: var(--c, var(--accent));
+	background: color-mix(in srgb, var(--c, var(--accent)) 16%, var(--surface));
 }
 
-.yes {
-	animation: yes 0.45s ease;
+/* Letters. */
+.wordPic {
+	display: block;
+	flex: none;
+	padding: 4%;
+	box-sizing: border-box;
+	border-radius: 1.6rem;
+	background: var(--surface);
 }
-@keyframes yes {
-	45% { transform: translateY(-0.8rem) scale(1.06); }
+.wordPic svg {
+	width: 100%;
+	height: 100%;
 }
-.nope {
-	animation: nope 0.4s ease;
+.word {
+	display: flex;
+	align-items: center;
+	gap: 0.1em;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	line-height: 1;
 }
-@keyframes nope {
-	25%, 75% { transform: translateX(-0.4rem); }
-	50% { transform: translateX(0.4rem); }
+.gap {
+	min-width: 0.8em;
+	height: 1.15em;
+	display: inline-grid;
+	place-items: center;
+	border-radius: 0.15em;
+	border: 0.05em dashed var(--c, var(--accent));
+	color: var(--c, var(--accent));
+}
+.gapFilled {
+	border-style: solid;
+	background: color-mix(in srgb, var(--c, var(--accent)) 14%, var(--surface));
+}
+
+/* Pairs. */
+.card {
+	padding: 0;
+	perspective: 40rem;
+	background: none;
+}
+.cardInner {
+	position: relative;
+	display: block;
+	width: 100%;
+	height: 100%;
+	transform-style: preserve-3d;
+	transition: transform 0.35s ease;
+}
+.cardUp .cardInner {
+	transform: rotateY(180deg);
+}
+.cardBack,
+.cardFace {
+	position: absolute;
+	inset: 0;
+	border-radius: 12%/9%;
+	backface-visibility: hidden;
+	box-shadow: 0 0.3rem 0.8rem rgb(29 31 35 / 0.12);
+}
+.cardBack {
+	background:
+		radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.35) 0 18%, transparent 19%),
+		var(--back);
+	border: 0.3rem solid white;
+}
+.cardFace {
+	display: grid;
+	place-items: center;
+	padding: 12%;
+	background: var(--surface);
+	transform: rotateY(180deg);
+}
+.cardFace svg {
+	width: 100%;
+	height: 100%;
+}
+.cardMatched .cardFace {
+	box-shadow: 0 0 0 0.25rem var(--c, var(--accent));
+}
+
+/* Peekaboo farm. */
+.farm {
+	position: relative;
+	flex: 1;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	border-radius: 1.6rem;
+}
+.farmBack,
+.roomBack {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+}
+.farmBack rect,
+.farmBack circle,
+.farmBack path {
+	transition: fill 1.5s ease;
+}
+.farmAsk {
+	position: absolute;
+	left: 50%;
+	top: 1rem;
+	transform: translateX(-50%);
+	z-index: 2;
+}
+.bushes {
+	position: relative;
+	display: grid;
+	gap: 12px;
+	justify-content: center;
+	padding: 0 12px 12px;
+}
+.bushSpot {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-end;
+	padding: 0;
+	background: none;
+}
+.peeker {
+	position: absolute;
+	bottom: 42%;
+	width: 74%;
+}
+.peeker svg,
+.bush svg {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+.bush {
+	position: relative;
+	width: 100%;
+	transform-origin: 50% 100%;
+}
+
+/* Find it. */
+.goal {
+	flex: none;
+	display: flex;
+	gap: 0.3rem;
+}
+.goalOne {
+	opacity: 0.25;
+	filter: grayscale(1);
+	transition: opacity 0.3s ease, filter 0.3s ease;
+}
+.goalOne svg {
+	width: 100%;
+	height: 100%;
+}
+.goalGot {
+	opacity: 1;
+	filter: none;
+}
+.room {
+	position: relative;
+	flex: none;
+	border-radius: 1.6rem;
+	overflow: hidden;
+}
+.spot {
+	position: absolute;
+}
+.thing {
+	position: absolute;
+	inset: 0;
+	padding: 0;
+	background: none;
+	transform: rotate(var(--tilt, 0deg));
+	transition: transform 0.4s ease;
+}
+.thing svg {
+	width: 100%;
+	height: 100%;
+	filter: drop-shadow(0 0.15rem 0.2rem rgb(0 0 0 / 0.2));
+}
+.lifted {
+	transform: translate(38%, -30%) rotate(18deg) scale(0.7);
+}
+.thingGot svg {
+	filter: drop-shadow(0 0 0.35rem var(--c, var(--accent))) drop-shadow(0 0 0.2rem var(--c, var(--accent)));
+}
+
+/* Maze. */
+.keysHeld {
+	display: flex;
+	gap: 0.3rem;
+}
+.keysHeld > span {
+	display: block;
+	aspect-ratio: 1;
+	height: 100%;
+}
+.keysHeld svg {
+	width: 100%;
+	height: 100%;
+}
+.keyEmpty {
+	opacity: 0.25;
+	filter: grayscale(1);
+}
+.map {
+	display: grid;
+	gap: 0;
+	padding: 6px;
+	border-radius: 1.2rem;
+	background: var(--wall);
+}
+.square {
+	position: relative;
+	min-width: 0;
+	padding: 8%;
+	box-sizing: border-box;
+	border-radius: 22%;
+	border: 2px solid var(--wall);
+	background: var(--path);
+	overflow: visible;
+}
+.square svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+.wall {
+	background: transparent;
+}
+.been {
+	background: var(--been);
+}
+.bear {
+	position: absolute;
+	inset: 4%;
+	z-index: 1;
+}
+
+/* Moves. */
+.hop {
+	animation: hop 0.5s ease;
+}
+@keyframes hop {
+	40% {
+		transform: translateY(-1.2rem) scale(1.06);
+	}
+}
+.hopForever {
+	animation: hop 0.7s ease infinite;
+}
+.wiggle {
+	animation: wiggle 0.45s ease;
+}
+@keyframes wiggle {
+	20%,
+	60% {
+		transform: rotate(-6deg);
+	}
+	40%,
+	80% {
+		transform: rotate(6deg);
+	}
+}
+.pop {
+	animation: pop 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes pop {
+	from {
+		transform: scale(0.3);
+	}
+}
+.peek {
+	animation: peek 0.55s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+@keyframes peek {
+	from {
+		transform: translateY(60%);
+		opacity: 0;
+	}
+}
+.rustle {
+	animation: rustle 0.4s ease;
+}
+@keyframes rustle {
+	20%,
+	60% {
+		transform: rotate(-5deg);
+	}
+	40%,
+	80% {
+		transform: rotate(5deg);
+	}
+}
+.snore {
+	animation: snore 2s ease-in-out infinite;
+}
+@keyframes snore {
+	50% {
+		transform: translateY(-0.5rem);
+		opacity: 0.6;
+	}
+}
+.step {
+	animation: step 0.3s ease;
+}
+@keyframes step {
+	50% {
+		transform: translateY(-0.6rem);
+	}
 }
 @media (prefers-reduced-motion: reduce) {
-	.yes,
-	.nope {
+	.hop,
+	.hopForever,
+	.wiggle,
+	.pop,
+	.peek,
+	.rustle,
+	.snore,
+	.step,
+	.confetti i {
 		animation: none;
 	}
-}
-@media (max-width: 700px) {
-	.tile {
-		min-height: 7rem;
+	.cheerMascot {
+		animation-duration: 0.01s;
+		animation-fill-mode: none;
 	}
-	.tilePicture {
-		font-size: 3.6rem;
-	}
-	.prompt {
-		font-size: 1.35rem;
-	}
-	.thing {
-		width: 4.2rem;
-		height: 4.2rem;
-		font-size: 2.6rem;
-	}
-	.pagePicture {
-		font-size: 6rem;
+	.cardInner,
+	.thing,
+	.farmBack rect,
+	.farmBack circle,
+	.farmBack path {
+		transition: none;
 	}
 }

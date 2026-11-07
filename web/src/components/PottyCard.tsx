@@ -21,6 +21,10 @@ interface Props {
 	askFirst?: (then: () => void) => void;
 	/** The Tasks page: small, like the task rows around it (kid mode's is big, for toddlers). */
 	compact?: boolean;
+	/** Opened out of a "Potty chart" button (kid mode): joined to it, without its own title or Edit button
+	    (the header has a pencil, which bumps `editAsked`). */
+	attached?: boolean;
+	editAsked?: number;
 }
 
 /** "took 6 days", from a card's start to when it filled. */
@@ -38,7 +42,7 @@ const zero = (): Record<PottyStep, number> => ({ ask: 0, sit: 0, go: 0, wipe: 0,
  * poop or both); stickers already there do nothing. A row takes one new sticker at a time, kept on
  * Save. Parents' Edit takes stickers back (a row's last one first) or stops the chart.
  */
-export default function PottyCard({ kid, chart, canEdit, askFirst, compact }: Props) {
+export default function PottyCard({ kid, chart, canEdit, askFirst, compact, attached, editAsked }: Props) {
 	const { setOn, punch, takeBack } = usePottyActions();
 	// Stickers added and not saved yet, per row.
 	const [adding, setAdding] = useState(none);
@@ -62,6 +66,13 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact }: Pr
 		setRemoving(zero());
 		setEditing(false);
 	}, [kid.id]);
+
+	// The header's pencil (attached): edit, as the Edit button would.
+	useEffect(() => {
+		if (editAsked) (askFirst ? askFirst(() => setEditing(true)) : setEditing(true));
+		// Only when it's tapped.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [editAsked]);
 
 	const changed = POTTY_STEPS.some(({ step }) => adding[step].length > 0 || removing[step] > 0);
 	const add = (step: PottyStep, kind: Kind) => setAdding((a) => ({ ...a, [step]: [...a[step], kind] }));
@@ -122,18 +133,20 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact }: Pr
 	}
 
 	return (
-		<section className={`${s.card} ${compact ? s.compact : ""} ${editing ? s.editing : ""}`} style={{ "--c": kid.color, "--on": textOn(kid.color) } as CSSProperties}
+		<section className={`${s.card} ${compact ? s.compact : ""} ${attached ? s.attached : ""} ${editing ? s.editing : ""}`} style={{ "--c": kid.color, "--on": textOn(kid.color) } as CSSProperties}
 			aria-label={`${kid.name}'s potty chart`}>
-			<div className={s.head}>
-				<h3 className={s.title}>
-					Potty chart <span className={s.logo} aria-hidden="true">🚽</span>
-				</h3>
-				{canEdit && !editing && !changed && (
-					<button type="button" className={s.edit} onClick={() => (askFirst ? askFirst(() => setEditing(true)) : setEditing(true))}>
-						Edit
-					</button>
-				)}
-			</div>
+			{!attached && (
+				<div className={s.head}>
+					<h3 className={s.title}>
+						Potty chart <span className={s.logo} aria-hidden="true">🚽</span>
+					</h3>
+					{canEdit && !editing && !changed && (
+						<button type="button" className={s.edit} onClick={() => (askFirst ? askFirst(() => setEditing(true)) : setEditing(true))}>
+							Edit
+						</button>
+					)}
+				</div>
+			)}
 			{editing && <p className={s.hint}>Tap a row's last sticker to take it off, then Save.</p>}
 
 			{POTTY_STEPS.map(({ step, emoji, label }) => {

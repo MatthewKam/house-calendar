@@ -1,123 +1,80 @@
-import { useMemo, useState, type CSSProperties } from "react";
-import { Dots, Next } from "./parts";
-import { pick, shuffle, useRounds, type ActivityProps } from "./rounds";
+import { useEffect, useMemo, useState } from "react";
+import { Pic } from "./art";
+import { Board } from "./parts";
+import { LOOK_ALIKE, WORDS } from "./things";
+import { at, pick, shuffle, useRounds, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
-/** Letters with their sound and three things that start with it. */
-const LETTERS = [
-	{ letter: "B", sound: "b-b-b", words: [["Ball", "⚽"], ["Bear", "🐻"], ["Banana", "🍌"]] },
-	{ letter: "S", sound: "sss", words: [["Sun", "☀️"], ["Sock", "🧦"], ["Snake", "🐍"]] },
-	{ letter: "D", sound: "d-d-d", words: [["Dog", "🐶"], ["Duck", "🦆"], ["Drum", "🥁"]] },
-	{ letter: "M", sound: "mmm", words: [["Moon", "🌙"], ["Milk", "🥛"], ["Monkey", "🐵"]] },
-	{ letter: "F", sound: "fff", words: [["Fish", "🐟"], ["Frog", "🐸"], ["Fox", "🦊"]] },
-	{ letter: "P", sound: "p-p-p", words: [["Pig", "🐷"], ["Pizza", "🍕"], ["Penguin", "🐧"]] },
-	{ letter: "T", sound: "t-t-t", words: [["Tiger", "🐯"], ["Train", "🚂"], ["Tree", "🌳"]] },
-	{ letter: "C", sound: "k-k-k", words: [["Cat", "🐱"], ["Car", "🚗"], ["Cake", "🎂"]] },
-] as const;
-type Word = { word: string; picture: string; letter: string };
-const ALL: Word[] = LETTERS.flatMap((l) => l.words.map(([word, picture]) => ({ word, picture, letter: l.letter })));
-/** Letters that look or sound alike, so level 2's choices make them think. */
-const LOOK_ALIKE: Record<string, string[]> = { B: ["D", "P"], D: ["B", "P"], P: ["B", "D"], M: ["N", "W"], C: ["K", "G"], S: ["Z", "C"], F: ["E", "T"], T: ["F", "L"] };
-const SOUND: Record<string, string> = Object.fromEntries(LETTERS.map((l) => [l.letter, l.sound]));
+/** Letters to choose from, the longest word, whether look-alike letters are offered, and capitals, by level. */
+const CHOICES = [2, 3, 3, 3, 4, 4];
+const LONGEST = [3, 3, 4, 4, 5, 8];
+const LOOK_ALIKES = [false, false, true, true, true, true];
+const CAPITALS = [true, true, true, false, false, false];
+const ROUNDS = 4;
+const ABC = "abcdefghijklmnopqrstuvwxyz";
 
 /**
- * Letters. Level 1: the letter of the day and its sound; find the three things that start with it.
- * Level 2: a picture with no word under it; pick the letter it starts with (look-alikes included).
+ * The missing first letter (age 4): a picture and its word with the first letter gone ("_at"). Tap the
+ * letter that goes in the gap. Short words and very different letters first; then look-alikes (b, d,
+ * p), small letters, and longer words.
  */
-export default function Letters({ level, onDone }: ActivityProps) {
-	return level >= 2 ? <WhichLetter onDone={onDone} /> : <FindThem onDone={onDone} />;
-}
+export default function Letters({ level, onDone, onBack }: GameProps) {
+	const rounds = useRounds(ROUNDS, onDone);
+	const caps = at(CAPITALS, level);
+	const plan = useMemo(() => {
+		const longest = at(LONGEST, level);
+		// Long words at the top levels, with a short one now and then.
+		const words = WORDS.filter((w) => w.word.length <= longest && (longest < 5 || w.word.length >= 4));
+		return pick(words, ROUNDS).map((w) => {
+			const first = w.word[0];
+			const alike = at(LOOK_ALIKES, level) ? (LOOK_ALIKE[first] ?? []) : [];
+			const others = shuffle([...ABC].filter((l) => l !== first && !alike.includes(l)));
+			const wrong = [...alike, ...others].slice(0, at(CHOICES, level) - 1);
+			return { ...w, first, choices: shuffle([first, ...wrong]) };
+		});
+	}, [level]);
+	const r = plan[rounds.round];
+	const [tapped, setTapped] = useState<{ letter: string; n: number } | null>(null);
+	const show = (text: string) => (caps ? text.toUpperCase() : text);
 
-function FindThem({ onDone }: { onDone: ActivityProps["onDone"] }) {
-	const { today, cards } = useMemo(() => {
-		const today = LETTERS[Math.floor(Math.random() * LETTERS.length)];
-		const others = pick(ALL.filter((w) => w.letter !== today.letter), 3);
-		return { today, cards: shuffle([...today.words.map(([word, picture]) => ({ word, picture, letter: today.letter })), ...others]) };
-	}, []);
-	const [found, setFound] = useState<string[]>([]);
-	const [last, setLast] = useState<{ word: string; n: number } | null>(null);
-	const [misses, setMisses] = useState(0);
-	const done = found.length === 3;
-	const tapped = last && cards.find((c) => c.word === last.word);
+	useEffect(() => setTapped(null), [r]);
+
+	function choose(letter: string) {
+		if (rounds.got) return;
+		setTapped((t) => ({ letter, n: (t?.n ?? 0) + 1 }));
+		rounds.tap(letter === r.first);
+	}
+
 	return (
-		<div className={s.board}>
-			<div className={s.top}>
-				<span className={s.letter}>{today.letter}{today.letter.toLowerCase()}</span>
-				<Dots total={3} done={found.length} />
-			</div>
-			<p className={s.prompt}>
-				{done ? `You found them all! They start with ${today.letter}.`
-					: !tapped ? `${today.letter} says ${today.sound}. Which ones start with ${today.letter}?`
-					: tapped.letter === today.letter ? `Yes! ${today.sound}-${tapped.word.toLowerCase()}!`
-					: `${tapped.word} starts with ${tapped.letter}. Find a ${today.letter}!`}
-			</p>
-			<div className={s.tiles} style={{ "--cols": 3 } as CSSProperties}>
-				{cards.map((c) => {
-					const hit = found.includes(c.word);
-					const isLast = last?.word === c.word;
-					return (
-						<button key={`${c.word}-${isLast ? last.n : 0}`} type="button" aria-label={c.word}
-							className={`${s.tile} ${hit ? s.tileRight : ""} ${isLast ? (c.letter === today.letter ? s.yes : s.nope) : ""}`}
-							onClick={() => {
-								if (hit || done) return;
-								setLast({ word: c.word, n: (last?.n ?? 0) + 1 });
-								if (c.letter === today.letter) setFound([...found, c.word]);
-								else setMisses(misses + 1);
-							}}>
-							<span className={s.tilePicture} aria-hidden="true">{c.picture}</span>
-							<span>{hit || isLast ? c.word : ""}</span>
-						</button>
-					);
-				})}
-			</div>
-			{/* Three to find; each wrong tap is one less "first try". */}
-			<Next show={done} last onNext={() => onDone(3, Math.max(0, 3 - misses))} />
-		</div>
-	);
-}
-
-const ROUNDS = 4;
-
-function WhichLetter({ onDone }: { onDone: ActivityProps["onDone"] }) {
-	const rounds = useMemo(() => pick(ALL, ROUNDS).map((w) => {
-		const alike = LOOK_ALIKE[w.letter] ?? [];
-		const others = pick(LETTERS.map((l) => l.letter).filter((l) => l !== w.letter && !alike.includes(l)), 3 - alike.length);
-		return { ...w, choices: shuffle([w.letter, ...alike, ...others]) };
-	}), []);
-	const r = useRounds(ROUNDS, onDone);
-	const [picked, setPicked] = useState<{ letter: string; n: number } | null>(null);
-	const w = rounds[r.round];
-	return (
-		<div className={s.board}>
-			<div className={s.top}>
-				<span />
-				<Dots total={ROUNDS} done={r.round + (r.got ? 1 : 0)} />
-			</div>
-			<div className={s.things}>
-				<span className={`${s.tilePicture} ${r.got ? s.yes : ""}`} aria-hidden="true">{w.picture}</span>
-				<span className={s.pageLine}>{r.got ? <><b>{w.letter}</b>{w.word.slice(1)}</> : ""}</span>
-			</div>
-			<p className={s.prompt}>
-				{r.got ? `Yes! ${w.word} starts with ${w.letter}.`
-					: picked ? `${picked.letter} says ${SOUND[picked.letter] ?? picked.letter.toLowerCase()}. Say it slowly. Which letter starts it?`
-					: "What is it? Say it slowly. Which letter does it start with?"}
-			</p>
-			<div className={s.tiles} style={{ "--cols": 4 } as CSSProperties}>
-				{w.choices.map((l) => (
-					<button key={`${r.round}-${l}-${picked?.letter === l ? picked.n : 0}`} type="button" aria-label={`Letter ${l}`}
-						className={`${s.tile} ${r.got && l === w.letter ? s.tileRight : ""} ${picked?.letter === l ? (l === w.letter ? s.yes : s.nope) : ""}`}
-						onClick={() => {
-							setPicked({ letter: l, n: (picked?.n ?? 0) + 1 });
-							r.tap(l === w.letter);
-						}}>
-						<span className={s.letter}>{l}</span>
-					</button>
-				))}
-			</div>
-			<Next show={r.got} last={r.round + 1 === ROUNDS} onNext={() => {
-				setPicked(null);
-				r.next();
-			}} />
-		</div>
+		<Board onBack={onBack} total={ROUNDS} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got}>
+			{(box) => {
+				const wide = box.w > box.h * 1.2;
+				const key = Math.floor(Math.min(110, (box.w - 24 * r.choices.length) / r.choices.length, box.h * (wide ? 0.3 : 0.2)));
+				const pic = Math.floor(Math.min(320, wide ? box.h - key - 80 : box.h * 0.4, box.w * (wide ? 0.4 : 0.7)));
+				// The word as big as fits beside (or under) the picture.
+				const letters = r.word.length;
+				const font = Math.floor(Math.min(120, (wide ? box.w - pic - 60 : box.w - 40) / (letters * 0.75 + 0.6), pic * 0.5));
+				return (
+					<div className={s.column}>
+						<div className={wide ? s.rowTight : s.columnTight}>
+							<span className={s.wordPic} style={{ width: pic, height: pic }}><Pic id={r.pic} label={r.word} /></span>
+							<div className={s.word} style={{ fontSize: font }} aria-label={rounds.got ? r.word : `blank, then ${r.word.slice(1)}`}>
+								<span className={`${s.gap} ${rounds.got ? `${s.gapFilled} ${s.pop}` : ""}`}>{rounds.got ? show(r.first) : ""}</span>
+								{show(r.word.slice(1))}
+							</div>
+						</div>
+						<div className={s.choices}>
+							{r.choices.map((l) => (
+								<button key={`${l}-${tapped?.letter === l ? tapped.n : 0}`} type="button"
+									className={`${s.choice} ${rounds.got && l === r.first ? s.choiceRight : tapped?.letter === l && l !== r.first ? s.wiggle : ""}`}
+									style={{ width: key, height: key, fontSize: key * 0.55 }} onClick={() => choose(l)}>
+									{show(l)}
+								</button>
+							))}
+						</div>
+					</div>
+				);
+			}}
+		</Board>
 	);
 }
