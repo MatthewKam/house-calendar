@@ -17,8 +17,9 @@ const SETS = [
 ];
 
 /**
- * Card matching (age 4): cards face down. Tap two to turn them over; a match stays face up (an animal makes its noise), and two that don't match turn back over. More cards as it levels up, and a new set each
- * play. First try is finding them all without too many misses (one per pair).
+ * Pairs (age 4): cards face down. Tap two to turn them over; a match stays face up (an animal makes its
+ * noise), and two that don't match shake, edged red, then turn back over. More cards as it levels up,
+ * and a new set each play. First try is finding them all without too many misses (one per pair).
  */
 export default function Memory({ level, onDone, onBack }: GameProps) {
 	const set = useMemo(() => fresh("pairs.sets", SETS, 1, (x) => x.name)[0], []);
@@ -27,6 +28,8 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 	const [up, setUp] = useState<number[]>([]);
 	const [matched, setMatched] = useState<number[]>([]);
 	const [misses, setMisses] = useState(0);
+	// Two that don't match, shaking before they turn back.
+	const [shaking, setShaking] = useState<number[]>([]);
 	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 	useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
@@ -54,7 +57,12 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 		} else {
 			if (animal) noise(animal);
 			setMisses(misses + 1);
-			timers.current.push(setTimeout(() => setUp([]), 1300));
+			// A moment to look, then the two shake ("not a pair"), then turn back over.
+			timers.current.push(setTimeout(() => setShaking([other, i]), 700));
+			timers.current.push(setTimeout(() => {
+				setShaking([]);
+				setUp([]);
+			}, 1300));
 		}
 	}
 
@@ -68,7 +76,7 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 							{cards.map((c, i) => {
 								const face = up.includes(i) || matched.includes(i);
 								return (
-									<button key={i} type="button" className={`${s.card} ${face ? s.cardUp : ""} ${matched.includes(i) ? s.cardMatched : ""}`}
+									<button key={i} type="button" className={`${s.card} ${face ? s.cardUp : ""} ${matched.includes(i) ? s.cardMatched : ""} ${shaking.includes(i) ? s.cardShake : ""}`}
 										style={{ width: grid.size, height: grid.size / 0.75 }} onClick={() => flip(i)} aria-label={face ? c.name : "A card, face down"}>
 										<span className={s.cardInner}>
 											<span className={s.cardBack} aria-hidden="true" />
