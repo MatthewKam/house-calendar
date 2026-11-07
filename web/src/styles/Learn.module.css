@@ -41,8 +41,8 @@
 	font-size: 1.15rem;
 	font-weight: 700;
 	letter-spacing: 0.04em;
-	/* Grey, so it doesn't stand out. */
-	color: var(--muted);
+	/* A light grey, so it doesn't stand out. */
+	color: color-mix(in srgb, var(--muted) 40%, var(--surface));
 }
 @media (min-width: 900px) {
 	.menu {
