@@ -465,7 +465,6 @@
 	flex: none;
 	display: flex;
 	flex-direction: column;
-	gap: 0.6rem;
 }
 .pottyToggle {
 	display: flex;
@@ -497,6 +496,17 @@
 }
 .pottyToggle[aria-expanded="true"] .pottyChevron {
 	transform: rotate(180deg);
+}
+/* Open: the button and the chart are one panel (the chart slides out from under it). */
+.pottyToggle[aria-expanded="true"] {
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+	border-bottom-color: transparent;
+	box-shadow: none;
+	transform: none;
+}
+.pottyFold > section {
+	border-color: color-mix(in srgb, var(--c) 35%, white);
 }
 
 /* AM or PM, in a tile's bottom-right corner. */

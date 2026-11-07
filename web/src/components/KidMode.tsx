@@ -196,7 +196,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 				{tab === "tasks" && daily}
 				{tab === "tasks" && dueToday.length > 0 && (
 					// Pages to swipe between: daily tasks (morning to evening), then goals.
-					<TaskPages kidId={kid.id} pages={[
+					<TaskPages kidId={kid.id} hold={pottyOpen} pages={[
 						{ label: "Daily tasks", tiles: dueToday.filter((t) => t.required).sort(byTime).map(tile) },
 						{ label: "Goals", tiles: dueToday.filter((t) => !t.required).map(tile) },
 					]} />
@@ -210,7 +210,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 							<svg className={s.pottyChevron} viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
 						</button>
 						{pottyOpen && (
-							<PottyCard key={kid.id} kid={kid} chart={chart} canEdit
+							<PottyCard key={kid.id} kid={kid} chart={chart} canEdit attached
 								askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
 						)}
 					</section>
@@ -261,16 +261,23 @@ const PEEK = 36;
  * six to a page; on its side, four. The next page peeks in at the side, and dots underneath show which page it's on.
  * It opens at the page with the first one not done yet.
  */
-function TaskPages({ kidId, pages }: { kidId: string; pages: { label: string; tiles: ReactNode[] }[] }) {
+function TaskPages({ kidId, pages, hold }: {
+	kidId: string;
+	pages: { label: string; tiles: ReactNode[] }[];
+	/** Keep the size they are (the potty chart's opened under them: the screen scrolls to it instead). */
+	hold: boolean;
+}) {
 	const row = useRef<HTMLDivElement>(null);
 	const [box, setBox] = useState({ w: 0, h: 0 });
+	const holding = useRef(hold);
+	holding.current = hold;
 	// The screen's way up (not the pages' own box, which the potty chart under it can make wide).
 	const upright = useMediaQuery("(orientation: portrait)");
 	const [at, setAt] = useState(0);
 	useLayoutEffect(() => {
 		const el = row.current;
 		if (!el) return;
-		const measure = () => setBox({ w: el.clientWidth, h: el.clientHeight });
+		const measure = () => setBox((b) => (holding.current ? { ...b, w: el.clientWidth } : { w: el.clientWidth, h: el.clientHeight }));
 		measure();
 		const watch = new ResizeObserver(measure);
 		watch.observe(el);
@@ -308,8 +315,8 @@ function TaskPages({ kidId, pages }: { kidId: string; pages: { label: string; ti
 	const once = lay(false);
 	const shown = once.length > 1 ? lay(true) : once;
 	return (
-		<div className={s.pages}>
-			<div ref={row} className={s.pageRow}
+		<div className={s.pages} style={hold && box.h ? { flex: "none" } : undefined}>
+			<div ref={row} className={s.pageRow} style={hold && box.h ? { flex: "none", height: box.h } : undefined}
 				onScroll={(e) => {
 					const el = e.currentTarget;
 					const width = (el.firstElementChild as HTMLElement | null)?.offsetWidth ?? el.clientWidth;
