@@ -200,6 +200,70 @@ const ART: Record<string, ReactNode> = {
 			{smile(84, 9)}
 		</>
 	),
+	rooster: (
+		<>
+			<path d="M40 30 q2 -22 14 -10 q6 -18 14 -2 q10 -12 12 6 q8 -2 4 12z" fill="#e03a2f" />
+			<path d="M84 66 q28 -10 30 14 q-6 -4 -14 0 q8 6 4 18 q-8 -10 -20 -8z" fill="#2f6b4a" />
+			<circle cx="58" cy="64" r="38" fill="#c8742c" />
+			<ellipse cx="56" cy="88" rx="26" ry="18" fill="#e3a05a" />
+			<path d="M44 66 L58 66 L52 78z" fill="#f4a020" transform="translate(-4 0)" />
+			<path d="M46 78 q3 14 8 2" fill="#e03a2f" />
+			{eyes(54, 13)}
+		</>
+	),
+	hawk: (
+		<>
+			<path d="M14 54 Q30 20 60 18 Q90 20 106 54 Q86 46 60 48 Q34 46 14 54z" fill="#6b4126" />
+			<ellipse cx="60" cy="68" rx="38" ry="40" fill="#a8744c" />
+			<ellipse cx="60" cy="84" rx="24" ry="22" fill="#f4e6cf" />
+			<path d="M36 50 Q48 44 56 52 M84 50 Q72 44 64 52" fill="none" stroke="#3b2a20" strokeWidth="4" strokeLinecap="round" />
+			<circle cx="46" cy="58" r="7" fill="#f6cf3c" />
+			<circle cx="46" cy="58" r="3.5" fill={EYE} />
+			<circle cx="74" cy="58" r="7" fill="#f6cf3c" />
+			<circle cx="74" cy="58" r="3.5" fill={EYE} />
+			<path d="M52 66 H68 Q66 80 60 86 Q54 80 52 66z" fill="#f4a020" />
+			<path d="M60 86 q-2 -6 2 -8" fill="none" stroke="#c46d00" strokeWidth="2.5" />
+		</>
+	),
+	leopard: (
+		<>
+			<circle cx="28" cy="30" r="14" fill="#e3a83c" />
+			<circle cx="28" cy="30" r="7" fill="#f4d79a" />
+			<circle cx="92" cy="30" r="14" fill="#e3a83c" />
+			<circle cx="92" cy="30" r="7" fill="#f4d79a" />
+			<circle cx="60" cy="64" r="42" fill="#f0bc4c" />
+			<g fill="#6b4126">
+				<circle cx="34" cy="48" r="5" /><circle cx="44" cy="34" r="4" /><circle cx="60" cy="28" r="5" />
+				<circle cx="76" cy="34" r="4" /><circle cx="86" cy="48" r="5" /><circle cx="28" cy="70" r="4" />
+				<circle cx="92" cy="70" r="4" /><circle cx="40" cy="94" r="4" /><circle cx="80" cy="94" r="4" />
+			</g>
+			<ellipse cx="60" cy="82" rx="18" ry="13" fill="#fbe9c4" />
+			<path d="M53 75 L67 75 L60 83z" fill="#c8577a" />
+			<path d="M60 83 q-6 7 -12 4 M60 83 q6 7 12 4" fill="none" stroke={EYE} strokeWidth="2.5" strokeLinecap="round" />
+			{eyes(60, 14)}
+		</>
+	),
+	seagull: (
+		<>
+			<path d="M8 66 Q30 50 50 62 L52 76 Q26 70 8 66z" fill="#9aa5b1" />
+			<path d="M112 66 Q90 50 70 62 L68 76 Q94 70 112 66z" fill="#9aa5b1" />
+			<circle cx="60" cy="58" r="34" fill="#f4f6f8" />
+			<path d="M60 64 L96 70 L60 78z" fill="#f6c02a" />
+			<circle cx="88" cy="72" r="3" fill="#e03a2f" />
+			<circle cx="48" cy="52" r="5" fill={EYE} />
+			<circle cx="72" cy="52" r="5" fill={EYE} />
+		</>
+	),
+	wolf: (
+		<>
+			<path d="M22 54 L30 12 L52 36z M98 54 L90 12 L68 36z" fill="#7d8794" />
+			<path d="M32 44 L34 24 L46 38z M88 44 L86 24 L74 38z" fill="#d7dce2" />
+			<path d="M60 110 L18 64 Q18 36 60 34 Q102 36 102 64z" fill="#9aa5b1" />
+			<path d="M60 110 L36 78 Q48 70 60 78 Q72 70 84 78z" fill="#eef1f4" />
+			<ellipse cx="60" cy="98" rx="8" ry="6" fill={EYE} />
+			{eyes(62, 15)}
+		</>
+	),
 	bear: (
 		<>
 			<circle cx="27" cy="30" r="15" fill="#b47a4c" />

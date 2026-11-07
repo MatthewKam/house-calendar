@@ -28,7 +28,8 @@ const GAMES_FOR: Record<'little' | 'early', Game[]> = {
 export const gamesFor = (stage: Stage | null) => GAMES_FOR[stage === 'little' || stage === null ? 'little' : 'early'];
 
 /** The animals with a noise (web/src/components/learn/things.ts), which a grown-up can record their own of. */
-export const ANIMALS = ['cow', 'pig', 'duck', 'sheep', 'horse', 'chicken', 'goat', 'dog', 'cat', 'mouse', 'frog', 'owl', 'bee', 'lion', 'elephant', 'monkey'];
+export const ANIMALS = ['cow', 'pig', 'duck', 'sheep', 'horse', 'chicken', 'rooster', 'goat', 'dog', 'cat', 'frog', 'owl', 'bee',
+  'seagull', 'hawk', 'lion', 'leopard', 'bear', 'wolf', 'elephant', 'monkey'];
 /** A recorded noise is a few seconds: well under this. */
 const MAX_SOUND_BYTES = 1024 * 1024;
 

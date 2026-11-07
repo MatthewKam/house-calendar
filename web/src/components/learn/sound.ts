@@ -4,7 +4,8 @@
 
 /** Animals with a built-in noise in web/public/sounds/animals (`<id>.m4a`). */
 export const BUILT_IN = new Set<string>([
-	"cow", "pig", "duck", "sheep", "horse", "chicken", "goat", "dog", "cat", "mouse", "frog", "owl", "bee", "lion", "elephant", "monkey",
+	"cow", "pig", "duck", "sheep", "horse", "chicken", "rooster", "goat", "dog", "cat", "frog", "owl", "bee", "seagull", "hawk",
+	"lion", "leopard", "bear", "wolf", "elephant", "monkey",
 ]);
 
 /** A grown-up's recordings: animal → when (set from the server's list as it loads). */
