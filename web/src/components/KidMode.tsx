@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { fromDayKey, startOfWeek } from "../lib/dates";
 import { api } from "../lib/api";
-import { useMediaQuery } from "../lib/useMediaQuery";
 import {
 	useBuckets,
 	useLearn,
@@ -14,7 +13,7 @@ import {
 	useTasksDone,
 } from "../lib/queries";
 import { momentKind } from "../lib/moments";
-import { didTask, dueOn, percent, taskProgress, tasksFor, TIMES } from "../lib/tasks";
+import { didTask, dueOn, percent, taskProgress, tasksFor } from "../lib/tasks";
 import type { Member, Task } from "../lib/types";
 import { textOn } from "../lib/color";
 import KidJars from "./KidJars";
@@ -43,11 +42,6 @@ interface Props {
 const ORDER = { morning: 0, evening: 2 } as Record<string, number>;
 const byTime = (a: Task, b: Task) => (ORDER[a.time ?? ""] ?? 1) - (ORDER[b.time ?? ""] ?? 1);
 
-/** Today's tasks in order: morning, anytime, evening, then goals. */
-const GROUPS: { label: string; has: (t: Task) => boolean }[] = [
-	...TIMES.map((t) => ({ label: t.label, has: (c: Task) => c.required && c.time === t.id })),
-	{ label: "Goals", has: (c: Task) => !c.required },
-];
 
 /** Learn: a lightbulb, drawn like the main nav's icons. */
 const LearnIcon = () => (
@@ -73,8 +67,6 @@ const TABS: { id: KidTab; Icon: () => ReactNode; label: string }[] = [
  */
 export default function KidMode({ today, kids, members, onLeave, askPin }: Props) {
 	const [pickedId, setPickedId] = useState(kids[0]?.id ?? null);
-	// Upright, the tasks wrap (with goals a page over); on its side they're one row.
-	const portrait = useMediaQuery("(orientation: portrait)");
 	const kid = kids.find((k) => k.id === pickedId) ?? kids[0];
 	const [picked, setTab] = useState<KidTab>("today");
 	const learning = useLearn(today).data?.find((l) => l.memberId === kid?.id && l.enabled);
@@ -144,7 +136,9 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 				<h2 className={s.groupHead}>Daily tasks</h2>
 				<div className={s.punches} role="img" aria-label={`${p.done} of ${p.due} done`}>
 					{Array.from({ length: p.due }, (_, i) => (
-						<span key={i} className={`${s.punch} ${i < p.done ? s.punched : ""}`}>{i < p.done ? "✓" : ""}</span>
+						<span key={i} className={`${s.punch} ${i < p.done ? s.punched : ""}`}>
+							{i < p.done && <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
+						</span>
 					))}
 					{pct === 100 && <span className={s.allDone}>All done! 🎉</span>}
 				</div>
@@ -205,16 +199,13 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 						askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
 				)}
 				{tab === "tasks" && daily}
-				{tab === "tasks" && dueToday.length > 0 && (portrait ? (
-					// Upright: daily tasks as blocks that wrap, and goals on a second page to swipe to.
+				{tab === "tasks" && dueToday.length > 0 && (
+					// Pages to swipe between: daily tasks (morning to evening), then goals.
 					<TaskPages kidId={kid.id} pages={[
 						{ label: "Daily tasks", tiles: dueToday.filter((t) => t.required).sort(byTime).map(tile) },
 						{ label: "Goals", tiles: dueToday.filter((t) => !t.required).map(tile) },
 					]} />
-				) : (
-					// On its side: one row of big tiles, goals at the end.
-					<TaskCarousel kidId={kid.id}>{GROUPS.flatMap((g) => dueToday.filter(g.has)).map(tile)}</TaskCarousel>
-				))}
+				)}
 				{tab === "tasks" && dueToday.length === 0 && <p className={s.none}>Nothing to do today. Have fun! 🌈</p>}
 
 				{tab === "learn" && learning && <LearnTab key={kid.id} kid={kid} today={today} learn={learning} />}
@@ -252,68 +243,99 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	);
 }
 
-/**
- * Today's tasks in one row of big tiles, swiped sideways, so they fill the screen in either direction
- * rather than sitting below everything else. Opens at the first one not done yet.
- */
-function TaskCarousel({ kidId, children }: { kidId: string; children: ReactNode }) {
-	const row = useRef<HTMLDivElement>(null);
-	useEffect(() => {
-		const el = row.current;
-		const next = el?.querySelector<HTMLElement>("[data-todo]");
-		if (el && next) el.scrollLeft = next.offsetLeft - 16;
-		// Only on opening (and switching kids), not as each one's ticked.
-	}, [kidId]);
-	return (
-		<div ref={row} className={s.carousel}>
-			{children}
-		</div>
-	);
+/** Task blocks are never smaller than this (px), for little fingers; more go onto another page. */
+const SMALLEST_BLOCK = 112;
+const BLOCK_GAP = 12;
+/** How much of the next page peeks in (px). */
+const PEEK = 36;
+
+/** The biggest square blocks `n` can be in a box, and how many across. */
+function blocksFor(n: number, w: number, h: number) {
+	let best = { cols: 1, size: 0 };
+	for (let cols = 1; cols <= n; cols++) {
+		const rows = Math.ceil(n / cols);
+		const size = Math.min((w - BLOCK_GAP * (cols - 1)) / cols, (h - BLOCK_GAP * (rows - 1)) / rows, 320);
+		if (size > best.size) best = { cols, size: Math.floor(size) };
+	}
+	return best;
 }
 
 /**
- * Upright: pages to swipe between (Daily tasks, then Goals), each a page of blocks that wrap. The
- * buttons on top show which page it's on (and go to the other); the next page peeks in at the side.
- * Pages with nothing on them are left out.
+ * Today's tasks as pages to swipe between, a page at a time: daily tasks then goals, each page of
+ * blocks sized so they all fit (no scrolling up and down). Too many to fit at a good size and they carry
+ * on to another page. The next page peeks in at the side, and dots underneath show which page it's on.
+ * It opens at the page with the first one not done yet.
  */
 function TaskPages({ kidId, pages }: { kidId: string; pages: { label: string; tiles: ReactNode[] }[] }) {
-	const shown = pages.filter((p) => p.tiles.length > 0);
 	const row = useRef<HTMLDivElement>(null);
+	const [box, setBox] = useState({ w: 0, h: 0 });
 	const [at, setAt] = useState(0);
-	// Each kid starts on the first page.
-	useEffect(() => {
-		row.current?.scrollTo({ left: 0 });
-		setAt(0);
-	}, [kidId]);
-	const go = (i: number) => {
+	useLayoutEffect(() => {
 		const el = row.current;
-		const page = el?.children[i] as HTMLElement | undefined;
-		if (el && page) el.scrollTo({ left: page.offsetLeft - el.offsetLeft, behavior: "smooth" });
+		if (!el) return;
+		const measure = () => setBox({ w: el.clientWidth, h: el.clientHeight });
+		measure();
+		const watch = new ResizeObserver(measure);
+		watch.observe(el);
+		return () => watch.disconnect();
+	}, []);
+	// Opening (or switching kids): the page with the first one not done yet.
+	const laidOut = box.w > 0;
+	useEffect(() => {
+		const el = row.current;
+		if (!el || !laidOut) return;
+		const pageOf = el.querySelector("[data-todo]")?.closest("section") as HTMLElement | null;
+		el.scrollTo({ left: pageOf?.offsetLeft ?? 0 });
+		// Not as each one's ticked, or when the screen turns.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [kidId, laidOut]);
+
+	// Lay each out: as one page if its blocks are big enough, or split over as many pages as it takes.
+	const filled = pages.filter((p) => p.tiles.length > 0);
+	const lay = (peek: boolean) => {
+		const w = box.w - (peek ? PEEK : 0);
+		// Room under the blocks for their raised edge.
+		const h = box.h - 6;
+		return filled.flatMap((p) => {
+			const one = blocksFor(p.tiles.length, w, h);
+			if (one.size >= SMALLEST_BLOCK || p.tiles.length === 1) return [{ label: p.label, tiles: p.tiles, ...one }];
+			// Too many for one page: as many rows as fit, blocks as big as the height allows but filling the
+			// width (at least two across), and the rest carry on to the next page.
+			const rows = Math.max(1, Math.floor((h + BLOCK_GAP) / (SMALLEST_BLOCK + BLOCK_GAP)));
+			const tall = Math.min(220, (h - BLOCK_GAP * (rows - 1)) / rows);
+			const across = (cols: number) => (w - BLOCK_GAP * (cols - 1)) / cols;
+			let cols = Math.max(2, Math.ceil((w + BLOCK_GAP) / (tall + BLOCK_GAP)));
+			if (Math.min(tall, across(cols)) < SMALLEST_BLOCK) cols = Math.max(2, cols - 1);
+			const size = Math.min(tall, across(cols));
+			const per = cols * rows;
+			return Array.from({ length: Math.ceil(p.tiles.length / per) }, (_, i) => ({
+				label: `${p.label} ${i + 1}`, tiles: p.tiles.slice(i * per, (i + 1) * per), cols, size: Math.floor(size),
+			}));
+		});
 	};
+	const once = lay(false);
+	const shown = once.length > 1 ? lay(true) : once;
 	return (
 		<div className={s.pages}>
-			{shown.length > 1 && (
-				<div className={s.pageTabs} role="tablist">
-					{shown.map((p, i) => (
-						<button key={p.label} type="button" role="tab" aria-selected={at === i} className={s.pageTab} onClick={() => go(i)}>
-							{p.label}
-							<span className={s.pageCount}>{p.tiles.length}</span>
-						</button>
-					))}
-				</div>
-			)}
 			<div ref={row} className={s.pageRow}
 				onScroll={(e) => {
 					const el = e.currentTarget;
 					const width = (el.firstElementChild as HTMLElement | null)?.offsetWidth ?? el.clientWidth;
-					setAt(Math.min(shown.length - 1, Math.round(el.scrollLeft / width)));
+					setAt(Math.min(shown.length - 1, Math.round(el.scrollLeft / (width + BLOCK_GAP))));
 				}}>
-				{shown.map((p) => (
-					<section key={p.label} className={`${s.taskPage} ${shown.length > 1 ? s.peek : ""}`} aria-label={p.label}>
-						<div className={s.blocks}>{p.tiles}</div>
+				{box.w > 0 && shown.map((p) => (
+					<section key={p.label} className={s.taskPage} style={{ flexBasis: shown.length > 1 ? box.w - PEEK : box.w }} aria-label={p.label}>
+						<div className={s.blocks} style={{ gridTemplateColumns: `repeat(${p.cols}, ${p.size}px)`, "--size": `${p.size}px` } as CSSProperties}>
+							{p.tiles}
+						</div>
 					</section>
 				))}
 			</div>
+			{shown.length > 1 && (
+				<div className={s.pageDots} aria-hidden="true">
+					{shown.map((p, i) => <span key={p.label} className={at === i ? s.pageDotOn : ""} />)}
+				</div>
+			)}
 		</div>
 	);
 }
