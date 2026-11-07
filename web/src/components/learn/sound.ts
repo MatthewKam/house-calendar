@@ -28,15 +28,26 @@ export function hush() {
 	playing = null;
 }
 
-/** Plays a sound file over anything before it. */
-export function play(url: string) {
+/** Plays a sound file over anything before it; `onEnd` once it's finished (or stopped, or won't play). */
+export function play(url: string, onEnd?: () => void) {
 	hush();
-	playing = new Audio(url);
-	playing.play().catch(() => {});
+	const audio = new Audio(url);
+	playing = audio;
+	let ended = false;
+	const end = () => {
+		if (ended) return;
+		ended = true;
+		onEnd?.();
+	};
+	audio.addEventListener("ended", end);
+	audio.addEventListener("pause", end);
+	audio.addEventListener("error", end);
+	audio.play().catch(end);
 }
 
-/** An animal's noise, over anything before it (nothing if it has none). */
-export function noise(animal: { id: string }) {
+/** An animal's noise, over anything before it; `onEnd` once it's finished (straight away if it has none). */
+export function noise(animal: { id: string }, onEnd?: () => void) {
 	const url = noiseUrl(animal.id);
-	if (url) play(url);
+	if (url) play(url, onEnd);
+	else onEnd?.();
 }

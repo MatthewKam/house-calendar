@@ -12,8 +12,8 @@ const ROUNDS = [3, 3, 3, 4, 4, 4];
 
 /**
  * Who says that? (age 2): an animal's noise as a word ("Moo!"), with a play button beside it to hear it
- * (nothing plays by itself); tap who says it. Every animal tapped makes its own noise. Farm animals first, then pets, then wild ones, and more
- * to choose from as it levels up.
+ * (nothing plays by itself); tap who says it. Each animal tapped makes its own noise, its word under it
+ * while it does. Farm animals first, then pets, then wild ones, and more to choose from as it levels up.
  */
 export default function Sounds({ level, onDone, onBack }: GameProps) {
 	const total = at(ROUNDS, level);
@@ -31,8 +31,13 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 
 	useEffect(() => setTapped(null), [answer]);
 
+	// The animal whose noise is playing: its word shows under it until the noise ends (a second at least,
+	// so there's time to see it).
+	const [saying, setSaying] = useState<string | null>(null);
 	function tap(a: Animal) {
-		noise(a);
+		setSaying(a.id);
+		const from = Date.now();
+		noise(a, () => setTimeout(() => setSaying((now) => (now === a.id ? null : now)), Math.max(0, 1000 - (Date.now() - from))));
 		setTapped((t) => ({ id: a.id, n: (t?.n ?? 0) + 1 }));
 		rounds.tap(a.id === answer.id);
 	}
@@ -58,6 +63,7 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 										className={`${s.tile} ${right ? `${s.tileRight} ${s.hop}` : isTapped ? s.wiggle : ""}`}
 										style={{ width: grid.size, height: grid.size }} onClick={() => tap(a)}>
 										<Pic id={a.id} />
+										{saying === a.id && <span className={s.tileSays}>{a.says}!</span>}
 									</button>
 								);
 							})}
