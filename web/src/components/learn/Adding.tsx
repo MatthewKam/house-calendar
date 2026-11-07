@@ -22,7 +22,7 @@ interface Round { take: boolean; a: number; b: number; fa: { id: string; one: st
  * on it (tap a fruit to take it off) until each plate has its number, then how many in all. Take-away
  * (from level 4): the plate starts full; tap fruit to move them to the "take away" bowl until it has
  * its number, then how many are left. The answer's picked from a few numbers, or from level 5 typed on
- * a number pad. Too many on a plate shows in yellow.
+ * a number pad. Too many on a plate turns it and its number red.
  */
 export default function Adding({ level, onDone, onBack }: GameProps) {
 	const rounds = useRounds(ROUNDS, onDone);
@@ -111,7 +111,7 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 					const item = Math.floor((D * 0.62) / perRow);
 					const extraSize = Math.min(80, D * 0.33);
 					const sign = (
-						<span className={`${s.sign} ${n === want && (bowl || !r.take) ? s.signDone : ""}`} style={{ fontSize: Math.max(22, D * 0.14) }}>
+						<span className={`${s.sign} ${over ? s.signOver : n === want && (bowl || !r.take) ? s.signDone : ""}`} style={{ fontSize: Math.max(30, D * 0.2) }}>
 							{bowl ? `− ${want}` : want}
 						</span>
 					);
