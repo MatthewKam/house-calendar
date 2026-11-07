@@ -25,8 +25,8 @@ export function Board({ onBack, total, done, children, cheer, style }: {
 	total?: number;
 	done?: number;
 	children: (box: Box) => ReactNode;
-	/** A round just got: the cheer shows over the game. */
-	cheer?: boolean;
+	/** A round just got: the cheer shows over the game ("slide": the mascot slides across instead). */
+	cheer?: boolean | "slide";
 	style?: CSSProperties;
 }) {
 	const howTo = useContext(HowTo);
@@ -46,7 +46,7 @@ export function Board({ onBack, total, done, children, cheer, style }: {
 			<div ref={stage} className={s.stage}>
 				{box.w > 0 && children(box)}
 			</div>
-			{cheer && <Cheer />}
+			{cheer && <Cheer slide={cheer === "slide"} />}
 			{showHow && howTo && <HowToPlay {...howTo} onClose={() => setShowHow(false)} />}
 		</section>
 	);
@@ -86,12 +86,18 @@ export function fit(n: number, box: Box, { gap = 12, shape = 1, most = 260 }: { 
 	return { ...best, size: Math.max(0, Math.floor(best.size)) };
 }
 
-/** A big cheer when a round's got: the mascot pops up, with a burst of confetti. No sound. */
-export function Cheer() {
+/** How long the mascot takes to slide across (a game's rounds wait this long before the next). */
+export const SLIDE_MS = 2600;
+
+/**
+ * A big cheer when a round's got: the mascot pops up with a burst of confetti; or (`slide`) slides
+ * across from left to right, wiping the game clean, with confetti all the way. No sound.
+ */
+export function Cheer({ slide }: { slide?: boolean }) {
 	return (
-		<div className={s.cheer} aria-hidden="true">
+		<div className={`${s.cheer} ${slide ? s.cheerSlide : ""}`} aria-hidden="true" style={{ "--slide": `${SLIDE_MS}ms` } as CSSProperties}>
 			<span className={s.confetti}>
-				{Array.from({ length: 14 }, (_, i) => <i key={i} style={{ "--i": i } as CSSProperties} />)}
+				{Array.from({ length: slide ? 24 : 14 }, (_, i) => <i key={i} style={{ "--i": i } as CSSProperties} />)}
 			</span>
 			<img className={s.cheerMascot} src="/mascot/sprig.png" alt="" />
 		</div>

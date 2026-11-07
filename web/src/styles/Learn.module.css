@@ -281,6 +281,42 @@
 		opacity: 0;
 	}
 }
+/* Sliding across: the mascot goes from off the left to off the right; confetti keeps coming. */
+.cheerSlide {
+	overflow: hidden;
+}
+.cheerSlide .cheerMascot {
+	position: absolute;
+	left: 0;
+	top: 50%;
+	width: min(36vmin, 14rem);
+	animation: slideAcross var(--slide) cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+@keyframes slideAcross {
+	from {
+		transform: translate(-110%, -50%) rotate(-6deg);
+	}
+	50% {
+		transform: translate(calc(50vw - 50%), -50%) rotate(4deg);
+	}
+	to {
+		transform: translate(100vw, -50%) rotate(-6deg);
+	}
+}
+.cheerSlide .confetti i {
+	animation: burst 1.1s ease-out infinite;
+	animation-delay: calc(var(--i) * -0.1s);
+}
+/* The fruit wiped off the plates as the mascot passes. */
+.wiped {
+	animation: wipe 0.45s ease-in calc(2600ms * var(--wipeAt, 0.45)) forwards;
+}
+@keyframes wipe {
+	to {
+		opacity: 0;
+		transform: translateX(40%) scale(0.6);
+	}
+}
 .confetti {
 	position: absolute;
 	left: 50%;

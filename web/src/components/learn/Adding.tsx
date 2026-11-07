@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Pic } from "./art";
-import { Board } from "./parts";
+import { Board, SLIDE_MS } from "./parts";
 import { FRUIT } from "./things";
 import { at, between, pick, shuffle, useRounds, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
@@ -25,7 +25,8 @@ interface Round { take: boolean; a: number; b: number; fa: { id: string; one: st
  * a number pad. Too many on a plate turns it and its number red.
  */
 export default function Adding({ level, onDone, onBack }: GameProps) {
-	const rounds = useRounds(ROUNDS, onDone);
+	// Right: the mascot slides across, wiping the plates clean, before the next round.
+	const rounds = useRounds(ROUNDS, onDone, SLIDE_MS);
 	const pad = level >= PAD_FROM;
 	const plan = useMemo<Round[]>(() => Array.from({ length: ROUNDS }, (_, i) => {
 		const [lo, hi] = at(SIDES, level);
@@ -80,7 +81,7 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 	}
 
 	return (
-		<Board onBack={onBack} total={ROUNDS} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got}>
+		<Board onBack={onBack} total={ROUNDS} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got && "slide"}>
 			{(box) => {
 				const wide = box.w > box.h * 1.15;
 				const GAP = 12;
@@ -127,7 +128,9 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 					);
 					const dish = (
 						<div className={`${bowl ? s.bowl : s.plate} ${over ? s.plateOver : ""}`} style={{ width: D, height: D }}>
-							<div className={s.onPlates} style={{ gridTemplateColumns: `repeat(${perRow}, ${item}px)` }}>
+							<div className={`${s.onPlates} ${rounds.got ? s.wiped : ""}`}
+								// Wiped as the mascot passes: side by side, the left plate first; one above the other, both as it crosses the middle.
+								style={{ gridTemplateColumns: `repeat(${perRow}, ${item}px)`, "--wipeAt": wide ? (side === "a" ? 0.4 : 0.55) : 0.47 } as CSSProperties}>
 								{Array.from({ length: n }, (_, i) => (
 									<button key={i} type="button" className={s.onPlate} style={{ width: item, height: item }}
 										onClick={() => put(side, r.take ? (bowl ? -1 : 1) : -1)}
