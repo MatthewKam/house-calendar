@@ -83,6 +83,12 @@ function devicesFor(db: DB, memberIds: string[]) {
   return all.filter((d) => d.member_id && memberIds.includes(d.member_id));
 }
 
+/** Every grown-up's device (not a kid's own). */
+export function grownUpDevices(db: DB) {
+  const kids = kidIds(db);
+  return (db.prepare('SELECT * FROM push_devices').all() as DeviceRow[]).filter((d) => !d.member_id || !kids.has(d.member_id));
+}
+
 /** When a reminder comes due on this device. */
 const dueAt = (due: string, d: DeviceRow) => (due.length === 10 ? atLocal(due, DAY_HOUR, d.time_zone) : Date.parse(due));
 

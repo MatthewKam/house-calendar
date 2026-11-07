@@ -117,3 +117,12 @@
 .soundName small { color: var(--muted); font-weight: 400; }
 .recording { background: #b42318; color: #fff; }
 .recordDot { color: #b42318; }
+.learnTop {
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  background: #fff4d6;
+  color: #8a5a00;
+  font-size: 0.8rem;
+  font-weight: 700;
+}

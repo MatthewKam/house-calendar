@@ -110,4 +110,26 @@ describe('learning', () => {
     // Letters: 3 perfect in a row, and no count.
     for (let i = 0; i < 20; i++) expect((await play('letters', 0, 4)).body.leveledUp).toBe(false);
   });
+
+  it("tells the grown-ups' phones when a game reaches its top level", async () => {
+    const db = openDb(':memory:');
+    const year = Number(TODAY.slice(0, 4));
+    db.prepare(`INSERT INTO members (id, name, color) VALUES ('alex', 'Alex', '#000000')`).run();
+    db.prepare(`INSERT INTO members (id, name, color, birthdate) VALUES ('nolan', 'Nolan Kam', '#111111', ?)`).run(`${year - 2}-01-01`);
+    // Alex's phone and Nolan's own device; only Alex's hears about it.
+    const sub = (e: string) => JSON.stringify({ endpoint: e, keys: { p256dh: 'p', auth: 'a' } });
+    db.prepare(`INSERT INTO push_devices (id, endpoint, subscription, member_id, time_zone) VALUES ('p1', 'https://push.test/alex', ?, 'alex', 'UTC'), ('p2', 'https://push.test/nolan', ?, 'nolan', 'UTC')`)
+      .run(sub('https://push.test/alex'), sub('https://push.test/nolan'));
+    const sent: { to: string; title: string }[] = [];
+    const app = buildApp(db, { push: { publicKey: 'test', send: async (s, a) => { sent.push({ to: s.endpoint, title: a.title }); } } });
+    const call = (method: string, url: string, payload: object) => app.inject({ method: method as 'POST', url, payload });
+    await call('PUT', '/api/learn/nolan', { today: TODAY, enabled: true, levels: { apples: 5 } });
+    const play = () => call('POST', '/api/learn/nolan/done', { today: TODAY, game: 'apples', level: 5, rounds: 3, firstTry: 3 });
+    await play();
+    await play();
+    expect(sent).toEqual([]);
+    expect((await play()).json().leveledUp).toBe(true);
+    await new Promise((r) => setTimeout(r, 10));
+    expect(sent).toEqual([{ to: 'https://push.test/alex', title: '🌱 Nolan has reached the top of Counting' }]);
+  });
 });

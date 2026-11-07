@@ -236,7 +236,7 @@ export function buildApp(db: DB, opts: {
   registerLists(app, db);
   registerPush(app, db, opts.push);
   registerCapture(app, db, opts.understand);
-  registerLearn(app, db);
+  registerLearn(app, db, opts.push);
 
   // ---- Display settings (key/value, for things like UI scale) -------------
   app.get('/api/settings', async () => {

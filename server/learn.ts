@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
+import { grownUpDevices, sendOnce, type Pusher } from './push.ts';
 import { stageOf, type Stage } from './stages.ts';
 
 // Learning (docs/kids-growth.md): short picture-first games in kid mode, with no fail states. A
@@ -19,6 +20,12 @@ export const GAMES = {
   adding: 6, maze: 6, letters: 6, memory: 6,
 } as const;
 export type Game = keyof typeof GAMES;
+
+/** The games' names, as the kids' Learn tab shows them (for a grown-up's heads-up). */
+const GAME_NAMES: Record<Game, string> = {
+  sounds: 'Who says that?', peekaboo: 'Peekaboo farm', findIt: 'Find it!', apples: 'Counting',
+  adding: 'Math', maze: 'Maze', letters: 'Letters', memory: 'Pairs',
+};
 
 /** Each stage's games. Older stages play Early's for now. */
 const GAMES_FOR: Record<'little' | 'early', Game[]> = {
@@ -41,7 +48,7 @@ export const PLAYS_TO_MOVE_ON: Partial<Record<Game, number>> = { adding: 20, maz
 
 interface KidRow { id: string; birthdate: string | null; stage: string | null; enabled: number | null }
 
-export function registerLearn(app: FastifyInstance, db: DB) {
+export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
   // Recorded noises arrive as the audio itself (Safari records audio/mp4, most others audio/webm).
   app.addContentTypeParser(/^audio\//, { parseAs: 'buffer', bodyLimit: MAX_SOUND_BYTES }, (_req, body, done) => done(null, body));
 
@@ -134,6 +141,16 @@ export function registerLearn(app: FastifyInstance, db: DB) {
         setLevel(r.id, game, at + 1);
         return true;
       })();
+      // Moved up to the top level: a heads-up to the grown-ups, so they know it's time for more.
+      const top = leveledUp && levelOf(r.id, game) >= GAMES[game];
+      if (top && pusher) {
+        const { name } = db.prepare('SELECT name FROM members WHERE id = ?').get(r.id) as { name: string };
+        void sendOnce(db, pusher, grownUpDevices(db), `learn-top:${r.id}:${game}:${randomUUID()}`, {
+          title: `🌱 ${name.split(' ')[0]} has reached the top of ${GAME_NAMES[game]}`,
+          body: `Level ${GAMES[game]} of ${GAMES[game]}. Time to ask for more levels.`,
+          url: '/', tag: `learn-top:${r.id}:${game}`,
+        }, req.log);
+      }
       return { leveledUp, ...state(kid(r.id)!, today) };
     });
 
