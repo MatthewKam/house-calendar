@@ -53,11 +53,11 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 		} else {
 			setMisses(misses + 1);
 			// A moment to look, then the two shake ("not a pair"), then turn back over.
-			timers.current.push(setTimeout(() => setShaking([other, i]), 700));
+			timers.current.push(setTimeout(() => setShaking([other, i]), 400));
 			timers.current.push(setTimeout(() => {
 				setShaking([]);
 				setUp([]);
-			}, 1300));
+			}, 950));
 		}
 	}
 
