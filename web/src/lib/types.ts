@@ -353,18 +353,12 @@ export type Proposal =
   | { kind: 'event'; title: string; allDay: boolean; start: string; end: string; memberIds: string[]; location: string | null; notes: string | null }
   | { kind: 'task'; title: string; memberId: string; day: string };
 
-/** Learning's skills (server/learn.ts). */
-export type Skill = 'animals' | 'story' | 'counting' | 'letters' | 'feelings' | 'patterns';
+/** Learning's games (server/learn.ts): Little's four, then Early's. */
+export type Game = 'sounds' | 'peekaboo' | 'findIt' | 'apples' | 'adding' | 'maze' | 'letters' | 'memory';
 
-/** A kid's learning: on or off, leveling up, the level for each of their skills, and today's activity. */
+/** A kid's learning: on or off, and their stage's games, each at the level they play it. */
 export interface LearnState {
   memberId: string;
   enabled: boolean;
-  levelUp: boolean;
-  /** Old enough for leveling up (3+). */
-  canLevelUp: boolean;
-  levels: Partial<Record<Skill, number>>;
-  today: { skill: Skill; level: number };
-  doneToday: boolean;
-  starToday: boolean;
+  games: { game: Game; level: number; maxLevel: number }[];
 }

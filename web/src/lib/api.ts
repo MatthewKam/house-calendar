@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, LearnState, Skill, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility, SprigList, SprigItem, Proposal } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, LearnState, Game, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility, SprigList, SprigItem, Proposal } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, {
@@ -87,10 +87,10 @@ export const api = {
   updateMember: (id: string, m: MemberPatch) => call<Member>('PATCH', `/api/members/${id}`, m),
   removeMember: (id: string) => call<void>('DELETE', `/api/members/${id}`),
   learn: (today: string) => call<LearnState[]>('GET', `/api/learn?today=${today}`),
-  setLearn: (memberId: string, today: string, p: { enabled?: boolean; levelUp?: boolean }) =>
+  setLearn: (memberId: string, today: string, p: { enabled?: boolean; levels?: Partial<Record<Game, number>> }) =>
     call<LearnState>('PUT', `/api/learn/${memberId}`, { ...p, today }),
-  learnDone: (memberId: string, p: { today: string; skill: Skill; level: number; rounds: number; firstTry: number }) =>
-    call<LearnState & { star: boolean; leveledUp: boolean }>('POST', `/api/learn/${memberId}/done`, p),
+  learnDone: (memberId: string, p: { today: string; game: Game; level: number; rounds: number; firstTry: number }) =>
+    call<LearnState & { leveledUp: boolean }>('POST', `/api/learn/${memberId}/done`, p),
   photos: () => call<Photo[]>('GET', '/api/photos'),
   updatePhoto: (id: string, p: { inSlideshow?: boolean; memberId?: string | null }) => call<Photo>('PATCH', `/api/photos/${id}`, p),
   deletePhoto: (id: string) => call<void>('DELETE', `/api/photos/${id}`),

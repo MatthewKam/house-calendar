@@ -83,3 +83,20 @@
   padding: 0.6rem 0;
   border-top: 1px solid var(--line);
 }
+/* A game's level, with a step down and up. */
+.learnGame {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 0.4rem;
+}
+.learnStep {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: var(--bg);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.learnStep:disabled { opacity: 0.35; }
+.learnLevel { min-width: 6.5rem; text-align: center; color: var(--muted); font-size: 0.9rem; }

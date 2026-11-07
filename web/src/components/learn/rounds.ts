@@ -1,10 +1,11 @@
 import { useState } from "react";
 
-/** An activity's props: its level, and what to call when every round is done. */
-export interface ActivityProps {
+/** A game's props: its level, what to call when it's finished, and the way back to the games. */
+export interface GameProps {
 	level: number;
-	/** Rounds played, and how many were right on the first try. */
+	/** Rounds played, and how many were right on the first try (all of them, three plays running, moves it up). */
 	onDone: (rounds: number, firstTry: number) => void;
+	onBack: () => void;
 }
 
 /** A copy in random order. */
@@ -20,11 +21,20 @@ export function shuffle<T>(list: readonly T[]): T[] {
 /** `n` different ones, at random. */
 export const pick = <T,>(list: readonly T[], n: number) => shuffle(list).slice(0, n);
 
+/** One at random. */
+export const any = <T,>(list: readonly T[]) => list[Math.floor(Math.random() * list.length)];
+
+/** A whole number from `lo` to `hi`. */
+export const between = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1));
+
+/** A level's setting, from a list of one per level (the last for any above it). */
+export const at = <T,>(perLevel: readonly T[], level: number) => perLevel[Math.min(level, perLevel.length) - 1];
+
 /**
- * Rounds of a pick-the-right-one activity: which round it is, whether it's been got, and how many were
- * got on the first try. `tap(ok)` is a pick; `next()` moves on, or finishes.
+ * Rounds of a pick-the-right-one game: which round it is, whether it's been got, and how many were got
+ * on the first try. `tap(ok)` is a pick; `next()` moves on, or finishes.
  */
-export function useRounds(total: number, onDone: ActivityProps["onDone"]) {
+export function useRounds(total: number, onDone: GameProps["onDone"]) {
 	const [round, setRound] = useState(0);
 	const [got, setGot] = useState(false);
 	const [missed, setMissed] = useState(false);

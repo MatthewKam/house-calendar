@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClie
 import { api } from './api';
 import { addDays, dayKey, fromDayKey } from './dates';
 import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, RewardInput, CalEvent, Reward, RewardWin, Bucket, StarPlacing,
-  ReminderList, Photo, LeaveAlert, OutboxStatus, PottyChart, Visibility, SprigList, SprigItem } from './types';
+  ReminderList, Photo, LeaveAlert, OutboxStatus, PottyChart, Visibility, SprigList, SprigItem, Game } from './types';
 
 // ---- Edits show straight away ---------------------------------------------------------------
 // Every edit changes what's on screen first (the cached data), then saves in the background. If
@@ -452,16 +452,16 @@ export function useSetPeople() {
   });
 }
 
-/** Each kid's learning (on or off, levels, today's activity). */
+/** Each kid's learning (on or off, and their games' levels). */
 export function useLearn(today: string) {
   return useQuery({ queryKey: keys.learn(today), queryFn: () => api.learn(today) });
 }
 
-/** A guardian turning learning or leveling up on or off for a kid. */
+/** A guardian turning learning on or off for a kid, or moving a game's level. */
 export function useSetLearn(today: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ memberId, ...p }: { memberId: string; enabled?: boolean; levelUp?: boolean }) => api.setLearn(memberId, today, p),
+    mutationFn: ({ memberId, ...p }: { memberId: string; enabled?: boolean; levels?: Partial<Record<Game, number>> }) => api.setLearn(memberId, today, p),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.learn(today) }),
   });
 }
