@@ -29,17 +29,28 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 	const { answer, choices } = plan[rounds.round];
 	const [tapped, setTapped] = useState<{ id: string; n: number } | null>(null);
 
-	useEffect(() => setTapped(null), [answer]);
+	useEffect(() => {
+		setTapped(null);
+		setFound(false);
+	}, [answer]);
 
 	// The animal whose noise is playing: its word shows under it until the noise ends (a second at least,
 	// so there's time to see it).
 	const [saying, setSaying] = useState<string | null>(null);
+	// The right one's been tapped and its noise is playing: the cheer waits for it to finish.
+	const [found, setFound] = useState(false);
 	function tap(a: Animal) {
+		if (found) return;
+		const right = a.id === answer.id;
+		if (right) setFound(true);
+		else rounds.tap(false);
 		setSaying(a.id);
-		const from = Date.now();
-		noise(a, () => setTimeout(() => setSaying((now) => (now === a.id ? null : now)), Math.max(0, 1000 - (Date.now() - from))));
 		setTapped((t) => ({ id: a.id, n: (t?.n ?? 0) + 1 }));
-		rounds.tap(a.id === answer.id);
+		const from = Date.now();
+		noise(a, () => setTimeout(() => {
+			setSaying((now) => (now === a.id ? null : now));
+			if (right) rounds.tap(true);
+		}, Math.max(0, 1000 - (Date.now() - from))));
 	}
 
 	return (
@@ -57,7 +68,7 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 						<div className={s.grid} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 16 }}>
 							{choices.map((a) => {
 								const isTapped = tapped?.id === a.id;
-								const right = rounds.got && a.id === answer.id;
+								const right = (found || rounds.got) && a.id === answer.id;
 								return (
 									<button key={`${a.id}-${isTapped ? tapped.n : 0}`} type="button" aria-label={a.name}
 										className={`${s.tile} ${right ? `${s.tileRight} ${s.hop}` : isTapped ? s.wiggle : ""}`}
