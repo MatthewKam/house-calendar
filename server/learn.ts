@@ -1,104 +1,98 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
-import { ageOn, stageOf, type Stage } from './stages.ts';
+import { stageOf, type Stage } from './stages.ts';
 
-// Learning (docs/kids-growth.md): one short activity a day in kid mode, picture-first, no fail states.
-// A guardian turns it on for each kid. Everyone starts on level 1; from age 3 a guardian can let a kid
-// level up, and from then on each skill moves up by itself once they've got it right a few days running.
-// Finishing the day's activity earns at most 1 star (from Early on; the littlest just play).
+// Learning (docs/kids-growth.md): short picture-first games in kid mode, with no fail states. A
+// guardian turns it on for each kid, who then picks any of their stage's games. Each game has levels:
+// a few perfect plays in a row move it up by itself, and a guardian can move it up or down. Each play
+// is a new version of the game (the web picks it). It's for learning: it earns no stars.
 
 const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 
-/** The skills, and the highest level each has. */
-export const SKILLS = { animals: 1, story: 1, counting: 2, letters: 2, feelings: 1, patterns: 2 } as const;
-export type Skill = keyof typeof SKILLS;
+/** The games, and the highest level each has. */
+export const GAMES = {
+  // Little (2): who says that, peekaboo farm, find it, count the apples.
+  sounds: 6, peekaboo: 6, findIt: 6, apples: 6,
+  // Early (4) and up: add them up, Bear's way home, the missing first letter, card matching.
+  adding: 6, maze: 6, letters: 6, memory: 6,
+} as const;
+export type Game = keyof typeof GAMES;
 
-/** What each stage does, taking turns a day at a time. Older stages use Early's for now. */
-const SKILLS_FOR: Record<'little' | 'early', Skill[]> = {
-  little: ['animals', 'story'],
-  early: ['counting', 'letters', 'feelings', 'patterns'],
+/** Each stage's games. Older stages play Early's for now. */
+const GAMES_FOR: Record<'little' | 'early', Game[]> = {
+  little: ['sounds', 'peekaboo', 'findIt', 'apples'],
+  early: ['adding', 'maze', 'letters', 'memory'],
 };
+export const gamesFor = (stage: Stage | null) => GAMES_FOR[stage === 'little' || stage === null ? 'little' : 'early'];
 
-/** Days of getting every round right the first time, at a level, before moving up. */
-export const DAYS_TO_LEVEL_UP = 3;
-/** Leveling up can be allowed from this age. */
-const LEVEL_UP_AGE = 3;
+/** Perfect plays in a row, at a level, before the game moves up. */
+export const PLAYS_TO_LEVEL_UP = 3;
 
-interface KidRow { id: string; birthdate: string | null; stage: string | null; enabled: number | null; level_up: number | null }
-
-const dayNumber = (day: string) => Math.floor(Date.parse(`${day}T00:00:00Z`) / 86_400_000);
-
-/** The skill for a kid's stage on a day. */
-export function skillFor(stage: Stage | null, day: string): Skill {
-  const list = SKILLS_FOR[stage === 'little' || stage === null ? 'little' : 'early'];
-  return list[((dayNumber(day) % list.length) + list.length) % list.length];
-}
+interface KidRow { id: string; birthdate: string | null; stage: string | null; enabled: number | null }
 
 export function registerLearn(app: FastifyInstance, db: DB) {
-  const kid = (id: string) => db.prepare(`SELECT m.id, m.birthdate, m.stage, k.enabled, k.level_up
+  const kid = (id: string) => db.prepare(`SELECT m.id, m.birthdate, m.stage, k.enabled
     FROM members m LEFT JOIN learn_kids k ON k.member_id = m.id WHERE m.id = ?`).get(id) as KidRow | undefined;
-  /** From age 3 (or, without a birthday, a stage past Little). */
-  const canLevelUp = (r: KidRow, today: string) =>
-    r.birthdate ? ageOn(r.birthdate, today) >= LEVEL_UP_AGE : r.stage !== null && r.stage !== 'little';
-  const levels = (memberId: string) => Object.fromEntries((db.prepare('SELECT skill, level FROM learn_levels WHERE member_id = ?')
-    .all(memberId) as { skill: Skill; level: number }[]).map((r) => [r.skill, r.level])) as Partial<Record<Skill, number>>;
-  /** The level a kid plays a skill at: 1 unless leveling up is on. */
-  const levelOf = (r: KidRow, skill: Skill, today: string) =>
-    r.level_up && canLevelUp(r, today) ? Math.min(levels(r.id)[skill] ?? 1, SKILLS[skill]) : 1;
+  const stored = (memberId: string) => Object.fromEntries((db.prepare('SELECT skill, level FROM learn_levels WHERE member_id = ?')
+    .all(memberId) as { skill: Game; level: number }[]).map((r) => [r.skill, r.level])) as Partial<Record<Game, number>>;
+  const levelOf = (memberId: string, game: Game) => Math.min(stored(memberId)[game] ?? 1, GAMES[game]);
+  const setLevel = (memberId: string, game: Game, level: number) => db.prepare(`INSERT INTO learn_levels (member_id, skill, level, since_play)
+    VALUES (?, ?, ?, (SELECT COALESCE(MAX(rowid), 0) FROM learn_sessions))
+    ON CONFLICT (member_id, skill) DO UPDATE SET level = excluded.level, since_play = excluded.since_play`).run(memberId, game, level);
 
   function state(r: KidRow, today: string) {
-    const stage = stageOf(r, today);
-    const skill = skillFor(stage, today);
-    const done = db.prepare('SELECT stars FROM learn_sessions WHERE member_id = ? AND day = ?').all(r.id, today) as { stars: number }[];
+    const games = gamesFor(stageOf(r, today));
     return {
       memberId: r.id,
       enabled: r.enabled === 1,
-      levelUp: r.level_up === 1,
-      canLevelUp: canLevelUp(r, today),
-      // Each skill of their stage, at the level they'd play it.
-      levels: Object.fromEntries(SKILLS_FOR[stage === 'little' || stage === null ? 'little' : 'early']
-        .map((s) => [s, levelOf(r, s, today)])),
-      today: { skill, level: levelOf(r, skill, today) },
-      doneToday: done.length > 0,
-      starToday: done.some((d) => d.stars > 0),
+      // Their stage's games, each at the level they'd play it, and its highest.
+      games: games.map((game) => ({ game, level: levelOf(r.id, game), maxLevel: GAMES[game] })),
     };
   }
 
-  // Each kid's learning: on or off, leveling up, levels, and today's activity.
+  // Each kid's learning: on or off, and their games' levels.
   app.get<{ Querystring: { today: string } }>('/api/learn', {
     schema: { querystring: { type: 'object', required: ['today'], properties: { today: { type: 'string', pattern: DAY } } } },
   }, async (req) => {
-    const rows = db.prepare(`SELECT m.id, m.birthdate, m.stage, k.enabled, k.level_up
+    const rows = db.prepare(`SELECT m.id, m.birthdate, m.stage, k.enabled
       FROM members m LEFT JOIN learn_kids k ON k.member_id = m.id ORDER BY m.sort_order, m.created_at`).all() as KidRow[];
     return rows.filter((r) => { const s = stageOf(r, req.query.today); return s !== null && s !== 'adult'; })
       .map((r) => state(r, req.query.today));
   });
 
-  // A guardian turns learning on or off for a kid, and lets them level up (from age 3).
-  app.put<{ Params: { memberId: string }; Body: { enabled?: boolean; levelUp?: boolean; today: string } }>('/api/learn/:memberId', {
-    schema: { body: { type: 'object', required: ['today'], additionalProperties: false, minProperties: 2, properties: {
-      enabled: { type: 'boolean' }, levelUp: { type: 'boolean' }, today: { type: 'string', pattern: DAY } } } },
-  }, async (req, reply) => {
-    const r = kid(req.params.memberId);
-    if (!r) return reply.code(404).send({ error: 'Member not found' });
-    const stage = stageOf(r, req.body.today);
-    if (stage === null || stage === 'adult') return reply.code(400).send({ error: 'Learning is for the kids' });
-    if (req.body.levelUp && !canLevelUp(r, req.body.today)) return reply.code(400).send({ error: 'Leveling up starts at age 3' });
-    db.prepare(`INSERT INTO learn_kids (member_id, enabled, level_up) VALUES (?, ?, ?)
-      ON CONFLICT (member_id) DO UPDATE SET enabled = excluded.enabled, level_up = excluded.level_up`)
-      .run(r.id, (req.body.enabled ?? r.enabled === 1) ? 1 : 0, (req.body.levelUp ?? r.level_up === 1) ? 1 : 0);
-    return state(kid(r.id)!, req.body.today);
-  });
+  // A guardian turns learning on or off for a kid, and moves games' levels up or down.
+  app.put<{ Params: { memberId: string }; Body: { enabled?: boolean; levels?: Partial<Record<Game, number>>; today: string } }>(
+    '/api/learn/:memberId', {
+      schema: { body: { type: 'object', required: ['today'], additionalProperties: false, minProperties: 2, properties: {
+        enabled: { type: 'boolean' }, today: { type: 'string', pattern: DAY },
+        levels: { type: 'object', additionalProperties: { type: 'integer', minimum: 1, maximum: 9 } } } } },
+    }, async (req, reply) => {
+      const r = kid(req.params.memberId);
+      if (!r) return reply.code(404).send({ error: 'Member not found' });
+      const { today } = req.body;
+      const stage = stageOf(r, today);
+      if (stage === null || stage === 'adult') return reply.code(400).send({ error: 'Learning is for the kids' });
+      const levels = Object.entries(req.body.levels ?? {}) as [Game, number][];
+      if (levels.some(([g, n]) => !gamesFor(stage).includes(g) || n > GAMES[g])) return reply.code(400).send({ error: 'No such level' });
+      db.transaction(() => {
+        if (req.body.enabled !== undefined) {
+          db.prepare(`INSERT INTO learn_kids (member_id, enabled) VALUES (?, ?)
+            ON CONFLICT (member_id) DO UPDATE SET enabled = excluded.enabled`).run(r.id, req.body.enabled ? 1 : 0);
+        }
+        for (const [game, level] of levels) setLevel(r.id, game, level);
+      })();
+      return state(kid(r.id)!, today);
+    });
 
-  // A finished activity: rounds played and how many were right the first time. The day's first earns
-  // the star (not for Little); with leveling up on, a few perfect days running moves the skill up.
-  app.post<{ Params: { memberId: string }; Body: { today: string; skill: Skill; level: number; rounds: number; firstTry: number } }>(
+  // A finished game: rounds played and how many were right the first time. The last few plays at its
+  // level all perfect moves it up.
+  app.post<{ Params: { memberId: string }; Body: { today: string; game: Game; level: number; rounds: number; firstTry: number } }>(
     '/api/learn/:memberId/done', {
-      schema: { body: { type: 'object', required: ['today', 'skill', 'level', 'rounds', 'firstTry'], additionalProperties: false, properties: {
-        today: { type: 'string', pattern: DAY }, skill: { enum: Object.keys(SKILLS) },
-        level: { type: 'integer', minimum: 1, maximum: 9 }, rounds: { type: 'integer', minimum: 1, maximum: 20 },
-        firstTry: { type: 'integer', minimum: 0, maximum: 20 } } } },
+      schema: { body: { type: 'object', required: ['today', 'game', 'level', 'rounds', 'firstTry'], additionalProperties: false, properties: {
+        today: { type: 'string', pattern: DAY }, game: { enum: Object.keys(GAMES) },
+        level: { type: 'integer', minimum: 1, maximum: 9 }, rounds: { type: 'integer', minimum: 1, maximum: 50 },
+        firstTry: { type: 'integer', minimum: 0, maximum: 50 } } } },
     }, async (req, reply) => {
       const r = kid(req.params.memberId);
       if (!r) return reply.code(404).send({ error: 'Member not found' });
@@ -106,29 +100,24 @@ export function registerLearn(app: FastifyInstance, db: DB) {
       // A kid's own device plays as that kid.
       if (viewer?.role === 'kid' && viewer.memberId !== r.id) return reply.code(403).send({ error: 'Not your activity' });
       if (!r.enabled) return reply.code(409).send({ error: 'Learning is off for this kid' });
-      const { today, skill, level, rounds } = req.body;
+      const { today, game, level, rounds } = req.body;
+      if (!gamesFor(stageOf(r, today)).includes(game)) return reply.code(400).send({ error: 'Not one of their games' });
       const firstTry = Math.min(req.body.firstTry, rounds);
-      const stage = stageOf(r, today);
-      const result = db.transaction(() => {
-        const already = db.prepare('SELECT 1 FROM learn_sessions WHERE member_id = ? AND day = ? AND stars > 0').get(r.id, today);
-        const star = stage !== 'little' && !already ? 1 : 0;
-        db.prepare(`INSERT INTO learn_sessions (id, member_id, day, skill, level, rounds, first_try, stars) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
-          .run(randomUUID(), r.id, today, skill, level, rounds, firstTry, star);
-        // Moving up: leveling up on, this level's the one they're on, and DAYS_TO_LEVEL_UP different days
-        // of perfect play at it.
-        let leveledUp = false;
-        const at = levelOf(r, skill, today);
-        if (r.level_up && canLevelUp(r, today) && level === at && at < SKILLS[skill]) {
-          const perfectDays = (db.prepare(`SELECT COUNT(DISTINCT day) n FROM learn_sessions
-            WHERE member_id = ? AND skill = ? AND level = ? AND first_try = rounds`).get(r.id, skill, at) as { n: number }).n;
-          if (perfectDays >= DAYS_TO_LEVEL_UP) {
-            db.prepare(`INSERT INTO learn_levels (member_id, skill, level) VALUES (?, ?, ?)
-              ON CONFLICT (member_id, skill) DO UPDATE SET level = excluded.level`).run(r.id, skill, at + 1);
-            leveledUp = true;
-          }
-        }
-        return { star: star > 0, leveledUp };
+      const leveledUp = db.transaction(() => {
+        db.prepare(`INSERT INTO learn_sessions (id, member_id, day, skill, level, rounds, first_try) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+          .run(randomUUID(), r.id, today, game, level, rounds, firstTry);
+        const at = levelOf(r.id, game);
+        if (level !== at || at >= GAMES[game]) return false;
+        // The latest plays at this level since it was set or moved up to.
+        const last = db.prepare(`SELECT s.first_try = s.rounds AS perfect FROM learn_sessions s
+          LEFT JOIN learn_levels l ON l.member_id = s.member_id AND l.skill = s.skill
+          WHERE s.member_id = ? AND s.skill = ? AND s.level = ? AND s.rowid > COALESCE(l.since_play, 0)
+          ORDER BY s.rowid DESC LIMIT ?`)
+          .all(r.id, game, at, PLAYS_TO_LEVEL_UP) as { perfect: number }[];
+        if (last.length < PLAYS_TO_LEVEL_UP || !last.every((p) => p.perfect)) return false;
+        setLevel(r.id, game, at + 1);
+        return true;
       })();
-      return { ...result, ...state(kid(r.id)!, today) };
+      return { leveledUp, ...state(kid(r.id)!, today) };
     });
 }

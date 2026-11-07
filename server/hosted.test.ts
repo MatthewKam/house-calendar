@@ -328,7 +328,7 @@ describe('privacy', () => {
     const today = new Date().toISOString().slice(0, 10);
     expect((await ipad.put(`/api/learn/${id('Sam')}`, { today, enabled: true })).status).toBe(403);
     expect((await alex.put(`/api/learn/${id('Sam')}`, { today, enabled: true })).body.enabled).toBe(true);
-    const played = { today, skill: 'counting', level: 1, rounds: 3, firstTry: 3 };
+    const played = { today, game: 'adding', level: 1, rounds: 3, firstTry: 3 };
     expect((await ipad.post(`/api/learn/${id('Sam')}/done`, played)).status).toBe(200);
     expect((await ipad.post(`/api/learn/${id('Alex')}/done`, played)).status).toBe(403);
 
