@@ -1,8 +1,10 @@
 // The games' only sound: animals' own recorded noises (web/public/sounds, free-to-use recordings,
 // credited in CREDITS.md there). Nothing is ever spoken.
 
-/** Animals with a recording in web/public/sounds/animals (`<id>.mp3`). The rest are silent. */
-export const RECORDED = new Set<string>([]);
+/** Animals with a recording in web/public/sounds/animals (`<id>.m4a`). The rest are silent. */
+export const RECORDED = new Set<string>([
+	"cow", "pig", "duck", "sheep", "horse", "chicken", "goat", "dog", "cat", "mouse", "frog", "owl", "bee", "lion", "elephant", "monkey",
+]);
 
 let playing: HTMLAudioElement | null = null;
 
@@ -16,6 +18,6 @@ export function hush() {
 export function noise(animal: { id: string }) {
 	if (!RECORDED.has(animal.id)) return;
 	hush();
-	playing = new Audio(`/sounds/animals/${animal.id}.mp3`);
+	playing = new Audio(`/sounds/animals/${animal.id}.m4a`);
 	playing.play().catch(() => {});
 }
