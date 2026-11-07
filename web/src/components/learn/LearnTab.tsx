@@ -52,7 +52,7 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 	letters: { title: "Letters", picture: "letters", Play: Letters, how: [
 		"A picture and its word, with the first letter missing. Say the word together.",
 		"Tap the letter that goes in the gap.",
-		"Higher levels: letters that look alike (b, d, p), small letters, then longer words.",
+		"A new few words each game, things a 4-year-old knows. Higher levels: more letters to choose from, letters that look alike (b, d, p), then small letters.",
 	] },
 	memory: { title: "Pairs", picture: "pairs", Play: Memory, how: [
 		"All the cards are face down. Tap two to turn them over.",

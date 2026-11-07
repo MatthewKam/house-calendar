@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Pic } from "./art";
 import { Board, fit } from "./parts";
 import { FRUIT } from "./things";
-import { at, between, pick, shuffle, useRounds, type GameProps } from "./rounds";
+import { at, between, fresh, shuffle, useRounds, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
 /** The most there can be, by level. From level 3 there's a "How many?" after counting. */
@@ -18,7 +18,7 @@ const ROUNDS = 3;
 export default function Apples({ level, onDone, onBack }: GameProps) {
 	const rounds = useRounds(ROUNDS, onDone);
 	const asking = level >= ASK_FROM;
-	const plan = useMemo(() => pick(FRUIT, ROUNDS).map((fruit) => ({
+	const plan = useMemo(() => fresh("apples.fruit", FRUIT, ROUNDS, (f) => f.id).map((fruit) => ({
 		fruit,
 		n: between(Math.max(2, at(MOST, level) - 2), at(MOST, level)),
 	})), [level]);

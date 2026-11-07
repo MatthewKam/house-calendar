@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Pic } from "./art";
 import { Board, fit, Hear } from "./parts";
 import { animalsUpTo } from "./things";
-import { any, at, pick, type GameProps } from "./rounds";
+import { at, fresh, pick, type GameProps } from "./rounds";
 import { noise } from "./sound";
 import s from "../../styles/Learn.module.css";
 
@@ -27,8 +27,8 @@ const NIGHT = { sky: "#26305e", hill: "#3f6b4a", light: "#f4f1ec" };
  */
 export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 	const listening = level >= LISTEN_FROM;
-	const look = useMemo(() => any(SKIES), []);
-	const hiding = useMemo(() => pick(animalsUpTo(Math.max(level, 2)), at(BUSHES, level)), [level]);
+	const look = useMemo(() => fresh("peekaboo.skies", SKIES, 1, (x) => x.sky)[0], []);
+	const hiding = useMemo(() => fresh(`peekaboo.${level}`, animalsUpTo(Math.max(level, 2)), at(BUSHES, level), (a) => a.id), [level]);
 	// Listening: who to find each round.
 	const asks = useMemo(() => pick(hiding, Math.min(LISTEN_ROUNDS, hiding.length)), [hiding]);
 	const [out, setOut] = useState<number[]>([]);

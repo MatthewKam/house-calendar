@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Pic } from "./art";
 import { Board, fit } from "./parts";
 import { ANIMALS, FRUIT, TOYS } from "./things";
-import { any, at, pick, shuffle, type GameProps } from "./rounds";
+import { at, fresh, shuffle, type GameProps } from "./rounds";
 import { noise } from "./sound";
 import s from "../../styles/Learn.module.css";
 
@@ -21,9 +21,9 @@ const SETS = [
  * play. First try is finding them all without too many misses (one per pair).
  */
 export default function Memory({ level, onDone, onBack }: GameProps) {
-	const set = useMemo(() => any(SETS), []);
+	const set = useMemo(() => fresh("pairs.sets", SETS, 1, (x) => x.name)[0], []);
 	const pairs = Math.min(at(PAIRS, level), set.cards.length);
-	const cards = useMemo(() => shuffle(pick(set.cards, pairs).flatMap((c) => [c, c])), [set, pairs]);
+	const cards = useMemo(() => shuffle(fresh(`pairs.${set.name}`, set.cards, pairs, (x) => x.id).flatMap((c) => [c, c])), [set, pairs]);
 	const [up, setUp] = useState<number[]>([]);
 	const [matched, setMatched] = useState<number[]>([]);
 	const [misses, setMisses] = useState(0);

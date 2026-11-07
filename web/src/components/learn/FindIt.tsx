@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Pic } from "./art";
 import { Board, fit } from "./parts";
 import { TOYS } from "./things";
-import { any, at, between, pick, shuffle, type GameProps } from "./rounds";
+import { any, at, between, fresh, shuffle, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
 /** Things in the room, how many to find, and how many of those hide under something, by level. */
@@ -46,8 +46,8 @@ function roomFor(level: number, find: string) {
  */
 export default function FindIt({ level, onDone, onBack }: GameProps) {
 	const total = at(ROUNDS, level);
-	const look = useMemo(() => any(ROOMS), []);
-	const finds = useMemo(() => pick(TOYS, total), [total]);
+	const look = useMemo(() => fresh("findit.rooms", ROOMS, 1, (r) => r.name)[0], []);
+	const finds = useMemo(() => fresh("findit.finds", TOYS, total, (t) => t.id), [total]);
 	const [round, setRound] = useState(0);
 	const find = finds[round];
 	const want = at(FIND, level);

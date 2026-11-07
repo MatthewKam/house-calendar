@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Pic } from "./art";
 import { Board, fit, Hear } from "./parts";
 import { animalsUpTo, type Animal } from "./things";
-import { at, pick, shuffle, useRounds, type GameProps } from "./rounds";
+import { at, fresh, pick, shuffle, useRounds, type GameProps } from "./rounds";
 import { noise } from "./sound";
 import s from "../../styles/Learn.module.css";
 
@@ -21,7 +21,7 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 	// Each round's animal and who's beside it, a new set each play.
 	const plan = useMemo(() => {
 		const pool = animalsUpTo(level);
-		return pick(pool, total).map((answer) => ({
+		return fresh(`sounds.${level}`, pool, total, (a) => a.id).map((answer) => ({
 			answer,
 			choices: shuffle([answer, ...pick(pool.filter((a) => a.id !== answer.id), at(CHOICES, level) - 1)]),
 		}));

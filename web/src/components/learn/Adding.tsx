@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Pic } from "./art";
 import { Board, SLIDE_MS } from "./parts";
 import { FRUIT } from "./things";
-import { at, between, pick, shuffle, useRounds, type GameProps } from "./rounds";
+import { at, between, fresh, shuffle, useRounds, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
 /** Each side's smallest and biggest number, by level. */
@@ -28,17 +28,21 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 	// Right: the mascot slides across, wiping the plates clean, before the next round.
 	const rounds = useRounds(ROUNDS, onDone, SLIDE_MS);
 	const pad = level >= PAD_FROM;
-	const plan = useMemo<Round[]>(() => Array.from({ length: ROUNDS }, (_, i) => {
-		const [lo, hi] = at(SIDES, level);
-		const [fa, fb] = pick(FRUIT, 2);
-		// From level 4, the middle round (and sometimes another) takes away.
-		const take = level >= TAKE_FROM && (i === 1 || Math.random() < 0.3);
-		if (take) {
-			const a = between(Math.max(3, lo + 1), hi + 2);
-			return { take, a, b: between(1, a - 1), fa, fb: fa };
-		}
-		return { take, a: between(lo, hi), b: between(lo, hi), fa, fb };
-	}), [level]);
+	const plan = useMemo<Round[]>(() => {
+		// Two fruit a round, none seen recently.
+		const fruit = fresh("math.fruit", FRUIT, ROUNDS * 2, (f) => f.id);
+		return Array.from({ length: ROUNDS }, (_, i) => {
+			const [lo, hi] = at(SIDES, level);
+			const [fa, fb] = [fruit[i * 2], fruit[i * 2 + 1]];
+			// From level 4, the middle round (and sometimes another) takes away.
+			const take = level >= TAKE_FROM && (i === 1 || Math.random() < 0.3);
+			if (take) {
+				const a = between(Math.max(3, lo + 1), hi + 2);
+				return { take, a, b: between(1, a - 1), fa, fb: fa };
+			}
+			return { take, a: between(lo, hi), b: between(lo, hi), fa, fb };
+		});
+	}, [level]);
 	const r = plan[rounds.round];
 	const answerIs = r.take ? r.a - r.b : r.a + r.b;
 	// Adding: how many on each plate. Taking away: how many are left on the plate, and in the bowl.

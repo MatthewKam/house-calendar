@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Pic } from "./art";
 import { Board, SLIDE_MS, type Box } from "./parts";
 import { makeMap } from "./mazeMap";
-import { any, at, type GameProps } from "./rounds";
+import { at, fresh, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
 /** The map's size in stops (rows, columns) and its keys and gates, by level. Level 1 is already a real maze. */
@@ -61,7 +61,7 @@ export default function Maze({ level, onDone, onBack }: GameProps) {
 /** One maze: a new animal, what it wants and a map. `onHome` once it's there (perfect: few bumps); `clearing`, it's cleared away. */
 function OneMaze({ level, box, onHome, clearing }: { level: number; box: Box; onHome: (perfect: boolean) => void; clearing: boolean }) {
 	const [levelRows, levelCols, keys] = at(SIZES, level);
-	const look = useMemo(() => any(QUESTS), []);
+	const look = useMemo(() => fresh("maze.quests", QUESTS, 1, (q) => q.who)[0], []);
 	// The level's size, but never so big a square's too small to tap on this screen (a phone on its side):
 	// its long side and short side each fit as many squares as there's room for at that size. Chosen once
 	// a maze starts, so turning the screen doesn't change it.

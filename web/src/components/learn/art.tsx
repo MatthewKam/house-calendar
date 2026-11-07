@@ -419,11 +419,21 @@ const ART: Record<string, ReactNode> = {
 	),
 	bone: (
 		<>
-			<rect x="30" y="50" width="60" height="20" fill="#f4f1ec" />
-			<circle cx="28" cy="48" r="14" fill="#f4f1ec" />
-			<circle cx="28" cy="72" r="14" fill="#f4f1ec" />
-			<circle cx="92" cy="48" r="14" fill="#f4f1ec" />
-			<circle cx="92" cy="72" r="14" fill="#f4f1ec" />
+			{/* An outline under it, so it shows on white. */}
+			<g fill="#c9bba4">
+				<rect x="28" y="46" width="64" height="28" />
+				<circle cx="28" cy="48" r="17" />
+				<circle cx="28" cy="72" r="17" />
+				<circle cx="92" cy="48" r="17" />
+				<circle cx="92" cy="72" r="17" />
+			</g>
+			<g fill="#f7f1e6">
+				<rect x="30" y="50" width="60" height="20" />
+				<circle cx="28" cy="48" r="14" />
+				<circle cx="28" cy="72" r="14" />
+				<circle cx="92" cy="48" r="14" />
+				<circle cx="92" cy="72" r="14" />
+			</g>
 			<path d="M40 56 H80" stroke="#e3dccf" strokeWidth="4" strokeLinecap="round" />
 		</>
 	),
@@ -445,6 +455,67 @@ const ART: Record<string, ReactNode> = {
 	),
 
 	// More things, for words.
+	bus: (
+		<>
+			<rect x="8" y="28" width="104" height="66" rx="12" fill="#f6c02a" />
+			<rect x="16" y="38" width="22" height="22" rx="4" fill="#d6ecff" />
+			<rect x="44" y="38" width="22" height="22" rx="4" fill="#d6ecff" />
+			<rect x="72" y="38" width="22" height="22" rx="4" fill="#d6ecff" />
+			<rect x="98" y="38" width="10" height="34" rx="3" fill="#d6ecff" />
+			<rect x="8" y="70" width="104" height="6" fill="#e0a800" />
+			<circle cx="32" cy="96" r="12" fill="#2b2b2b" />
+			<circle cx="32" cy="96" r="5" fill="#bdbdc6" />
+			<circle cx="88" cy="96" r="12" fill="#2b2b2b" />
+			<circle cx="88" cy="96" r="5" fill="#bdbdc6" />
+		</>
+	),
+	fox: (
+		<>
+			<path d="M20 20 L44 44 L26 58z M100 20 L76 44 L94 58z" fill="#e8742c" />
+			<path d="M60 108 L16 52 Q20 36 40 36 H80 Q100 36 104 52z" fill="#f08a3c" />
+			<path d="M60 108 L34 74 Q46 70 60 80 Q74 70 86 74z" fill="#fbf2e6" />
+			<circle cx="60" cy="104" r="6" fill={EYE} />
+			{eyes(58, 16)}
+		</>
+	),
+	bed: (
+		<>
+			<rect x="10" y="30" width="14" height="74" rx="4" fill="#8a5a3b" />
+			<rect x="96" y="54" width="14" height="50" rx="4" fill="#8a5a3b" />
+			<rect x="18" y="62" width="86" height="26" rx="6" fill="#5aa0e6" />
+			<rect x="24" y="48" width="30" height="16" rx="8" fill="#fbf7ee" />
+			<path d="M56 62 H104 V88 H56z" fill="#7cc0f0" />
+		</>
+	),
+	boat: (
+		<>
+			<path d="M58 12 V76" stroke="#8a5a3b" strokeWidth="5" />
+			<path d="M62 16 L98 70 H62z" fill="#e03a2f" />
+			<path d="M54 26 L24 70 H54z" fill="#fbf7ee" />
+			<path d="M12 78 H108 L94 102 H26z" fill="#3d7bd9" />
+			<path d="M4 108 q10 -6 20 0 t20 0 t20 0 t20 0 t20 0 t20 0" fill="none" stroke="#7cc0f0" strokeWidth="5" strokeLinecap="round" />
+		</>
+	),
+	kite: (
+		<>
+			<path d="M60 8 L96 48 L60 92 L24 48z" fill="#e8707c" />
+			<path d="M60 8 L60 92 M24 48 L96 48" stroke="#fbf7ee" strokeWidth="4" />
+			<path d="M60 92 Q50 100 60 106 Q70 112 60 118" fill="none" stroke="#3b2a20" strokeWidth="3" />
+			<path d="M52 102 l8 4 l-8 4z M68 110 l-8 4 l8 4z" fill="#f6cf3c" />
+		</>
+	),
+	train: (
+		<>
+			<rect x="14" y="40" width="58" height="50" rx="6" fill="#e03a2f" />
+			<rect x="22" y="48" width="20" height="18" rx="3" fill="#d6ecff" />
+			<rect x="66" y="58" width="44" height="32" rx="6" fill="#3d7bd9" />
+			<rect x="78" y="40" width="12" height="20" fill="#2b2b2b" />
+			<rect x="10" y="30" width="66" height="12" rx="4" fill="#b02a22" />
+			<circle cx="30" cy="96" r="12" fill="#2b2b2b" />
+			<circle cx="58" cy="96" r="12" fill="#2b2b2b" />
+			<circle cx="92" cy="96" r="10" fill="#2b2b2b" />
+		</>
+	),
 	sun: (
 		<>
 			<g stroke="#f4a020" strokeWidth="8" strokeLinecap="round">

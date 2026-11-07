@@ -21,6 +21,31 @@ export function shuffle<T>(list: readonly T[]): T[] {
 /** `n` different ones, at random. */
 export const pick = <T,>(list: readonly T[], n: number) => shuffle(list).slice(0, n);
 
+/**
+ * `n` different ones at random, but not ones this game showed recently (on this device): it keeps a list
+ * of what it's shown, and only once everything's been seen does it start over. So each play is new.
+ * `memory` names the list (a game and what it's picking, e.g. "letters.words").
+ */
+export function fresh<T>(memory: string, list: readonly T[], n: number, idOf: (t: T) => string = String): T[] {
+	const key = `sprig.learn.seen.${memory}`;
+	let seen: string[] = [];
+	try {
+		seen = JSON.parse(localStorage.getItem(key) ?? "[]");
+	} catch {
+		// Not kept (a private window, say): every pick's just random.
+	}
+	const unseen = list.filter((t) => !seen.includes(idOf(t)));
+	// Not enough new ones left: those, then start over with the rest.
+	const picked = unseen.length >= n ? pick(unseen, n) : [...shuffle(unseen), ...pick(list.filter((t) => !unseen.includes(t)), n - unseen.length)];
+	const now = unseen.length >= n ? [...seen, ...picked.map(idOf)] : picked.map(idOf);
+	try {
+		localStorage.setItem(key, JSON.stringify(now));
+	} catch {
+		// As above.
+	}
+	return picked;
+}
+
 /** One at random. */
 export const any = <T,>(list: readonly T[]) => list[Math.floor(Math.random() * list.length)];
 
