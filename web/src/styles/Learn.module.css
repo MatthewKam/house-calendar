@@ -675,10 +675,17 @@
 	box-shadow: 0 0.3rem 0.8rem rgb(29 31 35 / 0.12);
 }
 .cardBack {
-	background:
-		radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.35) 0 18%, transparent 19%),
-		var(--back);
+	background: var(--back);
 	border: 0.3rem solid white;
+}
+/* On the back, the mascot's line drawing in a light shade of the card's color. */
+.cardBack::after {
+	content: "";
+	position: absolute;
+	inset: 12%;
+	background: color-mix(in srgb, var(--back) 30%, white);
+	-webkit-mask: url(/mascot/sprig-lines.png) center / contain no-repeat;
+	mask: url(/mascot/sprig-lines.png) center / contain no-repeat;
 }
 .cardFace {
 	display: grid;
