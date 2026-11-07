@@ -94,8 +94,8 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 				const answerW = wide ? keySize * keyCols + (keyCols - 1) * 8 + 24 : 0;
 				const answerH = wide ? 0 : keySize * (keyRows + 0.9) + (keyRows - 1) * 8 + 40;
 				// Each plate's a circle (D across), with its sign and basket. On its side: side by side, the
-				// sign above and basket below. Upright: one above the other, the sign left and basket right.
-				const extra = r.take ? 0.35 : 0.7;
+				// sign above and basket below. Upright: one above the other, the sign and its basket on the left.
+				const extra = 0.4;
 				const D = Math.floor(Math.min(260, wide
 					? Math.min((box.w - answerW - 60) / 2, box.h - 2 * Math.min(80, box.h * 0.2) - 2 * GAP)
 					: Math.min((box.w - answerW - 2 * GAP) / (1 + extra), (box.h - answerH - 40 - 2 * GAP) / 2)));
@@ -110,29 +110,39 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 					const perRow = Math.ceil(Math.sqrt(most));
 					const item = Math.floor((D * 0.62) / perRow);
 					const extraSize = Math.min(80, D * 0.33);
-					return (
-						<div className={wide ? s.side : s.sideRow}>
-							<span className={`${s.sign} ${n === want && (bowl || !r.take) ? s.signDone : ""}`} style={{ fontSize: Math.max(22, D * 0.14) }}>
-								{bowl ? `− ${want}` : want}
-							</span>
-							<div className={`${bowl ? s.bowl : s.plate} ${over ? s.plateOver : ""}`} style={{ width: D, height: D }}>
-								<div className={s.onPlates} style={{ gridTemplateColumns: `repeat(${perRow}, ${item}px)` }}>
-									{Array.from({ length: n }, (_, i) => (
-										<button key={i} type="button" className={s.onPlate} style={{ width: item, height: item }}
-											onClick={() => put(side, r.take ? (bowl ? -1 : 1) : -1)}
-											aria-label={bowl ? `Put a ${fruit.one} back` : r.take ? `Take a ${fruit.one} away` : `Take a ${fruit.one} off`}>
-											<Pic id={fruit.id} />
-										</button>
-									))}
-								</div>
+					const sign = (
+						<span className={`${s.sign} ${n === want && (bowl || !r.take) ? s.signDone : ""}`} style={{ fontSize: Math.max(22, D * 0.14) }}>
+							{bowl ? `− ${want}` : want}
+						</span>
+					);
+					const basket = !r.take && (
+						<button type="button" className={s.basket} onClick={() => put(side, 1)} disabled={rounds.got} aria-label={`Put a ${fruit.one} on`}
+							style={{ width: extraSize, height: extraSize }}>
+							<Pic id={fruit.id} />
+							<span aria-hidden="true">+</span>
+						</button>
+					);
+					const dish = (
+						<div className={`${bowl ? s.bowl : s.plate} ${over ? s.plateOver : ""}`} style={{ width: D, height: D }}>
+							<div className={s.onPlates} style={{ gridTemplateColumns: `repeat(${perRow}, ${item}px)` }}>
+								{Array.from({ length: n }, (_, i) => (
+									<button key={i} type="button" className={s.onPlate} style={{ width: item, height: item }}
+										onClick={() => put(side, r.take ? (bowl ? -1 : 1) : -1)}
+										aria-label={bowl ? `Put a ${fruit.one} back` : r.take ? `Take a ${fruit.one} away` : `Take a ${fruit.one} off`}>
+										<Pic id={fruit.id} />
+									</button>
+								))}
 							</div>
-							{!r.take && (
-								<button type="button" className={s.basket} onClick={() => put(side, 1)} disabled={rounds.got} aria-label={`Put a ${fruit.one} on`}
-									style={{ width: extraSize, height: extraSize }}>
-									<Pic id={fruit.id} />
-									<span aria-hidden="true">+</span>
-								</button>
-							)}
+						</div>
+					);
+					// On its side: the sign, the plate, then the basket, top to bottom. Upright: the sign with the
+					// basket under it, then the plate.
+					return wide ? (
+						<div className={s.side}>{sign}{dish}{basket}</div>
+					) : (
+						<div className={s.sideRow}>
+							<div className={s.sideTag}>{sign}{basket}</div>
+							{dish}
 						</div>
 					);
 				};

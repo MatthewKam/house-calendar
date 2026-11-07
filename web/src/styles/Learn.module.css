@@ -444,7 +444,7 @@
 	display: grid;
 	justify-content: center;
 }
-/* Upright: the plates one above the other, each with its sign on the left and basket on the right. */
+/* Upright: the plates one above the other, each with its sign and basket (under it) on the left. */
 .platesUp {
 	display: flex;
 	flex-direction: column;
@@ -455,6 +455,12 @@
 	display: flex;
 	align-items: center;
 	gap: 12px;
+}
+.sideTag {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.6rem;
 }
 .onPlate {
 	padding: 0;
