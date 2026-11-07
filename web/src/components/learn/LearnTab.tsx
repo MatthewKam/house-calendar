@@ -17,6 +17,9 @@ import type { GameProps } from "./rounds";
 import { hush, setRecorded } from "./sound";
 import s from "../../styles/Learn.module.css";
 
+/** Levels as Roman numerals, for the game tiles' corners. */
+const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
+
 /** Each game: its name, its picture, and how to play it (for a grown-up to explain). */
 export const GAMES: Record<Game, { title: string; picture: string; how: string[]; Play: ComponentType<GameProps> }> = {
 	sounds: { title: "Who says that?", picture: "cow", Play: Sounds, how: [
@@ -133,9 +136,7 @@ export default function LearnTab({ kid, today, learn }: { kid: Member; today: st
 				<button key={game} type="button" className={s.gameTile} onClick={() => start(game)}>
 					<Pic id={GAMES[game].picture} className={s.gamePic} />
 					<span className={s.gameName}>{GAMES[game].title}</span>
-					<span className={s.gameLevel} aria-label={`Level ${level}`}>
-						{Array.from({ length: level }, (_, i) => <span key={i} className={s.levelDot} />)}
-					</span>
+					<span className={s.gameLevel} aria-label={`Level ${level}`}>{ROMAN[level - 1] ?? level}</span>
 				</button>
 			))}
 		</section>

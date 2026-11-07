@@ -29,16 +29,20 @@
 	font-weight: 800;
 	text-align: center;
 }
-.gameLevel {
-	display: flex;
-	gap: 0.3rem;
-	min-height: 0.7rem;
+.gameTile {
+	position: relative;
 }
-.levelDot {
-	width: 0.7rem;
-	height: 0.7rem;
-	border-radius: 50%;
-	background: var(--c, var(--accent));
+/* The game's level, as a Roman numeral, in the tile's top right corner. */
+.gameLevel {
+	position: absolute;
+	top: 0.6rem;
+	right: 0.8rem;
+	font-family: Georgia, "Times New Roman", serif;
+	font-size: 1.15rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	/* Grey, so it doesn't stand out. */
+	color: var(--muted);
 }
 @media (min-width: 900px) {
 	.menu {
