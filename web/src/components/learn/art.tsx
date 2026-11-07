@@ -369,6 +369,81 @@ const ART: Record<string, ReactNode> = {
 		</>
 	),
 
+	// Mazes: who's looking, and what for.
+	rabbit: (
+		<>
+			<ellipse cx="44" cy="30" rx="11" ry="28" fill="#e8e2d6" transform="rotate(-12 44 30)" />
+			<ellipse cx="44" cy="30" rx="5" ry="20" fill="#f2b6c0" transform="rotate(-12 44 30)" />
+			<ellipse cx="76" cy="30" rx="11" ry="28" fill="#e8e2d6" transform="rotate(12 76 30)" />
+			<ellipse cx="76" cy="30" rx="5" ry="20" fill="#f2b6c0" transform="rotate(12 76 30)" />
+			<circle cx="60" cy="76" r="36" fill="#f4f1ec" />
+			<ellipse cx="60" cy="86" rx="7" ry="5" fill="#e8707c" />
+			<path d="M60 91 v6 M60 97 q-6 5 -10 2 M60 97 q6 5 10 2" fill="none" stroke={EYE} strokeWidth="2.5" strokeLinecap="round" />
+			{eyes(72, 14)}
+		</>
+	),
+	butterfly: (
+		<>
+			<ellipse cx="34" cy="42" rx="26" ry="30" fill="#f08bb4" transform="rotate(-20 34 42)" />
+			<ellipse cx="86" cy="42" rx="26" ry="30" fill="#f08bb4" transform="rotate(20 86 42)" />
+			<ellipse cx="38" cy="86" rx="18" ry="20" fill="#f6c34a" transform="rotate(20 38 86)" />
+			<ellipse cx="82" cy="86" rx="18" ry="20" fill="#f6c34a" transform="rotate(-20 82 86)" />
+			<circle cx="34" cy="42" r="9" fill="#fff" opacity=".7" />
+			<circle cx="86" cy="42" r="9" fill="#fff" opacity=".7" />
+			<rect x="54" y="30" width="12" height="68" rx="6" fill="#3b2a20" />
+			<path d="M58 32 Q50 14 42 12 M62 32 Q70 14 78 12" fill="none" stroke="#3b2a20" strokeWidth="3" strokeLinecap="round" />
+		</>
+	),
+	honey: (
+		<>
+			<path d="M28 44 Q28 30 44 30 H76 Q92 30 92 44 V92 Q92 110 74 110 H46 Q28 110 28 92z" fill="#e3a21a" />
+			<rect x="24" y="22" width="72" height="16" rx="8" fill="#b97a10" />
+			<path d="M34 38 Q40 58 46 40 Q52 62 60 40 Q68 56 74 40 Q80 60 86 38z" fill="#f6cf3c" />
+			<rect x="40" y="62" width="40" height="26" rx="6" fill="#fbe7a8" />
+			<path d="M50 75 h20" stroke="#b97a10" strokeWidth="4" strokeLinecap="round" />
+		</>
+	),
+	flower: (
+		<>
+			<path d="M60 70 V116" stroke="#4c9a4c" strokeWidth="7" strokeLinecap="round" />
+			<path d="M60 100 Q40 86 30 96 Q44 108 60 100z" fill="#5cb85c" />
+			<g fill="#f08bb4">
+				<circle cx="60" cy="28" r="18" />
+				<circle cx="84" cy="44" r="18" />
+				<circle cx="76" cy="70" r="18" />
+				<circle cx="44" cy="70" r="18" />
+				<circle cx="36" cy="44" r="18" />
+			</g>
+			<circle cx="60" cy="50" r="15" fill="#f6cf3c" />
+		</>
+	),
+	bone: (
+		<>
+			<rect x="30" y="50" width="60" height="20" fill="#f4f1ec" />
+			<circle cx="28" cy="48" r="14" fill="#f4f1ec" />
+			<circle cx="28" cy="72" r="14" fill="#f4f1ec" />
+			<circle cx="92" cy="48" r="14" fill="#f4f1ec" />
+			<circle cx="92" cy="72" r="14" fill="#f4f1ec" />
+			<path d="M40 56 H80" stroke="#e3dccf" strokeWidth="4" strokeLinecap="round" />
+		</>
+	),
+	cheese: (
+		<>
+			<path d="M10 84 L104 40 L110 92 Q60 108 10 98z" fill="#f6cf3c" />
+			<path d="M10 84 L104 40 L110 50 L14 92z" fill="#fbe07a" />
+			<circle cx="44" cy="90" r="6" fill="#e0a800" />
+			<circle cx="74" cy="80" r="8" fill="#e0a800" />
+			<circle cx="94" cy="92" r="5" fill="#e0a800" />
+		</>
+	),
+	carrot: (
+		<>
+			<path d="M54 26 Q44 6 36 10 Q46 18 50 30z M62 26 Q62 4 72 6 Q66 18 66 30z M58 28 Q80 10 88 18 Q74 24 64 32z" fill="#5cb85c" />
+			<path d="M42 34 Q60 22 78 34 L62 112 Q60 116 58 112z" fill="#f4892a" />
+			<path d="M50 52 h10 M56 70 h10 M54 88 h8" stroke="#c96a12" strokeWidth="3" strokeLinecap="round" />
+		</>
+	),
+
 	// More things, for words.
 	sun: (
 		<>

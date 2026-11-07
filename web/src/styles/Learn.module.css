@@ -821,7 +821,7 @@
 .been {
 	background: var(--been);
 }
-.bear {
+.walker {
 	position: absolute;
 	inset: 4%;
 	z-index: 1;

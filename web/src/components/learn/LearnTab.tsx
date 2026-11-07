@@ -45,9 +45,9 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 		"From level 4, some are take-away: tap fruit on the plate to move them to the bowl until it has its number, then pick how many are left. From level 5, type the answer on the number pad. Higher levels: bigger numbers. It moves up a level after 3 perfect games in a row, or after 20 games at a level.",
 	] },
 	maze: { title: "Maze", picture: "maze", Play: Maze, how: [
-		"Tap a square in a straight line from Bear and he walks there. Find the way to his house.",
-		"He can't cross water, bushes or snow, so a dead end means turning back.",
-		"From level 3, a locked gate is in the way: find the key first. Higher levels: bigger maps and two gates.",
+		"An animal wants something: the bee the flower, the monkey the banana. Tap a square in a straight line from the animal and it walks there.",
+		"It can't go through the walls, so a dead end means turning back. Three mazes a game, a new animal each time.",
+		"From level 3, a locked gate is in the way: find the key first. Higher levels: bigger mazes and two gates. It moves up a level after 3 perfect games in a row, or after 20 games at a level.",
 	] },
 	letters: { title: "Letters", picture: "letters", Play: Letters, how: [
 		"A picture and its word, with the first letter missing. Say the word together.",
