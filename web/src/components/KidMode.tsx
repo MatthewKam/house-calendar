@@ -191,8 +191,9 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 									{!t.required && t.points > 0 && (
 										<span className={s.tileStars}>+{t.points} <StarIcon className={s.tileStar} /></span>
 									)}
-									{/* Morning or evening, in the corner (anytime ones and goals have none). */}
-									{t.required && t.time && <span className={s.tileWhen}>{t.time === "morning" ? "AM" : "PM"}</span>}
+									{/* In the corner: a goal says so; a daily task, morning or evening (anytime ones have none). */}
+									{!t.required ? <span className={s.tileWhen}>Goal</span>
+										: t.time && <span className={s.tileWhen}>{t.time === "morning" ? "AM" : "PM"}</span>}
 									{ticked && <span className={s.check} aria-hidden="true">✓</span>}
 								</button>
 							);
