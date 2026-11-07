@@ -91,6 +91,8 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	// The potty chart starts folded away (it's a tap to open).
 	const [pottyOpen, setPottyOpen] = useState(false);
 	const pottyRef = useRef<HTMLElement>(null);
+	// The potty chart header's pencil: a count, bumped each tap.
+	const [pottyEdit, setPottyEdit] = useState(0);
 	// Opening it scrolls down to it.
 	useEffect(() => {
 		if (pottyOpen) pottyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -210,12 +212,23 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 				{/* The potty chart, under the tasks: folded away until it's tapped open. */}
 				{tab === "tasks" && chart && (
 					<section ref={pottyRef} className={s.pottyFold}>
-						<button type="button" className={s.pottyToggle} aria-expanded={pottyOpen} onClick={() => setPottyOpen(!pottyOpen)}>
-							<span aria-hidden="true">🚽</span> Potty chart
-							<svg className={s.pottyChevron} viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-						</button>
+						{/* The header: tap it to open or close; open, a pencil edits the chart (asking for a PIN). */}
+						<div className={`${s.pottyHead} ${pottyOpen ? s.pottyHeadOpen : ""}`}>
+							<button type="button" className={s.pottyToggle} aria-expanded={pottyOpen} onClick={() => setPottyOpen(!pottyOpen)}>
+								<span aria-hidden="true">🚽</span> Potty chart
+							</button>
+							{pottyOpen && (
+								<button type="button" className={s.pottyIcon} aria-label="Edit the potty chart" onClick={() => setPottyEdit((n) => n + 1)}>
+									<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" /></svg>
+								</button>
+							)}
+							<button type="button" className={s.pottyIcon} aria-label={pottyOpen ? "Close the potty chart" : "Open the potty chart"}
+								onClick={() => setPottyOpen(!pottyOpen)}>
+								<svg className={s.pottyChevron} viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+							</button>
+						</div>
 						{pottyOpen && (
-							<PottyCard key={kid.id} kid={kid} chart={chart} canEdit attached
+							<PottyCard key={kid.id} kid={kid} chart={chart} canEdit attached editAsked={pottyEdit}
 								askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
 						)}
 					</section>

@@ -465,48 +465,70 @@
 	flex: none;
 	display: flex;
 	flex-direction: column;
+	/* Opening it scrolls it up, with some room above. */
+	scroll-margin-top: 1.5rem;
 }
-.pottyToggle {
+/* Its header: one raised bar with the name (tap to open), and on the right a pencil (open) and the arrow. */
+.pottyHead {
 	display: flex;
 	align-items: center;
-	gap: 0.6rem;
+	gap: 0.3rem;
 	min-height: 3.6rem;
-	padding: 0 1.1rem;
+	padding: 0 0.5rem 0 0;
 	border-radius: 1.2rem;
 	border: 3px solid color-mix(in srgb, var(--c) 35%, white);
 	background: var(--surface);
 	box-shadow: 0 0.25rem 0 color-mix(in srgb, var(--c) 35%, white);
+}
+.pottyToggle {
+	flex: 1;
+	align-self: stretch;
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0 0 0 1.1rem;
+	background: none;
 	font-size: 1.6rem;
 	font-weight: 800;
+	text-align: left;
 }
-.pottyToggle:active {
-	transform: translateY(0.15rem);
-	box-shadow: 0 0.1rem 0 color-mix(in srgb, var(--c) 35%, white);
+.pottyIcon {
+	width: 2.8rem;
+	height: 2.8rem;
+	display: grid;
+	place-items: center;
+	border-radius: 50%;
+	background: none;
+	color: var(--muted);
 }
-.pottyChevron {
-	width: 1.4rem;
-	height: 1.4rem;
-	margin-left: auto;
+.pottyIcon:active {
+	background: color-mix(in srgb, var(--c) 15%, white);
+}
+.pottyIcon svg {
+	width: 1.5rem;
+	height: 1.5rem;
 	fill: none;
 	stroke: currentColor;
-	stroke-width: 2.5;
+	stroke-width: 2.2;
 	stroke-linecap: round;
 	stroke-linejoin: round;
+}
+.pottyChevron {
 	transition: transform 0.2s ease;
 }
-.pottyToggle[aria-expanded="true"] .pottyChevron {
-	transform: rotate(180deg);
-}
-/* Open: the button and the chart are one panel (the chart slides out from under it). */
-.pottyToggle[aria-expanded="true"] {
+/* Open: the header and the chart are one panel (the chart slides out from under it), no line between. */
+.pottyHeadOpen {
 	border-bottom: none;
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;
 	padding-bottom: 3px;
 	box-shadow: none;
-	transform: none;
+}
+.pottyHeadOpen .pottyChevron {
+	transform: rotate(180deg);
 }
 .pottyFold > section {
+	margin-top: -1px;
 	border-color: color-mix(in srgb, var(--c) 35%, white);
 }
 
@@ -690,8 +712,10 @@
 	.punch {
 		flex-basis: 2rem;
 	}
-	.pottyToggle {
+	.pottyHead {
 		min-height: 2.8rem;
+	}
+	.pottyToggle {
 		font-size: 1.3rem;
 	}
 	.kidNav {

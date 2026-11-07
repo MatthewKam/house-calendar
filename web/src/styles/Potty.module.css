@@ -17,9 +17,6 @@
 	animation: slideOut 0.25s ease;
 	transform-origin: top;
 }
-.attached .head {
-	justify-content: flex-end;
-}
 @keyframes slideOut {
 	from {
 		opacity: 0;
