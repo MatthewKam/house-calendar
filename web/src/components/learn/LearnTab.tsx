@@ -30,9 +30,9 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 		"When every animal has had its turn, there's a cheer and it's the end. A new set of animals each time.",
 	] },
 	findIt: { title: "Find it!", picture: "teddy", Play: FindIt, how: [
-		"The pictures at the top show what to find, and how many.",
-		"Tap each one in the room. The pictures at the top fill in as they're found.",
-		"From level 3, some are hiding under other things: tap a toy to lift it and look underneath.",
+		"The index shows each kind of thing in the room and how many there are: socks 2, teddy bears 3.",
+		"Tap any of them: it flies to its place by the index, and the number goes down. Nothing is wrong to tap. The room's done when everything's collected.",
+		"From level 3, some things hide under others: collect the teddy and there's the sock. Higher levels: more kinds of things, and more of each.",
 	] },
 	apples: { title: "Count the apples", picture: "apple", Play: Apples, how: [
 		"Tap each fruit to count it, and its number shows under it. Count out loud together.",

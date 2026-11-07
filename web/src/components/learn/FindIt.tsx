@@ -2,16 +2,14 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Pic } from "./art";
 import { Board, fit } from "./parts";
 import { TOYS } from "./things";
-import { any, at, between, fresh, shuffle, type GameProps } from "./rounds";
+import { at, between, CHEER_MS, fresh, shuffle, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
-/** Things in the room, how many to find, and how many of those hide under something, by level. */
-const THINGS = [6, 8, 10, 12, 14, 16];
-const FIND = [2, 2, 3, 3, 4, 5];
-const HIDDEN = [0, 0, 1, 1, 2, 3];
-const ROUNDS = [2, 2, 3, 3, 3, 3];
-/** Taps on the wrong thing (with nothing under it) a round can have and still be first try. */
-const SLIPS = 2;
+/** Kinds of thing in the room, the most of each, how many hide under others, and rooms a play, by level. */
+const KINDS = [2, 2, 3, 3, 4, 4];
+const MOST = [2, 3, 3, 3, 4, 4];
+const HIDDEN = [0, 0, 1, 2, 2, 3];
+const ROUNDS = [1, 1, 1, 2, 2, 2];
 
 /** Different rooms each play. */
 const ROOMS = [
@@ -21,120 +19,146 @@ const ROOMS = [
 	{ name: "living room", wall: "#f3e1f5", floor: "#c7b29a", rug: "#a5d6a7" },
 ];
 
-interface Spot { kind: string; jx: number; jy: number; tilt: number; under: string | null }
+/** A thing in the room: what it is, where it sits in its spot, its tilt, and what's hiding under it. */
+interface Thing { id: number; kind: string; jx: number; jy: number; tilt: number; under: Thing | null }
 
-/** A round's things, in a random order (laid out in a grid on the floor), some of what's to find tucked under others. */
-function roomFor(level: number, find: string) {
-	const n = at(THINGS, level);
-	const want = at(FIND, level);
-	const hidden = Math.min(at(HIDDEN, level), want);
-	const others = TOYS.map((t) => t.id).filter((id) => id !== find);
-	// Visible things: what's to find (minus what's hidden), then others to make up the room.
-	const visible = [...Array(want - hidden).fill(find), ...Array.from({ length: n - (want - hidden) }, () => any(others))];
-	const spots: Spot[] = shuffle(visible).map((kind) => ({
-		kind, jx: Math.random() - 0.5, jy: Math.random() - 0.5, tilt: between(-12, 12), under: null,
+/** A room's things: a few kinds, one to a few of each, laid out at random, some tucked under others. */
+function roomFor(level: number) {
+	const kinds = fresh("findit.kinds", TOYS, at(KINDS, level), (t) => t.id).map((t) => ({ ...t, count: between(1, at(MOST, level)) }));
+	let id = 0;
+	const all: Thing[] = shuffle(kinds.flatMap((k) => Array.from({ length: k.count }, () => k.id))).map((kind) => ({
+		id: id++, kind, jx: Math.random() - 0.5, jy: Math.random() - 0.5, tilt: between(-12, 12), under: null,
 	}));
-	// Hide the rest under other things.
-	shuffle(spots.filter((p) => p.kind !== find)).slice(0, hidden).forEach((p) => (p.under = find));
-	return spots;
+	// Some hide under others (never under one of their own kind).
+	const hidden = Math.min(at(HIDDEN, level), Math.floor(all.length / 2));
+	const shown = [...all];
+	for (let h = 0; h < hidden; h++) {
+		const thing = shown.pop()!;
+		const cover = shown.find((t) => !t.under && t.kind !== thing.kind);
+		if (cover) cover.under = thing;
+		else shown.push(thing);
+	}
+	return { kinds, shown, total: all.length };
 }
 
 /**
- * Find it! (age 2): a room full of toys. Find the 2 socks, then the 3 teddy bears. Each one found hops
- * and fills in its outline at the top (the outlines show what to find). From level 3 some are hiding
- * under other things: tap the teddy and it lifts, and there's the sock. Anything else just wiggles.
+ * Find it! (ages 1 to 3): a room with a few kinds of things in it. The index at the top shows each kind
+ * and how many there are; tap any of them and it flies to its place beside the index, and its number
+ * goes down. Nothing's wrong to tap. From level 3 some are hiding under others: collect the teddy and
+ * there's the sock. The room's done when everything's collected.
  */
 export default function FindIt({ level, onDone, onBack }: GameProps) {
 	const total = at(ROUNDS, level);
 	const look = useMemo(() => fresh("findit.rooms", ROOMS, 1, (r) => r.name)[0], []);
-	const finds = useMemo(() => fresh("findit.finds", TOYS, total, (t) => t.id), [total]);
 	const [round, setRound] = useState(0);
-	const find = finds[round];
-	const want = at(FIND, level);
-	const spots = useMemo(() => roomFor(level, find.id), [level, find.id]);
-	const [found, setFound] = useState<number[]>([]);
-	const [lifted, setLifted] = useState<number[]>([]);
-	const [tapped, setTapped] = useState<{ i: number; n: number } | null>(null);
-	const [slips, setSlips] = useState(0);
-	const [firstTry, setFirstTry] = useState(0);
+	const room = useMemo(() => roomFor(level), [level, round]); // eslint-disable-line react-hooks/exhaustive-deps
+	// What's been collected (by thing), and which have landed by the index after their flight.
+	const [found, setFound] = useState<Thing[]>([]);
+	const [landed, setLanded] = useState<number[]>([]);
+	const [flying, setFlying] = useState<{ thing: Thing; dx: number; dy: number; scale: number; from: DOMRect }[]>([]);
+	const [cheering, setCheering] = useState(false);
+	const slots = useRef<Record<string, HTMLSpanElement | null>>({});
 	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 	useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
 	useEffect(() => {
 		setFound([]);
-		setLifted([]);
-		setTapped(null);
-		setSlips(0);
-	}, [spots]);
+		setLanded([]);
+		setFlying([]);
+		setCheering(false);
+	}, [room]);
 
-	// What's been found counts each thing once: a spot's own thing ("k"), or what was under it ("u").
-	const keyOf = (i: number, underneath: boolean) => i * 2 + (underneath ? 1 : 0);
-	function tap(i: number, underneath: boolean) {
-		const p = spots[i];
-		const kind = underneath ? p.under! : p.kind;
-		setTapped((t) => ({ i: keyOf(i, underneath), n: (t?.n ?? 0) + 1 }));
-		if (kind === find.id) {
-			if (found.includes(keyOf(i, underneath))) return;
-			const now = [...found, keyOf(i, underneath)];
-			setFound(now);
-			if (now.length === want) {
-				const right = firstTry + (slips <= SLIPS ? 1 : 0);
-				setFirstTry(right);
-				timers.current.push(setTimeout(() => (round + 1 >= total ? onDone(total, right) : setRound(round + 1)), 2200));
-			}
-			return;
+	function collect(thing: Thing, from: HTMLElement) {
+		if (found.some((f) => f.id === thing.id)) return;
+		const now = [...found, thing];
+		setFound(now);
+		// Off it flies to the next place in its kind's row.
+		const place = now.filter((f) => f.kind === thing.kind).length - 1;
+		const start = from.getBoundingClientRect();
+		const end = slots.current[`${thing.kind}-${place}`]?.getBoundingClientRect();
+		if (end) {
+			setFlying((f) => [...f, {
+				thing, from: start, scale: end.width / start.width,
+				dx: end.left + end.width / 2 - (start.left + start.width / 2), dy: end.top + end.height / 2 - (start.top + start.height / 2),
+			}]);
+		} else setLanded((l) => [...l, thing.id]);
+		// Everything collected: the cheer, then the next room (or the end).
+		if (now.length === room.total) {
+			timers.current.push(setTimeout(() => setCheering(true), 700));
+			timers.current.push(setTimeout(() => (round + 1 >= total ? onDone(total, total) : setRound(round + 1)), 700 + CHEER_MS));
 		}
-		// Something with a thing under it lifts to show it; anything else wiggles.
-		if (p.under && !lifted.includes(i)) {
-			setLifted([...lifted, i]);
-			return;
-		}
-		setSlips((n) => n + 1);
 	}
 
 	return (
-		<Board onBack={onBack} total={total} done={round + (found.length === want ? 1 : 0)} cheer={found.length === want}>
+		<Board onBack={onBack} total={total} done={round + (cheering ? 1 : 0)} cheer={cheering}>
 			{(box) => {
-				const goalSize = Math.min(64, Math.max(40, box.h * 0.09));
-				const room = { w: box.w, h: box.h - goalSize - 12 };
+				const wide = box.w > box.h * 1.1;
+				// The index: beside the room on its side, above it upright.
+				const chip = Math.min(64, Math.max(40, (wide ? box.h / room.kinds.length - 20 : box.h * 0.08)));
+				const indexW = wide ? chip * (1.9 + at(MOST, level) * 0.75) + 24 : box.w;
+				const perRow = wide ? 1 : Math.max(1, Math.floor(box.w / (chip * (1.9 + at(MOST, level) * 0.75) + 16)));
+				const indexH = wide ? box.h : Math.ceil(room.kinds.length / perRow) * (chip + 14);
+				const area = wide ? { w: box.w - indexW - 12, h: box.h } : { w: box.w, h: box.h - indexH - 12 };
 				// The wall's the top quarter; things are on the floor, in a loose grid, as big as fits.
-				const floor = { w: room.w - 16, h: room.h * 0.75 - 12 };
-				const grid = fit(spots.length, floor, { gap: 6, most: 200 });
+				const floor = { w: area.w - 16, h: area.h * 0.75 - 12 };
+				const grid = fit(room.shown.length, floor, { gap: 6, most: 200 });
 				const cellW = floor.w / grid.cols;
 				const cellH = floor.h / grid.rows;
 				const size = Math.min(cellW, cellH) * 0.86;
+				const gone = (t: Thing) => found.some((f) => f.id === t.id);
 				return (
-					<div className={s.column}>
-						<div className={s.goal} aria-label={`${found.length} of ${want} found`}>
-							{Array.from({ length: want }, (_, i) => (
-								<span key={i} className={`${s.goalOne} ${i < found.length ? `${s.goalGot} ${s.pop}` : ""}`} style={{ width: goalSize, height: goalSize }}>
-									<Pic id={find.id} />
-								</span>
-							))}
+					<div className={wide ? s.row : s.column}>
+						{/* The index: each kind, how many are left, and those collected lined up beside it. */}
+						<div className={s.findIndex} style={{ width: wide ? indexW : undefined, flexDirection: wide ? "column" : "row" }}>
+							{room.kinds.map((k) => {
+								const left = k.count - found.filter((f) => f.kind === k.id).length;
+								return (
+									<span key={k.id} className={`${s.indexCard} ${left === 0 ? s.indexDone : ""}`} aria-label={`${k.many}: ${left} more`}>
+										<span className={s.indexPic} style={{ width: chip, height: chip }}><Pic id={k.id} /></span>
+										<span key={left} className={`${s.indexCount} ${left < k.count ? s.pop : ""}`} style={{ fontSize: chip * 0.7 }}>{left}</span>
+										<span className={s.indexTray}>
+											{Array.from({ length: k.count }, (_, i) => {
+												const here = found.filter((f) => f.kind === k.id)[i];
+												return (
+													<span key={i} ref={(el) => { slots.current[`${k.id}-${i}`] = el; }} className={s.traySlot} style={{ width: chip * 0.62, height: chip * 0.62 }}>
+														{here && landed.includes(here.id) && <span className={s.pop}><Pic id={k.id} /></span>}
+													</span>
+												);
+											})}
+										</span>
+									</span>
+								);
+							})}
 						</div>
-						<div className={s.room} style={{ width: room.w, height: room.h }}>
+						{/* On their way to the index. */}
+						{flying.filter((f) => !landed.includes(f.thing.id)).map((f) => (
+							<span key={f.thing.id} className={s.flyer} onAnimationEnd={() => setLanded((l) => [...l, f.thing.id])}
+								style={{ left: f.from.left, top: f.from.top, width: f.from.width, height: f.from.height,
+									"--dx": `${f.dx}px`, "--dy": `${f.dy}px`, "--s": f.scale } as CSSProperties}>
+								<Pic id={f.thing.kind} />
+							</span>
+						))}
+						<div className={s.room} style={{ width: area.w, height: area.h }}>
 							<Room look={look} />
-							{spots.map((p, i) => {
-								const up = lifted.includes(i);
+							{room.shown.map((t, i) => {
 								const col = i % grid.cols;
 								const row = Math.floor(i / grid.cols);
-								const left = 8 + (col + 0.5) * cellW + p.jx * (cellW - size) - size / 2;
-								const top = room.h * 0.25 + 4 + (row + 0.5) * cellH + p.jy * (cellH - size) - size / 2;
-								const underKey = keyOf(i, true);
-								const ownKey = keyOf(i, false);
+								const left = 8 + (col + 0.5) * cellW + t.jx * (cellW - size) - size / 2;
+								const top = area.h * 0.25 + 4 + (row + 0.5) * cellH + t.jy * (cellH - size) - size / 2;
 								return (
-									<div key={`${round}-${i}`} className={s.spot} style={{ left, top, width: size, height: size }}>
-										{p.under && up && (
-											<button type="button" key={`u${tapped?.i === underKey ? tapped.n : 0}`} onClick={() => tap(i, true)} aria-label={find.one}
-												className={`${s.thing} ${found.includes(underKey) ? s.thingGot : ""} ${tapped?.i === underKey ? s.hop : ""}`}>
-												<Pic id={p.under} />
+									<div key={`${round}-${t.id}`} className={s.spot} style={{ left, top, width: size, height: size }}>
+										{/* What was hiding under it, there once it's been collected. */}
+										{t.under && (
+											<button type="button" onClick={(e) => collect(t.under!, e.currentTarget)} disabled={!gone(t)}
+												aria-label={TOYS.find((x) => x.id === t.under!.kind)?.one} aria-hidden={!gone(t)}
+												className={`${s.thing} ${gone(t.under) ? s.thingGone : ""}`} style={{ "--tilt": `${t.under.tilt}deg` } as CSSProperties}>
+												<Pic id={t.under.kind} />
 											</button>
 										)}
-										<button type="button" key={`k${tapped?.i === ownKey ? tapped.n : 0}`}
-											className={`${s.thing} ${up ? s.lifted : ""} ${found.includes(ownKey) ? s.thingGot : ""} ${tapped?.i === ownKey ? (p.kind === find.id ? s.hop : s.wiggle) : ""}`}
-											style={{ "--tilt": `${p.tilt}deg` } as CSSProperties}
-											onClick={() => tap(i, false)} aria-label={TOYS.find((t) => t.id === p.kind)?.one}>
-											<Pic id={p.kind} />
+										<button type="button" onClick={(e) => collect(t, e.currentTarget)}
+											className={`${s.thing} ${gone(t) ? s.thingGone : ""}`} style={{ "--tilt": `${t.tilt}deg` } as CSSProperties}
+											aria-label={TOYS.find((x) => x.id === t.kind)?.one}>
+											<Pic id={t.kind} />
 										</button>
 									</div>
 								);
