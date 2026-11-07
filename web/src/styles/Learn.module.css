@@ -60,7 +60,6 @@
 .mascot {
 	width: 11rem;
 	height: auto;
-	border-radius: 1.2rem;
 }
 .startTitle {
 	margin: 0;
@@ -174,6 +173,8 @@
 	display: flex;
 	gap: 0.5rem;
 	margin-left: auto;
+	/* Off the screen's edge a little. */
+	margin-right: 0.6rem;
 }
 .dot {
 	width: 1.1rem;
@@ -184,6 +185,13 @@
 }
 .dotOn {
 	background: var(--c, var(--accent));
+}
+
+/* Not kid mode's page width (it caps and centres what's on it, which would undo the full screen). */
+.board.board.board {
+	width: auto;
+	max-width: none;
+	margin: 0;
 }
 
 /* The games size their own pieces, so not the app's usual smallest button height. */
@@ -258,8 +266,8 @@
 .cheerMascot {
 	width: min(44vmin, 18rem);
 	height: auto;
-	border-radius: 1.6rem;
-	box-shadow: 0 1rem 3rem rgb(29 31 35 / 0.25);
+	/* No background: just the mascot, with a soft shadow of its own shape. */
+	filter: drop-shadow(0 0.6rem 1rem rgb(29 31 35 / 0.25));
 	animation: cheer 1.6s cubic-bezier(0.3, 1.5, 0.5, 1) forwards;
 }
 @keyframes cheer {
@@ -281,28 +289,63 @@
 		opacity: 0;
 	}
 }
+/* Sliding across: the mascot goes from off the left to off the right; confetti keeps coming. */
+.cheerSlide {
+	overflow: hidden;
+}
+.cheerSlide .cheerMascot {
+	position: absolute;
+	left: 0;
+	top: 50%;
+	width: min(36vmin, 14rem);
+	animation: slideAcross var(--slide) cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+@keyframes slideAcross {
+	from {
+		transform: translate(-110%, -50%) rotate(-6deg);
+	}
+	50% {
+		transform: translate(calc(50vw - 50%), -50%) rotate(4deg);
+	}
+	to {
+		transform: translate(100vw, -50%) rotate(-6deg);
+	}
+}
+.cheerSlide .confetti i {
+	animation-iteration-count: infinite;
+}
+/* The fruit wiped off the plates as the mascot passes. */
+.wiped {
+	animation: wipe 0.45s ease-in calc(2600ms * var(--wipeAt, 0.45)) forwards;
+}
+@keyframes wipe {
+	to {
+		opacity: 0;
+		transform: translateX(40%) scale(0.6);
+	}
+}
+/* Confetti: falls from the top of the screen, spread across it, each piece tumbling at its own pace. */
 .confetti {
 	position: absolute;
-	left: 50%;
-	top: 50%;
+	inset: 0;
+	overflow: hidden;
 }
 .confetti i {
 	position: absolute;
-	width: 0.9rem;
-	height: 1.3rem;
+	top: -2rem;
+	left: var(--x);
+	width: 0.8rem;
+	height: 1.2rem;
 	border-radius: 0.2rem;
 	background: hsl(calc(var(--i) * 47deg) 80% 58%);
-	animation: burst 1.3s ease-out forwards;
-	--a: calc(var(--i) * 25.7deg);
+	animation: fall var(--fall) ease-in var(--wait) forwards;
 }
-@keyframes burst {
+@keyframes fall {
 	from {
-		transform: rotate(var(--a)) translateY(0) rotate(0);
-		opacity: 1;
+		transform: translate(0, 0) rotate(0);
 	}
 	to {
-		transform: rotate(var(--a)) translateY(-38vmin) rotate(540deg);
-		opacity: 0;
+		transform: translate(var(--drift), 110vh) rotate(var(--spin));
 	}
 }
 
@@ -406,51 +449,95 @@
 	min-width: 2em;
 	padding: 0 0.4em;
 	border-radius: 0.5em;
-	background: #f6e3c0;
+	background: #fff;
 	border: 3px solid #8a5a3b;
 	font-weight: 800;
 	text-align: center;
 	line-height: 1.3;
 }
+/* Too many on its plate: the number and the plate both go red. */
+.signOver {
+	border-color: #d92d20;
+	color: #b42318;
+}
 .signDone {
 	background: color-mix(in srgb, var(--c, var(--accent)) 20%, white);
 	border-color: var(--c, var(--accent));
 }
+/* A plate, seen from above: a white well, a rim with a soft shine, and a shadow under it. */
 .plate,
 .bowl {
-	display: flex;
-	flex-wrap: wrap;
-	align-content: center;
-	justify-content: center;
-	gap: 2px;
-	padding: 6%;
+	flex: none;
+	display: grid;
+	place-items: center;
 	box-sizing: border-box;
 	border-radius: 50%;
-	background: var(--surface);
-	box-shadow: inset 0 0 0 0.5rem color-mix(in srgb, var(--text) 6%, var(--surface)), 0 0.3rem 0.8rem rgb(29 31 35 / 0.1);
+	background:
+		radial-gradient(circle at 50% 50%, #fff 0 56%, #e9edf1 57% 60%, #fbfcfd 61% 74%, #edf0f3 75% 100%);
+	border: 2px solid #dfe4e9;
+	box-shadow: 0 0.35rem 0.8rem rgb(29 31 35 / 0.16), inset 0 -0.2rem 0.4rem rgb(29 31 35 / 0.06);
 }
+/* The take-away bowl: wooden, deeper inside. */
 .bowl {
-	border-radius: 0 0 50% 50% / 0 0 70% 70%;
-	background: color-mix(in srgb, #8a5a3b 18%, var(--surface));
+	background:
+		radial-gradient(circle at 50% 45%, #f3e3cc 0 55%, #d9b88f 60% 72%, #b98a5a 76% 100%);
+	border-color: #a87a4c;
 }
 .plateOver {
-	box-shadow: inset 0 0 0 0.5rem #f4c430, 0 0.3rem 0.8rem rgb(29 31 35 / 0.1);
+	border-color: #d92d20;
+	box-shadow: 0 0 0 0.3rem #d92d20, 0 0.35rem 0.8rem rgb(29 31 35 / 0.16);
+}
+/* The fruit on a plate, in its middle. */
+.onPlates {
+	display: grid;
+	justify-content: center;
+}
+/* Upright: the plates one above the other, each with its sign and basket (under it) on the left. */
+.platesUp {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.3rem;
+}
+.sideRow {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.sideTagRow {
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+}
+.sideTag {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.6rem;
 }
 .onPlate {
 	padding: 0;
 	background: none;
 }
-.onPlate svg,
-.basket svg {
+.onPlate svg {
 	width: 100%;
 	height: 100%;
 }
+/* The fruit fills most of its basket. */
+.basket svg {
+	width: 76%;
+	height: 76%;
+}
 .basket {
 	position: relative;
-	padding: 0.5rem;
+	display: grid;
+	place-items: center;
+	padding: 0;
 	border-radius: 1.2rem;
-	background: #e8c48a;
-	box-shadow: 0 0.3rem 0 #b48a4c;
+	/* White, so any fruit shows (yellow ones vanished on tan), in a wooden frame. */
+	background: #fff;
+	border: 3px solid #c9a06a;
+	box-shadow: 0 0.3rem 0 #a87a4c;
 }
 .basket span {
 	position: absolute;
@@ -765,6 +852,30 @@
 		transform: rotate(6deg);
 	}
 }
+/* A wrong number or letter: red for as long as it shakes, then back to how it was. */
+.choice.wiggle,
+.answer.wiggle {
+	animation: wrongChoice 0.45s ease;
+}
+@keyframes wrongChoice {
+	0%,
+	100% {
+		border-color: #d92d20;
+		color: #b42318;
+	}
+	20%,
+	60% {
+		transform: rotate(-6deg);
+		border-color: #d92d20;
+		color: #b42318;
+	}
+	40%,
+	80% {
+		transform: rotate(6deg);
+		border-color: #d92d20;
+		color: #b42318;
+	}
+}
 .pop {
 	animation: pop 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
@@ -821,7 +932,9 @@
 	.rustle,
 	.snore,
 	.step,
-	.confetti i {
+	.confetti i,
+	.choice.wiggle,
+	.answer.wiggle {
 		animation: none;
 	}
 	.cheerMascot {

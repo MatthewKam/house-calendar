@@ -88,4 +88,15 @@ describe('learning', () => {
     expect((await app.inject({ method: 'DELETE', url: '/api/learn/sounds/cow' })).statusCode).toBe(204);
     expect((await app.inject({ method: 'GET', url: '/api/learn/sounds/cow' })).statusCode).toBe(404);
   });
+
+  it('moves Math up after 20 plays at a level, perfect or not', async () => {
+    const { call } = setup();
+    await call('PUT', '/api/learn/tayen', { today: TODAY, enabled: true });
+    const play = () => call('POST', '/api/learn/tayen/done', { today: TODAY, game: 'adding', level: 1, rounds: 3, firstTry: 1 });
+    for (let i = 0; i < 19; i++) expect((await play()).body.leveledUp).toBe(false);
+    expect((await play()).body).toMatchObject({ leveledUp: true });
+    // Other games don't.
+    const maze = () => call('POST', '/api/learn/tayen/done', { today: TODAY, game: 'maze', level: 1, rounds: 1, firstTry: 0 });
+    for (let i = 0; i < 20; i++) expect((await maze()).body.leveledUp).toBe(false);
+  });
 });

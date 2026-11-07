@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Pic } from "./art";
-import { Board } from "./parts";
+import { Board, SLIDE_MS } from "./parts";
 import { FRUIT } from "./things";
 import { at, between, pick, shuffle, useRounds, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
@@ -22,10 +22,11 @@ interface Round { take: boolean; a: number; b: number; fa: { id: string; one: st
  * on it (tap a fruit to take it off) until each plate has its number, then how many in all. Take-away
  * (from level 4): the plate starts full; tap fruit to move them to the "take away" bowl until it has
  * its number, then how many are left. The answer's picked from a few numbers, or from level 5 typed on
- * a number pad. Too many on a plate shows in yellow.
+ * a number pad. Too many on a plate turns it and its number red.
  */
 export default function Adding({ level, onDone, onBack }: GameProps) {
-	const rounds = useRounds(ROUNDS, onDone);
+	// Right: the mascot slides across, wiping the plates clean, before the next round.
+	const rounds = useRounds(ROUNDS, onDone, SLIDE_MS);
 	const pad = level >= PAD_FROM;
 	const plan = useMemo<Round[]>(() => Array.from({ length: ROUNDS }, (_, i) => {
 		const [lo, hi] = at(SIDES, level);
@@ -44,7 +45,9 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 	const [left, setLeft] = useState(0);
 	const [right, setRight] = useState(0);
 	const [typed, setTyped] = useState("");
+	// The last wrong answer, and how many so far (so the same one tapped again shakes again).
 	const [wrong, setWrong] = useState<number | null>(null);
+	const [misses, setMisses] = useState(0);
 	const ready = r.take ? right === r.b : left === r.a && right === r.b;
 	const options = useMemo(() => {
 		const near = shuffle([answerIs - 2, answerIs - 1, answerIs + 1, answerIs + 2].filter((x) => x >= 0));
@@ -72,37 +75,63 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 	function answer(x: number) {
 		if (x === answerIs) return rounds.tap(true);
 		setWrong(x);
+		setMisses((n) => n + 1);
 		setTyped("");
 		rounds.tap(false);
 	}
 
 	return (
-		<Board onBack={onBack} total={ROUNDS} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got}>
+		<Board onBack={onBack} total={ROUNDS} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got && "slide"}>
 			{(box) => {
 				const wide = box.w > box.h * 1.15;
-				// The answer area: a row of numbers, or the pad (beside the plates when there's room).
+				const GAP = 12;
+				// The answer: the numbers to pick, in a row, or the pad; beside the plates on its side and under
+				// them upright.
+				const padBeside = wide;
 				const keyRows = pad ? 4 : 1;
+				const keyCols = pad ? 3 : options.length;
 				const keySize = Math.floor(Math.min(
 					84,
-					wide ? (box.h - 90 - (keyRows - 1) * 8) / keyRows : (box.h * 0.42 - 70 - (keyRows - 1) * 8) / keyRows,
-					(box.w - 40) / (pad ? 3.4 : options.length + 0.6),
+					wide ? (box.h - 90 - (keyRows - 1) * 8) / keyRows : ((pad ? box.h * 0.45 : box.h * 0.22) - 50 - (keyRows - 1) * 8) / keyRows,
+					((wide ? box.w * 0.36 : box.w) - 16 - (keyCols - 1) * 8) / keyCols,
 				));
-				const answerW = wide ? (pad ? keySize * 3 + 16 : keySize * 1.4) + 24 : 0;
-				const plateW = Math.floor(Math.min(300, (box.w - answerW - 60) / 2, (wide ? box.h - 140 : box.h * 0.58 - 140) / 0.72));
+				const answerW = wide ? keySize * keyCols + (keyCols - 1) * 8 + 24 : 0;
+				const answerH = wide ? 0 : keySize * (keyRows + 0.9) + (keyRows - 1) * 8 + 40;
+				// Each plate's a circle (D across), with its sign and basket. On its side: side by side, the sign
+				// with its basket to its right above each. Upright: one above the other, the sign and its basket on
+				// the left.
+				const extra = 0.4;
+				const D = Math.floor(Math.min(260, wide
+					? Math.min((box.w - answerW - 60) / 2, box.h - Math.min(84, box.h * 0.24) - 2 * GAP)
+					: Math.min((box.w - answerW - 2 * GAP) / (1 + extra), (box.h - answerH - 40 - 2 * GAP) / 2)));
 				const plate = (side: "a" | "b") => {
 					const n = side === "a" ? left : right;
 					const want = side === "a" ? r.a : r.b;
 					const fruit = side === "a" ? r.fa : r.fb;
 					const bowl = r.take && side === "b";
 					const over = !r.take && n > want;
-					const most = Math.max(n, r.take ? r.a : want);
-					const item = Math.floor(plateW / (most > 12 ? 5.4 : most > 8 ? 4.4 : most > 4 ? 3.6 : 2.8));
-					return (
-						<div className={s.side} style={{ width: plateW }}>
-							<span className={`${s.sign} ${n === want && (bowl || !r.take) ? s.signDone : ""}`} style={{ fontSize: Math.max(24, plateW * 0.15) }}>
-								{bowl ? `− ${want}` : want}
-							</span>
-							<div className={`${bowl ? s.bowl : s.plate} ${over ? s.plateOver : ""}`} style={{ width: plateW, height: plateW * 0.72 }}>
+					const most = Math.max(n, r.take ? r.a : want, 1);
+					// The fruit sit in the plate's middle, as many to a row as makes a square.
+					const perRow = Math.ceil(Math.sqrt(most));
+					const item = Math.floor((D * 0.62) / perRow);
+					const extraSize = Math.min(84, D * 0.3);
+					const sign = (
+						<span className={`${s.sign} ${over ? s.signOver : n === want && (bowl || !r.take) ? s.signDone : ""}`} style={{ fontSize: Math.max(30, Math.min(56, D * 0.22)) }}>
+							{bowl ? `− ${want}` : want}
+						</span>
+					);
+					const basket = !r.take && (
+						<button type="button" className={s.basket} onClick={() => put(side, 1)} disabled={rounds.got} aria-label={`Put a ${fruit.one} on`}
+							style={{ width: extraSize, height: extraSize }}>
+							<Pic id={fruit.id} />
+							<span aria-hidden="true">+</span>
+						</button>
+					);
+					const dish = (
+						<div className={`${bowl ? s.bowl : s.plate} ${over ? s.plateOver : ""}`} style={{ width: D, height: D }}>
+							<div className={`${s.onPlates} ${rounds.got ? s.wiped : ""}`}
+								// Wiped as the mascot passes: side by side, the left plate first; one above the other, both as it crosses the middle.
+								style={{ gridTemplateColumns: `repeat(${perRow}, ${item}px)`, "--wipeAt": wide ? (side === "a" ? 0.4 : 0.55) : 0.47 } as CSSProperties}>
 								{Array.from({ length: n }, (_, i) => (
 									<button key={i} type="button" className={s.onPlate} style={{ width: item, height: item }}
 										onClick={() => put(side, r.take ? (bowl ? -1 : 1) : -1)}
@@ -111,13 +140,19 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 									</button>
 								))}
 							</div>
-							{!r.take && (
-								<button type="button" className={s.basket} onClick={() => put(side, 1)} disabled={rounds.got} aria-label={`Put a ${fruit.one} on`}
-									style={{ width: Math.min(80, plateW * 0.3), height: Math.min(80, plateW * 0.3) }}>
-									<Pic id={fruit.id} />
-									<span aria-hidden="true">+</span>
-								</button>
-							)}
+						</div>
+					);
+					// On its side: the sign, the plate, then the basket, top to bottom. Upright: the sign with the
+					// basket under it, then the plate.
+					return wide ? (
+						<div className={s.side}>
+							<div className={s.sideTagRow}>{sign}{basket}</div>
+							{dish}
+						</div>
+					) : (
+						<div className={s.sideRow}>
+							<div className={s.sideTag}>{sign}{basket}</div>
+							{dish}
 						</div>
 					);
 				};
@@ -135,9 +170,9 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 						))}
 					</div>
 				) : (
-					<div className={s.choices} style={{ flexDirection: wide ? "column" : "row", opacity: picking || rounds.got ? 1 : 0.35 }}>
+					<div className={s.choices} style={{ display: "grid", gridTemplateColumns: `repeat(${keyCols}, ${keySize}px)`, gap: 8, opacity: picking || rounds.got ? 1 : 0.35 }}>
 						{options.map((x) => (
-							<button key={x} type="button" disabled={!picking} onClick={() => answer(x)}
+							<button key={`${x}-${wrong === x ? misses : 0}`} type="button" disabled={!picking} onClick={() => answer(x)}
 								className={`${s.choice} ${rounds.got && x === answerIs ? s.choiceRight : wrong === x ? s.wiggle : ""}`}
 								style={{ width: keySize, height: keySize, fontSize: keySize * 0.45 }}>
 								{x}
@@ -146,8 +181,8 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 					</div>
 				);
 				return (
-					<div className={wide ? s.row : s.column}>
-						<div className={s.plates}>
+					<div className={padBeside ? s.row : s.column}>
+						<div className={wide ? s.plates : s.platesUp}>
 							{plate("a")}
 							{!r.take && <span className={s.plus} aria-hidden="true">+</span>}
 							{plate("b")}
@@ -155,7 +190,7 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 						<div className={s.answerArea}>
 							<div className={s.equals}>
 								<span className={s.plus} aria-hidden="true">=</span>
-								<span className={`${s.answer} ${rounds.got ? s.answerGot : ""}`} style={{ fontSize: Math.max(28, keySize * 0.5), minWidth: keySize * 1.2 }}>
+								<span key={pad ? misses : 0} className={`${s.answer} ${rounds.got ? s.answerGot : pad && misses ? s.wiggle : ""}`} style={{ fontSize: Math.max(28, keySize * 0.5), minWidth: keySize * 1.2 }}>
 									{rounds.got ? answerIs : typed || "?"}
 								</span>
 							</div>
