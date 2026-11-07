@@ -38,9 +38,14 @@
 	background: var(--bg);
 	color: var(--text);
 }
-.on {
+/* The page on screen: green and bold in its box, like the phone's bar. */
+.on,
+.on:hover {
 	background: var(--bg);
-	color: var(--text);
+	color: var(--accent);
+	font-weight: 700;
+	/* Raised a little off the bar. */
+	box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 2px 6px rgb(0 0 0 / 0.08);
 }
 /* Pushed to the bottom of the bar, with Settings under it: who's signed in (or the logo). */
 .me {
@@ -110,6 +115,7 @@
 	/* A soft box behind it too, as in the bar on the left. */
 	background: var(--bg);
 	border-radius: var(--radius);
+	box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 2px 6px rgb(0 0 0 / 0.08);
 }
 .center {
 	display: flex;
