@@ -807,6 +807,30 @@
 	bottom: 47%;
 	width: 82%;
 }
+/* A window: the room behind its panes, and the animal looking out of it (behind the frame). */
+.windows {
+	align-content: center;
+	padding-top: 2rem;
+}
+.windows .bushSpot {
+	justify-content: flex-start;
+}
+.windows .room {
+	position: absolute;
+	background: #3b3550;
+	border-radius: 2px;
+}
+.lookOut {
+	position: absolute;
+}
+.lookOut svg {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+.windows .bushName {
+	bottom: 4%;
+}
 /* The animal's name, in front of its bush while it's out. */
 .bushName {
 	position: absolute;
