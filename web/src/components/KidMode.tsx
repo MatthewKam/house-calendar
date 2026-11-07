@@ -276,7 +276,7 @@ const PEEK = 36;
 /**
  * Today's tasks as pages to swipe between, a page at a time, each page of
  * blocks sized so they all fit (no scrolling up and down), goals straight after the daily tasks. Upright,
- * six to a page; on its side, four. The next page peeks in at the side, and dots underneath show which page it's on.
+ * six to a page; on its side, four across and as many rows as fit. The next page peeks in at the side, and dots underneath show which page it's on.
  * It opens at the page with the first one not done yet.
  */
 function TaskPages({ kidId, pages, hold }: {
@@ -318,10 +318,13 @@ function TaskPages({ kidId, pages, hold }: {
 		const w = box.w - (peek ? PEEK : 0);
 		// Room under the blocks for their raised edge.
 		const h = box.h - 6;
-		// Upright, six to a page (two across, three down); on its side, four in a row. The next peeks in.
+		// Upright, six to a page (two across, three down). On its side, four across and as many rows as fit
+		// (one on a phone, two or three on a tablet). The next page peeks in.
 		const pagesOf = (label: string, tiles: ReactNode[]) => {
-			const [cols, rows] = upright ? [2, 3] : [4, 1];
-			const size = Math.floor(Math.min((w - BLOCK_GAP * (cols - 1)) / cols, (h - BLOCK_GAP * (rows - 1)) / rows, 280));
+			const cols = upright ? 2 : 4;
+			const across = (w - BLOCK_GAP * (cols - 1)) / cols;
+			const rows = upright ? 3 : Math.max(1, Math.floor((h + BLOCK_GAP) / (Math.min(across, 260) + BLOCK_GAP)));
+			const size = Math.floor(Math.min(across, (h - BLOCK_GAP * (rows - 1)) / rows, 280));
 			const per = cols * rows;
 			return Array.from({ length: Math.ceil(tiles.length / per) }, (_, i) => ({
 				label: `${label} ${i + 1}`, tiles: tiles.slice(i * per, (i + 1) * per), cols, size,
