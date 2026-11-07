@@ -97,7 +97,14 @@ export function Cheer({ slide }: { slide?: boolean }) {
 	return (
 		<div className={`${s.cheer} ${slide ? s.cheerSlide : ""}`} aria-hidden="true" style={{ "--slide": `${SLIDE_MS}ms` } as CSSProperties}>
 			<span className={s.confetti}>
-				{Array.from({ length: slide ? 24 : 14 }, (_, i) => <i key={i} style={{ "--i": i } as CSSProperties} />)}
+				{Array.from({ length: slide ? 28 : 18 }, (_, i) => (
+					// Spread across the top, each falling at its own speed, drift and spin (the slide's keep coming).
+					<i key={i} style={{
+						"--i": i, "--x": `${(i * 37) % 100}%`, "--fall": `${1.3 + (i % 5) * 0.18}s`,
+						"--wait": slide ? `${-(i * 0.11)}s` : `${(i % 7) * 0.06}s`,
+						"--drift": `${((i % 3) - 1) * 3}rem`, "--spin": `${360 + i * 40}deg`,
+					} as CSSProperties} />
+				))}
 			</span>
 			<img className={s.cheerMascot} src="/mascot/sprig.png" alt="" />
 		</div>
