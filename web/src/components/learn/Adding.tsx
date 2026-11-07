@@ -85,23 +85,24 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 			{(box) => {
 				const wide = box.w > box.h * 1.15;
 				const GAP = 12;
-				// The answer: the numbers to pick (two by two on its side, a row upright) or the pad, beside the
-				// plates on its side and under them upright.
+				// The answer: the numbers to pick, in a row, or the pad; beside the plates on its side and under
+				// them upright.
 				const padBeside = wide;
-				const keyRows = pad ? 4 : wide ? 2 : 1;
-				const keyCols = pad ? 3 : wide ? 2 : options.length;
+				const keyRows = pad ? 4 : 1;
+				const keyCols = pad ? 3 : options.length;
 				const keySize = Math.floor(Math.min(
 					84,
 					wide ? (box.h - 90 - (keyRows - 1) * 8) / keyRows : ((pad ? box.h * 0.45 : box.h * 0.22) - 50 - (keyRows - 1) * 8) / keyRows,
-					((wide ? box.w * 0.4 : box.w) - 16 - (keyCols - 1) * 8) / keyCols,
+					((wide ? box.w * 0.36 : box.w) - 16 - (keyCols - 1) * 8) / keyCols,
 				));
 				const answerW = wide ? keySize * keyCols + (keyCols - 1) * 8 + 24 : 0;
 				const answerH = wide ? 0 : keySize * (keyRows + 0.9) + (keyRows - 1) * 8 + 40;
-				// Each plate's a circle (D across), with its sign and basket. On its side: side by side, the
-				// sign above and basket below. Upright: one above the other, the sign and its basket on the left.
+				// Each plate's a circle (D across), with its sign and basket. On its side: side by side, the sign
+				// with its basket to its right above each. Upright: one above the other, the sign and its basket on
+				// the left.
 				const extra = 0.4;
 				const D = Math.floor(Math.min(260, wide
-					? Math.min((box.w - answerW - 60) / 2, box.h - 2 * Math.min(80, box.h * 0.2) - 2 * GAP)
+					? Math.min((box.w - answerW - 60) / 2, box.h - Math.min(84, box.h * 0.24) - 2 * GAP)
 					: Math.min((box.w - answerW - 2 * GAP) / (1 + extra), (box.h - answerH - 40 - 2 * GAP) / 2)));
 				const plate = (side: "a" | "b") => {
 					const n = side === "a" ? left : right;
@@ -113,9 +114,9 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 					// The fruit sit in the plate's middle, as many to a row as makes a square.
 					const perRow = Math.ceil(Math.sqrt(most));
 					const item = Math.floor((D * 0.62) / perRow);
-					const extraSize = Math.min(80, D * 0.33);
+					const extraSize = Math.min(84, D * 0.3);
 					const sign = (
-						<span className={`${s.sign} ${over ? s.signOver : n === want && (bowl || !r.take) ? s.signDone : ""}`} style={{ fontSize: Math.max(30, D * 0.2) }}>
+						<span className={`${s.sign} ${over ? s.signOver : n === want && (bowl || !r.take) ? s.signDone : ""}`} style={{ fontSize: Math.max(30, Math.min(56, D * 0.22)) }}>
 							{bowl ? `− ${want}` : want}
 						</span>
 					);
@@ -144,7 +145,10 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 					// On its side: the sign, the plate, then the basket, top to bottom. Upright: the sign with the
 					// basket under it, then the plate.
 					return wide ? (
-						<div className={s.side}>{sign}{dish}{basket}</div>
+						<div className={s.side}>
+							<div className={s.sideTagRow}>{sign}{basket}</div>
+							{dish}
+						</div>
 					) : (
 						<div className={s.sideRow}>
 							<div className={s.sideTag}>{sign}{basket}</div>

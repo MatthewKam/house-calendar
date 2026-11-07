@@ -185,6 +185,13 @@
 	background: var(--c, var(--accent));
 }
 
+/* Not kid mode's page width (it caps and centres what's on it, which would undo the full screen). */
+.board.board.board {
+	width: auto;
+	max-width: none;
+	margin: 0;
+}
+
 /* The games size their own pieces, so not the app's usual smallest button height. */
 .board button {
 	min-height: 0;
@@ -495,6 +502,11 @@
 	align-items: center;
 	gap: 12px;
 }
+.sideTagRow {
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+}
 .sideTag {
 	display: flex;
 	flex-direction: column;
@@ -512,7 +524,7 @@
 }
 .basket {
 	position: relative;
-	padding: 0.5rem;
+	padding: 12%;
 	border-radius: 1.2rem;
 	/* White, so any fruit shows (yellow ones vanished on tan), in a wooden frame. */
 	background: #fff;
