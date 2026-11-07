@@ -89,18 +89,25 @@ describe('learning', () => {
     expect((await app.inject({ method: 'GET', url: '/api/learn/sounds/cow' })).statusCode).toBe(404);
   });
 
-  it('moves Math and Maze up after 20 plays at a level and Pairs after 10, perfect or not', async () => {
+  it('moves Math, Maze and Pairs up by their own rules', async () => {
     const { call } = setup();
     await call('PUT', '/api/learn/tayen', { today: TODAY, enabled: true });
-    const play = () => call('POST', '/api/learn/tayen/done', { today: TODAY, game: 'adding', level: 1, rounds: 3, firstTry: 1 });
-    for (let i = 0; i < 19; i++) expect((await play()).body.leveledUp).toBe(false);
-    expect((await play()).body).toMatchObject({ leveledUp: true });
-    // Other games don't.
-    // Pairs after 10.
-    const pairs = () => call('POST', '/api/learn/tayen/done', { today: TODAY, game: 'memory', level: 1, rounds: 1, firstTry: 0 });
-    for (let i = 0; i < 9; i++) expect((await pairs()).body.leveledUp).toBe(false);
-    expect((await pairs()).body.leveledUp).toBe(true);
-    const letters = () => call('POST', '/api/learn/tayen/done', { today: TODAY, game: 'letters', level: 1, rounds: 4, firstTry: 0 });
-    for (let i = 0; i < 20; i++) expect((await letters()).body.leveledUp).toBe(false);
+    const play = (game: string, firstTry: number, rounds = 3) =>
+      call('POST', '/api/learn/tayen/done', { today: TODAY, game, level: 1, rounds, firstTry });
+    // Math: 5 perfect in a row (3 isn't enough)...
+    for (let i = 0; i < 4; i++) expect((await play('adding', 3)).body.leveledUp).toBe(false);
+    expect((await play('adding', 3)).body.leveledUp).toBe(true);
+    // ...or 20 games, perfect or not.
+    await call('PUT', '/api/learn/tayen', { today: TODAY, levels: { adding: 1 } });
+    for (let i = 0; i < 19; i++) expect((await play('adding', 1)).body.leveledUp).toBe(false);
+    expect((await play('adding', 1)).body.leveledUp).toBe(true);
+    // Maze: only 20 games, however perfect.
+    for (let i = 0; i < 19; i++) expect((await play('maze', 3)).body.leveledUp).toBe(false);
+    expect((await play('maze', 3)).body.leveledUp).toBe(true);
+    // Pairs: 5 perfect in a row, or 20 games.
+    for (let i = 0; i < 4; i++) expect((await play('memory', 1, 1)).body.leveledUp).toBe(false);
+    expect((await play('memory', 1, 1)).body.leveledUp).toBe(true);
+    // Letters: 3 perfect in a row, and no count.
+    for (let i = 0; i < 20; i++) expect((await play('letters', 0, 4)).body.leveledUp).toBe(false);
   });
 });

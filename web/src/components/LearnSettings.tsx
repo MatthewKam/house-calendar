@@ -22,7 +22,8 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
     <section className={s.bare}>
       <p className={s.hint}>
         Games in kid mode's Learn tab: pictures and sounds, no wrong answers, and no stars. A game moves up a level by
-        itself after 3 perfect plays in a row (Math and Maze also after 20 plays at a level, Pairs after 10).
+        itself after 3 perfect plays in a row; Math and Pairs after 5 perfect or 20 plays at a level, Maze after 20
+        plays.
       </p>
       {kids.map((k) => {
         const kid = members.find((m) => m.id === k.memberId);

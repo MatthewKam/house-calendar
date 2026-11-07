@@ -32,10 +32,11 @@ export const ANIMALS = ['cow', 'pig', 'duck', 'sheep', 'horse', 'chicken', 'goat
 /** A recorded noise is a few seconds: well under this. */
 const MAX_SOUND_BYTES = 1024 * 1024;
 
-/** Perfect plays in a row, at a level, before the game moves up. */
+/** Perfect plays in a row, at a level, before the game moves up: 3, or as set here (null: never, only by count). */
 export const PLAYS_TO_LEVEL_UP = 3;
+export const PERFECT_RUN: Partial<Record<Game, number | null>> = { adding: 5, memory: 5, maze: null };
 /** Some games also move up after this many plays at a level, perfect or not. */
-export const PLAYS_TO_MOVE_ON: Partial<Record<Game, number>> = { adding: 20, maze: 20, memory: 10 };
+export const PLAYS_TO_MOVE_ON: Partial<Record<Game, number>> = { adding: 20, maze: 20, memory: 20 };
 
 interface KidRow { id: string; birthdate: string | null; stage: string | null; enabled: number | null }
 
@@ -125,7 +126,8 @@ export function registerLearn(app: FastifyInstance, db: DB) {
           WHERE s.member_id = ? AND s.skill = ? AND s.level = ? AND s.rowid > COALESCE(l.since_play, 0)
           ORDER BY s.rowid DESC`)
           .all(r.id, game, at) as { perfect: number }[];
-        const perfectRun = plays.length >= PLAYS_TO_LEVEL_UP && plays.slice(0, PLAYS_TO_LEVEL_UP).every((p) => p.perfect);
+        const run = PERFECT_RUN[game] === undefined ? PLAYS_TO_LEVEL_UP : PERFECT_RUN[game];
+        const perfectRun = run !== null && plays.length >= run && plays.slice(0, run).every((p) => p.perfect);
         const playedEnough = PLAYS_TO_MOVE_ON[game] !== undefined && plays.length >= PLAYS_TO_MOVE_ON[game]!;
         if (!perfectRun && !playedEnough) return false;
         setLevel(r.id, game, at + 1);
