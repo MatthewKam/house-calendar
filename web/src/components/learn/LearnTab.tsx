@@ -25,9 +25,9 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 		"Higher levels: more animals to choose from, then pets and wild animals too.",
 	] },
 	peekaboo: { title: "Peekaboo farm", picture: "bush", Play: Peekaboo, how: [
-		"Tap a bush and an animal pops out, making its noise. Tap it again to hear it again.",
-		"Once everyone's out, the farm goes to sleep.",
-		"From level 4: listen to the noise (the play button plays it again), then find the bush hiding that animal.",
+		"Not a game to win, just fun: tap a bush and an animal pops up with its name, making its noise. Tap it again to hear it again.",
+		"A couple of seconds later it ducks back down, and someone new is hiding there.",
+		"When every animal has had its turn, night falls and it's the end. A new set of animals each time.",
 	] },
 	findIt: { title: "Find it!", picture: "teddy", Play: FindIt, how: [
 		"The pictures at the top show what to find, and how many.",

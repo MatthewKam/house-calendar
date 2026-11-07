@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Pic } from "./art";
-import { Board, fit, Hear } from "./parts";
-import { animalsUpTo } from "./things";
-import { at, fresh, pick, type GameProps } from "./rounds";
+import { Board, fit } from "./parts";
+import { ANIMALS, type Animal } from "./things";
+import { at, fresh, type GameProps } from "./rounds";
 import { noise } from "./sound";
 import s from "../../styles/Learn.module.css";
 
-/** Bushes, by level. Up to 3, everyone just says hello; from 4, find who made the noise. */
-const BUSHES = [3, 4, 5, 4, 5, 6];
-const LISTEN_FROM = 4;
-const LISTEN_ROUNDS = 3;
+/** Bushes, and animals hiding in them over a play, by level. */
+const BUSHES = [3, 4, 4, 5, 5, 6];
+const ANIMALS_PER_PLAY = [8, 10, 10, 12, 12, 14];
+/** How long an animal stays out after its noise before ducking back down (ms; a couple of seconds at least). */
+const STAY_AFTER = 1200;
+const STAY_AT_LEAST = 2500;
 
 /** Different skies each play: day, morning, sunset. */
 const SKIES = [
@@ -20,114 +22,79 @@ const SKIES = [
 ];
 const NIGHT = { sky: "#26305e", hill: "#3f6b4a", light: "#f4f1ec" };
 
+/** A bush: who's hiding in it now, whether they're out, and how many times it's been tapped (for its rustle). */
+interface Bush { animal: Animal | null; out: boolean; taps: number }
+
 /**
- * Peekaboo farm (age 2): tap a bush and an animal pops out, making its noise; tap it again to hear it
- * again. Once everyone's out, night falls. From level 4 it's listening: a noise plays, and the kid
- * finds the bush hiding who made it (a wrong bush shows its animal, then it ducks back down).
+ * Peekaboo farm (age 2): not a game to win, just fun. Tap a bush and an animal pops up, its name in
+ * front of the bush, making its noise (tap it again to hear it again). A couple of seconds after, it
+ * ducks back down and someone new is hiding there. When every animal's had its turn, night falls and
+ * that's the end. A new set of animals each play.
  */
 export default function Peekaboo({ level, onDone, onBack }: GameProps) {
-	const listening = level >= LISTEN_FROM;
 	const look = useMemo(() => fresh("peekaboo.skies", SKIES, 1, (x) => x.sky)[0], []);
-	const hiding = useMemo(() => fresh(`peekaboo.${level}`, animalsUpTo(Math.max(level, 2)), at(BUSHES, level), (a) => a.id), [level]);
-	// Listening: who to find each round.
-	const asks = useMemo(() => pick(hiding, Math.min(LISTEN_ROUNDS, hiding.length)), [hiding]);
-	const [out, setOut] = useState<number[]>([]);
-	const outNow = useRef<number[]>([]);
-	const [peeking, setPeeking] = useState<number | null>(null);
-	const [taps, setTaps] = useState<{ i: number; n: number } | null>(null);
-	const [round, setRound] = useState(0);
-	const [firstTry, setFirstTry] = useState(0);
-	const [missed, setMissed] = useState(false);
+	const bushCount = at(BUSHES, level);
+	// Everyone hiding this play, in the order they'll turn up.
+	const queue = useMemo(() => fresh("peekaboo.animals", ANIMALS, Math.max(bushCount, at(ANIMALS_PER_PLAY, level)), (a) => a.id), [level, bushCount]);
+	const next = useRef(bushCount);
+	const [bushes, setBushes] = useState<Bush[]>(() => queue.slice(0, bushCount).map((animal) => ({ animal, out: false, taps: 0 })));
 	const [night, setNight] = useState(false);
-	// Listening: the cheer, while the one found shows.
-	const [cheering, setCheering] = useState(false);
-	// Timers for what comes next, all stopped if they leave.
 	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 	const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(fn, ms));
 	useEffect(() => () => timers.current.forEach(clearTimeout), []);
-	const unpeek = useRef<ReturnType<typeof setTimeout>>(undefined);
+	// Each bush's own "duck back down" timer, so tapping it again keeps it out a bit longer.
+	const hideTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+	useEffect(() => () => Object.values(hideTimers.current).forEach(clearTimeout), []);
 
-	const ask = listening ? asks[round] : null;
-	// Listening: each round starts with the noise.
+	// Once nobody's left hiding or out: night, then the end.
 	useEffect(() => {
-		if (!ask) return;
-		const t = setTimeout(() => noise(ask), 500);
-		return () => clearTimeout(t);
-	}, [ask]);
-
-	function finish(rounds: number, right: number) {
-		later(() => setNight(true), 1800);
-		later(() => onDone(rounds, right), 4500);
-	}
+		if (night || bushes.some((b) => b.animal)) return;
+		later(() => setNight(true), 600);
+		later(() => onDone(1, 1), 3600);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [bushes]);
 
 	function tap(i: number) {
-		if (night) return;
-		const a = hiding[i];
-		noise(a);
-		setTaps((t) => ({ i, n: (t?.n ?? 0) + 1 }));
-		if (!listening) {
-			// Read and kept in a ref too, so quick taps in a row each count.
-			if (outNow.current.includes(i)) return;
-			outNow.current = [...outNow.current, i];
-			setOut(outNow.current);
-			if (outNow.current.length === hiding.length) finish(1, 1);
-			return;
-		}
-		if (out.includes(i) || !ask) return;
-		if (a.id !== ask.id) {
-			// The wrong one peeks out, then hides again.
-			setMissed(true);
-			setPeeking(i);
-			clearTimeout(unpeek.current);
-			unpeek.current = setTimeout(() => setPeeking(null), 1500);
-			return;
-		}
-		outNow.current = [...outNow.current, i];
-		setOut(outNow.current);
-		setPeeking(null);
-		const right = firstTry + (missed ? 0 : 1);
-		setFirstTry(right);
-		setMissed(false);
-		setCheering(true);
-		later(() => setCheering(false), 1600);
-		if (round + 1 >= asks.length) finish(asks.length, right);
-		else later(() => setRound(round + 1), 1800);
+		const bush = bushes[i];
+		if (night || !bush.animal) return;
+		const animal = bush.animal;
+		setBushes((all) => all.map((b, j) => (j === i ? { ...b, out: true, taps: b.taps + 1 } : b)));
+		clearTimeout(hideTimers.current[i]);
+		const from = Date.now();
+		noise(animal, () => {
+			hideTimers.current[i] = setTimeout(() => {
+				// Back down, and someone new hides there (or nobody, once everyone's had a turn).
+				const newcomer = next.current < queue.length ? queue[next.current++] : null;
+				setBushes((all) => all.map((b, j) => (j === i ? { ...b, animal: newcomer, out: false } : b)));
+			}, Math.max(STAY_AFTER, STAY_AT_LEAST - (Date.now() - from)));
+		});
 	}
 
 	const colors = night ? NIGHT : look;
 	return (
-		<Board onBack={onBack} total={listening ? asks.length : undefined} done={listening ? out.length : undefined}
-			cheer={cheering}>
+		<Board onBack={onBack}>
 			{(box) => {
-				// Each bush has room above it for its animal to pop up.
-				const grid = fit(hiding.length, { w: box.w - 24, h: box.h * 0.62 }, { gap: 12, shape: 0.8, most: 260 });
+				// Each bush has room above it for its animal to pop all the way up.
+				const grid = fit(bushes.length, { w: box.w - 24, h: box.h * 0.66 }, { gap: 12, shape: 0.62, most: 240 });
 				return (
 					<div className={s.farm} style={{ "--sky": colors.sky, "--hill": colors.hill, "--light": colors.light } as CSSProperties}>
 						<Farm night={night} />
-						{listening && !night && (
-							<div className={s.farmAsk}>
-								<Hear size={Math.min(100, Math.max(68, box.h * 0.15))} onTap={() => ask && noise(ask)} label="Hear who's hiding" />
-							</div>
-						)}
 						<div className={s.bushes} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)` }}>
-							{hiding.map((a, i) => {
-								const shown = out.includes(i) || peeking === i;
-								const tapped = taps?.i === i;
-								return (
-									<button key={i} type="button" className={s.bushSpot} onClick={() => tap(i)}
-										style={{ width: grid.size, height: grid.size * 1.25 }}
-										aria-label={shown ? `${a.name}: tap to hear it again` : "A bush. Who's hiding?"}>
-										{shown && (
-											<span key={tapped ? taps.n : 0} className={`${s.peeker} ${night ? s.snore : s.peek}`}>
-												<Pic id={a.id} />
-											</span>
-										)}
-										<span key={`b${tapped ? taps.n : 0}`} className={`${s.bush} ${tapped ? s.rustle : ""}`}>
-											<Pic id="bush" />
+							{bushes.map((b, i) => (
+								<button key={i} type="button" className={s.bushSpot} onClick={() => tap(i)}
+									style={{ width: grid.size, height: grid.size / 0.62 }}
+									aria-label={b.out && b.animal ? `${b.animal.name}: tap to hear it again` : b.animal ? "A bush. Who's hiding?" : "A bush"}>
+									{b.out && b.animal && (
+										<span key={`${b.animal.id}-${b.taps}`} className={`${s.peeker} ${s.peek}`}>
+											<Pic id={b.animal.id} />
 										</span>
-									</button>
-								);
-							})}
+									)}
+									<span key={`b${b.taps}`} className={`${s.bush} ${b.taps ? s.rustle : ""}`}>
+										<Pic id="bush" />
+									</span>
+									{b.out && b.animal && <span className={s.bushName}>{b.animal.name}</span>}
+								</button>
+							))}
 						</div>
 					</div>
 				);
