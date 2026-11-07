@@ -470,13 +470,13 @@
 	display: flex;
 	align-items: center;
 	gap: 0.6rem;
-	min-height: 3.2rem;
+	min-height: 3.6rem;
 	padding: 0 1.1rem;
 	border-radius: 1.2rem;
 	border: 3px solid color-mix(in srgb, var(--c) 35%, white);
 	background: var(--surface);
 	box-shadow: 0 0.25rem 0 color-mix(in srgb, var(--c) 35%, white);
-	font-size: 1.15rem;
+	font-size: 1.6rem;
 	font-weight: 800;
 }
 .pottyToggle:active {
@@ -499,9 +499,10 @@
 }
 /* Open: the button and the chart are one panel (the chart slides out from under it). */
 .pottyToggle[aria-expanded="true"] {
+	border-bottom: none;
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;
-	border-bottom-color: transparent;
+	padding-bottom: 3px;
 	box-shadow: none;
 	transform: none;
 }
@@ -690,8 +691,8 @@
 		flex-basis: 2rem;
 	}
 	.pottyToggle {
-		min-height: 2.6rem;
-		font-size: 1rem;
+		min-height: 2.8rem;
+		font-size: 1.3rem;
 	}
 	.kidNav {
 		gap: 0.3rem;

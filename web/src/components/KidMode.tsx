@@ -90,6 +90,11 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	const [asking, setAsking] = useState<{ body: string; then: () => void } | null>(null);
 	// The potty chart starts folded away (it's a tap to open).
 	const [pottyOpen, setPottyOpen] = useState(false);
+	const pottyRef = useRef<HTMLElement>(null);
+	// Opening it scrolls down to it.
+	useEffect(() => {
+		if (pottyOpen) pottyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+	}, [pottyOpen]);
 
 	if (!kid) {
 		return (
@@ -204,7 +209,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 				{tab === "tasks" && dueToday.length === 0 && <p className={s.none}>Nothing to do today. Have fun! 🌈</p>}
 				{/* The potty chart, under the tasks: folded away until it's tapped open. */}
 				{tab === "tasks" && chart && (
-					<section className={s.pottyFold}>
+					<section ref={pottyRef} className={s.pottyFold}>
 						<button type="button" className={s.pottyToggle} aria-expanded={pottyOpen} onClick={() => setPottyOpen(!pottyOpen)}>
 							<span aria-hidden="true">🚽</span> Potty chart
 							<svg className={s.pottyChevron} viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
