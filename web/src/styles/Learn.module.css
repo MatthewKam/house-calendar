@@ -691,12 +691,9 @@
 	width: 100%;
 	height: 100%;
 }
-/* Not a pair: the two shake, their faces edged red, before turning back. */
+/* Not a pair: the two shake before turning back. */
 .cardShake {
 	animation: wiggle 0.45s ease;
-}
-.cardShake .cardFace {
-	box-shadow: 0 0 0 0.25rem #d92d20;
 }
 .cardMatched .cardFace {
 	box-shadow: 0 0 0 0.25rem var(--c, var(--accent));

@@ -3,7 +3,6 @@ import { Pic } from "./art";
 import { Board, fit } from "./parts";
 import { ANIMALS, FRUIT, TOYS } from "./things";
 import { at, fresh, shuffle, type GameProps } from "./rounds";
-import { noise } from "./sound";
 import s from "../../styles/Learn.module.css";
 
 /** Pairs on the table, by level. */
@@ -17,9 +16,9 @@ const SETS = [
 ];
 
 /**
- * Pairs (age 4): cards face down. Tap two to turn them over; a match stays face up (an animal makes its
- * noise), and two that don't match shake, edged red, then turn back over. More cards as it levels up,
- * and a new set each play. First try is finding them all without too many misses (one per pair).
+ * Pairs (age 4): cards face down. Tap two to turn them over; a match stays face up, and two that don't
+ * match shake, then turn back over. No sounds. More cards as it levels up, and a new set
+ * each play. First try is finding them all without too many misses (one per pair).
  */
 export default function Memory({ level, onDone, onBack }: GameProps) {
 	const set = useMemo(() => fresh("pairs.sets", SETS, 1, (x) => x.name)[0], []);
@@ -36,10 +35,8 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 	function flip(i: number) {
 		if (up.length === 2 || up.includes(i) || matched.includes(i)) return;
 		const card = cards[i];
-		const animal = ANIMALS.find((a) => a.id === card.id);
 		if (up.length === 0) {
 			setUp([i]);
-			if (animal) noise(animal);
 			return;
 		}
 		const other = up[0];
@@ -50,12 +47,10 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 				setMatched(now);
 				setUp([]);
 			}, 500));
-			if (animal) noise(animal);
 			if (now.length === cards.length) {
 				timers.current.push(setTimeout(() => onDone(1, misses <= pairs ? 1 : 0), 3200));
 			}
 		} else {
-			if (animal) noise(animal);
 			setMisses(misses + 1);
 			// A moment to look, then the two shake ("not a pair"), then turn back over.
 			timers.current.push(setTimeout(() => setShaking([other, i]), 700));
