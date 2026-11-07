@@ -13,7 +13,7 @@ const ROUNDS = 3;
 
 /**
  * Counting (age 2): tap each one to count it; the count so far shows big at the top and is said out
- * loud, the one tapped keeps its number under it and can't be tapped again. Once they're all
+ * loud; the one tapped goes flat and can't be tapped again. Once they're all
  * counted, the cheer; from level 3 the kid picks how many first (a wrong pick clears the numbers, to
  * count again together). Different fruit each round.
  */
@@ -60,7 +60,7 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 				const below = asking ? Math.min(110, box.h * 0.22) : 0;
 				// The count so far, big, at the top.
 				const top = Math.min(120, Math.max(60, box.h * 0.16));
-				const grid = fit(n, { w: box.w, h: box.h - below - top - 16 }, { gap: 12, shape: 0.8, most: 220 });
+				const grid = fit(n, { w: box.w, h: box.h - below - top - 16 }, { gap: 12, most: 220 });
 				return (
 					<div className={s.column}>
 						<span key={done} className={`${s.countNow} ${done ? s.pop : ""}`} style={{ fontSize: top * 0.9, height: top }}
@@ -69,10 +69,9 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 							{Array.from({ length: n }, (_, i) => (
 								<button key={i} type="button" className={`${s.fruit} ${counted[i] !== undefined ? s.counted : ""}`}
 									disabled={counted[i] !== undefined}
-									style={{ width: grid.size, height: grid.size / 0.8 }} onClick={() => count(i)}
+									style={{ width: grid.size, height: grid.size }} onClick={() => count(i)}
 									aria-label={counted[i] !== undefined ? `${fruit.one} ${counted[i]}` : `${fruit.one}, not counted yet`}>
 									<Pic id={fruit.id} className={counted[i] !== undefined ? s.pop : ""} />
-									<span className={s.fruitNumber} style={{ fontSize: grid.size * 0.26 }}>{counted[i] ?? ""}</span>
 								</button>
 							))}
 						</div>

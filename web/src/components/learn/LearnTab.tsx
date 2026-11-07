@@ -35,7 +35,7 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 		"From level 3, some things hide under others: collect the teddy and there's the sock. Higher levels: more kinds of things, and more of each.",
 	] },
 	apples: { title: "Counting", picture: "apple", Play: Apples, how: [
-		"Tap each one to count it: the count so far shows big at the top and is said out loud, and the one tapped keeps its number.",
+		"Tap each one to count it: the count so far shows big at the top and is said out loud.",
 		"From level 3, pick how many there are. A wrong number clears the count, so you count again together.",
 		"Higher levels: more to count.",
 	] },

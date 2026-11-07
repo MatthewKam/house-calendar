@@ -519,12 +519,6 @@
 	line-height: 1;
 	color: var(--c, var(--accent));
 }
-.fruitNumber {
-	font-weight: 800;
-	line-height: 1.1;
-	min-height: 1.1em;
-	color: var(--c, var(--accent));
-}
 
 /* Math. */
 .plates {
