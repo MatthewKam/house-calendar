@@ -5,9 +5,9 @@ import { stageOf, type Stage } from './stages.ts';
 
 // Learning (docs/kids-growth.md): short picture-first games in kid mode, with no fail states. A
 // guardian turns it on for each kid, who then picks any of their stage's games. Each game has levels:
-// a few perfect plays in a row move it up by itself (Math and Maze also after 20 plays at a level, Pairs after 10), and a
-// guardian can move it up or down. Each play is a new version of the game (the web picks it). It's
-// for learning: it earns no stars.
+// a few perfect plays in a row move it up by itself (some games also after enough plays at a level:
+// PLAYS_TO_MOVE_ON), and a guardian can move it up or down. Each play is a new version of the game
+// (the web picks it). It's for learning: it earns no stars.
 
 const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 
