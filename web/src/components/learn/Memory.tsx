@@ -2,8 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Pic } from "./art";
 import { Board, fit } from "./parts";
 import { ANIMALS, FRUIT, TOYS } from "./things";
-import { any, at, pick, shuffle, type GameProps } from "./rounds";
-import { noise } from "./sound";
+import { at, fresh, shuffle, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
 /** Pairs on the table, by level. */
@@ -17,26 +16,27 @@ const SETS = [
 ];
 
 /**
- * Card matching (age 4): cards face down. Tap two to turn them over; a match stays face up (an animal makes its noise), and two that don't match turn back over. More cards as it levels up, and a new set each
- * play. First try is finding them all without too many misses (one per pair).
+ * Pairs (age 4): cards face down. Tap two to turn them over; a match stays face up, and two that don't
+ * match shake, then turn back over. No sounds. More cards as it levels up, and a new set
+ * each play. First try is finding them all without too many misses (one per pair).
  */
 export default function Memory({ level, onDone, onBack }: GameProps) {
-	const set = useMemo(() => any(SETS), []);
+	const set = useMemo(() => fresh("pairs.sets", SETS, 1, (x) => x.name)[0], []);
 	const pairs = Math.min(at(PAIRS, level), set.cards.length);
-	const cards = useMemo(() => shuffle(pick(set.cards, pairs).flatMap((c) => [c, c])), [set, pairs]);
+	const cards = useMemo(() => shuffle(fresh(`pairs.${set.name}`, set.cards, pairs, (x) => x.id).flatMap((c) => [c, c])), [set, pairs]);
 	const [up, setUp] = useState<number[]>([]);
 	const [matched, setMatched] = useState<number[]>([]);
 	const [misses, setMisses] = useState(0);
+	// Two that don't match, shaking before they turn back.
+	const [shaking, setShaking] = useState<number[]>([]);
 	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 	useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
 	function flip(i: number) {
 		if (up.length === 2 || up.includes(i) || matched.includes(i)) return;
 		const card = cards[i];
-		const animal = ANIMALS.find((a) => a.id === card.id);
 		if (up.length === 0) {
 			setUp([i]);
-			if (animal) noise(animal);
 			return;
 		}
 		const other = up[0];
@@ -47,14 +47,17 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 				setMatched(now);
 				setUp([]);
 			}, 500));
-			if (animal) noise(animal);
 			if (now.length === cards.length) {
 				timers.current.push(setTimeout(() => onDone(1, misses <= pairs ? 1 : 0), 3200));
 			}
 		} else {
-			if (animal) noise(animal);
 			setMisses(misses + 1);
-			timers.current.push(setTimeout(() => setUp([]), 1300));
+			// A moment to look, then the two shake ("not a pair"), then turn back over.
+			timers.current.push(setTimeout(() => setShaking([other, i]), 400));
+			timers.current.push(setTimeout(() => {
+				setShaking([]);
+				setUp([]);
+			}, 950));
 		}
 	}
 
@@ -68,7 +71,7 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 							{cards.map((c, i) => {
 								const face = up.includes(i) || matched.includes(i);
 								return (
-									<button key={i} type="button" className={`${s.card} ${face ? s.cardUp : ""} ${matched.includes(i) ? s.cardMatched : ""}`}
+									<button key={i} type="button" className={`${s.card} ${face ? s.cardUp : ""} ${matched.includes(i) ? s.cardMatched : ""} ${shaking.includes(i) ? s.cardShake : ""}`}
 										style={{ width: grid.size, height: grid.size / 0.75 }} onClick={() => flip(i)} aria-label={face ? c.name : "A card, face down"}>
 										<span className={s.cardInner}>
 											<span className={s.cardBack} aria-hidden="true" />

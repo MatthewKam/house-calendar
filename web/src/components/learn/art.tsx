@@ -200,6 +200,70 @@ const ART: Record<string, ReactNode> = {
 			{smile(84, 9)}
 		</>
 	),
+	rooster: (
+		<>
+			<path d="M40 30 q2 -22 14 -10 q6 -18 14 -2 q10 -12 12 6 q8 -2 4 12z" fill="#e03a2f" />
+			<path d="M84 66 q28 -10 30 14 q-6 -4 -14 0 q8 6 4 18 q-8 -10 -20 -8z" fill="#2f6b4a" />
+			<circle cx="58" cy="64" r="38" fill="#c8742c" />
+			<ellipse cx="56" cy="88" rx="26" ry="18" fill="#e3a05a" />
+			<path d="M44 66 L58 66 L52 78z" fill="#f4a020" transform="translate(-4 0)" />
+			<path d="M46 78 q3 14 8 2" fill="#e03a2f" />
+			{eyes(54, 13)}
+		</>
+	),
+	hawk: (
+		<>
+			<path d="M14 54 Q30 20 60 18 Q90 20 106 54 Q86 46 60 48 Q34 46 14 54z" fill="#6b4126" />
+			<ellipse cx="60" cy="68" rx="38" ry="40" fill="#a8744c" />
+			<ellipse cx="60" cy="84" rx="24" ry="22" fill="#f4e6cf" />
+			<path d="M36 50 Q48 44 56 52 M84 50 Q72 44 64 52" fill="none" stroke="#3b2a20" strokeWidth="4" strokeLinecap="round" />
+			<circle cx="46" cy="58" r="7" fill="#f6cf3c" />
+			<circle cx="46" cy="58" r="3.5" fill={EYE} />
+			<circle cx="74" cy="58" r="7" fill="#f6cf3c" />
+			<circle cx="74" cy="58" r="3.5" fill={EYE} />
+			<path d="M52 66 H68 Q66 80 60 86 Q54 80 52 66z" fill="#f4a020" />
+			<path d="M60 86 q-2 -6 2 -8" fill="none" stroke="#c46d00" strokeWidth="2.5" />
+		</>
+	),
+	leopard: (
+		<>
+			<circle cx="28" cy="30" r="14" fill="#e3a83c" />
+			<circle cx="28" cy="30" r="7" fill="#f4d79a" />
+			<circle cx="92" cy="30" r="14" fill="#e3a83c" />
+			<circle cx="92" cy="30" r="7" fill="#f4d79a" />
+			<circle cx="60" cy="64" r="42" fill="#f0bc4c" />
+			<g fill="#6b4126">
+				<circle cx="34" cy="48" r="5" /><circle cx="44" cy="34" r="4" /><circle cx="60" cy="28" r="5" />
+				<circle cx="76" cy="34" r="4" /><circle cx="86" cy="48" r="5" /><circle cx="28" cy="70" r="4" />
+				<circle cx="92" cy="70" r="4" /><circle cx="40" cy="94" r="4" /><circle cx="80" cy="94" r="4" />
+			</g>
+			<ellipse cx="60" cy="82" rx="18" ry="13" fill="#fbe9c4" />
+			<path d="M53 75 L67 75 L60 83z" fill="#c8577a" />
+			<path d="M60 83 q-6 7 -12 4 M60 83 q6 7 12 4" fill="none" stroke={EYE} strokeWidth="2.5" strokeLinecap="round" />
+			{eyes(60, 14)}
+		</>
+	),
+	seagull: (
+		<>
+			<path d="M8 66 Q30 50 50 62 L52 76 Q26 70 8 66z" fill="#9aa5b1" />
+			<path d="M112 66 Q90 50 70 62 L68 76 Q94 70 112 66z" fill="#9aa5b1" />
+			<circle cx="60" cy="58" r="34" fill="#f4f6f8" />
+			<path d="M60 64 L96 70 L60 78z" fill="#f6c02a" />
+			<circle cx="88" cy="72" r="3" fill="#e03a2f" />
+			<circle cx="48" cy="52" r="5" fill={EYE} />
+			<circle cx="72" cy="52" r="5" fill={EYE} />
+		</>
+	),
+	wolf: (
+		<>
+			<path d="M22 54 L30 12 L52 36z M98 54 L90 12 L68 36z" fill="#7d8794" />
+			<path d="M32 44 L34 24 L46 38z M88 44 L86 24 L74 38z" fill="#d7dce2" />
+			<path d="M60 110 L18 64 Q18 36 60 34 Q102 36 102 64z" fill="#9aa5b1" />
+			<path d="M60 110 L36 78 Q48 70 60 78 Q72 70 84 78z" fill="#eef1f4" />
+			<ellipse cx="60" cy="98" rx="8" ry="6" fill={EYE} />
+			{eyes(62, 15)}
+		</>
+	),
 	bear: (
 		<>
 			<circle cx="27" cy="30" r="15" fill="#b47a4c" />
@@ -369,7 +433,153 @@ const ART: Record<string, ReactNode> = {
 		</>
 	),
 
+	// Mazes: who's looking, and what for.
+	rabbit: (
+		<>
+			<ellipse cx="44" cy="30" rx="11" ry="28" fill="#e8e2d6" transform="rotate(-12 44 30)" />
+			<ellipse cx="44" cy="30" rx="5" ry="20" fill="#f2b6c0" transform="rotate(-12 44 30)" />
+			<ellipse cx="76" cy="30" rx="11" ry="28" fill="#e8e2d6" transform="rotate(12 76 30)" />
+			<ellipse cx="76" cy="30" rx="5" ry="20" fill="#f2b6c0" transform="rotate(12 76 30)" />
+			<circle cx="60" cy="76" r="36" fill="#f4f1ec" />
+			<ellipse cx="60" cy="86" rx="7" ry="5" fill="#e8707c" />
+			<path d="M60 91 v6 M60 97 q-6 5 -10 2 M60 97 q6 5 10 2" fill="none" stroke={EYE} strokeWidth="2.5" strokeLinecap="round" />
+			{eyes(72, 14)}
+		</>
+	),
+	butterfly: (
+		<>
+			<ellipse cx="34" cy="42" rx="26" ry="30" fill="#f08bb4" transform="rotate(-20 34 42)" />
+			<ellipse cx="86" cy="42" rx="26" ry="30" fill="#f08bb4" transform="rotate(20 86 42)" />
+			<ellipse cx="38" cy="86" rx="18" ry="20" fill="#f6c34a" transform="rotate(20 38 86)" />
+			<ellipse cx="82" cy="86" rx="18" ry="20" fill="#f6c34a" transform="rotate(-20 82 86)" />
+			<circle cx="34" cy="42" r="9" fill="#fff" opacity=".7" />
+			<circle cx="86" cy="42" r="9" fill="#fff" opacity=".7" />
+			<rect x="54" y="30" width="12" height="68" rx="6" fill="#3b2a20" />
+			<path d="M58 32 Q50 14 42 12 M62 32 Q70 14 78 12" fill="none" stroke="#3b2a20" strokeWidth="3" strokeLinecap="round" />
+		</>
+	),
+	honey: (
+		<>
+			<path d="M28 44 Q28 30 44 30 H76 Q92 30 92 44 V92 Q92 110 74 110 H46 Q28 110 28 92z" fill="#e3a21a" />
+			<rect x="24" y="22" width="72" height="16" rx="8" fill="#b97a10" />
+			<path d="M34 38 Q40 58 46 40 Q52 62 60 40 Q68 56 74 40 Q80 60 86 38z" fill="#f6cf3c" />
+			<rect x="40" y="62" width="40" height="26" rx="6" fill="#fbe7a8" />
+			<path d="M50 75 h20" stroke="#b97a10" strokeWidth="4" strokeLinecap="round" />
+		</>
+	),
+	flower: (
+		<>
+			<path d="M60 70 V116" stroke="#4c9a4c" strokeWidth="7" strokeLinecap="round" />
+			<path d="M60 100 Q40 86 30 96 Q44 108 60 100z" fill="#5cb85c" />
+			<g fill="#f08bb4">
+				<circle cx="60" cy="28" r="18" />
+				<circle cx="84" cy="44" r="18" />
+				<circle cx="76" cy="70" r="18" />
+				<circle cx="44" cy="70" r="18" />
+				<circle cx="36" cy="44" r="18" />
+			</g>
+			<circle cx="60" cy="50" r="15" fill="#f6cf3c" />
+		</>
+	),
+	bone: (
+		<>
+			{/* An outline under it, so it shows on white. */}
+			<g fill="#c9bba4">
+				<rect x="28" y="46" width="64" height="28" />
+				<circle cx="28" cy="48" r="17" />
+				<circle cx="28" cy="72" r="17" />
+				<circle cx="92" cy="48" r="17" />
+				<circle cx="92" cy="72" r="17" />
+			</g>
+			<g fill="#f7f1e6">
+				<rect x="30" y="50" width="60" height="20" />
+				<circle cx="28" cy="48" r="14" />
+				<circle cx="28" cy="72" r="14" />
+				<circle cx="92" cy="48" r="14" />
+				<circle cx="92" cy="72" r="14" />
+			</g>
+			<path d="M40 56 H80" stroke="#e3dccf" strokeWidth="4" strokeLinecap="round" />
+		</>
+	),
+	cheese: (
+		<>
+			<path d="M10 84 L104 40 L110 92 Q60 108 10 98z" fill="#f6cf3c" />
+			<path d="M10 84 L104 40 L110 50 L14 92z" fill="#fbe07a" />
+			<circle cx="44" cy="90" r="6" fill="#e0a800" />
+			<circle cx="74" cy="80" r="8" fill="#e0a800" />
+			<circle cx="94" cy="92" r="5" fill="#e0a800" />
+		</>
+	),
+	carrot: (
+		<>
+			<path d="M54 26 Q44 6 36 10 Q46 18 50 30z M62 26 Q62 4 72 6 Q66 18 66 30z M58 28 Q80 10 88 18 Q74 24 64 32z" fill="#5cb85c" />
+			<path d="M42 34 Q60 22 78 34 L62 112 Q60 116 58 112z" fill="#f4892a" />
+			<path d="M50 52 h10 M56 70 h10 M54 88 h8" stroke="#c96a12" strokeWidth="3" strokeLinecap="round" />
+		</>
+	),
+
 	// More things, for words.
+	bus: (
+		<>
+			<rect x="8" y="28" width="104" height="66" rx="12" fill="#f6c02a" />
+			<rect x="16" y="38" width="22" height="22" rx="4" fill="#d6ecff" />
+			<rect x="44" y="38" width="22" height="22" rx="4" fill="#d6ecff" />
+			<rect x="72" y="38" width="22" height="22" rx="4" fill="#d6ecff" />
+			<rect x="98" y="38" width="10" height="34" rx="3" fill="#d6ecff" />
+			<rect x="8" y="70" width="104" height="6" fill="#e0a800" />
+			<circle cx="32" cy="96" r="12" fill="#2b2b2b" />
+			<circle cx="32" cy="96" r="5" fill="#bdbdc6" />
+			<circle cx="88" cy="96" r="12" fill="#2b2b2b" />
+			<circle cx="88" cy="96" r="5" fill="#bdbdc6" />
+		</>
+	),
+	fox: (
+		<>
+			<path d="M20 20 L44 44 L26 58z M100 20 L76 44 L94 58z" fill="#e8742c" />
+			<path d="M60 108 L16 52 Q20 36 40 36 H80 Q100 36 104 52z" fill="#f08a3c" />
+			<path d="M60 108 L34 74 Q46 70 60 80 Q74 70 86 74z" fill="#fbf2e6" />
+			<circle cx="60" cy="104" r="6" fill={EYE} />
+			{eyes(58, 16)}
+		</>
+	),
+	bed: (
+		<>
+			<rect x="10" y="30" width="14" height="74" rx="4" fill="#8a5a3b" />
+			<rect x="96" y="54" width="14" height="50" rx="4" fill="#8a5a3b" />
+			<rect x="18" y="62" width="86" height="26" rx="6" fill="#5aa0e6" />
+			<rect x="24" y="48" width="30" height="16" rx="8" fill="#fbf7ee" />
+			<path d="M56 62 H104 V88 H56z" fill="#7cc0f0" />
+		</>
+	),
+	boat: (
+		<>
+			<path d="M58 12 V76" stroke="#8a5a3b" strokeWidth="5" />
+			<path d="M62 16 L98 70 H62z" fill="#e03a2f" />
+			<path d="M54 26 L24 70 H54z" fill="#fbf7ee" />
+			<path d="M12 78 H108 L94 102 H26z" fill="#3d7bd9" />
+			<path d="M4 108 q10 -6 20 0 t20 0 t20 0 t20 0 t20 0 t20 0" fill="none" stroke="#7cc0f0" strokeWidth="5" strokeLinecap="round" />
+		</>
+	),
+	kite: (
+		<>
+			<path d="M60 8 L96 48 L60 92 L24 48z" fill="#e8707c" />
+			<path d="M60 8 L60 92 M24 48 L96 48" stroke="#fbf7ee" strokeWidth="4" />
+			<path d="M60 92 Q50 100 60 106 Q70 112 60 118" fill="none" stroke="#3b2a20" strokeWidth="3" />
+			<path d="M52 102 l8 4 l-8 4z M68 110 l-8 4 l8 4z" fill="#f6cf3c" />
+		</>
+	),
+	train: (
+		<>
+			<rect x="14" y="40" width="58" height="50" rx="6" fill="#e03a2f" />
+			<rect x="22" y="48" width="20" height="18" rx="3" fill="#d6ecff" />
+			<rect x="66" y="58" width="44" height="32" rx="6" fill="#3d7bd9" />
+			<rect x="78" y="40" width="12" height="20" fill="#2b2b2b" />
+			<rect x="10" y="30" width="66" height="12" rx="4" fill="#b02a22" />
+			<circle cx="30" cy="96" r="12" fill="#2b2b2b" />
+			<circle cx="58" cy="96" r="12" fill="#2b2b2b" />
+			<circle cx="92" cy="96" r="10" fill="#2b2b2b" />
+		</>
+	),
 	sun: (
 		<>
 			<g stroke="#f4a020" strokeWidth="8" strokeLinecap="round">
@@ -483,6 +693,40 @@ const ART: Record<string, ReactNode> = {
 				<rect x="54" y="22" width="56" height="78" rx="10" fill="#fff" stroke="#7a5cc8" strokeWidth="5" />
 				<path d="M82 44 C74 34 60 42 66 54 L82 72 L98 54 C104 42 90 34 82 44z" fill="#e8313e" />
 			</g>
+		</>
+	),
+	// Peekaboo's hiding places (besides the bush).
+	haystack: (
+		<>
+			<path d="M8 112 Q10 52 60 40 Q110 52 112 112z" fill="#e8b84a" />
+			<path d="M22 112 Q26 70 60 58 Q94 70 98 112" fill="none" stroke="#c9952c" strokeWidth="4" />
+			<path d="M36 112 Q40 84 60 76 Q80 84 84 112" fill="none" stroke="#c9952c" strokeWidth="4" />
+			<g stroke="#f6d77a" strokeWidth="3" strokeLinecap="round">
+				<path d="M30 60 l-6 -10 M60 40 v-12 M90 60 l6 -10 M46 46 l-4 -11 M74 46 l4 -11" />
+			</g>
+		</>
+	),
+	tractor: (
+		<>
+			<rect x="48" y="30" width="36" height="34" rx="4" fill="#3d9a4c" />
+			<rect x="54" y="36" width="24" height="20" rx="3" fill="#d6ecff" />
+			<rect x="14" y="56" width="82" height="30" rx="6" fill="#4cb35c" />
+			<rect x="20" y="40" width="8" height="18" fill="#2b2b2b" />
+			<circle cx="82" cy="88" r="26" fill="#2b2b2b" />
+			<circle cx="82" cy="88" r="11" fill="#f6c02a" />
+			<circle cx="28" cy="96" r="16" fill="#2b2b2b" />
+			<circle cx="28" cy="96" r="7" fill="#f6c02a" />
+		</>
+	),
+	window: (
+		<>
+			{/* The frame and shutters; the panes are left open (the room or an animal shows through). */}
+			<path d="M20 20 H100 V108 H20z M30 30 V98 H90 V30z" fill="#fbf7ee" fillRule="evenodd" />
+			<path d="M59 30 h2 v68 h-2z M30 63 h60 v2 h-60z" fill="#fbf7ee" />
+			<rect x="2" y="20" width="18" height="88" rx="3" fill="#3d7bd9" />
+			<rect x="100" y="20" width="18" height="88" rx="3" fill="#3d7bd9" />
+			<path d="M6 34 h10 M6 50 h10 M6 66 h10 M6 82 h10 M6 98 h10 M104 34 h10 M104 50 h10 M104 66 h10 M104 82 h10 M104 98 h10" stroke="#2f62b0" strokeWidth="3" />
+			<rect x="14" y="106" width="92" height="10" rx="3" fill="#e9dfcc" />
 		</>
 	),
 	bush: (

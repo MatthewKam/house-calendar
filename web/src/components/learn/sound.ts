@@ -1,10 +1,11 @@
-// The games' only sound: animals' noises. A grown-up's own recording if there is one (Settings →
-// Learning), or the built-in one (web/public/sounds, free-to-use recordings, credited in CREDITS.md
-// there). Nothing is ever spoken.
+// The games' sound: animals' noises (a grown-up's own recording if there is one, Settings → Learning,
+// or the built-in one in web/public/sounds, credited in CREDITS.md there), and Counting's numbers said
+// out loud. Nothing else is spoken.
 
 /** Animals with a built-in noise in web/public/sounds/animals (`<id>.m4a`). */
 export const BUILT_IN = new Set<string>([
-	"cow", "pig", "duck", "sheep", "horse", "chicken", "goat", "dog", "cat", "mouse", "frog", "owl", "bee", "lion", "elephant", "monkey",
+	"cow", "pig", "duck", "sheep", "horse", "chicken", "rooster", "goat", "dog", "cat", "frog", "owl", "bee", "seagull", "hawk",
+	"lion", "leopard", "bear", "wolf", "elephant", "monkey",
 ]);
 
 /** A grown-up's recordings: animal → when (set from the server's list as it loads). */
@@ -28,15 +29,35 @@ export function hush() {
 	playing = null;
 }
 
-/** Plays a sound file over anything before it. */
-export function play(url: string) {
+/** Plays a sound file over anything before it; `onEnd` once it's finished (or stopped, or won't play). */
+export function play(url: string, onEnd?: () => void) {
 	hush();
-	playing = new Audio(url);
-	playing.play().catch(() => {});
+	const audio = new Audio(url);
+	playing = audio;
+	let ended = false;
+	const end = () => {
+		if (ended) return;
+		ended = true;
+		onEnd?.();
+	};
+	audio.addEventListener("ended", end);
+	audio.addEventListener("pause", end);
+	audio.addEventListener("error", end);
+	audio.play().catch(end);
 }
 
-/** An animal's noise, over anything before it (nothing if it has none). */
-export function noise(animal: { id: string }) {
+/** Says a number in the device's voice (Counting's one exception to "no speech": counting out loud). */
+export function sayNumber(n: number) {
+	if (!("speechSynthesis" in window)) return;
+	window.speechSynthesis.cancel();
+	const words = new SpeechSynthesisUtterance(String(n));
+	words.rate = 0.9;
+	window.speechSynthesis.speak(words);
+}
+
+/** An animal's noise, over anything before it; `onEnd` once it's finished (straight away if it has none). */
+export function noise(animal: { id: string }, onEnd?: () => void) {
 	const url = noiseUrl(animal.id);
-	if (url) play(url);
+	if (url) play(url, onEnd);
+	else onEnd?.();
 }

@@ -17,14 +17,19 @@ export const ANIMALS: Animal[] = [
 	{ id: "sheep", name: "sheep", says: "Baa", home: "farm" },
 	{ id: "horse", name: "horse", says: "Neigh", home: "farm" },
 	{ id: "chicken", name: "chicken", says: "Cluck cluck", home: "farm" },
-	{ id: "goat", name: "goat", says: "Meh", home: "farm" },
+	{ id: "rooster", name: "rooster", says: "Cock-a-doodle-doo", home: "farm" },
+	{ id: "goat", name: "goat", says: "Maa", home: "farm" },
 	{ id: "dog", name: "dog", says: "Woof", home: "house" },
 	{ id: "cat", name: "cat", says: "Meow", home: "house" },
-	{ id: "mouse", name: "mouse", says: "Squeak", home: "house" },
 	{ id: "frog", name: "frog", says: "Ribbit", home: "wild" },
 	{ id: "owl", name: "owl", says: "Hoo hoo", home: "wild" },
 	{ id: "bee", name: "bee", says: "Buzz", home: "wild" },
+	{ id: "seagull", name: "seagull", says: "Caw caw", home: "wild" },
+	{ id: "hawk", name: "hawk", says: "Screech", home: "wild" },
 	{ id: "lion", name: "lion", says: "Roar", home: "wild" },
+	{ id: "leopard", name: "leopard", says: "Grrr", home: "wild" },
+	{ id: "bear", name: "bear", says: "Growl", home: "wild" },
+	{ id: "wolf", name: "wolf", says: "Awoo", home: "wild" },
 	{ id: "elephant", name: "elephant", says: "Pawoo", home: "wild" },
 	{ id: "monkey", name: "monkey", says: "Ooh ooh ah ah", home: "wild" },
 ];
@@ -59,18 +64,17 @@ export const FRUIT = [
 	{ id: "cherry", one: "cherry", many: "cherries" },
 ];
 
-/** Words with a picture, for the missing first letter. Short ones first. Only pictures that say one word clearly (a cup could be a mug). */
+/**
+ * Words with a picture a 4-year-old knows straight away, for the missing first letter (only pictures that
+ * say one word clearly: a cup could be a mug). Any length: the levels change the letters, not the words.
+ */
 export const WORDS = [
-	{ word: "cat", pic: "cat" }, { word: "dog", pic: "dog" }, { word: "pig", pic: "pig" }, { word: "cow", pic: "cow" },
-	{ word: "sun", pic: "sun" }, { word: "hat", pic: "hat" }, { word: "bee", pic: "bee" },
-	{ word: "egg", pic: "egg" }, { word: "car", pic: "car" }, { word: "key", pic: "key" },
-	{ word: "ball", pic: "ball" }, { word: "fish", pic: "fish" }, { word: "duck", pic: "duck" }, { word: "frog", pic: "frog" },
-	{ word: "moon", pic: "moon" }, { word: "star", pic: "star" }, { word: "tree", pic: "tree" }, { word: "sock", pic: "sock" },
-	{ word: "book", pic: "book" }, { word: "goat", pic: "goat" }, { word: "lion", pic: "lion" }, { word: "bear", pic: "bear" },
-	{ word: "apple", pic: "apple" }, { word: "horse", pic: "horse" }, { word: "mouse", pic: "mouse" }, { word: "sheep", pic: "sheep" },
-	{ word: "house", pic: "house" }, { word: "monkey", pic: "monkey" }, { word: "banana", pic: "banana" },
-	{ word: "orange", pic: "orange" }, { word: "umbrella", pic: "umbrella" }, { word: "elephant", pic: "elephant" }, { word: "cherry", pic: "cherry" },
-];
+	"cat", "dog", "pig", "cow", "sun", "hat", "bee", "egg", "car", "key", "bus", "fox", "bed",
+	"ball", "fish", "duck", "frog", "moon", "star", "tree", "sock", "book", "goat", "lion", "bear", "boat", "kite",
+	"apple", "horse", "mouse", "sheep", "house", "train", "shoe", "bone", "teddy",
+	"monkey", "banana", "orange", "carrot", "cheese", "flower", "rabbit", "cherry",
+	"umbrella", "elephant", "butterfly",
+].map((word) => ({ word, pic: word }));
 
 /** Letters that look alike, offered together from level 3 so it's about looking closely. */
 export const LOOK_ALIKE: Record<string, string[]> = {

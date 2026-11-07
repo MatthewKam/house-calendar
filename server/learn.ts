@@ -5,9 +5,9 @@ import { stageOf, type Stage } from './stages.ts';
 
 // Learning (docs/kids-growth.md): short picture-first games in kid mode, with no fail states. A
 // guardian turns it on for each kid, who then picks any of their stage's games. Each game has levels:
-// a few perfect plays in a row move it up by itself (Math also after 20 plays at a level), and a
-// guardian can move it up or down. Each play is a new version of the game (the web picks it). It's
-// for learning: it earns no stars.
+// a few perfect plays in a row move it up by itself (some games also after enough plays at a level:
+// PLAYS_TO_MOVE_ON), and a guardian can move it up or down. Each play is a new version of the game
+// (the web picks it). It's for learning: it earns no stars.
 
 const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 
@@ -28,14 +28,16 @@ const GAMES_FOR: Record<'little' | 'early', Game[]> = {
 export const gamesFor = (stage: Stage | null) => GAMES_FOR[stage === 'little' || stage === null ? 'little' : 'early'];
 
 /** The animals with a noise (web/src/components/learn/things.ts), which a grown-up can record their own of. */
-export const ANIMALS = ['cow', 'pig', 'duck', 'sheep', 'horse', 'chicken', 'goat', 'dog', 'cat', 'mouse', 'frog', 'owl', 'bee', 'lion', 'elephant', 'monkey'];
+export const ANIMALS = ['cow', 'pig', 'duck', 'sheep', 'horse', 'chicken', 'rooster', 'goat', 'dog', 'cat', 'frog', 'owl', 'bee',
+  'seagull', 'hawk', 'lion', 'leopard', 'bear', 'wolf', 'elephant', 'monkey'];
 /** A recorded noise is a few seconds: well under this. */
 const MAX_SOUND_BYTES = 1024 * 1024;
 
-/** Perfect plays in a row, at a level, before the game moves up. */
+/** Perfect plays in a row, at a level, before the game moves up: 3, or as set here (null: never, only by count). */
 export const PLAYS_TO_LEVEL_UP = 3;
-/** Some games also move up after this many plays at a level, perfect or not (Math: 20 games of 3 rounds). */
-export const PLAYS_TO_MOVE_ON: Partial<Record<Game, number>> = { adding: 20 };
+export const PERFECT_RUN: Partial<Record<Game, number | null>> = { adding: 5, memory: 5, maze: null };
+/** Some games also move up after this many plays at a level, perfect or not. */
+export const PLAYS_TO_MOVE_ON: Partial<Record<Game, number>> = { adding: 20, maze: 20, memory: 20 };
 
 interface KidRow { id: string; birthdate: string | null; stage: string | null; enabled: number | null }
 
@@ -125,7 +127,8 @@ export function registerLearn(app: FastifyInstance, db: DB) {
           WHERE s.member_id = ? AND s.skill = ? AND s.level = ? AND s.rowid > COALESCE(l.since_play, 0)
           ORDER BY s.rowid DESC`)
           .all(r.id, game, at) as { perfect: number }[];
-        const perfectRun = plays.length >= PLAYS_TO_LEVEL_UP && plays.slice(0, PLAYS_TO_LEVEL_UP).every((p) => p.perfect);
+        const run = PERFECT_RUN[game] === undefined ? PLAYS_TO_LEVEL_UP : PERFECT_RUN[game];
+        const perfectRun = run !== null && plays.length >= run && plays.slice(0, run).every((p) => p.perfect);
         const playedEnough = PLAYS_TO_MOVE_ON[game] !== undefined && plays.length >= PLAYS_TO_MOVE_ON[game]!;
         if (!perfectRun && !playedEnough) return false;
         setLevel(r.id, game, at + 1);

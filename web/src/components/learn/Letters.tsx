@@ -2,12 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Pic } from "./art";
 import { Board } from "./parts";
 import { LOOK_ALIKE, WORDS } from "./things";
-import { at, pick, shuffle, useRounds, type GameProps } from "./rounds";
+import { at, fresh, shuffle, useRounds, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
-/** Letters to choose from, the longest word, whether look-alike letters are offered, and capitals, by level. */
+/** Letters to choose from, whether look-alike letters are offered, and capitals, by level. */
 const CHOICES = [2, 3, 3, 3, 4, 4];
-const LONGEST = [3, 3, 4, 4, 5, 8];
 const LOOK_ALIKES = [false, false, true, true, true, true];
 const CAPITALS = [true, true, true, false, false, false];
 const ROUNDS = 4;
@@ -15,17 +14,15 @@ const ABC = "abcdefghijklmnopqrstuvwxyz";
 
 /**
  * The missing first letter (age 4): a picture and its word with the first letter gone ("_at"). Tap the
- * letter that goes in the gap. Short words and very different letters first; then look-alikes (b, d,
- * p), small letters, and longer words.
+ * letter that goes in the gap. Words a 4-year-old knows, a new few each play; very different letters
+ * to choose from first, then more, look-alikes (b, d, p), and small letters.
  */
 export default function Letters({ level, onDone, onBack }: GameProps) {
 	const rounds = useRounds(ROUNDS, onDone);
 	const caps = at(CAPITALS, level);
 	const plan = useMemo(() => {
-		const longest = at(LONGEST, level);
-		// Long words at the top levels, with a short one now and then.
-		const words = WORDS.filter((w) => w.word.length <= longest && (longest < 5 || w.word.length >= 4));
-		return pick(words, ROUNDS).map((w) => {
+		// Any words, none seen recently; the level's in the letters to choose from.
+		return fresh("letters.words", WORDS, ROUNDS, (w) => w.word).map((w) => {
 			const first = w.word[0];
 			const alike = at(LOOK_ALIKES, level) ? (LOOK_ALIKE[first] ?? []) : [];
 			const others = shuffle([...ABC].filter((l) => l !== first && !alike.includes(l)));

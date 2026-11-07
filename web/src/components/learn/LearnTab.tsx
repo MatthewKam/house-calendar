@@ -17,47 +17,50 @@ import type { GameProps } from "./rounds";
 import { hush, setRecorded } from "./sound";
 import s from "../../styles/Learn.module.css";
 
+/** Levels as Roman numerals, for the game tiles' corners. */
+const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
+
 /** Each game: its name, its picture, and how to play it (for a grown-up to explain). */
 export const GAMES: Record<Game, { title: string; picture: string; how: string[]; Play: ComponentType<GameProps> }> = {
 	sounds: { title: "Who says that?", picture: "cow", Play: Sounds, how: [
-		"An animal makes its noise. Tap the play button to hear it again.",
+		"An animal's noise is written at the top (\"Moo!\"). Read it together, or tap the play button beside it to hear it.",
 		"Tap the animal that made it. Every animal tapped makes its own noise.",
 		"Higher levels: more animals to choose from, then pets and wild animals too.",
 	] },
 	peekaboo: { title: "Peekaboo farm", picture: "bush", Play: Peekaboo, how: [
-		"Tap a bush and an animal pops out, making its noise. Tap it again to hear it again.",
-		"Once everyone's out, the farm goes to sleep.",
-		"From level 4: listen to the noise (the play button plays it again), then find the bush hiding that animal.",
+		"Not a game to win, just fun: tap a bush (or haystack, tractor or barn window: a new place each time) and an animal pops up with its name, making its noise. Tap it again to hear it again.",
+		"A couple of seconds later it ducks back down, and someone new is hiding there.",
+		"When every animal has had its turn, there's a cheer and it's the end. A new set of animals each time.",
 	] },
 	findIt: { title: "Find it!", picture: "teddy", Play: FindIt, how: [
-		"The pictures at the top show what to find, and how many.",
-		"Tap each one in the room. The pictures at the top fill in as they're found.",
-		"From level 3, some are hiding under other things: tap a toy to lift it and look underneath.",
+		"The index shows each kind of thing in the room and how many there are: socks 2, teddy bears 3.",
+		"Tap any of them: it flies to its place by the index, and the number goes down. Nothing is wrong to tap. The room's done when everything's collected.",
+		"From level 3, some things hide under others: collect the teddy and there's the sock. Higher levels: more kinds of things, and more of each.",
 	] },
-	apples: { title: "Count the apples", picture: "apple", Play: Apples, how: [
-		"Tap each fruit to count it, and its number shows under it. Count out loud together.",
+	apples: { title: "Counting", picture: "apple", Play: Apples, how: [
+		"Tap each one to count it: the count so far shows big at the top and is said out loud.",
 		"From level 3, pick how many there are. A wrong number clears the count, so you count again together.",
-		"Higher levels: more fruit to count.",
+		"Higher levels: more to count.",
 	] },
 	adding: { title: "Math", picture: "math", Play: Adding, how: [
 		"Each plate has a number on its sign. Tap the basket under a plate to put a fruit on it; tap a fruit to take it off.",
 		"When both plates match their signs, pick how many there are in all.",
-		"From level 4, some are take-away: tap fruit on the plate to move them to the bowl until it has its number, then pick how many are left. From level 5, type the answer on the number pad. Higher levels: bigger numbers. It moves up a level after 3 perfect games in a row, or after 20 games at a level.",
+		"From level 4, some are take-away: tap fruit on the plate to move them to the bowl until it has its number, then pick how many are left. From level 5, type the answer on the number pad. Higher levels: bigger numbers. It moves up a level after 5 perfect games in a row, or after 20 games at a level.",
 	] },
 	maze: { title: "Maze", picture: "maze", Play: Maze, how: [
-		"Tap a square in a straight line from Bear and he walks there. Find the way to his house.",
-		"He can't cross water, bushes or snow, so a dead end means turning back.",
-		"From level 3, a locked gate is in the way: find the key first. Higher levels: bigger maps and two gates.",
+		"An animal wants something: the bee the flower, the monkey the banana. Tap a square in a straight line from the animal and it walks there.",
+		"It can't go through the walls, so a dead end means turning back. Three mazes a game, a new animal each time.",
+		"From level 3, a locked gate is in the way: find the key first. Higher levels: bigger mazes and two gates. It moves up a level after 20 games at a level.",
 	] },
 	letters: { title: "Letters", picture: "letters", Play: Letters, how: [
 		"A picture and its word, with the first letter missing. Say the word together.",
 		"Tap the letter that goes in the gap.",
-		"Higher levels: letters that look alike (b, d, p), small letters, then longer words.",
+		"A new few words each game, things a 4-year-old knows. Higher levels: more letters to choose from, letters that look alike (b, d, p), then small letters.",
 	] },
 	memory: { title: "Pairs", picture: "pairs", Play: Memory, how: [
 		"All the cards are face down. Tap two to turn them over.",
 		"Two the same stay face up. Two different ones turn back over, so remember where they were.",
-		"Higher levels: more cards.",
+		"Higher levels: more cards. It moves up a level after 5 perfect games in a row, or after 20 games at a level.",
 	] },
 };
 
@@ -113,12 +116,15 @@ export default function LearnTab({ kid, today, learn }: { kid: Member; today: st
 		return (
 			<section className={s.start} aria-label="Well done">
 				<img className={`${s.mascot} ${s.hop}`} src="/mascot/sprig.png" alt="" />
-				<h2 className={s.startTitle}>{result.leveledUp ? "New level!" : "You did it!"}</h2>
-				{result.leveledUp && <p className={s.note}>It gets a little trickier next time.</p>}
-				{done.isError && <p className={s.note}>Couldn't save that: {done.error.message}</p>}
-				<div className={s.startButtons}>
-					<button type="button" className={s.go} onClick={() => start(result.game)}>Play again</button>
-					<button type="button" className={s.quiet} onClick={() => setResult(null)}>Other games</button>
+				{/* The words and buttons: beside the mascot on a short screen, under it otherwise. */}
+				<div className={s.startText}>
+					<h2 className={s.startTitle}>{result.leveledUp ? "New level!" : "You did it!"}</h2>
+					{result.leveledUp && <p className={s.note}>It gets a little trickier next time.</p>}
+					{done.isError && <p className={s.note}>Couldn't save that: {done.error.message}</p>}
+					<div className={s.startButtons}>
+						<button type="button" className={s.go} onClick={() => start(result.game)}>Play again</button>
+						<button type="button" className={s.quiet} onClick={() => setResult(null)}>Other games</button>
+					</div>
 				</div>
 			</section>
 		);
@@ -130,9 +136,7 @@ export default function LearnTab({ kid, today, learn }: { kid: Member; today: st
 				<button key={game} type="button" className={s.gameTile} onClick={() => start(game)}>
 					<Pic id={GAMES[game].picture} className={s.gamePic} />
 					<span className={s.gameName}>{GAMES[game].title}</span>
-					<span className={s.gameLevel} aria-label={`Level ${level}`}>
-						{Array.from({ length: level }, (_, i) => <span key={i} className={s.levelDot} />)}
-					</span>
+					<span className={s.gameLevel} aria-label={`Level ${level}`}>{ROMAN[level - 1] ?? level}</span>
 				</button>
 			))}
 		</section>
