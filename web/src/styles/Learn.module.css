@@ -444,9 +444,11 @@
 	white-space: nowrap;
 	animation: pop 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
+/* The right one: outlined in green, "you did it". */
 .tileRight {
-	border-color: var(--c, var(--accent));
-	background: color-mix(in srgb, var(--c, var(--accent)) 14%, var(--surface));
+	border-color: #2f9e44;
+	background: #ebf7ee;
+	box-shadow: 0 0 0 0.2rem #2f9e44, 0 0.4rem 1.2rem rgb(29 31 35 / 0.07);
 }
 
 /* Numbers and letters to pick. */

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pic } from "./art";
-import { Board, fit, Hear } from "./parts";
+import { Board, fit, Hear, SLIDE_MS } from "./parts";
 import { animalsUpTo, type Animal } from "./things";
 import { at, fresh, pick, shuffle, useRounds, type GameProps } from "./rounds";
 import { noise } from "./sound";
@@ -17,7 +17,8 @@ const ROUNDS = [3, 3, 3, 4, 4, 4];
  */
 export default function Sounds({ level, onDone, onBack }: GameProps) {
 	const total = at(ROUNDS, level);
-	const rounds = useRounds(total, onDone);
+	// Right: once its noise is done, the mascot parades across with confetti, then the next round.
+	const rounds = useRounds(total, onDone, SLIDE_MS);
 	// Each round's animal and who's beside it, a new set each play.
 	const plan = useMemo(() => {
 		const pool = animalsUpTo(level);
@@ -54,7 +55,7 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 	}
 
 	return (
-		<Board onBack={onBack} total={total} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got}>
+		<Board onBack={onBack} total={total} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got && "slide"}>
 			{(box) => {
 				// The noise as big as fits beside its play button: on one line, or (a long one, like
 				// cock-a-doodle-doo, on a narrow screen) more, with room kept for them.
