@@ -113,12 +113,15 @@ export default function LearnTab({ kid, today, learn }: { kid: Member; today: st
 		return (
 			<section className={s.start} aria-label="Well done">
 				<img className={`${s.mascot} ${s.hop}`} src="/mascot/sprig.png" alt="" />
-				<h2 className={s.startTitle}>{result.leveledUp ? "New level!" : "You did it!"}</h2>
-				{result.leveledUp && <p className={s.note}>It gets a little trickier next time.</p>}
-				{done.isError && <p className={s.note}>Couldn't save that: {done.error.message}</p>}
-				<div className={s.startButtons}>
-					<button type="button" className={s.go} onClick={() => start(result.game)}>Play again</button>
-					<button type="button" className={s.quiet} onClick={() => setResult(null)}>Other games</button>
+				{/* The words and buttons: beside the mascot on a short screen, under it otherwise. */}
+				<div className={s.startText}>
+					<h2 className={s.startTitle}>{result.leveledUp ? "New level!" : "You did it!"}</h2>
+					{result.leveledUp && <p className={s.note}>It gets a little trickier next time.</p>}
+					{done.isError && <p className={s.note}>Couldn't save that: {done.error.message}</p>}
+					<div className={s.startButtons}>
+						<button type="button" className={s.go} onClick={() => start(result.game)}>Play again</button>
+						<button type="button" className={s.quiet} onClick={() => setResult(null)}>Other games</button>
+					</div>
 				</div>
 			</section>
 		);
