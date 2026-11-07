@@ -204,41 +204,17 @@
 	stroke-linecap: round;
 	stroke-linejoin: round;
 }
-/* Name, the day's bar, stars, and today's stickers. */
-.hero {
+/* The kid's name, with their stars beside it. */
+.nameRow {
 	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	padding: 1rem 1.2rem;
-	border-radius: 1.4rem;
-	background: var(--surface);
-	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.4rem 1rem;
 }
-/* The kid's name, on its own at the top. */
 .name {
 	margin: 0;
 	font-size: 2.8rem;
 	line-height: 1.1;
-}
-.heroRow {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
-}
-.bar {
-	flex: 1;
-	height: 1.4rem;
-	border-radius: 999px;
-	background: color-mix(in srgb, var(--c) 15%, white);
-	overflow: hidden;
-}
-.bar > span {
-	display: block;
-	height: 100%;
-	width: var(--p);
-	background: var(--c);
-	border-radius: inherit;
-	transition: width 0.5s ease;
 }
 .stars {
 	display: inline-flex;
@@ -273,6 +249,95 @@
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
 	color: var(--muted);
+}
+
+/* Daily tasks: a punch card, a circle for each of today's required tasks, filled in as each is done. */
+.daily {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.8rem 1.1rem;
+	border-radius: 1.4rem;
+	background: var(--surface);
+	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
+}
+.punches {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+}
+.punch {
+	width: 2.4rem;
+	height: 2.4rem;
+	display: grid;
+	place-items: center;
+	box-sizing: border-box;
+	border-radius: 50%;
+	border: 3px dashed color-mix(in srgb, var(--c) 55%, white);
+	color: var(--on);
+	font-size: 1.3rem;
+	font-weight: 900;
+}
+.punched {
+	border: 3px solid var(--c);
+	background: var(--c);
+	animation: pop 0.45s ease;
+}
+.allDone {
+	margin-left: 0.4rem;
+	font-size: 1.2rem;
+	font-weight: 750;
+}
+
+/* Today's tasks: one row of big tiles, swiped sideways, each time of day labelled. */
+.carousel {
+	/* As tall as the space left (it's what the screen's for): square tiles up to 20rem, a bit taller on
+	   a tall narrow screen. */
+	flex: 1 1 0;
+	min-height: 12rem;
+	container-type: size;
+	--tile: min(calc(100cqh - 3.4rem), 70cqw, 20rem);
+	--tileH: min(calc(100cqh - 3.4rem), calc(var(--tile) * 1.35));
+	position: relative;
+	display: flex;
+	gap: 1.2rem;
+	overflow-x: auto;
+	scroll-snap-type: x proximity;
+	scroll-padding-inline: 1rem;
+	padding: 0.2rem 0.2rem 0.8rem;
+	scrollbar-width: none;
+}
+.carousel::-webkit-scrollbar {
+	display: none;
+}
+.carGroup {
+	flex: none;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+/* Each time of day's label stays in view while any of its tiles are. */
+.carGroup > .groupHead {
+	position: sticky;
+	left: 0;
+	align-self: flex-start;
+}
+.carRow {
+	display: flex;
+	gap: 0.8rem;
+}
+.carRow .tile {
+	flex: none;
+	width: var(--tile);
+	height: var(--tileH);
+	scroll-snap-align: start;
+}
+.carRow .tileIcon {
+	font-size: calc(var(--tile) * 0.36);
+}
+.carRow .tileTitle {
+	font-size: calc(var(--tile) * 0.085 + 0.3rem);
 }
 
 /* Tasks and goals: big picture tiles. */
@@ -390,26 +455,6 @@
 	text-align: left;
 }
 
-/* My day: daily tasks done, and stars to spend, each with its own label. */
-.stat {
-	display: flex;
-	flex-direction: column;
-	gap: 0.4rem;
-}
-.stat + .stat {
-	padding-top: 0.8rem;
-	border-top: 2px solid color-mix(in srgb, var(--c) 15%, white);
-}
-.statLabel {
-	font-size: 1.15rem;
-	font-weight: 750;
-}
-.statValue {
-	flex: none;
-	font-size: 1.2rem;
-	font-weight: 750;
-	color: var(--muted);
-}
 .caught {
 	display: flex;
 	align-items: center;
@@ -500,8 +545,41 @@
 	}
 }
 
-/* A phone on its side: four tabs down the left still fit. */
+/* The stars by the switches: only on a short screen, where the name's left out. */
+.topStars {
+	display: none;
+	margin-right: auto;
+}
+
+/* A phone on its side: four tabs down the left still fit, and the tasks get the height. */
 @media (orientation: landscape) and (max-height: 500px) {
+	.page {
+		gap: 0.6rem;
+		padding-top: max(0.6rem, env(safe-area-inset-top));
+		padding-bottom: 0.6rem;
+	}
+	.nameRow {
+		display: none;
+	}
+	.topStars {
+		display: inline-flex;
+		font-size: 1.5rem;
+	}
+	.top {
+		justify-content: flex-start;
+		gap: 1.2rem;
+	}
+	.daily {
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.4rem 1rem;
+		padding: 0.5rem 0.9rem;
+	}
+	.punch {
+		width: 2rem;
+		height: 2rem;
+	}
 	.kidNav {
 		gap: 0.3rem;
 		padding-top: max(0.5rem, env(safe-area-inset-top));

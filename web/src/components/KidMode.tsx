@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { fromDayKey, startOfWeek } from "../lib/dates";
 import { api } from "../lib/api";
@@ -110,39 +110,29 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 			setDone.mutate({ taskId: t.id, memberId: kid.id, day: today, done: !ticked });
 		}
 
-		const myDay = (
-			<section className={s.group} aria-label="My day">
-				<h2 className={s.groupHead}>My day</h2>
-				<div className={s.hero}>
-					{/* Daily tasks: how far through today's required ones. */}
-					<div className={s.stat}>
-						<span className={s.statLabel}>Daily tasks</span>
-						<div className={s.heroRow}>
-							<span className={s.bar} aria-hidden="true"><span /></span>
-							<span className={s.statValue}>{!p ? "None today" : pct === 100 ? "All done! 🎉" : `${p.done} of ${p.due} done`}</span>
-						</div>
-					</div>
-					{/* Stars: what's in their bucket to put in jars. */}
-					<div className={s.stat}>
-						<span className={s.statLabel}>Stars to spend</span>
-						<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
-							<StarIcon className={s.star} /> {stars}
-						</span>
-						{stickers.length > 0 && (
-							<span className={s.caught}>
-								Caught being good:{" "}
-								<span className={s.stickers} aria-label={`${stickers.length} today`}>
-									{stickers.map((m) => momentKind(m.kind).emoji).join("")}
-								</span>
-							</span>
-						)}
-					</div>
+		// Daily tasks: a punch card, a circle for each of today's required tasks, filled in as they're done.
+		const daily = p && (
+			<section className={s.daily} aria-label="Daily tasks">
+				<h2 className={s.groupHead}>Daily tasks</h2>
+				<div className={s.punches} role="img" aria-label={`${p.done} of ${p.due} done`}>
+					{Array.from({ length: p.due }, (_, i) => (
+						<span key={i} className={`${s.punch} ${i < p.done ? s.punched : ""}`}>{i < p.done ? "✓" : ""}</span>
+					))}
+					{pct === 100 && <span className={s.allDone}>All done! 🎉</span>}
 				</div>
+				{stickers.length > 0 && (
+					<span className={s.caught}>
+						Caught being good:{" "}
+						<span className={s.stickers} aria-label={`${stickers.length} today`}>
+							{stickers.map((m) => momentKind(m.kind).emoji).join("")}
+						</span>
+					</span>
+				)}
 			</section>
 		);
 
 		return (
-			<div className={s.shell} style={{ "--c": kid.color, "--on": textOn(kid.color), "--p": `${pct}%` } as CSSProperties}>
+			<div className={s.shell} style={{ "--c": kid.color, "--on": textOn(kid.color) } as CSSProperties}>
 			<nav className={s.kidNav} aria-label="Kid mode">
 				{tabs.map((t) => (
 					<button key={t.id} type="button" className={s.kidTab} aria-current={tab === t.id ? "page" : undefined}
@@ -166,9 +156,19 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 							</button>
 						))}
 					</div>
+					{/* On a short screen (a phone on its side) the name's left out, so the stars sit by the switches. */}
+					<span className={`${s.stars} ${s.topStars}`} aria-hidden="true">
+						<StarIcon className={s.star} /> {stars}
+					</span>
 				</div>
 
-				<h1 className={s.name}>{kid.name}</h1>
+				{/* Their name, with the stars they have to put in jars. */}
+				<div className={s.nameRow}>
+					<h1 className={s.name}>{kid.name}</h1>
+					<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
+						<StarIcon className={s.star} /> {stars}
+					</span>
+				</div>
 
 				{tab === "today" && <KidToday today={today} kid={kid} />}
 
@@ -176,33 +176,37 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 					<PottyCard key={kid.id} kid={kid} chart={chart} canEdit
 						askFirst={askPin ? (then) => setAsking({ body: "A grown-up types their PIN to change the potty chart.", then }) : undefined} />
 				)}
-				{tab === "tasks" && myDay}
-				{tab === "tasks" && GROUPS.map((g) => {
-					const group = dueToday.filter(g.has);
-					if (group.length === 0) return null;
-					return (
-						<section key={g.label} className={s.group} aria-label={g.label}>
-							<h2 className={s.groupHead}>{g.label}</h2>
-							<div className={s.tiles}>
-								{group.map((t) => {
-									const ticked = didTask(done, t, kid.id, today);
-									return (
-										<button key={t.id} type="button" aria-pressed={ticked}
-											className={`${s.tile} ${ticked ? s.ticked : ""} ${ticked && popped === t.id ? s.pop : ""}`}
-											onClick={() => tick(t)}>
-											<span className={s.tileIcon} aria-hidden="true">{t.icon ?? (t.required ? "✅" : "⭐")}</span>
-											<span className={s.tileTitle}>{t.title}</span>
-											{!t.required && t.points > 0 && (
-												<span className={s.tileStars}>+{t.points} <StarIcon className={s.tileStar} /></span>
-											)}
-											{ticked && <span className={s.check} aria-hidden="true">✓</span>}
-										</button>
-									);
-								})}
-							</div>
-						</section>
-					);
-				})}
+				{tab === "tasks" && daily}
+				{tab === "tasks" && dueToday.length > 0 && (
+					<TaskCarousel kidId={kid.id}>
+						{GROUPS.map((g) => {
+							const group = dueToday.filter(g.has);
+							if (group.length === 0) return null;
+							return (
+								<section key={g.label} className={s.carGroup} aria-label={g.label}>
+									<h2 className={s.groupHead}>{g.label}</h2>
+									<div className={s.carRow}>
+										{group.map((t) => {
+											const ticked = didTask(done, t, kid.id, today);
+											return (
+												<button key={t.id} type="button" aria-pressed={ticked} data-todo={ticked ? undefined : ""}
+													className={`${s.tile} ${ticked ? s.ticked : ""} ${ticked && popped === t.id ? s.pop : ""}`}
+													onClick={() => tick(t)}>
+													<span className={s.tileIcon} aria-hidden="true">{t.icon ?? (t.required ? "✅" : "⭐")}</span>
+													<span className={s.tileTitle}>{t.title}</span>
+													{!t.required && t.points > 0 && (
+														<span className={s.tileStars}>+{t.points} <StarIcon className={s.tileStar} /></span>
+													)}
+													{ticked && <span className={s.check} aria-hidden="true">✓</span>}
+												</button>
+											);
+										})}
+									</div>
+								</section>
+							);
+						})}
+					</TaskCarousel>
+				)}
 				{tab === "tasks" && dueToday.length === 0 && <p className={s.none}>Nothing to do today. Have fun! 🌈</p>}
 
 				{tab === "learn" && learning && <LearnTab key={kid.id} kid={kid} today={today} learn={learning} />}
@@ -236,6 +240,25 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 					/>
 				)}
 			</main>
+		</div>
+	);
+}
+
+/**
+ * Today's tasks in one row of big tiles, swiped sideways, so they fill the screen in either direction
+ * rather than sitting below everything else. Opens at the first one not done yet.
+ */
+function TaskCarousel({ kidId, children }: { kidId: string; children: ReactNode }) {
+	const row = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		const el = row.current;
+		const next = el?.querySelector<HTMLElement>("[data-todo]");
+		if (el && next) el.scrollLeft = next.offsetLeft - 16;
+		// Only on opening (and switching kids), not as each one's ticked.
+	}, [kidId]);
+	return (
+		<div ref={row} className={s.carousel}>
+			{children}
 		</div>
 	);
 }
