@@ -695,14 +695,9 @@
 .cardShake {
 	animation: wiggle 0.45s ease;
 }
-/* Found: pressed into the table, a little smaller, shadowed inside its edge. */
-.cardMatched {
-	transform: scale(0.94) translateY(0.15rem);
-	transition: transform 0.25s ease;
-}
+/* Found: flat on the table, its shadow gone. */
 .cardMatched .cardFace {
-	background: #f4f5f2;
-	box-shadow: inset 0 0.3rem 0.7rem rgb(29 31 35 / 0.22), inset 0 -0.1rem 0.2rem rgb(255 255 255 / 0.8);
+	box-shadow: none;
 }
 
 /* Peekaboo farm. */
