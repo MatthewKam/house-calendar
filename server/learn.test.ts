@@ -89,13 +89,17 @@ describe('learning', () => {
     expect((await app.inject({ method: 'GET', url: '/api/learn/sounds/cow' })).statusCode).toBe(404);
   });
 
-  it('moves Math and Maze up after 20 plays at a level, perfect or not', async () => {
+  it('moves Math and Maze up after 20 plays at a level and Pairs after 10, perfect or not', async () => {
     const { call } = setup();
     await call('PUT', '/api/learn/tayen', { today: TODAY, enabled: true });
     const play = () => call('POST', '/api/learn/tayen/done', { today: TODAY, game: 'adding', level: 1, rounds: 3, firstTry: 1 });
     for (let i = 0; i < 19; i++) expect((await play()).body.leveledUp).toBe(false);
     expect((await play()).body).toMatchObject({ leveledUp: true });
     // Other games don't.
+    // Pairs after 10.
+    const pairs = () => call('POST', '/api/learn/tayen/done', { today: TODAY, game: 'memory', level: 1, rounds: 1, firstTry: 0 });
+    for (let i = 0; i < 9; i++) expect((await pairs()).body.leveledUp).toBe(false);
+    expect((await pairs()).body.leveledUp).toBe(true);
     const letters = () => call('POST', '/api/learn/tayen/done', { today: TODAY, game: 'letters', level: 1, rounds: 4, firstTry: 0 });
     for (let i = 0; i < 20; i++) expect((await letters()).body.leveledUp).toBe(false);
   });

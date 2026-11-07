@@ -57,7 +57,7 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 	memory: { title: "Pairs", picture: "pairs", Play: Memory, how: [
 		"All the cards are face down. Tap two to turn them over.",
 		"Two the same stay face up. Two different ones turn back over, so remember where they were.",
-		"Higher levels: more cards.",
+		"Higher levels: more cards. It moves up a level after 3 perfect games in a row, or after 10 games at a level.",
 	] },
 };
 
