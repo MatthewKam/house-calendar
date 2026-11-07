@@ -44,7 +44,9 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 	const [left, setLeft] = useState(0);
 	const [right, setRight] = useState(0);
 	const [typed, setTyped] = useState("");
+	// The last wrong answer, and how many so far (so the same one tapped again shakes again).
 	const [wrong, setWrong] = useState<number | null>(null);
+	const [misses, setMisses] = useState(0);
 	const ready = r.take ? right === r.b : left === r.a && right === r.b;
 	const options = useMemo(() => {
 		const near = shuffle([answerIs - 2, answerIs - 1, answerIs + 1, answerIs + 2].filter((x) => x >= 0));
@@ -72,6 +74,7 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 	function answer(x: number) {
 		if (x === answerIs) return rounds.tap(true);
 		setWrong(x);
+		setMisses((n) => n + 1);
 		setTyped("");
 		rounds.tap(false);
 	}
@@ -162,7 +165,7 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 				) : (
 					<div className={s.choices} style={{ display: "grid", gridTemplateColumns: `repeat(${keyCols}, ${keySize}px)`, gap: 8, opacity: picking || rounds.got ? 1 : 0.35 }}>
 						{options.map((x) => (
-							<button key={x} type="button" disabled={!picking} onClick={() => answer(x)}
+							<button key={`${x}-${wrong === x ? misses : 0}`} type="button" disabled={!picking} onClick={() => answer(x)}
 								className={`${s.choice} ${rounds.got && x === answerIs ? s.choiceRight : wrong === x ? s.wiggle : ""}`}
 								style={{ width: keySize, height: keySize, fontSize: keySize * 0.45 }}>
 								{x}
@@ -180,7 +183,7 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 						<div className={s.answerArea}>
 							<div className={s.equals}>
 								<span className={s.plus} aria-hidden="true">=</span>
-								<span className={`${s.answer} ${rounds.got ? s.answerGot : ""}`} style={{ fontSize: Math.max(28, keySize * 0.5), minWidth: keySize * 1.2 }}>
+								<span key={pad ? misses : 0} className={`${s.answer} ${rounds.got ? s.answerGot : pad && misses ? s.wiggle : ""}`} style={{ fontSize: Math.max(28, keySize * 0.5), minWidth: keySize * 1.2 }}>
 									{rounds.got ? answerIs : typed || "?"}
 								</span>
 							</div>

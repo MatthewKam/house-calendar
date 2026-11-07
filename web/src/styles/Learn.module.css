@@ -798,6 +798,30 @@
 		transform: rotate(6deg);
 	}
 }
+/* A wrong number or letter: red for as long as it shakes, then back to how it was. */
+.choice.wiggle,
+.answer.wiggle {
+	animation: wrongChoice 0.45s ease;
+}
+@keyframes wrongChoice {
+	0%,
+	100% {
+		border-color: #d92d20;
+		color: #b42318;
+	}
+	20%,
+	60% {
+		transform: rotate(-6deg);
+		border-color: #d92d20;
+		color: #b42318;
+	}
+	40%,
+	80% {
+		transform: rotate(6deg);
+		border-color: #d92d20;
+		color: #b42318;
+	}
+}
 .pop {
 	animation: pop 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
@@ -854,7 +878,9 @@
 	.rustle,
 	.snore,
 	.step,
-	.confetti i {
+	.confetti i,
+	.choice.wiggle,
+	.answer.wiggle {
 		animation: none;
 	}
 	.cheerMascot {
