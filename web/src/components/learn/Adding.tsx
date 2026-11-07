@@ -80,40 +80,55 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 		<Board onBack={onBack} total={ROUNDS} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got}>
 			{(box) => {
 				const wide = box.w > box.h * 1.15;
-				// The answer area: a row of numbers, or the pad (beside the plates when there's room).
-				const keyRows = pad ? 4 : 1;
+				const GAP = 12;
+				// The answer: the numbers to pick (two by two on its side, a row upright) or the pad, beside the
+				// plates on its side and under them upright.
+				const padBeside = wide;
+				const keyRows = pad ? 4 : wide ? 2 : 1;
+				const keyCols = pad ? 3 : wide ? 2 : options.length;
 				const keySize = Math.floor(Math.min(
 					84,
-					wide ? (box.h - 90 - (keyRows - 1) * 8) / keyRows : (box.h * 0.42 - 70 - (keyRows - 1) * 8) / keyRows,
-					(box.w - 40) / (pad ? 3.4 : options.length + 0.6),
+					wide ? (box.h - 90 - (keyRows - 1) * 8) / keyRows : ((pad ? box.h * 0.45 : box.h * 0.22) - 50 - (keyRows - 1) * 8) / keyRows,
+					((wide ? box.w * 0.4 : box.w) - 16 - (keyCols - 1) * 8) / keyCols,
 				));
-				const answerW = wide ? (pad ? keySize * 3 + 16 : keySize * 1.4) + 24 : 0;
-				const plateW = Math.floor(Math.min(300, (box.w - answerW - 60) / 2, (wide ? box.h - 140 : box.h * 0.58 - 140) / 0.72));
+				const answerW = wide ? keySize * keyCols + (keyCols - 1) * 8 + 24 : 0;
+				const answerH = wide ? 0 : keySize * (keyRows + 0.9) + (keyRows - 1) * 8 + 40;
+				// Each plate's a circle (D across), with its sign and basket. On its side: side by side, the
+				// sign above and basket below. Upright: one above the other, the sign left and basket right.
+				const extra = r.take ? 0.35 : 0.7;
+				const D = Math.floor(Math.min(260, wide
+					? Math.min((box.w - answerW - 60) / 2, box.h - 2 * Math.min(80, box.h * 0.2) - 2 * GAP)
+					: Math.min((box.w - answerW - 2 * GAP) / (1 + extra), (box.h - answerH - 40 - 2 * GAP) / 2)));
 				const plate = (side: "a" | "b") => {
 					const n = side === "a" ? left : right;
 					const want = side === "a" ? r.a : r.b;
 					const fruit = side === "a" ? r.fa : r.fb;
 					const bowl = r.take && side === "b";
 					const over = !r.take && n > want;
-					const most = Math.max(n, r.take ? r.a : want);
-					const item = Math.floor(plateW / (most > 12 ? 5.4 : most > 8 ? 4.4 : most > 4 ? 3.6 : 2.8));
+					const most = Math.max(n, r.take ? r.a : want, 1);
+					// The fruit sit in the plate's middle, as many to a row as makes a square.
+					const perRow = Math.ceil(Math.sqrt(most));
+					const item = Math.floor((D * 0.62) / perRow);
+					const extraSize = Math.min(80, D * 0.33);
 					return (
-						<div className={s.side} style={{ width: plateW }}>
-							<span className={`${s.sign} ${n === want && (bowl || !r.take) ? s.signDone : ""}`} style={{ fontSize: Math.max(24, plateW * 0.15) }}>
+						<div className={wide ? s.side : s.sideRow}>
+							<span className={`${s.sign} ${n === want && (bowl || !r.take) ? s.signDone : ""}`} style={{ fontSize: Math.max(22, D * 0.14) }}>
 								{bowl ? `− ${want}` : want}
 							</span>
-							<div className={`${bowl ? s.bowl : s.plate} ${over ? s.plateOver : ""}`} style={{ width: plateW, height: plateW * 0.72 }}>
-								{Array.from({ length: n }, (_, i) => (
-									<button key={i} type="button" className={s.onPlate} style={{ width: item, height: item }}
-										onClick={() => put(side, r.take ? (bowl ? -1 : 1) : -1)}
-										aria-label={bowl ? `Put a ${fruit.one} back` : r.take ? `Take a ${fruit.one} away` : `Take a ${fruit.one} off`}>
-										<Pic id={fruit.id} />
-									</button>
-								))}
+							<div className={`${bowl ? s.bowl : s.plate} ${over ? s.plateOver : ""}`} style={{ width: D, height: D }}>
+								<div className={s.onPlates} style={{ gridTemplateColumns: `repeat(${perRow}, ${item}px)` }}>
+									{Array.from({ length: n }, (_, i) => (
+										<button key={i} type="button" className={s.onPlate} style={{ width: item, height: item }}
+											onClick={() => put(side, r.take ? (bowl ? -1 : 1) : -1)}
+											aria-label={bowl ? `Put a ${fruit.one} back` : r.take ? `Take a ${fruit.one} away` : `Take a ${fruit.one} off`}>
+											<Pic id={fruit.id} />
+										</button>
+									))}
+								</div>
 							</div>
 							{!r.take && (
 								<button type="button" className={s.basket} onClick={() => put(side, 1)} disabled={rounds.got} aria-label={`Put a ${fruit.one} on`}
-									style={{ width: Math.min(80, plateW * 0.3), height: Math.min(80, plateW * 0.3) }}>
+									style={{ width: extraSize, height: extraSize }}>
 									<Pic id={fruit.id} />
 									<span aria-hidden="true">+</span>
 								</button>
@@ -135,7 +150,7 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 						))}
 					</div>
 				) : (
-					<div className={s.choices} style={{ flexDirection: wide ? "column" : "row", opacity: picking || rounds.got ? 1 : 0.35 }}>
+					<div className={s.choices} style={{ display: "grid", gridTemplateColumns: `repeat(${keyCols}, ${keySize}px)`, gap: 8, opacity: picking || rounds.got ? 1 : 0.35 }}>
 						{options.map((x) => (
 							<button key={x} type="button" disabled={!picking} onClick={() => answer(x)}
 								className={`${s.choice} ${rounds.got && x === answerIs ? s.choiceRight : wrong === x ? s.wiggle : ""}`}
@@ -146,8 +161,8 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 					</div>
 				);
 				return (
-					<div className={wide ? s.row : s.column}>
-						<div className={s.plates}>
+					<div className={padBeside ? s.row : s.column}>
+						<div className={wide ? s.plates : s.platesUp}>
 							{plate("a")}
 							{!r.take && <span className={s.plus} aria-hidden="true">+</span>}
 							{plate("b")}

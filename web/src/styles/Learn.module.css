@@ -416,25 +416,45 @@
 	background: color-mix(in srgb, var(--c, var(--accent)) 20%, white);
 	border-color: var(--c, var(--accent));
 }
+/* A plate, seen from above: a white well, a rim with a soft shine, and a shadow under it. */
 .plate,
 .bowl {
-	display: flex;
-	flex-wrap: wrap;
-	align-content: center;
-	justify-content: center;
-	gap: 2px;
-	padding: 6%;
+	flex: none;
+	display: grid;
+	place-items: center;
 	box-sizing: border-box;
 	border-radius: 50%;
-	background: var(--surface);
-	box-shadow: inset 0 0 0 0.5rem color-mix(in srgb, var(--text) 6%, var(--surface)), 0 0.3rem 0.8rem rgb(29 31 35 / 0.1);
+	background:
+		radial-gradient(circle at 50% 50%, #fff 0 56%, #e9edf1 57% 60%, #fbfcfd 61% 74%, #edf0f3 75% 100%);
+	border: 2px solid #dfe4e9;
+	box-shadow: 0 0.35rem 0.8rem rgb(29 31 35 / 0.16), inset 0 -0.2rem 0.4rem rgb(29 31 35 / 0.06);
 }
+/* The take-away bowl: wooden, deeper inside. */
 .bowl {
-	border-radius: 0 0 50% 50% / 0 0 70% 70%;
-	background: color-mix(in srgb, #8a5a3b 18%, var(--surface));
+	background:
+		radial-gradient(circle at 50% 45%, #f3e3cc 0 55%, #d9b88f 60% 72%, #b98a5a 76% 100%);
+	border-color: #a87a4c;
 }
 .plateOver {
-	box-shadow: inset 0 0 0 0.5rem #f4c430, 0 0.3rem 0.8rem rgb(29 31 35 / 0.1);
+	border-color: #f4c430;
+	box-shadow: 0 0 0 0.3rem #f4c430, 0 0.35rem 0.8rem rgb(29 31 35 / 0.16);
+}
+/* The fruit on a plate, in its middle. */
+.onPlates {
+	display: grid;
+	justify-content: center;
+}
+/* Upright: the plates one above the other, each with its sign on the left and basket on the right. */
+.platesUp {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.3rem;
+}
+.sideRow {
+	display: flex;
+	align-items: center;
+	gap: 12px;
 }
 .onPlate {
 	padding: 0;
