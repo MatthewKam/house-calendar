@@ -3,6 +3,7 @@ import { Pic } from "./art";
 import { Board, fit } from "./parts";
 import { FRUIT } from "./things";
 import { at, between, fresh, shuffle, useRounds, type GameProps } from "./rounds";
+import { sayNumber } from "./sound";
 import s from "../../styles/Learn.module.css";
 
 /** The most there can be, by level. From level 3 there's a "How many?" after counting. */
@@ -11,7 +12,8 @@ const ASK_FROM = 3;
 const ROUNDS = 3;
 
 /**
- * Count the apples (age 2): tap each one to count it, and its number shows under it. Once they're all
+ * Counting (age 2): tap each one to count it; the count so far shows big at the top and is said out
+ * loud, the one tapped keeps its number under it and can't be tapped again. Once they're all
  * counted, the cheer; from level 3 the kid picks how many first (a wrong pick clears the numbers, to
  * count again together). Different fruit each round.
  */
@@ -39,6 +41,7 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 		if (counted[i] !== undefined || rounds.got) return;
 		const number = done + 1;
 		setCounted({ ...counted, [i]: number });
+		sayNumber(number);
 		setWrong(null);
 		if (number === n && !asking) rounds.tap(true);
 	}
@@ -55,12 +58,17 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 			{(box) => {
 				// Room under the fruit for the numbers to pick (from level 3).
 				const below = asking ? Math.min(110, box.h * 0.22) : 0;
-				const grid = fit(n, { w: box.w, h: box.h - below }, { gap: 12, shape: 0.8, most: 220 });
+				// The count so far, big, at the top.
+				const top = Math.min(120, Math.max(60, box.h * 0.16));
+				const grid = fit(n, { w: box.w, h: box.h - below - top - 16 }, { gap: 12, shape: 0.8, most: 220 });
 				return (
 					<div className={s.column}>
+						<span key={done} className={`${s.countNow} ${done ? s.pop : ""}`} style={{ fontSize: top * 0.9, height: top }}
+							aria-live="polite">{done}</span>
 						<div className={s.grid} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 12 }}>
 							{Array.from({ length: n }, (_, i) => (
 								<button key={i} type="button" className={`${s.fruit} ${counted[i] !== undefined ? s.counted : ""}`}
+									disabled={counted[i] !== undefined}
 									style={{ width: grid.size, height: grid.size / 0.8 }} onClick={() => count(i)}
 									aria-label={counted[i] !== undefined ? `${fruit.one} ${counted[i]}` : `${fruit.one}, not counted yet`}>
 									<Pic id={fruit.id} className={counted[i] !== undefined ? s.pop : ""} />

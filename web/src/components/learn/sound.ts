@@ -1,6 +1,6 @@
-// The games' only sound: animals' noises. A grown-up's own recording if there is one (Settings →
-// Learning), or the built-in one (web/public/sounds, free-to-use recordings, credited in CREDITS.md
-// there). Nothing is ever spoken.
+// The games' sound: animals' noises (a grown-up's own recording if there is one, Settings → Learning,
+// or the built-in one in web/public/sounds, credited in CREDITS.md there), and Counting's numbers said
+// out loud. Nothing else is spoken.
 
 /** Animals with a built-in noise in web/public/sounds/animals (`<id>.m4a`). */
 export const BUILT_IN = new Set<string>([
@@ -44,6 +44,15 @@ export function play(url: string, onEnd?: () => void) {
 	audio.addEventListener("pause", end);
 	audio.addEventListener("error", end);
 	audio.play().catch(end);
+}
+
+/** Says a number in the device's voice (Counting's one exception to "no speech": counting out loud). */
+export function sayNumber(n: number) {
+	if (!("speechSynthesis" in window)) return;
+	window.speechSynthesis.cancel();
+	const words = new SpeechSynthesisUtterance(String(n));
+	words.rate = 0.9;
+	window.speechSynthesis.speak(words);
 }
 
 /** An animal's noise, over anything before it; `onEnd` once it's finished (straight away if it has none). */

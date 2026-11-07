@@ -507,6 +507,17 @@
 }
 .counted {
 	background: color-mix(in srgb, var(--c, var(--accent)) 16%, var(--surface));
+	/* Counted: flat (no shadow), and it can't be tapped again. */
+	box-shadow: none;
+	cursor: default;
+}
+/* Counting's count so far, big at the top. */
+.countNow {
+	display: grid;
+	place-items: center;
+	font-weight: 800;
+	line-height: 1;
+	color: var(--c, var(--accent));
 }
 .fruitNumber {
 	font-weight: 800;

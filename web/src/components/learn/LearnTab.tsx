@@ -34,10 +34,10 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 		"Tap any of them: it flies to its place by the index, and the number goes down. Nothing is wrong to tap. The room's done when everything's collected.",
 		"From level 3, some things hide under others: collect the teddy and there's the sock. Higher levels: more kinds of things, and more of each.",
 	] },
-	apples: { title: "Count the apples", picture: "apple", Play: Apples, how: [
-		"Tap each fruit to count it, and its number shows under it. Count out loud together.",
+	apples: { title: "Counting", picture: "apple", Play: Apples, how: [
+		"Tap each one to count it: the count so far shows big at the top and is said out loud, and the one tapped keeps its number.",
 		"From level 3, pick how many there are. A wrong number clears the count, so you count again together.",
-		"Higher levels: more fruit to count.",
+		"Higher levels: more to count.",
 	] },
 	adding: { title: "Math", picture: "math", Play: Adding, how: [
 		"Each plate has a number on its sign. Tap the basket under a plate to put a fruit on it; tap a fruit to take it off.",
