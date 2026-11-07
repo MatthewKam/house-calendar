@@ -42,12 +42,12 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 	adding: { title: "Math", picture: "math", Play: Adding, how: [
 		"Each plate has a number on its sign. Tap the basket under a plate to put a fruit on it; tap a fruit to take it off.",
 		"When both plates match their signs, pick how many there are in all.",
-		"From level 4, some are take-away: tap fruit on the plate to move them to the bowl until it has its number, then pick how many are left. From level 5, type the answer on the number pad. Higher levels: bigger numbers. It moves up a level after 3 perfect games in a row, or after 20 games at a level.",
+		"From level 4, some are take-away: tap fruit on the plate to move them to the bowl until it has its number, then pick how many are left. From level 5, type the answer on the number pad. Higher levels: bigger numbers. It moves up a level after 5 perfect games in a row, or after 20 games at a level.",
 	] },
 	maze: { title: "Maze", picture: "maze", Play: Maze, how: [
 		"An animal wants something: the bee the flower, the monkey the banana. Tap a square in a straight line from the animal and it walks there.",
 		"It can't go through the walls, so a dead end means turning back. Three mazes a game, a new animal each time.",
-		"From level 3, a locked gate is in the way: find the key first. Higher levels: bigger mazes and two gates. It moves up a level after 3 perfect games in a row, or after 20 games at a level.",
+		"From level 3, a locked gate is in the way: find the key first. Higher levels: bigger mazes and two gates. It moves up a level after 20 games at a level.",
 	] },
 	letters: { title: "Letters", picture: "letters", Play: Letters, how: [
 		"A picture and its word, with the first letter missing. Say the word together.",
@@ -57,7 +57,7 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 	memory: { title: "Pairs", picture: "pairs", Play: Memory, how: [
 		"All the cards are face down. Tap two to turn them over.",
 		"Two the same stay face up. Two different ones turn back over, so remember where they were.",
-		"Higher levels: more cards. It moves up a level after 3 perfect games in a row, or after 10 games at a level.",
+		"Higher levels: more cards. It moves up a level after 5 perfect games in a row, or after 20 games at a level.",
 	] },
 };
 
