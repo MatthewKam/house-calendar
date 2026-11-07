@@ -56,14 +56,23 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 	return (
 		<Board onBack={onBack} total={total} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got}>
 			{(box) => {
-				const prompt = Math.min(110, Math.max(64, box.h * 0.16));
+				// The noise as big as fits beside its play button: on one line, or (a long one, like
+				// cock-a-doodle-doo, on a narrow screen) more, with room kept for them.
+				const button = Math.min(88, Math.max(52, box.h * 0.13));
+				const room = box.w - button - 32;
+				const word = `${answer.says}!`;
+				// As few lines as keep it big (it breaks at its hyphens and spaces, so a line can run a letter long).
+				const sizeFor = (n: number) => Math.min(button * (n === 1 ? 0.85 : 0.7), room / ((Math.ceil(word.length / n) + (n > 1 ? 1 : 0)) * 0.6));
+				const lines = [1, 2, 3].find((n) => sizeFor(n) >= 30) ?? 3;
+				const font = Math.floor(sizeFor(lines));
+				const prompt = Math.max(button, lines * font * 1.15 + 8);
 				const grid = fit(choices.length, { w: box.w, h: box.h - prompt - 24 }, { gap: 16, most: 300 });
 				return (
 					<div className={s.column}>
 						{/* The noise as a word, and the play button beside it if they need to hear it. */}
 						<div className={s.sayRow} style={{ height: prompt }}>
-							<span className={s.sayWord} style={{ fontSize: prompt * 0.62 }}>{answer.says}!</span>
-							<Hear size={prompt * 0.8} onTap={() => noise(answer)} label="Hear it" />
+							<span className={s.sayWord} style={{ fontSize: font, maxWidth: room, whiteSpace: lines === 1 ? "nowrap" : "normal" }}>{word}</span>
+							<Hear size={button} onTap={() => noise(answer)} label="Hear it" />
 						</div>
 						<div className={s.grid} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 16 }}>
 							{choices.map((a) => {
