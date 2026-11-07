@@ -516,13 +516,18 @@
 .pottyChevron {
 	transition: transform 0.2s ease;
 }
-/* Open: the header and the chart are one panel (the chart slides out from under it), no line between. */
+/* Open: the header fills with its border's color, and it and the chart are one panel (the chart slides
+   out from under it), no line between. */
 .pottyHeadOpen {
+	background: color-mix(in srgb, var(--c) 35%, white);
 	border-bottom: none;
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;
 	padding-bottom: 3px;
 	box-shadow: none;
+}
+.pottyHeadOpen .pottyIcon {
+	color: var(--text);
 }
 .pottyHeadOpen .pottyChevron {
 	transform: rotate(180deg);
