@@ -12,11 +12,15 @@ import Maze from "./Maze";
 import Memory from "./Memory";
 import Peekaboo from "./Peekaboo";
 import Sounds from "./Sounds";
-import Chomp, { ChompPic } from "./Chomp";
+import Chomp, { ANIMALS as CHOMPERS, ChompPic } from "./Chomp";
 import { HowTo, Over } from "./parts";
 import type { GameProps } from "./rounds";
 import { hush, setRecorded } from "./sound";
 import s from "../../styles/Learn.module.css";
+
+/** Chomp! with an animal ("chomp:shark"), rather than a learning game. */
+type Chomping = `chomp:${string}`;
+const isChomp = (game: Game | Chomping): game is Chomping => game.startsWith("chomp:");
 
 /** How to play Chomp! (a game for two), for a grown-up to explain. */
 const CHOMP_HOW = {
@@ -24,7 +28,7 @@ const CHOMP_HOW = {
 	how: [
 		"Take turns, Player 1 and Player 2: the one lit up says whose turn it is. Tap a tooth to press it down.",
 		"One tooth makes the mouth snap shut: Chomp! Whoever didn't get chomped wins.",
-		"A few seconds later the shark grins again: tap Ready! for another go. The back arrow goes back to the games.",
+		"A few seconds later it grins again: tap Ready! for another go. The back arrow goes back to the games.",
 	],
 };
 
@@ -88,8 +92,9 @@ export default function LearnTab({ kid, today, learn, together }: {
 	together: boolean;
 }) {
 	const qc = useQueryClient();
-	// A learning game, or one of the games for two ("chomp"), which have no levels and aren't saved.
-	const [playing, setPlaying] = useState<Game | "chomp" | null>(null);
+	// A learning game, or one of the games for two (Chomp!, with which animal), which have no levels and
+	// aren't saved.
+	const [playing, setPlaying] = useState<Game | Chomping | null>(null);
 	const [plays, setPlays] = useState(0);
 	// A game just finished: the pop-up over it, and whether it moved up a level.
 	const [result, setResult] = useState<{ game: Game; leveledUp: boolean } | null>(null);
@@ -105,7 +110,7 @@ export default function LearnTab({ kid, today, learn, together }: {
 	useEffect(() => setRecorded(sounds ?? []), [sounds]);
 	const levelOf = (game: Game) => learn.games.find((g) => g.game === game)?.level ?? 1;
 
-	function start(game: Game | "chomp") {
+	function start(game: Game | Chomping) {
 		hush();
 		setResult(null);
 		setPlays((n) => n + 1);
@@ -118,10 +123,10 @@ export default function LearnTab({ kid, today, learn, together }: {
 		setPlaying(null);
 	}
 
-	if (playing === "chomp") {
+	if (playing && isChomp(playing)) {
 		return (
 			<HowTo.Provider value={CHOMP_HOW}>
-				<Chomp key={plays} onBack={() => setPlaying(null)} />
+				<Chomp key={plays} animal={playing.slice("chomp:".length)} onBack={() => setPlaying(null)} />
 			</HowTo.Provider>
 		);
 	}
@@ -154,10 +159,12 @@ export default function LearnTab({ kid, today, learn, together }: {
 		<section className={s.menuArea} aria-label={together ? "Games for two" : "Games"}>
 			<div className={s.menu}>
 				{together ? (
-					<button type="button" className={s.gameTile} onClick={() => start("chomp")}>
-						<ChompPic className={s.gamePic} />
-						<span className={s.gameName}>Chomp!</span>
-					</button>
+					CHOMPERS.map((a) => (
+						<button key={a.id} type="button" className={s.gameTile} onClick={() => start(`chomp:${a.id}`)}>
+							<ChompPic animal={a.id} className={s.gamePic} />
+							<span className={s.gameName}>{a.name} Chomp!</span>
+						</button>
+					))
 				) : (
 					learn.games.map(({ game, level }) => (
 						<button key={game} type="button" className={s.gameTile} onClick={() => start(game)}>

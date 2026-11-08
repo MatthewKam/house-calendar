@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
 import { Board } from "./parts";
-import { fresh } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
 /** The two players, taking turns. */
@@ -26,13 +25,20 @@ interface Animal {
 	teeth: [number, number, number, number][];
 }
 
-/** The animals (more to come, each drawn the same way). */
-const ANIMALS: Animal[] = [
+/** The animals, each its own card (more to come, each drawn the same way). */
+export const ANIMALS: Animal[] = [
 	{
 		id: "shark", name: "Shark", frame: [1000, 914],
 		teeth: [
 			[258.4, 528.2, 44.2, 73.2], [272.1, 582.3, 57.9, 81.6], [299.5, 636.4, 64, 93], [343.8, 682.9, 65.5, 98.3], [406.3, 704.3, 87.7, 106.7],
 			[513, 703.5, 86.1, 107.5], [598.3, 682.9, 63.3, 96.8], [644.8, 635.7, 59.5, 91.5], [673.8, 583.1, 54.1, 80], [695.9, 529, 43.4, 72.4],
+		],
+	},
+	{
+		id: "t-rex", name: "T-rex", frame: [1000, 892],
+		teeth: [
+			[308, 412.7, 42.2, 67.8], [319.3, 458.6, 49.7, 77.6], [338.1, 509.8, 56.5, 86.6], [372, 560.2, 60.2, 90.4], [426.2, 598.6, 67.8, 88.9],
+			[509, 597.9, 67.8, 89.6], [570.8, 559.5, 60.2, 91.1], [607.7, 509, 56.5, 86.6], [632.5, 457.1, 50.5, 78.3], [652.1, 412.7, 42.2, 67.8],
 		],
 	},
 ];
@@ -44,9 +50,9 @@ const HINT = 1800;
     teeth are both that close, the nearer one gets it. */
 const REACH = 18;
 
-/** Chomp!'s picture on its card: the shark, mouth open, all its teeth in. */
-export function ChompPic({ className }: { className?: string }) {
-	const a = ANIMALS[0];
+/** An animal's picture on its card: mouth open, all its teeth in. */
+export function ChompPic({ animal, className }: { animal: string; className?: string }) {
+	const a = ANIMALS.find((x) => x.id === animal) ?? ANIMALS[0];
 	const [fw, fh] = a.frame;
 	return (
 		<svg className={className} viewBox={`0 0 ${fw} ${fh}`} aria-hidden="true">
@@ -61,9 +67,9 @@ export function ChompPic({ className }: { className?: string }) {
  * mouth wide. Take turns pressing a bottom tooth (each shakes and goes); one of them makes the mouth snap
  * shut: Chomp! The other player wins. A few seconds on, it grins again, Ready! for another go.
  */
-export default function Chomp({ onBack }: { onBack: () => void }) {
+export default function Chomp({ animal: id, onBack }: { animal: string; onBack: () => void }) {
 	const players = PLAYERS;
-	const animal = useMemo(() => fresh("chomp.animals", ANIMALS, 1, (a) => a.id)[0], []);
+	const animal = ANIMALS.find((a) => a.id === id) ?? ANIMALS[0];
 	const [pressed, setPressed] = useState<number[]>([]);
 	const [chompTooth, setChompTooth] = useState(() => Math.floor(Math.random() * animal.teeth.length));
 	// Player 1 starts the first game; then they take turns starting.
