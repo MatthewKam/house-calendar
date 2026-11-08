@@ -3,8 +3,11 @@ import { Board } from "./parts";
 import { fresh, shuffle } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
-/** Who's playing: two names and colors, taking turns. */
-export interface Player { name: string; color: string }
+/** The two players, taking turns. */
+const PLAYERS = [
+	{ name: "Player 1", color: "#3d7bd9" },
+	{ name: "Player 2", color: "#e8590c" },
+];
 
 /** Teeth in the mouth, and chomps before the hooray. */
 const TEETH = 8;
@@ -30,7 +33,8 @@ const ANIMALS: { id: string; name: string; skin: string; belly: string; extra: (
  * opens it for another go. A few
  * chomps, then the hooray. A new animal each game.
  */
-export default function Chomp({ players, onDone, onBack }: { players: Player[]; onDone: () => void; onBack: () => void }) {
+export default function Chomp({ onDone, onBack }: { onDone: () => void; onBack: () => void }) {
+	const players = PLAYERS;
 	const animal = useMemo(() => fresh("chomp.animals", ANIMALS, 1, (a) => a.id)[0], []);
 	const [pressed, setPressed] = useState<number[]>([]);
 	const [chompTooth, setChompTooth] = useState(() => Math.floor(Math.random() * TEETH));

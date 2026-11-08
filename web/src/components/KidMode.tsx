@@ -234,11 +234,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 					</section>
 				)}
 
-				{tab === "learn" && learning && (
-					<LearnTab key={kid.id} kid={kid} today={today} learn={learning}
-						// Games for two: the kids here (the one picked first), or this kid and a grown-up.
-						players={kids.length > 1 ? [kid, ...kids.filter((k) => k.id !== kid.id)] : [kid, { name: "Grown-up", color: "#7d8794" }]} />
-				)}
+				{tab === "learn" && learning && <LearnTab key={kid.id} kid={kid} today={today} learn={learning} />}
 
 				{tab === "rewards" && (
 					<KidJars

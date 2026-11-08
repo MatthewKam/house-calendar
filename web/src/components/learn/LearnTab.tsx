@@ -12,7 +12,7 @@ import Maze from "./Maze";
 import Memory from "./Memory";
 import Peekaboo from "./Peekaboo";
 import Sounds from "./Sounds";
-import Chomp, { type Player } from "./Chomp";
+import Chomp from "./Chomp";
 import { HowTo } from "./parts";
 import type { GameProps } from "./rounds";
 import { hush, setRecorded } from "./sound";
@@ -22,7 +22,7 @@ import s from "../../styles/Learn.module.css";
 const CHOMP_HOW = {
 	title: "Chomp!",
 	how: [
-		"Take turns: the name lit up says whose turn it is. Tap a tooth to press it down.",
+		"Take turns, Player 1 and Player 2: the one lit up says whose turn it is. Tap a tooth to press it down.",
 		"One tooth makes the mouth snap shut: Chomp! It's a funny surprise, not losing. Then the teeth pop back up.",
 		"After three chomps, hooray. A new animal each time: crocodile, alligator, shark, dinosaur, hippo or lion.",
 	],
@@ -80,13 +80,7 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
  * of it. At the end: a cheer, play again, or back to the games. A few perfect plays move a game up a
  * level (the server decides), and that gets a cheer of its own. No stars: it's for learning.
  */
-export default function LearnTab({ kid, today, learn, players }: {
-	kid: Member;
-	today: string;
-	learn: LearnState;
-	/** Who plays the games for two (Play together): the kids here, or this kid and a grown-up. */
-	players: Player[];
-}) {
+export default function LearnTab({ kid, today, learn }: { kid: Member; today: string; learn: LearnState }) {
 	const qc = useQueryClient();
 	// A learning game, or one of the games for two ("chomp"), which have no levels and aren't saved.
 	const [playing, setPlaying] = useState<Game | "chomp" | null>(null);
@@ -113,7 +107,7 @@ export default function LearnTab({ kid, today, learn, players }: {
 	if (playing === "chomp") {
 		return (
 			<HowTo.Provider value={CHOMP_HOW}>
-				<Chomp key={plays} players={players}
+				<Chomp key={plays}
 					onBack={() => setPlaying(null)}
 					onDone={() => {
 						setPlaying(null);
