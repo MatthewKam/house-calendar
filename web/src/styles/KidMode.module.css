@@ -3,6 +3,10 @@
 .shell {
 	height: 100%;
 	display: flex;
+	/* Little fingers press and hold: nothing to highlight, no copy menu or picture preview. */
+	-webkit-user-select: none;
+	user-select: none;
+	-webkit-touch-callout: none;
 	background: color-mix(in srgb, var(--c, var(--accent)) 8%, var(--bg));
 }
 /* Today, Tasks and Rewards: down the left, or (phones) along the bottom. */
@@ -737,4 +741,10 @@
 		width: 1.8rem;
 		height: 1.8rem;
 	}
+}
+
+/* No dragging pictures out, either. */
+.shell img,
+.shell svg {
+	-webkit-user-drag: none;
 }
