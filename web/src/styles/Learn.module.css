@@ -9,7 +9,8 @@
 }
 .menu {
 	/* Two by two, upright or on its side: square cards, as big as fit the space. */
-	--tile: min(calc((100cqw - 1rem) / 2), calc((100cqh - 1rem) / 2), 22rem);
+	/* Leaving room under them for Play together. */
+	--tile: min(calc((100cqw - 1rem) / 2), calc((100cqh - 1rem - 8.5rem) / 2), 22rem);
 	display: grid;
 	grid-template-columns: repeat(2, var(--tile));
 	grid-template-rows: repeat(2, var(--tile));
@@ -56,6 +57,44 @@
 	letter-spacing: 0.04em;
 	/* A light grey, so it doesn't stand out. */
 	color: color-mix(in srgb, var(--muted) 40%, var(--surface));
+}
+
+/* Play together: games for two, under the learning games. */
+.together {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	margin-top: 1rem;
+}
+.togetherHead {
+	margin: 0;
+	font-size: 1rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--muted);
+}
+.togetherTile {
+	align-self: flex-start;
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	height: 5.5rem;
+	padding: 0.4rem 1.4rem 0.4rem 0.6rem;
+	border-radius: 1.4rem;
+	background: var(--surface);
+	box-shadow: 0 0.4rem 1.2rem rgb(29 31 35 / 0.08);
+	transition: transform 0.15s ease;
+}
+.togetherTile:active {
+	transform: scale(0.96);
+}
+.togetherPic {
+	width: 4.6rem;
+	height: 4.6rem;
+}
+.togetherNote {
+	color: var(--muted);
+	font-weight: 700;
 }
 
 /* Well done. */
@@ -1114,6 +1153,88 @@
 	z-index: 1;
 }
 
+/* Chomp!: whose turn, the head, its teeth, and the snap. */
+.chompPlayers {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+}
+.chompTag {
+	padding: 0.15em 0.9em;
+	border-radius: 999px;
+	border: 3px solid var(--pc);
+	background: var(--surface);
+	color: var(--text);
+	font-weight: 800;
+	opacity: 0.55;
+	transform: scale(0.9);
+	transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+}
+/* The one whose turn it is: big, bright, in their color. */
+.chompUp {
+	opacity: 1;
+	transform: scale(1.1);
+	background: var(--pc);
+	color: #fff;
+}
+/* Just got chomped: a happy bounce. */
+.chompGot {
+	opacity: 1;
+	animation: hop 0.5s ease 3;
+}
+/* Ready!: over the animal's shut mouth, to open it. */
+.chompReady {
+	position: absolute;
+	left: 50%;
+	top: 55%;
+	transform: translate(-50%, -50%);
+	z-index: 2;
+	min-width: 14rem;
+	min-height: 5rem;
+	font-size: 2rem;
+	box-shadow: 0 0.4rem 0 color-mix(in srgb, var(--c, var(--accent)) 60%, black);
+}
+.chompHead {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	overflow: visible;
+}
+.chompLaugh {
+	animation: wiggle 0.45s ease 3;
+}
+.tooth {
+	cursor: pointer;
+	transition: transform 0.15s ease;
+}
+.toothDown {
+	transform: translateY(26px);
+	cursor: default;
+}
+.toothDown path {
+	fill: #e9e4da;
+}
+/* The top jaw hinges at the back of the head: tilted up while the mouth's open, snapping down to shut. */
+/* The lower lip over the inside of the mouth: only while it's shut. */
+.lips {
+	opacity: 0;
+	transition: opacity 0.12s ease 0.06s;
+	pointer-events: none;
+}
+.lipsShut {
+	opacity: 1;
+}
+.upperJaw {
+	transform-box: view-box;
+	transform-origin: 40px 190px;
+	transform: rotate(-24deg);
+	transition: transform 0.18s cubic-bezier(0.6, 0, 0.9, 0.6);
+}
+.upperJaw.jawShut {
+	transform: rotate(0deg);
+}
+
 /* Moves. */
 .hop {
 	animation: hop 0.5s ease;
@@ -1214,6 +1335,8 @@
 	.startArrow,
 	.slideAway,
 	.slideIn,
+	.chompGot,
+	.chompLaugh,
 	.cardShake,
 	.choice.wiggle,
 	.answer.wiggle {

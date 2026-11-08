@@ -12,10 +12,21 @@ import Maze from "./Maze";
 import Memory from "./Memory";
 import Peekaboo from "./Peekaboo";
 import Sounds from "./Sounds";
+import Chomp, { type Player } from "./Chomp";
 import { HowTo } from "./parts";
 import type { GameProps } from "./rounds";
 import { hush, setRecorded } from "./sound";
 import s from "../../styles/Learn.module.css";
+
+/** How to play Chomp! (a game for two), for a grown-up to explain. */
+const CHOMP_HOW = {
+	title: "Chomp!",
+	how: [
+		"Take turns: the name lit up says whose turn it is. Tap a tooth to press it down.",
+		"One tooth makes the mouth snap shut: Chomp! It's a funny surprise, not losing. Then the teeth pop back up.",
+		"After three chomps, hooray. A new animal each time: crocodile, alligator, shark, dinosaur, hippo or lion.",
+	],
+};
 
 /** Levels as Roman numerals, for the game tiles' corners. */
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
@@ -69,11 +80,18 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
  * of it. At the end: a cheer, play again, or back to the games. A few perfect plays move a game up a
  * level (the server decides), and that gets a cheer of its own. No stars: it's for learning.
  */
-export default function LearnTab({ kid, today, learn }: { kid: Member; today: string; learn: LearnState }) {
+export default function LearnTab({ kid, today, learn, players }: {
+	kid: Member;
+	today: string;
+	learn: LearnState;
+	/** Who plays the games for two (Play together): the kids here, or this kid and a grown-up. */
+	players: Player[];
+}) {
 	const qc = useQueryClient();
-	const [playing, setPlaying] = useState<Game | null>(null);
+	// A learning game, or one of the games for two ("chomp"), which have no levels and aren't saved.
+	const [playing, setPlaying] = useState<Game | "chomp" | null>(null);
 	const [plays, setPlays] = useState(0);
-	const [result, setResult] = useState<{ game: Game; leveledUp: boolean } | null>(null);
+	const [result, setResult] = useState<{ game: Game | "chomp"; leveledUp: boolean } | null>(null);
 	const done = useMutation({
 		mutationFn: ({ game, level, rounds, firstTry }: { game: Game; level: number; rounds: number; firstTry: number }) =>
 			api.learnDone(kid.id, { today, game, level, rounds, firstTry }),
@@ -85,11 +103,24 @@ export default function LearnTab({ kid, today, learn }: { kid: Member; today: st
 	useEffect(() => setRecorded(sounds ?? []), [sounds]);
 	const levelOf = (game: Game) => learn.games.find((g) => g.game === game)?.level ?? 1;
 
-	function start(game: Game) {
+	function start(game: Game | "chomp") {
 		hush();
 		setResult(null);
 		setPlays((n) => n + 1);
 		setPlaying(game);
+	}
+
+	if (playing === "chomp") {
+		return (
+			<HowTo.Provider value={CHOMP_HOW}>
+				<Chomp key={plays} players={players}
+					onBack={() => setPlaying(null)}
+					onDone={() => {
+						setPlaying(null);
+						setResult({ game: "chomp", leveledUp: false });
+					}} />
+			</HowTo.Provider>
+		);
 	}
 
 	if (playing) {
@@ -120,7 +151,7 @@ export default function LearnTab({ kid, today, learn }: { kid: Member; today: st
 				<div className={s.startText}>
 					<h2 className={s.startTitle}>{result.leveledUp ? "New level!" : "You did it!"}</h2>
 					{result.leveledUp && <p className={s.note}>It gets a little trickier next time.</p>}
-					{done.isError && <p className={s.note}>Couldn't save that: {done.error.message}</p>}
+					{done.isError && result.game !== "chomp" && <p className={s.note}>Couldn't save that: {done.error.message}</p>}
 					<div className={s.startButtons}>
 						<button type="button" className={s.go} onClick={() => start(result.game)}>Play again</button>
 						<button type="button" className={s.quiet} onClick={() => setResult(null)}>Other games</button>
@@ -141,6 +172,15 @@ export default function LearnTab({ kid, today, learn }: { kid: Member; today: st
 						<span className={s.gameLevel} aria-label={`Level ${level}`}>{ROMAN[level - 1] ?? level}</span>
 					</button>
 				))}
+			</div>
+			{/* Games for two, taking turns: just for fun (no levels). */}
+			<div className={s.together}>
+				<h2 className={s.togetherHead}>Play together</h2>
+				<button type="button" className={s.togetherTile} onClick={() => start("chomp")}>
+					<Pic id="crocodile" className={s.togetherPic} />
+					<span className={s.gameName}>Chomp!</span>
+					<span className={s.togetherNote}>2 players</span>
+				</button>
 			</div>
 		</section>
 	);

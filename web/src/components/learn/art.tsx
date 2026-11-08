@@ -695,6 +695,22 @@ const ART: Record<string, ReactNode> = {
 			</g>
 		</>
 	),
+	// Chomp!'s tile: a crocodile, mouth open, teeth showing.
+	crocodile: (
+		<>
+			<path d="M8 74 Q8 108 60 108 Q104 108 114 82 L114 74z" fill="#4f9a4a" />
+			<path d="M16 74 Q24 98 60 98 Q96 98 106 76z" fill="#8a2f3c" />
+			<path d="M24 74 l6 -10 l6 10 M44 74 l6 -10 l6 10 M64 74 l6 -10 l6 10 M84 74 l6 -10 l6 10" fill="#fff" />
+			<g transform="rotate(-14 12 70)">
+				<path d="M10 70 Q4 22 50 14 Q100 6 116 50 Q118 64 112 70z" fill="#4f9a4a" />
+				<path d="M30 70 l6 10 l6 -10 M52 70 l6 10 l6 -10 M74 70 l6 10 l6 -10 M96 70 l5 9 l5 -9" fill="#fff" />
+				<circle cx="40" cy="26" r="11" fill="#fff" />
+				<circle cx="43" cy="27" r="5" fill={EYE} />
+				<circle cx="104" cy="40" r="3" fill={EYE} opacity=".7" />
+			</g>
+		</>
+	),
+
 	// Peekaboo's hiding places (besides the bush).
 	haystack: (
 		<>
