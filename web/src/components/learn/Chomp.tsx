@@ -65,6 +65,21 @@ const ANIMALS: Animal[] = [
 			[505.4, 784.8, 48.4, 47.5], [544.6, 780.7, 45.9, 46.7], [583, 695.6, 70.9, 128.4], [635.5, 644.7, 55, 80.9], [647.2, 594.7, 51.7, 71.7], [659.7, 552.1, 42.5, 60.9],
 		],
 	},
+	{
+		// Like the lion: three up each side, a fang at each corner, four little front teeth.
+		id: "tiger", name: "Tiger", frame: [1000, 1094],
+		teeth: [
+			[291.1, 491.2, 45, 60.1], [297.7, 536.3, 55, 65.1], [308.6, 583, 59.2, 73.4], [352.8, 633, 75.1, 129.3], [420.4, 716.4, 45, 47.5], [456.2, 718.9, 43.4, 47.5],
+			[490.4, 718.9, 44.2, 47.5], [525.4, 716.4, 44.2, 47.5], [563, 633, 74.2, 129.3], [622.2, 583, 56.7, 73.4], [634.7, 536.3, 52.5, 65.1], [650.5, 491.2, 43.4, 60.1],
+		],
+	},
+	{
+		id: "crocodile", name: "Crocodile", frame: [1000, 938],
+		teeth: [
+			[318.9, 387.6, 40.9, 59.5], [323.6, 432.4, 47.9, 70.3], [336.7, 483.4, 49.4, 73.4], [362.2, 526.6, 51.7, 68.7], [400, 565.3, 58.7, 72.6], [457.1, 596.9, 61.8, 74.1],
+			[524.3, 596.9, 62.5, 73.4], [584.6, 565.3, 57.9, 72.6], [627.8, 526.6, 51, 68.7], [656.4, 483.4, 47.1, 63.3], [669.5, 432.4, 47.1, 58.7], [681.9, 387.6, 39.4, 49.4],
+		],
+	},
 ];
 
 /** Which animal this time: a different one from last time. (Called once, when Chomp! is started.) */
@@ -91,7 +106,7 @@ export function ChompPic({ animal = "shark", className }: { animal?: string; cla
 
 /**
  * Chomp! (a game for two, a toddler and a sibling or grown-up): a big animal (a shark, a T-rex, a hippo, an
- * alligator or a lion, picked each time) grinning, Ready! to open its
+ * alligator, a lion, a tiger or a crocodile, a new one each game) grinning, Ready! to open its
  * mouth wide. Take turns pressing a bottom tooth (each shakes and goes); one of them makes the mouth snap
  * shut: Chomp! The other player wins. A few seconds on, it grins again, Ready! for another go.
  */
