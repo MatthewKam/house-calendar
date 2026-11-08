@@ -50,6 +50,13 @@ const ANIMALS: Animal[] = [
 			[499.2, 698.2, 70.1, 70.1], [564.8, 692.8, 63.3, 69.4], [620.4, 590.7, 96.8, 159.3], [670.7, 479.4, 77, 60.2], [678.4, 526.7, 83.8, 65.5], [682.2, 580, 89.9, 80.8],
 		],
 	},
+	{
+		id: "alligator", name: "Alligator", frame: [1000, 962],
+		teeth: [
+			[257.4, 406.9, 54.8, 82.9], [263.7, 472.6, 61, 90], [282.5, 534.4, 63.4, 97.8], [320, 593.1, 68.1, 106.4], [402.2, 640.8, 73.6, 100.9],
+			[519.6, 640.1, 73.6, 101.7], [605.6, 592.3, 68.9, 107.2], [649.5, 532.9, 62.6, 98.6], [670.6, 471, 59.5, 90.8], [683.9, 405.3, 50.9, 82.9],
+		],
+	},
 ];
 
 /** Which animal this time: a different one from last time. (Called once, when Chomp! is started.) */
@@ -75,8 +82,8 @@ export function ChompPic({ animal = "shark", className }: { animal?: string; cla
 }
 
 /**
- * Chomp! (a game for two, a toddler and a sibling or grown-up): a big animal (a shark, a T-rex or a hippo,
- * picked each time) grinning, Ready! to open its
+ * Chomp! (a game for two, a toddler and a sibling or grown-up): a big animal (a shark, a T-rex, a hippo or
+ * an alligator, picked each time) grinning, Ready! to open its
  * mouth wide. Take turns pressing a bottom tooth (each shakes and goes); one of them makes the mouth snap
  * shut: Chomp! The other player wins. A few seconds on, it grins again, Ready! for another go.
  */
