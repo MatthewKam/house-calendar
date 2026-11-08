@@ -88,7 +88,12 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 			{(box) => {
 				// Each bush has room above it for its animal to pop all the way up.
 				const shape = inside ? 0.85 : 0.62;
-				const grid = fit(bushes.length, { w: box.w - 24, h: box.h * (inside ? 0.8 : 0.66) }, { gap: 12, shape, most: 240 });
+				// On a tablet (either way up) or a phone on its side, the hiding places in one row; on an upright
+				// phone, the grid that fits best.
+				const room = { w: box.w - 24, h: box.h * (inside ? 0.8 : 0.66) };
+				const grid = box.w > box.h || box.w >= 600
+					? { cols: bushes.length, size: Math.floor(Math.min((room.w - 12 * (bushes.length - 1)) / bushes.length, room.h * shape, 240)) }
+					: fit(bushes.length, room, { gap: 12, shape, most: 240 });
 				return (
 					<div className={s.farm} style={{ "--sky": look.sky, "--hill": look.hill, "--light": look.light } as CSSProperties}>
 						<Scenery scene={place.scene} />
