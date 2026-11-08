@@ -21,7 +21,7 @@ interface Animal {
 	name: string;
 	/** The pictures' frame (px): the open mouth (its top teeth drawn in) and the shut one. */
 	frame: [number, number];
-	/** The bottom teeth, each its own picture (bottom-1.png, … left to right): where each sits in the
+	/** The bottom teeth, each its own picture (bottom-1.png, …): where each sits in the
 	    frame (x, y, width, height). These are the ones to press. */
 	teeth: [number, number, number, number][];
 }
@@ -40,6 +40,14 @@ const ANIMALS: Animal[] = [
 		teeth: [
 			[308, 412.7, 42.2, 67.8], [319.3, 458.6, 49.7, 77.6], [338.1, 509.8, 56.5, 86.6], [372, 560.2, 60.2, 90.4], [426.2, 598.6, 67.8, 88.9],
 			[509, 597.9, 67.8, 89.6], [570.8, 559.5, 60.2, 91.1], [607.7, 509, 56.5, 86.6], [632.5, 457.1, 50.5, 78.3], [652.1, 412.7, 42.2, 67.8],
+		],
+	},
+	{
+		// Its molars up each side, a tusk at each corner, and four little front teeth.
+		id: "hippo", name: "Hippo", frame: [1000, 914],
+		teeth: [
+			[227.9, 580, 90.7, 80.8], [238.6, 526.7, 83.1, 65.5], [253, 479.4, 76.2, 61], [283.5, 590.7, 96.8, 159.3], [372.7, 693.6, 64, 69.4], [432.2, 698.2, 69.4, 70.1],
+			[499.2, 698.2, 70.1, 70.1], [564.8, 692.8, 63.3, 69.4], [620.4, 590.7, 96.8, 159.3], [670.7, 479.4, 77, 60.2], [678.4, 526.7, 83.8, 65.5], [682.2, 580, 89.9, 80.8],
 		],
 	},
 ];
@@ -67,8 +75,8 @@ export function ChompPic({ animal = "shark", className }: { animal?: string; cla
 }
 
 /**
- * Chomp! (a game for two, a toddler and a sibling or grown-up): a big animal (a shark or a T-rex, picked
- * each time) grinning, Ready! to open its
+ * Chomp! (a game for two, a toddler and a sibling or grown-up): a big animal (a shark, a T-rex or a hippo,
+ * picked each time) grinning, Ready! to open its
  * mouth wide. Take turns pressing a bottom tooth (each shakes and goes); one of them makes the mouth snap
  * shut: Chomp! The other player wins. A few seconds on, it grins again, Ready! for another go.
  */
