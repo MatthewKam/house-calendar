@@ -12,7 +12,7 @@ import Maze from "./Maze";
 import Memory from "./Memory";
 import Peekaboo from "./Peekaboo";
 import Sounds from "./Sounds";
-import Chomp from "./Chomp";
+import Chomp, { ChompPic } from "./Chomp";
 import { HowTo, Over } from "./parts";
 import type { GameProps } from "./rounds";
 import { hush, setRecorded } from "./sound";
@@ -157,7 +157,7 @@ export default function LearnTab({ kid, today, learn, together }: {
 			<div className={s.menu}>
 				{together ? (
 					<button type="button" className={s.gameTile} onClick={() => start("chomp")}>
-						<Pic id="crocodile" className={s.gamePic} />
+						<ChompPic className={s.gamePic} />
 						<span className={s.gameName}>Chomp!</span>
 					</button>
 				) : (
