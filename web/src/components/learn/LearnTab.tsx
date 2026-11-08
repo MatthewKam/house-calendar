@@ -24,7 +24,7 @@ const CHOMP_HOW = {
 	how: [
 		"Take turns, Player 1 and Player 2: the one lit up says whose turn it is. Tap a tooth to press it down.",
 		"One tooth makes the mouth snap shut: Chomp! It's a funny surprise, not losing, and that's the game.",
-		"Then play again (a new animal each time: crocodile, alligator, shark, dinosaur, hippo or lion), or back to the games.",
+		"Then play again, or back to the games.",
 	],
 };
 

@@ -1171,6 +1171,8 @@
 }
 /* Ready!: the yellow button over the animal's shut mouth, to open it. */
 .board .chompReady {
+	outline: none;
+	-webkit-tap-highlight-color: transparent;
 	position: absolute;
 	left: 50%;
 	top: 62%;
@@ -1179,6 +1181,11 @@
 	border: 0;
 	background: none;
 	translate: -50% -50%;
+}
+.board .chompReady:focus,
+.board .chompReady:focus-visible {
+	outline: none;
+	box-shadow: none;
 }
 .chompReady img {
 	display: block;
@@ -1217,10 +1224,19 @@
 	opacity: 0;
 	pointer-events: none;
 }
-.tooth {
+/* A tooth to press: no outline or highlight when it's tapped. */
+.toothHit {
 	cursor: pointer;
+	outline: none;
+	-webkit-tap-highlight-color: transparent;
+}
+.toothHit:focus,
+.toothHit:focus-visible {
+	outline: none;
+}
+.tooth {
 	transform-box: fill-box;
-	transform-origin: 50% 100%;
+	transform-origin: 50% 50%;
 	transition: transform 0.15s ease, opacity 0.15s ease;
 }
 /* Pressed: shrunk down, faded into the gum. */
