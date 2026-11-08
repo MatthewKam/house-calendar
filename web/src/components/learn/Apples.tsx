@@ -10,19 +10,19 @@ import s from "../../styles/Learn.module.css";
 const MOST = [3, 4, 5, 7, 9, 10];
 const ASK_FROM = 3;
 const ROUNDS = 3;
-/** A moment to see it's right before moving on (ms), and how long the get-ready screen shows. */
+/** A moment to see it's right before moving on (ms), and how long the cards take to slide away. */
 const PAUSE = 800;
-const GET_READY = 1100;
+const SLIDE_AWAY = 450;
 
 /**
  * Counting (age 2): tap each one to count it; the count so far shows big at the top and is said out
  * loud, and the one tapped goes flat and can't be tapped again. From level 3 the kid picks how many at
- * the end (a wrong pick clears the count, to count again together). Right: a moment to see it, then a
- * get-ready screen with the next fruit; after the last round, a moment, then the hooray.
+ * the end (a wrong pick clears the count, to count again together). Right: a moment to see it, then the
+ * cards slide away and the next fruit's slide in; after the last round, a moment, then the hooray.
  */
 export default function Apples({ level, onDone, onBack }: GameProps) {
-	// Rounds: right gets a moment to see, then a get-ready screen before the next; after the last, a moment,
-	// then the hooray, then the end.
+	// Rounds: right gets a moment to see, then the cards slide away and the next round's slide in; after the
+	// last, a moment, then the hooray, then the end.
 	const [round, setRound] = useState(0);
 	const [got, setGot] = useState(false);
 	const [phase, setPhase] = useState<"play" | "next" | "hooray">("play");
@@ -44,7 +44,7 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 				setGot(false);
 				missed.current = false;
 				setPhase("play");
-			}, PAUSE + GET_READY);
+			}, PAUSE + SLIDE_AWAY);
 		}
 	}
 	const asking = level >= ASK_FROM;
@@ -84,17 +84,6 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 	return (
 		<Board onBack={onBack} total={ROUNDS} done={round + (got ? 1 : 0)} cheer={phase === "hooray"}>
 			{(box) => {
-				// Between rounds: the next fruit, on its own, popping in.
-				if (phase === "next") {
-					const upNext = plan[round + 1].fruit;
-					return (
-						<div className={s.column}>
-							<span className={`${s.getReady} ${s.pop}`} style={{ width: Math.min(box.w, box.h) * 0.4, height: Math.min(box.w, box.h) * 0.4 }}>
-								<Pic id={upNext.id} />
-							</span>
-						</div>
-					);
-				}
 				// Room under the fruit for the numbers to pick (from level 3).
 				const below = asking ? Math.min(110, box.h * 0.22) : 0;
 				// The count so far, big, at the top.
@@ -102,13 +91,14 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 				const grid = fit(n, { w: box.w, h: box.h - below - top - 16 }, { gap: 12, most: 220 });
 				return (
 					<div className={s.column}>
-						<span key={done} className={`${s.countNow} ${done ? s.pop : ""}`} style={{ fontSize: top * 0.9, height: top }}
+						<span key={`count-${done}`} className={`${s.countNow} ${done ? s.pop : ""}`} style={{ fontSize: top * 0.9, height: top }}
 							aria-live="polite">{done}</span>
-						<div className={s.grid} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 12 }}>
+						{/* Between rounds these slide away to the left, and the next round's slide in from the right. */}
+						<div key={`round-${round}`} className={`${s.grid} ${phase === "next" ? s.slideAway : ""}`} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 12 }}>
 							{Array.from({ length: n }, (_, i) => (
-								<button key={i} type="button" className={`${s.fruit} ${counted[i] !== undefined ? s.counted : ""}`}
+								<button key={i} type="button" className={`${s.fruit} ${s.slideIn} ${counted[i] !== undefined ? s.counted : ""}`}
 									disabled={counted[i] !== undefined}
-									style={{ width: grid.size, height: grid.size }} onClick={() => count(i)}
+									style={{ width: grid.size, height: grid.size, animationDelay: `${i * 70}ms` }} onClick={() => count(i)}
 									aria-label={counted[i] !== undefined ? `${fruit.one} ${counted[i]}` : `${fruit.one}, not counted yet`}>
 									<Pic id={fruit.id} className={counted[i] !== undefined ? s.pop : ""} />
 								</button>
