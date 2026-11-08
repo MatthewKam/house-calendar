@@ -1193,15 +1193,15 @@
 	height: auto;
 	filter: drop-shadow(0 0.3rem 0.4rem rgb(0 0 0 / 0.25));
 }
-/* Chomp!: bursting out over the snapped-shut mouth. */
+/* Chomp!: bursting out below the mouth once it's snapped shut (a beat after, so the snap is seen). */
 .chompBurst {
 	position: absolute;
 	left: 50%;
-	top: 58%;
-	width: 80%;
+	top: 80%;
+	width: 62%;
 	translate: -50% -50%;
 	pointer-events: none;
-	animation: burst 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
+	animation: burst 0.35s cubic-bezier(0.3, 1.6, 0.5, 1) 0.2s both;
 }
 @keyframes burst {
 	from {
@@ -1239,11 +1239,78 @@
 	transform-origin: 50% 50%;
 	transition: transform 0.15s ease, opacity 0.15s ease;
 }
-/* Pressed: shrunk down, faded into the gum. */
+/* Pressed: a shake, then gone. */
 .toothDown {
-	transform: scale(0.55);
-	opacity: 0.35;
-	cursor: default;
+	animation: toothGone 0.6s ease forwards;
+}
+@keyframes toothGone {
+	15% {
+		rotate: -14deg;
+	}
+	30% {
+		rotate: 12deg;
+	}
+	45% {
+		rotate: -9deg;
+	}
+	60% {
+		rotate: 6deg;
+		scale: 1;
+		opacity: 1;
+	}
+	100% {
+		rotate: 0deg;
+		scale: 0.3;
+		opacity: 0;
+	}
+}
+/* A tap that missed: the teeth left give a pulse, to show where to tap. */
+.teethNudge .tooth:not(.toothDown) {
+	animation: toothNudge 0.45s ease 2;
+}
+.teethNudgeAgain .tooth:not(.toothDown) {
+	animation: toothNudgeAgain 0.45s ease 2;
+}
+@keyframes toothNudge {
+	50% {
+		scale: 1.25;
+	}
+}
+@keyframes toothNudgeAgain {
+	50% {
+		scale: 1.25;
+	}
+}
+/* And a word for a grown-up to read out, over the shark's head. */
+.chompHint {
+	position: absolute;
+	left: 50%;
+	top: 4%;
+	translate: -50% 0;
+	margin: 0;
+	padding: 0.5em 1.1em;
+	border-radius: 999px;
+	background: var(--surface);
+	box-shadow: 0 0.3rem 1rem rgb(0 0 0 / 0.18);
+	font-size: clamp(1rem, 4.5vmin, 1.6rem);
+	font-weight: 800;
+	white-space: nowrap;
+	pointer-events: none;
+	animation: hintUp 1.8s ease forwards;
+}
+@keyframes hintUp {
+	0% {
+		opacity: 0;
+		translate: -50% 0.6rem;
+	}
+	12%,
+	80% {
+		opacity: 1;
+		translate: -50% 0;
+	}
+	100% {
+		opacity: 0;
+	}
 }
 
 /* Moves. */
@@ -1334,6 +1401,10 @@
 	}
 }
 @media (prefers-reduced-motion: reduce) {
+	/* A pressed tooth just goes. */
+	.toothDown {
+		opacity: 0;
+	}
 	.hop,
 	.hopForever,
 	.wiggle,
@@ -1349,6 +1420,10 @@
 	.chompGot,
 	.chompLaugh,
 	.chompBurst,
+	.chompHint,
+	.toothDown,
+	.teethNudge .tooth:not(.toothDown),
+	.teethNudgeAgain .tooth:not(.toothDown),
 	.cardShake,
 	.choice.wiggle,
 	.answer.wiggle {
