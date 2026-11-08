@@ -30,15 +30,18 @@ const PLACES = [
 ] as const;
 type Scene = (typeof PLACES)[number]["scene"];
 
-/** A bush (or haystack, tractor, window): who's hiding in it now, whether they're out, and how many times it's been tapped (for its rustle). */
-interface Bush { animal: Animal | null; out: boolean; taps: number }
+/**
+ * A bush (or haystack, tractor, window): who's hiding in it now, whether they're out, how many times it's
+ * been tapped (for its rustle), and `last`: it's out for good, with nobody new left to hide there.
+ */
+interface Bush { animal: Animal | null; out: boolean; taps: number; last?: boolean }
 
 /**
  * Peekaboo farm (age 2): not a game to win, just fun. Tap a bush (or a haystack, a tractor, a barn
  * window: a different place and scene each play) and an animal pops up, its name in front, making its
  * noise (tap it again to hear it again). A couple of seconds after, it ducks back down and someone new
- * is hiding there. When every animal's had its turn, the mascot cheers with confetti and that's the
- * end. A new set of animals each play.
+ * is hiding there; once nobody new is left, the last one there stays up. When every animal's had its
+ * turn, the mascot cheers with confetti and that's the end. A new set of animals each play.
  */
 export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 	const look = useMemo(() => fresh("peekaboo.skies", SKIES, 1, (x) => x.sky)[0], []);
@@ -59,9 +62,9 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 	const hideTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 	useEffect(() => () => Object.values(hideTimers.current).forEach(clearTimeout), []);
 
-	// Once nobody's left hiding or out: the mascot and confetti, then the end.
+	// Once nobody's left to hide and every last one is up: the mascot and confetti, then the end.
 	useEffect(() => {
-		if (finished || bushes.some((b) => b.animal)) return;
+		if (finished || next.current < queue.length || bushes.some((b) => b.animal && !b.last)) return;
 		later(() => setFinished(true), 400);
 		later(() => onDone(1, 1), 400 + CHEER_MS + 600);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -75,9 +78,18 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 		clearTimeout(hideTimers.current[i]);
 		const from = Date.now();
 		noise(animal, () => {
+			// With nobody new left to hide there, this one stays up.
+			if (next.current >= queue.length) {
+				setBushes((all) => all.map((b, j) => (j === i ? { ...b, last: true } : b)));
+				return;
+			}
 			hideTimers.current[i] = setTimeout(() => {
-				// Back down, and someone new hides there (or nobody, once everyone's had a turn).
-				const newcomer = next.current < queue.length ? queue[next.current++] : null;
+				// Back down, and someone new hides there (if nobody's taken the last one meanwhile).
+				if (next.current >= queue.length) {
+					setBushes((all) => all.map((b, j) => (j === i ? { ...b, last: true } : b)));
+					return;
+				}
+				const newcomer = queue[next.current++];
 				setBushes((all) => all.map((b, j) => (j === i ? { ...b, animal: newcomer, out: false } : b)));
 			}, Math.max(STAY_AFTER, STAY_AT_LEAST - (Date.now() - from)));
 		});
@@ -99,11 +111,8 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 						<Scenery scene={place.scene} />
 						<div className={`${s.bushes} ${inside ? s.windows : ""}`} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)` }}>
 							{bushes.map((b, i) => (
-								// With nobody left to hide there, it sinks away (and can't be tapped).
-								<button key={i} type="button" className={`${s.bushSpot} ${b.animal ? "" : s.gone}`} onClick={() => tap(i)}
-									disabled={!b.animal}
+								<button key={i} type="button" className={s.bushSpot} onClick={() => tap(i)}
 									style={{ width: grid.size, height: grid.size / shape }}
-									aria-hidden={!b.animal}
 									aria-label={b.out && b.animal ? `${b.animal.name}: tap to hear it again` : `A ${place.name}. Who's hiding?`}>
 									{/* A window: the room behind it, dark until someone looks out. */}
 									{inside && <span className={s.room} style={{ left: grid.size * 0.25, top: grid.size * 0.25, width: grid.size * 0.5, height: grid.size * 0.57 }} />}
