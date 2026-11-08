@@ -1,15 +1,28 @@
 /* Kid mode's Learn tab (components/learn): big pictures and big buttons in the kid's color (--c). */
 
 /* The games to pick from. */
+/* The space for the games under the name, which the cards size themselves to. */
+.menuArea {
+	flex: 1 1 0;
+	min-height: 8rem;
+	container-type: size;
+}
 .menu {
+	/* Two by two, upright or on its side: square cards, as big as fit the space. */
+	--tile: min(calc((100cqw - 1rem) / 2), calc((100cqh - 1rem) / 2), 22rem);
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-columns: repeat(2, var(--tile));
+	grid-template-rows: repeat(2, var(--tile));
+	justify-content: start;
+	align-content: start;
 	gap: 1rem;
 }
 .gameTile {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	justify-content: center;
+	min-height: 0;
 	gap: 0.4rem;
 	padding: 1rem 0.6rem 0.8rem;
 	border-radius: 1.6rem;
@@ -21,11 +34,11 @@
 	transform: scale(0.96);
 }
 .gamePic {
-	width: min(9rem, 30vw);
-	height: min(9rem, 30vw);
+	width: calc(var(--tile) * 0.55);
+	height: calc(var(--tile) * 0.55);
 }
 .gameName {
-	font-size: 1.25rem;
+	font-size: clamp(1rem, calc(var(--tile) * 0.08), 1.6rem);
 	font-weight: 800;
 	text-align: center;
 }
@@ -43,11 +56,6 @@
 	letter-spacing: 0.04em;
 	/* A light grey, so it doesn't stand out. */
 	color: color-mix(in srgb, var(--muted) 40%, var(--surface));
-}
-@media (min-width: 900px) {
-	.menu {
-		grid-template-columns: repeat(4, minmax(0, 1fr));
-	}
 }
 
 /* Well done. */

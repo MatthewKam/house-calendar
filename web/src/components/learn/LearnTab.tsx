@@ -131,14 +131,17 @@ export default function LearnTab({ kid, today, learn }: { kid: Member; today: st
 	}
 
 	return (
-		<section className={s.menu} aria-label="Games">
-			{learn.games.map(({ game, level }) => (
-				<button key={game} type="button" className={s.gameTile} onClick={() => start(game)}>
-					<Pic id={GAMES[game].picture} className={s.gamePic} />
-					<span className={s.gameName}>{GAMES[game].title}</span>
-					<span className={s.gameLevel} aria-label={`Level ${level}`}>{ROMAN[level - 1] ?? level}</span>
-				</button>
-			))}
+		// The space for the games (the cards size themselves to it), then the games, two by two.
+		<section className={s.menuArea} aria-label="Games">
+			<div className={s.menu}>
+				{learn.games.map(({ game, level }) => (
+					<button key={game} type="button" className={s.gameTile} onClick={() => start(game)}>
+						<Pic id={GAMES[game].picture} className={s.gamePic} />
+						<span className={s.gameName}>{GAMES[game].title}</span>
+						<span className={s.gameLevel} aria-label={`Level ${level}`}>{ROMAN[level - 1] ?? level}</span>
+					</button>
+				))}
+			</div>
 		</section>
 	);
 }
