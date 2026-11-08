@@ -141,6 +141,30 @@ function HowToPlay({ title, how, onClose }: { title: string; how: string[]; onCl
 	);
 }
 
+/**
+ * A game's over: a pop-up over it, the mascot hopping, then play again or back to the games (a level up
+ * says so, for a grown-up to read out).
+ */
+export function Over({ title, note, onAgain, onBack }: { title: string; note?: string; onAgain: () => void; onBack: () => void }) {
+	return (
+		<>
+			<div className={sheet.scrim} role="presentation" />
+			<div className={s.over} role="dialog" aria-modal="true" aria-label={title}>
+				<img className={`${s.mascot} ${s.hop}`} src="/mascot/sprig.png" alt="" />
+				{/* The words and buttons: beside the mascot on a short screen, under it otherwise. */}
+				<div className={s.overText}>
+					<h2 className={s.overTitle}>{title}</h2>
+					{note && <p className={s.note}>{note}</p>}
+					<div className={s.overButtons}>
+						<button type="button" className={s.go} onClick={onAgain}>Play again</button>
+						<button type="button" className={s.quiet} onClick={onBack}>Back to games</button>
+					</div>
+				</div>
+			</div>
+		</>
+	);
+}
+
 /** A big play button, to hear it again (they can't read the words yet). */
 export function Hear({ onTap, label = "Hear it again", size = 88 }: { onTap: () => void; label?: string; size?: number }) {
 	return (

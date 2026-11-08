@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Board } from "./parts";
-import { fresh, shuffle } from "./rounds";
+import { Board, Over } from "./parts";
+import { fresh } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
 /** The two players, taking turns. */
@@ -9,10 +9,9 @@ const PLAYERS = [
 	{ name: "Player 2", color: "#e8590c" },
 ];
 
-/** Teeth in the mouth, and chomps before the hooray. */
+/** Teeth in the mouth. */
 const TEETH = 8;
-const CHOMPS = 3;
-/** How long a chomp lasts: the snap, the laugh, then the mouth opens again (ms). */
+/** How long a chomp lasts: the snap, then the laugh, then Play again? (ms). */
 const SNAP = 450;
 const LAUGH = 1400;
 
@@ -28,22 +27,20 @@ const ANIMALS: { id: string; name: string; skin: string; belly: string; extra: (
 
 /**
  * Chomp! (a game for two, a toddler and a sibling or grown-up): a big animal, its mouth shut until
- * Ready! opens it. Take turns pressing a tooth down; one of them makes the mouth snap shut, a surprise, never a loss: the
- * animal laughs, the one who got chomped laughs too, and the teeth pop back up, mouth shut, until Ready!
- * opens it for another go. A few
- * chomps, then the hooray. A new animal each game.
+ * Ready! opens it. Take turns pressing a tooth down; one of them makes the mouth snap shut, a surprise,
+ * never a loss: the animal laughs, and that's the game. Then a pop-up: play again (a new animal), or back
+ * to the games.
  */
-export default function Chomp({ onDone, onBack }: { onDone: () => void; onBack: () => void }) {
+export default function Chomp({ onAgain, onBack }: { onAgain: () => void; onBack: () => void }) {
 	const players = PLAYERS;
 	const animal = useMemo(() => fresh("chomp.animals", ANIMALS, 1, (a) => a.id)[0], []);
 	const [pressed, setPressed] = useState<number[]>([]);
-	const [chompTooth, setChompTooth] = useState(() => Math.floor(Math.random() * TEETH));
+	const [chompTooth] = useState(() => Math.floor(Math.random() * TEETH));
 	const [turn, setTurn] = useState(() => Math.floor(Math.random() * players.length));
 	const [chomped, setChomped] = useState<number | null>(null);
 	const [laughing, setLaughing] = useState(false);
-	const [chomps, setChomps] = useState(0);
-	const [cheer, setCheer] = useState(false);
-	// The mouth starts shut, with Ready! to open it; after each chomp it stays shut until Ready! again.
+	const [over, setOver] = useState(false);
+	// The mouth starts shut, with Ready! to open it.
 	const [open, setOpen] = useState(false);
 	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 	const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(fn, ms));
@@ -51,33 +48,20 @@ export default function Chomp({ onDone, onBack }: { onDone: () => void; onBack: 
 	const closed = !open || chomped !== null;
 
 	function press(i: number) {
-		if (closed || cheer || pressed.includes(i)) return;
+		if (closed || pressed.includes(i)) return;
 		setPressed([...pressed, i]);
 		if (i !== chompTooth) {
 			setTurn((t) => (t + 1) % players.length);
 			return;
 		}
-		// Chomp! The mouth snaps shut on whoever's turn it was; a laugh; then open again, teeth up.
+		// Chomp! The mouth snaps shut on whoever's turn it was; a laugh; then Play again?
 		setChomped(turn);
 		later(() => setLaughing(true), SNAP);
-		later(() => {
-			const now = chomps + 1;
-			setChomps(now);
-			setLaughing(false);
-			setChomped(null);
-			setOpen(false);
-			setPressed([]);
-			setChompTooth(shuffle(Array.from({ length: TEETH }, (_, k) => k)).find((k) => k !== i) ?? 0);
-			setTurn((t) => (t + 1) % players.length);
-			if (now >= CHOMPS) {
-				setCheer(true);
-				later(onDone, 2200);
-			}
-		}, SNAP + LAUGH);
+		later(() => setOver(true), SNAP + LAUGH);
 	}
 
 	return (
-		<Board onBack={onBack} total={CHOMPS} done={chomps} cheer={cheer}>
+		<Board onBack={onBack}>
 			{(box) => {
 				const tagSize = Math.min(64, Math.max(44, box.h * 0.08));
 				// The drawing's frame has room above for the top jaw swung open.
@@ -95,7 +79,7 @@ export default function Chomp({ onDone, onBack }: { onDone: () => void; onBack: 
 							))}
 						</div>
 						{/* Ready? Opens the mouth to start (and again after each chomp). */}
-						{!open && !cheer && chomped === null && (
+						{!open && (
 							<button type="button" className={`${s.go} ${s.chompReady} ${s.pop}`} onClick={() => setOpen(true)}>
 								Ready!
 							</button>
@@ -146,6 +130,8 @@ export default function Chomp({ onDone, onBack }: { onDone: () => void; onBack: 
 								)}
 							</g>
 						</svg>
+						{/* The game's over: again, or back to the games. */}
+						{over && <Over title="Chomp!" onAgain={onAgain} onBack={onBack} />}
 					</div>
 				);
 			}}

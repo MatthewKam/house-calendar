@@ -13,7 +13,7 @@ import Memory from "./Memory";
 import Peekaboo from "./Peekaboo";
 import Sounds from "./Sounds";
 import Chomp from "./Chomp";
-import { HowTo } from "./parts";
+import { HowTo, Over } from "./parts";
 import type { GameProps } from "./rounds";
 import { hush, setRecorded } from "./sound";
 import s from "../../styles/Learn.module.css";
@@ -23,8 +23,8 @@ const CHOMP_HOW = {
 	title: "Chomp!",
 	how: [
 		"Take turns, Player 1 and Player 2: the one lit up says whose turn it is. Tap a tooth to press it down.",
-		"One tooth makes the mouth snap shut: Chomp! It's a funny surprise, not losing. Then the teeth pop back up.",
-		"After three chomps, hooray. A new animal each time: crocodile, alligator, shark, dinosaur, hippo or lion.",
+		"One tooth makes the mouth snap shut: Chomp! It's a funny surprise, not losing, and that's the game.",
+		"Then play again (a new animal each time: crocodile, alligator, shark, dinosaur, hippo or lion), or back to the games.",
 	],
 };
 
@@ -80,16 +80,24 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
  * of it. At the end: a cheer, play again, or back to the games. A few perfect plays move a game up a
  * level (the server decides), and that gets a cheer of its own. No stars: it's for learning.
  */
-export default function LearnTab({ kid, today, learn }: { kid: Member; today: string; learn: LearnState }) {
+export default function LearnTab({ kid, today, learn, together }: {
+	kid: Member;
+	today: string;
+	learn: LearnState;
+	/** The Both switch is on: show the games for two instead of the kid's own. */
+	together: boolean;
+}) {
 	const qc = useQueryClient();
 	// A learning game, or one of the games for two ("chomp"), which have no levels and aren't saved.
 	const [playing, setPlaying] = useState<Game | "chomp" | null>(null);
 	const [plays, setPlays] = useState(0);
-	const [result, setResult] = useState<{ game: Game | "chomp"; leveledUp: boolean } | null>(null);
+	// A game just finished: the pop-up over it, and whether it moved up a level.
+	const [result, setResult] = useState<{ game: Game; leveledUp: boolean } | null>(null);
 	const done = useMutation({
 		mutationFn: ({ game, level, rounds, firstTry }: { game: Game; level: number; rounds: number; firstTry: number }) =>
 			api.learnDone(kid.id, { today, game, level, rounds, firstTry }),
-		onSuccess: (r, { game }) => setResult({ game, leveledUp: r.leveledUp }),
+		// Only while its pop-up's up (not once they've gone back, or on to the next play).
+		onSuccess: (r, { game }) => setResult((now) => (now?.game === game ? { game, leveledUp: r.leveledUp } : now)),
 		onSettled: () => qc.invalidateQueries({ queryKey: keys.learn(today) }),
 	});
 	// A grown-up's own animal noises, played instead of the built-in ones.
@@ -104,15 +112,18 @@ export default function LearnTab({ kid, today, learn }: { kid: Member; today: st
 		setPlaying(game);
 	}
 
+	function back() {
+		hush();
+		setResult(null);
+		setPlaying(null);
+	}
+
 	if (playing === "chomp") {
 		return (
 			<HowTo.Provider value={CHOMP_HOW}>
 				<Chomp key={plays}
 					onBack={() => setPlaying(null)}
-					onDone={() => {
-						setPlaying(null);
-						setResult({ game: "chomp", leveledUp: false });
-					}} />
+					onAgain={() => start("chomp")} />
 			</HowTo.Provider>
 		);
 	}
@@ -124,57 +135,40 @@ export default function LearnTab({ kid, today, learn }: { kid: Member; today: st
 			<HowTo.Provider value={{ title, how }}>
 			{/* A new key each play, so it starts fresh with new pictures. */}
 			<Play key={plays} level={level}
-				onBack={() => {
-					hush();
-					setPlaying(null);
-				}}
+				onBack={back}
 				onDone={(rounds, firstTry) => {
-					setPlaying(null);
 					setResult({ game: playing, leveledUp: false });
 					done.mutate({ game: playing, level, rounds, firstTry });
 				}} />
+			{/* Done: the pop-up over the finished game. */}
+			{result && (
+				<Over title={result.leveledUp ? "New level!" : "You did it!"}
+					note={done.isError ? `Couldn't save that: ${done.error.message}` : result.leveledUp ? "It gets a little trickier next time." : undefined}
+					onAgain={() => start(playing)} onBack={back} />
+			)}
 			</HowTo.Provider>
 		);
 	}
 
-	if (result) {
-		return (
-			<section className={s.start} aria-label="Well done">
-				<img className={`${s.mascot} ${s.hop}`} src="/mascot/sprig.png" alt="" />
-				{/* The words and buttons: beside the mascot on a short screen, under it otherwise. */}
-				<div className={s.startText}>
-					<h2 className={s.startTitle}>{result.leveledUp ? "New level!" : "You did it!"}</h2>
-					{result.leveledUp && <p className={s.note}>It gets a little trickier next time.</p>}
-					{done.isError && result.game !== "chomp" && <p className={s.note}>Couldn't save that: {done.error.message}</p>}
-					<div className={s.startButtons}>
-						<button type="button" className={s.go} onClick={() => start(result.game)}>Play again</button>
-						<button type="button" className={s.quiet} onClick={() => setResult(null)}>Other games</button>
-					</div>
-				</div>
-			</section>
-		);
-	}
-
 	return (
-		// The space for the games (the cards size themselves to it), then the games, two by two.
-		<section className={s.menuArea} aria-label="Games">
+		// The space for the games (the cards size themselves to it), then the games, two by two: the kid's
+		// own, or with Both on, the games for two (just for fun, no levels).
+		<section className={s.menuArea} aria-label={together ? "Games for two" : "Games"}>
 			<div className={s.menu}>
-				{learn.games.map(({ game, level }) => (
-					<button key={game} type="button" className={s.gameTile} onClick={() => start(game)}>
-						<Pic id={GAMES[game].picture} className={s.gamePic} />
-						<span className={s.gameName}>{GAMES[game].title}</span>
-						<span className={s.gameLevel} aria-label={`Level ${level}`}>{ROMAN[level - 1] ?? level}</span>
+				{together ? (
+					<button type="button" className={s.gameTile} onClick={() => start("chomp")}>
+						<Pic id="crocodile" className={s.gamePic} />
+						<span className={s.gameName}>Chomp!</span>
 					</button>
-				))}
-			</div>
-			{/* Games for two, taking turns: just for fun (no levels). */}
-			<div className={s.together}>
-				<h2 className={s.togetherHead}>Play together</h2>
-				<button type="button" className={s.togetherTile} onClick={() => start("chomp")}>
-					<Pic id="crocodile" className={s.togetherPic} />
-					<span className={s.gameName}>Chomp!</span>
-					<span className={s.togetherNote}>2 players</span>
-				</button>
+				) : (
+					learn.games.map(({ game, level }) => (
+						<button key={game} type="button" className={s.gameTile} onClick={() => start(game)}>
+							<Pic id={GAMES[game].picture} className={s.gamePic} />
+							<span className={s.gameName}>{GAMES[game].title}</span>
+							<span className={s.gameLevel} aria-label={`Level ${level}`}>{ROMAN[level - 1] ?? level}</span>
+						</button>
+					))
+				)}
 			</div>
 		</section>
 	);

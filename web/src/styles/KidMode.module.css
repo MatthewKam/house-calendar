@@ -154,6 +154,11 @@
 	/* Raised a little, like the selected tab in the grown-ups' bar. */
 	box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 2px 6px rgb(0 0 0 / 0.08);
 }
+/* Learn's Both switch: like the names, in a color of its own. */
+.bothSwitch {
+	--c: #7a5cc8;
+	--on: #fff;
+}
 .face[aria-checked="true"] .knob {
 	left: calc(100% - var(--knob) - 0.35rem);
 }

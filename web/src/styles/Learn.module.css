@@ -9,8 +9,7 @@
 }
 .menu {
 	/* Two by two, upright or on its side: square cards, as big as fit the space. */
-	/* Leaving room under them for Play together. */
-	--tile: min(calc((100cqw - 1rem) / 2), calc((100cqh - 1rem - 8.5rem) / 2), 22rem);
+	--tile: min(calc((100cqw - 1rem) / 2), calc((100cqh - 1rem) / 2), 22rem);
 	display: grid;
 	grid-template-columns: repeat(2, var(--tile));
 	grid-template-rows: repeat(2, var(--tile));
@@ -59,46 +58,15 @@
 	color: color-mix(in srgb, var(--muted) 40%, var(--surface));
 }
 
-/* Play together: games for two, under the learning games. */
-.together {
-	display: flex;
-	flex-direction: column;
-	gap: 0.4rem;
-	margin-top: 1rem;
-}
-.togetherHead {
-	margin: 0;
-	font-size: 1rem;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-	color: var(--muted);
-}
-.togetherTile {
-	align-self: flex-start;
-	display: flex;
-	align-items: center;
-	gap: 0.8rem;
-	height: 5.5rem;
-	padding: 0.4rem 1.4rem 0.4rem 0.6rem;
-	border-radius: 1.4rem;
-	background: var(--surface);
-	box-shadow: 0 0.4rem 1.2rem rgb(29 31 35 / 0.08);
-	transition: transform 0.15s ease;
-}
-.togetherTile:active {
-	transform: scale(0.96);
-}
-.togetherPic {
-	width: 4.6rem;
-	height: 4.6rem;
-}
-.togetherNote {
-	color: var(--muted);
-	font-weight: 700;
-}
-
-/* Well done. */
-.start {
+/* A game's over: the pop-up over it, the mascot then the words and buttons. */
+.over {
+	position: fixed;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 21;
+	width: max-content;
+	max-width: calc(100vw - 2rem);
 	-webkit-user-select: none;
 	user-select: none;
 	-webkit-touch-callout: none;
@@ -106,16 +74,18 @@
 	flex-direction: column;
 	align-items: center;
 	gap: 1rem;
-	padding: 1.5rem 1rem;
+	padding: 1.5rem;
 	border-radius: 1.6rem;
 	background: var(--surface);
+	box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.25);
 	text-align: center;
 }
 .mascot {
 	width: auto;
-	height: min(12rem, 34vh);
+	height: min(10rem, 26vh);
+	-webkit-user-drag: none;
 }
-.startText {
+.overText {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -123,25 +93,28 @@
 }
 /* On its side: the mascot on the left, the words and buttons beside it, so the buttons aren't cut off. */
 @media (orientation: landscape) and (max-height: 760px) {
-	.start {
+	.over {
 		flex-direction: row;
-		justify-content: center;
-		gap: 2.5rem;
+		gap: 2rem;
 		padding: 1rem 1.5rem;
 	}
 	.mascot {
-		height: min(12rem, 42vh);
+		height: min(10rem, 40vh);
 	}
 }
-.startTitle {
+.overTitle {
 	margin: 0;
 	font-size: 2rem;
 }
-.startButtons {
+.overButtons {
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: center;
 	gap: 0.8rem;
+}
+/* Full-size buttons, even over a game (whose pieces have no minimum height). */
+.over .overButtons button {
+	min-height: 3.8rem;
 }
 .go {
 	min-width: 12rem;
@@ -1357,7 +1330,6 @@
 
 /* No dragging the pictures (the mascot, the drawings) out. */
 .board img,
-.board svg,
-.start img {
+.board svg {
 	-webkit-user-drag: none;
 }
