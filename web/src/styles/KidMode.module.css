@@ -723,8 +723,12 @@
 		gap: 0.4rem 1rem;
 		padding: 0.5rem 0.9rem;
 	}
+	/* The circles take the rest of the row (on their own they'd shrink to their smallest). */
+	.punches {
+		flex: 1 1 auto;
+	}
 	.punch {
-		flex-basis: 2rem;
+		flex-basis: 2.2rem;
 	}
 	.pottyHead {
 		min-height: 2.8rem;
