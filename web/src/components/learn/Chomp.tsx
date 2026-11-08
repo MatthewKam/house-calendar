@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
 import { Board } from "./parts";
+import { fresh } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
 /** The two players, taking turns. */
@@ -25,8 +26,8 @@ interface Animal {
 	teeth: [number, number, number, number][];
 }
 
-/** The animals, each its own card (more to come, each drawn the same way). */
-export const ANIMALS: Animal[] = [
+/** The animals, one picked each time Chomp! starts (more to come, each drawn the same way). */
+const ANIMALS: Animal[] = [
 	{
 		id: "shark", name: "Shark", frame: [1000, 914],
 		teeth: [
@@ -43,6 +44,9 @@ export const ANIMALS: Animal[] = [
 	},
 ];
 
+/** Which animal this time: a different one from last time. (Called once, when Chomp! is started.) */
+export const pickAnimal = () => fresh("chomp.animals", ANIMALS, 1, (a) => a.id)[0].id;
+
 /** How long the nudge to tap a bottom tooth stays up (ms). */
 const HINT = 1800;
 
@@ -50,8 +54,8 @@ const HINT = 1800;
     teeth are both that close, the nearer one gets it. */
 const REACH = 18;
 
-/** An animal's picture on its card: mouth open, all its teeth in. */
-export function ChompPic({ animal, className }: { animal: string; className?: string }) {
+/** Chomp!'s picture on its card (the shark, or another animal): mouth open, all its teeth in. */
+export function ChompPic({ animal = "shark", className }: { animal?: string; className?: string }) {
 	const a = ANIMALS.find((x) => x.id === animal) ?? ANIMALS[0];
 	const [fw, fh] = a.frame;
 	return (
@@ -63,7 +67,8 @@ export function ChompPic({ animal, className }: { animal: string; className?: st
 }
 
 /**
- * Chomp! (a game for two, a toddler and a sibling or grown-up): a big animal grinning, Ready! to open its
+ * Chomp! (a game for two, a toddler and a sibling or grown-up): a big animal (a shark or a T-rex, picked
+ * each time) grinning, Ready! to open its
  * mouth wide. Take turns pressing a bottom tooth (each shakes and goes); one of them makes the mouth snap
  * shut: Chomp! The other player wins. A few seconds on, it grins again, Ready! for another go.
  */

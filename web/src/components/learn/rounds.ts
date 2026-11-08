@@ -35,8 +35,12 @@ export function fresh<T>(memory: string, list: readonly T[], n: number, idOf: (t
 		// Not kept (a private window, say): every pick's just random.
 	}
 	const unseen = list.filter((t) => !seen.includes(idOf(t)));
-	// Not enough new ones left: those, then start over with the rest.
-	const picked = unseen.length >= n ? pick(unseen, n) : [...shuffle(unseen), ...pick(list.filter((t) => !unseen.includes(t)), n - unseen.length)];
+	// Not enough new ones left: those, then start over with the rest (not the very last one again, if
+	// there are enough others).
+	const rest = list.filter((t) => !unseen.includes(t));
+	const notLast = rest.filter((t) => idOf(t) !== seen[seen.length - 1]);
+	const again = notLast.length >= n - unseen.length ? notLast : rest;
+	const picked = unseen.length >= n ? pick(unseen, n) : [...shuffle(unseen), ...pick(again, n - unseen.length)];
 	const now = unseen.length >= n ? [...seen, ...picked.map(idOf)] : picked.map(idOf);
 	try {
 		localStorage.setItem(key, JSON.stringify(now));

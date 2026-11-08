@@ -12,15 +12,11 @@ import Maze from "./Maze";
 import Memory from "./Memory";
 import Peekaboo from "./Peekaboo";
 import Sounds from "./Sounds";
-import Chomp, { ANIMALS as CHOMPERS, ChompPic } from "./Chomp";
+import Chomp, { ChompPic, pickAnimal } from "./Chomp";
 import { HowTo, Over } from "./parts";
 import type { GameProps } from "./rounds";
 import { hush, setRecorded } from "./sound";
 import s from "../../styles/Learn.module.css";
-
-/** Chomp! with an animal ("chomp:shark"), rather than a learning game. */
-type Chomping = `chomp:${string}`;
-const isChomp = (game: Game | Chomping): game is Chomping => game.startsWith("chomp:");
 
 /** How to play Chomp! (a game for two), for a grown-up to explain. */
 const CHOMP_HOW = {
@@ -92,10 +88,11 @@ export default function LearnTab({ kid, today, learn, together }: {
 	together: boolean;
 }) {
 	const qc = useQueryClient();
-	// A learning game, or one of the games for two (Chomp!, with which animal), which have no levels and
-	// aren't saved.
-	const [playing, setPlaying] = useState<Game | Chomping | null>(null);
+	// A learning game, or one of the games for two ("chomp"), which have no levels and aren't saved.
+	const [playing, setPlaying] = useState<Game | "chomp" | null>(null);
 	const [plays, setPlays] = useState(0);
+	// Chomp!'s animal this time (picked as it starts).
+	const [chomper, setChomper] = useState("shark");
 	// A game just finished: the pop-up over it, and whether it moved up a level.
 	const [result, setResult] = useState<{ game: Game; leveledUp: boolean } | null>(null);
 	const done = useMutation({
@@ -110,10 +107,11 @@ export default function LearnTab({ kid, today, learn, together }: {
 	useEffect(() => setRecorded(sounds ?? []), [sounds]);
 	const levelOf = (game: Game) => learn.games.find((g) => g.game === game)?.level ?? 1;
 
-	function start(game: Game | Chomping) {
+	function start(game: Game | "chomp") {
 		hush();
 		setResult(null);
 		setPlays((n) => n + 1);
+		if (game === "chomp") setChomper(pickAnimal());
 		setPlaying(game);
 	}
 
@@ -123,10 +121,10 @@ export default function LearnTab({ kid, today, learn, together }: {
 		setPlaying(null);
 	}
 
-	if (playing && isChomp(playing)) {
+	if (playing === "chomp") {
 		return (
 			<HowTo.Provider value={CHOMP_HOW}>
-				<Chomp key={plays} animal={playing.slice("chomp:".length)} onBack={() => setPlaying(null)} />
+				<Chomp key={plays} animal={chomper} onBack={() => setPlaying(null)} />
 			</HowTo.Provider>
 		);
 	}
@@ -159,12 +157,10 @@ export default function LearnTab({ kid, today, learn, together }: {
 		<section className={s.menuArea} aria-label={together ? "Games for two" : "Games"}>
 			<div className={s.menu}>
 				{together ? (
-					CHOMPERS.map((a) => (
-						<button key={a.id} type="button" className={s.gameTile} onClick={() => start(`chomp:${a.id}`)}>
-							<ChompPic animal={a.id} className={s.gamePic} />
-							<span className={s.gameName}>{a.name} Chomp!</span>
-						</button>
-					))
+					<button type="button" className={s.gameTile} onClick={() => start("chomp")}>
+						<ChompPic className={s.gamePic} />
+						<span className={s.gameName}>Chomp!</span>
+					</button>
 				) : (
 					learn.games.map(({ game, level }) => (
 						<button key={game} type="button" className={s.gameTile} onClick={() => start(game)}>
