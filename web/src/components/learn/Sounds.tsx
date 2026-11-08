@@ -67,7 +67,11 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 				const lines = [1, 2, 3].find((n) => sizeFor(n) >= 30) ?? 3;
 				const font = Math.floor(sizeFor(lines));
 				const prompt = Math.max(button, lines * font * 1.15 + 8);
-				const grid = fit(choices.length, { w: box.w, h: box.h - prompt - 24 }, { gap: 16, most: 300 });
+				// On its side, the animals in one row, as big as fits; upright, the grid that fits best.
+				const wide = box.w > box.h;
+				const grid = wide
+					? { cols: choices.length, size: Math.floor(Math.min((box.w - 16 * (choices.length - 1)) / choices.length, box.h - prompt - 24, 340)) }
+					: fit(choices.length, { w: box.w, h: box.h - prompt - 24 }, { gap: 16, most: 300 });
 				return (
 					<div className={s.column}>
 						{/* The noise as a word, and the play button beside it if they need to hear it. */}
