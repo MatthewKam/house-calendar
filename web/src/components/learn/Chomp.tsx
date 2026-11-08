@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import { Board } from "./parts";
 import { fresh } from "./rounds";
 import s from "../../styles/Learn.module.css";
@@ -135,8 +135,8 @@ export default function Chomp({ animal: id, onBack }: { animal: string; onBack: 
 	const [hint, setHint] = useState(0);
 	const hintTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 	useEffect(() => () => clearTimeout(hintTimer.current), []);
-	function missed() {
-		if (closed) return;
+	function missed(e?: PointerEvent) {
+		if (closed || (e && (!e.isPrimary || e.button !== 0))) return;
 		setHint((n) => n + 1);
 		clearTimeout(hintTimer.current);
 		hintTimer.current = setTimeout(() => setHint(0), HINT);
@@ -147,12 +147,15 @@ export default function Chomp({ animal: id, onBack }: { animal: string; onBack: 
 		new Image().src = `${ART}/${animal.id}/chomped.webp`;
 	}, [animal]);
 
-	// A tap on the mouth: the tooth nearest the finger, if one's close enough (otherwise it's a miss, and the
-	// nudge).
-	function tapMouth(e: MouseEvent<SVGSVGElement>) {
-		if (closed) return;
-		const svg = e.currentTarget;
-		const at = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM()!.inverse());
+	// A finger (or mouse) down on the mouth: the tooth nearest it, if one's close enough (otherwise it's a
+	// miss, and the nudge). On the press itself, not a click: Safari drops the click for a slow press, or on
+	// a picture that isn't a button. Where it is from the picture's box on screen, which stays right when
+	// the phone turns or the window resizes (Safari's getScreenCTM goes wrong once the page has shifted).
+	function tapMouth(e: PointerEvent<SVGSVGElement>) {
+		if (closed || !e.isPrimary || e.button !== 0) return;
+		const box = e.currentTarget.getBoundingClientRect();
+		const [fw, fh] = animal.frame;
+		const at = { x: ((e.clientX - box.left) / box.width) * fw, y: ((e.clientY - box.top) / box.height) * fh };
 		// Nearest: the least gap to the tooth's edge, then (on or between overlapping teeth) to its middle.
 		let best = -1;
 		let bestGap = REACH;
@@ -227,11 +230,11 @@ export default function Chomp({ animal: id, onBack }: { animal: string; onBack: 
 				);
 				return (
 					// Anywhere but a tooth (while the mouth's open): the nudge.
-					<div className={sides ? s.chompSides : s.column} onClick={missed}>
+					<div className={sides ? s.chompSides : s.column} onPointerDown={missed}>
 						{sides ? tag(0) : <div className={s.chompPlayers} style={{ height: tagSize }}>{players.map((_, i) => tag(i))}</div>}
 						<div className={s.chompStage} style={{ width }}>
 							<svg className={`${s.chompHead} ${laughing ? s.chompLaugh : ""}`} viewBox={`0 0 ${fw} ${fh}`}
-								role="img" aria-label={`${animal.name}, mouth ${closed ? "shut" : "open"}`} onClick={tapMouth}>
+								role="img" aria-label={`${animal.name}, mouth ${closed ? "shut" : "open"}`} onPointerDown={tapMouth}>
 								{/* Grinning, open wide, and chomped, all there so the snap doesn't wait for a picture. */}
 								<image href={`${ART}/${animal.id}/shut.webp`} width={fw} height={fh} opacity={!open ? 1 : 0} />
 								<image href={`${ART}/${animal.id}/open.webp`} width={fw} height={fh} opacity={open && chomped === null ? 1 : 0} />
@@ -245,7 +248,7 @@ export default function Chomp({ animal: id, onBack }: { animal: string; onBack: 
 											<g key={i} className={s.toothHit} role="button" tabIndex={closed ? -1 : 0}
 												aria-label={`Tooth ${i + 1}${down ? ", pressed" : ""}`}
 												onClick={(e) => {
-													// A finger's tap goes to the nearest tooth (above); this is for a click with no
+													// A finger's press goes to the nearest tooth (above); this is for a click with no
 													// pointer, like a screen reader's.
 													if (e.detail !== 0 || down) return;
 													e.stopPropagation();
