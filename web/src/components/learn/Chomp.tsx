@@ -97,7 +97,8 @@ export function ChompPic({ animal = "shark", className }: { animal?: string; cla
  */
 export default function Chomp({ animal: id, onBack }: { animal: string; onBack: () => void }) {
 	const players = PLAYERS;
-	const animal = ANIMALS.find((a) => a.id === id) ?? ANIMALS[0];
+	// The animal: the one picked as Chomp! started, then a new one each game.
+	const [animal, setAnimal] = useState(() => ANIMALS.find((a) => a.id === id) ?? ANIMALS[0]);
 	const [pressed, setPressed] = useState<number[]>([]);
 	const [chompTooth, setChompTooth] = useState(() => Math.floor(Math.random() * animal.teeth.length));
 	// Player 1 starts the first game; then they take turns starting.
@@ -166,16 +167,21 @@ export default function Chomp({ animal: id, onBack }: { animal: string; onBack: 
 		const got = turn;
 		setChomped(got);
 		setLastWinner((got + 1) % players.length);
+		// The next game's animal, its pictures loading while this one laughs.
+		const nextId = pickAnimal();
+		const next = ANIMALS.find((a) => a.id === nextId) ?? animal;
+		for (const art of ["shut.webp", "open.webp", ...next.teeth.map((_, k) => `bottom-${k + 1}.png`)]) new Image().src = `${ART}/${next.id}/${art}`;
 		later(() => setLaughing(true), SNAP);
 		later(() => {
 			setLaughing(false);
 			setChomped(null);
 			setOpen(false);
 			setPressed([]);
-			setChompTooth(Math.floor(Math.random() * animal.teeth.length));
-			const next = (starter + 1) % players.length;
-			setStarter(next);
-			setTurn(next);
+			setAnimal(next);
+			setChompTooth(Math.floor(Math.random() * next.teeth.length));
+			const first = (starter + 1) % players.length;
+			setStarter(first);
+			setTurn(first);
 		}, PAUSE);
 	}
 
