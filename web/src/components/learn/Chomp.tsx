@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent } from "react";
-import { Board, Over } from "./parts";
+import { Board } from "./parts";
 import { fresh } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
@@ -9,9 +9,9 @@ const PLAYERS = [
 	{ name: "Player 2", color: "#e8590c" },
 ];
 
-/** How long a chomp lasts: the snap, then the laugh, then Play again? (ms). */
+/** A chomp (ms): the snap, then the laugh; then, a few seconds on, the grin and Ready! for another go. */
 const SNAP = 450;
-const LAUGH = 1400;
+const PAUSE = 3500;
 
 /** The art (web/public/chomp): Ready!, the Chomp! burst, and a folder for each animal. */
 const ART = "/chomp";
@@ -57,25 +57,30 @@ export function ChompPic({ className }: { className?: string }) {
 }
 
 /**
- * Chomp! (a game for two, a toddler and a sibling or grown-up): a big animal, its mouth shut until
- * Ready! opens it. Take turns pressing a tooth down; one of them makes the mouth snap shut, a surprise,
- * never a loss: the animal laughs, and that's the game. Then a pop-up: play again, or back to the games.
+ * Chomp! (a game for two, a toddler and a sibling or grown-up): a big animal grinning, Ready! to open its
+ * mouth wide. Take turns pressing a bottom tooth (each shakes and goes); one of them makes the mouth snap
+ * shut: Chomp! The other player wins. A few seconds on, it grins again, Ready! for another go.
  */
-export default function Chomp({ onAgain, onBack }: { onAgain: () => void; onBack: () => void }) {
+export default function Chomp({ onBack }: { onBack: () => void }) {
 	const players = PLAYERS;
 	const animal = useMemo(() => fresh("chomp.animals", ANIMALS, 1, (a) => a.id)[0], []);
 	const [pressed, setPressed] = useState<number[]>([]);
-	const [chompTooth] = useState(() => Math.floor(Math.random() * animal.teeth.length));
-	const [turn, setTurn] = useState(() => Math.floor(Math.random() * players.length));
+	const [chompTooth, setChompTooth] = useState(() => Math.floor(Math.random() * animal.teeth.length));
+	// Player 1 starts the first game; then they take turns starting.
+	const [starter, setStarter] = useState(0);
+	const [turn, setTurn] = useState(0);
+	// Who got chomped (the other one wins).
 	const [chomped, setChomped] = useState<number | null>(null);
 	const [laughing, setLaughing] = useState(false);
-	const [over, setOver] = useState(false);
-	// The mouth starts shut, with Ready! to open it.
+	// The mouth: grinning shut with Ready! to open it, open wide, or chomped.
 	const [open, setOpen] = useState(false);
 	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 	const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(fn, ms));
 	useEffect(() => () => timers.current.forEach(clearTimeout), []);
 	const closed = !open || chomped !== null;
+	const winner = chomped === null ? null : (chomped + 1) % players.length;
+	// Who won the game before, shown under the grin until the next one's won.
+	const [lastWinner, setLastWinner] = useState<number | null>(null);
 	// A tap that missed the teeth: a nudge to tap a bottom one (a new number each time, so it starts over).
 	const [hint, setHint] = useState(0);
 	const hintTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -86,10 +91,11 @@ export default function Chomp({ onAgain, onBack }: { onAgain: () => void; onBack
 		clearTimeout(hintTimer.current);
 		hintTimer.current = setTimeout(() => setHint(0), HINT);
 	}
-	// The burst comes up only after a while: have it ready.
+	// The chomped face and the burst come up only later: have them ready.
 	useEffect(() => {
 		new Image().src = `${ART}/chomp.webp`;
-	}, []);
+		new Image().src = `${ART}/${animal.id}/chomped.webp`;
+	}, [animal]);
 
 	// A tap on the mouth: the tooth nearest the finger, if one's close enough (otherwise it's a miss, and the
 	// nudge).
@@ -121,26 +127,46 @@ export default function Chomp({ onAgain, onBack }: { onAgain: () => void; onBack
 			setTurn((t) => (t + 1) % players.length);
 			return;
 		}
-		// Chomp! The mouth snaps shut on whoever's turn it was; a laugh; then Play again?
-		setChomped(turn);
+		// Chomp! The mouth snaps shut on whoever's turn it was, and the other one wins; a laugh; then, a few
+		// seconds on, it grins again, teeth back, Ready! for another go (the other player starts it).
+		const got = turn;
+		setChomped(got);
+		setLastWinner((got + 1) % players.length);
 		later(() => setLaughing(true), SNAP);
-		later(() => setOver(true), SNAP + LAUGH);
+		later(() => {
+			setLaughing(false);
+			setChomped(null);
+			setOpen(false);
+			setPressed([]);
+			setChompTooth(Math.floor(Math.random() * animal.teeth.length));
+			const next = (starter + 1) % players.length;
+			setStarter(next);
+			setTurn(next);
+		}, PAUSE);
 	}
 
 	return (
 		<Board onBack={onBack}>
 			{(box) => {
-				const tagSize = Math.min(64, Math.max(44, box.h * 0.08));
+				const tagSize = Math.min(72, Math.max(48, box.h * 0.085));
 				const [fw, fh] = animal.frame;
 				// A wide, short screen (a phone on its side): the players either side of the head, so it gets the
 				// whole height; otherwise above it.
 				const sides = box.w > box.h * 1.6;
-				const width = sides ? Math.min(box.w - 2 * (tagSize * 3 + 16), box.h * (fw / fh)) : Math.min(box.w, (box.h - tagSize - 24) * (fw / fh));
-				// Whose turn: each player's name in their color; the one up is big and bright. Who just got chomped
-				// bounces.
+				// The tags' text: as big as fits two side by side (each about 8.5 of its letters wide), or one either
+				// side of the head.
+				const tagFont = Math.min(tagSize * 0.4, sides ? 22 : (box.w - 48) / 18);
+				// Room under the head for who won.
+				const stamp = 28;
+				const width = sides
+					? Math.min(box.w - 2 * (tagFont * 9 + 16), (box.h - stamp) * (fw / fh))
+					: Math.min(box.w, (box.h - tagSize - 24 - stamp) * (fw / fh));
+				// Each player: their number in a badge and their name, in their color. Whose turn it is lifts up,
+				// lit in their color; the winner of a chomp bounces.
 				const tag = (i: number) => (
-					<span key={i} className={`${s.chompTag} ${i === turn && !closed ? s.chompUp : ""} ${chomped === i ? s.chompGot : ""}`}
-						style={{ "--pc": players[i].color, fontSize: tagSize * 0.42 } as CSSProperties}>
+					<span key={i} className={`${s.chompTag} ${(i === turn && !closed) || i === winner ? s.chompUp : ""} ${i === winner ? s.chompWin : ""}`}
+						style={{ "--pc": players[i].color, fontSize: tagFont } as CSSProperties}>
+						<span className={s.chompBadge}>{i + 1}</span>
 						{players[i].name}
 					</span>
 				);
@@ -151,9 +177,10 @@ export default function Chomp({ onAgain, onBack }: { onAgain: () => void; onBack
 						<div className={s.chompStage} style={{ width }}>
 							<svg className={`${s.chompHead} ${laughing ? s.chompLaugh : ""}`} viewBox={`0 0 ${fw} ${fh}`}
 								role="img" aria-label={`${animal.name}, mouth ${closed ? "shut" : "open"}`} onClick={tapMouth}>
-								{/* Open and shut, both there so the snap doesn't wait for a picture to load. */}
-								<image href={`${ART}/${animal.id}/open.webp`} width={fw} height={fh} opacity={closed ? 0 : 1} />
-								<image href={`${ART}/${animal.id}/shut.webp`} width={fw} height={fh} opacity={closed ? 1 : 0} />
+								{/* Grinning, open wide, and chomped, all there so the snap doesn't wait for a picture. */}
+								<image href={`${ART}/${animal.id}/shut.webp`} width={fw} height={fh} opacity={!open ? 1 : 0} />
+								<image href={`${ART}/${animal.id}/open.webp`} width={fw} height={fh} opacity={open && chomped === null ? 1 : 0} />
+								<image href={`${ART}/${animal.id}/chomped.webp`} width={fw} height={fh} opacity={open && chomped !== null ? 1 : 0} />
 								{/* The bottom teeth, to press (only while it's open; the top ones are in the picture). */}
 								{/* (Two nudges, taking turns, so each miss starts the pulse over.) */}
 								<g className={closed ? s.teethHidden : hint ? (hint % 2 ? s.teethNudge : s.teethNudgeAgain) : undefined}>
@@ -185,11 +212,23 @@ export default function Chomp({ onAgain, onBack }: { onAgain: () => void; onBack
 							)}
 							{/* Missed the teeth: which ones to tap (for a grown-up to read; the teeth pulse for the kids). */}
 							{hint > 0 && <p key={hint} className={s.chompHint} role="status">Tap a bottom tooth!</p>}
-							{/* Chomp! */}
-							{chomped !== null && <img className={s.chompBurst} src={`${ART}/chomp.webp`} alt="Chomp!" />}
+							{/* Waiting for Ready!: who won the last game, along the bottom. */}
+							{!open && lastWinner !== null && (
+								<p className={s.chompLast} style={{ "--pc": players[lastWinner].color } as CSSProperties}>
+									Last game: <span className={s.chompBadge}>{lastWinner + 1}</span> {players[lastWinner].name} won
+								</p>
+							)}
+							{/* Chomp! And who won, stamped under it. */}
+							{winner !== null && (
+								<>
+									<img className={s.chompBurst} src={`${ART}/chomp.webp`} alt="Chomp!" />
+									<p className={s.chompStamp} style={{ "--pc": players[winner].color } as CSSProperties} role="status">
+										{players[winner].name} wins!
+									</p>
+								</>
+							)}
 						</div>
 						{sides && tag(1)}
-						{over && <Over title="Chomp!" onAgain={onAgain} onBack={onBack} />}
 					</div>
 				);
 			}}

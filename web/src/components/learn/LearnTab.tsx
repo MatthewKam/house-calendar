@@ -23,8 +23,8 @@ const CHOMP_HOW = {
 	title: "Chomp!",
 	how: [
 		"Take turns, Player 1 and Player 2: the one lit up says whose turn it is. Tap a tooth to press it down.",
-		"One tooth makes the mouth snap shut: Chomp! It's a funny surprise, not losing, and that's the game.",
-		"Then play again, or back to the games.",
+		"One tooth makes the mouth snap shut: Chomp! Whoever didn't get chomped wins.",
+		"A few seconds later the shark grins again: tap Ready! for another go. The back arrow goes back to the games.",
 	],
 };
 
@@ -121,9 +121,7 @@ export default function LearnTab({ kid, today, learn, together }: {
 	if (playing === "chomp") {
 		return (
 			<HowTo.Provider value={CHOMP_HOW}>
-				<Chomp key={plays}
-					onBack={() => setPlaying(null)}
-					onAgain={() => start("chomp")} />
+				<Chomp key={plays} onBack={() => setPlaying(null)} />
 			</HowTo.Provider>
 		);
 	}
