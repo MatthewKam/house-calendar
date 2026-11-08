@@ -90,6 +90,9 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 	const [asking, setAsking] = useState<{ body: string; then: () => void } | null>(null);
 	// The potty chart starts folded away (it's a tap to open).
 	const [pottyOpen, setPottyOpen] = useState(false);
+	// Learn's Both switch: the games for two instead of one kid's own (only on Learn).
+	const [together, setTogether] = useState(false);
+	const bothOn = together && tab === "learn";
 	const pottyRef = useRef<HTMLElement>(null);
 	// The potty chart header's pencil: a count, bumped each tap.
 	const [pottyEdit, setPottyEdit] = useState(0);
@@ -180,22 +183,35 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 					{/* Each kid's name is a switch: the one showing is on (with one kid, it's always on). */}
 					<div className={s.faces} role="radiogroup" aria-label="Who's playing">
 						{kids.map((k) => (
-							<button key={k.id} type="button" role="radio" className={s.face} aria-checked={k.id === kid.id}
+							<button key={k.id} type="button" role="radio" className={s.face} aria-checked={k.id === kid.id && !bothOn}
 								style={{ "--c": k.color, "--on": textOn(k.color) } as CSSProperties}
-								onClick={() => setPickedId(k.id)}>
+								onClick={() => {
+									setPickedId(k.id);
+									setTogether(false);
+								}}>
 								{k.name}
 								<span className={s.knob} aria-hidden="true" />
 							</button>
 						))}
+						{/* On Learn: Both, for the games for two (taking turns), instead of one kid's own. */}
+						{tab === "learn" && learning && (
+							<button type="button" role="radio" className={`${s.face} ${s.bothSwitch}`} aria-checked={bothOn}
+								onClick={() => setTogether(true)}>
+								Both
+								<span className={s.knob} aria-hidden="true" />
+							</button>
+						)}
 					</div>
 				</div>
 
-				{/* Their name, with the stars they have to put in jars. */}
+				{/* Their name, with the stars they have to put in jars (Both: just their names). */}
 				<div className={s.nameRow}>
-					<h1 className={s.name}>{kid.name}</h1>
-					<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
-						<StarIcon className={s.star} /> {stars}
-					</span>
+					<h1 className={s.name}>{bothOn ? kids.map((k) => k.name.split(" ")[0]).join(" & ") : kid.name}</h1>
+					{!bothOn && (
+						<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
+							<StarIcon className={s.star} /> {stars}
+						</span>
+					)}
 				</div>
 
 				{tab === "today" && <KidToday today={today} kid={kid} />}
@@ -234,7 +250,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 					</section>
 				)}
 
-				{tab === "learn" && learning && <LearnTab key={kid.id} kid={kid} today={today} learn={learning} />}
+				{tab === "learn" && learning && <LearnTab key={kid.id} kid={kid} today={today} learn={learning} together={bothOn} />}
 
 				{tab === "rewards" && (
 					<KidJars
@@ -276,7 +292,7 @@ const PEEK = 36;
 /**
  * Today's tasks as pages to swipe between, a page at a time, each page of
  * blocks sized so they all fit (no scrolling up and down), goals straight after the daily tasks. Upright,
- * six to a page; on its side, four. The next page peeks in at the side, and dots underneath show which page it's on.
+ * six to a page; on its side, four across and as many rows as fit. The next page peeks in at the side, and dots underneath show which page it's on.
  * It opens at the page with the first one not done yet.
  */
 function TaskPages({ kidId, pages, hold }: {
@@ -318,10 +334,13 @@ function TaskPages({ kidId, pages, hold }: {
 		const w = box.w - (peek ? PEEK : 0);
 		// Room under the blocks for their raised edge.
 		const h = box.h - 6;
-		// Upright, six to a page (two across, three down); on its side, four in a row. The next peeks in.
+		// Upright, six to a page (two across, three down). On its side, four across and as many rows as fit
+		// (one on a phone, two or three on a tablet). The next page peeks in.
 		const pagesOf = (label: string, tiles: ReactNode[]) => {
-			const [cols, rows] = upright ? [2, 3] : [4, 1];
-			const size = Math.floor(Math.min((w - BLOCK_GAP * (cols - 1)) / cols, (h - BLOCK_GAP * (rows - 1)) / rows, 280));
+			const cols = upright ? 2 : 4;
+			const across = (w - BLOCK_GAP * (cols - 1)) / cols;
+			const rows = upright ? 3 : Math.max(1, Math.floor((h + BLOCK_GAP) / (Math.min(across, 260) + BLOCK_GAP)));
+			const size = Math.floor(Math.min(across, (h - BLOCK_GAP * (rows - 1)) / rows, 280));
 			const per = cols * rows;
 			return Array.from({ length: Math.ceil(tiles.length / per) }, (_, i) => ({
 				label: `${label} ${i + 1}`, tiles: tiles.slice(i * per, (i + 1) * per), cols, size,
