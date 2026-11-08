@@ -33,6 +33,7 @@ export function Board({ onBack, total, done, children, cheer, style }: {
 	const howTo = useContext(HowTo);
 	const [showHow, setShowHow] = useState(false);
 	const [stage, box] = useBox();
+	useSettled();
 	return (
 		<section className={s.board} style={style}>
 			<div className={s.top}>
@@ -51,6 +52,36 @@ export function Board({ onBack, total, done, children, cheer, style }: {
 			{showHow && howTo && <HowToPlay {...howTo} onClose={() => setShowHow(false)} />}
 		</section>
 	);
+}
+
+/**
+ * While a game's open, the page behind it can't scroll, and it's put back at the top whenever the screen
+ * turns or resizes. On an iPhone, a Home Screen app turned from landscape to portrait can be left scrolled
+ * a little: the game still shows where it should, but taps land as if it hadn't moved, so nothing presses.
+ * (iOS settles the new size late, so it's put back again a moment after.)
+ */
+function useSettled() {
+	useEffect(() => {
+		const html = document.documentElement;
+		const before = html.style.overflow;
+		html.style.overflow = "hidden";
+		const timers: ReturnType<typeof setTimeout>[] = [];
+		const settle = () => {
+			window.scrollTo(0, 0);
+			timers.push(setTimeout(() => window.scrollTo(0, 0), 350));
+		};
+		settle();
+		window.addEventListener("resize", settle);
+		window.addEventListener("orientationchange", settle);
+		window.visualViewport?.addEventListener("resize", settle);
+		return () => {
+			html.style.overflow = before;
+			timers.forEach(clearTimeout);
+			window.removeEventListener("resize", settle);
+			window.removeEventListener("orientationchange", settle);
+			window.visualViewport?.removeEventListener("resize", settle);
+		};
+	}, []);
 }
 
 export interface Box { w: number; h: number }
