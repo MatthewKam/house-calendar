@@ -770,12 +770,12 @@ button.kidName {
 	gap: 1rem;
 }
 /* A tablet, either way up (an iPad mini upright is 744px wide; phones on their side are under 600px
-   tall): the calendar (its days side by side) and what to remember across the whole width, then the
-   day's three cards in a row. */
+   tall): the calendar (its days side by side) and what to remember across the whole width, then what to
+   wear beside the month's special days, then kind words and the fun fact across the whole width. */
 @media (min-width: 744px) and (min-height: 600px) {
 	.today {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 	.remember,
 	.calendar {
@@ -785,12 +785,6 @@ button.kidName {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		align-items: start;
-	}
-}
-/* A tablet upright: the cards in rows of two instead. */
-@media (min-width: 744px) and (min-height: 600px) and (orientation: portrait) {
-	.today {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 }
 /* Wider than 1400px: the calendar's three days side by side. */
@@ -964,8 +958,79 @@ button.kidName {
 	background: color-mix(in srgb, var(--c) 14%, var(--surface));
 }
 
+/* The month's special days: a card, a row for each, the sleeps until it on the right. */
+.special {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	padding: 1rem 1.2rem;
+	border-radius: 1.4rem;
+	background: var(--surface);
+	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
+	box-shadow: 0 0.3rem 1rem color-mix(in srgb, var(--c) 18%, transparent);
+}
+.specialList {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.specialDay {
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	padding: 0.3rem 0.5rem;
+	border-radius: 0.9rem;
+}
+.specialPicture {
+	flex: none;
+	font-size: 2.4rem;
+	line-height: 1;
+}
+.specialText {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+.specialName {
+	font-size: 1.15rem;
+	font-weight: 750;
+}
+.specialDate {
+	font-size: 0.9rem;
+	font-weight: 650;
+	color: var(--muted);
+}
+.sleeps {
+	flex: none;
+	font-size: 1.5rem;
+	font-weight: 800;
+	color: var(--c);
+	text-align: right;
+}
+.sleepsWord {
+	font-size: 0.9rem;
+}
+/* Gone by: dimmed. Today: picked out. */
+.specialPast {
+	opacity: 0.45;
+}
+.specialToday {
+	background: color-mix(in srgb, var(--c) 16%, var(--surface));
+}
+.specialNone {
+	margin: 0;
+	color: var(--muted);
+	font-weight: 600;
+}
+
 /* The day's cards: a fun fact, and kind words. */
 .fact {
+	/* In rows of two: across the whole width. */
+	grid-column: 1 / -1;
 	display: flex;
 	align-items: center;
 	gap: 1rem;

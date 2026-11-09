@@ -2,7 +2,8 @@ import { useMemo, useRef, useState, type ReactNode } from "react";
 import { addDays, dayKey, fromDayKey, timeLabel } from "../lib/dates";
 import { factFor, type KidFact } from "../lib/kidFacts";
 import { kindWordsFor } from "../lib/kindWords";
-import { useLists, useRangeEvents, useWeather } from "../lib/queries";
+import { useLists, useMembers, useRangeEvents, useWeather } from "../lib/queries";
+import { birthdays, sleepsUntil, specialDaysFor } from "../lib/specialDays";
 import type { CalEvent, Member, SprigItem, Weather } from "../lib/types";
 import { sky } from "../lib/weather";
 import { useMediaQuery } from "../lib/useMediaQuery";
@@ -167,6 +168,8 @@ export default function KidToday({
 			/>
 			{remember.length > 0 && <Remember items={remember} />}
 			{weather && <WhatToWear weather={weather} />}
+			<SpecialDays today={today} />
+			{/* Last, each across the whole width. */}
 			<Card label="Kind words" item={kindWordsFor(today)} />
 			<Card label="Did you know?" item={factFor(today, little)} />
 		</div>
@@ -427,6 +430,44 @@ function Card({ label, item }: { label: string; item: KidFact }) {
 				{item.text}
 			</span>
 		</div>
+	);
+}
+
+/**
+ * The month's special days: holidays, family birthdays, each with how many sleeps until it (the ones gone
+ * by dimmed, today's picked out). In the month's last week, next month's first ones too.
+ */
+function SpecialDays({ today }: { today: string }) {
+	const people = useMembers().data ?? [];
+	const days = specialDaysFor(today, (year) => birthdays(people, year));
+	const month = fromDayKey(today).toLocaleDateString([], { month: "long" });
+	return (
+		<section className={s.special} aria-label={`${month}'s special days`}>
+			<span className={s.nextLabel}>{month}'s special days</span>
+			{days.length === 0 ? (
+				<p className={s.specialNone}>Nothing special this month yet.</p>
+			) : (
+				<ul className={s.specialList}>
+					{days.map((d) => {
+						const sleeps = sleepsUntil(today, d.day);
+						return (
+							<li key={`${d.day}-${d.name}`} className={`${s.specialDay} ${sleeps < 0 ? s.specialPast : sleeps === 0 ? s.specialToday : ""}`}>
+								<span className={s.specialPicture} aria-hidden="true">{d.picture}</span>
+								<span className={s.specialText}>
+									<span className={s.specialName}>{d.name}</span>
+									<span className={s.specialDate}>{fromDayKey(d.day).toLocaleDateString([], { month: "short", day: "numeric" })}</span>
+								</span>
+								{sleeps >= 0 && (
+									<span className={s.sleeps}>
+										{sleeps === 0 ? "Today!" : <>{sleeps} <span className={s.sleepsWord}>{sleeps === 1 ? "sleep" : "sleeps"}</span></>}
+									</span>
+								)}
+							</li>
+						);
+					})}
+				</ul>
+			)}
+		</section>
 	);
 }
 
