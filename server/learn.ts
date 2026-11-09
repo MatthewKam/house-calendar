@@ -27,9 +27,12 @@ const GAME_NAMES: Record<Game, string> = {
   adding: 'Math', maze: 'Maze', letters: 'Letters', memory: 'Pairs',
 };
 
-/** Each stage's games. Older stages play Early's for now. */
+/**
+ * Each stage's games. Older stages play Early's for now. Find it! is hidden for now (2026-11-09): its
+ * game and levels are kept, to put back in the list.
+ */
 const GAMES_FOR: Record<'little' | 'early', Game[]> = {
-  little: ['sounds', 'peekaboo', 'findIt', 'apples'],
+  little: ['sounds', 'peekaboo', 'apples'],
   early: ['adding', 'maze', 'letters', 'memory'],
 };
 export const gamesFor = (stage: Stage | null) => GAMES_FOR[stage === 'little' || stage === null ? 'little' : 'early'];

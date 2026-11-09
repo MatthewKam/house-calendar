@@ -25,7 +25,7 @@ describe('learning', () => {
     const kids = (await call('GET', `/api/learn?today=${TODAY}`)).body;
     expect(kids.map((k: { memberId: string }) => k.memberId)).toEqual(['nolan', 'tayen']);
     expect(kids[0]).toMatchObject({ enabled: false });
-    expect(kids[0].games.map((g: { game: string }) => g.game)).toEqual(['sounds', 'peekaboo', 'findIt', 'apples']);
+    expect(kids[0].games.map((g: { game: string }) => g.game)).toEqual(['sounds', 'peekaboo', 'apples']);
     expect(kids[1].games.map((g: { game: string }) => g.game)).toEqual(['adding', 'maze', 'letters', 'memory']);
     expect(kids[1].games[0]).toEqual({ game: 'adding', level: 1, maxLevel: 6 });
     expect((await call('POST', '/api/learn/tayen/done', { today: TODAY, game: 'adding', level: 1, rounds: 3, firstTry: 3 })).status).toBe(409);
