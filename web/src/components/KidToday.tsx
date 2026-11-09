@@ -132,7 +132,7 @@ const dueOn = (item: SprigItem, day: string) => (item.due!.length === 10 ? item.
 function WhatToWear({ weather: w }: { weather: Weather }) {
 	const { pants, jacket, rain } = w.wear;
 	const clothes = [
-		rain ? { picture: "🧥", name: "Rain jacket" } : jacket ? { picture: "🧥", name: "Jacket" } : { picture: "👕", name: "T-shirt" },
+		rain ? { picture: RAIN_JACKET, name: "Rain jacket" } : jacket ? { picture: JACKET, name: "Jacket" } : { picture: "👕", name: "T-shirt" },
 		pants ? { picture: "👖", name: "Pants" } : { picture: "🩳", name: "Shorts" },
 		...(rain ? [{ picture: "🥾", name: "Rain boots" }, { picture: "☔", name: "Umbrella" }] : []),
 	];
@@ -158,6 +158,42 @@ function WhatToWear({ weather: w }: { weather: Weather }) {
 		</section>
 	);
 }
+
+/**
+ * A kid's jacket, drawn (the coat emoji is a grown-up's trench coat): hood up behind, sleeves out, a
+ * zip (a rain jacket: buttons, and a bigger hood).
+ */
+function jacket({ cloth, trim, rain }: { cloth: string; trim: string; rain?: boolean }) {
+	return (
+		<svg viewBox="0 0 120 120" className={s.clothingDrawn}>
+			{/* The hood, behind. */}
+			<path d={rain ? "M32 34 Q60 -10 88 34 Q60 42 32 34z" : "M38 32 Q60 2 82 32 Q60 38 38 32z"} fill={trim} />
+			<path d={rain ? "M44 28 Q60 6 76 28 Q60 32 44 28z" : "M46 28 Q60 12 74 28 Q60 31 46 28z"} fill={cloth} opacity="0.55" />
+			{/* Sleeves, with cuffs. */}
+			<path d="M36 30 L18 42 L10 92 L26 95 L34 58z M84 30 L102 42 L110 92 L94 95 L86 58z" fill={cloth} />
+			<path d="M10 88 L26 91 L26 97 L9 94z M110 88 L94 91 L94 97 L111 94z" fill={trim} />
+			{/* The body, with a band at the bottom. */}
+			<path d="M34 28 Q60 20 86 28 L89 104 Q60 109 31 104z" fill={cloth} />
+			<path d="M31 98 Q60 103 89 98 L89 106 Q60 111 31 106z" fill={trim} />
+			{rain ? (
+				<g fill={trim}>
+					<circle cx="60" cy="46" r="3.5" />
+					<circle cx="60" cy="64" r="3.5" />
+					<circle cx="60" cy="82" r="3.5" />
+				</g>
+			) : (
+				<>
+					<path d="M60 30 V102" stroke="#e8eef8" strokeWidth="3" />
+					<rect x="57" y="34" width="6" height="9" rx="2" fill="#e8eef8" />
+					{/* Pockets. */}
+					<path d="M40 74 h12 M68 74 h12" stroke={trim} strokeWidth="4" strokeLinecap="round" />
+				</>
+			)}
+		</svg>
+	);
+}
+const JACKET = jacket({ cloth: "#3d7bd9", trim: "#2a5aa8" });
+const RAIN_JACKET = jacket({ cloth: "#f6c624", trim: "#d99a10", rain: true });
 
 /** Things to remember today, from the family's lists, each with a picture. */
 function Remember({ items }: { items: SprigItem[] }) {

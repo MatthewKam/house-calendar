@@ -712,8 +712,15 @@
 	font-weight: 700;
 }
 .clothingPicture {
-	font-size: 3.4rem;
+	font-size: 5rem;
 	line-height: 1;
+}
+/* A drawn one (the jackets): as big as the emoji. */
+.clothingDrawn {
+	display: block;
+	width: 5.6rem;
+	height: 5.6rem;
+	margin: -0.3rem;
 }
 .weatherLine {
 	margin: 0;
