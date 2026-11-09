@@ -118,6 +118,26 @@
 	justify-content: space-between;
 	gap: 0.6rem;
 }
+/* The time and date, on the right of the name row on every tab: the time big, the date under it. */
+.clock {
+	flex: none;
+	margin: 0 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	line-height: 1.1;
+	text-align: right;
+}
+.clockTime {
+	font-size: 1.6rem;
+	font-weight: 800;
+	color: var(--c);
+}
+.clockDate {
+	font-size: 0.95rem;
+	font-weight: 700;
+	color: var(--muted);
+}
 /* Who's playing: each kid's name is a switch. Off: a white circle, then the name. On: the circle
    slides to the right and the button fills with their color. */
 .faces {

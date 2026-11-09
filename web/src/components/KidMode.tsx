@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { fromDayKey, startOfWeek } from "../lib/dates";
+import { fromDayKey, startOfWeek, timeLabel } from "../lib/dates";
 import { api } from "../lib/api";
 import { useMediaQuery } from "../lib/useMediaQuery";
+import { useNow } from "../lib/useNow";
 import {
 	useBuckets,
 	useLearn,
@@ -204,7 +205,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 					</div>
 				</div>
 
-				{/* Their name, with the stars they have to put in jars (Both: just their names). */}
+				{/* Their name, with the stars they have to put in jars (Both: just their names), and the time on the right. */}
 				<div className={s.nameRow}>
 					<h1 className={s.name}>{bothOn ? kids.map((k) => k.name.split(" ")[0]).join(" & ") : kid.name}</h1>
 					{!bothOn && (
@@ -212,6 +213,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 							<StarIcon className={s.star} /> {stars}
 						</span>
 					)}
+					<Clock />
 				</div>
 
 				{tab === "today" && <KidToday today={today} kid={kid} />}
@@ -489,5 +491,16 @@ export function KidModeStart({ kids, needsPin, onPick, onClose }: {
 				</div>
 			</div>
 		</>
+	);
+}
+
+/** The time and the date, kept up to the minute, for the header on every tab. */
+function Clock() {
+	const now = useNow();
+	return (
+		<p className={s.clock}>
+			<span className={s.clockTime}>{timeLabel(now)}</span>
+			<span className={s.clockDate}>{now.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}</span>
+		</p>
 	);
 }
