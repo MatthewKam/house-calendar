@@ -65,9 +65,10 @@ export const CHEER_MS = 1600;
 /**
  * Rounds of a pick-the-right-one game: which round it is, whether it's been got (the cheer shows), and
  * how many were got on the first try. `tap(ok)` is a pick: right cheers, then moves on by itself (or
- * finishes); wrong just counts against the first try.
+ * finishes); wrong just counts against the first try. `cheerMs` can be per round (the last one's cheer
+ * can be longer).
  */
-export function useRounds(total: number, onDone: GameProps["onDone"], cheerMs = CHEER_MS) {
+export function useRounds(total: number, onDone: GameProps["onDone"], cheerMs: number | ((round: number) => number) = CHEER_MS) {
 	const [round, setRound] = useState(0);
 	const [got, setGot] = useState(false);
 	const [missed, setMissed] = useState(false);
@@ -90,7 +91,7 @@ export function useRounds(total: number, onDone: GameProps["onDone"], cheerMs = 
 					setGot(false);
 					setMissed(false);
 				}
-			}, cheerMs);
+			}, typeof cheerMs === "function" ? cheerMs(round) : cheerMs);
 		},
 	};
 }

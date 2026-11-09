@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api";
 import { keys, useLearnSounds } from "../../lib/queries";
 import type { Game, LearnState, Member } from "../../lib/types";
-import { Pic } from "./art";
+import { Pic, preloadAnimals } from "./art";
 import Adding from "./Adding";
 import Apples from "./Apples";
 import FindIt from "./FindIt";
@@ -105,6 +105,7 @@ export default function LearnTab({ kid, today, learn, together }: {
 	// A grown-up's own animal noises, played instead of the built-in ones.
 	const sounds = useLearnSounds().data;
 	useEffect(() => setRecorded(sounds ?? []), [sounds]);
+	useEffect(preloadAnimals, []);
 	const levelOf = (game: Game) => learn.games.find((g) => g.game === game)?.level ?? 1;
 
 	function start(game: Game | "chomp") {

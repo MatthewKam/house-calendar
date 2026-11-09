@@ -1,7 +1,17 @@
 import type { ReactNode } from "react";
+import { ANIMALS } from "./things";
 
 // The games' pictures, drawn flat and friendly (no emoji, so they look the same on every device). Each
-// fills a 120 × 120 box.
+// fills a 120 × 120 box. The animals with a noise are pictures instead (DRAWN).
+
+/** The animals with a noise: each a picture, /animals/<id>.webp, trimmed square around the animal. */
+const DRAWN = new Set(ANIMALS.map((a) => a.id));
+const drawn = (id: string) => `/animals/${id}.webp`;
+
+/** Loads every animal picture ahead, so none pops in late mid-game. */
+export function preloadAnimals() {
+	DRAWN.forEach((id) => (new Image().src = drawn(id)));
+}
 
 const EYE = "#3b2a20";
 const eyes = (y = 50, gap = 15) => (
@@ -13,111 +23,7 @@ const eyes = (y = 50, gap = 15) => (
 const smile = (y = 78, w = 8) => <path d={`M${60 - w} ${y} q${w} ${w * 0.8} ${w * 2} 0`} fill="none" stroke={EYE} strokeWidth="3" strokeLinecap="round" />;
 
 const ART: Record<string, ReactNode> = {
-	// Animals.
-	cow: (
-		<>
-			<path d="M38 26 l-8 -14 M82 26 l8 -14" stroke="#e8d4a8" strokeWidth="7" strokeLinecap="round" />
-			<ellipse cx="22" cy="44" rx="16" ry="9" fill="#f4f1ec" transform="rotate(-20 22 44)" />
-			<ellipse cx="98" cy="44" rx="16" ry="9" fill="#f4f1ec" transform="rotate(20 98 44)" />
-			<ellipse cx="60" cy="62" rx="38" ry="42" fill="#f4f1ec" />
-			<path d="M30 40 C40 32 50 40 44 54 C36 60 26 52 30 40z" fill="#3b2a20" />
-			<ellipse cx="60" cy="90" rx="28" ry="18" fill="#f6b8c0" />
-			<circle cx="50" cy="90" r="4" fill="#c7707c" />
-			<circle cx="70" cy="90" r="4" fill="#c7707c" />
-			{eyes(58, 14)}
-		</>
-	),
-	pig: (
-		<>
-			<path d="M24 26 L46 36 L28 54z" fill="#f2a2b0" />
-			<path d="M96 26 L74 36 L92 54z" fill="#f2a2b0" />
-			<circle cx="60" cy="64" r="42" fill="#f6b8c0" />
-			<ellipse cx="60" cy="78" rx="18" ry="13" fill="#f2a2b0" />
-			<ellipse cx="54" cy="78" rx="3.5" ry="5" fill="#c7707c" />
-			<ellipse cx="66" cy="78" rx="3.5" ry="5" fill="#c7707c" />
-			{eyes(56)}
-		</>
-	),
-	duck: (
-		<>
-			<path d="M58 22 C56 12 64 8 66 16" fill="none" stroke="#f6cf3c" strokeWidth="6" strokeLinecap="round" />
-			<circle cx="60" cy="62" r="40" fill="#f6cf3c" />
-			<path d="M42 74 C52 66 68 66 78 74 C70 88 50 88 42 74z" fill="#f4a020" />
-			{eyes(54, 14)}
-		</>
-	),
-	sheep: (
-		<>
-			<g fill="#f4f1ec">
-				<circle cx="30" cy="40" r="18" />
-				<circle cx="52" cy="26" r="18" />
-				<circle cx="74" cy="26" r="18" />
-				<circle cx="92" cy="42" r="18" />
-			</g>
-			<ellipse cx="18" cy="62" rx="14" ry="8" fill="#3b2a20" transform="rotate(-20 18 62)" />
-			<ellipse cx="102" cy="62" rx="14" ry="8" fill="#3b2a20" transform="rotate(20 102 62)" />
-			<ellipse cx="60" cy="70" rx="30" ry="38" fill="#3b2a20" />
-			<circle cx="49" cy="64" r="6" fill="#fff" />
-			<circle cx="49" cy="64" r="3" fill="#1d1f23" />
-			<circle cx="71" cy="64" r="6" fill="#fff" />
-			<circle cx="71" cy="64" r="3" fill="#1d1f23" />
-			<path d="M52 90 q8 6 16 0" fill="none" stroke="#f4f1ec" strokeWidth="3" strokeLinecap="round" />
-		</>
-	),
-	horse: (
-		<>
-			<path d="M38 20 l6 18 l10 -12z M82 20 l-6 18 l-10 -12z" fill="#9a5e34" />
-			<path d="M50 14 C60 6 76 12 74 30 L60 34z" fill="#4a2e1c" />
-			<rect x="34" y="22" width="52" height="88" rx="26" fill="#b5733f" />
-			<ellipse cx="60" cy="92" rx="24" ry="18" fill="#e3b989" />
-			<ellipse cx="51" cy="94" rx="3.5" ry="5" fill="#6b4126" />
-			<ellipse cx="69" cy="94" rx="3.5" ry="5" fill="#6b4126" />
-			{eyes(50, 14)}
-		</>
-	),
-	chicken: (
-		<>
-			<path d="M46 24 q4 -14 12 -4 q6 -14 12 0 q8 -8 8 6z" fill="#e03a2f" />
-			<circle cx="60" cy="64" r="40" fill="#fbf7ee" />
-			<path d="M54 64 L66 64 L60 76z" fill="#f4a020" />
-			<path d="M57 76 q3 12 6 0" fill="#e03a2f" />
-			{eyes(54, 13)}
-		</>
-	),
-	goat: (
-		<>
-			<path d="M42 30 C34 14 22 12 18 20 M78 30 C86 14 98 12 102 20" fill="none" stroke="#8a7a66" strokeWidth="7" strokeLinecap="round" />
-			<ellipse cx="22" cy="54" rx="15" ry="7" fill="#e8e2d6" transform="rotate(-15 22 54)" />
-			<ellipse cx="98" cy="54" rx="15" ry="7" fill="#e8e2d6" transform="rotate(15 98 54)" />
-			<rect x="34" y="28" width="52" height="72" rx="26" fill="#e8e2d6" />
-			<path d="M50 96 L60 116 L70 96z" fill="#c9bfae" />
-			<ellipse cx="54" cy="82" rx="3" ry="4" fill="#6b5a48" />
-			<ellipse cx="66" cy="82" rx="3" ry="4" fill="#6b5a48" />
-			{eyes(56, 13)}
-		</>
-	),
-	dog: (
-		<>
-			<circle cx="60" cy="62" r="40" fill="#c98c52" />
-			<ellipse cx="22" cy="62" rx="13" ry="28" fill="#6b4126" transform="rotate(12 22 62)" />
-			<ellipse cx="98" cy="62" rx="13" ry="28" fill="#6b4126" transform="rotate(-12 98 62)" />
-			<ellipse cx="60" cy="80" rx="20" ry="15" fill="#efd3b0" />
-			<ellipse cx="60" cy="73" rx="8" ry="6" fill={EYE} />
-			<path d="M56 88 q4 10 8 0z" fill="#e8707c" />
-			{eyes(54, 15)}
-		</>
-	),
-	cat: (
-		<>
-			<path d="M24 54 L28 14 L54 32z M96 54 L92 14 L66 32z" fill="#f0a04b" />
-			<path d="M32 40 L32 24 L46 34z M88 40 L88 24 L74 34z" fill="#f6c6a0" />
-			<circle cx="60" cy="64" r="40" fill="#f0a04b" />
-			<path d="M55 72 L65 72 L60 78z" fill="#e8707c" />
-			<path d="M60 78 q-6 8 -12 4 M60 78 q6 8 12 4" fill="none" stroke={EYE} strokeWidth="2.5" strokeLinecap="round" />
-			<path d="M20 70 H44 M20 80 L44 76 M100 70 H76 M100 80 L76 76" stroke={EYE} strokeWidth="2" strokeLinecap="round" />
-			{eyes(56, 15)}
-		</>
-	),
+	// Animals not in the drawn set (see DRAWN): the maze's mouse.
 	mouse: (
 		<>
 			<circle cx="28" cy="38" r="24" fill="#a9a9b2" />
@@ -128,153 +34,6 @@ const ART: Record<string, ReactNode> = {
 			<circle cx="60" cy="88" r="6" fill="#e8707c" />
 			<path d="M26 84 H48 M26 94 L48 90 M94 84 H72 M94 94 L72 90" stroke={EYE} strokeWidth="2" strokeLinecap="round" />
 			{eyes(64, 13)}
-		</>
-	),
-	frog: (
-		<>
-			<circle cx="36" cy="34" r="18" fill="#5cb85c" />
-			<circle cx="84" cy="34" r="18" fill="#5cb85c" />
-			<ellipse cx="60" cy="72" rx="48" ry="36" fill="#5cb85c" />
-			<circle cx="36" cy="34" r="10" fill="#fff" />
-			<circle cx="36" cy="34" r="5" fill={EYE} />
-			<circle cx="84" cy="34" r="10" fill="#fff" />
-			<circle cx="84" cy="34" r="5" fill={EYE} />
-			<path d="M30 76 q30 22 60 0" fill="none" stroke="#2f6b2f" strokeWidth="4" strokeLinecap="round" />
-			<circle cx="34" cy="64" r="5" fill="#f2a2b0" opacity=".7" />
-			<circle cx="86" cy="64" r="5" fill="#f2a2b0" opacity=".7" />
-		</>
-	),
-	owl: (
-		<>
-			<path d="M24 34 L36 10 L46 32z M96 34 L84 10 L74 32z" fill="#8a5a3b" />
-			<ellipse cx="60" cy="66" rx="42" ry="46" fill="#a8744c" />
-			<ellipse cx="60" cy="88" rx="26" ry="20" fill="#e3c39a" />
-			<circle cx="42" cy="54" r="16" fill="#fff" />
-			<circle cx="78" cy="54" r="16" fill="#fff" />
-			<circle cx="42" cy="54" r="8" fill={EYE} />
-			<circle cx="78" cy="54" r="8" fill={EYE} />
-			<path d="M54 66 L66 66 L60 80z" fill="#f4a020" />
-		</>
-	),
-	bee: (
-		<>
-			<ellipse cx="40" cy="30" rx="18" ry="24" fill="#d6ecff" transform="rotate(-25 40 30)" />
-			<ellipse cx="80" cy="30" rx="18" ry="24" fill="#d6ecff" transform="rotate(25 80 30)" />
-			<ellipse cx="60" cy="72" rx="42" ry="36" fill="#f6cf3c" />
-			<path d="M34 46 q-4 26 0 52 M86 46 q4 26 0 52" fill="none" stroke="#2b2b2b" strokeWidth="10" />
-			{eyes(66, 11)}
-			{smile(82, 7)}
-		</>
-	),
-	lion: (
-		<>
-			<circle cx="60" cy="62" r="54" fill="#c8742c" />
-			<circle cx="60" cy="64" r="36" fill="#f2b84b" />
-			<circle cx="34" cy="34" r="9" fill="#f2b84b" />
-			<circle cx="86" cy="34" r="9" fill="#f2b84b" />
-			<ellipse cx="60" cy="80" rx="16" ry="11" fill="#fbe2b0" />
-			<path d="M54 72 L66 72 L60 79z" fill="#6b4126" />
-			{eyes(58, 13)}
-		</>
-	),
-	elephant: (
-		<>
-			<ellipse cx="22" cy="56" rx="22" ry="32" fill="#9fb0c2" />
-			<ellipse cx="98" cy="56" rx="22" ry="32" fill="#9fb0c2" />
-			<circle cx="60" cy="52" r="34" fill="#b4c3d3" />
-			<path d="M50 70 C50 96 52 110 66 112 C74 112 74 104 68 104 C62 102 70 90 70 70z" fill="#b4c3d3" />
-			{eyes(48, 14)}
-		</>
-	),
-	monkey: (
-		<>
-			<circle cx="20" cy="60" r="16" fill="#8a5a3b" />
-			<circle cx="20" cy="60" r="9" fill="#e9c9a0" />
-			<circle cx="100" cy="60" r="16" fill="#8a5a3b" />
-			<circle cx="100" cy="60" r="9" fill="#e9c9a0" />
-			<circle cx="60" cy="60" r="42" fill="#8a5a3b" />
-			<path d="M60 42 C46 26 26 40 36 60 C26 76 40 100 60 98 C80 100 94 76 84 60 C94 40 74 26 60 42z" fill="#e9c9a0" />
-			<circle cx="55" cy="76" r="2.5" fill={EYE} />
-			<circle cx="65" cy="76" r="2.5" fill={EYE} />
-			{eyes(56, 12)}
-			{smile(84, 9)}
-		</>
-	),
-	rooster: (
-		<>
-			<path d="M40 30 q2 -22 14 -10 q6 -18 14 -2 q10 -12 12 6 q8 -2 4 12z" fill="#e03a2f" />
-			<path d="M84 66 q28 -10 30 14 q-6 -4 -14 0 q8 6 4 18 q-8 -10 -20 -8z" fill="#2f6b4a" />
-			<circle cx="58" cy="64" r="38" fill="#c8742c" />
-			<ellipse cx="56" cy="88" rx="26" ry="18" fill="#e3a05a" />
-			<path d="M44 66 L58 66 L52 78z" fill="#f4a020" transform="translate(-4 0)" />
-			<path d="M46 78 q3 14 8 2" fill="#e03a2f" />
-			{eyes(54, 13)}
-		</>
-	),
-	hawk: (
-		<>
-			<path d="M14 54 Q30 20 60 18 Q90 20 106 54 Q86 46 60 48 Q34 46 14 54z" fill="#6b4126" />
-			<ellipse cx="60" cy="68" rx="38" ry="40" fill="#a8744c" />
-			<ellipse cx="60" cy="84" rx="24" ry="22" fill="#f4e6cf" />
-			<path d="M36 50 Q48 44 56 52 M84 50 Q72 44 64 52" fill="none" stroke="#3b2a20" strokeWidth="4" strokeLinecap="round" />
-			<circle cx="46" cy="58" r="7" fill="#f6cf3c" />
-			<circle cx="46" cy="58" r="3.5" fill={EYE} />
-			<circle cx="74" cy="58" r="7" fill="#f6cf3c" />
-			<circle cx="74" cy="58" r="3.5" fill={EYE} />
-			<path d="M52 66 H68 Q66 80 60 86 Q54 80 52 66z" fill="#f4a020" />
-			<path d="M60 86 q-2 -6 2 -8" fill="none" stroke="#c46d00" strokeWidth="2.5" />
-		</>
-	),
-	leopard: (
-		<>
-			<circle cx="28" cy="30" r="14" fill="#e3a83c" />
-			<circle cx="28" cy="30" r="7" fill="#f4d79a" />
-			<circle cx="92" cy="30" r="14" fill="#e3a83c" />
-			<circle cx="92" cy="30" r="7" fill="#f4d79a" />
-			<circle cx="60" cy="64" r="42" fill="#f0bc4c" />
-			<g fill="#6b4126">
-				<circle cx="34" cy="48" r="5" /><circle cx="44" cy="34" r="4" /><circle cx="60" cy="28" r="5" />
-				<circle cx="76" cy="34" r="4" /><circle cx="86" cy="48" r="5" /><circle cx="28" cy="70" r="4" />
-				<circle cx="92" cy="70" r="4" /><circle cx="40" cy="94" r="4" /><circle cx="80" cy="94" r="4" />
-			</g>
-			<ellipse cx="60" cy="82" rx="18" ry="13" fill="#fbe9c4" />
-			<path d="M53 75 L67 75 L60 83z" fill="#c8577a" />
-			<path d="M60 83 q-6 7 -12 4 M60 83 q6 7 12 4" fill="none" stroke={EYE} strokeWidth="2.5" strokeLinecap="round" />
-			{eyes(60, 14)}
-		</>
-	),
-	seagull: (
-		<>
-			<path d="M8 66 Q30 50 50 62 L52 76 Q26 70 8 66z" fill="#9aa5b1" />
-			<path d="M112 66 Q90 50 70 62 L68 76 Q94 70 112 66z" fill="#9aa5b1" />
-			<circle cx="60" cy="58" r="34" fill="#f4f6f8" />
-			<path d="M60 64 L96 70 L60 78z" fill="#f6c02a" />
-			<circle cx="88" cy="72" r="3" fill="#e03a2f" />
-			<circle cx="48" cy="52" r="5" fill={EYE} />
-			<circle cx="72" cy="52" r="5" fill={EYE} />
-		</>
-	),
-	wolf: (
-		<>
-			<path d="M22 54 L30 12 L52 36z M98 54 L90 12 L68 36z" fill="#7d8794" />
-			<path d="M32 44 L34 24 L46 38z M88 44 L86 24 L74 38z" fill="#d7dce2" />
-			<path d="M60 110 L18 64 Q18 36 60 34 Q102 36 102 64z" fill="#9aa5b1" />
-			<path d="M60 110 L36 78 Q48 70 60 78 Q72 70 84 78z" fill="#eef1f4" />
-			<ellipse cx="60" cy="98" rx="8" ry="6" fill={EYE} />
-			{eyes(62, 15)}
-		</>
-	),
-	bear: (
-		<>
-			<circle cx="27" cy="30" r="15" fill="#b47a4c" />
-			<circle cx="27" cy="30" r="7.5" fill="#ecc9a2" />
-			<circle cx="93" cy="30" r="15" fill="#b47a4c" />
-			<circle cx="93" cy="30" r="7.5" fill="#ecc9a2" />
-			<circle cx="60" cy="64" r="42" fill="#b47a4c" />
-			<ellipse cx="60" cy="78" rx="17" ry="13" fill="#ecc9a2" />
-			<ellipse cx="60" cy="71" rx="6.5" ry="5" fill={EYE} />
-			{eyes(56)}
-			{smile(82, 8)}
 		</>
 	),
 
@@ -763,7 +522,7 @@ const ART: Record<string, ReactNode> = {
 export function Pic({ id, label, className }: { id: string; label?: string; className?: string }) {
 	return (
 		<svg viewBox="0 0 120 120" className={className} role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
-			{ART[id]}
+			{DRAWN.has(id) ? <image href={drawn(id)} width="120" height="120" /> : ART[id]}
 		</svg>
 	);
 }

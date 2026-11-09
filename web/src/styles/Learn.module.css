@@ -234,6 +234,8 @@
 }
 .dotOn {
 	background: var(--c, var(--accent));
+	/* Filling in: a pop, so a round done shows. */
+	animation: pop 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
 
 /* Not kid mode's page width (it caps and centres what's on it, which would undo the full screen). */
