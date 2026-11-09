@@ -35,7 +35,9 @@ export default function TodayAnimal({ day }: { day: string }) {
 	const src = (p: Pose) => `/today/${animal.id}/${p}.webp`;
 
 	// Every pose loaded up front, so nothing blinks mid-walk.
+	// (Here again on every mount: React's development mode mounts it twice, gone in between.)
 	useEffect(() => {
+		gone.current = false;
 		POSES.forEach((p) => (new Image().src = src(p)));
 		return () => void (gone.current = true);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
