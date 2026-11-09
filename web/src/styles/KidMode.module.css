@@ -137,6 +137,17 @@
 	font-weight: 700;
 	color: var(--muted);
 }
+/* On its side: the date beside the time, on one line. */
+@media (orientation: landscape) {
+	.clock {
+		flex-direction: row;
+		align-items: baseline;
+		gap: 0.8rem;
+	}
+	.clockDate {
+		font-size: 1.1rem;
+	}
+}
 /* Whose it is, top right: the stars, then their name in their colour, which opens the other kids. */
 .who {
 	margin-left: auto;
