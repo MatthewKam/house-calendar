@@ -22,6 +22,9 @@ const LEVELS: { find: Find; total: number; share: number; most: number; every: n
 /** Bubbles at the start, a moment apart, before the steady stream. */
 const BURST = 7;
 const BURST_GAP = 180;
+/** Level 2's show-me bubble: bigger, and slower to float away, than the rest. */
+const HINT_SIZE = 1.35;
+const HINT_SLOW = 1.8;
 
 const COLOURS = [
 	{ id: "red", name: "red", fill: "#ff5a5a" },
@@ -44,12 +47,15 @@ interface Bubble {
 	/** How far along its way it starts (ms): the opening burst's are already spread across the sky. */
 	head: number;
 	popped: boolean;
+	/** The show-me bubble: an animal one on its own to start, glowing, slow. */
+	hint?: boolean;
 }
 
 /**
  * Pop! (age 2): Sprig blows bubbles (a burst to start, then a steady stream), and they float up across the
  * screen. Tap one and it pops. Level 1: just bubbles, any of them. Level 2: the ones with an animal in
- * (it jumps out). Level 3 and 5: the animal on the sign ("pop the cows"), others mixed in.
+ * (it jumps out), starting with one of those on its own, big, slow and glowing, to show what counts.
+ * Level 3 and 5: the animal on the sign ("pop the cows"), others mixed in.
  * Level 4 and 6: the colour on the sign. The others still pop, quietly, but only those count; nothing's
  * ever wrong. When enough have popped, the mascot cheers with confetti. Bubbles that float away come round
  * again.
@@ -64,6 +70,8 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 	const [got, setGot] = useState(0);
 	const [missed, setMissed] = useState(0);
 	const [finished, setFinished] = useState(false);
+	// Level 2 starts with one show-me bubble with an animal in, on its own; the rest come once it's gone.
+	const [started, setStarted] = useState(find !== "anyAnimal");
 	const nextId = useRef(0);
 	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 	useEffect(() => () => timers.current.forEach(clearTimeout), []);
@@ -82,9 +90,17 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 		return base;
 	}
 
+	// Level 2: the show-me bubble first.
+	useEffect(() => {
+		if (started) return;
+		const show = setTimeout(() => setBubbles([{ ...blow(), animal: any(animals), size: HINT_SIZE, to: 0.45, hint: true }]), 400);
+		return () => clearTimeout(show);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	// Sprig blows a burst to start, then keeps blowing: a new bubble every so often, up to a few at once.
 	useEffect(() => {
-		if (finished) return;
+		if (finished || !started) return;
 		const burst = Array.from({ length: BURST }, (_, i) =>
 			setTimeout(() => setBubbles((all) => [...all, blow(rules.rise * (0.3 + Math.random() * 0.15))]), 300 + i * BURST_GAP));
 		const more = setInterval(() => setBubbles((all) => (all.filter((b) => !b.popped).length < rules.most ? [...all, blow()] : all)), rules.every);
@@ -93,13 +109,14 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 			clearInterval(more);
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [finished, level]);
+	}, [finished, started, level]);
 
 	const counts = (b: Bubble) =>
 		find === "any" || (find === "anyAnimal" ? !!b.animal : find === "colour" ? b.colour === wanted : b.animal === wanted);
 
 	function pop(b: Bubble) {
 		if (b.popped || finished) return;
+		if (b.hint) setStarted(true);
 		setBubbles((all) => all.map((x) => (x.id === b.id ? { ...x, popped: true } : x)));
 		// Gone once the pop's played.
 		timers.current.push(setTimeout(() => setBubbles((all) => all.filter((x) => x.id !== b.id)), 900));
@@ -135,16 +152,18 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 						{/* Sprig, blowing them, at the bottom. */}
 						<img className={s.popSprig} src="/pop/sprig.webp" alt="" draggable={false} style={{ height: Math.min(box.h * 0.38, 260) }} />
 						{bubbles.map((b) => (
-							<button key={b.id} type="button" className={`${s.bubble} ${b.popped ? s.bubblePopped : ""}`}
+							<button key={b.id} type="button" className={`${s.bubble} ${b.hint ? s.bubbleHint : ""} ${b.popped ? s.bubblePopped : ""}`}
 								aria-label={b.animal ? `A bubble with a ${b.animal.name}` : b.colour ? `A ${b.colour.name} bubble` : "A bubble"}
 								style={{
 									"--size": `${size * b.size}px`, "--to": `${b.to * (box.w - size)}px`, "--rise": `${box.h + size}px`,
-									"--time": `${rules.rise}ms`, "--wobble": `${b.wobble * 2.4}s`, animationDelay: `-${b.head}ms`,
+									"--time": `${b.hint ? rules.rise * HINT_SLOW : rules.rise}ms`, "--wobble": `${b.wobble * 2.4}s`, animationDelay: `-${b.head}ms`,
 								} as CSSProperties}
 								onPointerDown={() => pop(b)} onClick={(e) => e.detail === 0 && pop(b)}
 								onAnimationEnd={(e) => {
 									// Floated away without a pop: gone (another one's on its way).
-									if (e.animationName.includes("floatAway")) setBubbles((all) => all.filter((x) => x.id !== b.id));
+									if (!e.animationName.includes("floatAway")) return;
+									setBubbles((all) => all.filter((x) => x.id !== b.id));
+									if (b.hint) setStarted(true);
 								}}>
 								<span className={s.bubbleWobble}>
 									{b.colour && <span className={s.bubbleFill} style={{ background: b.colour.fill }} />}

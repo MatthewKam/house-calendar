@@ -51,7 +51,7 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 	] },
 	pop: { title: "Pop!", picture: "pop", Play: Pop, how: [
 		"Sprig blows bubbles, a burst to start, then a steady stream. Tap one to pop it.",
-		"Level 1: any bubble. Level 2: the ones with an animal inside (it jumps out). Level 3: the animal on the sign at the top (\"Pop 🐄\"), with others mixed in. Level 4: the colour on the sign. Levels 5 and 6: the same again, more bubbles and a little faster.",
+		"Level 1: any bubble. Level 2: the ones with an animal inside (it jumps out); it starts with one on its own, big and glowing, to show what counts. Level 3: the animal on the sign at the top (\"Pop 🐄\"), with others mixed in. Level 4: the colour on the sign. Levels 5 and 6: the same again, more bubbles and a little faster.",
 		"The others still pop, quietly, but only those count: nothing's ever wrong. When enough have popped, there's a cheer.",
 	] },
 	apples: { title: "Counting", picture: "apple", Play: Apples, how: [
