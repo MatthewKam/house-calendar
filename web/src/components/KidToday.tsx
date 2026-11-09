@@ -3,13 +3,13 @@ import { addDays, dayKey, fromDayKey, timeLabel } from "../lib/dates";
 import { factFor, type KidFact } from "../lib/kidFacts";
 import { kindWordsFor } from "../lib/kindWords";
 import { useLists, useRangeEvents, useWeather } from "../lib/queries";
-import type { CalEvent, Member, SprigItem, Stage, Weather } from "../lib/types";
+import type { CalEvent, Member, SprigItem, Weather } from "../lib/types";
 import { sky } from "../lib/weather";
 import TodayAnimal from "./TodayAnimal";
 import s from "../styles/KidMode.module.css";
 
-/** How many days a kid sees, growing with them: today for the littlest, then tomorrow too, then the week. */
-const DAYS: Record<Stage, number> = { little: 1, early: 2, middle: 7, tween: 7, teen: 7, adult: 7 };
+/** How many days ahead a kid sees: today, tomorrow, and later this week. */
+const DAYS = 7;
 
 /** A picture for an event, from words in its title (a calendar for kids who can't read yet). */
 const PICTURES: [RegExp, string][] = [
@@ -57,9 +57,9 @@ const partOfDay = (iso: string) => {
 };
 
 /**
- * Kid mode's Today, the morning screen: what to wear, anything to remember, the kid's own events as big
- * pictures (what's next picked out; older kids see more days ahead), or on a day with nothing on, an
- * animal to tap; then the day's fun fact and kind words.
+ * Kid mode's Today, the morning screen: what to wear and the day's kind words, anything to remember, then
+ * the kid's own events as big pictures (today with what's next picked out, tomorrow, and later this week),
+ * or on a day with nothing on, an animal to tap; then the day's fun fact. A phone on its side: in rows of two.
  */
 export default function KidToday({ today, kid }: { today: string; kid: Member }) {
 	const little = (kid.stage ?? "little") === "little";
@@ -67,9 +67,8 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 	const lists = useLists().data ?? [];
 	// Anything on a list for them, due today and not done yet.
 	const remember = lists.flatMap((l) => l.items).filter((i) => !i.done && i.memberId === kid.id && i.due && dueOn(i, today));
-	const days = DAYS[kid.stage ?? "little"];
 	const from = useMemo(() => fromDayKey(today), [today]);
-	const events = useRangeEvents(from, days).data ?? [];
+	const events = useRangeEvents(from, DAYS).data ?? [];
 	const now = Date.now();
 	// Only the ones they're on (not ones for everyone or no one in particular).
 	const mine = events.filter((e) => !e.busy && e.memberIds.includes(kid.id));
@@ -82,30 +81,47 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 			.filter((e) => (e.allDay ? e.start <= key && e.end > key : dayKey(new Date(e.start)) === key))
 			.sort((a, b) => Number(b.allDay) - Number(a.allDay) || a.start.localeCompare(b.start));
 
+	// Later this week: each event with its day.
+	const later = Array.from({ length: DAYS - 2 }, (_, i) => dayKey(addDays(from, i + 2)))
+		.flatMap((key) => onDay(key).map((e) => ({ e, day: fromDayKey(key).toLocaleDateString([], { weekday: "short" }) })))
+		// An all-day event over several days: once, on its first.
+		.filter(({ e }, i, all) => all.findIndex((x) => x.e.id === e.id) === i);
+	const todays = onDay(today);
+	const tomorrows = onDay(dayKey(addDays(from, 1)));
+	const event = (e: CalEvent, day?: string) => <KidEvent key={`${e.id}-${day ?? ""}`} event={e} day={day} next={e === next} over={!e.allDay && Date.parse(e.end) <= now} />;
+
 	return (
-		<>
+		<div className={s.today}>
 			{weather && <WhatToWear weather={weather} />}
-			{remember.length > 0 && <Remember items={remember} />}
-			{Array.from({ length: days }, (_, i) => {
-				const key = dayKey(addDays(from, i));
-				const list = onDay(key);
-				const label = i === 0 ? "Today" : i === 1 ? "Tomorrow" : fromDayKey(key).toLocaleDateString([], { weekday: "long" });
-				// Days after today with nothing on are left out; today always shows.
-				if (i > 0 && list.length === 0) return null;
-				return (
-					<section key={key} className={s.group} aria-label={label}>
-						<h2 className={s.groupHead}>{label}</h2>
-						{/* Nothing on today: an animal to tap instead. */}
-						{list.length === 0 && <TodayAnimal />}
-						<ul className={s.events}>
-							{list.map((e) => <KidEvent key={e.id} event={e} next={e === next} over={!e.allDay && Date.parse(e.end) <= now} />)}
-						</ul>
-					</section>
-				);
-			})}
-			<Card label="Did you know?" item={factFor(today, little)} />
 			<Card label="Kind words" item={kindWordsFor(today)} />
-		</>
+			{remember.length > 0 && <Remember items={remember} />}
+			<section className={s.group} aria-label="Today">
+				<h2 className={s.groupHead}>Today</h2>
+				{todays.length === 0 ? (
+					// Nothing on today: an animal to tap instead.
+					<>
+						<TodayAnimal />
+						<p className={s.none}>Nothing on the calendar today.</p>
+					</>
+				) : (
+					<ul className={s.events}>{todays.map((e) => event(e))}</ul>
+				)}
+			</section>
+			{/* Tomorrow and later this week, left out when there's nothing on. */}
+			{tomorrows.length > 0 && (
+				<section className={s.group} aria-label="Tomorrow">
+					<h2 className={s.groupHead}>Tomorrow</h2>
+					<ul className={s.events}>{tomorrows.map((e) => event(e))}</ul>
+				</section>
+			)}
+			{later.length > 0 && (
+				<section className={s.group} aria-label="Later this week">
+					<h2 className={s.groupHead}>Later this week</h2>
+					<ul className={s.events}>{later.map(({ e, day }) => event(e, day))}</ul>
+				</section>
+			)}
+			<Card label="Did you know?" item={factFor(today, little)} />
+		</div>
 	);
 }
 
@@ -173,7 +189,8 @@ function Card({ label, item }: { label: string; item: KidFact }) {
 	);
 }
 
-function KidEvent({ event: e, next, over }: { event: CalEvent; next: boolean; over: boolean }) {
+/** One event: its picture and title, and when (later this week: which day, too). */
+function KidEvent({ event: e, day, next, over }: { event: CalEvent; day?: string; next: boolean; over: boolean }) {
 	return (
 		<li className={`${s.event} ${next ? s.eventNext : ""} ${over ? s.eventOver : ""}`}>
 			<span className={s.eventPicture} aria-hidden="true">{picture(e.title)}</span>
@@ -184,10 +201,12 @@ function KidEvent({ event: e, next, over }: { event: CalEvent; next: boolean; ov
 			<span className={s.eventTime}>
 				{e.allDay ? (
 					<>
+						{day && <span className={s.eventDay}>{day}</span>}
 						<span aria-hidden="true">🌈</span> All day
 					</>
 				) : (
 					<>
+						{day && <span className={s.eventDay}>{day}</span>}
 						<span aria-hidden="true">{partOfDay(e.start)}</span> {timeLabel(e.start)}
 					</>
 				)}

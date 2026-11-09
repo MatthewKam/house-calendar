@@ -670,6 +670,19 @@
 	color: var(--muted);
 	white-space: nowrap;
 }
+/* Later this week: the day, over the time. */
+.eventDay {
+	display: block;
+	text-align: right;
+	font-weight: 800;
+}
+
+/* Today's cards and events, one under another (a phone on its side: rows of two). */
+.today {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
 
 /* What to wear: a card, the clothes as big pictures in a row, the weather under them in small print. */
 .wear {
@@ -855,6 +868,10 @@
 	}
 	.animal {
 		width: min(12rem, 45vh);
+	}
+	.today {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
 	}
 	.pottyToggle {
 		font-size: 1.3rem;
