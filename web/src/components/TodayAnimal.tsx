@@ -10,6 +10,7 @@ import s from "../styles/KidMode.module.css";
 const ANIMALS: { id: string; name: string; sound: string; gait: Gait }[] = [
 	{ id: "puppy", name: "Puppy", sound: "dog", gait: "walk" },
 	{ id: "duck", name: "Duck", sound: "duck", gait: "walk" },
+	{ id: "cat", name: "Cat", sound: "cat", gait: "walk" },
 	{ id: "frog", name: "Frog", sound: "frog", gait: "hop" },
 ];
 
