@@ -1,5 +1,5 @@
 // Special days for kid mode's Today: holidays and fun days (the ones that move worked out each year),
-// family birthdays, and days a grown-up adds, with a countdown in sleeps.
+// family birthdays, and events marked special, with a countdown in sleeps.
 
 import { dayKey, fromDayKey } from "./dates";
 
@@ -81,34 +81,30 @@ export function birthdays(people: { name: string; birthdate: string | null }[], 
 	});
 }
 
-/** The days a grown-up added, in a year: the once-only ones that fall in it, the yearly ones moved to it. */
-export function addedDays(days: { day: string; name: string; picture: string; yearly: boolean }[], year: number): SpecialDay[] {
-	return days.flatMap((d) => {
-		if (!d.yearly) return d.day.startsWith(`${year}-`) ? [{ day: d.day, name: d.name, picture: d.picture }] : [];
-		const [, m, dd] = d.day.split("-").map(Number);
-		const date = new Date(year, m - 1, dd);
-		if (date.getMonth() !== m - 1) date.setDate(0);
-		return [{ day: dayKey(date), name: d.name, picture: d.picture }];
-	});
-}
-
 /** How many sleeps from one day to another (YYYY-MM-DD). */
 export function sleepsUntil(today: string, day: string) {
 	return Math.round((fromDayKey(day).getTime() - fromDayKey(today).getTime()) / 86_400_000);
 }
 
 /**
- * This month's special days, in order; in the month's last week, next month's first two weeks too (so
- * the next ones don't vanish when the month turns over). `extra` adds birthdays and grown-ups' own days.
+ * The days the month card covers (YYYY-MM-DD, both ends in): this month, and in its last week, next
+ * month's first two weeks too (so the next ones don't vanish when the month turns over).
  */
-export function specialDaysFor(today: string, extra: (year: number) => SpecialDay[] = () => []) {
+export function specialWindow(today: string) {
 	const now = fromDayKey(today);
-	const from = dayKey(new Date(now.getFullYear(), now.getMonth(), 1));
 	const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 	const lastWeek = monthEnd.getDate() - now.getDate() < 7;
-	const to = dayKey(lastWeek ? new Date(now.getFullYear(), now.getMonth() + 1, 14) : monthEnd);
-	const years = [now.getFullYear(), now.getFullYear() + 1];
-	return years
+	return {
+		from: dayKey(new Date(now.getFullYear(), now.getMonth(), 1)),
+		to: dayKey(lastWeek ? new Date(now.getFullYear(), now.getMonth() + 1, 14) : monthEnd),
+	};
+}
+
+/** The special days in the month card's days (specialWindow), in order. `extra` adds birthdays and special events. */
+export function specialDaysFor(today: string, extra: (year: number) => SpecialDay[] = () => []) {
+	const { from, to } = specialWindow(today);
+	const year = fromDayKey(today).getFullYear();
+	return [year, year + 1]
 		.flatMap((y) => [...holidays(y), ...extra(y)])
 		.filter((d) => d.day >= from && d.day <= to)
 		.sort((a, b) => a.day.localeCompare(b.day) || a.name.localeCompare(b.name));

@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClie
 import { api } from './api';
 import { addDays, dayKey, fromDayKey } from './dates';
 import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, RewardInput, CalEvent, Reward, RewardWin, Bucket, StarPlacing,
-  ReminderList, Photo, LeaveAlert, OutboxStatus, PottyChart, Visibility, SprigList, SprigItem, Game, AddedDay } from './types';
+  ReminderList, Photo, LeaveAlert, OutboxStatus, PottyChart, Visibility, SprigList, SprigItem, Game } from './types';
 
 // ---- Edits show straight away ---------------------------------------------------------------
 // Every edit changes what's on screen first (the cached data), then saves in the background. If
@@ -458,21 +458,6 @@ export function useLearn(today: string) {
 }
 
 /** Animal noises a grown-up recorded for the games. */
-/** Special days the grown-ups added, for kid mode's month card. */
-export function useSpecialDays() {
-  return useQuery({ queryKey: ['specialDays'], queryFn: api.specialDays });
-}
-
-/** Adding or removing a special day: the answer is them all, which replaces the cache. */
-export function useChangeSpecialDays() {
-  const qc = useQueryClient();
-  const replace = (days: AddedDay[]) => qc.setQueryData(['specialDays'], days);
-  return {
-    add: useMutation({ mutationFn: api.addSpecialDay, onSuccess: replace }),
-    remove: useMutation({ mutationFn: api.deleteSpecialDay, onSuccess: replace }),
-  };
-}
-
 export function useLearnSounds() {
   return useQuery({ queryKey: ['learnSounds'], queryFn: api.learnSounds });
 }
@@ -504,6 +489,17 @@ export function useSetVisibility() {
   return useMutation({
     mutationFn: ({ id, visibility }: { id: string; visibility: Visibility }) => api.setVisibility(id, visibility),
     onMutate: ({ id, visibility }) => showNow(qc, [{ key: keys.events, apply: (list: CalEvent[]) => list.map((e) => (e.id === id ? { ...e, visibility } : e)) }]),
+    onError: putBack(qc),
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.events }),
+  });
+}
+
+/** Marking an event special (a countdown on kid mode's Today), or not. */
+export function useSetSpecial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, special }: { id: string; special: boolean }) => api.setSpecial(id, special),
+    onMutate: ({ id, special }) => showNow(qc, [{ key: keys.events, apply: (list: CalEvent[]) => list.map((e) => (e.id === id ? { ...e, special } : e)) }]),
     onError: putBack(qc),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.events }),
   });

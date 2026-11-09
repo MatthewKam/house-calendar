@@ -115,6 +115,8 @@ export interface CalEvent {
   repeats: boolean;
   /** Who sees it: its own setting, else its calendar's (server/privacy.ts). */
   visibility: Visibility;
+  /** Marked special: a countdown on kid mode's Today, for the kids it's for (every repeat of it). */
+  special: boolean;
   /** Sprig's own events: notes, and the flyer photo it was read from (Snap a flyer). */
   notes: string | null;
   photoUrl: string | null;
@@ -203,18 +205,6 @@ export interface SyncedCalendar {
 }
 
 /** A Reminders list as the wall shows it (synced from the family's iPhones by a Shortcut). */
-/** A special day a grown-up added for kid mode's month card (server/specialDays.ts). */
-export interface AddedDay {
-  id: string;
-  /** YYYY-MM-DD (every year: the year it was added for). */
-  day: string;
-  name: string;
-  picture: string;
-  /** Just this kid's; null: everyone's. */
-  memberId: string | null;
-  yearly: boolean;
-}
-
 /** A list kept in Sprig itself (server/lists.ts). */
 export interface SprigList {
   id: string;
@@ -289,6 +279,8 @@ export type EventInput = Pick<CalEvent, 'title' | 'memberIds' | 'allDay' | 'star
   calendarId?: string;
   /** New events only: who sees it (existing ones change it with setVisibility). */
   visibility?: Visibility;
+  /** New events only: a countdown on kid mode's Today (existing ones change it with setSpecial). */
+  special?: boolean;
   /** Changing a repeating iCloud event: just the day opened, or every day. */
   scope?: Scope;
 };

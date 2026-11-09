@@ -2,8 +2,8 @@ import { useMemo, useRef, useState, type ReactNode } from "react";
 import { addDays, dayKey, fromDayKey, timeLabel } from "../lib/dates";
 import { factFor, type KidFact } from "../lib/kidFacts";
 import { kindWordsFor } from "../lib/kindWords";
-import { useLists, useMembers, useRangeEvents, useSpecialDays, useWeather } from "../lib/queries";
-import { addedDays, birthdays, sleepsUntil, specialDaysFor } from "../lib/specialDays";
+import { useLists, useMembers, useRangeEvents, useWeather } from "../lib/queries";
+import { birthdays, sleepsUntil, specialDaysFor, specialWindow, type SpecialDay } from "../lib/specialDays";
 import type { CalEvent, Member, SprigItem, Weather } from "../lib/types";
 import { sky } from "../lib/weather";
 import { useMediaQuery } from "../lib/useMediaQuery";
@@ -434,14 +434,27 @@ function Card({ label, item }: { label: string; item: KidFact }) {
 }
 
 /**
- * The month's special days: holidays, family birthdays and the days a grown-up added (everyone's, and
- * this kid's own), each with how many sleeps until it (the ones gone by dimmed, today's picked out). In
- * the month's last week, next month's first ones too.
+ * The month's special days: holidays, family birthdays and the events a grown-up marked special (ones
+ * for this kid, or for no one in particular), each with how many sleeps until it (the ones gone by
+ * dimmed, today's picked out). In the month's last week, next month's first ones too.
  */
 function SpecialDays({ today, kidId }: { today: string; kidId: string }) {
 	const people = useMembers().data ?? [];
-	const added = (useSpecialDays().data ?? []).filter((d) => d.memberId === null || d.memberId === kidId);
-	const days = specialDaysFor(today, (year) => [...birthdays(people, year), ...addedDays(added, year)]);
+	const { from, to } = specialWindow(today);
+	const start = useMemo(() => fromDayKey(from), [from]);
+	const events = useRangeEvents(start, sleepsUntil(from, to) + 1).data ?? [];
+	// Each special one once, on its first day, its picture from its title: the ones this kid's on, and
+	// the ones no kid's on (for everyone, or just grown-ups: Mom's birthday) are every kid's.
+	const kids = new Set(people.filter((p) => p.stage !== null && p.stage !== "adult").map((p) => p.id));
+	const special: SpecialDay[] = events
+		.filter((e) => e.special && !e.busy)
+		.filter((e) => {
+			const on = e.memberIds.filter((id) => kids.has(id));
+			return on.length === 0 || on.includes(kidId);
+		})
+		.map((e) => ({ day: e.allDay ? e.start : dayKey(new Date(e.start)), name: e.title, picture: picture(e.title, "⭐") }))
+		.filter((d, i, all) => all.findIndex((x) => x.day === d.day && x.name === d.name) === i);
+	const days = specialDaysFor(today, (year) => [...birthdays(people, year), ...special.filter((d) => d.day.startsWith(`${year}-`))]);
 	const month = fromDayKey(today).toLocaleDateString([], { month: "long" });
 	return (
 		<section className={s.special} aria-label={`${month}'s special days`}>

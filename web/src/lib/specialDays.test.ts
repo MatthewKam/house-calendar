@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addedDays, birthdays, holidays, sleepsUntil, specialDaysFor } from "./specialDays";
+import { birthdays, holidays, sleepsUntil, specialDaysFor } from "./specialDays";
 
 const on = (year: number, name: string) => holidays(year).find((h) => h.name === name)?.day;
 
@@ -31,15 +31,6 @@ describe("special days", () => {
 		expect(dec).toContain("2027-01-01");
 		// Past the next month's first two weeks: not yet.
 		expect(dec).not.toContain("2027-01-18");
-	});
-
-	it("puts the grown-ups' days in their year: once-only ones in theirs, yearly ones in every one", () => {
-		const added = [
-			{ day: "2026-11-21", name: "School play", picture: "🎭", yearly: false },
-			{ day: "2025-11-14", name: "Cousins visit", picture: "🚗", yearly: true },
-		];
-		expect(addedDays(added, 2026).map((d) => d.day)).toEqual(["2026-11-21", "2026-11-14"]);
-		expect(addedDays(added, 2027).map((d) => d.day)).toEqual(["2027-11-14"]);
 	});
 
 	it("counts sleeps", () => {

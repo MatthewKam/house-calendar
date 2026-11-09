@@ -758,6 +758,17 @@ const migrations: string[] = [
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
   `,
+  // Special days are events now: one marked special (every repeat of it) counts down on kid mode's
+  // Today, for the kids it's for. The grown-ups' own list above goes (it was never used).
+  `
+  DROP TABLE special_days;
+  CREATE TABLE event_special (
+    calendar_id TEXT NOT NULL REFERENCES calendars(id) ON DELETE CASCADE,
+    -- The series (every repeat), or the event's own id when it doesn't repeat.
+    series_key  TEXT NOT NULL,
+    PRIMARY KEY (calendar_id, series_key)
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */
