@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClie
 import { api } from './api';
 import { addDays, dayKey, fromDayKey } from './dates';
 import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, RewardInput, CalEvent, Reward, RewardWin, Bucket, StarPlacing,
-  ReminderList, Photo, LeaveAlert, OutboxStatus, PottyChart, Visibility, SprigList, SprigItem, Game } from './types';
+  ReminderList, Photo, LeaveAlert, OutboxStatus, PottyChart, Visibility, SprigList, SprigItem, Game, AddedDay } from './types';
 
 // ---- Edits show straight away ---------------------------------------------------------------
 // Every edit changes what's on screen first (the cached data), then saves in the background. If
@@ -458,6 +458,21 @@ export function useLearn(today: string) {
 }
 
 /** Animal noises a grown-up recorded for the games. */
+/** Special days the grown-ups added, for kid mode's month card. */
+export function useSpecialDays() {
+  return useQuery({ queryKey: ['specialDays'], queryFn: api.specialDays });
+}
+
+/** Adding or removing a special day: the answer is them all, which replaces the cache. */
+export function useChangeSpecialDays() {
+  const qc = useQueryClient();
+  const replace = (days: AddedDay[]) => qc.setQueryData(['specialDays'], days);
+  return {
+    add: useMutation({ mutationFn: api.addSpecialDay, onSuccess: replace }),
+    remove: useMutation({ mutationFn: api.deleteSpecialDay, onSuccess: replace }),
+  };
+}
+
 export function useLearnSounds() {
   return useQuery({ queryKey: ['learnSounds'], queryFn: api.learnSounds });
 }

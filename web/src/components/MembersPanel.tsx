@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { PALETTE } from '../lib/color';
 import { screenSaverSettings } from '../lib/screensaver';
-import { useAddMember, useCalendars, useLearn, useRemoveMember, useSetSetting, useSettings, useUpdateMember } from '../lib/queries';
+import { useAddMember, useCalendars, useLearn, useRemoveMember, useSetSetting, useSettings, useUpdateMember , useSpecialDays } from '../lib/queries';
 import type { Member, MemberPatch, Stage } from '../lib/types';
 import { dayKey } from '../lib/dates';
 import { STAGE_AGES, STAGE_LIST, STAGE_NAMES } from '../lib/stages';
@@ -15,6 +15,7 @@ import s from '../styles/MembersPanel.module.css';
 import DateInput from './DateInput';
 import AlertsSetting, { ALERTS_NOTE } from './AlertsSetting';
 import LearnSettings, { learnNote } from './LearnSettings';
+import SpecialDaysSettings, { specialNote } from './SpecialDaysSettings';
 import { usePush } from '../lib/usePush';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
@@ -111,6 +112,7 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
   const [newName, setNewName] = useState('');
   const today = dayKey(new Date());
   const learn = useLearn(today).data ?? [];
+  const specialCount = (useSpecialDays().data ?? []).filter((d) => d.yearly || d.day >= today).length;
   // null until someone picks a color; then the next unused palette color is offered.
   const [pickedColor, setPickedColor] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -291,6 +293,10 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
 
         <Section title="Learning" note={learnNote(learn, members)}>
           <LearnSettings members={members} today={today} />
+        </Section>
+
+        <Section title="Special days" note={specialNote(specialCount)}>
+          <SpecialDaysSettings members={members} today={today} />
         </Section>
 
         <Section title="Calendars">

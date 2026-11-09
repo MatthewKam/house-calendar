@@ -10,6 +10,7 @@ import { registerTasks } from './tasks.ts';
 import { registerRewards } from './rewards.ts';
 import { registerMoments } from './moments.ts';
 import { registerPotty } from './potty.ts';
+import { registerSpecialDays } from './specialDays.ts';
 import { registerGoals } from './goals.ts';
 import { registerTravel, type Estimator } from './travel.ts';
 import { registerPlaces, type PlaceSearch } from './places.ts';
@@ -226,6 +227,7 @@ export function buildApp(db: DB, opts: {
   registerRewards(app, db);
   registerMoments(app, db);
   registerPotty(app, db);
+  registerSpecialDays(app, db);
   registerGoals(app, db);
   registerTravel(app, db, opts.travel);
   registerPlaces(app, db, opts.places);

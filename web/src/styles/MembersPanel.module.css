@@ -126,3 +126,12 @@
   font-size: 0.8rem;
   font-weight: 700;
 }
+
+/* Special days (SpecialDaysSettings): the ones added, then the form to add another. */
+.specialList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.specialRow { display: flex; align-items: center; gap: 0.7rem; }
+.specialPicture { font-size: 1.8rem; line-height: 1; }
+.specialWhat { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.specialAdd { display: flex; flex-direction: column; gap: 0.5rem; padding-top: 0.4rem; border-top: 1px solid var(--line); }
+.specialPick { flex: none; width: 2.8rem; height: 2.8rem; font-size: 1.5rem; border: 1px solid var(--line); border-radius: 0.6rem; background: var(--surface); }
+.specialField { font: inherit; font-size: 1rem; padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: 0.6rem; background: var(--surface); color: var(--text); }

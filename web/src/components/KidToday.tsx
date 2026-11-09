@@ -2,8 +2,8 @@ import { useMemo, useRef, useState, type ReactNode } from "react";
 import { addDays, dayKey, fromDayKey, timeLabel } from "../lib/dates";
 import { factFor, type KidFact } from "../lib/kidFacts";
 import { kindWordsFor } from "../lib/kindWords";
-import { useLists, useMembers, useRangeEvents, useWeather } from "../lib/queries";
-import { birthdays, sleepsUntil, specialDaysFor } from "../lib/specialDays";
+import { useLists, useMembers, useRangeEvents, useSpecialDays, useWeather } from "../lib/queries";
+import { addedDays, birthdays, sleepsUntil, specialDaysFor } from "../lib/specialDays";
 import type { CalEvent, Member, SprigItem, Weather } from "../lib/types";
 import { sky } from "../lib/weather";
 import { useMediaQuery } from "../lib/useMediaQuery";
@@ -168,7 +168,7 @@ export default function KidToday({
 			/>
 			{remember.length > 0 && <Remember items={remember} />}
 			{weather && <WhatToWear weather={weather} />}
-			<SpecialDays today={today} />
+			<SpecialDays today={today} kidId={kid.id} />
 			{/* Last, each across the whole width. */}
 			<Card label="Kind words" item={kindWordsFor(today)} />
 			<Card label="Did you know?" item={factFor(today, little)} />
@@ -434,12 +434,14 @@ function Card({ label, item }: { label: string; item: KidFact }) {
 }
 
 /**
- * The month's special days: holidays, family birthdays, each with how many sleeps until it (the ones gone
- * by dimmed, today's picked out). In the month's last week, next month's first ones too.
+ * The month's special days: holidays, family birthdays and the days a grown-up added (everyone's, and
+ * this kid's own), each with how many sleeps until it (the ones gone by dimmed, today's picked out). In
+ * the month's last week, next month's first ones too.
  */
-function SpecialDays({ today }: { today: string }) {
+function SpecialDays({ today, kidId }: { today: string; kidId: string }) {
 	const people = useMembers().data ?? [];
-	const days = specialDaysFor(today, (year) => birthdays(people, year));
+	const added = (useSpecialDays().data ?? []).filter((d) => d.memberId === null || d.memberId === kidId);
+	const days = specialDaysFor(today, (year) => [...birthdays(people, year), ...addedDays(added, year)]);
 	const month = fromDayKey(today).toLocaleDateString([], { month: "long" });
 	return (
 		<section className={s.special} aria-label={`${month}'s special days`}>

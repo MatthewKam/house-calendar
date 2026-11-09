@@ -203,6 +203,18 @@ export interface SyncedCalendar {
 }
 
 /** A Reminders list as the wall shows it (synced from the family's iPhones by a Shortcut). */
+/** A special day a grown-up added for kid mode's month card (server/specialDays.ts). */
+export interface AddedDay {
+  id: string;
+  /** YYYY-MM-DD (every year: the year it was added for). */
+  day: string;
+  name: string;
+  picture: string;
+  /** Just this kid's; null: everyone's. */
+  memberId: string | null;
+  yearly: boolean;
+}
+
 /** A list kept in Sprig itself (server/lists.ts). */
 export interface SprigList {
   id: string;

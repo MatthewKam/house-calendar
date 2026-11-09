@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, LearnState, LearnSound, Game, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility, SprigList, SprigItem, Proposal } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, LearnState, LearnSound, Game, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility, SprigList, SprigItem, Proposal, AddedDay } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, {
@@ -93,6 +93,9 @@ export const api = {
     call<LearnState & { leveledUp: boolean }>('POST', `/api/learn/${memberId}/done`, p),
   /** Animal noises a grown-up recorded, and when (for each one's address, so a new one isn't cached). */
   learnSounds: () => call<LearnSound[]>('GET', '/api/learn/sounds'),
+  specialDays: () => call<AddedDay[]>('GET', '/api/special-days'),
+  addSpecialDay: (d: Omit<AddedDay, 'id'>) => call<AddedDay[]>('POST', '/api/special-days', d),
+  deleteSpecialDay: (id: string) => call<AddedDay[]>('DELETE', `/api/special-days/${id}`),
   recordLearnSound: async (animal: string, audio: Blob) => {
     const res = await fetch(`/api/learn/sounds/${animal}`, { method: 'PUT', headers: { 'content-type': audio.type || 'audio/webm' }, body: audio });
     if (!res.ok) throw new Error(await res.json().then((j) => j.error ?? j.message, () => res.statusText));

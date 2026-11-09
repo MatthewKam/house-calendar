@@ -745,6 +745,19 @@ const migrations: string[] = [
     updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
   `,
+  // Special days a grown-up adds (specialDays.ts), for kid mode's month card: for one kid or all of
+  // them, once or every year.
+  `
+  CREATE TABLE special_days (
+    id         TEXT PRIMARY KEY,
+    day        TEXT NOT NULL,
+    name       TEXT NOT NULL,
+    picture    TEXT NOT NULL,
+    member_id  TEXT REFERENCES members(id) ON DELETE CASCADE,
+    yearly     INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

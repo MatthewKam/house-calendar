@@ -81,6 +81,17 @@ export function birthdays(people: { name: string; birthdate: string | null }[], 
 	});
 }
 
+/** The days a grown-up added, in a year: the once-only ones that fall in it, the yearly ones moved to it. */
+export function addedDays(days: { day: string; name: string; picture: string; yearly: boolean }[], year: number): SpecialDay[] {
+	return days.flatMap((d) => {
+		if (!d.yearly) return d.day.startsWith(`${year}-`) ? [{ day: d.day, name: d.name, picture: d.picture }] : [];
+		const [, m, dd] = d.day.split("-").map(Number);
+		const date = new Date(year, m - 1, dd);
+		if (date.getMonth() !== m - 1) date.setDate(0);
+		return [{ day: dayKey(date), name: d.name, picture: d.picture }];
+	});
+}
+
 /** How many sleeps from one day to another (YYYY-MM-DD). */
 export function sleepsUntil(today: string, day: string) {
 	return Math.round((fromDayKey(day).getTime() - fromDayKey(today).getTime()) / 86_400_000);
