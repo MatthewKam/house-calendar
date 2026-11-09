@@ -102,7 +102,11 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 				const shape = 1 / (place.peek / place.wide + animalShare);
 				// On a tablet (either way up) or a phone on its side, the three in one row; on an upright phone, two
 				// and one under them (whatever the hiding place's shape).
-				const room = { w: box.w - 24, h: box.h * 0.7 };
+				// On a tablet, up off the bottom: a quarter of the way up on its side, nearer the middle upright
+				// (a phone keeps them on the ground at the bottom).
+				const tablet = box.w >= 600 && box.h >= 500;
+				const lift = !tablet ? 0 : box.w > box.h ? box.h * 0.25 : box.h * 0.3;
+				const room = { w: box.w - 24, h: Math.min(box.h * 0.7, box.h - lift - 24) };
 				const row = box.w > box.h || box.w >= 600;
 				const cols = row ? bushes.length : 2;
 				const rows = Math.ceil(bushes.length / cols);
@@ -111,7 +115,7 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 				return (
 					<div className={s.farm}>
 						<img className={s.farmBack} src={art(place.id)} alt="" draggable={false} />
-						<div className={s.bushes} style={{ maxWidth: grid.cols * grid.size + (grid.cols - 1) * 12 + 24 }}>
+						<div className={s.bushes} style={{ maxWidth: grid.cols * grid.size + (grid.cols - 1) * 12 + 24, marginBottom: lift }}>
 							{bushes.map((b, i) => (
 								<button key={i} type="button" className={s.bushSpot} onClick={() => tap(i)}
 									style={{ width: grid.size, height: grid.size / shape }}
