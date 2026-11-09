@@ -771,10 +771,6 @@ button.kidName {
 /* A tablet on its side: the calendar (its days side by side) and what to remember across the whole width,
    then the day's three cards in a row. */
 @media (orientation: landscape) and (min-width: 900px) and (min-height: 501px) {
-	/* Everything on the page as wide as Today's rows of three, so it all lines up. */
-	.page > :not([role="dialog"], [role="presentation"]) {
-		max-width: 80rem;
-	}
 	.today {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
