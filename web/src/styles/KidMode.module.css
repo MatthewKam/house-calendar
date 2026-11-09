@@ -701,8 +701,80 @@
 	}
 	.calendar {
 		display: grid;
+		grid-template-columns: 1fr 1fr;
+		align-items: start;
+	}
+}
+/* Wider than 1400px: the calendar's three days side by side. */
+@media (min-width: 1401px) {
+	.calendar.calendar {
+		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 		align-items: start;
+	}
+}
+
+/* The calendar's carousel: a big button for each day along the top, the day under them. */
+.carousel {
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+	min-width: 0;
+	/* Up and down still scrolls the page; sideways is a swipe. */
+	touch-action: pan-y;
+}
+.dayButtons {
+	display: flex;
+	gap: 0.5rem;
+}
+.dayButton {
+	/* Each as wide as its name needs and the rest shared out, so none wraps. */
+	flex: 1 1 auto;
+	white-space: nowrap;
+	min-height: 3.2rem;
+	padding: 0.3rem 0.6rem;
+	border-radius: 999px;
+	border: 2px solid color-mix(in srgb, var(--c) 45%, white);
+	background: var(--surface);
+	color: var(--text);
+	font: inherit;
+	font-size: 0.95rem;
+	font-weight: 750;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+}
+.dayButtonOn {
+	border-color: var(--c);
+	background: var(--c);
+	color: #fff;
+}
+.dayPage {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.dayFromRight {
+	animation: dayFromRight 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.dayFromLeft {
+	animation: dayFromLeft 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@keyframes dayFromRight {
+	from {
+		opacity: 0;
+		transform: translateX(2.5rem);
+	}
+}
+@keyframes dayFromLeft {
+	from {
+		opacity: 0;
+		transform: translateX(-2.5rem);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.dayFromRight,
+	.dayFromLeft {
+		animation: none;
 	}
 }
 
@@ -748,6 +820,7 @@
 	margin: 0;
 	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	gap: 0.1rem 0.9rem;
 	font-size: 0.95rem;
 	font-weight: 600;
@@ -909,7 +982,7 @@
 	}
 	.calendar {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+		grid-template-columns: 1fr 1fr;
 		align-items: start;
 	}
 	.pottyToggle {
