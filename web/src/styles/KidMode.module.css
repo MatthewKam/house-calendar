@@ -138,8 +138,8 @@
 	font-weight: 700;
 	color: var(--muted);
 }
-/* On its side: the date beside the time, on one line. */
-@media (orientation: landscape) {
+/* On its side, or on a tablet either way up: the date beside the time, on one line. */
+@media (orientation: landscape), (min-width: 744px) and (min-height: 600px) {
 	.clock {
 		flex-direction: row;
 		align-items: baseline;
@@ -769,12 +769,13 @@ button.kidName {
 	flex-direction: column;
 	gap: 1rem;
 }
-/* A tablet on its side: the calendar (its days side by side) and what to remember across the whole width,
-   then the day's three cards in a row. */
-@media (orientation: landscape) and (min-width: 900px) and (min-height: 501px) {
+/* A tablet, either way up (an iPad mini upright is 744px wide; phones on their side are under 600px
+   tall): the calendar (its days side by side) and what to remember across the whole width, then the
+   day's three cards in a row. */
+@media (min-width: 744px) and (min-height: 600px) {
 	.today {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 	}
 	.remember,
 	.calendar {
@@ -782,8 +783,14 @@ button.kidName {
 	}
 	.calendar {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 		align-items: start;
+	}
+}
+/* A tablet upright: the cards in rows of two instead. */
+@media (min-width: 744px) and (min-height: 600px) and (orientation: portrait) {
+	.today {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 }
 /* Wider than 1400px: the calendar's three days side by side. */
@@ -913,13 +920,23 @@ button.kidName {
 
 .weatherStats {
 	display: flex;
+	align-items: center;
 	gap: 15px;
 }
 .weatherBlock {
+	/* Beside the temperature, as wide as there's room for (its lines wrap inside it). */
+	flex: 1 1 0;
+	min-width: 0;
 	display: flex;
 	flex-direction: column;
 	gap: 5px;
 	padding: 10px;
+}
+/* The conditions, rain and wind: spaced apart, and onto another line if the card's narrow. */
+.weatherBlock > span:last-child {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0 0.7rem;
 }
 
 .currentWeather {
