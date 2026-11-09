@@ -730,19 +730,17 @@
 	background: color-mix(in srgb, var(--c) 14%, var(--surface));
 }
 
-/* The day's cards: a fun fact, and kind words (solid, not dashed). */
+/* The day's cards: a fun fact, and kind words. */
 .fact {
 	display: flex;
 	align-items: center;
 	gap: 1rem;
 	padding: 1.1rem 1.2rem;
 	border-radius: 1.4rem;
+	/* A card, like What to wear. */
 	background: var(--surface);
-	border: 3px dashed color-mix(in srgb, var(--c) 50%, white);
-}
-.factKind {
-	border-style: solid;
-	background: color-mix(in srgb, var(--c) 10%, var(--surface));
+	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
+	box-shadow: 0 0.3rem 1rem color-mix(in srgb, var(--c) 18%, transparent);
 }
 .factPicture {
 	font-size: 5rem;

@@ -104,7 +104,7 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 				);
 			})}
 			<Card label="Did you know?" item={factFor(today, little)} />
-			<Card label="Kind words" item={kindWordsFor(today)} kind />
+			<Card label="Kind words" item={kindWordsFor(today)} />
 		</>
 	);
 }
@@ -161,9 +161,9 @@ function Remember({ items }: { items: SprigItem[] }) {
 }
 
 /** A card for the day: a big picture and one short sentence, for a grown-up to read aloud. */
-function Card({ label, item, kind }: { label: string; item: KidFact; kind?: boolean }) {
+function Card({ label, item }: { label: string; item: KidFact }) {
 	return (
-		<div className={`${s.fact} ${kind ? s.factKind : ""}`}>
+		<div className={s.fact}>
 			<span className={s.factPicture} aria-hidden="true">{item.picture}</span>
 			<span className={s.factText}>
 				<span className={s.nextLabel}>{label}</span>
