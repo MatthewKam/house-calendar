@@ -504,6 +504,13 @@ const ART: Record<string, ReactNode> = {
 			<rect x="14" y="106" width="92" height="10" rx="3" fill="#e9dfcc" />
 		</>
 	),
+	// Pop!'s tile: a bubble with a duck in it.
+	pop: (
+		<>
+			<image href="/animals/duck.webp" x="26" y="26" width="68" height="68" />
+			<image href="/pop/bubble.webp" x="4" y="4" width="112" height="112" />
+		</>
+	),
 	bush: (
 		<>
 			<g fill="#4c9a4c">

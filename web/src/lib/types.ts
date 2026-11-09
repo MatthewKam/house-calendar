@@ -364,7 +364,7 @@ export type Proposal =
   | { kind: 'task'; title: string; memberId: string; day: string };
 
 /** Learning's games (server/learn.ts): Little's four, then Early's. */
-export type Game = 'sounds' | 'peekaboo' | 'findIt' | 'apples' | 'adding' | 'maze' | 'letters' | 'memory';
+export type Game = 'sounds' | 'peekaboo' | 'findIt' | 'apples' | 'pop' | 'adding' | 'maze' | 'letters' | 'memory';
 
 /** An animal noise a grown-up recorded for the games (server/learn.ts), and when. */
 export interface LearnSound {

@@ -11,6 +11,7 @@ import Letters from "./Letters";
 import Maze from "./Maze";
 import Memory from "./Memory";
 import Peekaboo from "./Peekaboo";
+import Pop from "./Pop";
 import Sounds from "./Sounds";
 import Chomp, { ChompPic, pickAnimal } from "./Chomp";
 import { HowTo, Over } from "./parts";
@@ -47,6 +48,11 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 		"The index shows each kind of thing in the room and how many there are: socks 2, teddy bears 3.",
 		"Tap any of them: it flies to its place by the index, and the number goes down. Nothing is wrong to tap. The room's done when everything's collected.",
 		"From level 3, some things hide under others: collect the teddy and there's the sock. Higher levels: more kinds of things, and more of each.",
+	] },
+	pop: { title: "Pop!", picture: "pop", Play: Pop, how: [
+		"Sprig blows bubbles, each with an animal inside. Tap one to pop it: the animal jumps out making its noise.",
+		"From level 3, a sign at the top says which animal to pop (\"Pop 🐄\"): the others still pop, quietly, but only those count. From level 5, it's a colour.",
+		"Nothing's ever wrong: bubbles that float away come round again. When enough have popped, there's a cheer.",
 	] },
 	apples: { title: "Counting", picture: "apple", Play: Apples, how: [
 		"Tap each one to count it: the count so far shows big at the top and is said out loud.",
