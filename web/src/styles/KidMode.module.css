@@ -114,19 +114,18 @@
 /* Switching kids (all kids). */
 .top {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
 	gap: 0.6rem;
 }
-/* The time and date, on the right of the name row on every tab: the time big, the date under it. */
+/* The time and date, top left on every tab: the time big, the date under it. */
 .clock {
-	flex: none;
-	margin: 0 0 0 auto;
+	margin: 0;
 	display: flex;
 	flex-direction: column;
-	align-items: flex-end;
 	line-height: 1.1;
-	text-align: right;
+	white-space: nowrap;
 }
 .clockTime {
 	font-size: 1.6rem;
@@ -138,67 +137,118 @@
 	font-weight: 700;
 	color: var(--muted);
 }
-/* Who's playing: each kid's name is a switch. Off: a white circle, then the name. On: the circle
-   slides to the right and the button fills with their color. */
-.faces {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.5rem;
-}
-.face {
-	--knob: 2.4rem;
-	position: relative;
+/* Whose it is, top right: the stars, then their name in their colour, which opens the other kids. */
+.who {
+	margin-left: auto;
 	display: flex;
 	align-items: center;
+	gap: 0.8rem;
+}
+.picker {
+	position: relative;
+}
+.pickerHead {
+	margin: 0;
+	font-size: inherit;
+}
+.kidName {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	margin: 0;
 	min-height: 3.2rem;
-	padding: 0.3rem 1.2rem 0.3rem calc(var(--knob) + 0.8rem);
+	padding: 0.3rem 1.2rem;
+	border: 0;
 	border-radius: 999px;
-	border: 2px solid color-mix(in srgb, var(--c) 45%, white);
-	background: color-mix(in srgb, var(--text) 7%, var(--surface));
-	color: var(--text);
-	font-weight: 700;
-	font-size: 1.2rem;
-	transition:
-		background 0.25s ease,
-		color 0.25s ease,
-		padding 0.25s ease,
-		border-color 0.25s ease,
-		box-shadow 0.25s ease;
-}
-.knob {
-	position: absolute;
-	top: 50%;
-	left: 0.35rem;
-	width: var(--knob);
-	height: var(--knob);
-	border-radius: 50%;
-	background: white;
-	box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
-	transform: translateY(-50%);
-	transition: left 0.25s ease;
-}
-.face[aria-checked="true"] {
-	padding: 0.3rem calc(var(--knob) + 0.8rem) 0.3rem 1.2rem;
 	background: var(--c);
-	border-color: var(--c);
 	color: var(--on);
-	/* Raised a little, like the selected tab in the grown-ups' bar. */
+	font: inherit;
+	font-size: 1.6rem;
+	font-weight: 800;
+	line-height: 1.1;
 	box-shadow:
 		0 1px 2px rgb(0 0 0 / 0.08),
 		0 2px 6px rgb(0 0 0 / 0.08);
 }
-/* Learn's Both switch: like the names, in a color of its own. */
-.bothSwitch {
-	--c: #7a5cc8;
-	--on: #fff;
+button.kidName {
+	padding-right: 0.8rem;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
 }
-.face[aria-checked="true"] .knob {
-	left: calc(100% - var(--knob) - 0.35rem);
+.kidName svg {
+	width: 1.4rem;
+	height: 1.4rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 3;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	transition: transform 0.2s ease;
 }
-@media (prefers-reduced-motion: reduce) {
-	.face,
-	.knob {
-		transition: none;
+.kidName .kidNameOpen {
+	transform: rotate(180deg);
+}
+/* The other kids, dropped down under it. */
+.kidMenu {
+	position: absolute;
+	top: calc(100% + 0.4rem);
+	right: 0;
+	z-index: 20;
+	min-width: 12rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	padding: 0.4rem;
+	border-radius: 1.2rem;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	box-shadow: 0 0.6rem 1.6rem rgb(0 0 0 / 0.18);
+}
+.kidMenuItem {
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+	min-height: 3.2rem;
+	padding: 0.3rem 1rem;
+	border: 0;
+	border-radius: 0.9rem;
+	background: none;
+	color: var(--text);
+	font: inherit;
+	font-size: 1.3rem;
+	font-weight: 750;
+	text-align: left;
+	cursor: pointer;
+}
+.kidMenuItem:hover,
+.kidMenuItem:focus-visible {
+	background: color-mix(in srgb, var(--c) 14%, var(--surface));
+}
+.kidMenuDot {
+	flex: none;
+	width: 1.2rem;
+	height: 1.2rem;
+	border-radius: 50%;
+	background: var(--c);
+}
+/* A phone: a little smaller, so the time and whose it is share a line. */
+@media (max-width: 700px) {
+	.who {
+		gap: 0.5rem;
+	}
+	.who .stars {
+		font-size: 1.5rem;
+	}
+	.who .star {
+		width: 1.6rem;
+		height: 1.6rem;
+	}
+	.kidName {
+		font-size: 1.35rem;
+		padding: 0.3rem 1rem;
+	}
+	button.kidName {
+		padding-right: 0.7rem;
 	}
 }
 .faceDot {
@@ -245,18 +295,6 @@
 	stroke-width: 1.8;
 	stroke-linecap: round;
 	stroke-linejoin: round;
-}
-/* The kid's name, with their stars beside it. */
-.nameRow {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 0.4rem 1rem;
-}
-.name {
-	margin: 0;
-	font-size: 2.8rem;
-	line-height: 1.1;
 }
 .stars {
 	display: inline-flex;
@@ -1000,10 +1038,11 @@
 		padding-top: max(0.6rem, env(safe-area-inset-top));
 		padding-bottom: 0.6rem;
 	}
-	.name {
-		font-size: 2rem;
+	.kidName {
+		min-height: 2.8rem;
+		font-size: 1.4rem;
 	}
-	.nameRow .stars {
+	.who .stars {
 		font-size: 1.5rem;
 	}
 	.daily {

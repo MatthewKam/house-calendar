@@ -180,40 +180,23 @@ export default function KidMode({ today, kids, members, onLeave, askPin }: Props
 				<LeaveButton onLeave={onLeave} inNav />
 			</nav>
 			<main className={s.page}>
+				{/* The time and date on the left; on the right, the stars they have to put in jars, and whose it
+				    is: their name, which opens the other kids (and on Learn, Both) to switch to. */}
 				<div className={s.top}>
-					{/* Each kid's name is a switch: the one showing is on (with one kid, it's always on). */}
-					<div className={s.faces} role="radiogroup" aria-label="Who's playing">
-						{kids.map((k) => (
-							<button key={k.id} type="button" role="radio" className={s.face} aria-checked={k.id === kid.id && !bothOn}
-								style={{ "--c": k.color, "--on": textOn(k.color) } as CSSProperties}
-								onClick={() => {
-									setPickedId(k.id);
-									setTogether(false);
-								}}>
-								{k.name}
-								<span className={s.knob} aria-hidden="true" />
-							</button>
-						))}
-						{/* On Learn: Both, for the games for two (taking turns), instead of one kid's own. */}
-						{tab === "learn" && learning && (
-							<button type="button" role="radio" className={`${s.face} ${s.bothSwitch}`} aria-checked={bothOn}
-								onClick={() => setTogether(true)}>
-								Both
-								<span className={s.knob} aria-hidden="true" />
-							</button>
-						)}
-					</div>
-				</div>
-
-				{/* Their name, with the stars they have to put in jars (Both: just their names), and the time on the right. */}
-				<div className={s.nameRow}>
-					<h1 className={s.name}>{bothOn ? kids.map((k) => k.name.split(" ")[0]).join(" & ") : kid.name}</h1>
-					{!bothOn && (
-						<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
-							<StarIcon className={s.star} /> {stars}
-						</span>
-					)}
 					<Clock />
+					<div className={s.who}>
+						{!bothOn && (
+							<span className={s.stars} aria-label={`${stars} ${stars === 1 ? "star" : "stars"}`}>
+								<StarIcon className={s.star} /> {stars}
+							</span>
+						)}
+						<KidPicker kids={kids} current={bothOn ? BOTH : kid.id} both={tab === "learn" && !!learning}
+							onPick={(id) => {
+								if (id === BOTH) return setTogether(true);
+								setPickedId(id);
+								setTogether(false);
+							}} />
+					</div>
 				</div>
 
 				{tab === "today" && <KidToday today={today} kid={kid} />}
@@ -491,6 +474,73 @@ export function KidModeStart({ kids, needsPin, onPick, onClose }: {
 				</div>
 			</div>
 		</>
+	);
+}
+
+/** Learn's Both: the games for two, in a colour of its own. */
+const BOTH = "both";
+const BOTH_COLOR = "#7a5cc8";
+
+/**
+ * Whose it is, top right: their name (Both: both names) in their colour. Tapped, a list drops down of the
+ * other kids (and on Learn, Both) to switch to. With nobody else to switch to, just the name.
+ */
+function KidPicker({ kids, current, both, onPick }: {
+	kids: Member[];
+	/** A kid's id, or BOTH. */
+	current: string;
+	/** Both's an option (on Learn). */
+	both: boolean;
+	onPick: (id: string) => void;
+}) {
+	const [open, setOpen] = useState(false);
+	const box = useRef<HTMLDivElement>(null);
+	// A tap anywhere else, or Escape, closes it.
+	useEffect(() => {
+		if (!open) return;
+		const away = (e: PointerEvent) => !box.current?.contains(e.target as Node) && setOpen(false);
+		const key = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+		document.addEventListener("pointerdown", away);
+		document.addEventListener("keydown", key);
+		return () => {
+			document.removeEventListener("pointerdown", away);
+			document.removeEventListener("keydown", key);
+		};
+	}, [open]);
+	const first = (k: Member) => k.name.split(" ")[0];
+	const shown = current === BOTH ? { name: kids.map(first).join(" & "), color: BOTH_COLOR } : kids.find((k) => k.id === current) ?? kids[0];
+	const others = [
+		...kids.filter((k) => k.id !== current).map((k) => ({ id: k.id, name: k.name, color: k.color })),
+		...(both && current !== BOTH ? [{ id: BOTH, name: "Both", color: BOTH_COLOR }] : []),
+	];
+	const colours = (c: string) => ({ "--c": c, "--on": textOn(c) }) as CSSProperties;
+	if (others.length === 0) return <h1 className={s.kidName} style={colours(shown.color)}>{shown.name}</h1>;
+	return (
+		<div ref={box} className={s.picker}>
+			<h1 className={s.pickerHead}>
+				<button type="button" className={s.kidName} style={colours(shown.color)} aria-haspopup="menu" aria-expanded={open}
+					onClick={() => setOpen((o) => !o)}>
+					{shown.name}
+					<svg viewBox="0 0 24 24" aria-hidden="true" className={open ? s.kidNameOpen : ""}>
+						<path d="M6 9l6 6 6-6" />
+					</svg>
+				</button>
+			</h1>
+			{open && (
+				<div role="menu" className={s.kidMenu} aria-label="Switch to">
+					{others.map((o) => (
+						<button key={o.id} type="button" role="menuitem" className={s.kidMenuItem} style={colours(o.color)}
+							onClick={() => {
+								setOpen(false);
+								onPick(o.id);
+							}}>
+							<span className={s.kidMenuDot} aria-hidden="true" />
+							{o.name}
+						</button>
+					))}
+				</div>
+			)}
+		</div>
 	);
 }
 
