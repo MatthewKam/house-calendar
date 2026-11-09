@@ -154,9 +154,9 @@ function WhatToWear({ weather: w }: { weather: Weather }) {
 			</ul>
 			<p className={s.weatherLine}>
 				<span><span aria-hidden="true">{look.icon}</span> {look.label}</span>
-				<span>{w.high}° / {w.low}°</span>
+				<span>Now {w.temp}°</span>
+				<span>High {w.high}° · Low {w.low}°</span>
 				<span>💧 {w.rainChance}%</span>
-				<span>☁️ {w.cloudCover}%</span>
 				<span>💨 {w.wind} mph</span>
 			</p>
 		</section>
