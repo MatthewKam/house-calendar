@@ -13,8 +13,12 @@ const ANIMALS = [{ id: "puppy", name: "Puppy", sound: "dog" }];
 type Pose = "sitting" | "barking" | "standing" | "side" | "walk-a" | "walk-b";
 const POSES: Pose[] = ["sitting", "barking", "standing", "side", "walk-a", "walk-b"];
 
-/** How long the noise shows before it gets up, how long each step lasts, and each walk (off, or back in). */
+/**
+ * The shortest and longest the noise shows before it gets up (it waits for the sound to finish), how long
+ * each step lasts, and each walk (off, or back in).
+ */
 const NOISE = 900;
+const LONGEST = 6000;
 const STEP = 170;
 const WALK = 1800;
 
@@ -59,16 +63,16 @@ export default function TodayAnimal({ day }: { day: string }) {
 	async function tap() {
 		if (busy.current) return;
 		busy.current = true;
-		noise({ id: animal.sound });
+		// The noise all the way through before it gets up (at least NOISE, at most LONGEST if it never says it's done).
+		const heard = new Promise<void>((done) => noise({ id: animal.sound }, done));
 		setPose("barking");
+		await Promise.race([Promise.all([heard, wait(NOISE)]), wait(LONGEST)]);
 		// Just the noise when motion is turned down.
 		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-			await wait(NOISE);
 			if (!gone.current) setPose("sitting");
 			busy.current = false;
 			return;
 		}
-		await wait(NOISE);
 		if (gone.current) return;
 		setPose("standing");
 		await wait(350);
