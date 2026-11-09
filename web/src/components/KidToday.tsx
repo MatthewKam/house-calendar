@@ -80,7 +80,7 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 					<section key={key} className={s.group} aria-label={label}>
 						<h2 className={s.groupHead}>{label}</h2>
 						{/* The littlest: an animal to tap, every day. */}
-						{i === 0 && little && <TodayAnimal day={today} />}
+						{i === 0 && little && <TodayAnimal />}
 						{list.length === 0 && (
 							<>
 								<p className={s.none}>Nothing on the calendar today. 🌈</p>

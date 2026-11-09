@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { fromDayKey } from "../lib/dates";
 import { noise } from "./learn/sound";
 import s from "../styles/KidMode.module.css";
 
@@ -7,11 +6,14 @@ import s from "../styles/KidMode.module.css";
  * The animals that can sit on a little one's Today: each one's noise (an animal in Learn's sounds) and
  * its pictures in /today/<id>/, all on the same square canvas, the side views facing right.
  */
-const ANIMALS = [{ id: "puppy", name: "Puppy", sound: "dog" }];
+const ANIMALS = [
+	{ id: "puppy", name: "Puppy", sound: "dog" },
+	{ id: "duck", name: "Duck", sound: "duck" },
+];
 
 /** The poses, one picture each. */
-type Pose = "sitting" | "barking" | "standing" | "side" | "walk-a" | "walk-b";
-const POSES: Pose[] = ["sitting", "barking", "standing", "side", "walk-a", "walk-b"];
+type Pose = "sitting" | "noise" | "standing" | "side" | "walk-a" | "walk-b";
+const POSES: Pose[] = ["sitting", "noise", "standing", "side", "walk-a", "walk-b"];
 
 /**
  * The shortest and longest the noise shows before it gets up (it waits for the sound to finish), how long
@@ -25,12 +27,12 @@ const WALK = 1800;
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * The animal of the day, sitting on a little one's Today (a new one each day). Tap it: it makes its noise,
- * gets up, walks off to the right, comes back in from the left, and sits down again. Taps while it's
- * out walking do nothing, so it always finishes the trip.
+ * An animal sitting on a little one's Today, picked at random each time it shows. Tap it: it makes its
+ * noise, gets up, walks off to the right, comes back in from the left, and sits down again. Taps while
+ * it's out walking do nothing, so it always finishes the trip.
  */
-export default function TodayAnimal({ day }: { day: string }) {
-	const animal = ANIMALS[Math.floor(fromDayKey(day).getTime() / 86_400_000) % ANIMALS.length];
+export default function TodayAnimal() {
+	const [animal] = useState(() => ANIMALS[Math.floor(Math.random() * ANIMALS.length)]);
 	const [pose, setPose] = useState<Pose>("sitting");
 	const stage = useRef<HTMLDivElement>(null);
 	const walker = useRef<HTMLButtonElement>(null);
@@ -65,7 +67,7 @@ export default function TodayAnimal({ day }: { day: string }) {
 		busy.current = true;
 		// The noise all the way through before it gets up (at least NOISE, at most LONGEST if it never says it's done).
 		const heard = new Promise<void>((done) => noise({ id: animal.sound }, done));
-		setPose("barking");
+		setPose("noise");
 		await Promise.race([Promise.all([heard, wait(NOISE)]), wait(LONGEST)]);
 		// Just the noise when motion is turned down.
 		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
