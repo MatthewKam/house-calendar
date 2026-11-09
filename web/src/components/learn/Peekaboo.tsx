@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Pic } from "./art";
-import { Board, fit } from "./parts";
+import { Board } from "./parts";
 import { ANIMALS, type Animal } from "./things";
 import { at, CHEER_MS, fresh, shuffle, type GameProps } from "./rounds";
 import { noise } from "./sound";
@@ -100,12 +100,13 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 				// as most of it, and stands from `peek` of the way up.
 				const animalShare = 0.6;
 				const shape = 1 / (place.peek / place.wide + animalShare);
-				// On a tablet (either way up) or a phone on its side, the hiding places in one row; on an upright
-				// phone, the grid that fits best.
+				// On a tablet (either way up) or a phone on its side, the three in one row; on an upright phone, two
+				// and one under them (whatever the hiding place's shape).
 				const room = { w: box.w - 24, h: box.h * 0.7 };
-				const grid = box.w > box.h || box.w >= 600
-					? { cols: bushes.length, size: Math.floor(Math.min((room.w - 12 * (bushes.length - 1)) / bushes.length, room.h * shape, 260)) }
-					: fit(bushes.length, room, { gap: 12, shape, most: 260 });
+				const row = box.w > box.h || box.w >= 600;
+				const cols = row ? bushes.length : 2;
+				const rows = Math.ceil(bushes.length / cols);
+				const grid = { cols, size: Math.floor(Math.min((room.w - 12 * (cols - 1)) / cols, ((room.h - 12 * (rows - 1)) / rows) * shape, 260)) };
 				const placeHeight = grid.size / place.wide;
 				return (
 					<div className={s.farm}>
