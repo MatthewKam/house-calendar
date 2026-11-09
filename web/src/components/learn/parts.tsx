@@ -8,7 +8,8 @@ export const HowTo = createContext<{ title: string; how: string[] } | null>(null
 /** How far through: a dot per round, filled once done. */
 export function Dots({ total, done }: { total: number; done: number }) {
 	return (
-		<div className={s.dots} role="img" aria-label={`${done} of ${total} done`}>
+		// Many (more than 8): smaller, so they still fit beside the back button on a phone.
+		<div className={`${s.dots} ${total > 8 ? s.dotsMany : ""}`} role="img" aria-label={`${done} of ${total} done`}>
 			{Array.from({ length: total }, (_, i) => (
 				<span key={i} className={`${s.dot} ${i < done ? s.dotOn : ""}`} />
 			))}

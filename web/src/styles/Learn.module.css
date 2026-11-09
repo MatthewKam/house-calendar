@@ -232,6 +232,17 @@
 	border: 3px solid var(--c, var(--accent));
 	box-sizing: border-box;
 }
+.dotsMany {
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 0.35rem;
+	min-width: 0;
+}
+.dotsMany .dot {
+	width: 0.85rem;
+	height: 0.85rem;
+	border-width: 2.5px;
+}
 .dotOn {
 	background: var(--c, var(--accent));
 	/* Filling in: a pop, so a round done shows. */

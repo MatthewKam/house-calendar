@@ -50,9 +50,9 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 		"From level 3, some things hide under others: collect the teddy and there's the sock. Higher levels: more kinds of things, and more of each.",
 	] },
 	pop: { title: "Pop!", picture: "pop", Play: Pop, how: [
-		"Sprig blows bubbles, each with an animal inside. Tap one to pop it: the animal jumps out making its noise.",
-		"From level 3, a sign at the top says which animal to pop (\"Pop 🐄\"): the others still pop, quietly, but only those count. From level 5, it's a colour.",
-		"Nothing's ever wrong: bubbles that float away come round again. When enough have popped, there's a cheer.",
+		"Sprig blows bubbles, a burst to start, then a steady stream. Tap one to pop it.",
+		"Level 1: any bubble. Level 2: the ones with an animal inside (it jumps out making its noise). Level 3: the animal on the sign at the top (\"Pop 🐄\"), with others mixed in. Level 4: the colour on the sign. Levels 5 and 6: the same again, more bubbles and a little faster.",
+		"The others still pop, quietly, but only those count: nothing's ever wrong. When enough have popped, there's a cheer.",
 	] },
 	apples: { title: "Counting", picture: "apple", Play: Apples, how: [
 		"Tap each one to count it: the count so far shows big at the top and is said out loud.",
