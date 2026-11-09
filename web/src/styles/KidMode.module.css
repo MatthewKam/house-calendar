@@ -100,7 +100,8 @@
 /* Not the pop-ups (and their dimmed backdrop), which sit over the page at their own size. */
 .page > :not([role="dialog"], [role="presentation"]) {
 	width: 100%;
-	max-width: 56rem;
+	/* 56rem, or on a big screen (where that's under 80% of it), 80% of the width, so it doesn't sit small in the middle. */
+	max-width: max(56rem, 80%);
 	margin-inline: auto;
 	box-sizing: border-box;
 }
