@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { openDb } from './db.ts';
 import { buildApp } from './app.ts';
-import { geocode, wearFor } from './weather.ts';
+import { dressingHours, forecast, geocode, wearFor } from './weather.ts';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 const FORECAST = {
@@ -56,6 +56,15 @@ describe('weather', () => {
     // A windy cool day, and a warm wet one.
     expect(wearFor(day([62, 66]), 25)).toEqual({ pants: true, jacket: true, rain: false });
     expect(wearFor(day([72, 78], 60), 5)).toEqual({ pants: false, jacket: false, rain: true });
+  });
+
+  it('dresses for the hours still ahead, so a warm afternoon drops the morning jacket', async () => {
+    const at = (time: string) => (async () => json({ ...FORECAST, current: { ...FORECAST.current, time } })) as unknown as typeof fetch;
+    // At 1 PM only the 80°F hour is left; at 6 AM the cool start still counts.
+    expect((await forecast({ lat: 33.7, lon: -117.8 }, at('2026-10-07T13:15'))).wear).toEqual({ pants: false, jacket: false, rain: false });
+    expect((await forecast({ lat: 33.7, lon: -117.8 }, at('2026-10-07T06:00'))).wear).toEqual({ pants: false, jacket: true, rain: false });
+    // School day, then the evening, then the rest of the night.
+    expect([dressingHours(6), dressingHours(10), dressingHours(16), dressingHours(21)]).toEqual([[7, 15], [10, 15], [16, 20], [21, 23]]);
   });
 
   it('asks for a home address first', async () => {

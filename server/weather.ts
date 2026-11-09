@@ -27,9 +27,22 @@ export interface Weather {
 
 export interface Wear { pants: boolean; jacket: boolean; rain: boolean }
 
-/** The hours that count for dressing: out the door to the end of the school day (home's clock). */
+/**
+ * The hours that count for dressing (home's clock): out the door to the end of the school day, or once
+ * that's over, the evening. Only the hours still ahead count, so a cold morning that's turned warm
+ * doesn't still ask for a jacket.
+ */
 const OUT_FROM = 7;
 const OUT_TO = 15;
+const EVENING_TO = 20;
+
+/** The first and last hour that count for dressing, `now` being the hour of the day it is. */
+export function dressingHours(now: number): [number, number] {
+  if (now < OUT_TO) return [Math.max(now, OUT_FROM), OUT_TO];
+  if (now < EVENING_TO) return [now, EVENING_TO];
+  return [now, 23];
+}
+
 /** Pants when it never feels warmer than this while out (°F); a jacket when it feels colder than this at any point. */
 const PANTS_BELOW = 70;
 const JACKET_BELOW = 58;
@@ -88,11 +101,12 @@ export async function forecast(place: Place, fetchImpl: typeof fetch = fetch): P
   const w = await res.json();
   // Sunrise and sunset come as home's local clock time ("2026-10-07T06:50"); make them instants.
   const instant = (local: string) => new Date(Date.parse(`${local}:00Z`) - w.utc_offset_seconds * 1000).toISOString();
-  // Today's hours while they're out ("2026-10-07T08:00", home's clock).
+  // Today's hours still ahead while they're out ("2026-10-07T08:00", home's clock).
   const today = w.daily.time[0] as string;
+  const [from, to] = dressingHours(w.current.time ? Number((w.current.time as string).slice(11, 13)) : 0);
   const out = (w.hourly.time as string[]).flatMap((t, i) => {
     const hour = Number(t.slice(11, 13));
-    return t.startsWith(today) && hour >= OUT_FROM && hour <= OUT_TO
+    return t.startsWith(today) && hour >= from && hour <= to
       ? [{ feels: w.hourly.apparent_temperature[i] as number, rain: (w.hourly.precipitation_probability[i] ?? 0) as number }] : [];
   });
   const wind = Math.round(w.daily.wind_speed_10m_max[0] ?? 0);
