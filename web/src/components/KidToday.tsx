@@ -49,7 +49,8 @@ const PICTURES: [RegExp, string][] = [
 	[/backpack|bag/i, "🎒"],
 	[/snack/i, "🍎"],
 ];
-const picture = (title: string, otherwise = "📅") => PICTURES.find(([re]) => re.test(title))?.[1] ?? otherwise;
+const picture = (title: string, otherwise = "📅") =>
+	PICTURES.find(([re]) => re.test(title))?.[1] ?? otherwise;
 
 /** Morning, afternoon or evening, as a picture. */
 const partOfDay = (iso: string) => {
@@ -58,17 +59,27 @@ const partOfDay = (iso: string) => {
 };
 
 /**
- * Kid mode's Today, the morning screen: what to wear and the day's kind words, anything to remember, then
- * the kid's own events as big pictures (today with what's next picked out, tomorrow, and later this week),
- * or on a day with nothing on, an animal to tap; then the day's fun fact. On its side: the cards in rows of
- * two (a phone) or three (a tablet, the fact up top with the others), the calendar's days side by side.
+ * Kid mode's Today, the morning screen: the kid's own events first, as big pictures (today with what's
+ * next picked out, tomorrow, and later this week), or on a day with nothing on, an animal to tap; anything
+ * to remember; then what to wear, the day's kind words and fun fact. On its side: the cards in rows of two
+ * (a phone) or three (a tablet), the calendar's days side by side.
  */
-export default function KidToday({ today, kid }: { today: string; kid: Member }) {
+export default function KidToday({
+	today,
+	kid,
+}: {
+	today: string;
+	kid: Member;
+}) {
 	const little = (kid.stage ?? "little") === "little";
 	const weather = useWeather().data;
 	const lists = useLists().data ?? [];
 	// Anything on a list for them, due today and not done yet.
-	const remember = lists.flatMap((l) => l.items).filter((i) => !i.done && i.memberId === kid.id && i.due && dueOn(i, today));
+	const remember = lists
+		.flatMap((l) => l.items)
+		.filter(
+			(i) => !i.done && i.memberId === kid.id && i.due && dueOn(i, today),
+		);
 	const from = useMemo(() => fromDayKey(today), [today]);
 	const events = useRangeEvents(from, DAYS).data ?? [];
 	const now = Date.now();
@@ -80,46 +91,91 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 
 	const onDay = (key: string) =>
 		mine
-			.filter((e) => (e.allDay ? e.start <= key && e.end > key : dayKey(new Date(e.start)) === key))
-			.sort((a, b) => Number(b.allDay) - Number(a.allDay) || a.start.localeCompare(b.start));
+			.filter((e) =>
+				e.allDay
+					? e.start <= key && e.end > key
+					: dayKey(new Date(e.start)) === key,
+			)
+			.sort(
+				(a, b) =>
+					Number(b.allDay) - Number(a.allDay) || a.start.localeCompare(b.start),
+			);
 
 	// Later this week: each event with its day.
-	const later = Array.from({ length: DAYS - 2 }, (_, i) => dayKey(addDays(from, i + 2)))
-		.flatMap((key) => onDay(key).map((e) => ({ e, day: fromDayKey(key).toLocaleDateString([], { weekday: "short" }) })))
+	const later = Array.from({ length: DAYS - 2 }, (_, i) =>
+		dayKey(addDays(from, i + 2)),
+	)
+		.flatMap((key) =>
+			onDay(key).map((e) => ({
+				e,
+				day: fromDayKey(key).toLocaleDateString([], { weekday: "short" }),
+			})),
+		)
 		// An all-day event over several days: once, on its first.
 		.filter(({ e }, i, all) => all.findIndex((x) => x.e.id === e.id) === i);
 	const todays = onDay(today);
 	const tomorrows = onDay(dayKey(addDays(from, 1)));
-	const event = (e: CalEvent, day?: string) => <KidEvent key={`${e.id}-${day ?? ""}`} event={e} day={day} next={e === next} over={!e.allDay && Date.parse(e.end) <= now} />;
+	const event = (e: CalEvent, day?: string) => (
+		<KidEvent
+			key={`${e.id}-${day ?? ""}`}
+			event={e}
+			day={day}
+			next={e === next}
+			over={!e.allDay && Date.parse(e.end) <= now}
+		/>
+	);
 
 	return (
 		<div className={s.today}>
+			{/* The calendar: today, tomorrow and later this week, kept together. */}
+			<Calendar
+				days={[
+					{
+						label: "Today",
+						body:
+							todays.length === 0 ? (
+								// Nothing on today: an animal to tap instead.
+								<>
+									<TodayAnimal />
+									<p className={s.none}>Nothing on the calendar today.</p>
+								</>
+							) : (
+								<ul className={s.events}>{todays.map((e) => event(e))}</ul>
+							),
+					},
+					{
+						label: "Tomorrow",
+						body:
+							tomorrows.length === 0 ? (
+								<p className={s.none}>Nothing on tomorrow.</p>
+							) : (
+								<ul className={s.events}>{tomorrows.map((e) => event(e))}</ul>
+							),
+					},
+					{
+						label: "Later this week",
+						body:
+							later.length === 0 ? (
+								<p className={s.none}>Nothing later this week.</p>
+							) : (
+								<ul className={s.events}>
+									{later.map(({ e, day }) => event(e, day))}
+								</ul>
+							),
+					},
+				]}
+			/>
+			{remember.length > 0 && <Remember items={remember} />}
 			{weather && <WhatToWear weather={weather} />}
 			<Card label="Kind words" item={kindWordsFor(today)} />
-			{remember.length > 0 && <Remember items={remember} />}
-			{/* The calendar: today, tomorrow and later this week, kept together. */}
-			<Calendar days={[
-				{ label: "Today", body: todays.length === 0 ? (
-					// Nothing on today: an animal to tap instead.
-					<>
-						<TodayAnimal />
-						<p className={s.none}>Nothing on the calendar today.</p>
-					</>
-				) : <ul className={s.events}>{todays.map((e) => event(e))}</ul> },
-				{ label: "Tomorrow", body: tomorrows.length === 0
-					? <p className={s.none}>Nothing on tomorrow.</p>
-					: <ul className={s.events}>{tomorrows.map((e) => event(e))}</ul> },
-				{ label: "Later this week", body: later.length === 0
-					? <p className={s.none}>Nothing later this week.</p>
-					: <ul className={s.events}>{later.map(({ e, day }) => event(e, day))}</ul> },
-			]} />
 			<Card label="Did you know?" item={factFor(today, little)} />
 		</div>
 	);
 }
 
 /** How the calendar's laid out: a phone or tablet on its side, side by side (all three when there's room). */
-const SIDE_BY_SIDE = "(orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 900px)";
+const SIDE_BY_SIDE =
+	"(orientation: landscape) and (max-height: 500px), (orientation: landscape) and (min-width: 900px)";
 const ALL_THREE = "(min-width: 1401px)";
 
 /**
@@ -145,7 +201,11 @@ function Calendar({ days }: { days: { label: string; body: ReactNode }[] }) {
 			</div>
 		);
 	}
-	return <div className={s.calendar}><Carousel days={days} /></div>;
+	return (
+		<div className={s.calendar}>
+			<Carousel days={days} />
+		</div>
+	);
 }
 
 /** Days a page at a time: a button for each along the top, and a swipe to the next or back. */
@@ -161,7 +221,8 @@ function Carousel({ days }: { days: { label: string; body: ReactNode }[] }) {
 	const swipe = useRef<{ x: number; y: number } | null>(null);
 	const shown = days[Math.min(at, days.length - 1)];
 	return (
-		<div className={s.carousel}
+		<div
+			className={s.carousel}
 			onPointerDown={(e) => (swipe.current = { x: e.clientX, y: e.clientY })}
 			onPointerUp={(e) => {
 				const start = swipe.current;
@@ -169,18 +230,30 @@ function Carousel({ days }: { days: { label: string; body: ReactNode }[] }) {
 				if (!start) return;
 				const dx = e.clientX - start.x;
 				// Mostly sideways, and far enough to mean it.
-				if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(e.clientY - start.y)) go(at + (dx < 0 ? 1 : -1));
-			}}>
+				if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(e.clientY - start.y))
+					go(at + (dx < 0 ? 1 : -1));
+			}}
+		>
 			<div className={s.dayButtons} role="tablist">
 				{days.map((d, i) => (
-					<button key={d.label} type="button" role="tab" aria-selected={i === at}
-						className={`${s.dayButton} ${i === at ? s.dayButtonOn : ""}`} onClick={() => go(i)}>
+					<button
+						key={d.label}
+						type="button"
+						role="tab"
+						aria-selected={i === at}
+						className={`${s.dayButton} ${i === at ? s.dayButtonOn : ""}`}
+						onClick={() => go(i)}
+					>
 						{d.label}
 					</button>
 				))}
 			</div>
-			<section key={shown.label} role="tabpanel" aria-label={shown.label}
-				className={`${s.dayPage} ${from === "right" ? s.dayFromRight : s.dayFromLeft}`}>
+			<section
+				key={shown.label}
+				role="tabpanel"
+				aria-label={shown.label}
+				className={`${s.dayPage} ${from === "right" ? s.dayFromRight : s.dayFromLeft}`}
+			>
 				{shown.body}
 			</section>
 		</div>
@@ -188,15 +261,29 @@ function Carousel({ days }: { days: { label: string; body: ReactNode }[] }) {
 }
 
 /** Whether a list item's due today (YYYY-MM-DD): a day, or an instant on that day. */
-const dueOn = (item: SprigItem, day: string) => (item.due!.length === 10 ? item.due === day : dayKey(new Date(item.due!)) === day);
+const dueOn = (item: SprigItem, day: string) =>
+	item.due!.length === 10
+		? item.due === day
+		: dayKey(new Date(item.due!)) === day;
 
 /** What to wear: the clothes as big pictures, then the day's weather in small print for a grown-up. */
 function WhatToWear({ weather: w }: { weather: Weather }) {
 	const { pants, jacket, rain } = w.wear;
 	const clothes = [
-		rain ? { picture: RAIN_JACKET, name: "Rain jacket" } : jacket ? { picture: JACKET, name: "Jacket" } : { picture: "👕", name: "T-shirt" },
-		pants ? { picture: "👖", name: "Pants" } : { picture: "🩳", name: "Shorts" },
-		...(rain ? [{ picture: "🥾", name: "Rain boots" }, { picture: "☔", name: "Umbrella" }] : []),
+		rain
+			? { picture: RAIN_JACKET, name: "Rain jacket" }
+			: jacket
+				? { picture: JACKET, name: "Jacket" }
+				: { picture: "👕", name: "T-shirt" },
+		pants
+			? { picture: "👖", name: "Pants" }
+			: { picture: "🩳", name: "Shorts" },
+		...(rain
+			? [
+					{ picture: "🥾", name: "Rain boots" },
+					{ picture: "☔", name: "Umbrella" },
+				]
+			: []),
 	];
 	const look = sky(w.days[0]?.code ?? w.code, true);
 	return (
@@ -205,17 +292,33 @@ function WhatToWear({ weather: w }: { weather: Weather }) {
 			<ul className={s.clothes}>
 				{clothes.map((c) => (
 					<li key={c.name} className={s.clothing}>
-						<span className={s.clothingPicture} aria-hidden="true">{c.picture}</span>
+						<span className={s.clothingPicture} aria-hidden="true">
+							{c.picture}
+						</span>
 						{c.name}
 					</li>
 				))}
 			</ul>
 			<p className={s.weatherLine}>
-				<span><span aria-hidden="true">{look.icon}</span> {look.label}</span>
-				<span>Now {w.temp}°</span>
-				<span>High {w.high}° · Low {w.low}°</span>
-				<span>💧 {w.rainChance}%</span>
-				<span>💨 {w.wind} mph</span>
+				<span className={s.weatherStats}>
+					<span className={s.currentWeather}>
+						{w.temp}
+						<span>°F</span>
+					</span>
+					<span className={s.weatherBlock}>
+						<span>
+							High {w.high}° · Low {w.low}°
+						</span>
+						<span>
+							<span>
+								<span aria-hidden="true">{look.icon}</span> {look.label}
+							</span>
+
+							<span>💧 {w.rainChance}%</span>
+							<span>💨 {w.wind} mph</span>
+						</span>
+					</span>
+				</span>
 			</p>
 		</section>
 	);
@@ -225,15 +328,44 @@ function WhatToWear({ weather: w }: { weather: Weather }) {
  * A kid's jacket, drawn (the coat emoji is a grown-up's trench coat): hood up behind, sleeves out, a
  * zip (a rain jacket: buttons, and a bigger hood).
  */
-function jacket({ cloth, trim, rain }: { cloth: string; trim: string; rain?: boolean }) {
+function jacket({
+	cloth,
+	trim,
+	rain,
+}: {
+	cloth: string;
+	trim: string;
+	rain?: boolean;
+}) {
 	return (
 		<svg viewBox="0 0 120 120" className={s.clothingDrawn}>
 			{/* The hood, behind. */}
-			<path d={rain ? "M32 34 Q60 -10 88 34 Q60 42 32 34z" : "M38 32 Q60 2 82 32 Q60 38 38 32z"} fill={trim} />
-			<path d={rain ? "M44 28 Q60 6 76 28 Q60 32 44 28z" : "M46 28 Q60 12 74 28 Q60 31 46 28z"} fill={cloth} opacity="0.55" />
+			<path
+				d={
+					rain
+						? "M32 34 Q60 -10 88 34 Q60 42 32 34z"
+						: "M38 32 Q60 2 82 32 Q60 38 38 32z"
+				}
+				fill={trim}
+			/>
+			<path
+				d={
+					rain
+						? "M44 28 Q60 6 76 28 Q60 32 44 28z"
+						: "M46 28 Q60 12 74 28 Q60 31 46 28z"
+				}
+				fill={cloth}
+				opacity="0.55"
+			/>
 			{/* Sleeves, with cuffs. */}
-			<path d="M36 30 L18 42 L10 92 L26 95 L34 58z M84 30 L102 42 L110 92 L94 95 L86 58z" fill={cloth} />
-			<path d="M10 88 L26 91 L26 97 L9 94z M110 88 L94 91 L94 97 L111 94z" fill={trim} />
+			<path
+				d="M36 30 L18 42 L10 92 L26 95 L34 58z M84 30 L102 42 L110 92 L94 95 L86 58z"
+				fill={cloth}
+			/>
+			<path
+				d="M10 88 L26 91 L26 97 L9 94z M110 88 L94 91 L94 97 L111 94z"
+				fill={trim}
+			/>
 			{/* The body, with a band at the bottom. */}
 			<path d="M34 28 Q60 20 86 28 L89 104 Q60 109 31 104z" fill={cloth} />
 			<path d="M31 98 Q60 103 89 98 L89 106 Q60 111 31 106z" fill={trim} />
@@ -248,7 +380,12 @@ function jacket({ cloth, trim, rain }: { cloth: string; trim: string; rain?: boo
 					<path d="M60 30 V102" stroke="#e8eef8" strokeWidth="3" />
 					<rect x="57" y="34" width="6" height="9" rx="2" fill="#e8eef8" />
 					{/* Pockets. */}
-					<path d="M40 74 h12 M68 74 h12" stroke={trim} strokeWidth="4" strokeLinecap="round" />
+					<path
+						d="M40 74 h12 M68 74 h12"
+						stroke={trim}
+						strokeWidth="4"
+						strokeLinecap="round"
+					/>
 				</>
 			)}
 		</svg>
@@ -265,7 +402,9 @@ function Remember({ items }: { items: SprigItem[] }) {
 			<ul className={s.events}>
 				{items.map((i) => (
 					<li key={i.id} className={s.rememberItem}>
-						<span className={s.eventPicture} aria-hidden="true">{picture(i.title, "📌")}</span>
+						<span className={s.eventPicture} aria-hidden="true">
+							{picture(i.title, "📌")}
+						</span>
 						<span className={s.eventTitle}>{i.title}</span>
 					</li>
 				))}
@@ -278,7 +417,9 @@ function Remember({ items }: { items: SprigItem[] }) {
 function Card({ label, item }: { label: string; item: KidFact }) {
 	return (
 		<div className={s.fact}>
-			<span className={s.factPicture} aria-hidden="true">{item.picture}</span>
+			<span className={s.factPicture} aria-hidden="true">
+				{item.picture}
+			</span>
 			<span className={s.factText}>
 				<span className={s.nextLabel}>{label}</span>
 				{item.text}
@@ -288,10 +429,24 @@ function Card({ label, item }: { label: string; item: KidFact }) {
 }
 
 /** One event: its picture and title, and when (later this week: which day, too). */
-function KidEvent({ event: e, day, next, over }: { event: CalEvent; day?: string; next: boolean; over: boolean }) {
+function KidEvent({
+	event: e,
+	day,
+	next,
+	over,
+}: {
+	event: CalEvent;
+	day?: string;
+	next: boolean;
+	over: boolean;
+}) {
 	return (
-		<li className={`${s.event} ${next ? s.eventNext : ""} ${over ? s.eventOver : ""}`}>
-			<span className={s.eventPicture} aria-hidden="true">{picture(e.title)}</span>
+		<li
+			className={`${s.event} ${next ? s.eventNext : ""} ${over ? s.eventOver : ""}`}
+		>
+			<span className={s.eventPicture} aria-hidden="true">
+				{picture(e.title)}
+			</span>
 			<span className={s.eventText}>
 				{next && <span className={s.nextLabel}>Next</span>}
 				<span className={s.eventTitle}>{e.title}</span>
@@ -305,7 +460,8 @@ function KidEvent({ event: e, day, next, over }: { event: CalEvent; day?: string
 				) : (
 					<>
 						{day && <span className={s.eventDay}>{day}</span>}
-						<span aria-hidden="true">{partOfDay(e.start)}</span> {timeLabel(e.start)}
+						<span aria-hidden="true">{partOfDay(e.start)}</span>{" "}
+						{timeLabel(e.start)}
 					</>
 				)}
 			</span>
