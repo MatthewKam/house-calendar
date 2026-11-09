@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { PALETTE } from '../lib/color';
 import { screenSaverSettings } from '../lib/screensaver';
-import { useAddMember, useCalendars, useLearn, useRemoveMember, useSetSetting, useSettings, useUpdateMember } from '../lib/queries';
+import { useAddMember, useCalendars, useLearn, useRemoveMember, useSetSetting, useSettings, useUpdateMember  } from '../lib/queries';
 import type { Member, MemberPatch, Stage } from '../lib/types';
 import { dayKey } from '../lib/dates';
 import { STAGE_AGES, STAGE_LIST, STAGE_NAMES } from '../lib/stages';

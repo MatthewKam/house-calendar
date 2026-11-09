@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { addDays, dayKey, fromDayKey, hhmm, timeLabel, toInstant } from '../lib/dates';
 import { UNASSIGNED } from '../lib/color';
-import { useCalendars, useSetPeople, useSetSetting, useSettings, useSetVisibility } from '../lib/queries';
+import { useCalendars, useSetPeople, useSetSetting, useSettings, useSetSpecial, useSetVisibility } from '../lib/queries';
 import type { CalEvent, EventInput, Member, Scope, Visibility } from '../lib/types';
 import { PencilIcon } from './icons';
 import TravelInfo from './TravelInfo';
@@ -162,6 +162,14 @@ function SyncedEvent({ event, members, onClose, onEdit, locked }: {
   );
 }
 
+/** Whose Today a special day counts down on: the kids it's for, or with none picked (or only grown-ups), every kid's. */
+function specialFor(members: Member[], memberIds: string[]) {
+  const kids = members.filter((m) => m.stage !== null && m.stage !== 'adult');
+  const picked = kids.filter((k) => memberIds.includes(k.id)).map((k) => `${k.name.split(' ')[0]}'s`);
+  if (picked.length === 0 || picked.length === kids.length) return kids.length > 1 ? "the kids'" : `${kids[0]?.name.split(' ')[0] ?? 'the kids'}'s`;
+  return picked.join(' and ');
+}
+
 export default function EventDialog(props: Props) {
   const [editing, setEditing] = useState(false);
   // Synced events are changed here only in calendars that take changes (iCloud's; Google's are changed in Google).
@@ -193,6 +201,7 @@ function useNewEventCalendar(enabled: boolean) {
 
 function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSynced }: Props) {
   const setVisibility = useSetVisibility();
+  const setSpecial = useSetSpecial();
   const calendars = useCalendars().data ?? [];
   // Form starts from the event being edited, or a one-hour slot on the tapped day.
   // The parent remounts this dialog (via key) for each open, so initial state is enough.
@@ -208,6 +217,8 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
   const [location, setLocation] = useState(event?.location ?? '');
   const [notes, setNotes] = useState(event?.notes ?? '');
   const [keepPhoto, setKeepPhoto] = useState(true);
+  // A special day: a countdown on the kids' Today (the ones it's for, or all of them).
+  const [special, setSpecialDay] = useState(event?.special ?? false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   // A repeating iCloud event asks "this day or every day?" before saving.
   const [askScope, setAskScope] = useState<EventInput | null>(null);
@@ -234,11 +245,14 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
     const t = title.trim();
     const place = location.trim() || null;
     // Only new events choose a calendar.
-    const where: Pick<EventInput, 'calendarId' | 'visibility' | 'notes' | 'photoId'> = !event && target.options.length ? { calendarId: chosenCalendar } : {};
+    const where: Pick<EventInput, 'calendarId' | 'visibility' | 'special' | 'notes' | 'photoId'> = !event && target.options.length ? { calendarId: chosenCalendar } : {};
     if (!event && target.options.length) target.remember(chosenCalendar);
     // A new event says who sees it when it's picked; an existing one changes it on its own.
     if (!event && seenPick) where.visibility = seenPick;
     if (event && seenPick && seenPick !== event.visibility) setVisibility.mutate({ id: event.id, visibility: seenPick });
+    // A new event says it's special when it's made; an existing one changes it on its own.
+    if (!event && special) where.special = true;
+    if (event && special !== event.special) setSpecial.mutate({ id: event.id, special });
     if (ownEvent) {
       where.notes = notes.trim() || null;
       if (!keepPhoto) where.photoId = null;
@@ -268,6 +282,15 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
         )}
 
         <WhoPicker members={members} value={memberIds} onChange={setMemberIds} />
+        <label className={s.toggle}>
+          <input type="checkbox" checked={special} onChange={(e) => setSpecialDay(e.target.checked)} />
+          <span>
+            ⭐ Special day
+            <span className={s.toggleNote}>
+              {' '}Counts down on {specialFor(members, memberIds)} Today
+            </span>
+          </span>
+        </label>
         <SeenPicker value={seen} onChange={setSeenPick} />
 
         {target.options.length > 0 && (

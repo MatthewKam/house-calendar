@@ -19,6 +19,8 @@ interface EventRow {
   member_ids: string;
   /** Who sees it (privacy.ts): its own setting, else its calendar's. */
   visibility: Visibility;
+  /** Marked special: a countdown on kid mode's Today. */
+  special: number;
 }
 
 // Event columns plus who it's for, from event_members, and who sees it.
@@ -26,8 +28,19 @@ const EVENT_SELECT = `
   SELECT e.*, (SELECT json_group_array(member_id) FROM (
     SELECT em.member_id FROM event_members em JOIN members m ON m.id = em.member_id
     WHERE em.event_id = e.id ORDER BY m.sort_order, m.created_at)) AS member_ids,
-    ${VISIBILITY_SQL} AS visibility
+    ${VISIBILITY_SQL} AS visibility,
+    EXISTS (SELECT 1 FROM event_special s WHERE s.calendar_id = e.calendar_id AND s.series_key = COALESCE(e.series_id, e.id)) AS special
   FROM events e`;
+
+/** Marks an event (every repeat of it) special, or not. */
+function setSpecial(db: DB, eventId: string, special: boolean) {
+  const ev = db.prepare('SELECT calendar_id, COALESCE(series_id, id) AS key FROM events WHERE id = ?').get(eventId) as
+    { calendar_id: string; key: string } | undefined;
+  if (!ev) return false;
+  if (special) db.prepare('INSERT OR IGNORE INTO event_special (calendar_id, series_key) VALUES (?, ?)').run(ev.calendar_id, ev.key);
+  else db.prepare('DELETE FROM event_special WHERE calendar_id = ? AND series_key = ?').run(ev.calendar_id, ev.key);
+  return true;
+}
 
 const toEvent = (r: EventRow) => ({
   id: r.id, calendarId: r.calendar_id, memberIds: JSON.parse(r.member_ids) as string[], title: r.title,
@@ -35,6 +48,7 @@ const toEvent = (r: EventRow) => ({
   // One day of a repeating iCloud event; edits here change that day only.
   repeats: !!r.remote_id?.includes('#'),
   visibility: r.visibility,
+  special: !!r.special,
   // Sprig's own events only: notes, and the flyer it was read from.
   notes: r.notes,
   photoUrl: r.photo_id && `/api/photos/${r.photo_id}/full`,
@@ -138,9 +152,10 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
   });
 
   // calendarId: an iCloud calendar to add it to (sent there shortly); left out, it stays on the wall.
-  // visibility: who sees it, when not its calendar's default.
-  app.post<{ Body: EventInput & { calendarId?: string; visibility?: Visibility } }>('/api/events', {
-    schema: { body: { ...eventBody, properties: { ...eventBody.properties, calendarId: { type: 'string' }, visibility: { enum: VISIBILITIES } },
+  // visibility: who sees it, when not its calendar's default. special: a countdown on kid mode's Today.
+  app.post<{ Body: EventInput & { calendarId?: string; visibility?: Visibility; special?: boolean } }>('/api/events', {
+    schema: { body: { ...eventBody, properties: { ...eventBody.properties, calendarId: { type: 'string' }, visibility: { enum: VISIBILITIES },
+      special: { type: 'boolean' } },
       required: ['title', 'allDay', 'start', 'end'] } },
   }, async (req, reply) => {
     const ev = { ...req.body, memberIds: req.body.memberIds ?? [] };
@@ -158,6 +173,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
       // Who it's for is kept on this display, like any iCloud event.
       if (ev.memberIds.length) assignManually(db, id, ev.memberIds);
       if (req.body.visibility) setVisibility(db, id, req.body.visibility);
+      if (req.body.special) setSpecial(db, id, true);
       opts.syncedEdits.soon();
       reply.code(201);
       return getEvent(id);
@@ -168,6 +184,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
         .run(id, ev.title.trim(), ev.allDay ? 1 : 0, ev.start, ev.end, ev.location?.trim() || null, ev.notes?.trim() || null, ev.photoId ?? null);
       setMembers(id, ev.memberIds);
       if (req.body.visibility) setVisibility(db, id, req.body.visibility);
+      if (req.body.special) setSpecial(db, id, true);
     })();
     reply.code(201);
     return getEvent(id);
@@ -329,6 +346,14 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
       properties: { visibility: { enum: [...VISIBILITIES, null] } } } },
   }, async (req, reply) => {
     if (!setVisibility(db, req.params.id, req.body.visibility)) return reply.code(404).send({ error: 'Event not found' });
+    return getEvent(req.params.id);
+  });
+
+  // Marked special or not (every repeat of it): a countdown on kid mode's Today.
+  app.put<{ Params: { id: string }; Body: { special: boolean } }>('/api/events/:id/special', {
+    schema: { body: { type: 'object', required: ['special'], additionalProperties: false, properties: { special: { type: 'boolean' } } } },
+  }, async (req, reply) => {
+    if (!setSpecial(db, req.params.id, req.body.special)) return reply.code(404).send({ error: 'Event not found' });
     return getEvent(req.params.id);
   });
 

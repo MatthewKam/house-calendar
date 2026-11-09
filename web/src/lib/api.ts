@@ -131,6 +131,7 @@ export const api = {
   /** Who a synced event is for; covers every repeat of it. */
   setPeople: (id: string, memberIds: string[]) => call<CalEvent>('PUT', `/api/events/${id}/people`, { memberIds }),
   setVisibility: (id: string, visibility: Visibility | null) => call<CalEvent>('PUT', `/api/events/${id}/visibility`, { visibility }),
+  setSpecial: (id: string, special: boolean) => call<CalEvent>('PUT', `/api/events/${id}/special`, { special }),
 
   sync: () => call<SyncStatus | null>('GET', '/api/sync'),
   calendars: () => call<SyncedCalendar[]>('GET', '/api/calendars'),

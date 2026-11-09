@@ -201,10 +201,10 @@ export default function App() {
 	const notAPhoto = useCallback(() => setToast({ text: "Drop a photo of the flyer (a JPEG, PNG or HEIC)" }), []);
 	const draggingFlyer = useFlyerDrop(parentLock.parent && captureOn && !kidModeFor && !kidDevice && page !== "photos" && !capture,
 		takeFlyer, notAPhoto);
+	// Kid mode turned on here: every kid, to switch between, starting with the one picked. A kid's own
+	// device: just them.
 	const kidView = kidModeFor
-		? kidModeFor === "all" || !members.some((m) => m.id === kidModeFor)
-			? kids
-			: members.filter((m) => m.id === kidModeFor)
+		? kids
 		: kidDevice
 			? members.filter((m) => m.id === kidDevice)
 			: null;
@@ -413,6 +413,7 @@ export default function App() {
 			<>
 				{/* Wait for the family, so it doesn't flash "No kids yet". */}
 				{members.length > 0 && <KidMode today={today} kids={kidView} members={members} onLeave={leaveKidMode}
+					startWith={kidModeFor ?? undefined}
 					askPin={!!signedIn && signedIn.guardianPins > 0} />}
 				{leavingKidMode && (
 					<GrownUpPin

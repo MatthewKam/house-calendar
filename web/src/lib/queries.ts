@@ -494,6 +494,17 @@ export function useSetVisibility() {
   });
 }
 
+/** Marking an event special (a countdown on kid mode's Today), or not. */
+export function useSetSpecial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, special }: { id: string; special: boolean }) => api.setSpecial(id, special),
+    onMutate: ({ id, special }) => showNow(qc, [{ key: keys.events, apply: (list: CalEvent[]) => list.map((e) => (e.id === id ? { ...e, special } : e)) }]),
+    onError: putBack(qc),
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.events }),
+  });
+}
+
 /** Undo for deleting an iCloud event (before the delete is sent). */
 export function useRestoreEvent() {
   const qc = useQueryClient();

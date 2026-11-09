@@ -115,6 +115,8 @@ export interface CalEvent {
   repeats: boolean;
   /** Who sees it: its own setting, else its calendar's (server/privacy.ts). */
   visibility: Visibility;
+  /** Marked special: a countdown on kid mode's Today, for the kids it's for (every repeat of it). */
+  special: boolean;
   /** Sprig's own events: notes, and the flyer photo it was read from (Snap a flyer). */
   notes: string | null;
   photoUrl: string | null;
@@ -277,6 +279,8 @@ export type EventInput = Pick<CalEvent, 'title' | 'memberIds' | 'allDay' | 'star
   calendarId?: string;
   /** New events only: who sees it (existing ones change it with setVisibility). */
   visibility?: Visibility;
+  /** New events only: a countdown on kid mode's Today (existing ones change it with setSpecial). */
+  special?: boolean;
   /** Changing a repeating iCloud event: just the day opened, or every day. */
   scope?: Scope;
 };
@@ -297,6 +301,12 @@ export interface Weather {
   sunset: string;
   /** Today and the next six days. */
   days: { date: string; high: number; low: number; code: number }[];
+  /** Today's highest chance of rain (%), average cloud cover (%) and strongest wind (mph). */
+  rainChance: number;
+  cloudCover: number;
+  wind: number;
+  /** What to wear today: long pants, a jacket, rain gear (boots, rain jacket, umbrella). */
+  wear: { pants: boolean; jacket: boolean; rain: boolean };
 }
 
 /** A photo in the album. */

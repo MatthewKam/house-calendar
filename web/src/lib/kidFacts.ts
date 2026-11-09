@@ -1,5 +1,5 @@
-// Fun facts for kid mode's Today when nothing's on: a big picture and one short sentence a grown-up
-// can read aloud. Written here, not fetched, so every one suits a 2-year-old.
+// Fun facts for kid mode's Today: a big picture and one short sentence a grown-up can read aloud. Written
+// here, not fetched, so every one suits a young kid; the littlest get their own, simpler ones.
 
 export interface KidFact { picture: string; text: string }
 
@@ -56,8 +56,46 @@ export const KID_FACTS: KidFact[] = [
 	{ picture: "🦒", text: "A giraffe's tongue is as long as your arm." },
 ];
 
-/** The day's fact: the same all day, a new one each day (YYYY-MM-DD). */
-export function factFor(day: string): KidFact {
+/** Facts for the littlest (2–3): things they can see, hear or do, in a few words. */
+export const LITTLE_FACTS: KidFact[] = [
+	{ picture: "🐄", text: "Cows say moo, and they give us milk." },
+	{ picture: "🐝", text: "Bees go buzz, and they make honey." },
+	{ picture: "🐘", text: "Elephants are big, with a long, long nose." },
+	{ picture: "🐶", text: "Dogs wag their tails when they're happy." },
+	{ picture: "🐱", text: "Cats purr when they're cozy." },
+	{ picture: "🦆", text: "Ducks say quack, and they love to swim." },
+	{ picture: "🐸", text: "Frogs go hop, hop, hop!" },
+	{ picture: "🐟", text: "Fish live in the water." },
+	{ picture: "🐔", text: "Chickens lay eggs." },
+	{ picture: "🐑", text: "Sheep are soft and fluffy." },
+	{ picture: "🦒", text: "Giraffes have long, long necks." },
+	{ picture: "🐢", text: "Turtles carry their house on their back." },
+	{ picture: "🦉", text: "Owls stay up at night." },
+	{ picture: "🐰", text: "Bunnies have long ears." },
+	{ picture: "🐵", text: "Monkeys love bananas." },
+	{ picture: "🐻", text: "Bears sleep all winter long." },
+	{ picture: "🦁", text: "Lions say roar!" },
+	{ picture: "🐌", text: "Snails go very, very slow." },
+	{ picture: "🦋", text: "Butterflies have pretty wings." },
+	{ picture: "🐧", text: "Penguins waddle and slide on their tummies." },
+	{ picture: "☀️", text: "The sun keeps us warm." },
+	{ picture: "🌙", text: "The moon comes out at night." },
+	{ picture: "🌧️", text: "Rain helps the flowers grow." },
+	{ picture: "🌈", text: "Rainbows have lots of colors." },
+	{ picture: "⭐", text: "Stars twinkle in the night sky." },
+	{ picture: "🍎", text: "Apples grow on trees." },
+	{ picture: "🥕", text: "Carrots grow under the ground." },
+	{ picture: "🍌", text: "Bananas are yellow." },
+	{ picture: "❄️", text: "Snow is cold and white." },
+	{ picture: "🌳", text: "Birds make their nests in trees." },
+	{ picture: "🚒", text: "Fire trucks are red and go nee-naw." },
+];
+
+/** One of a list for the day (YYYY-MM-DD): the same all day, the next one tomorrow. */
+export function ofTheDay<T>(list: T[], day: string): T {
 	const days = Math.floor(Date.parse(`${day}T00:00:00Z`) / 86_400_000);
-	return KID_FACTS[((days % KID_FACTS.length) + KID_FACTS.length) % KID_FACTS.length];
+	return list[((days % list.length) + list.length) % list.length];
 }
+
+/** The day's fact (YYYY-MM-DD), from the littlest's own list for them. */
+export const factFor = (day: string, little = false) => ofTheDay(little ? LITTLE_FACTS : KID_FACTS, day);
