@@ -1,14 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { openDb } from './db.ts';
 import { buildApp } from './app.ts';
-import { geocode } from './weather.ts';
+import { geocode, wearFor } from './weather.ts';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 const FORECAST = {
   utc_offset_seconds: -25200,
   current: { temperature_2m: 73.5, relative_humidity_2m: 44.6, weather_code: 2, is_day: 1 },
   daily: { time: ['2026-10-07', '2026-10-08'], temperature_2m_max: [88.4, 91.1], temperature_2m_min: [66.9, 68.1], weather_code: [0, 3],
-    sunrise: ['2026-10-07T06:50', '2026-10-08T06:50'], sunset: ['2026-10-07T18:31', '2026-10-08T18:30'] },
+    sunrise: ['2026-10-07T06:50', '2026-10-08T06:50'], sunset: ['2026-10-07T18:31', '2026-10-08T18:30'],
+    precipitation_probability_max: [10, 60], cloud_cover_mean: [22.4, 90], wind_speed_10m_max: [8.6, 20] },
+  // A cool morning that warms up: 55°F at 7, 80°F by 1.
+  hourly: { time: ['2026-10-07T06:00', '2026-10-07T07:00', '2026-10-07T10:00', '2026-10-07T13:00', '2026-10-08T08:00'],
+    apparent_temperature: [50, 55, 68, 80, 40], precipitation_probability: [0, 5, 10, 0, 90] },
 };
 
 /** Answers like the Census geocoder (when `censusFinds`) and Open-Meteo; records each URL. */
@@ -35,10 +39,23 @@ describe('weather', () => {
     expect(res.json()).toEqual({ temp: 74, high: 88, low: 67, humidity: 45, code: 2, isDay: true,
       // Home's 6:50 AM at UTC-7.
       sunrise: '2026-10-07T13:50:00.000Z', sunset: '2026-10-08T01:31:00.000Z',
-      days: [{ date: '2026-10-07', high: 88, low: 67, code: 0 }, { date: '2026-10-08', high: 91, low: 68, code: 3 }] });
+      days: [{ date: '2026-10-07', high: 88, low: 67, code: 0 }, { date: '2026-10-08', high: 91, low: 68, code: 3 }],
+      rainChance: 10, cloudCover: 22, wind: 9,
+      // Only today's hours out (7 to 3) count: the cool start means a jacket, the warm afternoon no pants.
+      wear: { pants: false, jacket: true, rain: false } });
     expect(calls.find((u) => u.includes('open-meteo.com/v1/forecast'))).toContain('latitude=33.700&longitude=-117.800');
     await app.inject({ url: '/api/weather' });
     expect(calls).toHaveLength(2);
+  });
+
+  it('works out what to wear from how it feels while out, rain and wind', () => {
+    const day = (feels: number[], rain = 0) => feels.map((f) => ({ feels: f, rain }));
+    expect(wearFor(day([75, 85]), 5)).toEqual({ pants: false, jacket: false, rain: false });
+    expect(wearFor(day([60, 68]), 5)).toEqual({ pants: true, jacket: false, rain: false });
+    expect(wearFor(day([50, 62]), 5)).toEqual({ pants: true, jacket: true, rain: false });
+    // A windy cool day, and a warm wet one.
+    expect(wearFor(day([62, 66]), 25)).toEqual({ pants: true, jacket: true, rain: false });
+    expect(wearFor(day([72, 78], 60), 5)).toEqual({ pants: false, jacket: false, rain: true });
   });
 
   it('asks for a home address first', async () => {

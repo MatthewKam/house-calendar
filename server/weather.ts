@@ -17,6 +17,39 @@ export interface Weather {
   sunset: string;
   /** Today and the next six days. */
   days: { date: string; high: number; low: number; code: number }[];
+  /** Today's highest chance of rain (%), average cloud cover (%) and strongest wind (mph). */
+  rainChance: number;
+  cloudCover: number;
+  wind: number;
+  /** What to wear today (see wearFor): long pants, a jacket, rain gear (boots, rain jacket, umbrella). */
+  wear: Wear;
+}
+
+export interface Wear { pants: boolean; jacket: boolean; rain: boolean }
+
+/** The hours that count for dressing: out the door to the end of the school day (home's clock). */
+const OUT_FROM = 7;
+const OUT_TO = 15;
+/** Pants when it never feels warmer than this while out (°F); a jacket when it feels colder than this at any point. */
+const PANTS_BELOW = 70;
+const JACKET_BELOW = 58;
+/** Rain gear at this chance of rain (%) while out, or a jacket for wind this strong (mph). */
+const RAIN_FROM = 40;
+const WINDY = 20;
+
+/**
+ * What to wear, from how warm it feels (the wind's chill counted in) and the chance of rain while
+ * they're out: long pants on a day that never gets warm, a jacket for a cold moment or a cold wind,
+ * rain gear when rain's likely.
+ */
+export function wearFor(hours: { feels: number; rain: number }[], wind: number): Wear {
+  const most = Math.max(...hours.map((h) => h.feels));
+  const least = Math.min(...hours.map((h) => h.feels));
+  return {
+    pants: most < PANTS_BELOW,
+    jacket: least < JACKET_BELOW || (wind >= WINDY && most < PANTS_BELOW),
+    rain: Math.max(...hours.map((h) => h.rain)) >= RAIN_FROM,
+  };
 }
 
 interface Place { lat: number; lon: number }
@@ -46,13 +79,23 @@ export async function geocode(address: string, fetchImpl: typeof fetch = fetch):
 /** Current conditions and today's high and low from Open-Meteo (free, no key). */
 export async function forecast(place: Place, fetchImpl: typeof fetch = fetch): Promise<Weather> {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${place.lat.toFixed(3)}&longitude=${place.lon.toFixed(3)}`
-    + '&current=temperature_2m,relative_humidity_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset'
-    + '&temperature_unit=fahrenheit&timezone=auto&forecast_days=7';
+    + '&current=temperature_2m,relative_humidity_2m,weather_code,is_day'
+    + '&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset,precipitation_probability_max,cloud_cover_mean,wind_speed_10m_max'
+    + '&hourly=apparent_temperature,precipitation_probability'
+    + '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7';
   const res = await fetchImpl(url);
   if (!res.ok) throw new Error(`Open-Meteo answered ${res.status}`);
   const w = await res.json();
   // Sunrise and sunset come as home's local clock time ("2026-10-07T06:50"); make them instants.
   const instant = (local: string) => new Date(Date.parse(`${local}:00Z`) - w.utc_offset_seconds * 1000).toISOString();
+  // Today's hours while they're out ("2026-10-07T08:00", home's clock).
+  const today = w.daily.time[0] as string;
+  const out = (w.hourly.time as string[]).flatMap((t, i) => {
+    const hour = Number(t.slice(11, 13));
+    return t.startsWith(today) && hour >= OUT_FROM && hour <= OUT_TO
+      ? [{ feels: w.hourly.apparent_temperature[i] as number, rain: (w.hourly.precipitation_probability[i] ?? 0) as number }] : [];
+  });
+  const wind = Math.round(w.daily.wind_speed_10m_max[0] ?? 0);
   return {
     temp: Math.round(w.current.temperature_2m),
     high: Math.round(w.daily.temperature_2m_max[0]),
@@ -68,6 +111,12 @@ export async function forecast(place: Place, fetchImpl: typeof fetch = fetch): P
       low: Math.round(w.daily.temperature_2m_min[i]),
       code: w.daily.weather_code[i],
     })),
+    rainChance: Math.round(w.daily.precipitation_probability_max[0] ?? 0),
+    cloudCover: Math.round(w.daily.cloud_cover_mean[0] ?? 0),
+    wind,
+    // No hours (the forecast came without them): judged by the day's high and low instead.
+    wear: wearFor(out.length ? out : [{ feels: w.daily.temperature_2m_max[0], rain: w.daily.precipitation_probability_max[0] ?? 0 },
+      { feels: w.daily.temperature_2m_min[0], rain: 0 }], wind),
   };
 }
 

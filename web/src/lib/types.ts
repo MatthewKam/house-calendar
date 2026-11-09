@@ -297,6 +297,12 @@ export interface Weather {
   sunset: string;
   /** Today and the next six days. */
   days: { date: string; high: number; low: number; code: number }[];
+  /** Today's highest chance of rain (%), average cloud cover (%) and strongest wind (mph). */
+  rainChance: number;
+  cloudCover: number;
+  wind: number;
+  /** What to wear today: long pants, a jacket, rain gear (boots, rain jacket, umbrella). */
+  wear: { pants: boolean; jacket: boolean; rain: boolean };
 }
 
 /** A photo in the album. */
