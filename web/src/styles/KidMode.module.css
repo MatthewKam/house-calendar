@@ -671,7 +671,7 @@
 	white-space: nowrap;
 }
 
-/* What to wear: the clothes as big pictures in a row, the weather under them in small print. */
+/* What to wear: a card, the clothes as big pictures in a row, the weather under them in small print. */
 .wear {
 	display: flex;
 	flex-direction: column;
@@ -679,6 +679,8 @@
 	padding: 1rem 1.2rem;
 	border-radius: 1.4rem;
 	background: var(--surface);
+	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
+	box-shadow: 0 0.3rem 1rem color-mix(in srgb, var(--c) 18%, transparent);
 }
 .clothes {
 	list-style: none;
