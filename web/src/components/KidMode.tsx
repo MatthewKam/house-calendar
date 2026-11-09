@@ -550,7 +550,7 @@ function Clock() {
 	return (
 		<p className={s.clock}>
 			<span className={s.clockTime}>{timeLabel(now)}</span>
-			<span className={s.clockDate}>{now.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}</span>
+			<span className={s.clockDate}>{now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })}</span>
 		</p>
 	);
 }
