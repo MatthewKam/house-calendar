@@ -671,7 +671,64 @@
 	white-space: nowrap;
 }
 
-/* A fun fact on a day with nothing on: a big picture and the fact. */
+/* What to wear: the clothes as big pictures in a row, the weather under them in small print. */
+.wear {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	padding: 1rem 1.2rem;
+	border-radius: 1.4rem;
+	background: var(--surface);
+}
+.clothes {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem 1.4rem;
+}
+.clothing {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.2rem;
+	font-size: 1rem;
+	font-weight: 700;
+}
+.clothingPicture {
+	font-size: 3.4rem;
+	line-height: 1;
+}
+.weatherLine {
+	margin: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.1rem 0.9rem;
+	font-size: 0.95rem;
+	font-weight: 600;
+	color: var(--muted);
+}
+.weatherLine span {
+	white-space: nowrap;
+}
+
+/* Don't forget: today's things to remember, from the family's lists. */
+.remember {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.rememberItem {
+	display: flex;
+	align-items: center;
+	gap: 0.9rem;
+	padding: 0.8rem 1.1rem;
+	border-radius: 1.2rem;
+	background: color-mix(in srgb, var(--c) 14%, var(--surface));
+}
+
+/* The day's cards: a fun fact, and kind words (solid, not dashed). */
 .fact {
 	display: flex;
 	align-items: center;
@@ -680,6 +737,10 @@
 	border-radius: 1.4rem;
 	background: var(--surface);
 	border: 3px dashed color-mix(in srgb, var(--c) 50%, white);
+}
+.factKind {
+	border-style: solid;
+	background: color-mix(in srgb, var(--c) 10%, var(--surface));
 }
 .factPicture {
 	font-size: 5rem;

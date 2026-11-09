@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import { addDays, dayKey, fromDayKey, timeLabel } from "../lib/dates";
-import { factFor } from "../lib/kidFacts";
-import { useRangeEvents } from "../lib/queries";
-import type { CalEvent, Member, Stage } from "../lib/types";
+import { factFor, type KidFact } from "../lib/kidFacts";
+import { kindWordsFor } from "../lib/kindWords";
+import { useLists, useRangeEvents, useWeather } from "../lib/queries";
+import type { CalEvent, Member, SprigItem, Stage, Weather } from "../lib/types";
+import { sky } from "../lib/weather";
 import TodayAnimal from "./TodayAnimal";
 import s from "../styles/KidMode.module.css";
 
@@ -38,8 +40,15 @@ const PICTURES: [RegExp, string][] = [
 	[/movie|film|cinema/i, "🎬"],
 	[/sleep ?over/i, "🛏️"],
 	[/no school|day off/i, "🌈"],
+	// Things to remember.
+	[/show.?and.?tell/i, "🧸"],
+	[/water bottle|bottle/i, "🥤"],
+	[/permission|form|slip|money|check/i, "📝"],
+	[/pajama|pj|costume|hair|wear|shirt|dress up/i, "👕"],
+	[/backpack|bag/i, "🎒"],
+	[/snack/i, "🍎"],
 ];
-const picture = (title: string) => PICTURES.find(([re]) => re.test(title))?.[1] ?? "📅";
+const picture = (title: string, otherwise = "📅") => PICTURES.find(([re]) => re.test(title))?.[1] ?? otherwise;
 
 /** Morning, afternoon or evening, as a picture. */
 const partOfDay = (iso: string) => {
@@ -48,11 +57,16 @@ const partOfDay = (iso: string) => {
 };
 
 /**
- * Kid mode's Today: the kid's own events as big pictures, today first, with
- * what's next picked out. Older kids see more days ahead.
+ * Kid mode's Today, the morning screen: what to wear, anything to remember, the kid's own events as big
+ * pictures (what's next picked out; older kids see more days ahead), or on a day with nothing on, an
+ * animal to tap; then the day's fun fact and kind words.
  */
 export default function KidToday({ today, kid }: { today: string; kid: Member }) {
 	const little = (kid.stage ?? "little") === "little";
+	const weather = useWeather().data;
+	const lists = useLists().data ?? [];
+	// Anything on a list for them, due today and not done yet.
+	const remember = lists.flatMap((l) => l.items).filter((i) => !i.done && i.memberId === kid.id && i.due && dueOn(i, today));
 	const days = DAYS[kid.stage ?? "little"];
 	const from = useMemo(() => fromDayKey(today), [today]);
 	const events = useRangeEvents(from, days).data ?? [];
@@ -70,6 +84,8 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 
 	return (
 		<>
+			{weather && <WhatToWear weather={weather} />}
+			{remember.length > 0 && <Remember items={remember} />}
 			{Array.from({ length: days }, (_, i) => {
 				const key = dayKey(addDays(from, i));
 				const list = onDay(key);
@@ -79,33 +95,79 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 				return (
 					<section key={key} className={s.group} aria-label={label}>
 						<h2 className={s.groupHead}>{label}</h2>
-						{/* The littlest: an animal to tap, every day. */}
-						{i === 0 && little && <TodayAnimal />}
-						{list.length === 0 && (
-							<>
-								<p className={s.none}>Nothing on the calendar today. 🌈</p>
-								<FunFact day={today} />
-							</>
-						)}
+						{/* Nothing on today: an animal to tap instead. */}
+						{list.length === 0 && <TodayAnimal />}
 						<ul className={s.events}>
 							{list.map((e) => <KidEvent key={e.id} event={e} next={e === next} over={!e.allDay && Date.parse(e.end) <= now} />)}
 						</ul>
 					</section>
 				);
 			})}
+			<Card label="Did you know?" item={factFor(today, little)} />
+			<Card label="Kind words" item={kindWordsFor(today)} kind />
 		</>
 	);
 }
 
-/** Something fun to know, for a day with nothing on: a big picture and one short sentence. */
-function FunFact({ day }: { day: string }) {
-	const fact = factFor(day);
+/** Whether a list item's due today (YYYY-MM-DD): a day, or an instant on that day. */
+const dueOn = (item: SprigItem, day: string) => (item.due!.length === 10 ? item.due === day : dayKey(new Date(item.due!)) === day);
+
+/** What to wear: the clothes as big pictures, then the day's weather in small print for a grown-up. */
+function WhatToWear({ weather: w }: { weather: Weather }) {
+	const { pants, jacket, rain } = w.wear;
+	const clothes = [
+		rain ? { picture: "🧥", name: "Rain jacket" } : jacket ? { picture: "🧥", name: "Jacket" } : { picture: "👕", name: "T-shirt" },
+		pants ? { picture: "👖", name: "Pants" } : { picture: "🩳", name: "Shorts" },
+		...(rain ? [{ picture: "🥾", name: "Rain boots" }, { picture: "☔", name: "Umbrella" }] : []),
+	];
+	const look = sky(w.days[0]?.code ?? w.code, true);
 	return (
-		<div className={s.fact}>
-			<span className={s.factPicture} aria-hidden="true">{fact.picture}</span>
+		<section className={s.wear} aria-label="What to wear">
+			<span className={s.nextLabel}>What to wear</span>
+			<ul className={s.clothes}>
+				{clothes.map((c) => (
+					<li key={c.name} className={s.clothing}>
+						<span className={s.clothingPicture} aria-hidden="true">{c.picture}</span>
+						{c.name}
+					</li>
+				))}
+			</ul>
+			<p className={s.weatherLine}>
+				<span><span aria-hidden="true">{look.icon}</span> {look.label}</span>
+				<span>{w.high}° / {w.low}°</span>
+				<span>💧 {w.rainChance}%</span>
+				<span>☁️ {w.cloudCover}%</span>
+				<span>💨 {w.wind} mph</span>
+			</p>
+		</section>
+	);
+}
+
+/** Things to remember today, from the family's lists, each with a picture. */
+function Remember({ items }: { items: SprigItem[] }) {
+	return (
+		<section className={s.remember} aria-label="Don't forget">
+			<span className={s.nextLabel}>Don't forget</span>
+			<ul className={s.events}>
+				{items.map((i) => (
+					<li key={i.id} className={s.rememberItem}>
+						<span className={s.eventPicture} aria-hidden="true">{picture(i.title, "📌")}</span>
+						<span className={s.eventTitle}>{i.title}</span>
+					</li>
+				))}
+			</ul>
+		</section>
+	);
+}
+
+/** A card for the day: a big picture and one short sentence, for a grown-up to read aloud. */
+function Card({ label, item, kind }: { label: string; item: KidFact; kind?: boolean }) {
+	return (
+		<div className={`${s.fact} ${kind ? s.factKind : ""}`}>
+			<span className={s.factPicture} aria-hidden="true">{item.picture}</span>
 			<span className={s.factText}>
-				<span className={s.nextLabel}>Did you know?</span>
-				{fact.text}
+				<span className={s.nextLabel}>{label}</span>
+				{item.text}
 			</span>
 		</div>
 	);
