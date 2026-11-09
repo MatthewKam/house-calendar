@@ -59,7 +59,8 @@ const partOfDay = (iso: string) => {
 /**
  * Kid mode's Today, the morning screen: what to wear and the day's kind words, anything to remember, then
  * the kid's own events as big pictures (today with what's next picked out, tomorrow, and later this week),
- * or on a day with nothing on, an animal to tap; then the day's fun fact. A phone on its side: in rows of two.
+ * or on a day with nothing on, an animal to tap; then the day's fun fact. On its side: the cards in rows of
+ * two (a phone) or three (a tablet, the fact up top with the others), the calendar's days side by side.
  */
 export default function KidToday({ today, kid }: { today: string; kid: Member }) {
 	const little = (kid.stage ?? "little") === "little";
@@ -95,6 +96,8 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 			{weather && <WhatToWear weather={weather} />}
 			<Card label="Kind words" item={kindWordsFor(today)} />
 			{remember.length > 0 && <Remember items={remember} />}
+			{/* The calendar: today, tomorrow and later this week, kept together. */}
+			<div className={s.calendar}>
 			<section className={s.group} aria-label="Today">
 				<h2 className={s.groupHead}>Today</h2>
 				{todays.length === 0 ? (
@@ -120,6 +123,7 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 					<ul className={s.events}>{later.map(({ e, day }) => event(e, day))}</ul>
 				</section>
 			)}
+			</div>
 			<Card label="Did you know?" item={factFor(today, little)} />
 		</div>
 	);

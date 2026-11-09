@@ -677,11 +677,33 @@
 	font-weight: 800;
 }
 
-/* Today's cards and events, one under another (a phone on its side: rows of two). */
-.today {
+/* Today's cards and events, one under another (on its side: rows of two or three). */
+.today,
+.calendar {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
+}
+/* A tablet on its side: rows of three, the day's three cards across the top, then what to remember and
+   the calendar (its days side by side) across the whole width. */
+@media (orientation: landscape) and (min-width: 900px) and (min-height: 501px) {
+	.page > .today {
+		max-width: 80rem;
+	}
+	.today {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+	}
+	.remember,
+	.calendar {
+		grid-column: 1 / -1;
+		order: 1;
+	}
+	.calendar {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		align-items: start;
+	}
 }
 
 /* What to wear: a card, the clothes as big pictures in a row, the weather under them in small print. */
@@ -879,6 +901,16 @@
 	.today {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
+	}
+	/* What to remember and the calendar across the whole width, the calendar's days side by side. */
+	.remember,
+	.calendar {
+		grid-column: 1 / -1;
+	}
+	.calendar {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+		align-items: start;
 	}
 	.pottyToggle {
 		font-size: 1.3rem;
