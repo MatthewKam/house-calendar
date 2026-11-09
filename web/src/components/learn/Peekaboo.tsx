@@ -2,52 +2,50 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Pic } from "./art";
 import { Board, fit } from "./parts";
 import { ANIMALS, type Animal } from "./things";
-import { at, CHEER_MS, fresh, type GameProps } from "./rounds";
+import { at, CHEER_MS, fresh, shuffle, type GameProps } from "./rounds";
 import { noise } from "./sound";
 import s from "../../styles/Learn.module.css";
 
-/** Bushes, and animals hiding in them over a play, by level. */
-const BUSHES = [3, 4, 4, 5, 5, 6];
+/** Hiding places (always three: the garden's three pots), and animals hiding in them over a play, by level. */
+const BUSHES = [3];
 const ANIMALS_PER_PLAY = [8, 10, 10, 12, 12, 14];
 /** How long an animal stays out after its noise before ducking back down (ms; a couple of seconds at least). */
 const STAY_AFTER = 1200;
 const STAY_AT_LEAST = 2500;
 
-/** Different skies each play: day, morning, sunset. */
-const SKIES = [
-	{ sky: "#cfe9ff", hill: "#a6dc8a", light: "#ffd95a" },
-	{ sky: "#ffe3c4", hill: "#9fd28a", light: "#ffb347" },
-	{ sky: "#ffd1dc", hill: "#8cc98a", light: "#ff8c69" },
-	{ sky: "#d9f2e6", hill: "#b5e08a", light: "#fff07a" },
-];
-
-/** Where the animals hide each play, and the scene around them: a different one each time. */
+/**
+ * Where the animals hide each play (a different one each time): its painted scene, and the hiding place
+ * in front of it. The garden's three pots are all different, in a new order each play. `wide`: the
+ * hiding place's width over its height; `peek`: how far up it the animal sits (behind it, so the rest is
+ * hidden), as a share of its height.
+ */
 const PLACES = [
-	{ id: "bush", scene: "farm", name: "bush" },
-	{ id: "haystack", scene: "barnyard", name: "haystack" },
-	{ id: "tractor", scene: "field", name: "tractor" },
-	{ id: "window", scene: "barn", name: "window" },
+	{ id: "farm", name: "haystack", spots: ["haystack"], wide: 560 / 333, peek: 0.55 },
+	{ id: "field", name: "tractor", spots: ["tractor"], wide: 560 / 381, peek: 0.5 },
+	{ id: "forest", name: "bush", spots: ["bush"], wide: 560 / 308, peek: 0.5 },
+	{ id: "garden", name: "flower pot", spots: ["pot-1", "pot-2", "pot-3"], wide: 420 / 390, peek: 0.62 },
+	{ id: "safari", name: "rock", spots: ["boulder"], wide: 560 / 252, peek: 0.45 },
 ] as const;
-type Scene = (typeof PLACES)[number]["scene"];
+const art = (file: string) => `/hide/${file}.webp`;
 
 /**
- * A bush (or haystack, tractor, window): who's hiding in it now, whether they're out, how many times it's
+ * A hiding place (a haystack, a tractor, a bush, a flower pot, a rock): who's hiding in it now, whether they're out, how many times it's
  * been tapped (for its rustle), and `last`: it's out for good, with nobody new left to hide there.
  */
 interface Bush { animal: Animal | null; out: boolean; taps: number; last?: boolean }
 
 /**
- * Peekaboo farm (age 2): not a game to win, just fun. Tap a bush (or a haystack, a tractor, a barn
- * window: a different place and scene each play) and an animal pops up, its name in front, making its
+ * Peekaboo (age 2): not a game to win, just fun. Tap a haystack on the farm (or a tractor in the
+ * field, a bush in the forest, a flower pot in the garden, a rock on the safari: a different scene each
+ * play) and an animal pops up, its name in front, making its
  * noise (tap it again to hear it again). A couple of seconds after, it ducks back down and someone new
  * is hiding there; once nobody new is left, the last one there stays up. When every animal's had its
  * turn, the mascot cheers with confetti and that's the end. A new set of animals each play.
  */
 export default function Peekaboo({ level, onDone, onBack }: GameProps) {
-	const look = useMemo(() => fresh("peekaboo.skies", SKIES, 1, (x) => x.sky)[0], []);
 	const place = useMemo(() => fresh("peekaboo.places", PLACES, 1, (p) => p.id)[0], []);
-	// A window's animal looks out of it; anywhere else, it pops up over the top.
-	const inside = place.id === "window";
+	// Each hiding place's picture: the garden's pots in a new order each play (round again past three).
+	const spots = useMemo(() => shuffle(place.spots), [place]);
 	const bushCount = at(BUSHES, level);
 	// Everyone hiding this play, in the order they'll turn up.
 	const queue = useMemo(() => fresh("peekaboo.animals", ANIMALS, Math.max(bushCount, at(ANIMALS_PER_PLAY, level)), (a) => a.id), [level, bushCount]);
@@ -98,32 +96,37 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 	return (
 		<Board onBack={onBack} cheer={finished}>
 			{(box) => {
-				// Each bush has room above it for its animal to pop all the way up.
-				const shape = inside ? 0.85 : 0.62;
+				// Each hiding place has room above it for its animal to pop all the way up: the animal is as wide
+				// as most of it, and stands from `peek` of the way up.
+				const animalShare = 0.6;
+				const shape = 1 / (place.peek / place.wide + animalShare);
 				// On a tablet (either way up) or a phone on its side, the hiding places in one row; on an upright
 				// phone, the grid that fits best.
-				const room = { w: box.w - 24, h: box.h * (inside ? 0.8 : 0.66) };
+				const room = { w: box.w - 24, h: box.h * 0.7 };
 				const grid = box.w > box.h || box.w >= 600
-					? { cols: bushes.length, size: Math.floor(Math.min((room.w - 12 * (bushes.length - 1)) / bushes.length, room.h * shape, 240)) }
-					: fit(bushes.length, room, { gap: 12, shape, most: 240 });
+					? { cols: bushes.length, size: Math.floor(Math.min((room.w - 12 * (bushes.length - 1)) / bushes.length, room.h * shape, 260)) }
+					: fit(bushes.length, room, { gap: 12, shape, most: 260 });
+				const placeHeight = grid.size / place.wide;
 				return (
-					<div className={s.farm} style={{ "--sky": look.sky, "--hill": look.hill, "--light": look.light } as CSSProperties}>
-						<Scenery scene={place.scene} />
-						<div className={`${s.bushes} ${inside ? s.windows : ""}`} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)` }}>
+					<div className={s.farm}>
+						<img className={s.farmBack} src={art(place.id)} alt="" draggable={false} />
+						<div className={s.bushes} style={{ maxWidth: grid.cols * grid.size + (grid.cols - 1) * 12 + 24 }}>
 							{bushes.map((b, i) => (
 								<button key={i} type="button" className={s.bushSpot} onClick={() => tap(i)}
 									style={{ width: grid.size, height: grid.size / shape }}
 									aria-label={b.out && b.animal ? `${b.animal.name}: tap to hear it again` : `A ${place.name}. Who's hiding?`}>
-									{/* A window: the room behind it, dark until someone looks out. */}
-									{inside && <span className={s.room} style={{ left: grid.size * 0.25, top: grid.size * 0.25, width: grid.size * 0.5, height: grid.size * 0.57 }} />}
+									{/* Out: it jumps up from behind (its feet over the top of the hiding place, whose height
+									    is known from its picture's shape), and lands in front, on the grass. Tapped again: a hop. */}
 									{b.out && b.animal && (
-										<span key={`${b.animal.id}-${b.taps}`} className={`${inside ? s.lookOut : s.peeker} ${s.peek}`}
-											style={inside ? { left: grid.size * 0.27, top: grid.size * 0.3, width: grid.size * 0.46 } : undefined}>
-											<Pic id={b.animal.id} />
+										<span key={b.animal.id} className={s.jumper}
+											style={{ width: grid.size * animalShare, "--behind": `${placeHeight * place.peek}px`, "--over": `${placeHeight + grid.size * 0.06}px` } as CSSProperties}>
+											<span key={b.taps} className={b.taps > 1 ? s.hop : ""}>
+												<Pic id={b.animal.id} />
+											</span>
 										</span>
 									)}
-									<span key={`b${b.taps}`} className={`${s.bush} ${b.taps && !inside ? s.rustle : ""}`}>
-										<Pic id={place.id} />
+									<span key={`b${b.taps}`} className={`${s.bush} ${b.taps ? s.rustle : ""}`}>
+										<img src={art(spots[i % spots.length])} alt="" draggable={false} />
 									</span>
 									{b.out && b.animal && <span className={s.bushName}>{b.animal.name}</span>}
 								</button>
@@ -133,79 +136,5 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 				);
 			}}
 		</Board>
-	);
-}
-
-/** The scene behind the hiding places: the sky (sun and clouds), then the place. */
-function Scenery({ scene }: { scene: Scene }) {
-	return (
-		<svg className={s.farmBack} viewBox="0 0 1000 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-			<rect width="1000" height="600" style={{ fill: "var(--sky)" }} />
-			<circle cx="860" cy="90" r="50" style={{ fill: "var(--light)" }} />
-			<g fill="#fff" opacity=".9">
-				<ellipse cx="200" cy="90" rx="70" ry="26" />
-				<ellipse cx="250" cy="72" rx="50" ry="30" />
-				<ellipse cx="560" cy="130" rx="60" ry="22" />
-				<ellipse cx="600" cy="116" rx="40" ry="24" />
-			</g>
-			{scene === "farm" && (
-				<>
-					<path d="M0 300 C200 240 420 290 600 270 C780 250 900 240 1000 255 V600 H0z" style={{ fill: "var(--hill)" }} opacity=".75" />
-					<Barn x={700} y={150} />
-					<path d="M0 340 C250 310 700 330 1000 320 V600 H0z" style={{ fill: "var(--hill)" }} />
-					<Fence y={330} />
-				</>
-			)}
-			{scene === "barnyard" && (
-				<>
-					<path d="M0 300 C200 260 500 290 1000 270 V600 H0z" style={{ fill: "var(--hill)" }} opacity=".75" />
-					<Barn x={40} y={110} big />
-					<path d="M0 360 C300 340 700 350 1000 340 V600 H0z" fill="#e3cf8e" />
-					<Fence y={350} />
-				</>
-			)}
-			{scene === "field" && (
-				<>
-					<path d="M0 290 C250 250 600 280 1000 260 V600 H0z" style={{ fill: "var(--hill)" }} />
-					{/* Rows of crops, running back to the hills. */}
-					<g stroke="#5e9a3a" strokeWidth="10" strokeLinecap="round" opacity=".55">
-						{Array.from({ length: 9 }, (_, i) => <path key={i} d={`M${500 + (i - 4) * 40} 290 L${500 + (i - 4) * 260} 600`} />)}
-					</g>
-				</>
-			)}
-			{scene === "barn" && (
-				<>
-					{/* The side of a red barn: boards, and its roof's edge at the top. */}
-					<rect y="150" width="1000" height="450" fill="#c84a3c" />
-					<g stroke="#a8322a" strokeWidth="5">
-						{Array.from({ length: 20 }, (_, i) => <path key={i} d={`M${i * 52 + 20} 150 V600`} />)}
-					</g>
-					<path d="M0 150 H1000 V176 H0z" fill="#7a2620" />
-				</>
-			)}
-		</svg>
-	);
-}
-
-/** A red barn, at x, y (`big`: closer, filling more of the scene). */
-function Barn({ x, y, big }: { x: number; y: number; big?: boolean }) {
-	return (
-		<g transform={`translate(${x} ${y}) scale(${big ? 1.25 : 1})`}>
-			<path d="M0 90 L120 20 L240 90z" fill="#a8322a" />
-			<rect x="12" y="88" width="216" height="150" fill="#d0473b" />
-			<rect x="90" y="150" width="60" height="88" fill="#f4f1ec" />
-			<path d="M90 150 L150 238 M150 150 L90 238" stroke="#d0473b" strokeWidth="7" />
-			<rect x="100" y="104" width="40" height="30" fill="#f4f1ec" />
-		</g>
-	);
-}
-
-/** A white fence across the scene at y. */
-function Fence({ y }: { y: number }) {
-	return (
-		<g stroke="#f4f1ec" strokeWidth="9" strokeLinecap="round">
-			<path d={`M0 ${y + 20} H1000 M0 ${y + 50} H1000`} />
-			{Array.from({ length: 11 }, (_, i) => <path key={i} d={`M${i * 100 + 20} ${y} V${y + 70}`} />)}
-		</g>
 	);
 }

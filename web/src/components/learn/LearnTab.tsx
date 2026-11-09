@@ -39,10 +39,10 @@ export const GAMES: Record<Game, { title: string; picture: string; how: string[]
 		"Tap the animal that made it. Every animal tapped makes its own noise.",
 		"Higher levels: more animals to choose from, then pets and wild animals too.",
 	] },
-	peekaboo: { title: "Peekaboo farm", picture: "bush", Play: Peekaboo, how: [
-		"Not a game to win, just fun: tap a bush (or haystack, tractor or barn window: a new place each time) and an animal pops up with its name, making its noise. Tap it again to hear it again.",
+	peekaboo: { title: "Peekaboo", picture: "tractor", Play: Peekaboo, how: [
+		"Not a game to win, just fun: three hiding places (haystacks on the farm, tractors in the field, bushes in the forest, flower pots in the garden, rocks on the safari: a new scene each time). Tap one and an animal pops up with its name, making its noise. Tap it again to hear it again.",
 		"A couple of seconds later it ducks back down, and someone new is hiding there.",
-		"When every animal has had its turn, there's a cheer and it's the end. A new set of animals each time.",
+		"When every animal has had its turn, there's a cheer and it's the end. A new set of animals each time; higher levels, more animals.",
 	] },
 	findIt: { title: "Find it!", picture: "teddy", Play: FindIt, how: [
 		"The index shows each kind of thing in the room and how many there are: socks 2, teddy bears 3.",

@@ -470,40 +470,6 @@ const ART: Record<string, ReactNode> = {
 		</>
 	),
 
-	// Peekaboo's hiding places (besides the bush).
-	haystack: (
-		<>
-			<path d="M8 112 Q10 52 60 40 Q110 52 112 112z" fill="#e8b84a" />
-			<path d="M22 112 Q26 70 60 58 Q94 70 98 112" fill="none" stroke="#c9952c" strokeWidth="4" />
-			<path d="M36 112 Q40 84 60 76 Q80 84 84 112" fill="none" stroke="#c9952c" strokeWidth="4" />
-			<g stroke="#f6d77a" strokeWidth="3" strokeLinecap="round">
-				<path d="M30 60 l-6 -10 M60 40 v-12 M90 60 l6 -10 M46 46 l-4 -11 M74 46 l4 -11" />
-			</g>
-		</>
-	),
-	tractor: (
-		<>
-			<rect x="48" y="30" width="36" height="34" rx="4" fill="#3d9a4c" />
-			<rect x="54" y="36" width="24" height="20" rx="3" fill="#d6ecff" />
-			<rect x="14" y="56" width="82" height="30" rx="6" fill="#4cb35c" />
-			<rect x="20" y="40" width="8" height="18" fill="#2b2b2b" />
-			<circle cx="82" cy="88" r="26" fill="#2b2b2b" />
-			<circle cx="82" cy="88" r="11" fill="#f6c02a" />
-			<circle cx="28" cy="96" r="16" fill="#2b2b2b" />
-			<circle cx="28" cy="96" r="7" fill="#f6c02a" />
-		</>
-	),
-	window: (
-		<>
-			{/* The frame and shutters; the panes are left open (the room or an animal shows through). */}
-			<path d="M20 20 H100 V108 H20z M30 30 V98 H90 V30z" fill="#fbf7ee" fillRule="evenodd" />
-			<path d="M59 30 h2 v68 h-2z M30 63 h60 v2 h-60z" fill="#fbf7ee" />
-			<rect x="2" y="20" width="18" height="88" rx="3" fill="#3d7bd9" />
-			<rect x="100" y="20" width="18" height="88" rx="3" fill="#3d7bd9" />
-			<path d="M6 34 h10 M6 50 h10 M6 66 h10 M6 82 h10 M6 98 h10 M104 34 h10 M104 50 h10 M104 66 h10 M104 82 h10 M104 98 h10" stroke="#2f62b0" strokeWidth="3" />
-			<rect x="14" y="106" width="92" height="10" rx="3" fill="#e9dfcc" />
-		</>
-	),
 	// Pop!'s tile: a bubble with a duck in it.
 	pop: (
 		<>
@@ -511,18 +477,8 @@ const ART: Record<string, ReactNode> = {
 			<image href="/pop/bubble.webp" x="4" y="4" width="112" height="112" />
 		</>
 	),
-	bush: (
-		<>
-			<g fill="#4c9a4c">
-				<circle cx="30" cy="74" r="30" />
-				<circle cx="60" cy="58" r="36" />
-				<circle cx="92" cy="74" r="28" />
-				<rect x="2" y="74" width="116" height="40" rx="16" />
-			</g>
-			<circle cx="48" cy="40" r="10" fill="#6cbc5f" />
-			<circle cx="86" cy="62" r="8" fill="#6cbc5f" />
-		</>
-	),
+	// Peekaboo's tile: the red tractor from its field scene.
+	tractor: <image href="/hide/tractor.webp" x="0" y="19" width="120" height="82" />,
 };
 
 /** A picture by name (see ART), filling its box; `label` names it for screen readers, or it's hidden. */

@@ -14,7 +14,7 @@ const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 
 /** The games, and the highest level each has. */
 export const GAMES = {
-  // Little (2): who says that, peekaboo farm, find it, count the apples, pop the bubbles.
+  // Little (2): who says that, peekaboo, find it, count the apples, pop the bubbles.
   sounds: 6, peekaboo: 6, findIt: 6, apples: 6, pop: 6,
   // Early (4) and up: add them up, Bear's way home, the missing first letter, card matching.
   adding: 6, maze: 6, letters: 6, memory: 6,
@@ -23,7 +23,7 @@ export type Game = keyof typeof GAMES;
 
 /** The games' names, as the kids' Learn tab shows them (for a grown-up's heads-up). */
 const GAME_NAMES: Record<Game, string> = {
-  sounds: 'Who says that?', peekaboo: 'Peekaboo farm', findIt: 'Find it!', apples: 'Counting', pop: 'Pop!',
+  sounds: 'Who says that?', peekaboo: 'Peekaboo', findIt: 'Find it!', apples: 'Counting', pop: 'Pop!',
   adding: 'Math', maze: 'Maze', letters: 'Letters', memory: 'Pairs',
 };
 
