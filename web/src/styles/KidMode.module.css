@@ -694,6 +694,65 @@
 	font-size: 1.35rem;
 	font-weight: 650;
 }
+/* The littlest's Today: an animal to tap, which walks off one side and back in the other. */
+.animalStage {
+	display: flex;
+	justify-content: center;
+	/* Off the sides is out of sight; the bob above stays in. */
+	overflow-x: clip;
+}
+.animal {
+	flex: none;
+	padding: 0;
+	border: 0;
+	background: none;
+	width: min(16rem, 62vw);
+	aspect-ratio: 1;
+	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+}
+.animal:focus {
+	outline: none;
+}
+.animal:focus-visible {
+	outline: 3px solid var(--c);
+	outline-offset: 4px;
+	border-radius: 1.4rem;
+}
+.animalPic {
+	display: block;
+	width: 100%;
+	height: 100%;
+	transform-origin: 50% 95%;
+}
+/* Walking: a bob each step. Sitting down: a little squash. */
+.animalWalking {
+	animation: bob 0.34s ease-in-out infinite;
+}
+.animalSat {
+	animation: sitDown 0.4s ease-out;
+}
+@keyframes bob {
+	50% {
+		transform: translateY(-4%);
+	}
+}
+@keyframes sitDown {
+	0% {
+		transform: scale(1.04, 0.92);
+	}
+	60% {
+		transform: scale(0.98, 1.03);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.animalWalking,
+	.animalSat {
+		animation: none;
+	}
+}
+
 @media (max-width: 700px) {
 	.factPicture {
 		font-size: 3.6rem;
@@ -728,6 +787,9 @@
 	}
 	.pottyHead {
 		min-height: 2.8rem;
+	}
+	.animal {
+		width: min(12rem, 45vh);
 	}
 	.pottyToggle {
 		font-size: 1.3rem;

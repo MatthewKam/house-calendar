@@ -3,6 +3,7 @@ import { addDays, dayKey, fromDayKey, timeLabel } from "../lib/dates";
 import { factFor } from "../lib/kidFacts";
 import { useRangeEvents } from "../lib/queries";
 import type { CalEvent, Member, Stage } from "../lib/types";
+import TodayAnimal from "./TodayAnimal";
 import s from "../styles/KidMode.module.css";
 
 /** How many days a kid sees, growing with them: today for the littlest, then tomorrow too, then the week. */
@@ -51,6 +52,7 @@ const partOfDay = (iso: string) => {
  * what's next picked out. Older kids see more days ahead.
  */
 export default function KidToday({ today, kid }: { today: string; kid: Member }) {
+	const little = (kid.stage ?? "little") === "little";
 	const days = DAYS[kid.stage ?? "little"];
 	const from = useMemo(() => fromDayKey(today), [today]);
 	const events = useRangeEvents(from, days).data ?? [];
@@ -77,6 +79,8 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 				return (
 					<section key={key} className={s.group} aria-label={label}>
 						<h2 className={s.groupHead}>{label}</h2>
+						{/* The littlest: an animal to tap, every day. */}
+						{i === 0 && little && <TodayAnimal day={today} />}
 						{list.length === 0 && (
 							<>
 								<p className={s.none}>Nothing on the calendar today. 🌈</p>
