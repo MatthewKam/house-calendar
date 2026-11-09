@@ -9,16 +9,21 @@ import s from "../../styles/Learn.module.css";
 /** Animals to choose from, by level. */
 const CHOICES = [2, 3, 3, 4, 4, 6];
 const ROUNDS = [3, 3, 3, 4, 4, 4];
+/** Between rounds: how long the round takes to slide away before the next slides in. */
+const NEXT_MS = 550;
 
 /**
  * Who says that? (age 2): an animal's noise as a word ("Moo!"), with a play button beside it to hear it
  * (nothing plays by itself); tap who says it. Each animal tapped makes its own noise, its word under it
  * while it does. Farm animals first, then pets, then wild ones, and more to choose from as it levels up.
+ * Between rounds, the round slides away and the next slides in; the mascot and confetti are for the end.
  */
 export default function Sounds({ level, onDone, onBack }: GameProps) {
 	const total = at(ROUNDS, level);
-	// Right: once its noise is done, the mascot parades across with confetti, then the next round.
-	const rounds = useRounds(total, onDone, SLIDE_MS);
+	// Right: once its noise is done, its dot fills and the next round slides in; after the last, the
+	// mascot parades across with confetti, then the end.
+	const rounds = useRounds(total, onDone, (r) => (r + 1 >= total ? SLIDE_MS : NEXT_MS));
+	const last = rounds.round + 1 >= total;
 	// Each round's animal and who's beside it, a new set each play.
 	const plan = useMemo(() => {
 		const pool = animalsUpTo(level);
@@ -55,7 +60,7 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 	}
 
 	return (
-		<Board onBack={onBack} total={total} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got && "slide"}>
+		<Board onBack={onBack} total={total} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got && last && "slide"}>
 			{(box) => {
 				// The noise as big as fits beside its play button: on one line, or (a long one, like
 				// cock-a-doodle-doo, on a narrow screen) more, with room kept for them.
@@ -76,13 +81,14 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 					? { cols: choices.length, size: Math.floor(Math.min((box.w - 16 * (choices.length - 1)) / choices.length, box.h - prompt - 24, 340)) }
 					: fit(choices.length, { w: box.w, h: box.h - prompt - 24 }, { gap: 16, most: 300 });
 				return (
-					<div className={s.column}>
+					// A new one each round, sliding in; got (not the last), it slides away.
+					<div key={rounds.round} className={`${s.column} ${rounds.got && !last ? s.slideAway : ""}`}>
 						{/* The noise as a word, and the play button beside it if they need to hear it. */}
-						<div className={s.sayRow} style={{ height: prompt - space, marginBottom: space }}>
+						<div className={`${s.sayRow} ${s.slideIn}`} style={{ height: prompt - space, marginBottom: space }}>
 							<span className={s.sayWord} style={{ fontSize: font, maxWidth: room, whiteSpace: lines === 1 ? "nowrap" : "normal" }}>{word}</span>
 							<Hear size={button} onTap={() => noise(answer)} label="Hear it" />
 						</div>
-						<div className={s.grid} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 16 }}>
+						<div className={`${s.grid} ${s.slideIn}`} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 16 }}>
 							{choices.map((a) => {
 								const isTapped = tapped?.id === a.id;
 								const right = (found || rounds.got) && a.id === answer.id;
