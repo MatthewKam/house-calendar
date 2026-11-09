@@ -376,5 +376,6 @@ export interface LearnSound {
 export interface LearnState {
   memberId: string;
   enabled: boolean;
-  games: { game: Game; level: number; maxLevel: number }[];
+  /** `ready`: a little one's game that would have moved up, waiting for a grown-up to move it. */
+  games: { game: Game; level: number; maxLevel: number; ready: boolean }[];
 }
