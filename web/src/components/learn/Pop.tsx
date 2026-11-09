@@ -3,7 +3,6 @@ import { Pic } from "./art";
 import { Board } from "./parts";
 import { ANIMALS, type Animal } from "./things";
 import { any, at, CHEER_MS, fresh, type GameProps } from "./rounds";
-import { noise } from "./sound";
 import s from "../../styles/Learn.module.css";
 
 /**
@@ -50,7 +49,7 @@ interface Bubble {
 /**
  * Pop! (age 2): Sprig blows bubbles (a burst to start, then a steady stream), and they float up across the
  * screen. Tap one and it pops. Level 1: just bubbles, any of them. Level 2: the ones with an animal in
- * (it jumps out making its noise). Level 3 and 5: the animal on the sign ("pop the cows"), others mixed in.
+ * (it jumps out). Level 3 and 5: the animal on the sign ("pop the cows"), others mixed in.
  * Level 4 and 6: the colour on the sign. The others still pop, quietly, but only those count; nothing's
  * ever wrong. When enough have popped, the mascot cheers with confetti. Bubbles that float away come round
  * again.
@@ -108,7 +107,6 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 			setMissed((n) => n + 1);
 			return;
 		}
-		if (b.animal) noise(b.animal);
 		const now = got + 1;
 		setGot(now);
 		if (now >= total) {
