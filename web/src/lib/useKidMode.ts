@@ -1,6 +1,9 @@
 import { useState } from 'react';
 
-/** Kid mode on this device: one kid's id, or "all" (a shared tablet, switching between kids). */
+/**
+ * Kid mode on this device: the kid it starts on (the others are a switch away). "all" is from before
+ * there was a choice: it starts on the first kid.
+ */
 export type KidModeFor = string | 'all';
 
 const KEY = 'sprig:kid-mode';

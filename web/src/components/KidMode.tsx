@@ -32,6 +32,8 @@ interface Props {
 	today: string;
 	/** The kids this screen is for: one, or several to switch between (a shared tablet). */
 	kids: Member[];
+	/** The kid it opens on (else the first). */
+	startWith?: string;
 	members: Member[];
 	/** The corner button was held: a grown-up wants out. */
 	onLeave: () => void;
@@ -67,8 +69,8 @@ const TABS: { id: KidTab; Icon: () => ReactNode; label: string }[] = [
  * Learn (when it's on): the day's activity. Rewards: their stars and jars. No settings or anyone else's things. Tapping a done task again
  * unticks it, so nothing can go wrong. A grown-up taps the corner button (and types a PIN) to leave.
  */
-export default function KidMode({ today, kids, members, onLeave, askPin }: Props) {
-	const [pickedId, setPickedId] = useState(kids[0]?.id ?? null);
+export default function KidMode({ today, kids, members, onLeave, askPin, startWith }: Props) {
+	const [pickedId, setPickedId] = useState(kids.find((k) => k.id === startWith)?.id ?? kids[0]?.id ?? null);
 	const kid = kids.find((k) => k.id === pickedId) ?? kids[0];
 	const [picked, setTab] = useState<KidTab>("today");
 	const learning = useLearn(today).data?.find((l) => l.memberId === kid?.id && l.enabled);
@@ -421,7 +423,7 @@ export function GrownUpPin({ title, body, okLabel, onClose, onOk }: {
 	);
 }
 
-/** Starting kid mode on this device: which kid (or all of them, to switch between). */
+/** Starting kid mode on this device: which kid it opens on (the name at the top switches to the others). */
 export function KidModeStart({ kids, needsPin, onPick, onClose }: {
 	kids: Member[];
 	/** No guardian has a PIN yet, so no one could get back out. */
@@ -449,7 +451,7 @@ export function KidModeStart({ kids, needsPin, onPick, onClose }: {
 				) : (
 					<>
 						<div className={sheet.body}>
-							Just their tasks, stars and jars, in big pictures. To leave, tap the exit button in the corner and type a guardian's PIN.
+							Who's it for? Just their day, tasks, stars and jars, in big pictures; tap their name at the top to switch kids. To leave, tap the exit button in the corner and type a guardian's PIN.
 						</div>
 						<div className={s.startPicks}>
 							{kids.map((k) => (
@@ -459,12 +461,6 @@ export function KidModeStart({ kids, needsPin, onPick, onClose }: {
 									{k.name}
 								</button>
 							))}
-							{kids.length > 1 && (
-								<button type="button" className={s.startPick} onClick={() => onPick("all")}>
-									<span className={s.faceDot} aria-hidden="true">👫</span>
-									All kids
-								</button>
-							)}
 						</div>
 					</>
 				)}

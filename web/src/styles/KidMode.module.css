@@ -112,7 +112,7 @@
 	color: var(--muted);
 }
 
-/* Switching kids (all kids). */
+/* The header: the time, and whose it is. */
 .top {
 	display: flex;
 	flex-wrap: wrap;
