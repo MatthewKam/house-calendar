@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { openDb } from './db.ts';
 import { buildApp } from './app.ts';
-import { syncOnce } from './sync.ts';
+import { REFUSED_PATIENCE_MS, syncError, syncOnce } from './sync.ts';
+import { CalDavAuthError } from './providers/caldav.ts';
 import type { CalendarSource, RemoteCalendar, RemoteEvent } from './providers/types.ts';
 
 function fakeSource(calendars: RemoteCalendar[], events: Record<string, RemoteEvent[]>): CalendarSource {
@@ -95,5 +96,16 @@ describe('duplicate events', () => {
     expect(h[0]).toMatchObject({ id, memberIds: [riley] });
     // Same title at different times is not a duplicate.
     expect(list.filter((e: any) => e.title === 'Swim')).toHaveLength(2);
+  });
+});
+
+describe('sync errors', () => {
+  it("says iCloud isn't letting Sprig in for an hour of refusals, then that the password needs making again", () => {
+    const now = Date.parse('2026-11-10T23:30:00Z');
+    expect(syncError(new CalDavAuthError(), now, now)).toMatch(/isn't letting Sprig in right now/);
+    expect(syncError(new CalDavAuthError(), now - REFUSED_PATIENCE_MS + 60_000, now)).toMatch(/right now/);
+    expect(syncError(new CalDavAuthError(), now - REFUSED_PATIENCE_MS, now)).toMatch(/over an hour.*new app-specific password/);
+    // Anything else says what went wrong.
+    expect(syncError(new Error('CalDAV PROPFIND failed: 503 Service Unavailable'), null, now)).toBe('CalDAV PROPFIND failed: 503 Service Unavailable');
   });
 });

@@ -3,6 +3,7 @@ import type { DB } from './db.ts';
 import type { CalendarSource, CalendarWriter, RemoteEvent } from './providers/types.ts';
 import { eventId, overlayOutbox, pushOutbox, SEND_AFTER_MS } from './outbox.ts';
 import { applyPeople, assignPending, type Classify } from './people.ts';
+import { CalDavAuthError } from './providers/caldav.ts';
 
 /** How far around today synced events are kept. Further out shows only events added on the wall. */
 const MONTHS_BACK = 3;
@@ -120,6 +121,20 @@ interface Log {
 }
 
 /**
+ * How long iCloud can refuse the sign-in before it's taken as the password being wrong: until then,
+ * it's more likely iCloud having trouble (it refuses then too), and the banner says so.
+ */
+export const REFUSED_PATIENCE_MS = 60 * 60_000;
+const REFUSED_FOR_NOW = "iCloud isn't letting Sprig in right now; trying again every few minutes";
+const REFUSED_FOR_GOOD = 'iCloud has refused the Apple ID or app-specific password for over an hour. Make a new app-specific password at account.apple.com';
+
+/** What the banner says for a failed sync: a refused sign-in by how long it's been refused (since `refusedSince`). */
+export function syncError(err: unknown, refusedSince: number | null, now = Date.now()) {
+  if (err instanceof CalDavAuthError) return refusedSince !== null && now - refusedSince >= REFUSED_PATIENCE_MS ? REFUSED_FOR_GOOD : REFUSED_FOR_NOW;
+  return err instanceof Error ? err.message : String(err);
+}
+
+/**
  * Live status for the API, plus start() to sync now and then every `intervalMs`. With a classifier,
  * each pass also has Claude pick who new events are for.
  */
@@ -129,6 +144,8 @@ export function createSync(db: DB, source: CalendarSource & Partial<CalendarWrit
     provider: source.id, running: false, lastSuccess: null, lastError: null, calendars: 0, events: 0, peopleError: null,
     canWrite: !!writer,
   };
+  /** When iCloud started refusing the sign-in (null: it isn't). */
+  let refusedSince: number | null = null;
   let timer: NodeJS.Timeout | undefined;
   let soonTimer: NodeJS.Timeout | undefined;
   let again = false;
@@ -148,9 +165,12 @@ export function createSync(db: DB, source: CalendarSource & Partial<CalendarWrit
       }
       const result = await syncOnce(db, source);
       Object.assign(status, result, { lastSuccess: new Date().toISOString(), lastError: null });
+      refusedSince = null;
       log.info(result, `${source.id} sync done`);
     } catch (err) {
-      status.lastError = err instanceof Error ? err.message : String(err);
+      // Refused: since when (kept through other errors in between, until a sync goes through).
+      if (err instanceof CalDavAuthError) refusedSince ??= Date.now();
+      status.lastError = syncError(err, refusedSince);
       log.error({ err }, `${source.id} sync failed`);
     } finally {
       status.running = false;
