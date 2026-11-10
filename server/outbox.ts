@@ -30,7 +30,7 @@ interface OutboxRow {
 }
 
 /** The parts of a synced event row the wall can change. */
-export interface SyncedRow {
+interface SyncedRow {
   id: string;
   calendar_id: string;
   remote_id: string | null;

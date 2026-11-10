@@ -112,7 +112,7 @@ function instant(day: string, time: string | null, tz: string) {
 }
 
 /** Checks what Claude found: names to people, local times to instants; anything that doesn't make sense goes. */
-export function toProposals(found: Found, members: { id: string; name: string; kid: boolean }[], tz: string, lists: string[]): Proposal[] {
+function toProposals(found: Found, members: { id: string; name: string; kid: boolean }[], tz: string, lists: string[]): Proposal[] {
   const lower = (s: string) => s.trim().toLowerCase();
   const person = (name: string) => members.find((m) => lower(m.name) === lower(name))
     ?? members.find((m) => lower(m.name).split(/\s+/)[0] === lower(name).split(/\s+/)[0]);

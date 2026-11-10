@@ -40,7 +40,7 @@ const showCode = (code: string) => `${code.slice(0, 4)}-${code.slice(4)}`;
 const PIN = { type: 'string', pattern: '^[0-9]{4,8}$' } as const;
 const NAME = { type: 'string', minLength: 1, maxLength: 40 } as const;
 
-export interface ServerOptions {
+interface ServerOptions {
   /** Where new households' databases and photos go (data/households/<id>/). */
   dataDir: string;
   webDist?: string;

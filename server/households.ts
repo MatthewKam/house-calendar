@@ -5,7 +5,7 @@ import type { HouseholdRow } from './accounts.ts';
 // Each household runs as its own app (app.ts) on its own database, built the first time someone
 // in it signs in, and kept running (its syncs and timers too) until the server stops.
 
-export interface HouseholdApp {
+interface HouseholdApp {
   app: FastifyInstance;
   db: DB;
   /** Google Calendar for this household, when it's turned on. */

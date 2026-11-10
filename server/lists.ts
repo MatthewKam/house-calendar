@@ -21,7 +21,7 @@ const tidy = (s: string) => s.trim().replace(/\s+/g, ' ');
 const toItem = (r: ItemRow) => ({ id: r.id, title: r.title, done: r.done === 1, due: r.due, memberId: r.member_id, doneAt: r.done_at });
 
 /** Every list with its items: open ones oldest first, then done ones, most recently done first. */
-export function allLists(db: DB) {
+function allLists(db: DB) {
   const lists = db.prepare('SELECT * FROM lists ORDER BY created_at').all() as ListRow[];
   const items = db.prepare('SELECT * FROM list_items ORDER BY done, CASE WHEN done = 1 THEN done_at END DESC, created_at').all() as ItemRow[];
   return lists.map((l) => ({ id: l.id, title: l.title, items: items.filter((i) => i.list_id === l.id).map(toItem) }));

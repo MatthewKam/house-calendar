@@ -36,7 +36,7 @@ const GAMES_FOR: Record<'little' | 'early', Game[]> = {
   little: ['sounds', 'peekaboo', 'pop', 'apples'],
   early: ['adding', 'maze', 'letters', 'memory'],
 };
-export const gamesFor = (stage: Stage | null) => GAMES_FOR[stage === 'little' || stage === null ? 'little' : 'early'];
+const gamesFor = (stage: Stage | null) => GAMES_FOR[stage === 'little' || stage === null ? 'little' : 'early'];
 
 /** The animals with a noise (web/src/components/learn/things.ts), which a grown-up can record their own of. */
 export const ANIMALS = ['cow', 'pig', 'duck', 'sheep', 'horse', 'chicken', 'rooster', 'goat', 'dog', 'cat', 'frog', 'owl', 'bee',
@@ -45,10 +45,10 @@ export const ANIMALS = ['cow', 'pig', 'duck', 'sheep', 'horse', 'chicken', 'roos
 const MAX_SOUND_BYTES = 1024 * 1024;
 
 /** Perfect plays in a row, at a level, before the game moves up: 3, or as set here (null: never, only by count). */
-export const PLAYS_TO_LEVEL_UP = 3;
-export const PERFECT_RUN: Partial<Record<Game, number | null>> = { adding: 5, memory: 5, maze: null };
+const PLAYS_TO_LEVEL_UP = 3;
+const PERFECT_RUN: Partial<Record<Game, number | null>> = { adding: 5, memory: 5, maze: null };
 /** Some games also move up after this many plays at a level, perfect or not. */
-export const PLAYS_TO_MOVE_ON: Partial<Record<Game, number>> = { adding: 20, maze: 20, memory: 20 };
+const PLAYS_TO_MOVE_ON: Partial<Record<Game, number>> = { adding: 20, maze: 20, memory: 20 };
 /** The little ones' (2) games, hidden ones too: ready for the next level, but only a grown-up moves them up. */
 const ASK_FIRST: Game[] = ['sounds', 'peekaboo', 'findIt', 'apples', 'pop'];
 

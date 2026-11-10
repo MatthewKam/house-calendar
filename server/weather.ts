@@ -28,7 +28,7 @@ export interface Weather {
   wear: Wear;
 }
 
-export interface Wear { pants: boolean; jacket: boolean; rain: boolean }
+interface Wear { pants: boolean; jacket: boolean; rain: boolean }
 
 /** The hours the forecast gives around now: this many gone by, and this many ahead. */
 const HOURS_BEFORE = 6;

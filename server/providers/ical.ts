@@ -28,7 +28,7 @@ const locationOf = (c: ICAL.Component) =>
   String(c.getFirstPropertyValue('location') ?? '').replace(/\s*\n\s*/g, ', ').trim() || null;
 
 /** An event's notes (DESCRIPTION), or null. */
-export const notesOf = (c: ICAL.Component) => String(c.getFirstPropertyValue('description') ?? '').trim() || null;
+const notesOf = (c: ICAL.Component) => String(c.getFirstPropertyValue('description') ?? '').trim() || null;
 
 const cancelled = (c: ICAL.Component) => String(c.getFirstPropertyValue('status') ?? '').toUpperCase() === 'CANCELLED';
 

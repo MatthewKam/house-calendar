@@ -11,13 +11,13 @@ const UA = 'Sprig family app (family use)';
 const GRIM = /\b(kill\w*|dead\w*|death\w*|die|died|dies|dying|fatal\w*|landslide\w*|flood\w*|avalanche\w*|tornado\w*|wreck\w*|drown\w*|accident\w*|collapse\w*|casualt\w*|murder\w*|assassinat\w*|war|wars|wartime|bomb\w*|attack\w*|massacre\w*|shoot\w*|shot|terror\w*|crash\w*|disaster\w*|execut\w*|genocide|invasion|invaded|invade\w*|battle\w*|siege|hostage\w*|riot\w*|coup|suicide|earthquake\w*|hurricane\w*|tsunami\w*|sank|sinking|famine|plague|slave\w*|nazi\w*|holocaust|weapon\w*|nuclear|missile\w*|gun\w*|drunk|beer|sex\w*|drug\w*|prison\w*|jail\w*|arrest\w*|hanged|lynch\w*|burned|fire|fires|explod\w*|explosion\w*|injur\w*|victim\w*|rebel\w*|militar\w*|army|troops|soldier\w*|insurgen\w*|guerrilla\w*|rape\w*|abuse\w*)\b/i;
 export const familyFriendly = (text: string) => !GRIM.test(text);
 
-export interface Joke { text: string }
+interface Joke { text: string }
 export interface Quote { text: string; author: string }
 
 type Fetch = typeof fetch;
 
 /** A dad joke (icanhazdadjoke.com), trying a few until one suits a family wall. */
-export async function fetchJoke(fetchImpl: Fetch): Promise<Joke> {
+async function fetchJoke(fetchImpl: Fetch): Promise<Joke> {
   for (let i = 0; i < 6; i++) {
     const res = await fetchImpl('https://icanhazdadjoke.com/', { headers: { accept: 'application/json', 'user-agent': UA } });
     if (!res.ok) throw new Error(`icanhazdadjoke answered ${res.status}`);
@@ -28,7 +28,7 @@ export async function fetchJoke(fetchImpl: Fetch): Promise<Joke> {
 }
 
 /** ZenQuotes' quote of the day. */
-export async function fetchQuote(fetchImpl: Fetch): Promise<Quote> {
+async function fetchQuote(fetchImpl: Fetch): Promise<Quote> {
   const res = await fetchImpl('https://zenquotes.io/api/today', { headers: { 'user-agent': UA } });
   if (!res.ok) throw new Error(`ZenQuotes answered ${res.status}`);
   const [q] = (await res.json()) as { q: string; a: string }[];
