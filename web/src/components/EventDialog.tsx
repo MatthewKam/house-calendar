@@ -13,6 +13,7 @@ import DateInput from './DateInput';
 import { CalendarPick, useNewEventCalendar } from './CalendarPick';
 import { isKid, firstName } from '../lib/people';
 import Sheet from './Sheet';
+import ConfirmDialog from './ConfirmDialog';
 
 interface Props {
   day: string;
@@ -338,10 +339,7 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
         ) : (
           <div className={sheet.actions}>
             {event && (
-              <button type="button" className={sheet.danger}
-                onClick={() => (confirmDelete ? onDelete(event) : setConfirmDelete(true))}>
-                {confirmDelete ? 'Tap again to delete' : 'Delete'}
-              </button>
+              <button type="button" className={sheet.danger} onClick={() => setConfirmDelete(true)}>Delete</button>
             )}
             <span className={sheet.spacer} />
             <button type="button" className={sheet.secondary} onClick={onClose}>Cancel</button>
@@ -349,6 +347,11 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
           </div>
         )}
       </Sheet>
+      {/* A one-off event: asked over the form (a repeating one asks which days, above). */}
+      {event && confirmDelete && !repeating && (
+        <ConfirmDialog title={`Delete ${event.title}?`} confirmLabel="Delete"
+          onCancel={() => setConfirmDelete(false)} onConfirm={() => onDelete(event)} />
+      )}
     </>
   );
 }

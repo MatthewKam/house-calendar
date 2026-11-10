@@ -6,6 +6,7 @@ import { ago } from "../lib/dates";
 import type { Member } from "../lib/types";
 import s from "../styles/Account.module.css";
 import panel from "../styles/MembersPanel.module.css";
+import ConfirmDialog from "./ConfirmDialog";
 
 /**
  * Settings → Calendars: each person's iCloud Calendar, connected with their Apple ID and an
@@ -14,6 +15,8 @@ import panel from "../styles/MembersPanel.module.css";
 export default function ICloudCalendars({ members }: { members: Member[] }) {
 	const qc = useQueryClient();
 	const status = useAuthStatus().data;
+	// The account being disconnected, while that's asked.
+	const [disconnecting, setDisconnecting] = useState<{ id: string; account: string } | null>(null);
 	const list = useQuery({ queryKey: ["connections"], queryFn: api.connections, refetchInterval: 30_000 }).data?.icloud;
 	const [open, setOpen] = useState(false);
 	const [appleId, setAppleId] = useState("");
@@ -55,7 +58,7 @@ export default function ICloudCalendars({ members }: { members: Member[] }) {
 									</span>
 								</span>
 								<button type="button" className={panel.textLink}
-									onClick={() => confirm(`Disconnect ${c.account}? Its calendars leave the app.`) && remove.mutate(c.id)}>
+									onClick={() => setDisconnecting(c)}>
 									Disconnect
 								</button>
 							</li>
@@ -98,6 +101,13 @@ export default function ICloudCalendars({ members }: { members: Member[] }) {
 					</div>
 					<p className={s.hint}>You can change iCloud events here too, and they update on everyone's phones.</p>
 				</form>
+			)}
+			{disconnecting && (
+				<ConfirmDialog title={`Disconnect ${disconnecting.account}?`} confirmLabel="Disconnect"
+					onCancel={() => setDisconnecting(null)}
+					onConfirm={() => { remove.mutate(disconnecting.id); setDisconnecting(null); }}>
+					Its calendars leave the app.
+				</ConfirmDialog>
 			)}
 		</section>
 	);

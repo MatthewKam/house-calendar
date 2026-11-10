@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { useAuthStatus } from "../lib/queries";
@@ -5,6 +6,7 @@ import { ago } from "../lib/dates";
 import type { Member } from "../lib/types";
 import s from "../styles/Account.module.css";
 import panel from "../styles/MembersPanel.module.css";
+import ConfirmDialog from "./ConfirmDialog";
 
 /**
  * Settings → Calendars: each person's Google Calendar. Connecting is from your own phone (Google
@@ -13,6 +15,8 @@ import panel from "../styles/MembersPanel.module.css";
 export default function GoogleCalendars({ members }: { members: Member[] }) {
 	const qc = useQueryClient();
 	const status = useAuthStatus().data;
+	// The account being disconnected, while that's asked.
+	const [disconnecting, setDisconnecting] = useState<{ id: string; account: string } | null>(null);
 	const list = useQuery({ queryKey: ["connections"], queryFn: api.connections, refetchInterval: 30_000 }).data?.google;
 	const remove = useMutation({
 		mutationFn: api.removeConnection,
@@ -44,7 +48,7 @@ export default function GoogleCalendars({ members }: { members: Member[] }) {
 									</span>
 								</span>
 								<button type="button" className={panel.textLink}
-									onClick={() => confirm(`Disconnect ${c.account}? Its calendars leave the app.`) && remove.mutate(c.id)}>
+									onClick={() => setDisconnecting(c)}>
 									Disconnect
 								</button>
 							</li>
@@ -63,6 +67,13 @@ export default function GoogleCalendars({ members }: { members: Member[] }) {
 				<p className={s.hint}>Each person connects their own Google Calendar from Settings on their phone.</p>
 			)}
 			<p className={s.hint}>Google events show here; change them in Google Calendar.</p>
+			{disconnecting && (
+				<ConfirmDialog title={`Disconnect ${disconnecting.account}?`} confirmLabel="Disconnect"
+					onCancel={() => setDisconnecting(null)}
+					onConfirm={() => { remove.mutate(disconnecting.id); setDisconnecting(null); }}>
+					Its calendars leave the app.
+				</ConfirmDialog>
+			)}
 		</section>
 	);
 }
