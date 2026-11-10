@@ -1,29 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { openDb } from './db.ts';
-import { buildApp } from './app.ts';
 import type { CaptureContext, CaptureInput, Found } from './capture.ts';
+import { bornYearsAgo, household } from './testing.ts';
 
 const item = (f: Partial<Found[number]>): Found[number] =>
   ({ kind: 'item', title: '', list: null, date: null, time: null, endDate: null, endTime: null, people: [], location: null, notes: null, ...f });
 
 function setup(found: Found | Error | null) {
-  const db = openDb(':memory:');
-  const born = `${new Date().getFullYear() - 4}-01-01`;
-  db.prepare(`INSERT INTO members (id, name, color, sort_order) VALUES ('alex', 'Alex Kim', '#000000', 0)`).run();
-  db.prepare(`INSERT INTO members (id, name, color, birthdate, sort_order) VALUES ('sam', 'Sam', '#111111', ?, 1)`).run(born);
-  db.prepare(`INSERT INTO lists (id, title) VALUES ('g', 'Groceries')`).run();
   const asked: { input: CaptureInput; ctx: CaptureContext }[] = [];
-  const app = buildApp(db, found === null ? {} : {
+  const { db, call } = household([{ id: 'alex', name: 'Alex Kim' }, { id: 'sam', name: 'Sam', birthdate: bornYearsAgo(4) }], found === null ? {} : {
     understand: async (input, ctx) => {
       asked.push({ input, ctx });
       if (found instanceof Error) throw found;
       return found;
     },
   });
-  const call = async (method: string, url: string, payload?: object) => {
-    const res = await app.inject({ method: method as 'GET', url, payload });
-    return { status: res.statusCode, body: res.body ? res.json() : undefined };
-  };
+  db.prepare(`INSERT INTO lists (id, title) VALUES ('g', 'Groceries')`).run();
   return { call, asked };
 }
 

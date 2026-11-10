@@ -5,16 +5,13 @@ import { join } from 'node:path';
 import { openDb } from './db.ts';
 import { buildApp } from './app.ts';
 import { bucket } from './rewards.ts';
+import { household } from './testing.ts';
 
 const DAY = '2026-11-04';
 
-function setup() {
-  const db = openDb(':memory:');
-  // Mia is 2 (Little), Sam is 5 (Early), Kai has no birthday.
-  db.prepare(`INSERT INTO members (id, name, color, birthdate) VALUES ('mia', 'Mia', '#000000', '2024-05-01'),
-    ('sam', 'Sam', '#000000', '2021-03-01'), ('kai', 'Kai', '#000000', NULL)`).run();
-  return { db, app: buildApp(db) };
-}
+// Mia is 2 (Little), Sam is 5 (Early), Kai has no birthday.
+const setup = () => household([{ id: 'mia', name: 'Mia', birthdate: '2024-05-01' }, { id: 'sam', name: 'Sam', birthdate: '2021-03-01' },
+  { id: 'kai', name: 'Kai' }]);
 
 const catchMoment = (app: ReturnType<typeof buildApp>, memberId: string, kind = 'helpful', note?: string) =>
   app.inject({ method: 'POST', url: '/api/moments', payload: { memberId, kind, day: DAY, ...(note ? { note } : {}) } });

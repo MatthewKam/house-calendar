@@ -5,12 +5,9 @@ import { join } from 'node:path';
 import { openDb } from './db.ts';
 import { buildApp } from './app.ts';
 import { bucket } from './rewards.ts';
+import { household } from './testing.ts';
 
-function setup() {
-  const db = openDb(':memory:');
-  db.prepare(`INSERT INTO members (id, name, color) VALUES ('mia', 'Mia', '#000000'), ('sam', 'Sam', '#000000')`).run();
-  return { db, app: buildApp(db) };
-}
+const setup = () => household([{ id: 'mia', name: 'Mia' }, { id: 'sam', name: 'Sam' }]);
 type App = ReturnType<typeof buildApp>;
 const library = async (app: App) =>
   (await app.inject({ url: '/api/goals/library' })).json() as { key: string; title: string; own: boolean; hidden: boolean; stages: string[] }[];

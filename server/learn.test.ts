@@ -2,20 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { openDb } from './db.ts';
 import { buildApp } from './app.ts';
 import { bucket } from './rewards.ts';
+import { bornYearsAgo, household } from './testing.ts';
 
-function setup() {
-  const db = openDb(':memory:');
-  const year = Number(TODAY.slice(0, 4));
-  db.prepare(`INSERT INTO members (id, name, color) VALUES ('alex', 'Alex', '#000000')`).run();
-  db.prepare(`INSERT INTO members (id, name, color, birthdate, sort_order) VALUES ('nolan', 'Nolan', '#111111', ?, 1), ('tayen', 'Tayen', '#222222', ?, 2)`)
-    .run(`${year - 2}-01-01`, `${year - 4}-01-01`);
-  const app = buildApp(db);
-  const call = async (method: string, url: string, payload?: object) => {
-    const res = await app.inject({ method: method as 'GET', url, payload });
-    return { status: res.statusCode, body: res.body ? res.json() : undefined };
-  };
-  return { db, call };
-}
+// Nolan is 2 (Little), Tayen 4 (Early), in TODAY's year.
+const setup = () => household([{ id: 'alex', name: 'Alex' },
+  { id: 'nolan', name: 'Nolan', birthdate: bornYearsAgo(2, new Date(TODAY)) }, { id: 'tayen', name: 'Tayen', birthdate: bornYearsAgo(4, new Date(TODAY)) }]);
 
 const TODAY = '2026-11-06';
 
