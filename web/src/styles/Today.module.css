@@ -621,13 +621,48 @@ details > summary.cardHead {
 	color: var(--muted);
 	font-size: 0.85rem;
 }
-.weekBar {
+/* Two bars side by side: the temperature (green) and how warm it feels (orange). */
+.weekBars {
 	position: absolute;
 	left: 50%;
-	width: 0.6rem;
+	width: 1.1rem;
 	translate: -50% 0;
+}
+.weekBar {
+	position: absolute;
+	left: 0;
+	width: 0.45rem;
 	border-radius: 999px;
 	background: linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 30%, var(--surface)));
+}
+.weekBarFeels {
+	left: auto;
+	right: 0;
+	background: linear-gradient(#e07b2a, color-mix(in srgb, #e07b2a 30%, var(--surface)));
+}
+/* Which bar is which. */
+.weekKey {
+	margin: 0.2rem 0 0;
+	display: flex;
+	justify-content: center;
+	gap: 1rem;
+	font-size: 0.75rem;
+	color: var(--muted);
+}
+.weekKey > span {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+}
+.weekSwatch {
+	width: 0.7rem;
+	height: 0.7rem;
+	border-radius: 0.2rem;
+	background: var(--accent);
+}
+.weekSwatch.weekBarFeels {
+	position: static;
+	background: #e07b2a;
 }
 .weekFeels {
 	display: flex;
