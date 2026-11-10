@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import { createPortal } from "react-dom";
 import { usePhotos, useSettings } from "../lib/queries";
 import { screenSaverSettings } from "../lib/screensaver";
 import { preload, slideSeconds } from "../lib/photos";
@@ -9,6 +10,8 @@ import s from "../styles/PhotoCard.module.css";
 const SWIPE_PX = 40;
 /** The ‹ › arrows fade out after this long without a touch on the card. */
 const ARROWS_MS = 3000;
+/** A tap: moved less than this. */
+const TAP_PX = 10;
 
 function shuffle<T>(list: T[]) {
 	const out = [...list];
@@ -20,7 +23,7 @@ function shuffle<T>(list: T[]) {
 }
 
 /** A photo, or a video playing muted (looping if it runs short of its turn). */
-function Media({ photo, className }: { photo: Photo; className: string }) {
+function Media({ photo, className }: { photo: Photo; className?: string }) {
 	return photo.kind === "video" ? (
 		<video className={className} src={photo.url} poster={photo.thumbUrl} autoPlay muted loop playsInline />
 	) : (
@@ -30,8 +33,9 @@ function Media({ photo, className }: { photo: Photo; className: string }) {
 
 /**
  * A carousel of the screen saver's photos (and videos, muted) under the week: it moves on by itself at the screen
- * saver's pace, and swipes or ‹ › step through by hand. The ⋯ menu plays the screen saver. Not
- * shown until some photos are picked for it.
+ * saver's pace, and swipes or ‹ › step through by hand. A tap opens it big over the page (swipes, ‹ › and
+ * the arrow keys still step through; it waits there instead of moving on). The ⋯ menu plays the screen
+ * saver. Not shown until some photos are picked for it.
  */
 export default function PhotoCard({ onPlay, className }: { onPlay: () => void; className?: string }) {
 	const all = usePhotos().data;
@@ -42,6 +46,8 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 	// The photo before, fading out beneath the current one.
 	const [under, setUnder] = useState<Photo | null>(null);
 	const [menu, setMenu] = useState(false);
+	// Open big, over the page.
+	const [big, setBig] = useState(false);
 	const swipe = useRef<{ x: number; y: number } | null>(null);
 	const card = useRef<HTMLDivElement>(null);
 	const current = order.length ? order[at % order.length] : null;
@@ -65,14 +71,26 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 		});
 	}
 
-	// On by itself; stepping by hand starts the wait over.
+	// On by itself (not while it's open big); stepping by hand starts the wait over.
 	useEffect(() => {
-		if (order.length < 2) return;
+		if (order.length < 2 || big) return;
 		// A video plays through once (45 seconds at most).
 		const timer = setTimeout(() => step(1), slideSeconds(order[at % order.length], seconds) * 1000);
 		return () => clearTimeout(timer);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [at, order, seconds]);
+	}, [at, order, seconds, big]);
+
+	// Open big: Escape closes it, the arrow keys step through.
+	useEffect(() => {
+		if (!big) return;
+		const key = (e: KeyboardEvent) => {
+			if (e.key === "Escape") setBig(false);
+			else if (e.key === "ArrowRight") stepRef.current(1);
+			else if (e.key === "ArrowLeft") stepRef.current(-1);
+		};
+		window.addEventListener("keydown", key);
+		return () => window.removeEventListener("keydown", key);
+	}, [big]);
 
 	// A two-finger swipe on a trackpad comes as sideways scrolling: one photo per swipe (it counts
 	// again once the fingers have rested), and it doesn't go Back in the browser.
@@ -116,12 +134,15 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 		return () => window.removeEventListener("pointerdown", close);
 	}, [menu]);
 
-	function up(e: PointerEvent) {
+	/** A swipe steps; on the card, a tap on the photo (not its buttons) opens it big. */
+	function up(e: PointerEvent, open: boolean) {
 		const start = swipe.current;
 		swipe.current = null;
 		if (!start) return;
 		const dx = e.clientX - start.x;
-		if (Math.abs(dx) >= SWIPE_PX && Math.abs(dx) > Math.abs(e.clientY - start.y)) step(dx < 0 ? 1 : -1);
+		const dy = e.clientY - start.y;
+		if (Math.abs(dx) >= SWIPE_PX && Math.abs(dx) > Math.abs(dy)) step(dx < 0 ? 1 : -1);
+		else if (open && Math.abs(dx) < TAP_PX && Math.abs(dy) < TAP_PX && !(e.target as Element).closest("button")) setBig(true);
 	}
 
 	if (!current) return null;
@@ -137,7 +158,7 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 				wake();
 			}}
 			onPointerMove={(e) => e.pointerType === "mouse" && wake()}
-			onPointerUp={up}
+			onPointerUp={(e) => up(e, true)}
 		>
 			{under && under.id !== current.id && <Media key={under.id} photo={under} className={s.photo} />}
 			<Media key={current.id} photo={current} className={`${s.photo} ${under ? s.fadeIn : ""}`} />
@@ -169,6 +190,41 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 					</div>
 				)}
 			</div>
+			{big &&
+				createPortal(
+					// Over the whole page: the photo in a rounded frame with a see-through border, ‹ › and ✕. A tap
+					// on the border closes it.
+					// (Its touches stop here: React would pass them on to the card it's drawn from.)
+					<div className={s.big} role="dialog" aria-modal="true" aria-label="Photo"
+						onPointerDown={(e) => {
+							e.stopPropagation();
+							swipe.current = { x: e.clientX, y: e.clientY };
+						}}
+						onPointerMove={(e) => e.stopPropagation()}
+						onPointerUp={(e) => {
+							e.stopPropagation();
+							up(e, false);
+						}}
+						onClick={(e) => e.target === e.currentTarget && setBig(false)}>
+						<div className={s.bigFrame}>
+							<Media key={current.id} photo={current} className={s.bigPhoto} />
+							{order.length > 1 && (
+								<>
+									<button className={`${s.step} ${s.prev}`} onClick={() => step(-1)} aria-label="Previous photo">
+										‹
+									</button>
+									<button className={`${s.step} ${s.next}`} onClick={() => step(1)} aria-label="Next photo">
+										›
+									</button>
+								</>
+							)}
+							<button className={s.bigClose} onClick={() => setBig(false)} aria-label="Close">
+								✕
+							</button>
+						</div>
+					</div>,
+					document.body,
+				)}
 		</div>
 	);
 }
