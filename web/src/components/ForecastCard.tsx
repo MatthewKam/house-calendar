@@ -11,8 +11,8 @@ const hourLabel = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: 
 
 /**
  * The grown-ups' Today weather: now (how warm it feels, the sky, the day's high and low, rain and wind),
- * the hours around now as a line (a dot where now is; tap the line for an hour's details), then the rest
- * of the week, a day to a cell.
+ * the hours around now as a line (a dot where now is; tap the line for an hour's details), then the next
+ * seven days side by side (Week).
  */
 export default function ForecastCard({ weather: w }: { weather: Weather }) {
 	const now = sky(w.code, w.isDay);
@@ -39,30 +39,51 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 				</span>
 			</div>
 			{w.hours.length > 1 && <HourGraph hours={w.hours} isDay={isDay} />}
-			<ul className={s.week} aria-label="The rest of the week">
-				{w.days.slice(1).map((d) => {
-					const look = sky(d.code, true);
-					return (
-						<li key={d.date} className={s.weekDay}>
-							<span className={s.weekName}>
-								{fromDayKey(d.date).toLocaleDateString([], { weekday: "long" })}
-								<span className={s.weekIcon} role="img" aria-label={look.label}>{look.icon}</span>
-							</span>
-							<span className={s.weekMore}>
-								<span aria-label={`${d.rain}% chance of rain`}>💧 {d.rain}%</span>
-								<span aria-label={`wind up to ${d.wind} mph`}>💨 {d.wind} mph</span>
-							</span>
-							<span className={s.weekTemps}>
-								{d.high}° <span className={s.weekLow}>/ {d.low}°</span>
-							</span>
-							<span className={s.weekFeels}>
-								Feels {d.feelsHigh}° / {d.feelsLow}°
-							</span>
-						</li>
-					);
-				})}
-			</ul>
+			<Week days={w.days.slice(1)} />
 		</section>
+	);
+}
+
+/** The range bars' height: the week's warmest at the top, its coolest at the bottom. */
+const BAR_HEIGHT = 84;
+
+/**
+ * The next seven days side by side, a column each: the day, its date, its sky and chance of rain; then its
+ * high over a bar from high to low (the bars on one scale, so a warmer day sits higher) and its low under
+ * it; then its wind and how warm it feels at most and least.
+ */
+function Week({ days }: { days: Weather["days"] }) {
+	const top = Math.max(...days.map((d) => d.high));
+	const bottom = Math.min(...days.map((d) => d.low));
+	const span = Math.max(top - bottom, 1);
+	const at = (t: number) => ((top - t) / span) * BAR_HEIGHT;
+	return (
+		<ul className={s.week} aria-label="The next seven days">
+			{days.map((d) => {
+				const look = sky(d.code, true);
+				const date = fromDayKey(d.date);
+				return (
+					<li key={d.date} className={s.weekDay}
+						aria-label={`${date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })}: ${look.label}, ${d.rain}% rain, high ${d.high}°, low ${d.low}°, wind ${d.wind} mph, feels like ${d.feelsHigh}° to ${d.feelsLow}°`}>
+						<span className={s.weekName} aria-hidden="true">{date.toLocaleDateString([], { weekday: "short" })}</span>
+						<span className={s.weekDate} aria-hidden="true">{date.getDate()}</span>
+						<span className={s.weekIcon} aria-hidden="true">{look.icon}</span>
+						<span className={s.weekRain} aria-hidden="true">💧{d.rain}%</span>
+						<span className={s.weekRange} aria-hidden="true" style={{ height: BAR_HEIGHT + 40 }}>
+							<span className={s.weekHigh} style={{ top: at(d.high) }}>{d.high}°</span>
+							<span className={s.weekBar} style={{ top: at(d.high) + 20, height: Math.max(at(d.low) - at(d.high), 6) }} />
+							<span className={s.weekLow} style={{ top: at(d.low) + 22 }}>{d.low}°</span>
+						</span>
+						<span className={s.weekWind} aria-hidden="true">💨{d.wind}</span>
+						<span className={s.weekFeels} aria-hidden="true">
+							<span>Feels</span>
+							<span>{d.feelsHigh}°</span>
+							<span>{d.feelsLow}°</span>
+						</span>
+					</li>
+				);
+			})}
+		</ul>
 	);
 }
 

@@ -301,7 +301,7 @@ export interface Weather {
   /** Today's sunrise and sunset (instants). */
   sunrise: string;
   sunset: string;
-  /** Today and the next six days, each with its highest chance of rain (%) and strongest wind (mph). */
+  /** Today and the next seven days, each with its highest chance of rain (%) and strongest wind (mph). */
   days: { date: string; high: number; low: number; code: number; rain: number; wind: number; feelsHigh: number; feelsLow: number }[];
   /** The hours around now: six gone by, this one, and eighteen ahead (instants). */
   hours: { time: string; temp: number; feels: number; rain: number; code: number }[];

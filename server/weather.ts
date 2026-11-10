@@ -16,7 +16,7 @@ export interface Weather {
   /** Today's sunrise and sunset, as instants. */
   sunrise: string;
   sunset: string;
-  /** Today and the next six days: each one's highest chance of rain (%), strongest wind (mph), and how warm it feels at most and least too. */
+  /** Today and the next seven days: each one's highest chance of rain (%), strongest wind (mph), and how warm it feels at most and least too. */
   days: { date: string; high: number; low: number; code: number; rain: number; wind: number; feelsHigh: number; feelsLow: number }[];
   /** The hours around now (HOURS_BEFORE back, HOURS_AFTER ahead): when (an instant), °F, how warm it feels, chance of rain (%). */
   hours: { time: string; temp: number; feels: number; rain: number; code: number }[];
@@ -102,7 +102,7 @@ export async function forecast(place: Place, fetchImpl: typeof fetch = fetch): P
     + '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day'
     + '&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,weather_code,sunrise,sunset,precipitation_probability_max,cloud_cover_mean,wind_speed_10m_max'
     + '&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code'
-    + '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7';
+    + '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=8';
   const res = await fetchImpl(url);
   if (!res.ok) throw new Error(`Open-Meteo answered ${res.status}`);
   const w = await res.json();
