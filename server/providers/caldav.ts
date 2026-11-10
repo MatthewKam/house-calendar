@@ -3,6 +3,10 @@ import { XMLParser } from 'fast-xml-parser';
 // Minimal CalDAV (RFC 4791) over fetch: the PROPFIND and REPORT calls sync needs, plus GET, PUT and
 // DELETE of one event for edits made on the wall.
 
+/**
+ * iCloud said no to the Apple ID and app-specific password. Usually they're wrong (or revoked), but
+ * iCloud also says it for a while when it's having trouble itself.
+ */
 export class CalDavAuthError extends Error {
   constructor() {
     super('iCloud rejected the Apple ID or app-specific password');
