@@ -29,6 +29,7 @@ import {
 } from "../lib/specialDays";
 import { sky } from "../lib/weather";
 import { useNow } from "../lib/useNow";
+import { useMediaQuery } from "../lib/useMediaQuery";
 import { momentKind } from "../lib/moments";
 import { dueLabel, isDue, isLate } from "../lib/lists";
 import { percent, taskProgress, tasksFor } from "../lib/tasks";
@@ -64,6 +65,8 @@ const WEEK = 7;
 /** Special days this far ahead, and at most this many of them. */
 const SPECIAL_DAYS_AHEAD = 60;
 const SPECIAL_DAYS_SHOWN = 6;
+/** A tablet on its side, or anything bigger: the calendar in a column of its own on the right. */
+const TWO_COLUMNS = "(orientation: landscape) and (min-width: 1000px)";
 
 /** "Good morning", "Good afternoon" or "Good evening". */
 function greeting(now: Date) {
@@ -268,6 +271,166 @@ export default function TodayPage({
 	const look = weather && sky(weather.code, weather.isDay);
 	const quote = quoteFor(today);
 	const kind = grownUpKindWordsFor(today);
+	const twoColumns = useMediaQuery(TWO_COLUMNS);
+
+	// The cards. A tablet on its side and anything bigger: two columns, the calendar on the right (today,
+	// then tomorrow and the rest of the week under it), the rest down the left. Otherwise one list.
+	const calendarCard = (
+		<section className={`${s.card} ${s.wide}`} aria-label="Calendar">
+			<DayCalendar days={calendar} styles={s} stacked={twoColumns} />
+		</section>
+	);
+	const weatherCard = weather && <ForecastCard weather={weather} />;
+	const specialCard = <SpecialDays today={today} onAdd={onAddSpecial} />;
+	const kidsCard = kids.length > 0 && (
+		<section className={s.card}>
+			<div className={s.cardTop}>
+				<h2 className={s.cardHead}>The kids today</h2>
+				{parent && (
+					<button
+						type="button"
+						className={s.catch}
+						onClick={() => setCatching(true)}
+					>
+						✨ Caught being good
+					</button>
+				)}
+			</div>
+			<ul className={s.kids}>
+				{kids.map((k) => {
+					const p = progress.get(k.id);
+					const pct = percent(p);
+					const stickers = moments.filter((mo) => mo.memberId === k.id);
+					const stars =
+						buckets.find((b) => b.memberId === k.id)?.stars ?? 0;
+					const hasTasks = tasksFor(tasks, k.id).length > 0;
+					return (
+						<li key={k.id}>
+							<button
+								type="button"
+								className={s.kid}
+								onClick={() => onPage("tasks")}
+								style={
+									{ "--c": k.color, "--p": `${pct}%` } as CSSProperties
+								}
+							>
+								<span className={s.kidName}>{k.name}</span>
+								<span className={s.kidBar} aria-hidden="true">
+									<span />
+								</span>
+								<span className={s.kidMeta}>
+									{!hasTasks || !p
+										? "No tasks today"
+										: pct === 100
+											? "All done! 🎉"
+											: `${p.done} of ${p.due} tasks`}
+									{stickers.length > 0 && (
+										<span
+											className={s.stickers}
+											aria-label={`${stickers.length} caught being good`}
+										>
+											{stickers
+												.map((mo) => momentKind(mo.kind).emoji)
+												.join("")}
+										</span>
+									)}
+									<span className={s.stars}>
+										<StarIcon className={s.star} /> {stars}
+									</span>
+								</span>
+							</button>
+						</li>
+					);
+				})}
+			</ul>
+		</section>
+	);
+	const needsCard = needs > 0 && (
+		<section className={s.card}>
+			<h2 className={s.cardHead}>Needs you</h2>
+			<ul className={s.needs}>
+				{clashes > 0 && (
+					<li>
+						<button
+							type="button"
+							className={s.need}
+							onClick={() => onPage("calendar")}
+						>
+							<span aria-hidden="true">⚠️</span>
+							{clashes === 1
+								? "A calendar change clashes with one made elsewhere"
+								: `${clashes} calendar changes clash with ones made elsewhere`}
+						</button>
+					</li>
+				)}
+				{toHandOver.map((w) => (
+					<li key={w.id}>
+						<button
+							type="button"
+							className={s.need}
+							onClick={() => onPage("rewards")}
+						>
+							<span aria-hidden="true">🎁</span>
+							{w.title} is earned: hand it over
+						</button>
+					</li>
+				))}
+				{due.map((i) => (
+					<li key={i.id}>
+						<button
+							type="button"
+							className={s.need}
+							onClick={() => onPage("lists")}
+						>
+							<span aria-hidden="true">⏰</span>
+							<span className={s.needText}>
+								{i.title}
+								<span
+									className={isLate(i.due!, now) ? s.late : s.dueWhen}
+								>
+									{dueLabel(i.due!, now)}
+								</span>
+							</span>
+						</button>
+					</li>
+				))}
+				{lists.map((l) => (
+					<li key={l.title}>
+						<button
+							type="button"
+							className={s.need}
+							onClick={() => onPage("lists")}
+						>
+							<span aria-hidden="true">📝</span>
+							{l.title}: {l.open} {l.open === 1 ? "item" : "items"}
+						</button>
+					</li>
+				))}
+			</ul>
+		</section>
+	);
+	const quoteCard = (
+		<section className={`${s.card} ${s.words}`} aria-label="Quote of the day">
+			<h2 className={s.cardHead}>Quote of the day</h2>
+			<blockquote className={s.quote}>
+				<p>“{quote.text}”</p>
+				<footer>{quote.by}</footer>
+			</blockquote>
+		</section>
+	);
+	const encouragementCard = (
+		<section className={`${s.card} ${s.words}`} aria-label="Encouragement">
+			<h2 className={s.cardHead}>Encouragement</h2>
+			<p className={s.kindWords}>
+				<span className={s.kindPicture} aria-hidden="true">
+					{kind.picture}
+				</span>
+				{kind.text}
+			</p>
+		</section>
+	);
+	// The family's slideshow (the screen saver's photos), as on the calendar.
+	const photosCard = <PhotoCard onPlay={onPlaySlideshow} className={`${s.wide} ${s.slideshow}`} />;
 
 	return (
 		<section className={s.page} aria-label="Today">
@@ -301,169 +464,31 @@ export default function TodayPage({
 			</header>
 
 			<div className={s.scroll}>
-				<div className={s.cards}>
-					<section className={`${s.card} ${s.wide}`} aria-label="Calendar">
-						<DayCalendar days={calendar} styles={s} />
-					</section>
-
-					{weather && <ForecastCard weather={weather} />}
-
-					<SpecialDays today={today} onAdd={onAddSpecial} />
-					{kids.length > 0 && (
-						<section className={s.card}>
-							<div className={s.cardTop}>
-								<h2 className={s.cardHead}>The kids today</h2>
-								{parent && (
-									<button
-										type="button"
-										className={s.catch}
-										onClick={() => setCatching(true)}
-									>
-										✨ Caught being good
-									</button>
-								)}
-							</div>
-							<ul className={s.kids}>
-								{kids.map((k) => {
-									const p = progress.get(k.id);
-									const pct = percent(p);
-									const stickers = moments.filter((mo) => mo.memberId === k.id);
-									const stars =
-										buckets.find((b) => b.memberId === k.id)?.stars ?? 0;
-									const hasTasks = tasksFor(tasks, k.id).length > 0;
-									return (
-										<li key={k.id}>
-											<button
-												type="button"
-												className={s.kid}
-												onClick={() => onPage("tasks")}
-												style={
-													{ "--c": k.color, "--p": `${pct}%` } as CSSProperties
-												}
-											>
-												<span className={s.kidName}>{k.name}</span>
-												<span className={s.kidBar} aria-hidden="true">
-													<span />
-												</span>
-												<span className={s.kidMeta}>
-													{!hasTasks || !p
-														? "No tasks today"
-														: pct === 100
-															? "All done! 🎉"
-															: `${p.done} of ${p.due} tasks`}
-													{stickers.length > 0 && (
-														<span
-															className={s.stickers}
-															aria-label={`${stickers.length} caught being good`}
-														>
-															{stickers
-																.map((mo) => momentKind(mo.kind).emoji)
-																.join("")}
-														</span>
-													)}
-													<span className={s.stars}>
-														<StarIcon className={s.star} /> {stars}
-													</span>
-												</span>
-											</button>
-										</li>
-									);
-								})}
-							</ul>
-						</section>
-					)}
-
-					{needs > 0 && (
-						<section className={s.card}>
-							<h2 className={s.cardHead}>Needs you</h2>
-							<ul className={s.needs}>
-								{clashes > 0 && (
-									<li>
-										<button
-											type="button"
-											className={s.need}
-											onClick={() => onPage("calendar")}
-										>
-											<span aria-hidden="true">⚠️</span>
-											{clashes === 1
-												? "A calendar change clashes with one made elsewhere"
-												: `${clashes} calendar changes clash with ones made elsewhere`}
-										</button>
-									</li>
-								)}
-								{toHandOver.map((w) => (
-									<li key={w.id}>
-										<button
-											type="button"
-											className={s.need}
-											onClick={() => onPage("rewards")}
-										>
-											<span aria-hidden="true">🎁</span>
-											{w.title} is earned: hand it over
-										</button>
-									</li>
-								))}
-								{due.map((i) => (
-									<li key={i.id}>
-										<button
-											type="button"
-											className={s.need}
-											onClick={() => onPage("lists")}
-										>
-											<span aria-hidden="true">⏰</span>
-											<span className={s.needText}>
-												{i.title}
-												<span
-													className={isLate(i.due!, now) ? s.late : s.dueWhen}
-												>
-													{dueLabel(i.due!, now)}
-												</span>
-											</span>
-										</button>
-									</li>
-								))}
-								{lists.map((l) => (
-									<li key={l.title}>
-										<button
-											type="button"
-											className={s.need}
-											onClick={() => onPage("lists")}
-										>
-											<span aria-hidden="true">📝</span>
-											{l.title}: {l.open} {l.open === 1 ? "item" : "items"}
-										</button>
-									</li>
-								))}
-							</ul>
-						</section>
-					)}
-
-					<section
-						className={`${s.card} ${s.words}`}
-						aria-label="Quote of the day"
-					>
-						<h2 className={s.cardHead}>Quote of the day</h2>
-						<blockquote className={s.quote}>
-							<p>“{quote.text}”</p>
-							<footer>{quote.by}</footer>
-						</blockquote>
-					</section>
-					<section
-						className={`${s.card} ${s.words}`}
-						aria-label="Encouragement"
-					>
-						<h2 className={s.cardHead}>Encouragement</h2>
-						<p className={s.kindWords}>
-							<span className={s.kindPicture} aria-hidden="true">
-								{kind.picture}
-							</span>
-							{kind.text}
-						</p>
-					</section>
-
-					{/* The family's slideshow (the screen saver's photos), as on the calendar. */}
-					<PhotoCard onPlay={onPlaySlideshow} className={`${s.wide} ${s.slideshow}`} />
-				</div>
+				{twoColumns ? (
+					<div className={s.columns}>
+						<div className={s.column}>
+							{quoteCard}
+							{encouragementCard}
+							{weatherCard}
+							{specialCard}
+							{kidsCard}
+							{needsCard}
+							{photosCard}
+						</div>
+						<div className={s.column}>{calendarCard}</div>
+					</div>
+				) : (
+					<div className={s.cards}>
+						{calendarCard}
+						{weatherCard}
+						{specialCard}
+						{kidsCard}
+						{needsCard}
+						{quoteCard}
+						{encouragementCard}
+						{photosCard}
+					</div>
+				)}
 			</div>
 
 			{catching && (

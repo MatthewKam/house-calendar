@@ -89,6 +89,23 @@
 		grid-column: 1 / -1;
 	}
 }
+/* A tablet on its side and bigger (TodayPage's TWO_COLUMNS): two columns, the other cards down the left,
+   the calendar down the right (today, then tomorrow and the rest of the week under it). */
+.columns {
+	width: 100%;
+	max-width: max(56rem, 80%);
+	margin-inline: auto;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	align-items: start;
+	gap: 0.9rem;
+}
+.column {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+}
 /* A big screen: rows of three. */
 @media (min-width: 1401px) {
 	.cards {
@@ -602,4 +619,12 @@ details > summary.cardHead {
 /* Kept on one line: a time, "10% rain". */
 .nowrap {
 	white-space: nowrap;
+}
+
+/* The calendar in a column of its own: today, then the carousel under it. */
+.calendar.calendarStacked {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 1.2rem;
 }

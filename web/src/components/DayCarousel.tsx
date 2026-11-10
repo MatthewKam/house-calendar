@@ -10,7 +10,7 @@ export interface CalendarDay {
 /**
  * The page's CSS module (kid mode's and the grown-ups' Today each have their own look), with these
  * classes: calendar (the whole), group and groupHead (a day, its heading), and the carousel's: carousel,
- * dayButtons, dayButton, dayButtonOn, dayPage, dayFromRight and dayFromLeft.
+ * dayButtons, dayButton, dayButtonOn, dayPage, dayFromRight and dayFromLeft; calendarStacked when stacked.
  */
 export type CalendarStyles = { readonly [name: string]: string };
 
@@ -24,9 +24,9 @@ const ALL_THREE = "(min-width: 1401px)";
 /**
  * The calendar's days. Upright: a carousel of all three, big buttons along the top to go to each (or a
  * swipe). On its side: the first, and a carousel of the others beside it. Wider than 1400px: all three
- * side by side.
+ * side by side. `stacked` (a column of its own): the first, and a carousel of the others under it.
  */
-export function DayCalendar({ days, styles: s }: { days: CalendarDay[]; styles: CalendarStyles }) {
+export function DayCalendar({ days, styles: s, stacked = false }: { days: CalendarDay[]; styles: CalendarStyles; stacked?: boolean }) {
 	const sideBySide = useMediaQuery(SIDE_BY_SIDE);
 	const allThree = useMediaQuery(ALL_THREE);
 	const day = (d: CalendarDay) => (
@@ -35,6 +35,14 @@ export function DayCalendar({ days, styles: s }: { days: CalendarDay[]; styles: 
 			{d.body}
 		</section>
 	);
+	if (stacked) {
+		return (
+			<div className={`${s.calendar} ${s.calendarStacked}`}>
+				{day(days[0])}
+				<Carousel days={days.slice(1)} styles={s} />
+			</div>
+		);
+	}
 	if (allThree) return <div className={s.calendar}>{days.map(day)}</div>;
 	if (sideBySide) {
 		return (
