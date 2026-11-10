@@ -79,7 +79,8 @@
 	gap: 0.9rem;
 }
 /* A tablet either way up, or a phone on its side: rows of two, the calendar and the photos across both. */
-@media (orientation: landscape) and (max-height: 500px), (min-width: 744px) and (min-height: 600px) {
+@media (orientation: landscape) and (max-height: 500px),
+	(min-width: 744px) and (min-height: 600px) {
 	.cards {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -334,7 +335,8 @@ details > summary.cardHead {
 	flex-direction: column;
 	gap: 0.9rem;
 }
-@media (orientation: landscape) and (max-height: 500px), (min-width: 744px) and (min-height: 600px) {
+@media (orientation: landscape) and (max-height: 500px),
+	(min-width: 744px) and (min-height: 600px) {
 	.calendar {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -444,7 +446,9 @@ details > summary.cardHead {
 	border-right: 2px solid currentColor;
 	border-bottom: 2px solid currentColor;
 	transform: rotate(45deg);
-	transition: transform 0.2s ease, margin 0.2s ease;
+	transition:
+		transform 0.2s ease,
+		margin 0.2s ease;
 }
 .earlier[open] > summary::after {
 	margin-top: 0.2rem;
@@ -565,6 +569,9 @@ details > summary.cardHead {
 	padding: 0;
 	display: grid;
 	grid-template-columns: repeat(7, minmax(0, 1fr));
+	background: var(--bg);
+	border-radius: 5px;
+	padding: 15px 0;
 }
 .weekDay {
 	min-width: 0;
@@ -624,14 +631,17 @@ details > summary.cardHead {
 /* Two bars side by side, each with its numbers: the temperature (green) and how warm it feels (grey). */
 .weekRange {
 	display: flex;
-	justify-content: center;
-	gap: 0.1rem;
+	justify-content: space-around;
+	gap: 0;
+	padding: 0 0.3rem;
 }
 .weekPair {
 	position: relative;
 	flex: 1;
 	max-width: 2rem;
 	min-width: 0;
+	background: white;
+	border-radius: 5px;
 }
 .weekPair .weekHigh,
 .weekPair .weekLow {
@@ -648,10 +658,16 @@ details > summary.cardHead {
 	width: 0.45rem;
 	translate: -50% 0;
 	border-radius: 999px;
-	background: linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 30%, var(--surface)));
+	background: linear-gradient(
+		var(--accent),
+		color-mix(in srgb, var(--accent) 30%, var(--surface))
+	);
 }
 .weekPairFeels .weekBar {
-	background: linear-gradient(#8a8f98, color-mix(in srgb, #8a8f98 30%, var(--surface)));
+	background: linear-gradient(
+		#8a8f98,
+		color-mix(in srgb, #8a8f98 30%, var(--surface))
+	);
 }
 /* Which bar is which. */
 .weekKey {

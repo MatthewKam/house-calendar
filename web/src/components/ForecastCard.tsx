@@ -52,6 +52,8 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 
 /** The range bars' height: the week's warmest (or warmest-feeling) at the top, its coolest at the bottom. */
 const BAR_HEIGHT = 84;
+/** Room inside each bar's box above the warmest high and below the coolest low. */
+const BAR_PAD = 8;
 
 /**
  * The next seven days side by side, a column each: the day, its date, its sky; then two bars, its high to
@@ -63,7 +65,7 @@ function Week({ days }: { days: Weather["days"] }) {
 	const top = Math.max(...days.flatMap((d) => [d.high, d.feelsHigh]));
 	const bottom = Math.min(...days.flatMap((d) => [d.low, d.feelsLow]));
 	const span = Math.max(top - bottom, 1);
-	const at = (t: number) => ((top - t) / span) * BAR_HEIGHT;
+	const at = (t: number) => BAR_PAD + ((top - t) / span) * BAR_HEIGHT;
 	const bar = (high: number, low: number) => ({ top: at(high) + 16, height: Math.max(at(low) - at(high), 6) });
 	return (
 		<>
@@ -90,7 +92,7 @@ function Week({ days }: { days: Weather["days"] }) {
 						<span
 							className={s.weekRange}
 							aria-hidden="true"
-							style={{ height: BAR_HEIGHT + 40 }}
+							style={{ height: BAR_HEIGHT + 40 + 2 * BAR_PAD }}
 						>
 							{/* Each bar with its own high over it and low under it. */}
 							{[
