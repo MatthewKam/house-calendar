@@ -1,5 +1,11 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { addDays, dayKey, fromDayKey, startOfWeek, timeLabel } from "../lib/dates";
+import {
+	addDays,
+	dayKey,
+	fromDayKey,
+	startOfWeek,
+	timeLabel,
+} from "../lib/dates";
 import {
 	useBuckets,
 	useMoments,
@@ -16,7 +22,13 @@ import {
 	useWeather,
 } from "../lib/queries";
 import { grownUpKindWordsFor, quoteFor } from "../lib/grownUpWords";
-import { birthdays, sleepsUntil, specialDaysBetween, type SpecialDay } from "../lib/specialDays";
+import { memoriesFor } from "../lib/memories";
+import {
+	birthdays,
+	sleepsUntil,
+	specialDaysBetween,
+	type SpecialDay,
+} from "../lib/specialDays";
 import { sky } from "../lib/weather";
 import { useNow } from "../lib/useNow";
 import { momentKind } from "../lib/moments";
@@ -61,10 +73,18 @@ function greeting(now: Date) {
 /**
  * Today (phones open on it): the family's calendar (today, tomorrow, the rest of the week), the
  * weather, special days coming up, how the kids are doing, what needs me, a quote and kind words for the
- * day, and photos from this day in years gone by. On a tablet or a phone on its side, the cards in rows
+ * day, and memories (photos from this day in years gone by, or lately). On a tablet or a phone on its side, the cards in rows
  * of two (three on a big screen).
  */
-export default function TodayPage({ today, members, me, parent, onPage, onOpenEvent, onAddSpecial }: Props) {
+export default function TodayPage({
+	today,
+	members,
+	me,
+	parent,
+	onPage,
+	onOpenEvent,
+	onAddSpecial,
+}: Props) {
 	const now = useNow();
 	const day = fromDayKey(today);
 	const meMember = members.find((m) => m.id === me) ?? null;
@@ -72,21 +92,28 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 
 	// The week ahead: today, tomorrow and the five days after.
 	const events = useRangeEvents(day, WEEK).data ?? [];
-	const ended = (e: CalEvent) => (e.allDay ? e.end <= today : Date.parse(e.end) <= now.getTime());
+	const ended = (e: CalEvent) =>
+		e.allDay ? e.end <= today : Date.parse(e.end) <= now.getTime();
 	const onDay = (e: CalEvent, d: string) =>
 		e.allDay ? e.start <= d && e.end > d : dayKey(new Date(e.start)) === d;
-	const sorted = [...events].sort((a, b) => (a.allDay === b.allDay ? a.start.localeCompare(b.start) : a.allDay ? -1 : 1));
+	const sorted = [...events].sort((a, b) =>
+		a.allDay === b.allDay ? a.start.localeCompare(b.start) : a.allDay ? -1 : 1,
+	);
 	const todays = sorted.filter((e) => onDay(e, today));
 	const upNext = todays.filter((e) => !ended(e));
 	const earlier = todays.filter(ended);
 	const tomorrows = sorted.filter((e) => onDay(e, dayKey(addDays(day, 1))));
 	// The rest of the week, day by day (an all-day event over several days: once, on its first).
 	const shown = new Set([...todays, ...tomorrows].map((e) => e.id));
-	const restOfWeek = Array.from({ length: WEEK - 2 }, (_, i) => dayKey(addDays(day, i + 2))).map((key) => {
-		const on = sorted.filter((e) => onDay(e, key) && !shown.has(e.id));
-		on.forEach((e) => shown.add(e.id));
-		return { key, events: on };
-	}).filter((d) => d.events.length > 0);
+	const restOfWeek = Array.from({ length: WEEK - 2 }, (_, i) =>
+		dayKey(addDays(day, i + 2)),
+	)
+		.map((key) => {
+			const on = sorted.filter((e) => onDay(e, key) && !shown.has(e.id));
+			on.forEach((e) => shown.add(e.id));
+			return { key, events: on };
+		})
+		.filter((d) => d.events.length > 0);
 	const drives = useTravelTimes(upNext.map((e) => e.id)).data ?? {};
 
 	// The kids: today's tasks, stickers and stars.
@@ -94,45 +121,84 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 	const tasks = useTasks().data ?? [];
 	const thisWeek = useMemo(() => startOfWeek(day), [today]); // eslint-disable-line react-hooks/exhaustive-deps
 	const done = useTasksDone(thisWeek).data ?? [];
-	const progress = taskProgress(tasks, done, today, kids.map((k) => k.id));
+	const progress = taskProgress(
+		tasks,
+		done,
+		today,
+		kids.map((k) => k.id),
+	);
 	const moments = useMoments(today).data ?? [];
 	const buckets = useBuckets().data ?? [];
 	const [catching, setCatching] = useState(false);
 
 	// Needs you: only what's waiting.
 	const outbox = useOutbox().data;
-	const toHandOver = (useRewardHistory().data ?? []).filter((w) => !w.givenAt && !w.missedOn);
+	const toHandOver = (useRewardHistory().data ?? []).filter(
+		(w) => !w.givenAt && !w.missedOn,
+	);
 	const own = useLists().data ?? [];
 	// Reminders due now (or late) on Sprig's lists, for me or for anyone.
-	const due = own.flatMap((l) => l.items.filter((i) => !i.done && i.due && isDue(i.due, now) && (!me || !i.memberId || i.memberId === me)));
+	const due = own.flatMap((l) =>
+		l.items.filter(
+			(i) =>
+				!i.done &&
+				i.due &&
+				isDue(i.due, now) &&
+				(!me || !i.memberId || i.memberId === me),
+		),
+	);
 	const lists = [...own, ...(useReminders().data?.lists ?? [])]
-		.map((l) => ({ title: l.title, open: l.items.filter((i) => !i.done).length })).filter((l) => l.open > 0);
+		.map((l) => ({
+			title: l.title,
+			open: l.items.filter((i) => !i.done).length,
+		}))
+		.filter((l) => l.open > 0);
 	const clashes = outbox?.conflicts.length ?? 0;
 	const needs = clashes + toHandOver.length + due.length + lists.length;
 
 	const who = (e: CalEvent) =>
-		e.memberIds.length === 0 ? [] : members.filter((m) => e.memberIds.includes(m.id));
+		e.memberIds.length === 0
+			? []
+			: members.filter((m) => e.memberIds.includes(m.id));
 	const when = (e: CalEvent) =>
-		e.allDay ? "All day" : `${timeLabel(e.start)}${e.end ? ` – ${timeLabel(e.end)}` : ""}`;
+		e.allDay
+			? "All day"
+			: `${timeLabel(e.start)}${e.end ? ` – ${timeLabel(e.end)}` : ""}`;
 
 	const eventRow = (e: CalEvent, showLeave: boolean) => {
 		const people = who(e);
 		const drive = drives[e.id];
-		const leaveAt = showLeave && !e.allDay && drive ? new Date(Date.parse(e.start) - (drive + ARRIVE_EARLY_MINUTES) * 60_000) : null;
+		const leaveAt =
+			showLeave && !e.allDay && drive
+				? new Date(
+						Date.parse(e.start) - (drive + ARRIVE_EARLY_MINUTES) * 60_000,
+					)
+				: null;
 		const soon = leaveAt && leaveAt.getTime() - now.getTime() < 30 * 60_000;
 		return (
 			<li key={e.id}>
-				<button type="button" className={s.event} data-busy={e.busy || undefined} onClick={() => onOpenEvent(e)}
-					style={{ "--c": people[0]?.color ?? "var(--line)" } as CSSProperties}>
+				<button
+					type="button"
+					className={s.event}
+					data-busy={e.busy || undefined}
+					onClick={() => onOpenEvent(e)}
+					style={{ "--c": people[0]?.color ?? "var(--line)" } as CSSProperties}
+				>
 					<span className={s.when}>{when(e)}</span>
 					<span className={s.what}>
 						<span className={s.title}>{e.title}</span>
 						{e.location && <span className={s.where}>{e.location}</span>}
-						{people.length > 0 && <span className={s.where}>{people.map((p) => p.name).join(", ")}</span>}
+						{people.length > 0 && (
+							<span className={s.where}>
+								{people.map((p) => p.name).join(", ")}
+							</span>
+						)}
 						{/* Under the event, so the title keeps the row's width on a phone. */}
 						{leaveAt && (
 							<span className={`${s.leave} ${soon ? s.leaveSoon : ""}`}>
-								{leaveAt.getTime() <= now.getTime() ? "Leave now" : `Leave by ${timeLabel(leaveAt)}`}
+								{leaveAt.getTime() <= now.getTime()
+									? "Leave now"
+									: `Leave by ${timeLabel(leaveAt)}`}
 							</span>
 						)}
 					</span>
@@ -141,7 +207,9 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 		);
 	};
 
-	const list = (items: CalEvent[], leave = false) => <ul className={s.events}>{items.map((e) => eventRow(e, leave))}</ul>;
+	const list = (items: CalEvent[], leave = false) => (
+		<ul className={s.events}>{items.map((e) => eventRow(e, leave))}</ul>
+	);
 	const calendar: { label: string; body: ReactNode }[] = [
 		{
 			label: "Today",
@@ -156,7 +224,9 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 					)}
 					{earlier.length > 0 && (
 						<details className={s.earlier}>
-							<summary className={s.subHead}>Earlier today ({earlier.length})</summary>
+							<summary className={s.subHead}>
+								Earlier today ({earlier.length})
+							</summary>
 							{list(earlier)}
 						</details>
 					)}
@@ -165,20 +235,32 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 		},
 		{
 			label: "Tomorrow",
-			body: tomorrows.length === 0 ? <p className={s.none}>Nothing on tomorrow.</p> : list(tomorrows),
+			body:
+				tomorrows.length === 0 ? (
+					<p className={s.none}>Nothing on tomorrow.</p>
+				) : (
+					list(tomorrows)
+				),
 		},
 		{
 			label: "Rest of the week",
-			body: restOfWeek.length === 0 ? (
-				<p className={s.none}>Nothing else this week.</p>
-			) : (
-				restOfWeek.map((d) => (
-					<div key={d.key} className={s.weekGroup}>
-						<h3 className={s.subHead}>{fromDayKey(d.key).toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}</h3>
-						{list(d.events)}
-					</div>
-				))
-			),
+			body:
+				restOfWeek.length === 0 ? (
+					<p className={s.none}>Nothing else this week.</p>
+				) : (
+					restOfWeek.map((d) => (
+						<div key={d.key} className={s.weekGroup}>
+							<h3 className={s.subHead}>
+								{fromDayKey(d.key).toLocaleDateString([], {
+									weekday: "long",
+									month: "short",
+									day: "numeric",
+								})}
+							</h3>
+							{list(d.events)}
+						</div>
+					))
+				),
 		},
 	];
 	const look = weather && sky(weather.code, weather.isDay);
@@ -194,13 +276,22 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 						{meMember ? `, ${meMember.name.split(" ")[0]}` : ""}
 					</h1>
 					<div className={s.date}>
-						{now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })} ·{" "}
-						<span className={s.nowrap}>{timeLabel(now)}</span>
+						{now.toLocaleDateString([], {
+							weekday: "long",
+							month: "long",
+							day: "numeric",
+						})}{" "}
+						· <span className={s.nowrap}>{timeLabel(now)}</span>
 					</div>
 				</div>
 				{weather && look && (
-					<div className={s.headWeather} aria-label={`${weather.temp}°, feels like ${weather.feels}°, ${look.label}`}>
-						<span className={s.headIcon} aria-hidden="true">{look.icon}</span>
+					<div
+						className={s.headWeather}
+						aria-label={`${weather.temp}°, feels like ${weather.feels}°, ${look.label}`}
+					>
+						<span className={s.headIcon} aria-hidden="true">
+							{look.icon}
+						</span>
 						<span className={s.headTemp}>{weather.temp}°</span>
 						<span className={s.headFeels}>Feels {weather.feels}°</span>
 					</div>
@@ -221,7 +312,11 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 							<div className={s.cardTop}>
 								<h2 className={s.cardHead}>The kids today</h2>
 								{parent && (
-									<button type="button" className={s.catch} onClick={() => setCatching(true)}>
+									<button
+										type="button"
+										className={s.catch}
+										onClick={() => setCatching(true)}
+									>
 										✨ Caught being good
 									</button>
 								)}
@@ -231,19 +326,37 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 									const p = progress.get(k.id);
 									const pct = percent(p);
 									const stickers = moments.filter((mo) => mo.memberId === k.id);
-									const stars = buckets.find((b) => b.memberId === k.id)?.stars ?? 0;
+									const stars =
+										buckets.find((b) => b.memberId === k.id)?.stars ?? 0;
 									const hasTasks = tasksFor(tasks, k.id).length > 0;
 									return (
 										<li key={k.id}>
-											<button type="button" className={s.kid} onClick={() => onPage("tasks")}
-												style={{ "--c": k.color, "--p": `${pct}%` } as CSSProperties}>
+											<button
+												type="button"
+												className={s.kid}
+												onClick={() => onPage("tasks")}
+												style={
+													{ "--c": k.color, "--p": `${pct}%` } as CSSProperties
+												}
+											>
 												<span className={s.kidName}>{k.name}</span>
-												<span className={s.kidBar} aria-hidden="true"><span /></span>
+												<span className={s.kidBar} aria-hidden="true">
+													<span />
+												</span>
 												<span className={s.kidMeta}>
-													{!hasTasks || !p ? "No tasks today" : pct === 100 ? "All done! 🎉" : `${p.done} of ${p.due} tasks`}
+													{!hasTasks || !p
+														? "No tasks today"
+														: pct === 100
+															? "All done! 🎉"
+															: `${p.done} of ${p.due} tasks`}
 													{stickers.length > 0 && (
-														<span className={s.stickers} aria-label={`${stickers.length} caught being good`}>
-															{stickers.map((mo) => momentKind(mo.kind).emoji).join("")}
+														<span
+															className={s.stickers}
+															aria-label={`${stickers.length} caught being good`}
+														>
+															{stickers
+																.map((mo) => momentKind(mo.kind).emoji)
+																.join("")}
 														</span>
 													)}
 													<span className={s.stars}>
@@ -264,15 +377,25 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 							<ul className={s.needs}>
 								{clashes > 0 && (
 									<li>
-										<button type="button" className={s.need} onClick={() => onPage("calendar")}>
+										<button
+											type="button"
+											className={s.need}
+											onClick={() => onPage("calendar")}
+										>
 											<span aria-hidden="true">⚠️</span>
-											{clashes === 1 ? "A calendar change clashes with one made elsewhere" : `${clashes} calendar changes clash with ones made elsewhere`}
+											{clashes === 1
+												? "A calendar change clashes with one made elsewhere"
+												: `${clashes} calendar changes clash with ones made elsewhere`}
 										</button>
 									</li>
 								)}
 								{toHandOver.map((w) => (
 									<li key={w.id}>
-										<button type="button" className={s.need} onClick={() => onPage("rewards")}>
+										<button
+											type="button"
+											className={s.need}
+											onClick={() => onPage("rewards")}
+										>
 											<span aria-hidden="true">🎁</span>
 											{w.title} is earned: hand it over
 										</button>
@@ -280,18 +403,30 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 								))}
 								{due.map((i) => (
 									<li key={i.id}>
-										<button type="button" className={s.need} onClick={() => onPage("lists")}>
+										<button
+											type="button"
+											className={s.need}
+											onClick={() => onPage("lists")}
+										>
 											<span aria-hidden="true">⏰</span>
 											<span className={s.needText}>
 												{i.title}
-												<span className={isLate(i.due!, now) ? s.late : s.dueWhen}>{dueLabel(i.due!, now)}</span>
+												<span
+													className={isLate(i.due!, now) ? s.late : s.dueWhen}
+												>
+													{dueLabel(i.due!, now)}
+												</span>
 											</span>
 										</button>
 									</li>
 								))}
 								{lists.map((l) => (
 									<li key={l.title}>
-										<button type="button" className={s.need} onClick={() => onPage("lists")}>
+										<button
+											type="button"
+											className={s.need}
+											onClick={() => onPage("lists")}
+										>
 											<span aria-hidden="true">📝</span>
 											{l.title}: {l.open} {l.open === 1 ? "item" : "items"}
 										</button>
@@ -301,17 +436,25 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 						</section>
 					)}
 
-					<section className={`${s.card} ${s.words}`} aria-label="Quote of the day">
+					<section
+						className={`${s.card} ${s.words}`}
+						aria-label="Quote of the day"
+					>
 						<h2 className={s.cardHead}>Quote of the day</h2>
 						<blockquote className={s.quote}>
 							<p>“{quote.text}”</p>
 							<footer>{quote.by}</footer>
 						</blockquote>
 					</section>
-					<section className={`${s.card} ${s.words}`} aria-label="Kind words for you">
-						<h2 className={s.cardHead}>Kind words for you</h2>
+					<section
+						className={`${s.card} ${s.words}`}
+						aria-label="Encouragement"
+					>
+						<h2 className={s.cardHead}>Encouragement</h2>
 						<p className={s.kindWords}>
-							<span className={s.kindPicture} aria-hidden="true">{kind.picture}</span>
+							<span className={s.kindPicture} aria-hidden="true">
+								{kind.picture}
+							</span>
 							{kind.text}
 						</p>
 					</section>
@@ -320,13 +463,20 @@ export default function TodayPage({ today, members, me, parent, onPage, onOpenEv
 				</div>
 			</div>
 
-			{catching && <MomentDialog kids={kids} today={today} onClose={() => setCatching(false)} />}
+			{catching && (
+				<MomentDialog
+					kids={kids}
+					today={today}
+					onClose={() => setCatching(false)}
+				/>
+			)}
 		</section>
 	);
 }
 
 /** "Today", "Tomorrow", or "In 12 days". */
-const countdown = (days: number) => (days === 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`);
+const countdown = (days: number) =>
+	days === 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`;
 
 /**
  * Special days coming up (the next few, in the next two months): holidays, the family's birthdays, and
@@ -340,10 +490,19 @@ function SpecialDays({ today, onAdd }: { today: string; onAdd?: () => void }) {
 	// Each special one once, on its first day.
 	const special: SpecialDay[] = events
 		.filter((e) => e.special && !e.busy)
-		.map((e) => ({ day: e.allDay ? e.start : dayKey(new Date(e.start)), name: e.title, picture: "⭐" }))
-		.filter((d, i, all) => all.findIndex((x) => x.day === d.day && x.name === d.name) === i);
-	const days = specialDaysBetween(today, to, (year) => [...birthdays(people, year), ...special.filter((d) => d.day.startsWith(`${year}-`))])
-		.slice(0, SPECIAL_DAYS_SHOWN);
+		.map((e) => ({
+			day: e.allDay ? e.start : dayKey(new Date(e.start)),
+			name: e.title,
+			picture: "⭐",
+		}))
+		.filter(
+			(d, i, all) =>
+				all.findIndex((x) => x.day === d.day && x.name === d.name) === i,
+		);
+	const days = specialDaysBetween(today, to, (year) => [
+		...birthdays(people, year),
+		...special.filter((d) => d.day.startsWith(`${year}-`)),
+	]).slice(0, SPECIAL_DAYS_SHOWN);
 	return (
 		<section className={s.card} aria-label="Special days">
 			<div className={s.cardTop}>
@@ -361,11 +520,22 @@ function SpecialDays({ today, onAdd }: { today: string; onAdd?: () => void }) {
 					{days.map((d) => {
 						const until = sleepsUntil(today, d.day);
 						return (
-							<li key={`${d.day}-${d.name}`} className={`${s.specialRow} ${until === 0 ? s.specialToday : ""}`}>
-								<span className={s.specialPicture} aria-hidden="true">{d.picture}</span>
+							<li
+								key={`${d.day}-${d.name}`}
+								className={`${s.specialRow} ${until === 0 ? s.specialToday : ""}`}
+							>
+								<span className={s.specialPicture} aria-hidden="true">
+									{d.picture}
+								</span>
 								<span className={s.what}>
 									<span className={s.title}>{d.name}</span>
-									<span className={s.where}>{fromDayKey(d.day).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}</span>
+									<span className={s.where}>
+										{fromDayKey(d.day).toLocaleDateString([], {
+											weekday: "short",
+											month: "short",
+											day: "numeric",
+										})}
+									</span>
 								</span>
 								<span className={s.countdown}>{countdown(until)}</span>
 							</li>
@@ -377,48 +547,50 @@ function SpecialDays({ today, onAdd }: { today: string; onAdd?: () => void }) {
 	);
 }
 
-/** "1 year ago", "3 years ago". */
-const yearsAgo = (n: number) => `${n} ${n === 1 ? "year" : "years"} ago`;
-
 /**
- * Photos (and videos) taken on this day in other years, newest first, each with how long ago; tap one to
- * see it big. Not shown when there are none.
+ * Memories (memoriesFor): photos from this day a year or more ago, or until there are some, from the past
+ * week or month, each with when; tap one to see it big. Not shown when there are none.
  */
 function YearsAgo({ today }: { today: string }) {
 	const all = usePhotos().data;
 	const [open, setOpen] = useState<Photo | null>(null);
-	const [year, month, date] = today.split("-").map(Number);
-	const photos = useMemo(
-		() =>
-			(all ?? [])
-				.filter((p) => p.ready && p.takenAt)
-				.map((p) => ({ p, at: new Date(p.takenAt!) }))
-				.filter(({ at }) => at.getMonth() + 1 === month && at.getDate() === date && at.getFullYear() < year)
-				.sort((a, b) => b.at.getTime() - a.at.getTime()),
-		[all, year, month, date],
-	);
-	if (photos.length === 0) return null;
+	const memories = useMemo(() => memoriesFor(all ?? [], today), [all, today]);
+	if (!memories) return null;
 	return (
-		<section className={`${s.card} ${s.wide}`} aria-label="On this day">
-			<h2 className={s.cardHead}>On this day</h2>
+		<section className={`${s.card} ${s.wide}`} aria-label={memories.title}>
+			<h2 className={s.cardHead}>{memories.title}</h2>
 			<ul className={s.memories}>
-				{photos.map(({ p, at }) => (
+				{memories.items.map(({ photo: p, note }) => (
 					<li key={p.id}>
-						<button type="button" className={s.memory} onClick={() => setOpen(p)} aria-label={`A ${p.kind} from ${yearsAgo(year - at.getFullYear())}`}>
+						<button type="button" className={s.memory} onClick={() => setOpen(p)} aria-label={`A ${p.kind}: ${note}`}>
 							<img src={p.thumbUrl} alt="" draggable={false} />
-							<span className={s.memoryWhen}>{yearsAgo(year - at.getFullYear())}</span>
+							<span className={s.memoryWhen}>{note}</span>
 						</button>
 					</li>
 				))}
 			</ul>
 			{open && (
-				<div className={s.memoryBig} role="dialog" aria-label="Photo" onClick={() => setOpen(null)}>
+				<div
+					className={s.memoryBig}
+					role="dialog"
+					aria-label="Photo"
+					onClick={() => setOpen(null)}
+				>
 					{open.kind === "video" ? (
-						<video src={open.url} poster={open.thumbUrl} autoPlay muted loop playsInline />
+						<video
+							src={open.url}
+							poster={open.thumbUrl}
+							autoPlay
+							muted
+							loop
+							playsInline
+						/>
 					) : (
 						<img src={open.url} alt="" draggable={false} />
 					)}
-					<button type="button" className={s.memoryClose} aria-label="Close">✕</button>
+					<button type="button" className={s.memoryClose} aria-label="Close">
+						✕
+					</button>
 				</div>
 			)}
 		</section>
