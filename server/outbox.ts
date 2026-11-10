@@ -39,10 +39,11 @@ export interface SyncedRow {
   start: string;
   end: string;
   location: string | null;
+  notes?: string | null;
 }
 
 const detailsOf = (r: SyncedRow): Details =>
-  ({ title: r.title, allDay: r.all_day === 1, start: r.start, end: r.end, location: r.location });
+  ({ title: r.title, allDay: r.all_day === 1, start: r.start, end: r.end, location: r.location, notes: r.notes ?? null });
 
 /** Equal as the wall shows them: instants compared as times, so "…00Z" and "….000Z" match. */
 function same(key: keyof Details, a: Details, b: Details) {
@@ -58,6 +59,8 @@ export function diff(from: Details, to: Details): Partial<Details> {
     Object.assign(out, { allDay: to.allDay, start: to.start, end: to.end });
   }
   if ((to.location ?? null) !== (from.location ?? null)) out.location = to.location ?? null;
+  // Notes only when they're being set (a change that doesn't touch them leaves them out).
+  if (to.notes !== undefined && (to.notes ?? null) !== (from.notes ?? null)) out.notes = to.notes ?? null;
   return out;
 }
 
@@ -185,11 +188,12 @@ export function overlayOutbox(db: DB) {
   const seriesRemove = db.prepare(`UPDATE events SET sync_state = 'pending_delete' WHERE calendar_id = ? AND series_id = ?`);
   const update = db.prepare(`UPDATE events SET title = COALESCE(@title, title), all_day = COALESCE(@allDay, all_day),
       start = COALESCE(@start, start), end = COALESCE(@end, end),
-      location = CASE WHEN @hasLocation THEN @location ELSE location END, sync_state = @syncState
+      location = CASE WHEN @hasLocation THEN @location ELSE location END,
+      notes = CASE WHEN @hasNotes THEN @notes ELSE notes END, sync_state = @syncState
     WHERE calendar_id = @calendarId AND remote_id = @remoteId`);
   // A new event isn't in iCloud's snapshot yet, so it's added back after each sync.
-  const insert = db.prepare(`INSERT INTO events (id, calendar_id, title, all_day, start, end, location, remote_id, series_id, sync_state)
-    VALUES (@id, @calendarId, @title, @allDay, @start, @end, @location, @remoteId, @remoteId, 'pending_create')
+  const insert = db.prepare(`INSERT INTO events (id, calendar_id, title, all_day, start, end, location, notes, remote_id, series_id, sync_state)
+    VALUES (@id, @calendarId, @title, @allDay, @start, @end, @location, @notes, @remoteId, @remoteId, 'pending_create')
     ON CONFLICT(id) DO NOTHING`);
   const remove = db.prepare(`UPDATE events SET sync_state = 'pending_delete' WHERE calendar_id = ? AND remote_id = ?`);
   for (const r of rows) {
@@ -217,12 +221,13 @@ export function overlayOutbox(db: DB) {
     const c = JSON.parse(r.changes) as Partial<Details>;
     if (r.op === 'create') {
       insert.run({ id: eventId(r.calendar_id, r.remote_id), calendarId: r.calendar_id, remoteId: r.remote_id,
-        title: c.title, allDay: c.allDay ? 1 : 0, start: c.start, end: c.end, location: c.location ?? null });
+        title: c.title, allDay: c.allDay ? 1 : 0, start: c.start, end: c.end, location: c.location ?? null, notes: c.notes ?? null });
     }
     update.run({
       syncState: r.op === 'create' ? 'pending_create' : 'pending_update',
       title: c.title ?? null, allDay: c.allDay === undefined ? null : c.allDay ? 1 : 0, start: c.start ?? null, end: c.end ?? null,
-      hasLocation: 'location' in c ? 1 : 0, location: c.location ?? null, calendarId: r.calendar_id, remoteId: r.remote_id,
+      hasLocation: 'location' in c ? 1 : 0, location: c.location ?? null,
+      hasNotes: 'notes' in c ? 1 : 0, notes: c.notes ?? null, calendarId: r.calendar_id, remoteId: r.remote_id,
     });
   }
 }

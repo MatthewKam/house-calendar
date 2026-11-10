@@ -36,9 +36,10 @@ function api(calendars: Record<string, { id: string; summary: string; primary?: 
 
 describe('Google events', () => {
   it('maps timed, all-day and repeating events, and skips what the wall leaves out', () => {
-    expect(toRemoteEvent({ id: 'a', etag: 'e', summary: ' Swim ', location: '1 Pool Rd\nTown',
+    expect(toRemoteEvent({ id: 'a', etag: 'e', summary: ' Swim ', location: '1 Pool Rd\nTown', description: ' Bring goggles ',
       start: { dateTime: '2026-10-12T09:00:00-07:00' }, end: { dateTime: '2026-10-12T10:00:00-07:00' } }))
-      .toEqual({ remoteId: 'a', etag: 'e', title: 'Swim', allDay: false, start: '2026-10-12T16:00:00.000Z', end: '2026-10-12T17:00:00.000Z', location: '1 Pool Rd, Town' });
+      .toEqual({ remoteId: 'a', etag: 'e', title: 'Swim', allDay: false, start: '2026-10-12T16:00:00.000Z', end: '2026-10-12T17:00:00.000Z',
+        location: '1 Pool Rd, Town', notes: 'Bring goggles' });
     expect(toRemoteEvent({ id: 'b_20261012', recurringEventId: 'b', etag: 'e', start: { date: '2026-10-12' }, end: { date: '2026-10-13' } }))
       .toMatchObject({ remoteId: 'b#b_20261012', title: '(No title)', allDay: true, start: '2026-10-12', end: '2026-10-13' });
     const base = { id: 'c', etag: 'e', start: { date: '2026-10-12' }, end: { date: '2026-10-13' } };

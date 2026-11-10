@@ -197,6 +197,33 @@ describe('adding iCloud events from the wall', () => {
     expect([...cloud.store.values()].some((r) => r.data.includes('Oops'))).toBe(false);
   });
 
+  it("sends a new event's notes to iCloud and keeps its flyer here, both through syncs", async () => {
+    const { app, cloud, events, send, resync, db } = await setup();
+    const cal = (db.prepare(`SELECT id FROM calendars`).get() as { id: string }).id;
+    db.prepare(`INSERT INTO photos (id, width, height, flyer) VALUES ('flyer1', 800, 600, 1)`).run();
+    const made = (await app.inject({ method: 'POST', url: '/api/events', payload: {
+      title: 'Book fair', allDay: true, start: '2026-10-15', end: '2026-10-16', calendarId: cal,
+      notes: 'Bring $10', photoId: 'flyer1' } })).json();
+    expect(made).toMatchObject({ notes: 'Bring $10', photoUrl: '/api/photos/flyer1/full', syncState: 'pending_create' });
+    await send();
+    const [href, created] = [...cloud.store.entries()].find(([, r]) => r.data.includes('Book fair'))!;
+    expect(currentDetails(created.data, href, href)).toMatchObject({ notes: 'Bring $10' });
+    await resync();
+    const shown = () => events().then((all) => all.find((e) => e.id === made.id) as unknown as { notes: string | null; photoUrl: string | null });
+    expect(await shown()).toMatchObject({ notes: 'Bring $10', photoUrl: '/api/photos/flyer1/full' });
+
+    // Notes changed on a phone come back; changed here, they're sent.
+    cloud.put(href, created.data.replace('Bring $10', 'Bring $12'));
+    await resync();
+    expect(await shown()).toMatchObject({ notes: 'Bring $12' });
+    await app.inject({ method: 'PATCH', url: `/api/events/${made.id}`, payload: { notes: 'Bring $15' } });
+    await send();
+    expect(currentDetails(cloud.store.get(href)!.data, href, href)).toMatchObject({ notes: 'Bring $15' });
+    // The flyer can be taken off.
+    await app.inject({ method: 'PATCH', url: `/api/events/${made.id}`, payload: { photoId: null } });
+    expect((await shown()).photoUrl).toBeNull();
+  });
+
   it('only adds to calendars that take changes', async () => {
     const { app, db } = await setup();
     const cal = (db.prepare(`SELECT id FROM calendars`).get() as { id: string }).id;

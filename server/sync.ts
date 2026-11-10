@@ -51,8 +51,8 @@ export async function syncOnce(db: DB, source: CalendarSource, now = new Date())
   const clearEvents = db.prepare('DELETE FROM events WHERE calendar_id = ?');
   // Who each event is for is filled in afterwards by applyPeople().
   const insertEvent = db.prepare(`
-    INSERT INTO events (id, calendar_id, title, all_day, start, end, location, remote_id, series_id, etag, sync_state)
-    VALUES (@id, @calendarId, @title, @allDay, @start, @end, @location, @remoteId, @seriesId, @etag, 'synced')
+    INSERT INTO events (id, calendar_id, title, all_day, start, end, location, notes, remote_id, series_id, etag, sync_state)
+    VALUES (@id, @calendarId, @title, @allDay, @start, @end, @location, @notes, @remoteId, @seriesId, @etag, 'synced')
     ON CONFLICT(id) DO NOTHING`);
 
   let events = 0;
@@ -94,6 +94,7 @@ const toRow = (calendarId: string, ev: RemoteEvent) => ({
   // Every occurrence of a repeating event shares its resource URL, the part before '#'.
   seriesId: ev.remoteId.split('#')[0],
   location: ev.location ?? null,
+  notes: ev.notes?.slice(0, 4000) ?? null,
   etag: ev.etag,
 });
 

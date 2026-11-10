@@ -61,7 +61,7 @@ describe('ICloudSource', () => {
       new Date('2026-10-01T00:00:00Z'), new Date('2026-11-01T00:00:00Z'));
     expect(events).toEqual([{
       remoteId: 'https://p42-caldav.icloud.com/123/calendars/home/a.ics', etag: '"abc"', title: 'Swim & snack',
-      allDay: false, start: '2026-10-06T16:00:00.000Z', end: '2026-10-06T17:00:00.000Z', location: null,
+      allDay: false, start: '2026-10-06T16:00:00.000Z', end: '2026-10-06T17:00:00.000Z', location: null, notes: null,
     }]);
   });
 

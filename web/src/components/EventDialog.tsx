@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { addDays, dayKey, fromDayKey, hhmm, timeLabel, toInstant } from '../lib/dates';
 import { UNASSIGNED } from '../lib/color';
-import { useCalendars, useSetPeople, useSetSetting, useSettings, useSetSpecial, useSetVisibility } from '../lib/queries';
+import { useCalendars, useSetPeople, useSetSpecial, useSetVisibility } from '../lib/queries';
 import type { CalEvent, EventInput, Member, Scope, Visibility } from '../lib/types';
 import { PencilIcon } from './icons';
 import TravelInfo from './TravelInfo';
@@ -10,6 +10,7 @@ import { PickChip } from './NameChip';
 import sheet from '../styles/Sheet.module.css';
 import s from '../styles/EventDialog.module.css';
 import DateInput from './DateInput';
+import { CalendarPick, useNewEventCalendar } from './CalendarPick';
 
 interface Props {
   day: string;
@@ -184,23 +185,6 @@ export default function EventDialog(props: Props) {
   return <EventForm {...props} />;
 }
 
-/**
- * Where a new event goes: an iCloud calendar (sent there, so it reaches the phones) or this wall only.
- * The last choice is remembered for next time.
- */
-function useNewEventCalendar(enabled: boolean) {
-  const calendars = (useCalendars().data ?? []).filter((c) => c.writable && !c.hidden);
-  const saved = useSettings().data?.newEventCalendar as string | undefined;
-  const setSetting = useSetSetting();
-  const options = enabled ? calendars : [];
-  // Same-named calendars are told apart by one of their events.
-  const label = (c: (typeof calendars)[number]) =>
-    options.filter((o) => o.name === c.name).length > 1 && c.sample[0] ? `${c.name} (has “${c.sample[0]}”)` : c.name;
-  const fallback = options[0]?.id ?? 'local';
-  const initial = saved === 'local' || options.some((c) => c.id === saved) ? saved! : fallback;
-  return { options, label, initial, remember: (id: string) => setSetting.mutate({ key: 'newEventCalendar', value: id }) };
-}
-
 function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSynced, special: newSpecial }: Props) {
   const setVisibility = useSetVisibility();
   const setSpecial = useSetSpecial();
@@ -226,14 +210,10 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
   const [askScope, setAskScope] = useState<EventInput | null>(null);
   const repeating = !!event?.repeats && event.calendarId !== 'local';
   const target = useNewEventCalendar(!event && !!canEditSynced);
-  // null until picked, so the remembered choice can arrive after the form opens.
-  const [calendarId, setCalendarId] = useState<string | null>(null);
-  const chosenCalendar = calendarId ?? target.initial;
+  const chosenCalendar = target.chosen;
   // Who sees it: as picked, else the event's own, else (new) the chosen calendar's default.
   const [seenPick, setSeenPick] = useState<Visibility | null>(null);
   const seen = seenPick ?? event?.visibility ?? calendars.find((c) => c.id === chosenCalendar)?.visibility ?? 'everyone';
-  // Notes are kept on Sprig's own events (iCloud ones have nowhere for them yet).
-  const ownEvent = event ? event.calendarId === 'local' : !target.options.length || chosenCalendar === 'local';
 
   const problem =
     !title.trim() ? 'Add a title'
@@ -247,18 +227,17 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
     const t = title.trim();
     const place = location.trim() || null;
     // Only new events choose a calendar.
-    const where: Pick<EventInput, 'calendarId' | 'visibility' | 'special' | 'notes' | 'photoId'> = !event && target.options.length ? { calendarId: chosenCalendar } : {};
-    if (!event && target.options.length) target.remember(chosenCalendar);
+    const where: Pick<EventInput, 'calendarId' | 'visibility' | 'special' | 'notes' | 'photoId'> = event ? {} : target.forSave();
     // A new event says who sees it when it's picked; an existing one changes it on its own.
     if (!event && seenPick) where.visibility = seenPick;
     if (event && seenPick && seenPick !== event.visibility) setVisibility.mutate({ id: event.id, visibility: seenPick });
     // A new event says it's special when it's made; an existing one changes it on its own.
     if (!event && special) where.special = true;
     if (event && special !== event.special) setSpecial.mutate({ id: event.id, special });
-    if (ownEvent) {
-      where.notes = notes.trim() || null;
-      if (!keepPhoto) where.photoId = null;
-    }
+    // Notes (an iCloud event's go to iCloud too), only when changed; the flyer, when taken off.
+    const nextNotes = notes.trim() || null;
+    if (!event || nextNotes !== (event.notes ?? null)) where.notes = nextNotes;
+    if (!keepPhoto) where.photoId = null;
     const input: EventInput = allDay
       ? { title: t, memberIds, allDay, start: date, end: dayKey(addDays(fromDayKey(lastDate), 1)), location: place, ...where }
       : { title: t, memberIds, allDay, start: toInstant(date, startTime), end: toInstant(date, endTime), location: place, ...where };
@@ -295,24 +274,14 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
         </label>
         <SeenPicker value={seen} onChange={setSeenPick} />
 
-        {target.options.length > 0 && (
-          <label className={s.calendarPick}>
-            Calendar
-            <select value={chosenCalendar} onChange={(e) => setCalendarId(e.target.value)}>
-              {target.options.map((c) => <option key={c.id} value={c.id}>{target.label(c)} (iCloud)</option>)}
-              <option value="local">This wall only</option>
-            </select>
-          </label>
-        )}
+        <CalendarPick target={target} className={s.calendarPick} />
 
         <AddressInput value={location} onChange={setLocation} />
         {/* Travel time for the saved address (the field above already shows it). */}
         {event?.location && event.location === location.trim() && <TravelInfo event={event} showAddress={false} />}
 
-        {ownEvent && (
-          <textarea className={s.notes} placeholder="Notes" aria-label="Notes" value={notes} maxLength={4000}
-            rows={Math.min(8, Math.max(2, notes.split('\n').length))} onChange={(e) => setNotes(e.target.value)} />
-        )}
+        <textarea className={s.notes} placeholder="Notes" aria-label="Notes" value={notes} maxLength={4000}
+          rows={Math.min(8, Math.max(2, notes.split('\n').length))} onChange={(e) => setNotes(e.target.value)} />
         {event?.photoUrl && keepPhoto && (
           // The flyer it was read from (Snap a flyer): tap for the full photo.
           <div className={s.flyer}>

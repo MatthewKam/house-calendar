@@ -30,7 +30,7 @@ describe('expandCalendarData', () => {
       'DTSTART;TZID=America/New_York:20261006T090000', 'DTEND;TZID=America/New_York:20261006T100000', 'END:VEVENT'));
     expect(ev).toEqual({
       remoteId: 'https://p1.icloud.com/cal/a.ics', etag: '"e1"', title: 'Dentist',
-      allDay: false, start: '2026-10-06T13:00:00.000Z', end: '2026-10-06T14:00:00.000Z', location: null,
+      allDay: false, start: '2026-10-06T13:00:00.000Z', end: '2026-10-06T14:00:00.000Z', location: null, notes: null,
     });
   });
 

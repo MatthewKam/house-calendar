@@ -21,16 +21,18 @@ const all = (ics: string) => expandCalendarData(ics, HREF, '', new Date('2026-10
 describe('editing iCloud events', () => {
   it('reads one occurrence as it stands', () => {
     expect(currentDetails(ONE_OFF, HREF, HREF)).toEqual({
-      title: 'Dentist', allDay: false, start: '2026-10-06T13:00:00.000Z', end: '2026-10-06T14:00:00.000Z', location: 'Old St' });
+      title: 'Dentist', allDay: false, start: '2026-10-06T13:00:00.000Z', end: '2026-10-06T14:00:00.000Z', location: 'Old St', notes: null });
     expect(currentDetails(WEEKLY, HREF, OCT_13)).toMatchObject({ title: 'Soccer', start: '2026-10-13T21:00:00.000Z' });
     expect(currentDetails(WEEKLY, HREF, `${HREF}#2026-10-14T17:00:00`)).toBeNull();
   });
 
   it('changes a one-off event, dropping the old map pin and counting the change', () => {
     const out = editEvent(ONE_OFF, HREF, HREF, { title: 'Dentist (moved)', allDay: false,
-      start: '2026-10-07T15:00:00.000Z', end: '2026-10-07T16:00:00.000Z', location: '1 New Rd' });
+      start: '2026-10-07T15:00:00.000Z', end: '2026-10-07T16:00:00.000Z', location: '1 New Rd', notes: 'Bring the card' });
     expect(currentDetails(out, HREF, HREF)).toEqual({ title: 'Dentist (moved)', allDay: false,
-      start: '2026-10-07T15:00:00.000Z', end: '2026-10-07T16:00:00.000Z', location: '1 New Rd' });
+      start: '2026-10-07T15:00:00.000Z', end: '2026-10-07T16:00:00.000Z', location: '1 New Rd', notes: 'Bring the card' });
+    // Cleared: gone from the event.
+    expect(currentDetails(editEvent(out, HREF, HREF, { notes: null }), HREF, HREF)?.notes).toBeNull();
     expect(out).not.toContain('X-APPLE-STRUCTURED-LOCATION');
     expect(out).toContain('SEQUENCE:3');
     expect(out).toContain('UID:1');

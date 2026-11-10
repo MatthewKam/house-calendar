@@ -27,6 +27,9 @@ function times(start: ICAL.Time, end: ICAL.Time): Pick<RemoteEvent, 'allDay' | '
 const locationOf = (c: ICAL.Component) =>
   String(c.getFirstPropertyValue('location') ?? '').replace(/\s*\n\s*/g, ', ').trim() || null;
 
+/** An event's notes (DESCRIPTION), or null. */
+export const notesOf = (c: ICAL.Component) => String(c.getFirstPropertyValue('description') ?? '').trim() || null;
+
 const cancelled = (c: ICAL.Component) => String(c.getFirstPropertyValue('status') ?? '').toUpperCase() === 'CANCELLED';
 
 /**
@@ -41,13 +44,14 @@ export function expandCalendarData(ics: string, href: string, etag: string, from
   const vevents = root.getAllSubcomponents('vevent');
   const master = vevents.find((v) => !v.hasProperty('recurrence-id'));
   const out: RemoteEvent[] = [];
-  const add = (remoteId: string, title: string, start: ICAL.Time, end: ICAL.Time, location: string | null) => {
+  // An occurrence, with its place and notes from its own component (a changed day can have its own).
+  const add = (remoteId: string, title: string, start: ICAL.Time, end: ICAL.Time, c: ICAL.Component) => {
     const t = times(start, end);
     const startMs = t.allDay ? start.toJSDate().getTime() : Date.parse(t.start);
     const endMs = t.allDay ? ICAL.Time.fromDateString(t.end).toJSDate().getTime() : Date.parse(t.end);
     // Zero-length timed events still show if they start inside the window.
     if (startMs < to.getTime() && (endMs > from.getTime() || (endMs === startMs && startMs >= from.getTime()))) {
-      out.push({ remoteId, etag, title: title || '(No title)', ...t, location });
+      out.push({ remoteId, etag, title: title || '(No title)', ...t, location: locationOf(c), notes: notesOf(c) });
     }
   };
 
@@ -56,14 +60,14 @@ export function expandCalendarData(ics: string, href: string, etag: string, from
     for (const v of vevents) {
       if (cancelled(v)) continue;
       const ev = new ICAL.Event(v);
-      add(`${href}#${ev.recurrenceId.toString()}`, ev.summary, ev.startDate, ev.endDate, locationOf(v));
+      add(`${href}#${ev.recurrenceId.toString()}`, ev.summary, ev.startDate, ev.endDate, v);
     }
     return out;
   }
 
   const event = new ICAL.Event(master, { exceptions: vevents.filter((v) => v !== master) });
   if (!event.isRecurring()) {
-    if (!cancelled(master)) add(href, event.summary, event.startDate, event.endDate, locationOf(master));
+    if (!cancelled(master)) add(href, event.summary, event.startDate, event.endDate, master);
     return out;
   }
 
@@ -72,7 +76,7 @@ export function expandCalendarData(ics: string, href: string, etag: string, from
     const occ = event.getOccurrenceDetails(next);
     if (occ.startDate.toJSDate() >= to) break;
     if (cancelled(occ.item.component)) continue;
-    add(`${href}#${occ.recurrenceId.toString()}`, occ.item.summary, occ.startDate, occ.endDate, locationOf(occ.item.component));
+    add(`${href}#${occ.recurrenceId.toString()}`, occ.item.summary, occ.startDate, occ.endDate, occ.item.component);
   }
   return out;
 }

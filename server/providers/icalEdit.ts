@@ -12,6 +12,8 @@ export interface Details {
   start: string;
   end: string;
   location: string | null;
+  /** Its notes (DESCRIPTION). Left out: not being changed. */
+  notes?: string | null;
 }
 
 const DAY_MS = 86_400_000;
@@ -36,7 +38,9 @@ export function currentDetails(ics: string, href: string, remoteId: string): Det
   const from = new Date(Number.isNaN(around) ? 0 : around - 366 * DAY_MS);
   const to = new Date(Number.isNaN(around) ? Date.UTC(2200, 0) : around + 366 * DAY_MS);
   const found = expandCalendarData(ics, href, '', from, to).find((e) => e.remoteId === remoteId);
-  return found ? { title: found.title, allDay: found.allDay, start: found.start, end: found.end, location: found.location ?? null } : null;
+  return found
+    ? { title: found.title, allDay: found.allDay, start: found.start, end: found.end, location: found.location ?? null, notes: found.notes ?? null }
+    : null;
 }
 
 /** A DATE or DATE-TIME property, copying a time zone parameter when the time has none of its own. */
@@ -97,6 +101,10 @@ export function editEvent(ics: string, href: string, remoteId: string, changes: 
     target.removeAllProperties('x-apple-structured-location');
     if (changes.location) target.updatePropertyWithValue('location', changes.location);
     else target.removeAllProperties('location');
+  }
+  if (changes.notes !== undefined) {
+    if (changes.notes) target.updatePropertyWithValue('description', changes.notes);
+    else target.removeAllProperties('description');
   }
   stamp(target);
   return root.toString();
@@ -180,6 +188,7 @@ export function newEvent(uid: string, d: Details): string {
   ev.addProperty(timeProp('dtstart', time(d.start)));
   ev.addProperty(timeProp('dtend', time(d.end)));
   if (d.location) ev.updatePropertyWithValue('location', d.location);
+  if (d.notes) ev.updatePropertyWithValue('description', d.notes);
   root.addSubcomponent(ev);
   return root.toString();
 }
