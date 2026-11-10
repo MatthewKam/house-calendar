@@ -621,24 +621,37 @@ details > summary.cardHead {
 	color: var(--muted);
 	font-size: 0.85rem;
 }
-/* Two bars side by side: the temperature (green) and how warm it feels (orange). */
-.weekBars {
-	position: absolute;
-	left: 50%;
-	width: 1.1rem;
-	translate: -50% 0;
+/* Two bars side by side, each with its numbers: the temperature (green) and how warm it feels (grey). */
+.weekRange {
+	display: flex;
+	justify-content: center;
+	gap: 0.1rem;
+}
+.weekPair {
+	position: relative;
+	flex: 1;
+	max-width: 2rem;
+	min-width: 0;
+}
+.weekPair .weekHigh,
+.weekPair .weekLow {
+	font-size: 0.72rem;
+}
+.weekPairFeels .weekHigh,
+.weekPairFeels .weekLow {
+	color: var(--muted);
+	font-weight: 500;
 }
 .weekBar {
 	position: absolute;
-	left: 0;
+	left: 50%;
 	width: 0.45rem;
+	translate: -50% 0;
 	border-radius: 999px;
 	background: linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 30%, var(--surface)));
 }
-.weekBarFeels {
-	left: auto;
-	right: 0;
-	background: linear-gradient(#e07b2a, color-mix(in srgb, #e07b2a 30%, var(--surface)));
+.weekPairFeels .weekBar {
+	background: linear-gradient(#8a8f98, color-mix(in srgb, #8a8f98 30%, var(--surface)));
 }
 /* Which bar is which. */
 .weekKey {
@@ -660,18 +673,9 @@ details > summary.cardHead {
 	border-radius: 0.2rem;
 	background: var(--accent);
 }
-.weekSwatch.weekBarFeels {
-	position: static;
-	background: #e07b2a;
+.weekSwatchFeels {
+	background: #8a8f98;
 }
-.weekFeels {
-	display: flex;
-	flex-direction: column;
-	font-size: 0.66rem;
-	color: var(--muted);
-	line-height: 1.25;
-}
-
 /* Special days: a picture, the name and date, and how long until it. */
 .specials {
 	list-style: none;

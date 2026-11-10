@@ -55,16 +55,16 @@ const BAR_HEIGHT = 84;
 
 /**
  * The next seven days side by side, a column each: the day, its date, its sky; then two bars, its high to
- * its low (green) and how warm it feels at most to least (orange), all on one scale so a warmer day sits
- * higher, with the high over them and the low under; then how warm it feels, its wind and chance of rain.
- * A key under the columns says which bar is which.
+ * its low (green) and how warm it feels at most to least (grey), all on one scale so a warmer day sits
+ * higher, each with its high over it and its low under it; then its wind and chance of rain. A key under
+ * the columns says which bar is which.
  */
 function Week({ days }: { days: Weather["days"] }) {
 	const top = Math.max(...days.flatMap((d) => [d.high, d.feelsHigh]));
 	const bottom = Math.min(...days.flatMap((d) => [d.low, d.feelsLow]));
 	const span = Math.max(top - bottom, 1);
 	const at = (t: number) => ((top - t) / span) * BAR_HEIGHT;
-	const bar = (high: number, low: number) => ({ top: at(high) + 20, height: Math.max(at(low) - at(high), 6) });
+	const bar = (high: number, low: number) => ({ top: at(high) + 16, height: Math.max(at(low) - at(high), 6) });
 	return (
 		<>
 		<ul className={s.week} aria-label="The next seven days">
@@ -92,26 +92,17 @@ function Week({ days }: { days: Weather["days"] }) {
 							aria-hidden="true"
 							style={{ height: BAR_HEIGHT + 40 }}
 						>
-							{/* The high over the higher bar's top, the low under the lower one's bottom. */}
-							<span className={s.weekHigh} style={{ top: at(Math.max(d.high, d.feelsHigh)) }}>
-								{d.high}°
-							</span>
-							<span className={s.weekBars} style={{ top: 0, height: "100%" }}>
-								<span className={s.weekBar} style={bar(d.high, d.low)} />
-								<span className={`${s.weekBar} ${s.weekBarFeels}`} style={bar(d.feelsHigh, d.feelsLow)} />
-							</span>
-							<span className={s.weekLow} style={{ top: at(Math.min(d.low, d.feelsLow)) + 22 }}>
-								{d.low}°
-							</span>
-						</span>
-						<span className={s.weekFeels} aria-hidden="true">
-							<span>Feels</span>
-							<span>
-								<strong>H</strong> {d.feelsHigh}°
-							</span>
-							<span>
-								<strong>L</strong> {d.feelsLow}°
-							</span>
+							{/* Each bar with its own high over it and low under it. */}
+							{[
+								{ high: d.high, low: d.low, feels: false },
+								{ high: d.feelsHigh, low: d.feelsLow, feels: true },
+							].map(({ high, low, feels }) => (
+								<span key={String(feels)} className={`${s.weekPair} ${feels ? s.weekPairFeels : ""}`}>
+									<span className={s.weekHigh} style={{ top: at(high) }}>{high}°</span>
+									<span className={s.weekBar} style={bar(high, low)} />
+									<span className={s.weekLow} style={{ top: at(low) + 20 }}>{low}°</span>
+								</span>
+							))}
 						</span>
 						<span className={s.weekWind} aria-hidden="true">
 							💨 {d.wind}
@@ -125,7 +116,7 @@ function Week({ days }: { days: Weather["days"] }) {
 		</ul>
 		<p className={s.weekKey} aria-hidden="true">
 			<span><span className={s.weekSwatch} /> Temperature</span>
-			<span><span className={`${s.weekSwatch} ${s.weekBarFeels}`} /> Feels like</span>
+			<span><span className={`${s.weekSwatch} ${s.weekSwatchFeels}`} /> Feels like</span>
 		</p>
 		</>
 	);
