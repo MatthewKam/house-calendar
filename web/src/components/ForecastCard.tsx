@@ -178,7 +178,10 @@ function HourGraph({ hours, isDay }: { hours: Hour[]; isDay: (iso: string) => bo
 					{shown.rain > 0 && <span>💧 {shown.rain}% rain</span>}
 				</div>
 			)}
-			{picked === null && <p className={s.graphHint}>Tap the line for an hour's weather</p>}
+			{/* Hidden while an hour's showing, but keeping its room, so the week under it stays put. */}
+			<p className={s.graphHint} style={picked === null ? undefined : { visibility: "hidden" }}>
+				Tap the line for an hour's weather
+			</p>
 		</div>
 	);
 }
