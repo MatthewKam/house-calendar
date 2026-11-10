@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "../lib/api";
+import { useAuthStatus } from "../lib/queries";
 import s from "../styles/PinPad.module.css";
 
 /** For the dialog the pad is in: on a phone on its side, the words and buttons go beside the pad. */
@@ -29,7 +28,7 @@ export default function PinPad({ value, onChange, onEnter, error, done = "OK" }:
 	useEffect(() => {
 		if (error) setShakes((n) => n + 1);
 	}, [error]);
-	const status = useQuery({ queryKey: ["auth"], queryFn: api.authStatus }).data;
+	const status = useAuthStatus().data;
 	const length = status?.signedIn ? status.pinLength : null;
 	const max = length ?? MAX;
 	// Tried to type past the longest a PIN can be.

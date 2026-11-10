@@ -17,8 +17,9 @@ import { sky } from "../lib/weather";
 import { isNight, TRANSITIONS } from "../lib/screensaver";
 import type { CalEvent, Photo, ScreenSaverSettings } from "../lib/types";
 import { preload, slideSeconds } from "../lib/photos";
-import { dayKey, driveLabel, fromDayKey, timeLabel } from "../lib/dates";
+import { dayKey, driveLabel, fromDayKey, timeLabel, longDate } from "../lib/dates";
 import s from "../styles/ScreenSaver.module.css";
+import { shuffle } from "../lib/random";
 
 type Effect = Exclude<ScreenSaverSettings["transition"], "mix"> | "slideBack";
 const EFFECTS = TRANSITIONS.map((t) => t.id).filter(
@@ -37,15 +38,6 @@ interface Slide {
 	/** Ken Burns: where the slow zoom drifts toward. */
 	origin: string;
 	key: number;
-}
-
-function shuffle<T>(list: T[]) {
-	const out = [...list];
-	for (let i = out.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		[out[i], out[j]] = [out[j], out[i]];
-	}
-	return out;
 }
 
 /**
@@ -291,11 +283,7 @@ export default function ScreenSaver({
 				<div className={s.cornerInfo}>
 					<span className={s.time}>{timeLabel(now)}</span>
 					<span className={s.date}>
-						{now.toLocaleDateString([], {
-							weekday: "long",
-							month: "long",
-							day: "numeric",
-						})}
+						{longDate(now)}
 					</span>
 					{weather && look && (
 						<span className={s.weather}>

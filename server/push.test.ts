@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { openDb } from './db.ts';
-import { buildApp } from './app.ts';
 import { atLocal, sendDue, sendOnce, type Alert, type Pusher, type Subscription } from './push.ts';
+import { household } from './testing.ts';
 
 function setup(withPush = true) {
-  const db = openDb(':memory:');
-  db.prepare(`INSERT INTO members (id, name, color) VALUES ('alex', 'Alex', '#000000')`).run();
   const sent: { endpoint: string; alert: Alert }[] = [];
   const gone = new Set<string>();
   const pusher: Pusher = {
@@ -15,11 +13,7 @@ function setup(withPush = true) {
       sent.push({ endpoint: sub.endpoint, alert });
     },
   };
-  const app = buildApp(db, withPush ? { push: pusher } : {});
-  const call = async (method: string, url: string, payload?: object) => {
-    const res = await app.inject({ method: method as 'GET', url, payload });
-    return { status: res.statusCode, body: res.body ? res.json() : undefined };
-  };
+  const { db, call } = household([{ id: 'alex', name: 'Alex' }], withPush ? { push: pusher } : {});
   return { db, call, pusher, sent, gone };
 }
 

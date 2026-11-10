@@ -11,6 +11,7 @@ import DateInput from "./DateInput";
 import { CalendarPick, useNewEventCalendar } from "./CalendarPick";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Capture.module.css";
+import { isKid, firstName } from "../lib/people";
 
 /** A card being checked: the proposal, in the shape the fields edit. */
 interface Card {
@@ -118,7 +119,7 @@ interface Props {
 export default function CaptureSheet({ photo, members, onClose, onAdded }: Props) {
 	const qc = useQueryClient();
 	const lists = useLists().data ?? [];
-	const kids = members.filter((m) => m.stage !== null && m.stage !== "adult");
+	const kids = members.filter(isKid);
 	const [text, setText] = useState("");
 	const [listening, setListening] = useState(false);
 	const [working, setWorking] = useState(!!photo);
@@ -230,7 +231,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 					<button key={m.id} type="button" className={s.person} aria-pressed={on}
 						style={on ? { background: m.color, borderColor: m.color, color: textOn(m.color) } : undefined}
 						onClick={() => set(c.id, { who: one ? (on ? [] : [m.id]) : on ? c.who.filter((w) => w !== m.id) : [...c.who, m.id] })}>
-						{m.name.split(" ")[0]}
+						{firstName(m.name)}
 					</button>
 				);
 			})}

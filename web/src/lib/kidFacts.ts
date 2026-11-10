@@ -3,7 +3,7 @@
 
 export interface KidFact { picture: string; text: string }
 
-export const KID_FACTS: KidFact[] = [
+const KID_FACTS: KidFact[] = [
 	{ picture: "🐙", text: "An octopus has three hearts!" },
 	{ picture: "🦋", text: "Butterflies taste with their feet." },
 	{ picture: "🐝", text: "Bees do a little dance to tell their friends where the flowers are." },
@@ -57,7 +57,7 @@ export const KID_FACTS: KidFact[] = [
 ];
 
 /** Facts for the littlest (2–3): things they can see, hear or do, in a few words. */
-export const LITTLE_FACTS: KidFact[] = [
+const LITTLE_FACTS: KidFact[] = [
 	{ picture: "🐄", text: "Cows say moo, and they give us milk." },
 	{ picture: "🐝", text: "Bees go buzz, and they make honey." },
 	{ picture: "🐘", text: "Elephants are big, with a long, long nose." },

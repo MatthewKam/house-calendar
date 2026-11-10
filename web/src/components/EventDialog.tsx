@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { addDays, dayKey, fromDayKey, hhmm, timeLabel, toInstant } from '../lib/dates';
+import { addDays, dayKey, fromDayKey, hhmm, timeLabel, toInstant, longDate } from '../lib/dates';
 import { UNASSIGNED } from '../lib/color';
 import { useCalendars, useSetPeople, useSetSpecial, useSetVisibility } from '../lib/queries';
 import type { CalEvent, EventInput, Member, Scope, Visibility } from '../lib/types';
@@ -11,6 +11,7 @@ import sheet from '../styles/Sheet.module.css';
 import s from '../styles/EventDialog.module.css';
 import DateInput from './DateInput';
 import { CalendarPick, useNewEventCalendar } from './CalendarPick';
+import { isKid, firstName } from '../lib/people';
 
 interface Props {
   day: string;
@@ -99,12 +100,11 @@ function SyncedEvent({ event, members, onClose, onEdit, locked }: {
     setDraft(null);
   }
   const people = members.filter((m) => memberIds.includes(m.id));
-  const date = (d: Date) => d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
   const when = event.allDay
     ? fromDayKey(event.end) > addDays(fromDayKey(event.start), 1)
-      ? `${date(fromDayKey(event.start))} – ${date(addDays(fromDayKey(event.end), -1))}`
-      : `${date(fromDayKey(event.start))}, all day`
-    : `${date(new Date(event.start))}, ${timeLabel(event.start)} – ${timeLabel(event.end)}`;
+      ? `${longDate(fromDayKey(event.start))} – ${longDate(addDays(fromDayKey(event.end), -1))}`
+      : `${longDate(fromDayKey(event.start))}, all day`
+    : `${longDate(new Date(event.start))}, ${timeLabel(event.start)} – ${timeLabel(event.end)}`;
   return (
     <>
       <div className={sheet.scrim} onClick={onClose} role="presentation" />
@@ -167,9 +167,9 @@ function SyncedEvent({ event, members, onClose, onEdit, locked }: {
 
 /** Whose Today a special day counts down on: the kids it's for, or with none picked (or only grown-ups), every kid's. */
 function specialFor(members: Member[], memberIds: string[]) {
-  const kids = members.filter((m) => m.stage !== null && m.stage !== 'adult');
-  const picked = kids.filter((k) => memberIds.includes(k.id)).map((k) => `${k.name.split(' ')[0]}'s`);
-  if (picked.length === 0 || picked.length === kids.length) return kids.length > 1 ? "the kids'" : `${kids[0]?.name.split(' ')[0] ?? 'the kids'}'s`;
+  const kids = members.filter(isKid);
+  const picked = kids.filter((k) => memberIds.includes(k.id)).map((k) => `${firstName(k.name)}'s`);
+  if (picked.length === 0 || picked.length === kids.length) return kids.length > 1 ? "the kids'" : `${kids[0] ? firstName(kids[0].name) : 'the kids'}'s`;
   return picked.join(' and ');
 }
 

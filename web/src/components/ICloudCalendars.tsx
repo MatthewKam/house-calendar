@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
+import { useAuthStatus } from "../lib/queries";
 import { ago } from "../lib/dates";
 import type { Member } from "../lib/types";
 import s from "../styles/Account.module.css";
@@ -12,7 +13,7 @@ import panel from "../styles/MembersPanel.module.css";
  */
 export default function ICloudCalendars({ members }: { members: Member[] }) {
 	const qc = useQueryClient();
-	const status = useQuery({ queryKey: ["auth"], queryFn: api.authStatus }).data;
+	const status = useAuthStatus().data;
 	const list = useQuery({ queryKey: ["connections"], queryFn: api.connections, refetchInterval: 30_000 }).data?.icloud;
 	const [open, setOpen] = useState(false);
 	const [appleId, setAppleId] = useState("");

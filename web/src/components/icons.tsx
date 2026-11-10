@@ -32,9 +32,3 @@ export const GripIcon = () => (
 	</svg>
 );
 
-export const GiftIcon = () => (
-	<svg {...svg}>
-		<rect x="3.5" y="8" width="17" height="4" rx="1" />
-		<path d="M5 12v8h14v-8M12 8v12M12 8c-1.5-3-5-3.5-5-1.2C7 8 9.5 8 12 8zm0 0c1.5-3 5-3.5 5-1.2C17 8 14.5 8 12 8z" />
-	</svg>
-);

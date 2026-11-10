@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, type AuthStatus } from './api';
+import { useAuthStatus } from './queries';
 
 /** A parent's unlock ends after this long without a touch. */
 const IDLE_MS = 5 * 60_000;
@@ -12,7 +13,7 @@ const IDLE_MS = 5 * 60_000;
  */
 export function useParent() {
   const qc = useQueryClient();
-  const status = useQuery({ queryKey: ['auth'], queryFn: api.authStatus }).data;
+  const status = useAuthStatus().data;
   const set = (s: AuthStatus) => qc.setQueryData(['auth'], s);
   const unlock = useMutation({
     mutationFn: ({ pin }: { pin: string }) => api.unlockParent(pin),

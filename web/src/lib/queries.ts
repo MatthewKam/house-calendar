@@ -39,6 +39,7 @@ const newId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toStr
 const REFRESH_MS = 60_000;
 
 export const keys = {
+  auth: ['auth'] as const,
   members: ['members'] as const,
   events: ['events'] as const,
   range: (from: Date, days: number) => ['events', dayKey(from), days] as const,
@@ -78,6 +79,14 @@ export function useRangeEvents(from: Date, days: number) {
     // Keep showing the old range while the next one loads, so paging doesn't flash empty.
     placeholderData: keepPreviousData,
   });
+}
+
+/**
+ * Who this device is signed in as, its household, and whether a parent has unlocked it. A failed
+ * check is tried once more, then shown (the sign-in screen handles it).
+ */
+export function useAuthStatus() {
+  return useQuery({ queryKey: keys.auth, queryFn: api.authStatus, retry: 1 });
 }
 
 /** iCloud sync status; null when no account is set up. */

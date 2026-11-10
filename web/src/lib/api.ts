@@ -16,7 +16,7 @@ async function call<T>(method: string, url: string, body?: unknown, signal?: Abo
   return res.status === 204 ? (undefined as T) : res.json();
 }
 
-export type Role = 'guardian' | 'kid' | 'wall';
+type Role = 'guardian' | 'kid' | 'wall';
 /** Who this device is signed in as (server/hosted.ts). */
 export type AuthStatus = { signedIn: false } | {
   signedIn: true;
@@ -45,7 +45,7 @@ export interface GoogleConnection {
   id: string; account: string; memberId: string | null; connectedAt: string;
   lastSuccess: string | null; lastError: string | null; calendars: number;
 }
-export interface AccountConfig { google: string | null; apple: string | null; email: boolean }
+interface AccountConfig { google: string | null; apple: string | null; email: boolean }
 export interface JoinPreview { kind: 'guardian' | 'kid' | 'wall'; household: string; for: string | null; choose: { id: string; name: string }[] | null }
 export interface HouseholdAccess {
   name: string;

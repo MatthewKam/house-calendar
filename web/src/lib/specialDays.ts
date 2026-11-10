@@ -2,6 +2,7 @@
 // family birthdays, and events marked special, with a countdown in sleeps.
 
 import { dayKey, fromDayKey } from "./dates";
+import { firstName } from "./people";
 
 export interface SpecialDay {
 	/** YYYY-MM-DD. */
@@ -77,7 +78,7 @@ export function birthdays(people: { name: string; birthdate: string | null }[], 
 		// Born on 29 February: the 28th in other years.
 		const date = new Date(year, m - 1, d);
 		if (date.getMonth() !== m - 1) date.setDate(0);
-		return [{ day: dayKey(date), name: `${p.name.split(" ")[0]}'s birthday`, picture: "🎂" }];
+		return [{ day: dayKey(date), name: `${firstName(p.name)}'s birthday`, picture: "🎂" }];
 	});
 }
 

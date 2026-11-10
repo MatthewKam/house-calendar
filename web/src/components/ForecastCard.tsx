@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
-import { fromDayKey } from "../lib/dates";
+import { fromDayKey, longDate } from "../lib/dates";
 import { sky } from "../lib/weather";
 import type { Weather } from "../lib/types";
 import s from "../styles/Today.module.css";
@@ -77,7 +77,7 @@ function Week({ days }: { days: Weather["days"] }) {
 					<li
 						key={d.date}
 						className={s.weekDay}
-						aria-label={`${date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })}: ${look.label}, ${d.rain}% rain, high ${d.high}°, low ${d.low}°, wind ${d.wind} mph, feels like ${d.feelsHigh}° to ${d.feelsLow}°`}
+						aria-label={`${longDate(date)}: ${look.label}, ${d.rain}% rain, high ${d.high}°, low ${d.low}°, wind ${d.wind} mph, feels like ${d.feelsHigh}° to ${d.feelsLow}°`}
 					>
 						<span className={s.weekName} aria-hidden="true">
 							{date.toLocaleDateString([], { weekday: "short" })}

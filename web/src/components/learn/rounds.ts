@@ -9,14 +9,8 @@ export interface GameProps {
 }
 
 /** A copy in random order. */
-export function shuffle<T>(list: readonly T[]): T[] {
-	const out = [...list];
-	for (let i = out.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		[out[i], out[j]] = [out[j], out[i]];
-	}
-	return out;
-}
+export { shuffle } from "../../lib/random";
+import { shuffle } from "../../lib/random";
 
 /** `n` different ones, at random. */
 export const pick = <T,>(list: readonly T[], n: number) => shuffle(list).slice(0, n);
@@ -61,6 +55,18 @@ export const at = <T,>(perLevel: readonly T[], level: number) => perLevel[Math.m
 
 /** How long the cheer shows before the next round starts by itself. */
 export const CHEER_MS = 1600;
+
+/**
+ * Timers for a game's moments (the cheer, the next round, a pop going), all cleared when the game
+ * closes, so nothing fires after it's gone. later(fn, ms) runs fn after ms.
+ */
+export function useLater() {
+	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+	useEffect(() => () => timers.current.forEach(clearTimeout), []);
+	return (fn: () => void, ms: number) => {
+		timers.current.push(setTimeout(fn, ms));
+	};
+}
 
 /**
  * Rounds of a pick-the-right-one game: which round it is, whether it's been got (the cheer shows), and

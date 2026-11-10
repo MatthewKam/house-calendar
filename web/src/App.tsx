@@ -26,6 +26,7 @@ import {
 	useSettings,
 	useSyncStatus,
 	useRangeEvents,
+	useAuthStatus,
 } from "./lib/queries";
 import WeekView from "./components/WeekView";
 import MonthView from "./components/MonthView";
@@ -69,6 +70,7 @@ import { UNASSIGNED } from "./lib/color";
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from "./lib/useMediaQuery";
 import { useFlyerDrop } from "./lib/useFlyerDrop";
 import s from "./styles/App.module.css";
+import { isKid } from "./lib/people";
 
 /** Today's date key, updated when the clock passes midnight. */
 function useToday() {
@@ -182,14 +184,14 @@ export default function App() {
 	useAutoLock(saver.on);
 	const [unlocking, setUnlocking] = useState<{ then?: () => void } | null>(null);
 	// Who's signed in here, shown at the bottom of the bar.
-	const auth = useQuery({ queryKey: ["auth"], queryFn: api.authStatus }).data;
+	const auth = useAuthStatus().data;
 	const signedIn = auth?.signedIn ? auth : null;
 	const [showAccount, setShowAccount] = useState(false);
 	// Kid mode: turned on for this device by a parent, or a kid's own device (added by code) while it's locked.
 	const [kidModeFor, setKidMode] = useKidMode();
 	const [startingKidMode, setStartingKidMode] = useState(false);
 	const [leavingKidMode, setLeavingKidMode] = useState(false);
-	const kids = members.filter((m) => m.stage !== null && m.stage !== "adult");
+	const kids = members.filter(isKid);
 	// Phones: what the + in the bottom bar opened (Add to a list, Caught being good), and photos it
 	// picked, on their way to the Photos page.
 	const [quick, setQuick] = useState<"list" | "good" | null>(null);

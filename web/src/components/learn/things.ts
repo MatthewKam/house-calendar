@@ -53,5 +53,3 @@ export const LOOK_ALIKE: Record<string, string[]> = {
 	e: ["c", "a"], h: ["n", "k"], k: ["h", "x"], s: ["z", "c"], t: ["f", "l"], f: ["t", "l"], l: ["i", "t"],
 	g: ["q", "j"], a: ["o", "e"], u: ["n", "v"],
 };
-
-export const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];

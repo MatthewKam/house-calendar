@@ -1,5 +1,5 @@
 import { useMemo, useState, type CSSProperties } from "react";
-import { addDays, dayKey, fromDayKey, startOfWeek } from "../lib/dates";
+import { addDays, dayKey, fromDayKey, startOfWeek, longDate } from "../lib/dates";
 import { useSetTaskDone, useTasksDone } from "../lib/queries";
 import { didTask, dueOn } from "../lib/tasks";
 import type { Member, Task, TaskDone } from "../lib/types";
@@ -248,7 +248,7 @@ function MonthCalendar({ kid, tasks, today, from, days, done, picked, onPick, on
 			</div>
 			{pickedDate && (
 				<div className={s.dayDetail}>
-					<h3 className={s.timeHead}>{pickedDate.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })}</h3>
+					<h3 className={s.timeHead}>{longDate(pickedDate)}</h3>
 					{pickedTasks.length === 0 && <p className={s.none}>Nothing was due.</p>}
 					<ul className={s.today}>
 						{pickedTasks.map((c) => {

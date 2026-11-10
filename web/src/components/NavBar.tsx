@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from "react";
 import type { SignedIn } from "../lib/api";
 import { Avatar } from "./AccountSheet";
 import s from "../styles/NavBar.module.css";
+import { firstName } from "../lib/people";
 
 export type Page = "calendar" | "today" | "tasks" | "rewards" | "lists" | "photos";
 
@@ -169,7 +170,7 @@ export default function NavBar({
 				<button className={`${s.item} ${s.me}`} onClick={me.onTap}
 					aria-label={`Signed in as ${me.status.me?.name ?? "the wall"}`}>
 					<Avatar status={me.status} />
-					<span className={s.label}>{me.status.me?.name.split(" ")[0] ?? "Wall"}</span>
+					<span className={s.label}>{(me.status.me ? firstName(me.status.me.name) : "Wall")}</span>
 				</button>
 			) : (
 				<img className={s.logo} src="/favicon.svg" alt="" />

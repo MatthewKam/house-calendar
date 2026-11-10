@@ -9,6 +9,7 @@ import { sky } from "../lib/weather";
 import { DayCalendar } from "./DayCarousel";
 import TodayAnimal from "./TodayAnimal";
 import s from "../styles/KidMode.module.css";
+import { isKid } from "../lib/people";
 
 /** How many days ahead a kid sees: today, tomorrow, and later this week. */
 const DAYS = 7;
@@ -357,7 +358,7 @@ function SpecialDays({ today, kidId }: { today: string; kidId: string }) {
 	const events = useRangeEvents(start, sleepsUntil(from, to) + 1).data ?? [];
 	// Each special one once, on its first day, its picture from its title: the ones this kid's on, and
 	// the ones no kid's on (for everyone, or just grown-ups: Mom's birthday) are every kid's.
-	const kids = new Set(people.filter((p) => p.stage !== null && p.stage !== "adult").map((p) => p.id));
+	const kids = new Set(people.filter(isKid).map((p) => p.id));
 	const special: SpecialDay[] = events
 		.filter((e) => e.special && !e.busy)
 		.filter((e) => {

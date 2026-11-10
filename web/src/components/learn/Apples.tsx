@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Pic } from "./art";
 import { Board, fit } from "./parts";
 import { FRUIT } from "./things";
-import { at, between, CHEER_MS, fresh, shuffle, type GameProps } from "./rounds";
+import { at, between, CHEER_MS, fresh, shuffle, type GameProps, useLater } from "./rounds";
 import { sayNumber } from "./sound";
 import s from "../../styles/Learn.module.css";
 
@@ -28,9 +28,7 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 	const [phase, setPhase] = useState<"play" | "next" | "hooray">("play");
 	const missed = useRef(false);
 	const firstTry = useRef(0);
-	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-	const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(fn, ms));
-	useEffect(() => () => timers.current.forEach(clearTimeout), []);
+	const later = useLater();
 	function right() {
 		setGot(true);
 		if (!missed.current) firstTry.current += 1;

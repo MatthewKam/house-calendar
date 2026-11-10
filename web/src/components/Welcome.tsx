@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { api, type AuthStatus, type SignedIn } from "../lib/api";
 import JoinForm from "./JoinForm";
 import s from "../styles/Account.module.css";
+import { firstName } from "../lib/people";
 
 /** Signed in, but in no household yet: start one (as its first guardian), or join one with a code. */
 export default function Welcome({ status, onDone }: { status: SignedIn; onDone: (s: AuthStatus) => void }) {
@@ -27,7 +28,7 @@ export default function Welcome({ status, onDone }: { status: SignedIn; onDone: 
 		<main className={s.screen}>
 			<div className={s.column}>
 				<img src="/wordmark.svg" alt="Sprig" className={s.wordmark} />
-				<h1 className={s.title}>Hi{status.user?.name ? `, ${status.user.name.split(" ")[0]}` : ""}</h1>
+				<h1 className={s.title}>Hi{status.user?.name ? `, ${firstName(status.user.name)}` : ""}</h1>
 				<p className={s.lead}>Join your family's household with the code they sent you, or start a new one.</p>
 				<JoinForm signedIn onJoined={onDone} />
 				<div className={s.or}>or</div>

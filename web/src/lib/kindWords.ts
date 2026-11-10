@@ -2,7 +2,7 @@
 
 import { ofTheDay, type KidFact } from "./kidFacts";
 
-export const KIND_WORDS: KidFact[] = [
+const KIND_WORDS: KidFact[] = [
 	{ picture: "🦁", text: "You are brave." },
 	{ picture: "💛", text: "You are loved." },
 	{ picture: "🤝", text: "You are a good friend." },

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type AuthStatus } from "../lib/api";
+import { useAuthStatus } from "../lib/queries";
 import { ago } from "../lib/dates";
 import s from "../styles/Account.module.css";
 import panel from "../styles/MembersPanel.module.css";
@@ -15,7 +16,7 @@ const DEVICE = { user: "", device: " (kid's device)", wall: "" };
  */
 export default function HouseholdAccess() {
 	const qc = useQueryClient();
-	const status = useQuery({ queryKey: ["auth"], queryFn: api.authStatus }).data;
+	const status = useAuthStatus().data;
 	const data = useQuery({ queryKey: ["account", "household"], queryFn: api.household }).data;
 	const refresh = () => qc.invalidateQueries({ queryKey: ["account"] });
 	const [issued, setIssued] = useState<{ code: string; expiresAt: string; what: string } | null>(null);

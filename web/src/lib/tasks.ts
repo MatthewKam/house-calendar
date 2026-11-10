@@ -1,7 +1,7 @@
 import { dayKey, fromDayKey } from './dates';
 import type { Task, TaskCategory, TaskDone, TaskTime } from './types';
 
-export const CATEGORIES: { id: TaskCategory; label: string; hint: string }[] = [
+const CATEGORIES: { id: TaskCategory; label: string; hint: string }[] = [
   { id: 'non_negotiable', label: 'Daily', hint: 'Must be done every day it\'s due; always counts toward the bar.' },
   { id: 'chores', label: 'Chores', hint: 'Jobs around the house.' },
   // A goal: optional, ticked any day it's done for its stars. Listed in its own Goals section.

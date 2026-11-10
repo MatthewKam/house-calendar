@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import { Board } from "./parts";
-import { fresh } from "./rounds";
+import { fresh, useLater } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
 /** The two players, taking turns. */
@@ -124,9 +124,7 @@ export default function Chomp({ animal: id, onBack }: { animal: string; onBack: 
 	const [laughing, setLaughing] = useState(false);
 	// The mouth: grinning shut with Ready! to open it, open wide, or chomped.
 	const [open, setOpen] = useState(false);
-	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-	const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(fn, ms));
-	useEffect(() => () => timers.current.forEach(clearTimeout), []);
+	const later = useLater();
 	const closed = !open || chomped !== null;
 	const winner = chomped === null ? null : (chomped + 1) % players.length;
 	// Who won the game before, shown under the grin until the next one's won.

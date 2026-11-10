@@ -132,12 +132,6 @@
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
 }
-/* Under the page title. */
-.add {
-	composes: textButton from "./Buttons.module.css";
-	padding-left: 0;
-	font-size: 0.95rem;
-}
 
 /* ---- Jars and earned rewards: a list, one row each ---- */
 .list {
@@ -446,18 +440,6 @@
 /* Room at the end, so the last item can scroll up past the round + button (and a phone's home bar). */
 .scroll {
 	padding-bottom: calc(5rem + env(safe-area-inset-bottom));
-}
-
-/* The parent unlock: "Keep this device unlocked". */
-.keepUnlocked {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	font-size: 0.95rem;
-}
-.keepUnlocked input {
-	width: 1.2rem;
-	height: 1.2rem;
 }
 
 /* Kid mode (KidJars big): the jars as big tiles, like the task tiles above, under a JARS heading

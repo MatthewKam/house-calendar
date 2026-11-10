@@ -1,14 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { openDb } from './db.ts';
 import { buildApp } from './app.ts';
 import { bucket } from './rewards.ts';
 import { ROW_PUNCHES, STEPS } from './potty.ts';
+import { household } from './testing.ts';
 
-function setup() {
-  const db = openDb(':memory:');
-  db.prepare(`INSERT INTO members (id, name, color, birthdate) VALUES ('mia', 'Mia', '#000000', '2024-05-01')`).run();
-  return { db, app: buildApp(db) };
-}
+const setup = () => household([{ id: 'mia', name: 'Mia', birthdate: '2024-05-01' }]);
 
 type App = ReturnType<typeof buildApp>;
 const punch = (app: App, step: string, kind?: string) =>

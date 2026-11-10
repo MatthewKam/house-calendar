@@ -5,7 +5,7 @@ import { ofTheDay, type KidFact } from "./kidFacts";
 
 export interface Quote { text: string; by: string }
 
-export const QUOTES: Quote[] = [
+const QUOTES: Quote[] = [
 	{ text: "The best way to make children good is to make them happy.", by: "Oscar Wilde" },
 	{ text: "Do what you can, with what you have, where you are.", by: "Theodore Roosevelt" },
 	{ text: "Nothing is worth more than this day.", by: "Johann Wolfgang von Goethe" },
@@ -33,7 +33,7 @@ export const QUOTES: Quote[] = [
 	{ text: "Where there is love there is life.", by: "Mahatma Gandhi" },
 ];
 
-export const GROWN_UP_KIND_WORDS: KidFact[] = [
+const GROWN_UP_KIND_WORDS: KidFact[] = [
 	{ picture: "💛", text: "You don't have to be perfect to be exactly what they need." },
 	{ picture: "🌧️", text: "The love you give counts, even on the messy days." },
 	{ picture: "🛋️", text: "Rest is part of the work." },

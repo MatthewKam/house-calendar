@@ -6,7 +6,7 @@ import sheet from "../../styles/Sheet.module.css";
 export const HowTo = createContext<{ title: string; how: string[] } | null>(null);
 
 /** How far through: a dot per round, filled once done. */
-export function Dots({ total, done }: { total: number; done: number }) {
+function Dots({ total, done }: { total: number; done: number }) {
 	return (
 		// Many (more than 8): smaller, so they still fit beside the back button on a phone.
 		<div className={`${s.dots} ${total > 8 ? s.dotsMany : ""}`} role="img" aria-label={`${done} of ${total} done`}>
@@ -88,7 +88,7 @@ function useSettled() {
 export interface Box { w: number; h: number }
 
 /** An element's size, kept up to date as the screen turns or resizes. */
-export function useBox() {
+function useBox() {
 	const ref = useRef<HTMLDivElement>(null);
 	const [box, setBox] = useState<Box>({ w: 0, h: 0 });
 	useLayoutEffect(() => {

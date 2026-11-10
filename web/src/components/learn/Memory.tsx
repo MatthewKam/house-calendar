@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { Pic } from "./art";
 import { Board, fit } from "./parts";
 import { ANIMALS, FRUIT, TOYS } from "./things";
-import { at, fresh, shuffle, type GameProps } from "./rounds";
+import { at, fresh, shuffle, type GameProps, useLater } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
 /** Pairs on the table, by level. */
@@ -29,8 +29,7 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 	const [misses, setMisses] = useState(0);
 	// Two that don't match, shaking before they turn back.
 	const [shaking, setShaking] = useState<number[]>([]);
-	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-	useEffect(() => () => timers.current.forEach(clearTimeout), []);
+	const later = useLater();
 
 	function flip(i: number) {
 		if (up.length === 2 || up.includes(i) || matched.includes(i)) return;
@@ -43,21 +42,21 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 		setUp([other, i]);
 		if (cards[other].id === card.id) {
 			const now = [...matched, other, i];
-			timers.current.push(setTimeout(() => {
+			later(() => {
 				setMatched(now);
 				setUp([]);
-			}, 500));
+			}, 500);
 			if (now.length === cards.length) {
-				timers.current.push(setTimeout(() => onDone(1, misses <= pairs ? 1 : 0), 3200));
+				later(() => onDone(1, misses <= pairs ? 1 : 0), 3200);
 			}
 		} else {
 			setMisses(misses + 1);
 			// A moment to look, then the two shake ("not a pair"), then turn back over.
-			timers.current.push(setTimeout(() => setShaking([other, i]), 400));
-			timers.current.push(setTimeout(() => {
+			later(() => setShaking([other, i]), 400);
+			later(() => {
 				setShaking([]);
 				setUp([]);
-			}, 950));
+			}, 950);
 		}
 	}
 

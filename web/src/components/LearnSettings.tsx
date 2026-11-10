@@ -1,4 +1,5 @@
 import { GAME_NAMES } from '../../../shared/learn.ts';
+import { firstName } from '../lib/people';
 import LearnSounds from './LearnSounds';
 import { useLearn, useSetLearn } from '../lib/queries';
 import type { LearnState, Member } from '../lib/types';
@@ -6,7 +7,7 @@ import s from '../styles/MembersPanel.module.css';
 
 /** The word beside Learning in Settings while it's folded: who has it on. */
 export function learnNote(kids: LearnState[], members: Member[]) {
-  const on = kids.filter((k) => k.enabled).map((k) => members.find((m) => m.id === k.memberId)?.name.split(' ')[0]).filter(Boolean);
+  const on = kids.filter((k) => k.enabled).flatMap((k) => members.filter((m) => m.id === k.memberId).map((m) => firstName(m.name)));
   return on.length ? `On for ${on.join(', ')}` : 'Off';
 }
 

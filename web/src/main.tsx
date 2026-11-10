@@ -5,6 +5,7 @@ import App from './App';
 import AuthGate from './components/AuthGate';
 import './styles/app.css';
 import { guardTouch } from './lib/touchGuard';
+import { keys } from './lib/queries';
 
 const queryClient = new QueryClient({
   // Edits show straight away and save in the background; if a save fails, the screen goes back and
@@ -14,7 +15,7 @@ const queryClient = new QueryClient({
       // Signed out shows the PIN screen; some edits show their own error (e.g. a wrong PIN in a dialog).
       if (/Sign in/.test(err.message) || mutation.meta?.inline) return;
       // Refused because this device is locked (it timed out, say): show it as locked again.
-      if (/^Locked/.test(err.message)) void queryClient.invalidateQueries({ queryKey: ['auth'] });
+      if (/^Locked/.test(err.message)) void queryClient.invalidateQueries({ queryKey: keys.auth });
       window.dispatchEvent(new CustomEvent('household:save-failed', { detail: err.message }));
     },
   }),

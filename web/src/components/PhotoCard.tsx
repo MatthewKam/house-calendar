@@ -5,6 +5,7 @@ import { screenSaverSettings } from "../lib/screensaver";
 import { preload, slideSeconds } from "../lib/photos";
 import type { Photo } from "../lib/types";
 import s from "../styles/PhotoCard.module.css";
+import { shuffle } from "../lib/random";
 
 /** A swipe: at least this far sideways, and more sideways than up or down. */
 const SWIPE_PX = 40;
@@ -12,15 +13,6 @@ const SWIPE_PX = 40;
 const ARROWS_MS = 3000;
 /** A tap: moved less than this. */
 const TAP_PX = 10;
-
-function shuffle<T>(list: T[]) {
-	const out = [...list];
-	for (let i = out.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		[out[i], out[j]] = [out[j], out[i]];
-	}
-	return out;
-}
 
 /** A photo, or a video playing muted (looping if it runs short of its turn). */
 function Media({ photo, className }: { photo: Photo; className?: string }) {

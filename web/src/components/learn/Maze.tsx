@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Pic } from "./art";
 import { Board, SLIDE_MS, type Box } from "./parts";
 import { makeMap } from "./mazeMap";
-import { at, fresh, type GameProps } from "./rounds";
+import { at, fresh, type GameProps, useLater } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
 /** The map's size in stops (rows, columns) and its keys and gates, by level. Level 1 is already a real maze. */
@@ -80,8 +80,7 @@ function OneMaze({ level, box, onHome, clearing }: { level: number; box: Box; on
 	const [slips, setSlips] = useState(0);
 	const [home, setHome] = useState(false);
 	const walking = useRef(false);
-	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-	useEffect(() => () => timers.current.forEach(clearTimeout), []);
+	const later = useLater();
 	// What's changed as it walks, read between steps.
 	const now = useRef({ at: start, keysHeld: 0, opened: [] as string[], taken: [] as string[] });
 
@@ -114,7 +113,7 @@ function OneMaze({ level, box, onHome, clearing }: { level: number; box: Box; on
 		setTaken(st.taken);
 		if (cell === "H") {
 			setHome(true);
-			timers.current.push(setTimeout(() => onHome(slips <= SLIPS), 700));
+			later(() => onHome(slips <= SLIPS), 700);
 		}
 		return true;
 	}
@@ -143,7 +142,7 @@ function OneMaze({ level, box, onHome, clearing }: { level: number; box: Box; on
 				return;
 			}
 			i += 1;
-			timers.current.push(setTimeout(walk, 170));
+			later(walk, 170);
 		};
 		walk();
 	}

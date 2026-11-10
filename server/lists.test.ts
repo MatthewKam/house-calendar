@@ -1,17 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { openDb } from './db.ts';
-import { buildApp } from './app.ts';
+import { household } from './testing.ts';
 
-function setup() {
-  const db = openDb(':memory:');
-  db.prepare(`INSERT INTO members (id, name, color) VALUES ('alex', 'Alex', '#000000')`).run();
-  const app = buildApp(db);
-  const call = async (method: string, url: string, payload?: object) => {
-    const res = await app.inject({ method: method as 'GET', url, payload });
-    return { status: res.statusCode, body: res.body ? res.json() : undefined };
-  };
-  return { db, call };
-}
+const setup = () => household([{ id: 'alex', name: 'Alex' }]);
 
 describe('lists', () => {
   it('makes lists, adds items with a when and a who, and ticks them off', async () => {
