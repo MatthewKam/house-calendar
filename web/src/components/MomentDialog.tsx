@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { addDays, dayKey, fromDayKey } from "../lib/dates";
 import { useMomentActions, useMomentHistory } from "../lib/queries";
 import { MOMENT_KINDS, momentKind } from "../lib/moments";
@@ -9,6 +9,7 @@ import ConfirmBelow from "./ConfirmBelow";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Moments.module.css";
 import g from "../styles/Goals.module.css";
+import Sheet from "./Sheet";
 
 /** How far back the history goes. */
 const HISTORY_DAYS = 30;
@@ -37,19 +38,12 @@ export default function MomentDialog({ kids, today, onClose }: Props) {
 	// The moment asking "Remove?" below itself.
 	const [confirmId, setConfirmId] = useState<string | null>(null);
 
-	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-		window.addEventListener("keydown", onKey);
-		return () => window.removeEventListener("keydown", onKey);
-	}, [onClose]);
-
 	const ready = kidId && kind;
 	const day = (d: string) => (d === today ? "Today" : fromDayKey(d).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }));
 
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<div className={sheet.sheet} role="dialog" aria-modal="true" aria-label="Caught being good">
+			<Sheet label="Caught being good" onClose={onClose}>
 				<div className={sheet.head}>
 					<h2 className={sheet.heading}>✨ Caught being good</h2>
 					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">×</button>
@@ -125,7 +119,7 @@ export default function MomentDialog({ kids, today, onClose }: Props) {
 					</ul>
 				)}
 				{tab === "history" && remove.isError && <p className={s.problem}>{remove.error.message}</p>}
-			</div>
+			</Sheet>
 		</>
 	);
 }

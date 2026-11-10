@@ -28,6 +28,7 @@ import { StarIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/KidMode.module.css";
 import { firstName } from "../lib/people";
+import Sheet from "./Sheet";
 
 interface Props {
 	today: string;
@@ -393,12 +394,6 @@ export function GrownUpPin({ title, body, okLabel, onClose, onOk }: {
 	const [pin, setPin] = useState("");
 	const check = useMutation({ mutationFn: api.checkPin, meta: { inline: true } });
 
-	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-		window.addEventListener("keydown", onKey);
-		return () => window.removeEventListener("keydown", onKey);
-	}, [onClose]);
-
 	function submit(e?: FormEvent, typed = pin) {
 		e?.preventDefault();
 		if (!typed || check.isPending) return;
@@ -409,8 +404,7 @@ export function GrownUpPin({ title, body, okLabel, onClose, onOk }: {
 
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<form className={`${sheet.sheet} ${sheet.confirm} ${pinSheet}`} role="dialog" aria-modal="true" aria-label={title} onSubmit={submit}>
+			<Sheet label={title} onClose={onClose} className={`${sheet.confirm} ${pinSheet}`} onSubmit={submit}>
 				<h2 className={sheet.heading}>{title}</h2>
 				<div className={sheet.body}>{body}</div>
 				<PinPad value={pin} onChange={setPin} onEnter={(typed) => submit(undefined, typed)} error={check.error?.message} done={okLabel} />
@@ -419,7 +413,7 @@ export function GrownUpPin({ title, body, okLabel, onClose, onOk }: {
 					<button type="button" className={sheet.secondary} onClick={onClose}>Cancel</button>
 					<button type="submit" className={sheet.primary} disabled={!pin || check.isPending}>{okLabel}</button>
 				</div>
-			</form>
+			</Sheet>
 		</>
 	);
 }
@@ -432,16 +426,10 @@ export function KidModeStart({ kids, needsPin, onPick, onClose }: {
 	onPick: (id: string) => void;
 	onClose: () => void;
 }) {
-	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-		window.addEventListener("keydown", onKey);
-		return () => window.removeEventListener("keydown", onKey);
-	}, [onClose]);
 
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<div className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-modal="true" aria-label="Kid mode">
+			<Sheet label="Kid mode" onClose={onClose} className={sheet.confirm}>
 				<h2 className={sheet.heading}>Kid mode</h2>
 				{needsPin ? (
 					<div className={sheet.body}>
@@ -469,7 +457,7 @@ export function KidModeStart({ kids, needsPin, onPick, onClose }: {
 					<span className={sheet.spacer} />
 					<button type="button" className={sheet.secondary} onClick={onClose}>Cancel</button>
 				</div>
-			</div>
+			</Sheet>
 		</>
 	);
 }

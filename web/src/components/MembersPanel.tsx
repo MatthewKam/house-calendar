@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
+import { useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { PALETTE } from '../lib/color';
 import { screenSaverSettings } from '../lib/screensaver';
 import { useAddMember, useAuthStatus, useCalendars, useLearn, useRemoveMember, useSetSetting, useSettings, useUpdateMember  } from '../lib/queries';
@@ -16,6 +16,8 @@ import DateInput from './DateInput';
 import AlertsSetting, { ALERTS_NOTE } from './AlertsSetting';
 import LearnSettings, { learnNote } from './LearnSettings';
 import { usePush } from '../lib/usePush';
+import Sheet from './Sheet';
+import ConfirmDialog from './ConfirmDialog';
 
 interface Props { members: Member[]; uiScale: number; onClose: () => void }
 
@@ -111,7 +113,8 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
   const learn = useLearn(today).data ?? [];
   // null until someone picks a color; then the next unused palette color is offered.
   const [pickedColor, setPickedColor] = useState<string | null>(null);
-  const [confirmId, setConfirmId] = useState<string | null>(null);
+  // The person being removed, while that's asked.
+  const [removing, setRemoving] = useState<Member | null>(null);
   // Person being edited (opened with the pencil), one at a time. Name, color, birthday and stage are
   // saved together with Save, and Cancel drops them all.
   const [editing, setEditing] = useState<{ id: string; name: string; color: string; birthdate: string; stage: Stage | null } | null>(null);
@@ -152,12 +155,6 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
   const push = usePush();
   const hasCalendars = (useCalendars().data ?? []).length > 0;
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   const nextColor = PALETTE.find((c) => !members.some((m) => m.color === c)) ?? PALETTE[0];
   const newColor = pickedColor ?? nextColor;
 
@@ -173,16 +170,10 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
     });
   }
 
-  function remove(m: Member) {
-    if (confirmId !== m.id) return setConfirmId(m.id);
-    setConfirmId(null);
-    removeMember.mutate(m.id);
-  }
 
   return (
     <>
-      <div className={sheet.scrim} onClick={onClose} role="presentation" />
-      <div className={sheet.sheet} role="dialog" aria-label="Settings">
+      <Sheet label="Settings" onClose={onClose}>
         <header className={sheet.head}>
           <h2 className={sheet.heading}>Settings</h2>
           <button className={sheet.close} onClick={onClose} aria-label="Close Settings">×</button>
@@ -232,8 +223,8 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
                     </>
                   )}
                   {CAN_ADD_OR_REMOVE && (
-                    <button className={sheet.danger} onClick={() => remove(m)}>
-                      {confirmId === m.id ? 'Tap again' : 'Remove'}
+                    <button className={sheet.danger} onClick={() => setRemoving(m)}>
+                      Remove
                     </button>
                   )}
                 </div>
@@ -327,7 +318,14 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
           <span className={sheet.spacer} />
           <button className={sheet.secondary} onClick={onClose}>Done</button>
         </div>
-      </div>
+      </Sheet>
+      {removing && (
+        <ConfirmDialog title={`Remove ${removing.name}?`} confirmLabel="Remove"
+          onCancel={() => setRemoving(null)}
+          onConfirm={() => { removeMember.mutate(removing.id); setRemoving(null); }}>
+          Their events stay on the calendar for whoever else they're for.
+        </ConfirmDialog>
+      )}
     </>
   );
 }

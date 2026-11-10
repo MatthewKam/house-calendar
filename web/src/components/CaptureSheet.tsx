@@ -12,6 +12,7 @@ import { CalendarPick, useNewEventCalendar } from "./CalendarPick";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Capture.module.css";
 import { isKid, firstName } from "../lib/people";
+import Sheet from "./Sheet";
 
 /** A card being checked: the proposal, in the shape the fields edit. */
 interface Card {
@@ -240,8 +241,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<div className={`${sheet.sheet} ${s.capture}`} role="dialog" aria-label={photo ? "Snap a flyer" : "Say it"}>
+			<Sheet label={photo ? "Snap a flyer" : "Say it"} onClose={onClose} className={s.capture}>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>{cards ? "Add these?" : photo ? "Snap a flyer" : "Say it"}</h2>
 					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">×</button>
@@ -335,7 +335,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 						</button>
 					</div>
 				)}
-			</div>
+			</Sheet>
 		</>
 	);
 }

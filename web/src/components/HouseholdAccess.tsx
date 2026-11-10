@@ -5,6 +5,7 @@ import { useAuthStatus } from "../lib/queries";
 import { ago } from "../lib/dates";
 import s from "../styles/Account.module.css";
 import panel from "../styles/MembersPanel.module.css";
+import ConfirmDialog from "./ConfirmDialog";
 
 type Kind = "guardian" | "kid" | "wall";
 const ROLE = { guardian: "Guardian", kid: "Kid" };
@@ -17,6 +18,8 @@ const DEVICE = { user: "", device: " (kid's device)", wall: "" };
 export default function HouseholdAccess() {
 	const qc = useQueryClient();
 	const status = useAuthStatus().data;
+	// The sign-in being removed, while that's asked.
+	const [removing, setRemoving] = useState<{ id: string; name: string } | null>(null);
 	const data = useQuery({ queryKey: ["account", "household"], queryFn: api.household }).data;
 	const refresh = () => qc.invalidateQueries({ queryKey: ["account"] });
 	const [issued, setIssued] = useState<{ code: string; expiresAt: string; what: string } | null>(null);
@@ -81,7 +84,7 @@ export default function HouseholdAccess() {
 							)}
 							{p.membershipId && p.memberId !== me.memberId && (
 								<button type="button" className={panel.textLink}
-									onClick={() => confirm(`Sign ${p.name} out of this household? They stay in the family.`) && remove.mutate(p.membershipId!)}>
+									onClick={() => setRemoving({ id: p.membershipId!, name: p.name })}>
 									Remove sign-in
 								</button>
 							)}
@@ -163,6 +166,13 @@ export default function HouseholdAccess() {
 					</select>
 				)}
 			</div>
+			{removing && (
+				<ConfirmDialog title={`Sign ${removing.name} out of this household?`} confirmLabel="Remove sign-in"
+					onCancel={() => setRemoving(null)}
+					onConfirm={() => { remove.mutate(removing.id); setRemoving(null); }}>
+					They stay in the family.
+				</ConfirmDialog>
+			)}
 		</section>
 	);
 }

@@ -9,6 +9,7 @@ import s from "../styles/EventDialog.module.css";
 import t from "../styles/Tasks.module.css";
 import r from "../styles/Rewards.module.css";
 import DateInput from "./DateInput";
+import Sheet from "./Sheet";
 
 interface Props {
 	/** Who a new jar starts out for (e.g. the kid whose section it was added from). */
@@ -65,8 +66,7 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<form className={sheet.sheet} onSubmit={submit}>
+			<Sheet label={reward ? "Change jar" : "New reward jar"} onClose={onClose} onSubmit={submit}>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>{reward ? "Change jar" : "New reward jar"}</h2>
 					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
@@ -194,7 +194,7 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 						Save
 					</button>
 				</div>
-			</form>
+			</Sheet>
 			{reward && takingBack && (
 				<TakeBackDialog
 					jar={reward}
