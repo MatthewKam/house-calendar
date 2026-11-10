@@ -1,8 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
+import { DAY_VALUE } from './schemas.ts';
 import { grownUpDevices, sendOnce, type Pusher } from './push.ts';
 import { stageOf, type Stage } from './stages.ts';
+import { ANIMALS, GAME_LEVELS, GAME_NAMES, type Game } from '../shared/learn.ts';
 
 // Learning (docs/kids-growth.md): short picture-first games in kid mode, with no fail states. A
 // guardian turns it on for each kid, who then picks any of their stage's games. Each game has levels:
@@ -11,22 +13,6 @@ import { stageOf, type Stage } from './stages.ts';
 // move up by themselves: they're ready for the next level, and a grown-up moves them up. Each play is a new version of the game
 // (the web picks it). It's for learning: it earns no stars.
 
-const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
-
-/** The games, and the highest level each has. */
-export const GAMES = {
-  // Little (2): who says that, peekaboo, find it, count the apples, pop the bubbles.
-  sounds: 6, peekaboo: 6, findIt: 6, apples: 6, pop: 6,
-  // Early (4) and up: add them up, Bear's way home, the missing first letter, card matching.
-  adding: 6, maze: 6, letters: 6, memory: 6,
-} as const;
-export type Game = keyof typeof GAMES;
-
-/** The games' names, as the kids' Learn tab shows them (for a grown-up's heads-up). */
-const GAME_NAMES: Record<Game, string> = {
-  sounds: 'Who says that?', peekaboo: 'Peekaboo', findIt: 'Find it!', apples: 'Counting', pop: 'Pop!',
-  adding: 'Math', maze: 'Maze', letters: 'Letters', memory: 'Pairs',
-};
 
 /**
  * Each stage's games. Older stages play Early's for now. Find it! is hidden for now (2026-11-09): its
@@ -36,19 +22,16 @@ const GAMES_FOR: Record<'little' | 'early', Game[]> = {
   little: ['sounds', 'peekaboo', 'pop', 'apples'],
   early: ['adding', 'maze', 'letters', 'memory'],
 };
-export const gamesFor = (stage: Stage | null) => GAMES_FOR[stage === 'little' || stage === null ? 'little' : 'early'];
+const gamesFor = (stage: Stage | null) => GAMES_FOR[stage === 'little' || stage === null ? 'little' : 'early'];
 
-/** The animals with a noise (web/src/components/learn/things.ts), which a grown-up can record their own of. */
-export const ANIMALS = ['cow', 'pig', 'duck', 'sheep', 'horse', 'chicken', 'rooster', 'goat', 'dog', 'cat', 'frog', 'owl', 'bee',
-  'seagull', 'hawk', 'lion', 'leopard', 'bear', 'wolf', 'elephant', 'monkey'];
 /** A recorded noise is a few seconds: well under this. */
 const MAX_SOUND_BYTES = 1024 * 1024;
 
 /** Perfect plays in a row, at a level, before the game moves up: 3, or as set here (null: never, only by count). */
-export const PLAYS_TO_LEVEL_UP = 3;
-export const PERFECT_RUN: Partial<Record<Game, number | null>> = { adding: 5, memory: 5, maze: null };
+const PLAYS_TO_LEVEL_UP = 3;
+const PERFECT_RUN: Partial<Record<Game, number | null>> = { adding: 5, memory: 5, maze: null };
 /** Some games also move up after this many plays at a level, perfect or not. */
-export const PLAYS_TO_MOVE_ON: Partial<Record<Game, number>> = { adding: 20, maze: 20, memory: 20 };
+const PLAYS_TO_MOVE_ON: Partial<Record<Game, number>> = { adding: 20, maze: 20, memory: 20 };
 /** The little ones' (2) games, hidden ones too: ready for the next level, but only a grown-up moves them up. */
 const ASK_FIRST: Game[] = ['sounds', 'peekaboo', 'findIt', 'apples', 'pop'];
 
@@ -62,8 +45,8 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
     FROM members m LEFT JOIN learn_kids k ON k.member_id = m.id WHERE m.id = ?`).get(id) as KidRow | undefined;
   const stored = (memberId: string) => Object.fromEntries((db.prepare('SELECT skill, level, ready FROM learn_levels WHERE member_id = ?')
     .all(memberId) as { skill: Game; level: number; ready: number }[]).map((r) => [r.skill, r])) as Partial<Record<Game, { level: number; ready: number }>>;
-  const levelOf = (memberId: string, game: Game) => Math.min(stored(memberId)[game]?.level ?? 1, GAMES[game]);
-  const isReady = (memberId: string, game: Game) => stored(memberId)[game]?.ready === 1 && levelOf(memberId, game) < GAMES[game];
+  const levelOf = (memberId: string, game: Game) => Math.min(stored(memberId)[game]?.level ?? 1, GAME_LEVELS[game]);
+  const isReady = (memberId: string, game: Game) => stored(memberId)[game]?.ready === 1 && levelOf(memberId, game) < GAME_LEVELS[game];
   // A grown-up (or the game itself) setting the level: no longer waiting to move up.
   const setLevel = (memberId: string, game: Game, level: number) => db.prepare(`INSERT INTO learn_levels (member_id, skill, level, since_play)
     VALUES (?, ?, ?, (SELECT COALESCE(MAX(rowid), 0) FROM learn_sessions))
@@ -78,13 +61,13 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
       enabled: r.enabled === 1,
       // Their stage's games, each at the level they'd play it, its highest, and whether it's waiting for a
       // grown-up to move it up.
-      games: games.map((game) => ({ game, level: levelOf(r.id, game), maxLevel: GAMES[game], ready: isReady(r.id, game) })),
+      games: games.map((game) => ({ game, level: levelOf(r.id, game), maxLevel: GAME_LEVELS[game], ready: isReady(r.id, game) })),
     };
   }
 
   // Each kid's learning: on or off, and their games' levels.
   app.get<{ Querystring: { today: string } }>('/api/learn', {
-    schema: { querystring: { type: 'object', required: ['today'], properties: { today: { type: 'string', pattern: DAY } } } },
+    schema: { querystring: { type: 'object', required: ['today'], properties: { today: DAY_VALUE } } },
   }, async (req) => {
     const rows = db.prepare(`SELECT m.id, m.birthdate, m.stage, k.enabled
       FROM members m LEFT JOIN learn_kids k ON k.member_id = m.id ORDER BY m.sort_order, m.created_at`).all() as KidRow[];
@@ -96,7 +79,7 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
   app.put<{ Params: { memberId: string }; Body: { enabled?: boolean; levels?: Partial<Record<Game, number>>; today: string } }>(
     '/api/learn/:memberId', {
       schema: { body: { type: 'object', required: ['today'], additionalProperties: false, minProperties: 2, properties: {
-        enabled: { type: 'boolean' }, today: { type: 'string', pattern: DAY },
+        enabled: { type: 'boolean' }, today: DAY_VALUE,
         levels: { type: 'object', additionalProperties: { type: 'integer', minimum: 1, maximum: 9 } } } } },
     }, async (req, reply) => {
       const r = kid(req.params.memberId);
@@ -105,7 +88,7 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
       const stage = stageOf(r, today);
       if (stage === null || stage === 'adult') return reply.code(400).send({ error: 'Learning is for the kids' });
       const levels = Object.entries(req.body.levels ?? {}) as [Game, number][];
-      if (levels.some(([g, n]) => !gamesFor(stage).includes(g) || n > GAMES[g])) return reply.code(400).send({ error: 'No such level' });
+      if (levels.some(([g, n]) => !gamesFor(stage).includes(g) || n > GAME_LEVELS[g])) return reply.code(400).send({ error: 'No such level' });
       db.transaction(() => {
         if (req.body.enabled !== undefined) {
           db.prepare(`INSERT INTO learn_kids (member_id, enabled) VALUES (?, ?)
@@ -121,7 +104,7 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
   app.post<{ Params: { memberId: string }; Body: { today: string; game: Game; level: number; rounds: number; firstTry: number } }>(
     '/api/learn/:memberId/done', {
       schema: { body: { type: 'object', required: ['today', 'game', 'level', 'rounds', 'firstTry'], additionalProperties: false, properties: {
-        today: { type: 'string', pattern: DAY }, game: { enum: Object.keys(GAMES) },
+        today: DAY_VALUE, game: { enum: Object.keys(GAME_LEVELS) },
         level: { type: 'integer', minimum: 1, maximum: 9 }, rounds: { type: 'integer', minimum: 1, maximum: 50 },
         firstTry: { type: 'integer', minimum: 0, maximum: 50 } } } },
     }, async (req, reply) => {
@@ -139,7 +122,7 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
         db.prepare(`INSERT INTO learn_sessions (id, member_id, day, skill, level, rounds, first_try) VALUES (?, ?, ?, ?, ?, ?, ?)`)
           .run(randomUUID(), r.id, today, game, level, rounds, firstTry);
         const at = levelOf(r.id, game);
-        if (level !== at || at >= GAMES[game] || isReady(r.id, game)) return false;
+        if (level !== at || at >= GAME_LEVELS[game] || isReady(r.id, game)) return false;
         // The plays at this level since it was set or moved up to, latest first.
         const plays = db.prepare(`SELECT s.first_try = s.rounds AS perfect FROM learn_sessions s
           LEFT JOIN learn_levels l ON l.member_id = s.member_id AND l.skill = s.skill
@@ -159,12 +142,12 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
         return true;
       })();
       // Moved up to the top level: a heads-up to the grown-ups, so they know it's time for more.
-      const top = leveledUp && levelOf(r.id, game) >= GAMES[game];
+      const top = leveledUp && levelOf(r.id, game) >= GAME_LEVELS[game];
       if (top && pusher) {
         const { name } = db.prepare('SELECT name FROM members WHERE id = ?').get(r.id) as { name: string };
         void sendOnce(db, pusher, grownUpDevices(db), `learn-top:${r.id}:${game}:${randomUUID()}`, {
           title: `🌱 ${name.split(' ')[0]} has reached the top of ${GAME_NAMES[game]}`,
-          body: `Level ${GAMES[game]} of ${GAMES[game]}. Time to ask for more levels.`,
+          body: `Level ${GAME_LEVELS[game]} of ${GAME_LEVELS[game]}. Time to ask for more levels.`,
           url: '/', tag: `learn-top:${r.id}:${game}`,
         }, req.log);
       }
@@ -193,7 +176,7 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
 
   // A grown-up records one (the body is the audio), or deletes it to go back to the built-in noise.
   app.put<{ Params: { animal: string } }>('/api/learn/sounds/:animal', { bodyLimit: MAX_SOUND_BYTES }, async (req, reply) => {
-    if (!ANIMALS.includes(req.params.animal)) return reply.code(404).send({ error: 'No such animal' });
+    if (!ANIMALS.some((a) => a.id === req.params.animal)) return reply.code(404).send({ error: 'No such animal' });
     const mime = String(req.headers['content-type'] ?? '').split(';')[0];
     if (!/^audio\/[\w.+-]+$/.test(mime) || !Buffer.isBuffer(req.body) || req.body.length === 0) {
       return reply.code(400).send({ error: 'Send the recording as audio' });

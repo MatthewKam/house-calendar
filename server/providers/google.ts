@@ -20,7 +20,7 @@ export interface GoogleOAuth {
 }
 
 /** Thrown when the person took the app's access away (or it expired): they connect again. */
-export class AccessRevoked extends Error {}
+class AccessRevoked extends Error {}
 
 export function googleOAuth(clientId: string, clientSecret: string, fetchImpl: typeof fetch = fetch): GoogleOAuth {
   const post = async (body: Record<string, string>) => {

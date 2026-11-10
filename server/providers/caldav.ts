@@ -9,7 +9,7 @@ export class CalDavAuthError extends Error {
   }
 }
 
-export interface DavResponse {
+interface DavResponse {
   href: string;
   status: number;
   /** Properties from the 200 propstat blocks, namespace prefixes removed. */
@@ -29,7 +29,7 @@ export const text = (v: unknown): string =>
 
 const statusCode = (s: unknown) => Number(/\s(\d{3})\s/.exec(` ${text(s)} `)?.[1] ?? 200);
 
-export function parseMultistatus(xml: string): DavResponse[] {
+function parseMultistatus(xml: string): DavResponse[] {
   const doc = parser.parse(xml);
   return (doc.multistatus?.response ?? []).map((r: any) => {
     const props: Record<string, any> = {};

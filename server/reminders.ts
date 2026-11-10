@@ -16,7 +16,7 @@ interface OutboxRow {
   id: number; op: 'add' | 'complete' | 'uncomplete' | 'rename'; list: string; title: string; new_title: string | null; claimed_by: string | null;
 }
 
-export interface PhoneItem { list: string; title: string; done?: boolean | string; due?: string | null }
+interface PhoneItem { list: string; title: string; done?: boolean | string; due?: string | null }
 
 /** Lists and titles are matched loosely: Shortcuts may add stray spaces. */
 const norm = (s: string) => s.trim().replace(/\s+/g, ' ');
@@ -29,7 +29,7 @@ const truthy = (v: unknown) => v === true || v === 1 || /^(true|yes|1)$/i.test(S
  * the dictionaries one after another, one per line, rather than a JSON array; both forms are accepted,
  * as is a single dictionary. Returns null when it can't be read.
  */
-export function readList(text: string): unknown[] | null {
+function readList(text: string): unknown[] | null {
   const t = text.trim();
   if (!t) return [];
   for (const candidate of [t, `[${t.replace(/}\s*\n\s*{/g, '},{')}]`]) {
@@ -116,7 +116,7 @@ export function claimPending(db: DB, device: string, now = new Date()) {
 }
 
 /** What the wall shows: each list's latest snapshot with the wall's own pending changes applied. */
-export function wallLists(db: DB) {
+function wallLists(db: DB) {
   const items = db.prepare('SELECT * FROM reminder_items ORDER BY done, id').all() as ItemRow[];
   // Renames last, as they'll be applied.
   const outbox = db.prepare(`SELECT * FROM reminder_outbox ORDER BY op = 'rename', id`).all() as OutboxRow[];

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
+import { DAY, memberExists } from './schemas.ts';
 import { bucket } from './rewards.ts';
 import { ACTIVITIES } from './activities.ts';
 
@@ -8,7 +9,6 @@ import { ACTIVITIES } from './activities.ts';
 // (docs/product-plan.md, "Three ways to earn"): which kid, which of the six activities, and how many
 // stars (0 is a sticker and a cheer, with nothing to save up).
 
-const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 
 interface MomentRow { id: string; member_id: string; kind: string; note: string | null; stars: number; day: string; created_at: string }
 const toMoment = (r: MomentRow) => ({ id: r.id, memberId: r.member_id, kind: r.kind, note: r.note, stars: r.stars, day: r.day, createdAt: r.created_at });
@@ -29,7 +29,7 @@ export function registerMoments(app: FastifyInstance, db: DB) {
         day: { type: 'string', pattern: DAY }, stars: { type: 'integer', minimum: 0, maximum: 20 },
       } } },
   }, async (req, reply) => {
-    if (!db.prepare('SELECT 1 FROM members WHERE id = ?').get(req.body.memberId)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!memberExists(db, req.body.memberId)) return reply.code(400).send({ error: 'Unknown member' });
     const stars = req.body.stars ?? 1;
     const id = randomUUID();
     db.prepare('INSERT INTO moments (id, member_id, kind, note, stars, day) VALUES (?, ?, ?, ?, ?, ?)')

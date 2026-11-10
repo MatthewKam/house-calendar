@@ -286,32 +286,8 @@ export type EventInput = Pick<CalEvent, 'title' | 'memberIds' | 'allDay' | 'star
 };
 export type Scope = 'one' | 'all';
 
-/** Today's weather at home (°F), from GET /api/weather. */
-export interface Weather {
-  /** Now, and how warm it feels (°F). */
-  temp: number;
-  feels: number;
-  high: number;
-  low: number;
-  /** Relative humidity now, in %. */
-  humidity: number;
-  /** WMO weather code: 0 clear ... 99 thunderstorm. */
-  code: number;
-  isDay: boolean;
-  /** Today's sunrise and sunset (instants). */
-  sunrise: string;
-  sunset: string;
-  /** Today and the next seven days, each with its highest chance of rain (%) and strongest wind (mph). */
-  days: { date: string; high: number; low: number; code: number; rain: number; wind: number; feelsHigh: number; feelsLow: number }[];
-  /** The hours around now: six gone by, this one, and eighteen ahead (instants). */
-  hours: { time: string; temp: number; feels: number; rain: number; code: number }[];
-  /** Today's highest chance of rain (%), average cloud cover (%) and strongest wind (mph). */
-  rainChance: number;
-  cloudCover: number;
-  wind: number;
-  /** What to wear today: long pants, a jacket, rain gear (boots, rain jacket, umbrella). */
-  wear: { pants: boolean; jacket: boolean; rain: boolean };
-}
+/** Today's weather at home (the server's own shape, shared). */
+export type { Weather } from '../../../shared/weather.ts';
 
 /** A photo in the album. */
 export interface Photo {
@@ -368,7 +344,8 @@ export type Proposal =
   | { kind: 'task'; title: string; memberId: string; day: string };
 
 /** Learning's games (server/learn.ts): Little's four, then Early's. */
-export type Game = 'sounds' | 'peekaboo' | 'findIt' | 'apples' | 'pop' | 'adding' | 'maze' | 'letters' | 'memory';
+import type { Game } from '../../../shared/learn.ts';
+export type { Game };
 
 /** An animal noise a grown-up recorded for the games (server/learn.ts), and when. */
 export interface LearnSound {

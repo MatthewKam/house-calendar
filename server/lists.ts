@@ -1,15 +1,15 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
+import { isDay, noneOrMember } from './schemas.ts';
 
 // Lists kept in Sprig itself: groceries, to-dos, packing. No Reminders Shortcut needed (that's
 // reminders.ts, whose lists show beside these). An item can say when (a reminder, due that day or at
 // a time) and who it's for. Anyone adds and ticks; naming, deleting and the when and who are a
 // parent's (auth.ts).
 
-const DAY = /^\d{4}-\d{2}-\d{2}$/;
 /** A when: a day (YYYY-MM-DD) or an instant. */
-const validDue = (d: string) => DAY.test(d) || !Number.isNaN(Date.parse(d));
+const validDue = (d: string) => isDay(d) || !Number.isNaN(Date.parse(d));
 const TITLE = { type: 'string', minLength: 1, maxLength: 300 } as const;
 const DUE = { type: ['string', 'null'], maxLength: 40 } as const;
 const MEMBER = { type: ['string', 'null'] } as const;
@@ -21,7 +21,7 @@ const tidy = (s: string) => s.trim().replace(/\s+/g, ' ');
 const toItem = (r: ItemRow) => ({ id: r.id, title: r.title, done: r.done === 1, due: r.due, memberId: r.member_id, doneAt: r.done_at });
 
 /** Every list with its items: open ones oldest first, then done ones, most recently done first. */
-export function allLists(db: DB) {
+function allLists(db: DB) {
   const lists = db.prepare('SELECT * FROM lists ORDER BY created_at').all() as ListRow[];
   const items = db.prepare('SELECT * FROM list_items ORDER BY done, CASE WHEN done = 1 THEN done_at END DESC, created_at').all() as ItemRow[];
   return lists.map((l) => ({ id: l.id, title: l.title, items: items.filter((i) => i.list_id === l.id).map(toItem) }));
@@ -32,7 +32,6 @@ const forgetAlerts = (db: DB, itemId: string) => db.prepare(`DELETE FROM push_se
   .run(`item:${itemId.replace(/[\\%_]/g, '\\$&')}:%`);
 
 export function registerLists(app: FastifyInstance, db: DB) {
-  const memberOk = (id: string | null | undefined) => !id || !!db.prepare('SELECT 1 FROM members WHERE id = ?').get(id);
 
   app.get('/api/lists', async () => allLists(db));
 
@@ -79,7 +78,7 @@ export function registerLists(app: FastifyInstance, db: DB) {
     if (!title) return reply.code(400).send({ error: 'A name is needed' });
     if (!db.prepare('SELECT 1 FROM lists WHERE id = ?').get(req.params.id)) return reply.code(404).send({ error: 'List not found' });
     if (due && !validDue(due)) return reply.code(400).send({ error: 'When should be a day or a time' });
-    if (!memberOk(memberId)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!noneOrMember(db, memberId)) return reply.code(400).send({ error: 'Unknown member' });
     db.prepare('INSERT INTO list_items (id, list_id, title, due, member_id) VALUES (?, ?, ?, ?, ?)')
       .run(randomUUID(), req.params.id, title, due, memberId);
     reply.code(201);
@@ -96,7 +95,7 @@ export function registerLists(app: FastifyInstance, db: DB) {
     const b = req.body;
     if (b.title !== undefined && !tidy(b.title)) return reply.code(400).send({ error: 'A name is needed' });
     if (b.due && !validDue(b.due)) return reply.code(400).send({ error: 'When should be a day or a time' });
-    if (!memberOk(b.memberId)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!noneOrMember(db, b.memberId)) return reply.code(400).send({ error: 'Unknown member' });
     const done = b.done ?? row.done === 1;
     // Unticked: its alert can come again.
     if (!done && row.done === 1) forgetAlerts(db, row.id);

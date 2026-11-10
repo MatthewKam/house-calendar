@@ -22,7 +22,7 @@ export interface SyncStatus {
   canWrite: boolean;
 }
 
-export function syncWindow(now = new Date()) {
+function syncWindow(now = new Date()) {
   return {
     from: new Date(now.getFullYear(), now.getMonth() - MONTHS_BACK, 1),
     to: new Date(now.getFullYear(), now.getMonth() + MONTHS_AHEAD, 1),

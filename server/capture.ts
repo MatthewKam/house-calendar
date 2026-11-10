@@ -3,6 +3,7 @@ import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import { z } from 'zod';
 import type { FastifyInstance } from 'fastify';
 import type { DB } from './db.ts';
+import { isDay } from './schemas.ts';
 import { kidIds } from './privacy.ts';
 import { atLocal } from './push.ts';
 
@@ -100,9 +101,8 @@ export function claudeUnderstand(client = new Anthropic()): Understand {
   };
 }
 
-const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const TIME = /^(\d{1,2}):(\d{2})$/;
-const realDay = (d: string | null): d is string => !!d && DAY.test(d) && !Number.isNaN(Date.parse(`${d}T00:00:00Z`));
+const realDay = (d: string | null): d is string => !!d && isDay(d) && !Number.isNaN(Date.parse(`${d}T00:00:00Z`));
 const nextDay = (d: string) => new Date(Date.parse(`${d}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
 /** `day` at `time` (HH:MM) in `tz`, as an instant; null when the time isn't one. */
 function instant(day: string, time: string | null, tz: string) {
@@ -112,7 +112,7 @@ function instant(day: string, time: string | null, tz: string) {
 }
 
 /** Checks what Claude found: names to people, local times to instants; anything that doesn't make sense goes. */
-export function toProposals(found: Found, members: { id: string; name: string; kid: boolean }[], tz: string, lists: string[]): Proposal[] {
+function toProposals(found: Found, members: { id: string; name: string; kid: boolean }[], tz: string, lists: string[]): Proposal[] {
   const lower = (s: string) => s.trim().toLowerCase();
   const person = (name: string) => members.find((m) => lower(m.name) === lower(name))
     ?? members.find((m) => lower(m.name).split(/\s+/)[0] === lower(name).split(/\s+/)[0]);

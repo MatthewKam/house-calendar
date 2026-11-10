@@ -1,12 +1,10 @@
 import type { DB } from './db.ts';
 import { CalDavAuthError } from './providers/caldav.ts';
 import { ICloudSource } from './providers/icloud.ts';
-import { calendarConnections, type Connection, type ConnectionOptions } from './connections.ts';
+import { calendarConnections, type ConnectionOptions } from './connections.ts';
 
 // A household's iCloud connections: each person's Apple ID with an app-specific password they make
 // at account.apple.com. Events sync both ways, like the .env iCloud setup.
-
-export type ICloudConnection = Connection;
 
 /** The Apple ID or password was wrong: the person checks them and tries again. */
 export class ICloudLoginError extends Error {

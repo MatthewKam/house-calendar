@@ -11,9 +11,9 @@ const run = promisify(execFile);
 const ffmpeg = createRequire(import.meta.url)('ffmpeg-static') as string | null;
 
 /** The longest a video can be; longer ones keep their first 45 seconds. */
-export const MAX_SECONDS = 45;
+const MAX_SECONDS = 45;
 
-export interface VideoInfo { width: number; height: number; seconds: number }
+interface VideoInfo { width: number; height: number; seconds: number }
 
 /** Reads a video's size and length from what ffmpeg prints about it. */
 export function readInfo(text: string): VideoInfo | null {

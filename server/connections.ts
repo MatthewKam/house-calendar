@@ -104,4 +104,3 @@ export function calendarConnections(db: DB, provider: 'google' | 'icloud', opts:
     },
   };
 }
-export type CalendarConnections = ReturnType<typeof calendarConnections>;

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
+import { DAY_VALUE, isDay, allMembersExist } from './schemas.ts';
 import { assignManually } from './people.ts';
 import { cancelDelete, diff, outboxStatus, queueCreate, queueEdit, queueSeries, resolveConflict } from './outbox.ts';
 import type { Viewer } from './auth.ts';
@@ -9,7 +10,6 @@ import { accessFor, eventAccess, kidIds, setVisibility, VISIBILITIES, VISIBILITY
 // Events on the wall: its own, and synced ones (iCloud), whose edits go through the outbox
 // (outbox.ts) and are sent to iCloud shortly after.
 
-const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 
 interface EventRow {
   id: string; calendar_id: string; title: string; remote_id: string | null; series_id: string | null;
@@ -75,6 +75,9 @@ const toEvent = (r: EventRow) => ({
 /** A Busy event someone else is on: just the time and who, never its title or place. */
 const asBusy = (r: EventRow) => ({ ...toEvent(r), title: 'Busy', location: null, notes: null, photoUrl: null, busy: true });
 
+/** A title as copies are matched by: ignoring case and spacing. */
+const titleKey = (t: string) => t.trim().toLowerCase().replace(/\s+/g, ' ');
+
 /**
  * The same event often sits in two calendars (a shared family calendar and a personal one), so
  * show it once: same title (ignoring case and spacing) and same start and end. Of the copies, keep
@@ -85,7 +88,7 @@ function dedupe(rows: EventRow[], access?: Map<EventRow, Access>): EventRow[] {
   const rank = (r: EventRow) => (access?.get(r) === 'busy' ? 4 : 0) + (r.member_ids !== '[]' ? 0 : 2) + (r.calendar_id === 'local' ? 0 : 1);
   const best = new Map<string, EventRow>();
   for (const r of rows) {
-    const key = [r.title.trim().toLowerCase().replace(/\s+/g, ' '), r.all_day, r.start, r.end].join('\n');
+    const key = [titleKey(r.title), r.all_day, r.start, r.end].join('\n');
     const kept = best.get(key);
     if (!kept || rank(r) < rank(kept)) best.set(key, r);
   }
@@ -103,8 +106,7 @@ interface EventInput {
 
 function validateTimes(ev: EventInput): string | null {
   if (ev.allDay) {
-    const day = new RegExp(DAY);
-    if (!day.test(ev.start) || !day.test(ev.end)) return 'All-day events use YYYY-MM-DD dates';
+    if (!isDay(ev.start) || !isDay(ev.end)) return 'All-day events use YYYY-MM-DD dates';
     return ev.end > ev.start ? null : 'End must be after start';
   }
   const start = Date.parse(ev.start);
@@ -122,11 +124,8 @@ const GOOGLE_READ_ONLY = 'This event comes from Google Calendar. Change it there
  * sends a new edit after the Undo window); without it, synced events are read-only.
  */
 export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soon: () => void }) {
-  const opts = { syncedEdits };
   // ---- Events ------------------------------------------------------------
   const getEvent = (id: string) => toEvent(db.prepare(`${EVENT_SELECT} WHERE e.id = ?`).get(id) as EventRow);
-  const allMembers = (ids: string[]) =>
-    ids.every((id) => db.prepare('SELECT 1 FROM members WHERE id = ?').get(id));
   const knownPhoto = (id?: string | null) => !id || !!db.prepare('SELECT 1 FROM photos WHERE id = ?').get(id);
   /** Replaces who a wall event is for. */
   function setMembers(eventId: string, memberIds: string[]) {
@@ -154,7 +153,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
   app.get<{ Querystring: { from: string; to: string; fromDay: string; toDay: string } }>('/api/events', {
     schema: { querystring: { type: 'object', required: ['from', 'to', 'fromDay', 'toDay'],
       properties: { from: { type: 'string' }, to: { type: 'string' },
-        fromDay: { type: 'string', pattern: DAY }, toDay: { type: 'string', pattern: DAY } } } },
+        fromDay: DAY_VALUE, toDay: DAY_VALUE } } },
   }, async (req) => {
     const { from, to, fromDay, toDay } = req.query;
     const rows = db.prepare(`${EVENT_SELECT}
@@ -180,13 +179,13 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     const ev = { ...req.body, memberIds: req.body.memberIds ?? [] };
     const err = validateTimes(ev);
     if (err) return reply.code(400).send({ error: err });
-    if (!allMembers(ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!allMembersExist(db, ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
     if (!knownPhoto(ev.photoId)) return reply.code(400).send({ error: 'Unknown photo' });
     if (req.body.calendarId && req.body.calendarId !== 'local') {
       const cal = db.prepare(`SELECT id, remote_id, writable FROM calendars WHERE id = ? AND provider != 'local'`)
         .get(req.body.calendarId) as { id: string; remote_id: string; writable: number } | undefined;
       if (!cal) return reply.code(400).send({ error: 'Unknown calendar' });
-      if (!opts.syncedEdits || !cal.writable) return reply.code(409).send({ error: "That calendar can't be added to from here" });
+      if (!syncedEdits || !cal.writable) return reply.code(409).send({ error: "That calendar can't be added to from here" });
       const id = queueCreate(db, cal, { title: ev.title.trim(), allDay: ev.allDay, start: ev.start, end: ev.end,
         location: ev.location?.trim() || null, notes: ev.notes?.trim() || null });
       // Who it's for, who sees it, special and the flyer are kept on this display, like any iCloud event's.
@@ -194,7 +193,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
       if (req.body.visibility) setVisibility(db, id, req.body.visibility);
       if (req.body.special) setSpecial(db, id, true);
       if (ev.photoId) setFlyer(db, id, ev.photoId);
-      opts.syncedEdits.soon();
+      syncedEdits.soon();
       reply.code(201);
       return getEvent(id);
     }
@@ -212,17 +211,18 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
 
   /**
    * Other copies of the same event (same title, same times) in other calendars: the wall shows one,
-   * so a change made to it is made to all of them.
+   * so a change made to it is made to all of them. `deleted`: the copies waiting to be deleted with it
+   * (for Undo), instead of the ones still showing.
    */
-  function copiesOf(row: EventRow) {
-    const key = (t: string) => t.trim().toLowerCase().replace(/\s+/g, ' ');
-    return (db.prepare(`SELECT * FROM events WHERE id != ? AND all_day = ? AND start = ? AND end = ? AND sync_state != 'pending_delete'`)
-      .all(row.id, row.all_day, row.start, row.end) as EventRow[]).filter((r) => key(r.title) === key(row.title));
+  function copiesOf(row: EventRow, deleted = false) {
+    return (db.prepare(`SELECT * FROM events WHERE id != ? AND all_day = ? AND start = ? AND end = ?
+      AND (sync_state = 'pending_delete') = ?`).all(row.id, row.all_day, row.start, row.end, deleted ? 1 : 0) as EventRow[])
+      .filter((r) => titleKey(r.title) === titleKey(row.title));
   }
   /** Google events are changed in Google Calendar (read-only here, for now). */
   const isGoogle = (calendarId: string) => !!db.prepare(`SELECT 1 FROM calendars WHERE id = ? AND provider = 'google'`).get(calendarId);
   const writable = (calendarId: string) =>
-    !!opts.syncedEdits && !!db.prepare('SELECT 1 FROM calendars WHERE id = ? AND writable = 1').get(calendarId);
+    !!syncedEdits && !!db.prepare('SELECT 1 FROM calendars WHERE id = ? AND writable = 1').get(calendarId);
   type Details = { title: string; allDay: boolean; start: string; end: string; location?: string | null };
   const details = (x: Details) => ({ title: x.title.trim(), allDay: x.allDay, start: x.start, end: x.end, location: x.location?.trim() || null });
   const rowDetails = (r: EventRow) => details({ ...r, allDay: r.all_day === 1 });
@@ -234,7 +234,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     const row = db.prepare(`${EVENT_SELECT} WHERE e.id = ?`).get(req.params.id) as EventRow | undefined;
     if (!row) return reply.code(404).send({ error: 'Event not found' });
     if (isGoogle(row.calendar_id)) return reply.code(409).send({ error: GOOGLE_READ_ONLY });
-    if (row.calendar_id !== 'local' && !opts.syncedEdits) return reply.code(409).send({ error: READ_ONLY });
+    if (row.calendar_id !== 'local' && !syncedEdits) return reply.code(409).send({ error: READ_ONLY });
     const ev: EventInput = {
       title: req.body.title ?? row.title,
       memberIds: req.body.memberIds ?? JSON.parse(row.member_ids),
@@ -247,7 +247,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     };
     const err = validateTimes(ev);
     if (err) return reply.code(400).send({ error: err });
-    if (!allMembers(ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!allMembersExist(db, ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
     if (!knownPhoto(ev.photoId)) return reply.code(400).send({ error: 'Unknown photo' });
     const next = details(ev);
     // Notes are the opened event's own (not its copies'): changed only when they're being set.
@@ -269,7 +269,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
       }
       if (Object.keys(changes).length) {
         queueSeries(db, row, 'update', changes);
-        opts.syncedEdits!.soon();
+        syncedEdits!.soon();
       }
       if (req.body.memberIds && JSON.stringify(ev.memberIds) !== row.member_ids) assignManually(db, row.id, ev.memberIds);
       return getEvent(row.id);
@@ -294,7 +294,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
       if (row.calendar_id === 'local') setMembers(row.id, ev.memberIds);
       else if (req.body.photoId !== undefined) setFlyer(db, row.id, ev.photoId ?? null);
     })();
-    if (row.calendar_id !== 'local' || copies.some((c) => c.calendar_id !== 'local')) opts.syncedEdits?.soon();
+    if (row.calendar_id !== 'local' || copies.some((c) => c.calendar_id !== 'local')) syncedEdits?.soon();
     // iCloud events: who it's for stays on this display (every repeat).
     if (row.calendar_id !== 'local' && req.body.memberIds && JSON.stringify(ev.memberIds) !== row.member_ids) {
       assignManually(db, row.id, ev.memberIds);
@@ -308,7 +308,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     if (!row) return reply.code(404).send({ error: 'Event not found' });
     if (row.calendar_id !== 'local') {
       if (isGoogle(row.calendar_id)) return reply.code(409).send({ error: GOOGLE_READ_ONLY });
-      if (!opts.syncedEdits) return reply.code(409).send({ error: READ_ONLY });
+      if (!syncedEdits) return reply.code(409).send({ error: READ_ONLY });
       // Hidden here now; deleted in iCloud after the Undo window.
       if (req.query.scope === 'all' && row.remote_id?.includes('#')) {
         queueSeries(db, row, 'delete', {});
@@ -319,7 +319,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
           for (const c of copiesOf(row)) if (c.calendar_id !== 'local' && writable(c.calendar_id)) queueEdit(db, c, 'delete', {});
         })();
       }
-      opts.syncedEdits.soon();
+      syncedEdits.soon();
       return reply.code(204).send();
     }
     db.transaction(() => {
@@ -334,10 +334,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     const row = db.prepare('SELECT * FROM events WHERE id = ?').get(req.params.id) as EventRow | undefined;
     if (!row || !cancelDelete(db, row)) return reply.code(404).send({ error: 'Nothing to undo' });
     // Its copies in other calendars, deleted with it, come back too.
-    const key = (t: string) => t.trim().toLowerCase().replace(/\s+/g, ' ');
-    const copies = (db.prepare(`SELECT * FROM events WHERE id != ? AND all_day = ? AND start = ? AND end = ? AND sync_state = 'pending_delete'`)
-      .all(row.id, row.all_day, row.start, row.end) as EventRow[]).filter((r) => key(r.title) === key(row.title));
-    for (const c of copies) cancelDelete(db, c);
+    for (const c of copiesOf(row, true)) cancelDelete(db, c);
     return getEvent(row.id);
   });
 
@@ -359,7 +356,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
       properties: { keep: { type: 'string', enum: ['mine', 'theirs'] } } } },
   }, async (req, reply) => {
     if (!resolveConflict(db, Number(req.params.id), req.body.keep)) return reply.code(404).send({ error: 'Already settled' });
-    if (req.body.keep === 'mine') opts.syncedEdits?.soon();
+    if (req.body.keep === 'mine') syncedEdits?.soon();
     return visibleOutbox(req.raw.viewer);
   });
 
@@ -385,7 +382,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     schema: { body: { type: 'object', required: ['memberIds'], additionalProperties: false,
       properties: { memberIds: eventBody.properties.memberIds } } },
   }, async (req, reply) => {
-    if (!allMembers(req.body.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!allMembersExist(db, req.body.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
     if (!assignManually(db, req.params.id, req.body.memberIds)) {
       return reply.code(404).send({ error: 'Synced event not found' });
     }

@@ -1,4 +1,4 @@
-import { GAMES } from './learn/LearnTab';
+import { GAME_NAMES } from '../../../shared/learn.ts';
 import LearnSounds from './LearnSounds';
 import { useLearn, useSetLearn } from '../lib/queries';
 import type { LearnState, Member } from '../lib/types';
@@ -41,7 +41,7 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
             {k.enabled && k.games.map(({ game, level, maxLevel, ready }) => (
               <div key={game} className={s.learnGame}>
                 <span>
-                  {GAMES[game].title}
+                  {GAME_NAMES[game]}
                   {/* At the top: time to ask for more levels. */}
                   {level >= maxLevel && <span className={s.learnTop}>Top level</span>}
                   {/* A little one's, ready for the next level: a grown-up moves it up. */}
@@ -52,11 +52,11 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
                     </button>
                   )}
                 </span>
-                <button type="button" className={s.learnStep} aria-label={`${GAMES[game].title}: down a level`}
+                <button type="button" className={s.learnStep} aria-label={`${GAME_NAMES[game]}: down a level`}
                   disabled={level <= 1 || set.isPending}
                   onClick={() => set.mutate({ memberId: k.memberId, levels: { [game]: level - 1 } })}>−</button>
                 <span className={s.learnLevel}>Level {level} of {maxLevel}</span>
-                <button type="button" className={s.learnStep} aria-label={`${GAMES[game].title}: up a level`}
+                <button type="button" className={s.learnStep} aria-label={`${GAME_NAMES[game]}: up a level`}
                   disabled={level >= maxLevel || set.isPending}
                   onClick={() => set.mutate({ memberId: k.memberId, levels: { [game]: level + 1 } })}>+</button>
               </div>

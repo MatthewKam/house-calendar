@@ -7,9 +7,10 @@
     "skipLibCheck": true,
     "noEmit": true,
     "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "types": ["vite/client"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "../shared/**/*.ts"]
 }

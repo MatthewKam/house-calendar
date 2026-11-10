@@ -71,7 +71,7 @@ export function atLocal(day: string, hour: number, tz: string, minute = 0) {
 }
 
 /** A reminder with a day but no time comes due at this hour, on each phone's own clock. */
-export const DAY_HOUR = 8;
+const DAY_HOUR = 8;
 /** One that came due longer ago than this isn't sent (the server was off, or it was set late). */
 const STALE = 12 * 3_600_000;
 

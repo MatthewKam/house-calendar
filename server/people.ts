@@ -13,7 +13,7 @@ const BATCH = 150;
 const RULES = 2;
 
 export interface Member { id: string; name: string }
-export interface Pending { calendarId: string; seriesId: string; title: string; calendar: string }
+interface Pending { calendarId: string; seriesId: string; title: string; calendar: string }
 /** Classifier: for each pending series (same order), the member ids it's for; [] for everyone. */
 export type Classify = (members: Member[], items: Pending[]) => Promise<string[][]>;
 
