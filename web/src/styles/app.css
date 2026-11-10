@@ -20,6 +20,9 @@
      main.tsx marks which side the notch is really on, and the other side gets none. */
 	--inset-left: env(safe-area-inset-left);
 	--inset-right: env(safe-area-inset-right);
+	/* Room above the first line of a page, under the phone's clock and status bar: iOS fades the
+	   top of the screen a little further down than the status bar itself, so there's this much more. */
+	--top-room: calc(env(safe-area-inset-top, 0px) + 1.75rem);
 	--bg: #f6f5f2;
 	--surface: #ffffff;
 	--text: #1d1f23;
