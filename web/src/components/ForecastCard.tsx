@@ -44,13 +44,13 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 					const look = sky(d.code, true);
 					return (
 						<li key={d.date} className={s.weekDay}>
-							<span className={s.weekName}>{fromDayKey(d.date).toLocaleDateString([], { weekday: "long" })}</span>
-							<span className={s.weekSky}>
+							<span className={s.weekName}>
+								{fromDayKey(d.date).toLocaleDateString([], { weekday: "long" })}
 								<span className={s.weekIcon} role="img" aria-label={look.label}>{look.icon}</span>
-								<span className={s.weekMore}>
-									<span aria-label={`${d.rain}% chance of rain`}>💧 {d.rain}%</span>
-									<span aria-label={`wind up to ${d.wind} mph`}>💨 {d.wind} mph</span>
-								</span>
+							</span>
+							<span className={s.weekMore}>
+								<span aria-label={`${d.rain}% chance of rain`}>💧 {d.rain}%</span>
+								<span aria-label={`wind up to ${d.wind} mph`}>💨 {d.wind} mph</span>
 							</span>
 							<span className={s.weekTemps}>
 								{d.high}° <span className={s.weekLow}>/ {d.low}°</span>

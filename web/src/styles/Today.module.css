@@ -578,22 +578,22 @@ details > summary.cardHead {
 	text-align: center;
 	font-variant-numeric: tabular-nums;
 }
+/* The day, its sky to the right of it. */
 .weekName {
+	display: flex;
+	align-items: center;
+	gap: 0.3rem;
 	font-weight: 700;
 	font-size: 0.9rem;
 }
-.weekSky {
-	display: flex;
-	align-items: center;
-	gap: 0.35rem;
-}
 .weekIcon {
-	font-size: 1.6rem;
+	font-size: 1.35rem;
 }
 .weekMore {
 	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0 0.5rem;
 	font-size: 0.75rem;
 	color: var(--muted);
 	white-space: nowrap;
