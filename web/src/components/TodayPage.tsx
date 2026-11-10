@@ -5,6 +5,7 @@ import {
 	fromDayKey,
 	startOfWeek,
 	timeLabel,
+	longDate,
 } from "../lib/dates";
 import {
 	useBuckets,
@@ -41,6 +42,7 @@ import PhotoCard from "./PhotoCard";
 import MomentDialog from "./MomentDialog";
 import { StarIcon } from "./icons";
 import s from "../styles/Today.module.css";
+import { isKid, firstName } from "../lib/people";
 
 interface Props {
 	today: string;
@@ -57,7 +59,6 @@ interface Props {
 	onPlaySlideshow: () => void;
 }
 
-const isKid = (m: Member) => m.stage !== null && m.stage !== "adult";
 /** Be there this many minutes before it starts, for parking and walking in (as server/travel.ts plans). */
 const ARRIVE_EARLY_MINUTES = 10;
 /** The calendar's days: today, tomorrow and the rest of the week. */
@@ -439,14 +440,10 @@ export default function TodayPage({
 				<div className={s.headText}>
 					<h1 className={s.hello}>
 						{greeting(now)}
-						{meMember ? `, ${meMember.name.split(" ")[0]}` : ""}
+						{meMember ? `, ${firstName(meMember.name)}` : ""}
 					</h1>
 					<div className={s.date}>
-						{now.toLocaleDateString([], {
-							weekday: "long",
-							month: "long",
-							day: "numeric",
-						})}{" "}
+						{longDate(now)}{" "}
 						· <span className={s.nowrap}>{timeLabel(now)}</span>
 					</div>
 				</div>

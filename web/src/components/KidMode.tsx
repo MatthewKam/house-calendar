@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { fromDayKey, startOfWeek, timeLabel } from "../lib/dates";
+import { fromDayKey, startOfWeek, timeLabel, longDate } from "../lib/dates";
 import { api } from "../lib/api";
 import { useMediaQuery } from "../lib/useMediaQuery";
 import { useNow } from "../lib/useNow";
@@ -27,6 +27,7 @@ import PottyCard from "./PottyCard";
 import { StarIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/KidMode.module.css";
+import { firstName } from "../lib/people";
 
 interface Props {
 	today: string;
@@ -503,7 +504,7 @@ function KidPicker({ kids, current, both, onPick }: {
 			document.removeEventListener("keydown", key);
 		};
 	}, [open]);
-	const first = (k: Member) => k.name.split(" ")[0];
+	const first = (k: Member) => firstName(k.name);
 	const shown = current === BOTH ? { name: kids.map(first).join(" & "), color: BOTH_COLOR } : kids.find((k) => k.id === current) ?? kids[0];
 	const others = [
 		...kids.filter((k) => k.id !== current).map((k) => ({ id: k.id, name: k.name, color: k.color })),
@@ -546,7 +547,7 @@ function Clock() {
 	return (
 		<p className={s.clock}>
 			<span className={s.clockTime}>{timeLabel(now)}</span>
-			<span className={s.clockDate}>{now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })}</span>
+			<span className={s.clockDate}>{longDate(now)}</span>
 		</p>
 	);
 }

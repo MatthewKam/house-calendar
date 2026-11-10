@@ -27,6 +27,8 @@ export function monthGridDays(d: Date, weekStartsOn = 0) {
 }
 
 /** "6:52 PM" (in the display's own style), from an instant or a Date. */
+/** "Tuesday, November 10". */
+export const longDate = (d: Date) => d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
 export const timeLabel = (when: string | Date) =>
   new Date(when).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 

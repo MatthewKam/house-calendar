@@ -9,14 +9,8 @@ export interface GameProps {
 }
 
 /** A copy in random order. */
-export function shuffle<T>(list: readonly T[]): T[] {
-	const out = [...list];
-	for (let i = out.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		[out[i], out[j]] = [out[j], out[i]];
-	}
-	return out;
-}
+export { shuffle } from "../../lib/random";
+import { shuffle } from "../../lib/random";
 
 /** `n` different ones, at random. */
 export const pick = <T,>(list: readonly T[], n: number) => shuffle(list).slice(0, n);

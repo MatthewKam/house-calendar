@@ -1,5 +1,5 @@
 import { useMemo, useState, type CSSProperties } from "react";
-import { fromDayKey, startOfWeek } from "../lib/dates";
+import { fromDayKey, startOfWeek, longDate } from "../lib/dates";
 import {
 	useTasks,
 	useTasksDone,
@@ -23,6 +23,7 @@ import MomentDialog from "./MomentDialog";
 import PottyCard from "./PottyCard";
 import panel from "../styles/DayPanel.module.css";
 import s from "../styles/Tasks.module.css";
+import { isKid } from "../lib/people";
 
 interface Props {
 	today: string;
@@ -76,7 +77,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 
 	// Everyone has the shared tasks, so with any of those every member gets a card. Kids (anyone with
 	// a stage below adult) always get one, for their goals and stickers.
-	const kids = members.filter((m) => tasksFor(tasks, m.id).length > 0 || (m.stage !== null && m.stage !== "adult"));
+	const kids = members.filter((m) => tasksFor(tasks, m.id).length > 0 || isKid(m));
 
 	return (
 		<section className={s.page} aria-label="Tasks">
@@ -84,11 +85,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 				<div>
 					<h1 className={s.pageTitle}>Tasks</h1>
 					<div className={panel.dow}>
-						{fromDayKey(today).toLocaleDateString([], {
-							weekday: "long",
-							month: "long",
-							day: "numeric",
-						})}
+						{longDate(fromDayKey(today))}
 					</div>
 				</div>
 				<div className={s.headButtons}>
@@ -149,7 +146,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 												<button className={s.addText} onClick={() => onAdd(kid.id)}>
 													+ Add task/goal
 												</button>
-												{kid.stage !== null && kid.stage !== "adult" && !potty.some((c) => c.memberId === kid.id) && (
+												{isKid(kid) && !potty.some((c) => c.memberId === kid.id) && (
 													<button className={s.addText} disabled={pottyActions.setOn.isPending}
 														onClick={() => pottyActions.setOn.mutate({ memberId: kid.id, on: true })}>
 														🚽 Start potty chart
