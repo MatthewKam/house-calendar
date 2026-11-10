@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Pic } from "./art";
 import { Board } from "./parts";
 import { ANIMALS, type Animal } from "./things";
-import { at, CHEER_MS, fresh, shuffle, type GameProps } from "./rounds";
+import { at, CHEER_MS, fresh, shuffle, type GameProps, useLater } from "./rounds";
 import { noise } from "./sound";
 import s from "../../styles/Learn.module.css";
 
@@ -53,9 +53,7 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 	const [bushes, setBushes] = useState<Bush[]>(() => queue.slice(0, bushCount).map((animal) => ({ animal, out: false, taps: 0 })));
 	// Everyone's had their turn: the cheer, then the end.
 	const [finished, setFinished] = useState(false);
-	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-	const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(fn, ms));
-	useEffect(() => () => timers.current.forEach(clearTimeout), []);
+	const later = useLater();
 	// Each bush's own "duck back down" timer, so tapping it again keeps it out a bit longer.
 	const hideTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 	useEffect(() => () => Object.values(hideTimers.current).forEach(clearTimeout), []);

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Pic } from "./art";
 import { Board } from "./parts";
 import { ANIMALS, type Animal } from "./things";
-import { any, at, CHEER_MS, fresh, type GameProps } from "./rounds";
+import { any, at, CHEER_MS, fresh, type GameProps, useLater } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
 /**
@@ -73,8 +73,7 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 	// Level 2 starts with one show-me bubble with an animal in, on its own; the rest come once it's gone.
 	const [started, setStarted] = useState(find !== "anyAnimal");
 	const nextId = useRef(0);
-	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-	useEffect(() => () => timers.current.forEach(clearTimeout), []);
+	const later = useLater();
 
 	/** A new bubble: one that counts some of the time (share), else one that doesn't (empty, another animal, another colour). */
 	function blow(head = 0): Bubble {
@@ -119,7 +118,7 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 		if (b.hint) setStarted(true);
 		setBubbles((all) => all.map((x) => (x.id === b.id ? { ...x, popped: true } : x)));
 		// Gone once the pop's played.
-		timers.current.push(setTimeout(() => setBubbles((all) => all.filter((x) => x.id !== b.id)), 900));
+		later(() => setBubbles((all) => all.filter((x) => x.id !== b.id)), 900);
 		if (!counts(b)) {
 			setMissed((n) => n + 1);
 			return;
@@ -129,7 +128,7 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 		if (now >= total) {
 			setFinished(true);
 			// Every pop that counted, less the ones that didn't, is how many went right first time.
-			timers.current.push(setTimeout(() => onDone(total, Math.max(0, total - missed)), CHEER_MS + 900));
+			later(() => onDone(total, Math.max(0, total - missed)), CHEER_MS + 900);
 		}
 	}
 

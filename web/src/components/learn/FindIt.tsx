@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { Pic } from "./art";
 import { Board, fit } from "./parts";
 import { TOYS } from "./things";
-import { at, between, CHEER_MS, fresh, shuffle, type GameProps } from "./rounds";
+import { at, between, CHEER_MS, fresh, shuffle, type GameProps, useLater } from "./rounds";
 import s from "../../styles/Learn.module.css";
 
 /** Kinds of thing in the room, the most of each, how many hide under others, and rooms a play, by level. */
@@ -58,8 +58,7 @@ export default function FindIt({ level, onDone, onBack }: GameProps) {
 	const [flying, setFlying] = useState<{ thing: Thing; dx: number; dy: number; scale: number; from: DOMRect }[]>([]);
 	const [cheering, setCheering] = useState(false);
 	const slots = useRef<Record<string, HTMLSpanElement | null>>({});
-	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-	useEffect(() => () => timers.current.forEach(clearTimeout), []);
+	const later = useLater();
 
 	useEffect(() => {
 		setFound([]);
@@ -84,8 +83,8 @@ export default function FindIt({ level, onDone, onBack }: GameProps) {
 		} else setLanded((l) => [...l, thing.id]);
 		// Everything collected: the cheer, then the next room (or the end).
 		if (now.length === room.total) {
-			timers.current.push(setTimeout(() => setCheering(true), 700));
-			timers.current.push(setTimeout(() => (round + 1 >= total ? onDone(total, total) : setRound(round + 1)), 700 + CHEER_MS));
+			later(() => setCheering(true), 700);
+			later(() => (round + 1 >= total ? onDone(total, total) : setRound(round + 1)), 700 + CHEER_MS);
 		}
 	}
 

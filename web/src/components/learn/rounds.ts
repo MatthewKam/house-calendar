@@ -57,6 +57,18 @@ export const at = <T,>(perLevel: readonly T[], level: number) => perLevel[Math.m
 export const CHEER_MS = 1600;
 
 /**
+ * Timers for a game's moments (the cheer, the next round, a pop going), all cleared when the game
+ * closes, so nothing fires after it's gone. later(fn, ms) runs fn after ms.
+ */
+export function useLater() {
+	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+	useEffect(() => () => timers.current.forEach(clearTimeout), []);
+	return (fn: () => void, ms: number) => {
+		timers.current.push(setTimeout(fn, ms));
+	};
+}
+
+/**
  * Rounds of a pick-the-right-one game: which round it is, whether it's been got (the cheer shows), and
  * how many were got on the first try. `tap(ok)` is a pick: right cheers, then moves on by itself (or
  * finishes); wrong just counts against the first try. `cheerMs` can be per round (the last one's cheer
