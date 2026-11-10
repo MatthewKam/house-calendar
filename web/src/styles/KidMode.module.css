@@ -3,9 +3,9 @@
 .shell {
 	height: 100%;
 	display: flex;
-	/* Clear of the phone's clock and status bar (installed, the app reaches under them): the page scrolls
-	   below them, not under them. */
-	padding-top: env(safe-area-inset-top);
+	/* Clear of the phone's clock and status bar (installed, the app reaches under them), and iOS's fade
+	   under them: the page scrolls below them, not under them. */
+	padding-top: var(--top-room);
 	box-sizing: border-box;
 	/* Little fingers press and hold: nothing to highlight, no copy menu or picture preview. */
 	-webkit-user-select: none;
@@ -94,7 +94,8 @@
 	min-height: 0;
 	overflow-y: auto;
 	box-sizing: border-box;
-	padding: 1rem max(1rem, env(safe-area-inset-right)) 2rem
+	/* The top's room is the shell's (--top-room). */
+	padding: 0 max(1rem, env(safe-area-inset-right)) 2rem
 		max(1rem, env(safe-area-inset-left));
 	display: flex;
 	flex-direction: column;
@@ -1129,7 +1130,6 @@ button.kidName {
 @media (orientation: landscape) and (max-height: 500px) {
 	.page {
 		gap: 0.6rem;
-		padding-top: max(0.6rem, env(safe-area-inset-top));
 		padding-bottom: 0.6rem;
 	}
 	.kidName {
@@ -1178,7 +1178,7 @@ button.kidName {
 	}
 	.kidNav {
 		gap: 0.3rem;
-		padding-top: max(0.5rem, env(safe-area-inset-top));
+		padding-top: 0.5rem;
 		padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 	}
 	.kidTab {

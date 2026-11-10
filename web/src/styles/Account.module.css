@@ -5,7 +5,7 @@
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	padding: max(1.5rem, env(safe-area-inset-top)) 1rem max(1.5rem, env(safe-area-inset-bottom));
+	padding: var(--top-room) 1rem max(1.5rem, env(safe-area-inset-bottom));
 	box-sizing: border-box;
 	background: var(--bg);
 }
