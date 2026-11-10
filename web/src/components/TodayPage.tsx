@@ -17,12 +17,10 @@ import {
 	useTasks,
 	useTasksDone,
 	useMembers,
-	usePhotos,
 	useTravelTimes,
 	useWeather,
 } from "../lib/queries";
 import { grownUpKindWordsFor, quoteFor } from "../lib/grownUpWords";
-import { memoriesFor } from "../lib/memories";
 import {
 	birthdays,
 	sleepsUntil,
@@ -34,10 +32,11 @@ import { useNow } from "../lib/useNow";
 import { momentKind } from "../lib/moments";
 import { dueLabel, isDue, isLate } from "../lib/lists";
 import { percent, taskProgress, tasksFor } from "../lib/tasks";
-import type { CalEvent, Member, Photo } from "../lib/types";
+import type { CalEvent, Member } from "../lib/types";
 import type { Page } from "./NavBar";
 import { DayCalendar } from "./DayCarousel";
 import ForecastCard from "./ForecastCard";
+import PhotoCard from "./PhotoCard";
 import MomentDialog from "./MomentDialog";
 import { StarIcon } from "./icons";
 import s from "../styles/Today.module.css";
@@ -53,6 +52,8 @@ interface Props {
 	onOpenEvent: (event: CalEvent) => void;
 	/** A grown-up adding a special day (a new event marked special); left out while the parent lock's on. */
 	onAddSpecial?: () => void;
+	/** The photo slideshow's "Play screen saver". */
+	onPlaySlideshow: () => void;
 }
 
 const isKid = (m: Member) => m.stage !== null && m.stage !== "adult";
@@ -73,8 +74,8 @@ function greeting(now: Date) {
 /**
  * Today (phones open on it): the family's calendar (today, tomorrow, the rest of the week), the
  * weather, special days coming up, how the kids are doing, what needs me, a quote and kind words for the
- * day, and memories (photos from this day in years gone by, or lately). On a tablet or a phone on its side, the cards in rows
- * of two (three on a big screen).
+ * day, and the family's photo slideshow. On a tablet or a phone on its side, the cards in rows of two
+ * (three on a big screen).
  */
 export default function TodayPage({
 	today,
@@ -84,6 +85,7 @@ export default function TodayPage({
 	onPage,
 	onOpenEvent,
 	onAddSpecial,
+	onPlaySlideshow,
 }: Props) {
 	const now = useNow();
 	const day = fromDayKey(today);
@@ -459,7 +461,8 @@ export default function TodayPage({
 						</p>
 					</section>
 
-					<YearsAgo today={today} />
+					{/* The family's slideshow (the screen saver's photos), as on the calendar. */}
+					<PhotoCard onPlay={onPlaySlideshow} className={`${s.wide} ${s.slideshow}`} />
 				</div>
 			</div>
 
@@ -542,56 +545,6 @@ function SpecialDays({ today, onAdd }: { today: string; onAdd?: () => void }) {
 						);
 					})}
 				</ul>
-			)}
-		</section>
-	);
-}
-
-/**
- * Memories (memoriesFor): photos from this day a year or more ago, or until there are some, from the past
- * week or month, each with when; tap one to see it big. Not shown when there are none.
- */
-function YearsAgo({ today }: { today: string }) {
-	const all = usePhotos().data;
-	const [open, setOpen] = useState<Photo | null>(null);
-	const memories = useMemo(() => memoriesFor(all ?? [], today), [all, today]);
-	if (!memories) return null;
-	return (
-		<section className={`${s.card} ${s.wide}`} aria-label={memories.title}>
-			<h2 className={s.cardHead}>{memories.title}</h2>
-			<ul className={s.memories}>
-				{memories.items.map(({ photo: p, note }) => (
-					<li key={p.id}>
-						<button type="button" className={s.memory} onClick={() => setOpen(p)} aria-label={`A ${p.kind}: ${note}`}>
-							<img src={p.thumbUrl} alt="" draggable={false} />
-							<span className={s.memoryWhen}>{note}</span>
-						</button>
-					</li>
-				))}
-			</ul>
-			{open && (
-				<div
-					className={s.memoryBig}
-					role="dialog"
-					aria-label="Photo"
-					onClick={() => setOpen(null)}
-				>
-					{open.kind === "video" ? (
-						<video
-							src={open.url}
-							poster={open.thumbUrl}
-							autoPlay
-							muted
-							loop
-							playsInline
-						/>
-					) : (
-						<img src={open.url} alt="" draggable={false} />
-					)}
-					<button type="button" className={s.memoryClose} aria-label="Close">
-						✕
-					</button>
-				</div>
 			)}
 		</section>
 	);

@@ -33,7 +33,7 @@ function Media({ photo, className }: { photo: Photo; className: string }) {
  * saver's pace, and swipes or ‹ › step through by hand. The ⋯ menu plays the screen saver. Not
  * shown until some photos are picked for it.
  */
-export default function PhotoCard({ onPlay }: { onPlay: () => void }) {
+export default function PhotoCard({ onPlay, className }: { onPlay: () => void; className?: string }) {
 	const all = usePhotos().data;
 	const photos = useMemo(() => (all ?? []).filter((p) => p.inSlideshow && p.ready), [all]);
 	const order = useMemo(() => shuffle(photos), [photos]);
@@ -128,7 +128,7 @@ export default function PhotoCard({ onPlay }: { onPlay: () => void }) {
 	return (
 		<div
 			ref={card}
-			className={s.card}
+			className={`${s.card} ${className ?? ""}`}
 			role="region"
 			aria-roledescription="carousel"
 			aria-label="Photos"

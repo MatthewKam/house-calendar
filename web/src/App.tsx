@@ -485,6 +485,7 @@ export default function App() {
 							onPage={setPage}
 							onOpenEvent={(event) => openEvent(event, event.allDay ? event.start : dayKey(new Date(event.start)))}
 							onAddSpecial={parentLock.parent ? () => setDialog({ day: today, special: true }) : undefined}
+							onPlaySlideshow={saver.show}
 						/>
 					) : page === "tasks" ? (
 						<TasksPage
