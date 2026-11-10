@@ -769,6 +769,11 @@ const migrations: string[] = [
     PRIMARY KEY (calendar_id, series_key)
   );
   `,
+  // The little ones' games don't move up by themselves: once one would, it's ready, and waits for a
+  // grown-up to move it up (learn.ts).
+  `
+  ALTER TABLE learn_levels ADD COLUMN ready INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

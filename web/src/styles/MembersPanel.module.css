@@ -117,6 +117,17 @@
 .soundName small { color: var(--muted); font-weight: 400; }
 .recording { background: #b42318; color: #fff; }
 .recordDot { color: #b42318; }
+.learnReady {
+  display: inline-block;
+  margin: 0.2rem 0 0 0.5rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: #e3f6e3;
+  color: #1f6b2a;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.learnReady:disabled { opacity: 0.5; }
 .learnTop {
   margin-left: 0.5rem;
   padding: 0.05rem 0.5rem;
