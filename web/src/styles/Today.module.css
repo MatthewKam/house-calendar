@@ -429,6 +429,26 @@ details > summary.cardHead {
 	min-height: 2rem;
 	display: flex;
 	align-items: center;
+	gap: 0.5rem;
+	list-style: none;
+}
+.earlier > summary::-webkit-details-marker {
+	display: none;
+}
+/* A chevron: down while they're folded away, up once open. */
+.earlier > summary::after {
+	content: "";
+	width: 0.45rem;
+	height: 0.45rem;
+	margin-top: -0.25rem;
+	border-right: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+	transform: rotate(45deg);
+	transition: transform 0.2s ease, margin 0.2s ease;
+}
+.earlier[open] > summary::after {
+	margin-top: 0.2rem;
+	transform: rotate(-135deg);
 }
 .earlier .events {
 	opacity: 0.7;
