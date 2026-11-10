@@ -171,3 +171,10 @@
 	border-radius: 0.5rem;
 	border: 1px solid var(--line);
 }
+
+/* Which calendar the events go to (CalendarPick), over the buttons. */
+.calendarPick { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; color: var(--muted); }
+.calendarPick select {
+	font-size: 1.05rem; padding: 0.55rem 0.6rem; border: 1px solid var(--line); border-radius: 0.6rem;
+	color: var(--text); background: var(--surface);
+}

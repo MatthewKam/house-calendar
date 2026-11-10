@@ -8,6 +8,7 @@ import { flyerImage, uploadFlyer } from "../lib/photos";
 import { useLists } from "../lib/queries";
 import type { Member, Proposal } from "../lib/types";
 import DateInput from "./DateInput";
+import { CalendarPick, useNewEventCalendar } from "./CalendarPick";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Capture.module.css";
 
@@ -55,7 +56,7 @@ const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
  * Adds one card through the usual routes (the server checks it like any other add). flyer: the
  * flyer's photo id, uploaded the first time an event needs it.
  */
-async function addCard(c: Card, lists: { id: string; title: string }[], flyer?: () => Promise<string>) {
+async function addCard(c: Card, lists: { id: string; title: string }[], flyer?: () => Promise<string>, calendar: { calendarId?: string } = {}) {
 	const title = c.title.trim();
 	if (c.kind === "item") {
 		let list = lists.find((l) => l.title.toLowerCase() === c.list.trim().toLowerCase());
@@ -64,7 +65,8 @@ async function addCard(c: Card, lists: { id: string; title: string }[], flyer?: 
 		await api.addListItem(list.id, { title, due: c.day ? (c.time ? toInstant(c.day, c.time) : c.day) : null, memberId: c.who[0] ?? null });
 	} else if (c.kind === "event") {
 		const endDay = c.endDay && c.endDay >= c.day ? c.endDay : c.day;
-		const extra = { location: c.location, notes: c.notes.trim() || null, photoId: flyer ? await flyer() : null };
+		// In the calendar picked (as the event form remembers it), so it reaches the phones.
+		const extra = { location: c.location, notes: c.notes.trim() || null, photoId: flyer ? await flyer() : null, ...calendar };
 		if (!c.time) {
 			await api.addEvent({ title, memberIds: c.who, allDay: true, start: c.day, end: nextDay(endDay), ...extra });
 		} else {
@@ -191,6 +193,8 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 	}
 
 	const set = (id: number, patch: Partial<Card>) => setCards((cs) => cs?.map((c) => (c.id === id ? { ...c, ...patch } : c)) ?? null);
+	// Where its events go: the same calendar the event form uses.
+	const target = useNewEventCalendar();
 	const ready = (cards ?? []).filter((c) => c.title.trim() && (c.kind === "item" || c.day) && (c.kind !== "task" || c.who.length));
 
 	async function addAll() {
@@ -199,9 +203,10 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 		setError(null);
 		const left: Card[] = [];
 		let added = 0;
+		const calendar = ready.some((c) => c.kind === "event") ? target.forSave() : {};
 		for (const c of ready) {
 			try {
-				await addCard(c, lists, photo ? flyer : undefined);
+				await addCard(c, lists, photo ? flyer : undefined, calendar);
 				added++;
 			} catch (e) {
 				left.push(c);
@@ -318,6 +323,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 				)}
 				<datalist id="capture-lists">{lists.map((l) => <option key={l.id} value={l.title} />)}</datalist>
 
+				{cards?.some((c) => c.kind === "event") && <CalendarPick target={target} className={s.calendarPick} />}
 				{cards && (
 					<div className={sheet.actions}>
 						<button type="button" className={sheet.secondary} onClick={() => { setCards(null); setError(null); }} hidden={!!photo}>Back</button>

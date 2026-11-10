@@ -85,7 +85,8 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
   // A flyer (from Snap a flyer) is kept for the events read from it; once none are left, it goes.
   function sweepFlyers() {
     const gone = db.prepare(`SELECT id FROM photos WHERE flyer = 1 AND created_at < strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-1 day')
-      AND id NOT IN (SELECT photo_id FROM events WHERE photo_id IS NOT NULL)`).all() as { id: string }[];
+      AND id NOT IN (SELECT photo_id FROM events WHERE photo_id IS NOT NULL)
+      AND id NOT IN (SELECT photo_id FROM event_flyers)`).all() as { id: string }[];
     for (const r of gone) removePhoto(r.id);
   }
   sweepFlyers();

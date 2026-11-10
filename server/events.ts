@@ -21,21 +21,40 @@ interface EventRow {
   visibility: Visibility;
   /** Marked special: a countdown on kid mode's Today. */
   special: number;
+  /** Its flyer: photo_id, or a synced event's from event_flyers. */
+  flyer_id: string | null;
 }
 
-// Event columns plus who it's for, from event_members, and who sees it.
+/** Keeps a synced event's flyer (every repeat of it), or lets it go (null). */
+function setFlyer(db: DB, eventId: string, photoId: string | null) {
+  const ev = seriesOf(db, eventId);
+  if (!ev) return;
+  if (photoId) {
+    db.prepare(`INSERT INTO event_flyers (calendar_id, series_key, photo_id) VALUES (?, ?, ?)
+      ON CONFLICT (calendar_id, series_key) DO UPDATE SET photo_id = excluded.photo_id`).run(ev.calendar_id, ev.key, photoId);
+  } else db.prepare('DELETE FROM event_flyers WHERE calendar_id = ? AND series_key = ?').run(ev.calendar_id, ev.key);
+}
+
+// Event columns plus who it's for, from event_members, who sees it, whether it's special, and its
+// flyer (a synced event's is kept in event_flyers).
+const SERIES_OF = 's.calendar_id = e.calendar_id AND s.series_key = COALESCE(e.series_id, e.id)';
 const EVENT_SELECT = `
-  SELECT e.*, (SELECT json_group_array(member_id) FROM (
+  SELECT e.*, COALESCE(e.photo_id, (SELECT s.photo_id FROM event_flyers s WHERE ${SERIES_OF})) AS flyer_id,
+    (SELECT json_group_array(member_id) FROM (
     SELECT em.member_id FROM event_members em JOIN members m ON m.id = em.member_id
     WHERE em.event_id = e.id ORDER BY m.sort_order, m.created_at)) AS member_ids,
     ${VISIBILITY_SQL} AS visibility,
-    EXISTS (SELECT 1 FROM event_special s WHERE s.calendar_id = e.calendar_id AND s.series_key = COALESCE(e.series_id, e.id)) AS special
+    EXISTS (SELECT 1 FROM event_special s WHERE ${SERIES_OF}) AS special
   FROM events e`;
+
+/** An event's calendar and series (every repeat of it), which its special mark and flyer are kept by. */
+const seriesOf = (db: DB, eventId: string) =>
+  db.prepare('SELECT calendar_id, COALESCE(series_id, id) AS key FROM events WHERE id = ?').get(eventId) as
+    { calendar_id: string; key: string } | undefined;
 
 /** Marks an event (every repeat of it) special, or not. */
 function setSpecial(db: DB, eventId: string, special: boolean) {
-  const ev = db.prepare('SELECT calendar_id, COALESCE(series_id, id) AS key FROM events WHERE id = ?').get(eventId) as
-    { calendar_id: string; key: string } | undefined;
+  const ev = seriesOf(db, eventId);
   if (!ev) return false;
   if (special) db.prepare('INSERT OR IGNORE INTO event_special (calendar_id, series_key) VALUES (?, ?)').run(ev.calendar_id, ev.key);
   else db.prepare('DELETE FROM event_special WHERE calendar_id = ? AND series_key = ?').run(ev.calendar_id, ev.key);
@@ -49,9 +68,9 @@ const toEvent = (r: EventRow) => ({
   repeats: !!r.remote_id?.includes('#'),
   visibility: r.visibility,
   special: !!r.special,
-  // Sprig's own events only: notes, and the flyer it was read from.
+  // Its notes (an iCloud event's are its own, synced both ways), and the flyer it was read from.
   notes: r.notes,
-  photoUrl: r.photo_id && `/api/photos/${r.photo_id}/full`,
+  photoUrl: r.flyer_id && `/api/photos/${r.flyer_id}/full`,
 });
 /** A Busy event someone else is on: just the time and who, never its title or place. */
 const asBusy = (r: EventRow) => ({ ...toEvent(r), title: 'Busy', location: null, notes: null, photoUrl: null, busy: true });
@@ -78,7 +97,7 @@ function dedupe(rows: EventRow[], access?: Map<EventRow, Access>): EventRow[] {
 /** memberIds: who it's for; empty means everyone. */
 interface EventInput {
   title: string; memberIds: string[]; allDay: boolean; start: string; end: string; location?: string | null;
-  /** Kept on Sprig's own events only (iCloud has nowhere for them yet). */
+  /** Notes go to iCloud with a synced event; the flyer's photo stays here (iCloud has nowhere for it). */
   notes?: string | null; photoId?: string | null;
 }
 
@@ -169,11 +188,12 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
       if (!cal) return reply.code(400).send({ error: 'Unknown calendar' });
       if (!opts.syncedEdits || !cal.writable) return reply.code(409).send({ error: "That calendar can't be added to from here" });
       const id = queueCreate(db, cal, { title: ev.title.trim(), allDay: ev.allDay, start: ev.start, end: ev.end,
-        location: ev.location?.trim() || null });
-      // Who it's for is kept on this display, like any iCloud event.
+        location: ev.location?.trim() || null, notes: ev.notes?.trim() || null });
+      // Who it's for, who sees it, special and the flyer are kept on this display, like any iCloud event's.
       if (ev.memberIds.length) assignManually(db, id, ev.memberIds);
       if (req.body.visibility) setVisibility(db, id, req.body.visibility);
       if (req.body.special) setSpecial(db, id, true);
+      if (ev.photoId) setFlyer(db, id, ev.photoId);
       opts.syncedEdits.soon();
       reply.code(201);
       return getEvent(id);
@@ -230,6 +250,8 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     if (!allMembers(ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
     if (!knownPhoto(ev.photoId)) return reply.code(400).send({ error: 'Unknown photo' });
     const next = details(ev);
+    // Notes are the opened event's own (not its copies'): changed only when they're being set.
+    const notesChange = req.body.notes === undefined ? {} : { notes: ev.notes ?? null };
     if (row.calendar_id !== 'local' && req.body.scope === 'all' && row.remote_id?.includes('#')) {
       // Every day of a repeating event: a new title or address, and the same move for every day.
       const was = rowDetails(row);
@@ -262,7 +284,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
         // Notes and the flyer belong to the one opened, not its copies.
         if (r.id === row.id) db.prepare('UPDATE events SET notes = ?, photo_id = ? WHERE id = ?').run(ev.notes ?? null, ev.photoId ?? null, r.id);
       } else if (r.id === row.id || writable(r.calendar_id)) {
-        const changes = diff(rowDetails(r), next);
+        const changes = diff({ ...rowDetails(r), notes: r.notes }, r.id === row.id ? { ...next, ...notesChange } : next);
         if (Object.keys(changes).length) queueEdit(db, r, 'update', changes);
       }
     };
@@ -270,6 +292,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
       change(row);
       copies.forEach(change);
       if (row.calendar_id === 'local') setMembers(row.id, ev.memberIds);
+      else if (req.body.photoId !== undefined) setFlyer(db, row.id, ev.photoId ?? null);
     })();
     if (row.calendar_id !== 'local' || copies.some((c) => c.calendar_id !== 'local')) opts.syncedEdits?.soon();
     // iCloud events: who it's for stays on this display (every repeat).

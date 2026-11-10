@@ -17,6 +17,8 @@ export interface RemoteEvent {
   end: string;
   /** Where it is (LOCATION), on one line; null when there's none. */
   location?: string | null;
+  /** Its notes (DESCRIPTION); null when there are none. */
+  notes?: string | null;
 }
 
 export interface RemoteCalendar {

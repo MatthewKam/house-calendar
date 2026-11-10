@@ -58,7 +58,7 @@ export function googleOAuth(clientId: string, clientSecret: string, fetchImpl: t
 }
 
 interface GEvent {
-  id: string; etag: string; status?: string; summary?: string; location?: string; eventType?: string;
+  id: string; etag: string; status?: string; summary?: string; location?: string; description?: string; eventType?: string;
   recurringEventId?: string;
   start?: { date?: string; dateTime?: string };
   end?: { date?: string; dateTime?: string };
@@ -81,6 +81,7 @@ export function toRemoteEvent(e: GEvent): RemoteEvent | null {
     start: allDay ? e.start.date! : new Date(e.start.dateTime!).toISOString(),
     end: allDay ? e.end.date! : new Date(e.end.dateTime!).toISOString(),
     location: e.location?.replace(/\s*\n\s*/g, ', ').trim() || null,
+    notes: e.description?.trim() || null,
   };
 }
 

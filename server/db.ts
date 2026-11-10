@@ -774,6 +774,17 @@ const migrations: string[] = [
   `
   ALTER TABLE learn_levels ADD COLUMN ready INTEGER NOT NULL DEFAULT 0;
   `,
+  // The flyer an iCloud event was read from (Snap a flyer). Sprig's own events keep theirs in
+  // events.photo_id; a synced event's row is replaced on every sync, so its flyer is kept here, by
+  // its series (every repeat), like event_special. Its notes go to iCloud itself.
+  `
+  CREATE TABLE event_flyers (
+    calendar_id TEXT NOT NULL REFERENCES calendars(id) ON DELETE CASCADE,
+    series_key  TEXT NOT NULL,
+    photo_id    TEXT NOT NULL,
+    PRIMARY KEY (calendar_id, series_key)
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */
