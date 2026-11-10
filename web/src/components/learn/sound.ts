@@ -3,7 +3,7 @@
 // out loud. Nothing else is spoken.
 
 /** Animals with a built-in noise in web/public/sounds/animals (`<id>.m4a`). */
-export const BUILT_IN = new Set<string>([
+const BUILT_IN = new Set<string>([
 	"cow", "pig", "duck", "sheep", "horse", "chicken", "rooster", "goat", "dog", "cat", "frog", "owl", "bee", "seagull", "hawk",
 	"lion", "leopard", "bear", "wolf", "elephant", "monkey",
 ]);

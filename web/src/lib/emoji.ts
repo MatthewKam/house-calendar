@@ -1,7 +1,7 @@
 // Emoji the icon pickers offer, each with words to search by. Food comes first: groceries use it
 // most, and suggestIcon() matches item names against it.
 
-export interface Emoji {
+interface Emoji {
   e: string;
   /** Search words, lowercase; the first is its name. */
   k: string;
@@ -11,7 +11,7 @@ export interface Emoji {
 const food = (e: string, k: string): Emoji => ({ e, k, food: true });
 const item = (e: string, k: string): Emoji => ({ e, k });
 
-export const EMOJI: Emoji[] = [
+const EMOJI: Emoji[] = [
   // ---- Food and drink ----
   food('🥛', 'milk dairy'), food('🧀', 'cheese dairy'), food('🥚', 'eggs egg'), food('🧈', 'butter dairy'),
   food('🍦', 'ice cream dessert'), food('🍨', 'yogurt yoghurt gelato'), food('🍞', 'bread loaf toast'),

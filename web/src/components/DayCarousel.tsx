@@ -2,7 +2,7 @@ import { useRef, useState, type ReactNode } from "react";
 import { useMediaQuery } from "../lib/useMediaQuery";
 
 /** A day (or a few) of the calendar: its button's name, and what's on. */
-export interface CalendarDay {
+interface CalendarDay {
 	label: string;
 	body: ReactNode;
 }
@@ -12,7 +12,7 @@ export interface CalendarDay {
  * classes: calendar (the whole), group and groupHead (a day, its heading), and the carousel's: carousel,
  * dayButtons, dayButton, dayButtonOn, dayPage, dayFromRight and dayFromLeft; calendarStacked when stacked.
  */
-export type CalendarStyles = { readonly [name: string]: string };
+type CalendarStyles = { readonly [name: string]: string };
 
 /**
  * How the calendar's laid out: side by side on a phone on its side, and on a tablet either way up (or

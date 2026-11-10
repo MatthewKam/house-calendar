@@ -4,7 +4,7 @@ import { useState } from 'react';
  * Kid mode on this device: the kid it starts on (the others are a switch away). "all" is from before
  * there was a choice: it starts on the first kid.
  */
-export type KidModeFor = string | 'all';
+type KidModeFor = string | 'all';
 
 const KEY = 'sprig:kid-mode';
 

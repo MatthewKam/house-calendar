@@ -34,7 +34,7 @@ const CHOMP_HOW = {
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
 
 /** Each game: its picture, and how to play it (for a grown-up to explain). Its name is GAME_NAMES (shared). */
-export const GAMES: Record<Game, { picture: string; how: string[]; Play: ComponentType<GameProps> }> = {
+const GAMES: Record<Game, { picture: string; how: string[]; Play: ComponentType<GameProps> }> = {
 	sounds: { picture: "cow", Play: Sounds, how: [
 		"An animal's noise is written at the top (\"Moo!\"). Read it together, or tap the play button beside it to hear it.",
 		"Tap the animal that made it. Every animal tapped makes its own noise.",

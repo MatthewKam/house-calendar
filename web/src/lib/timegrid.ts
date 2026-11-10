@@ -21,7 +21,7 @@ function hoursOn(ev: CalEvent, day: Date) {
   };
 }
 
-export interface Placed {
+interface Placed {
   ev: CalEvent;
   /** Where it starts and how tall it is, as fractions of the hours shown. */
   top: number;

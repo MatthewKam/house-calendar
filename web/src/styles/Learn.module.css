@@ -852,13 +852,7 @@ img.farmBack {
 	object-position: 50% 100%;
 	user-select: none;
 }
-.farmAsk {
-	position: absolute;
-	left: 50%;
-	top: 1rem;
-	transform: translateX(-50%);
-	z-index: 2;
-}
+
 .bushes {
 	position: relative;
 	/* Rows of them, a short last row in the middle. */
@@ -879,12 +873,7 @@ img.farmBack {
 	padding: 0;
 	background: none;
 }
-.peeker {
-	position: absolute;
-	/* High enough that its whole face shows over the bush. */
-	bottom: 47%;
-	width: 82%;
-}
+
 /* Peekaboo's animal, out: from behind the hiding place (--behind up from the ground), up until its feet
    are over the top (--over), then in front of it, landing on the grass with a little squash. */
 .jumper {
@@ -949,7 +938,6 @@ img.farmBack {
 	box-shadow: 0 0.2rem 0.5rem rgb(29 31 35 / 0.18);
 	animation: pop 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
-.peeker svg,
 .bush svg,
 .bush img {
 	display: block;
@@ -1029,24 +1017,6 @@ img.farmBack {
 }
 
 /* Find it. */
-.goal {
-	flex: none;
-	display: flex;
-	gap: 0.3rem;
-}
-.goalOne {
-	opacity: 0.25;
-	filter: grayscale(1);
-	transition: opacity 0.3s ease, filter 0.3s ease;
-}
-.goalOne svg {
-	width: 100%;
-	height: 100%;
-}
-.goalGot {
-	opacity: 1;
-	filter: none;
-}
 .room {
 	position: relative;
 	flex: none;
@@ -1068,12 +1038,6 @@ img.farmBack {
 	width: 100%;
 	height: 100%;
 	filter: drop-shadow(0 0.15rem 0.2rem rgb(0 0 0 / 0.2));
-}
-.lifted {
-	transform: translate(38%, -30%) rotate(18deg) scale(0.7);
-}
-.thingGot svg {
-	filter: drop-shadow(0 0 0.35rem var(--c, var(--accent))) drop-shadow(0 0 0.2rem var(--c, var(--accent)));
 }
 
 /* Maze. */

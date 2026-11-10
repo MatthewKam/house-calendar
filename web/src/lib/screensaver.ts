@@ -1,6 +1,6 @@
 import type { ScreenSaverSettings } from './types';
 
-export const SCREEN_SAVER_DEFAULTS: ScreenSaverSettings = {
+const SCREEN_SAVER_DEFAULTS: ScreenSaverSettings = {
   enabled: true,
   idleMinutes: 2,
   seconds: 20,

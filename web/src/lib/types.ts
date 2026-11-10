@@ -230,7 +230,7 @@ export interface ReminderList {
   syncedBy: { device: string; at: string }[];
 }
 
-export interface ReminderItem {
+interface ReminderItem {
   /** "p…" came from a phone, "w…" was added on the wall. */
   id: string;
   title: string;

@@ -15,7 +15,7 @@ export const POTTY_STEPS: { step: PottyStep; emoji: string; label: string }[] = 
 export const ROW_PUNCHES = 7;
 
 /** The go row's choices: the sticker each leaves, and its word. */
-export const PEE_POO: { kind: PottyKind; emoji: string; label: string }[] = [
+const PEE_POO: { kind: PottyKind; emoji: string; label: string }[] = [
 	{ kind: "pee", emoji: "💧", label: "Pee" },
 	{ kind: "poo", emoji: "💩", label: "Poop" },
 	{ kind: "both", emoji: "💧💩", label: "Both" },

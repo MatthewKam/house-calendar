@@ -14,7 +14,7 @@ export function startOfWeek(d: Date, weekStartsOn = 0) {
   return addDays(d, -diff);
 }
 
-export const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
+const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
 export const addMonths = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth() + n, 1);
 
 /** Every day in a month grid: whole weeks, from the week holding the 1st to the week holding the last day. */

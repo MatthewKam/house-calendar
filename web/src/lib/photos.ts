@@ -7,7 +7,7 @@ import type { Photo } from './types';
 const FULL = 2560;
 const THUMB = 480;
 
-export interface Prepared {
+interface Prepared {
   full: Blob;
   thumb: Blob;
   width: number;

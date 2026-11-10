@@ -317,12 +317,6 @@
 }
 
 /* ---- Task sheet ---- */
-.requiredRow {
-	display: flex;
-	align-items: center;
-	gap: 1.2rem;
-	flex-wrap: wrap;
-}
 .points {
 	display: flex;
 	align-items: center;
