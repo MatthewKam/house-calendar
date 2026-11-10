@@ -26,6 +26,7 @@ import {
 	useSettings,
 	useSyncStatus,
 	useRangeEvents,
+	useAuthStatus,
 } from "./lib/queries";
 import WeekView from "./components/WeekView";
 import MonthView from "./components/MonthView";
@@ -182,7 +183,7 @@ export default function App() {
 	useAutoLock(saver.on);
 	const [unlocking, setUnlocking] = useState<{ then?: () => void } | null>(null);
 	// Who's signed in here, shown at the bottom of the bar.
-	const auth = useQuery({ queryKey: ["auth"], queryFn: api.authStatus }).data;
+	const auth = useAuthStatus().data;
 	const signedIn = auth?.signedIn ? auth : null;
 	const [showAccount, setShowAccount] = useState(false);
 	// Kid mode: turned on for this device by a parent, or a kid's own device (added by code) while it's locked.

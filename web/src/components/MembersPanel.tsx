@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { PALETTE } from '../lib/color';
 import { screenSaverSettings } from '../lib/screensaver';
-import { useAddMember, useCalendars, useLearn, useRemoveMember, useSetSetting, useSettings, useUpdateMember  } from '../lib/queries';
+import { useAddMember, useAuthStatus, useCalendars, useLearn, useRemoveMember, useSetSetting, useSettings, useUpdateMember  } from '../lib/queries';
 import type { Member, MemberPatch, Stage } from '../lib/types';
 import { dayKey } from '../lib/dates';
 import { STAGE_AGES, STAGE_LIST, STAGE_NAMES } from '../lib/stages';
@@ -16,8 +16,6 @@ import DateInput from './DateInput';
 import AlertsSetting, { ALERTS_NOTE } from './AlertsSetting';
 import LearnSettings, { learnNote } from './LearnSettings';
 import { usePush } from '../lib/usePush';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '../lib/api';
 
 interface Props { members: Member[]; uiScale: number; onClose: () => void }
 
@@ -149,7 +147,7 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
   const homeAddress = ((settings?.homeAddress as string | undefined) ?? '').trim();
   const saver = screenSaverSettings(settings?.screensaver);
   // Alerts are a grown-up's own phone's (not the wall's or a kid's device).
-  const auth = useQuery({ queryKey: ['auth'], queryFn: api.authStatus }).data;
+  const auth = useAuthStatus().data;
   const grownUp = !!auth?.signedIn && auth.role === 'guardian' && auth.kind === 'user';
   const push = usePush();
   const hasCalendars = (useCalendars().data ?? []).length > 0;

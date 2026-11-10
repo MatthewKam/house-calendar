@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { api, type AuthStatus } from "../lib/api";
+import { keys, useAuthStatus } from "../lib/queries";
 import PinScreen from "./PinScreen";
 import SignIn from "./SignIn";
 import Welcome from "./Welcome";
@@ -12,9 +13,9 @@ import Welcome from "./Welcome";
  */
 export default function AuthGate({ children }: { children: ReactNode }) {
 	const qc = useQueryClient();
-	const status = useQuery({ queryKey: ["auth"], queryFn: api.authStatus, retry: 1 });
+	const status = useAuthStatus();
 	useEffect(() => {
-		const signedOut = () => void qc.invalidateQueries({ queryKey: ["auth"] });
+		const signedOut = () => void qc.invalidateQueries({ queryKey: keys.auth });
 		window.addEventListener("household:signed-out", signedOut);
 		return () => window.removeEventListener("household:signed-out", signedOut);
 	}, [qc]);
