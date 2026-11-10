@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { birthdays, holidays, sleepsUntil, specialDaysFor } from "./specialDays";
+import { birthdays, holidays, sleepsUntil, specialDaysBetween, specialDaysFor } from "./specialDays";
 
 const on = (year: number, name: string) => holidays(year).find((h) => h.name === name)?.day;
 
@@ -31,6 +31,12 @@ describe("special days", () => {
 		expect(dec).toContain("2027-01-01");
 		// Past the next month's first two weeks: not yet.
 		expect(dec).not.toContain("2027-01-18");
+	});
+
+	it("finds the ones between two days, over the new year too", () => {
+		expect(specialDaysBetween("2026-12-20", "2027-01-20").map((d) => d.name)).toEqual([
+			"First day of winter", "Christmas Eve", "Christmas", "New Year's Eve", "New Year's Day", "Martin Luther King Jr. Day",
+		]);
 	});
 
 	it("counts sleeps", () => {

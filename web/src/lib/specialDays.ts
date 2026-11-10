@@ -100,12 +100,18 @@ export function specialWindow(today: string) {
 	};
 }
 
-/** The special days in the month card's days (specialWindow), in order. `extra` adds birthdays and special events. */
-export function specialDaysFor(today: string, extra: (year: number) => SpecialDay[] = () => []) {
-	const { from, to } = specialWindow(today);
-	const year = fromDayKey(today).getFullYear();
-	return [year, year + 1]
+/** The special days from one day to another (YYYY-MM-DD, both in), in order. `extra` adds birthdays and special events. */
+export function specialDaysBetween(from: string, to: string, extra: (year: number) => SpecialDay[] = () => []) {
+	const first = fromDayKey(from).getFullYear();
+	const years = Array.from({ length: fromDayKey(to).getFullYear() - first + 1 }, (_, i) => first + i);
+	return years
 		.flatMap((y) => [...holidays(y), ...extra(y)])
 		.filter((d) => d.day >= from && d.day <= to)
 		.sort((a, b) => a.day.localeCompare(b.day) || a.name.localeCompare(b.name));
+}
+
+/** The special days in the month card's days (specialWindow), in order. `extra` adds birthdays and special events. */
+export function specialDaysFor(today: string, extra: (year: number) => SpecialDay[] = () => []) {
+	const { from, to } = specialWindow(today);
+	return specialDaysBetween(from, to, extra);
 }

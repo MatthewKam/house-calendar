@@ -23,6 +23,8 @@ interface Props {
   canEditSynced?: boolean;
   /** The parent lock is on: the event is shown, but nothing can be changed. */
   locked?: boolean;
+  /** A new special day (from Today's special days): all day, for everyone, marked special. */
+  special?: boolean;
 }
 
 const QUICK = ['Practice', 'Appointment', 'Dinner out', 'Pick up', 'Work trip'];
@@ -199,7 +201,7 @@ function useNewEventCalendar(enabled: boolean) {
   return { options, label, initial, remember: (id: string) => setSetting.mutate({ key: 'newEventCalendar', value: id }) };
 }
 
-function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSynced }: Props) {
+function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSynced, special: newSpecial }: Props) {
   const setVisibility = useSetVisibility();
   const setSpecial = useSetSpecial();
   const calendars = useCalendars().data ?? [];
@@ -207,8 +209,8 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
   // The parent remounts this dialog (via key) for each open, so initial state is enough.
   const firstDate = event ? (event.allDay ? event.start : dayKey(new Date(event.start))) : day;
   const [title, setTitle] = useState(event?.title ?? '');
-  const [memberIds, setMemberIds] = useState<string[]>(event ? event.memberIds : members.slice(0, 1).map((m) => m.id));
-  const [allDay, setAllDay] = useState(event?.allDay ?? false);
+  const [memberIds, setMemberIds] = useState<string[]>(event ? event.memberIds : newSpecial ? [] : members.slice(0, 1).map((m) => m.id));
+  const [allDay, setAllDay] = useState(event?.allDay ?? !!newSpecial);
   const [date, setDate] = useState(firstDate);
   // All-day end is stored exclusive; the form shows the inclusive last day.
   const [lastDate, setLastDate] = useState(event?.allDay ? dayKey(addDays(fromDayKey(event.end), -1)) : firstDate);
@@ -218,7 +220,7 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
   const [notes, setNotes] = useState(event?.notes ?? '');
   const [keepPhoto, setKeepPhoto] = useState(true);
   // A special day: a countdown on the kids' Today (the ones it's for, or all of them).
-  const [special, setSpecialDay] = useState(event?.special ?? false);
+  const [special, setSpecialDay] = useState(event?.special ?? !!newSpecial);
   const [confirmDelete, setConfirmDelete] = useState(false);
   // A repeating iCloud event asks "this day or every day?" before saving.
   const [askScope, setAskScope] = useState<EventInput | null>(null);
