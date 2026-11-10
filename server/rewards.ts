@@ -1,7 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
+import { DAY, DAY_VALUE, isDay, allMembersExist, memberExists } from './schemas.ts';
 import { ROW_PUNCHES } from './potty.ts';
+import { localDay } from './stages.ts';
 
 // Reward jars. Each kid has a bucket: every star earned from extras, minus what they've put in jars.
 // Parents make the jars; kids drop stars in and can't take them back out. A jar is
@@ -14,7 +16,6 @@ import { ROW_PUNCHES } from './potty.ts';
 // Stars not yet redeemed go back to the kids when a jar is deleted, made smaller, or a kid is taken off it,
 // and a parent (with the master PIN) can take a kid's stars back out of a jar.
 
-const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 type TeamMode = 'pooled' | 'each';
 interface RewardRow {
   id: string; title: string; goal: number; team_mode: TeamMode; deadline: string | null; missed_at: string | null;
@@ -35,8 +36,9 @@ const PROPS = {
   memberIds: { type: 'array', minItems: 1, maxItems: 20, uniqueItems: true, items: { type: 'string' } },
   deadline: { type: ['string', 'null'], pattern: DAY },
 } as const;
-const TODAY = { type: 'string', pattern: DAY } as const;
-const dayOr = (d?: string) => (d && new RegExp(DAY).test(d) ? d : new Date().toISOString().slice(0, 10));
+const TODAY = DAY_VALUE;
+/** The day asked about, else today at home. */
+const dayOr = (d?: string) => (d && isDay(d) ? d : localDay());
 const sum = (stars: Record<string, number>) => Object.values(stars).reduce((a, n) => a + n, 0);
 
 /** Stars a kid can still put in jars: everything earned from extras, moments, goals and potty rows, minus what's in jars. */
@@ -148,7 +150,6 @@ export function registerRewards(app: FastifyInstance, db: DB) {
     earnedDay: w.earned_day, givenAt: w.given_at, missedOn: w.missed_on,
   });
 
-  const validMembers = (ids: string[]) => ids.every((id) => db.prepare('SELECT 1 FROM members WHERE id = ?').get(id));
   function setMembers(id: string, ids: string[]) {
     db.prepare('DELETE FROM reward_members WHERE reward_id = ?').run(id);
     const add = db.prepare('INSERT INTO reward_members (reward_id, member_id) VALUES (?, ?)');
@@ -183,7 +184,7 @@ export function registerRewards(app: FastifyInstance, db: DB) {
         properties: { ...PROPS, today: TODAY } } },
     }, async (req, reply) => {
       const { memberIds, today, deadline = null } = req.body;
-      if (!validMembers(memberIds)) return reply.code(400).send({ error: 'Unknown member' });
+      if (!allMembersExist(db, memberIds)) return reply.code(400).send({ error: 'Unknown member' });
       if (deadline && deadline < today) return reply.code(400).send({ error: 'That deadline has already passed' });
       const id = randomUUID();
       db.transaction(() => {
@@ -202,7 +203,7 @@ export function registerRewards(app: FastifyInstance, db: DB) {
   }, async (req, reply) => {
     const row = get(req.params.id);
     if (!row) return reply.code(404).send({ error: 'Jar not found' });
-    if (req.body.memberIds && !validMembers(req.body.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
+    if (req.body.memberIds && !allMembersExist(db, req.body.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
     const today = dayOr(req.query.today);
     const { deadline } = req.body;
     if (deadline && deadline !== row.deadline && deadline < today) return reply.code(400).send({ error: 'That deadline has already passed' });
@@ -229,7 +230,7 @@ export function registerRewards(app: FastifyInstance, db: DB) {
       } } },
     }, async (req, reply) => {
       const { memberId, today, from, places } = req.body;
-      if (!validMembers([memberId])) return reply.code(400).send({ error: 'Unknown member' });
+      if (!memberExists(db, memberId)) return reply.code(400).send({ error: 'Unknown member' });
       try {
         db.transaction(() => {
           if (from) {

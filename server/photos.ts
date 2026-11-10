@@ -5,6 +5,7 @@ import { pipeline } from 'node:stream/promises';
 import type { Readable } from 'node:stream';
 import { join } from 'node:path';
 import type { DB } from './db.ts';
+import { noneOrMember } from './schemas.ts';
 import { convertVideo } from './video.ts';
 
 // The photo album. Browsers resize photos before uploading (2560px on the long side, plus a small
@@ -102,7 +103,7 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
     const body = req.body as Buffer;
     if (!Buffer.isBuffer(body) || !isJpeg(body)) return reply.code(415).send({ error: 'Photos are uploaded as JPEG' });
     const { memberId } = req.query;
-    if (memberId && !db.prepare('SELECT 1 FROM members WHERE id = ?').get(memberId)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!noneOrMember(db, memberId)) return reply.code(400).send({ error: 'Unknown member' });
     const takenAt = req.query.takenAt && !Number.isNaN(Date.parse(req.query.takenAt)) ? new Date(req.query.takenAt).toISOString() : null;
     const id = randomUUID();
     writeFileSync(file(id), body);
@@ -120,7 +121,7 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
       takenAt: { type: 'string', maxLength: 40 }, memberId: { type: 'string' }, inSlideshow: { type: 'boolean' } } } },
   }, async (req, reply) => {
     const { memberId } = req.query;
-    if (memberId && !db.prepare('SELECT 1 FROM members WHERE id = ?').get(memberId)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!noneOrMember(db, memberId)) return reply.code(400).send({ error: 'Unknown member' });
     const id = randomUUID();
     let bytes = 0;
     try {
@@ -192,7 +193,7 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
     const row = get(req.params.id);
     if (!row) return reply.code(404).send({ error: 'Photo not found' });
     const memberId = req.body.memberId === undefined ? row.member_id : req.body.memberId;
-    if (memberId && !db.prepare('SELECT 1 FROM members WHERE id = ?').get(memberId)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!noneOrMember(db, memberId)) return reply.code(400).send({ error: 'Unknown member' });
     db.prepare('UPDATE photos SET in_slideshow = ?, member_id = ? WHERE id = ?')
       .run(req.body.inSlideshow === undefined ? row.in_slideshow : req.body.inSlideshow ? 1 : 0, memberId, row.id);
     return toPhoto(get(row.id)!);

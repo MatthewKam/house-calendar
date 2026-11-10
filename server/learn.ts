@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
+import { DAY_VALUE } from './schemas.ts';
 import { grownUpDevices, sendOnce, type Pusher } from './push.ts';
 import { stageOf, type Stage } from './stages.ts';
 
@@ -11,7 +12,6 @@ import { stageOf, type Stage } from './stages.ts';
 // move up by themselves: they're ready for the next level, and a grown-up moves them up. Each play is a new version of the game
 // (the web picks it). It's for learning: it earns no stars.
 
-const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 
 /** The games, and the highest level each has. */
 export const GAMES = {
@@ -84,7 +84,7 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
 
   // Each kid's learning: on or off, and their games' levels.
   app.get<{ Querystring: { today: string } }>('/api/learn', {
-    schema: { querystring: { type: 'object', required: ['today'], properties: { today: { type: 'string', pattern: DAY } } } },
+    schema: { querystring: { type: 'object', required: ['today'], properties: { today: DAY_VALUE } } },
   }, async (req) => {
     const rows = db.prepare(`SELECT m.id, m.birthdate, m.stage, k.enabled
       FROM members m LEFT JOIN learn_kids k ON k.member_id = m.id ORDER BY m.sort_order, m.created_at`).all() as KidRow[];
@@ -96,7 +96,7 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
   app.put<{ Params: { memberId: string }; Body: { enabled?: boolean; levels?: Partial<Record<Game, number>>; today: string } }>(
     '/api/learn/:memberId', {
       schema: { body: { type: 'object', required: ['today'], additionalProperties: false, minProperties: 2, properties: {
-        enabled: { type: 'boolean' }, today: { type: 'string', pattern: DAY },
+        enabled: { type: 'boolean' }, today: DAY_VALUE,
         levels: { type: 'object', additionalProperties: { type: 'integer', minimum: 1, maximum: 9 } } } } },
     }, async (req, reply) => {
       const r = kid(req.params.memberId);
@@ -121,7 +121,7 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
   app.post<{ Params: { memberId: string }; Body: { today: string; game: Game; level: number; rounds: number; firstTry: number } }>(
     '/api/learn/:memberId/done', {
       schema: { body: { type: 'object', required: ['today', 'game', 'level', 'rounds', 'firstTry'], additionalProperties: false, properties: {
-        today: { type: 'string', pattern: DAY }, game: { enum: Object.keys(GAMES) },
+        today: DAY_VALUE, game: { enum: Object.keys(GAMES) },
         level: { type: 'integer', minimum: 1, maximum: 9 }, rounds: { type: 'integer', minimum: 1, maximum: 50 },
         firstTry: { type: 'integer', minimum: 0, maximum: 50 } } } },
     }, async (req, reply) => {

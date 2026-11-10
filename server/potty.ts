@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
+import { memberExists } from './schemas.ts';
 import { bucket } from './rewards.ts';
 
 // Potty charts, a punch card for potty training. Each step of a trip has its own row: said I need to
@@ -58,7 +59,7 @@ export function registerPotty(app: FastifyInstance, db: DB) {
     schema: { body: { type: 'object', required: ['on'], additionalProperties: false, properties: { on: { type: 'boolean' } } } },
   }, async (req, reply) => {
     const { memberId } = req.params;
-    if (!db.prepare('SELECT 1 FROM members WHERE id = ?').get(memberId)) return reply.code(404).send({ error: 'Unknown member' });
+    if (!memberExists(db, memberId)) return reply.code(404).send({ error: 'Unknown member' });
     if (req.body.on) db.prepare('INSERT OR IGNORE INTO potty_kids (member_id) VALUES (?)').run(memberId);
     else db.prepare('DELETE FROM potty_kids WHERE member_id = ?').run(memberId);
     return reply.code(204).send();

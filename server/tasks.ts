@@ -1,10 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
+import { DAY, DAY_VALUE, memberExists, noneOrMember } from './schemas.ts';
 import { bucket, coverShortfall } from './rewards.ts';
 import { localDay } from './stages.ts';
 
-const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 const WEEKDAYS = { type: 'array', minItems: 1, maxItems: 7, items: { type: 'integer', minimum: 0, maximum: 6 } } as const;
 const TITLE = { type: 'string', minLength: 1, maxLength: 80 } as const;
 
@@ -74,7 +74,6 @@ export function registerTasks(app: FastifyInstance, db: DB) {
   }
 
   const get = (id: string) => db.prepare('SELECT * FROM tasks WHERE id = ?').get(id) as TaskRow | undefined;
-  const memberExists = (id: string | null) => id === null || !!db.prepare('SELECT 1 FROM members WHERE id = ?').get(id);
 
   /** Every task in order, each one-time task with when each person first did it. */
   function listTasks() {
@@ -93,7 +92,7 @@ export function registerTasks(app: FastifyInstance, db: DB) {
     schema: { body: { type: 'object', required: ['title', 'memberId', 'days'], additionalProperties: false,
       properties: TASK_PROPS } },
   }, async (req, reply) => {
-    if (!memberExists(req.body.memberId)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!noneOrMember(db, req.body.memberId)) return reply.code(400).send({ error: 'Unknown member' });
     const id = randomUUID();
     const next = (db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 AS n FROM tasks').get() as { n: number }).n;
     const category = req.body.category ?? 'non_negotiable';
@@ -115,7 +114,7 @@ export function registerTasks(app: FastifyInstance, db: DB) {
     if (!row) return reply.code(404).send({ error: 'Task not found' });
     const title = req.body.title ?? row.title;
     const memberId = req.body.memberId === undefined ? row.member_id : req.body.memberId;
-    if (!memberExists(memberId)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!noneOrMember(db, memberId)) return reply.code(400).send({ error: 'Unknown member' });
     const dueBy = req.body.dueBy === undefined ? row.due_by : req.body.dueBy;
     const days = dueBy ? ALL_DAYS : req.body.days ? daysText(req.body.days) : row.days;
     const time = req.body.time === undefined ? row.time : req.body.time;
@@ -148,7 +147,7 @@ export function registerTasks(app: FastifyInstance, db: DB) {
   // Check-offs between two local days, end exclusive.
   app.get<{ Querystring: { from: string; to: string } }>('/api/tasks/done', {
     schema: { querystring: { type: 'object', required: ['from', 'to'],
-      properties: { from: { type: 'string', pattern: DAY }, to: { type: 'string', pattern: DAY } } } },
+      properties: { from: DAY_VALUE, to: DAY_VALUE } } },
   }, async (req) =>
     (db.prepare('SELECT task_id, member_id, day, points FROM task_done WHERE day >= ? AND day < ? ORDER BY day')
       .all(req.query.from, req.query.to) as { task_id: string; member_id: string; day: string; points: number }[])
@@ -169,12 +168,12 @@ export function registerTasks(app: FastifyInstance, db: DB) {
   // Check off (PUT) or un-check (DELETE) a task for one person on one day. Both are safe to repeat.
   type DoneParams = { id: string; memberId: string; day: string };
   const doneParams = { type: 'object',
-    properties: { id: { type: 'string' }, memberId: { type: 'string' }, day: { type: 'string', pattern: DAY } } } as const;
+    properties: { id: { type: 'string' }, memberId: { type: 'string' }, day: DAY_VALUE } } as const;
   app.put<{ Params: DoneParams }>('/api/tasks/:id/done/:memberId/:day', { schema: { params: doneParams } },
     async (req, reply) => {
       const task = get(req.params.id);
       if (!task) return reply.code(404).send({ error: 'Task not found' });
-      if (!memberExists(req.params.memberId)) return reply.code(400).send({ error: 'Unknown member' });
+      if (!memberExists(db, req.params.memberId)) return reply.code(400).send({ error: 'Unknown member' });
       if (task.member_id && task.member_id !== req.params.memberId) {
         return reply.code(400).send({ error: 'This task belongs to someone else' });
       }

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
+import { DAY_VALUE, isDay, allMembersExist } from './schemas.ts';
 import { assignManually } from './people.ts';
 import { cancelDelete, diff, outboxStatus, queueCreate, queueEdit, queueSeries, resolveConflict } from './outbox.ts';
 import type { Viewer } from './auth.ts';
@@ -9,7 +10,6 @@ import { accessFor, eventAccess, kidIds, setVisibility, VISIBILITIES, VISIBILITY
 // Events on the wall: its own, and synced ones (iCloud), whose edits go through the outbox
 // (outbox.ts) and are sent to iCloud shortly after.
 
-const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 
 interface EventRow {
   id: string; calendar_id: string; title: string; remote_id: string | null; series_id: string | null;
@@ -103,8 +103,7 @@ interface EventInput {
 
 function validateTimes(ev: EventInput): string | null {
   if (ev.allDay) {
-    const day = new RegExp(DAY);
-    if (!day.test(ev.start) || !day.test(ev.end)) return 'All-day events use YYYY-MM-DD dates';
+    if (!isDay(ev.start) || !isDay(ev.end)) return 'All-day events use YYYY-MM-DD dates';
     return ev.end > ev.start ? null : 'End must be after start';
   }
   const start = Date.parse(ev.start);
@@ -125,8 +124,6 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
   const opts = { syncedEdits };
   // ---- Events ------------------------------------------------------------
   const getEvent = (id: string) => toEvent(db.prepare(`${EVENT_SELECT} WHERE e.id = ?`).get(id) as EventRow);
-  const allMembers = (ids: string[]) =>
-    ids.every((id) => db.prepare('SELECT 1 FROM members WHERE id = ?').get(id));
   const knownPhoto = (id?: string | null) => !id || !!db.prepare('SELECT 1 FROM photos WHERE id = ?').get(id);
   /** Replaces who a wall event is for. */
   function setMembers(eventId: string, memberIds: string[]) {
@@ -154,7 +151,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
   app.get<{ Querystring: { from: string; to: string; fromDay: string; toDay: string } }>('/api/events', {
     schema: { querystring: { type: 'object', required: ['from', 'to', 'fromDay', 'toDay'],
       properties: { from: { type: 'string' }, to: { type: 'string' },
-        fromDay: { type: 'string', pattern: DAY }, toDay: { type: 'string', pattern: DAY } } } },
+        fromDay: DAY_VALUE, toDay: DAY_VALUE } } },
   }, async (req) => {
     const { from, to, fromDay, toDay } = req.query;
     const rows = db.prepare(`${EVENT_SELECT}
@@ -180,7 +177,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     const ev = { ...req.body, memberIds: req.body.memberIds ?? [] };
     const err = validateTimes(ev);
     if (err) return reply.code(400).send({ error: err });
-    if (!allMembers(ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!allMembersExist(db, ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
     if (!knownPhoto(ev.photoId)) return reply.code(400).send({ error: 'Unknown photo' });
     if (req.body.calendarId && req.body.calendarId !== 'local') {
       const cal = db.prepare(`SELECT id, remote_id, writable FROM calendars WHERE id = ? AND provider != 'local'`)
@@ -247,7 +244,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     };
     const err = validateTimes(ev);
     if (err) return reply.code(400).send({ error: err });
-    if (!allMembers(ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!allMembersExist(db, ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
     if (!knownPhoto(ev.photoId)) return reply.code(400).send({ error: 'Unknown photo' });
     const next = details(ev);
     // Notes are the opened event's own (not its copies'): changed only when they're being set.
@@ -385,7 +382,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     schema: { body: { type: 'object', required: ['memberIds'], additionalProperties: false,
       properties: { memberIds: eventBody.properties.memberIds } } },
   }, async (req, reply) => {
-    if (!allMembers(req.body.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
+    if (!allMembersExist(db, req.body.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
     if (!assignManually(db, req.params.id, req.body.memberIds)) {
       return reply.code(404).send({ error: 'Synced event not found' });
     }

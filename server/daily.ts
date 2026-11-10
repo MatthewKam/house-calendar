@@ -1,11 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import type { DB } from './db.ts';
+import { DAY_VALUE } from './schemas.ts';
 
 // A dad joke and a quote, for cards on the calendar page. Each comes from a free service with no
 // key, once a day; the wall is a family screen, so grim jokes are skipped.
 
 const UA = 'Sprig family app (family use)';
-const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
 
 /** Words that keep a joke off a family wall. */
 const GRIM = /\b(kill\w*|dead\w*|death\w*|die|died|dies|dying|fatal\w*|landslide\w*|flood\w*|avalanche\w*|tornado\w*|wreck\w*|drown\w*|accident\w*|collapse\w*|casualt\w*|murder\w*|assassinat\w*|war|wars|wartime|bomb\w*|attack\w*|massacre\w*|shoot\w*|shot|terror\w*|crash\w*|disaster\w*|execut\w*|genocide|invasion|invaded|invade\w*|battle\w*|siege|hostage\w*|riot\w*|coup|suicide|earthquake\w*|hurricane\w*|tsunami\w*|sank|sinking|famine|plague|slave\w*|nazi\w*|holocaust|weapon\w*|nuclear|missile\w*|gun\w*|drunk|beer|sex\w*|drug\w*|prison\w*|jail\w*|arrest\w*|hanged|lynch\w*|burned|fire|fires|explod\w*|explosion\w*|injur\w*|victim\w*|rebel\w*|militar\w*|army|troops|soldier\w*|insurgen\w*|guerrilla\w*|rape\w*|abuse\w*)\b/i;
@@ -60,7 +60,7 @@ export function registerDaily(app: FastifyInstance, db: DB, fetchImpl: Fetch = f
   }
 
   app.get<{ Querystring: { day: string } }>('/api/daily', {
-    schema: { querystring: { type: 'object', required: ['day'], properties: { day: { type: 'string', pattern: DAY } } } },
+    schema: { querystring: { type: 'object', required: ['day'], properties: { day: DAY_VALUE } } },
   }, async (req) => {
     const { day } = req.query;
     const [joke, quote] = await Promise.all([
