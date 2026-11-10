@@ -1,5 +1,6 @@
-/* Today (TodayPage): what's next for me, the kids, and what needs me. A single column of cards,
-   phone first; wider screens keep it a readable width. */
+/* Today (TodayPage): the family's week, the weather, special days, the kids, what needs me, words for
+   the day and photos from this day before. A column of cards on a phone; rows of two on a tablet or a
+   phone on its side, three on a big screen. */
 .page {
 	flex: 1;
 	min-height: 0;
@@ -9,8 +10,41 @@
 }
 .head {
 	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.8rem;
+	/* As wide as the cards, over them. */
+	width: 100%;
+	max-width: max(56rem, 80%);
+	margin-inline: auto;
+}
+.headText {
+	display: flex;
 	flex-direction: column;
 	gap: 0.2rem;
+	min-width: 0;
+}
+/* The weather now, top right: the sky, the temperature, and how warm it feels. */
+.headWeather {
+	flex: none;
+	display: grid;
+	grid-template-columns: auto auto;
+	align-items: center;
+	column-gap: 0.35rem;
+	text-align: right;
+}
+.headIcon {
+	grid-row: span 2;
+	font-size: 2rem;
+}
+.headTemp {
+	font-size: 1.5rem;
+	font-weight: 750;
+	line-height: 1;
+}
+.headFeels {
+	font-size: 0.8rem;
+	color: var(--muted);
 }
 .hello {
 	margin: 0;
@@ -20,15 +54,64 @@
 	color: var(--muted);
 	font-size: 0.95rem;
 }
+@media (max-width: 700px) {
+	.hello {
+		font-size: 1.55rem;
+	}
+	.date {
+		font-size: 0.88rem;
+	}
+}
 .scroll {
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
-	gap: 0.9rem;
-	max-width: 40rem;
 	padding-bottom: 1rem;
+}
+.cards {
+	width: 100%;
+	max-width: max(56rem, 80%);
+	margin-inline: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+}
+/* A tablet either way up, or a phone on its side: rows of two, the calendar and the photos across both. */
+@media (orientation: landscape) and (max-height: 500px),
+	(min-width: 744px) and (min-height: 600px) {
+	.cards {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		align-items: start;
+	}
+	.wide {
+		grid-column: 1 / -1;
+	}
+}
+/* A tablet on its side and bigger (TodayPage's TWO_COLUMNS): two columns, the other cards down the left,
+   the calendar down the right (today, then tomorrow and the rest of the week under it). */
+.columns {
+	width: 100%;
+	max-width: max(56rem, 80%);
+	margin-inline: auto;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	align-items: start;
+	gap: 0.9rem;
+}
+.column {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+}
+/* A big screen: rows of three. */
+@media (min-width: 1401px) {
+	.cards {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
 }
 /* It scrolls by touch or wheel; no bar beside the cards. */
 .scroll {
@@ -242,4 +325,456 @@ details > summary.cardHead {
 }
 .needText .late {
 	color: #b42318;
+}
+
+/* The calendar: today, tomorrow and the rest of the week (DayCalendar): a carousel with a button for
+   each; on a tablet or a phone on its side, today beside the other two; on a big screen all three. */
+.calendar {
+	--c: var(--accent);
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+}
+@media (orientation: landscape) and (max-height: 500px),
+	(min-width: 744px) and (min-height: 600px) {
+	.calendar {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		align-items: start;
+		gap: 1.2rem;
+	}
+}
+@media (min-width: 1401px) {
+	.calendar.calendar {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+.group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	min-width: 0;
+}
+.groupHead {
+	margin: 0;
+	min-height: 2.6rem;
+	display: flex;
+	align-items: center;
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--muted);
+}
+.carousel {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	min-width: 0;
+	/* Up and down still scrolls the page; sideways is a swipe. */
+	touch-action: pan-y;
+}
+.dayButtons {
+	display: flex;
+	gap: 0.4rem;
+}
+.dayButton {
+	flex: 1 1 auto;
+	white-space: nowrap;
+	min-height: 2.6rem;
+	padding: 0.2rem 0.7rem;
+	border-radius: 999px;
+	border: 1px solid var(--line);
+	background: var(--bg);
+	color: var(--text);
+	font: inherit;
+	font-size: 0.9rem;
+	font-weight: 650;
+	cursor: pointer;
+}
+.dayButtonOn {
+	border-color: var(--c);
+	background: var(--c);
+	color: #fff;
+}
+.dayPage {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.dayFromRight {
+	animation: dayFromRight 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.dayFromLeft {
+	animation: dayFromLeft 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@keyframes dayFromRight {
+	from {
+		opacity: 0;
+		transform: translateX(2rem);
+	}
+}
+@keyframes dayFromLeft {
+	from {
+		opacity: 0;
+		transform: translateX(-2rem);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.dayFromRight,
+	.dayFromLeft {
+		animation: none;
+	}
+}
+/* Today's events that are over, folded away; the rest of the week, a heading for each day. */
+.earlier > summary {
+	cursor: pointer;
+	min-height: 2rem;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	list-style: none;
+}
+.earlier > summary::-webkit-details-marker {
+	display: none;
+}
+/* A chevron: down while they're folded away, up once open. */
+.earlier > summary::after {
+	content: "";
+	width: 0.45rem;
+	height: 0.45rem;
+	margin-top: -0.25rem;
+	border-right: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+	transform: rotate(45deg);
+	transition:
+		transform 0.2s ease,
+		margin 0.2s ease;
+}
+.earlier[open] > summary::after {
+	margin-top: 0.2rem;
+	transform: rotate(-135deg);
+}
+.earlier .events {
+	opacity: 0.7;
+}
+.weekGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+/* The weather: now, the next hours across, then the week. */
+.weatherNow {
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+}
+.weatherIcon {
+	font-size: 2.6rem;
+}
+.weatherTemp {
+	font-size: 2.6rem;
+	font-weight: 750;
+	line-height: 1;
+}
+.weatherFacts {
+	display: flex;
+	flex-direction: column;
+	font-size: 0.9rem;
+	color: var(--muted);
+}
+.weatherFacts b {
+	color: var(--text);
+}
+/* The hours around now: a line of temperatures (HourGraph), the hours gone by faint, a dot for now; a
+   tapped hour gets a line down through it and its details in a box over the graph. */
+.graph {
+	position: relative;
+	margin-top: 0.2rem;
+}
+.graph svg {
+	display: block;
+	touch-action: pan-y;
+	cursor: crosshair;
+}
+.graphLine,
+.graphPast {
+	fill: none;
+	stroke-width: 2px;
+	stroke-linejoin: round;
+	stroke-linecap: round;
+}
+.graphLine {
+	stroke: var(--accent);
+}
+.graphPast {
+	stroke: var(--muted);
+	stroke-opacity: 0.45;
+}
+.graphTick {
+	stroke: var(--line);
+	stroke-width: 1px;
+}
+.graphHour {
+	fill: var(--muted);
+	font-size: 11px;
+}
+.graphTemp {
+	fill: var(--text);
+	font-size: 12px;
+	font-weight: 700;
+}
+.graphNow {
+	fill: var(--accent);
+	stroke: var(--surface);
+	stroke-width: 2px;
+}
+.graphCross {
+	stroke: var(--muted);
+	stroke-width: 1px;
+	stroke-dasharray: 3 3;
+}
+.graphPick {
+	fill: var(--surface);
+	stroke: var(--accent);
+	stroke-width: 2px;
+}
+.graphTip {
+	position: absolute;
+	top: -0.2rem;
+	width: 150px;
+	display: flex;
+	flex-direction: column;
+	gap: 0.05rem;
+	padding: 0.4rem 0.6rem;
+	border-radius: 0.6rem;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	box-shadow: 0 0.3rem 0.9rem rgb(0 0 0 / 0.12);
+	font-size: 0.82rem;
+	pointer-events: none;
+}
+.graphHint {
+	margin: 0.1rem 0 0;
+	text-align: center;
+	font-size: 0.75rem;
+	color: var(--muted);
+}
+
+/* The next seven days side by side (Week), a column each with a line between: the day, its date, sky and
+   rain, a bar from its high down to its low (all on one scale), then wind and how warm it feels. */
+.week {
+	list-style: none;
+	margin: 0.3rem 0 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	background: var(--bg);
+	border-radius: 5px;
+	padding: 15px 0;
+}
+.weekDay {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.2rem 0;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+.weekDay + .weekDay {
+	border-left: 1px solid var(--line);
+}
+.weekName {
+	font-size: 0.75rem;
+	font-weight: 650;
+	color: var(--muted);
+}
+.weekDate {
+	font-weight: 750;
+	font-size: 0.95rem;
+	line-height: 1;
+}
+.weekIcon {
+	margin-top: 0.2rem;
+	font-size: 1.5rem;
+	line-height: 1.1;
+}
+.weekRain,
+.weekWind {
+	font-size: 0.7rem;
+	color: var(--muted);
+	white-space: nowrap;
+}
+/* The high over its bar, the low under it. */
+.weekRange {
+	position: relative;
+	width: 100%;
+	margin-top: 0.3rem;
+}
+.weekHigh,
+.weekLow {
+	position: absolute;
+	left: 0;
+	right: 0;
+	line-height: 1;
+}
+.weekHigh {
+	font-weight: 750;
+	font-size: 0.95rem;
+}
+.weekLow {
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+/* Two bars side by side, each with its numbers: the temperature (green) and how warm it feels (grey). */
+.weekRange {
+	display: flex;
+	justify-content: space-around;
+	gap: 0;
+	padding: 0 0.3rem;
+}
+.weekPair {
+	position: relative;
+	flex: 1;
+	max-width: 2rem;
+	min-width: 0;
+	background: white;
+	border-radius: 5px;
+}
+.weekPair .weekHigh,
+.weekPair .weekLow {
+	font-size: 0.72rem;
+}
+.weekPairFeels .weekHigh,
+.weekPairFeels .weekLow {
+	color: var(--muted);
+	font-weight: 500;
+}
+.weekBar {
+	position: absolute;
+	left: 50%;
+	width: 0.45rem;
+	translate: -50% 0;
+	border-radius: 999px;
+	background: linear-gradient(
+		var(--accent),
+		color-mix(in srgb, var(--accent) 30%, var(--surface))
+	);
+}
+.weekPairFeels .weekBar {
+	background: linear-gradient(
+		#8a8f98,
+		color-mix(in srgb, #8a8f98 30%, var(--surface))
+	);
+}
+/* Which bar is which. */
+.weekKey {
+	margin: 0.2rem 0 0;
+	display: flex;
+	justify-content: center;
+	gap: 1rem;
+	font-size: 0.75rem;
+	color: var(--muted);
+}
+.weekKey > span {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+}
+.weekSwatch {
+	width: 0.7rem;
+	height: 0.7rem;
+	border-radius: 0.2rem;
+	background: var(--accent);
+}
+.weekSwatchFeels {
+	background: #8a8f98;
+}
+/* Special days: a picture, the name and date, and how long until it. */
+.specials {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.specialRow {
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+	padding: 0.45rem 0.7rem;
+	border-radius: 0.8rem;
+	background: var(--bg);
+}
+.specialToday {
+	background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+}
+.specialPicture {
+	flex: none;
+	font-size: 1.6rem;
+}
+.countdown {
+	flex: none;
+	font-size: 0.85rem;
+	font-weight: 700;
+	color: var(--accent);
+	white-space: nowrap;
+}
+
+/* The day's quote and kind words. */
+.quote {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+.quote p {
+	margin: 0;
+	font-size: 1.15rem;
+	font-style: italic;
+	line-height: 1.4;
+}
+.quote footer {
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.quote footer::before {
+	content: "— ";
+}
+.kindWords {
+	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	font-size: 1.15rem;
+	font-weight: 600;
+	line-height: 1.35;
+}
+.kindPicture {
+	flex: none;
+	font-size: 2.2rem;
+}
+
+/* The family's photo slideshow (PhotoCard): across the cards, a photo's shape. */
+.slideshow.slideshow {
+	flex: none;
+	width: 100%;
+	aspect-ratio: 3 / 2;
+	max-height: 70vh;
+}
+
+/* Kept on one line: a time, "10% rain". */
+.nowrap {
+	white-space: nowrap;
+}
+
+/* The calendar in a column of its own: today, then the carousel under it. */
+.calendar.calendarStacked {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 1.2rem;
 }

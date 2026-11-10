@@ -205,17 +205,18 @@ const MORE: [Page, string, () => ReactNode][] = [
 ];
 
 /**
- * Phones: Today, Calendar, the quick-add button, Tasks and More along the bottom, in thumb's reach.
+ * Phones: Today, Calendar ("Cal"), the quick-add button, Tasks and More along the bottom, in thumb's reach.
  * More holds the other pages, who's signed in, the parent lock and Settings.
  */
 function BottomBar({ page, settingsOpen, onPage, onSettings, lock, me, center, onKidMode }: Omit<Props, "phone">) {
 	const [more, setMore] = useState(false);
 	const inMore = MORE.some(([p]) => p === page);
-	const tab = (p: Page, label: string, icon: ReactNode) => (
+	// `short`: a shorter name to show (the full one still read out).
+	const tab = (p: Page, label: string, icon: ReactNode, short?: string) => (
 		<button className={`${s.tab} ${page === p ? s.tabOn : ""}`} aria-current={page === p ? "page" : undefined}
-			onClick={() => onPage(p)}>
+			aria-label={short ? label : undefined} onClick={() => onPage(p)}>
 			{icon}
-			<span>{label}</span>
+			<span>{short ?? label}</span>
 		</button>
 	);
 	// Picking from More closes it.
@@ -227,7 +228,7 @@ function BottomBar({ page, settingsOpen, onPage, onSettings, lock, me, center, o
 		<>
 			<nav className={s.bar} aria-label="Main">
 				{tab("today", "Today", <TodayIcon />)}
-				{tab("calendar", "Calendar", <CalendarIcon />)}
+				{tab("calendar", "Calendar", <CalendarIcon />, "Cal")}
 				<div className={s.center}>{center}</div>
 				{tab("tasks", "Tasks", <TasksIcon />)}
 				<button className={`${s.tab} ${inMore || more || settingsOpen ? s.tabOn : ""}`} aria-expanded={more}

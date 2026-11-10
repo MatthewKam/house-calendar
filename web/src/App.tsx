@@ -100,6 +100,8 @@ export default function App() {
 	const [dialog, setDialog] = useState<{
 		day: string;
 		event?: CalEvent;
+		/** A new special day, from Today. */
+		special?: boolean;
 	} | null>(null);
 	// Task sheet: an existing task to edit, or a kid to start a new one for.
 	// blank: opened from the round +, so no one is picked yet.
@@ -482,6 +484,8 @@ export default function App() {
 							parent={parentLock.parent}
 							onPage={setPage}
 							onOpenEvent={(event) => openEvent(event, event.allDay ? event.start : dayKey(new Date(event.start)))}
+							onAddSpecial={parentLock.parent ? () => setDialog({ day: today, special: true }) : undefined}
+							onPlaySlideshow={saver.show}
 						/>
 					) : page === "tasks" ? (
 						<TasksPage
@@ -613,9 +617,10 @@ export default function App() {
 
 			{dialog && (
 				<EventDialog
-					key={dialog.event?.id ?? dialog.day}
+					key={dialog.event?.id ?? `${dialog.day}${dialog.special ? "-special" : ""}`}
 					day={dialog.day}
 					event={dialog.event}
+					special={dialog.special}
 					members={members}
 					onSave={save}
 					onDelete={remove}

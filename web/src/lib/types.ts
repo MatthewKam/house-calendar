@@ -288,7 +288,9 @@ export type Scope = 'one' | 'all';
 
 /** Today's weather at home (°F), from GET /api/weather. */
 export interface Weather {
+  /** Now, and how warm it feels (°F). */
   temp: number;
+  feels: number;
   high: number;
   low: number;
   /** Relative humidity now, in %. */
@@ -299,8 +301,10 @@ export interface Weather {
   /** Today's sunrise and sunset (instants). */
   sunrise: string;
   sunset: string;
-  /** Today and the next six days. */
-  days: { date: string; high: number; low: number; code: number }[];
+  /** Today and the next seven days, each with its highest chance of rain (%) and strongest wind (mph). */
+  days: { date: string; high: number; low: number; code: number; rain: number; wind: number; feelsHigh: number; feelsLow: number }[];
+  /** The hours around now: six gone by, this one, and eighteen ahead (instants). */
+  hours: { time: string; temp: number; feels: number; rain: number; code: number }[];
   /** Today's highest chance of rain (%), average cloud cover (%) and strongest wind (mph). */
   rainChance: number;
   cloudCover: number;

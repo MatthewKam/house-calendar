@@ -3,8 +3,9 @@ import type { DB } from './db.ts';
 
 /** Today's weather at home, as the wall shows it under the month. */
 export interface Weather {
-  /** Now, in °F. */
+  /** Now, in °F, and how warm it feels (the wind and humidity counted in). */
   temp: number;
+  feels: number;
   high: number;
   low: number;
   /** Relative humidity now, in %. */
@@ -15,8 +16,10 @@ export interface Weather {
   /** Today's sunrise and sunset, as instants. */
   sunrise: string;
   sunset: string;
-  /** Today and the next six days. */
-  days: { date: string; high: number; low: number; code: number }[];
+  /** Today and the next seven days: each one's highest chance of rain (%), strongest wind (mph), and how warm it feels at most and least too. */
+  days: { date: string; high: number; low: number; code: number; rain: number; wind: number; feelsHigh: number; feelsLow: number }[];
+  /** The hours around now (HOURS_BEFORE back, HOURS_AFTER ahead): when (an instant), °F, how warm it feels, chance of rain (%). */
+  hours: { time: string; temp: number; feels: number; rain: number; code: number }[];
   /** Today's highest chance of rain (%), average cloud cover (%) and strongest wind (mph). */
   rainChance: number;
   cloudCover: number;
@@ -26,6 +29,10 @@ export interface Weather {
 }
 
 export interface Wear { pants: boolean; jacket: boolean; rain: boolean }
+
+/** The hours the forecast gives around now: this many gone by, and this many ahead. */
+const HOURS_BEFORE = 6;
+const HOURS_AFTER = 18;
 
 /**
  * The hours that count for dressing (home's clock): out the door to the end of the school day, or once
@@ -92,10 +99,10 @@ export async function geocode(address: string, fetchImpl: typeof fetch = fetch):
 /** Current conditions and today's high and low from Open-Meteo (free, no key). */
 export async function forecast(place: Place, fetchImpl: typeof fetch = fetch): Promise<Weather> {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${place.lat.toFixed(3)}&longitude=${place.lon.toFixed(3)}`
-    + '&current=temperature_2m,relative_humidity_2m,weather_code,is_day'
-    + '&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset,precipitation_probability_max,cloud_cover_mean,wind_speed_10m_max'
-    + '&hourly=apparent_temperature,precipitation_probability'
-    + '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7';
+    + '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day'
+    + '&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,weather_code,sunrise,sunset,precipitation_probability_max,cloud_cover_mean,wind_speed_10m_max'
+    + '&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code'
+    + '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=8';
   const res = await fetchImpl(url);
   if (!res.ok) throw new Error(`Open-Meteo answered ${res.status}`);
   const w = await res.json();
@@ -110,8 +117,23 @@ export async function forecast(place: Place, fetchImpl: typeof fetch = fetch): P
       ? [{ feels: w.hourly.apparent_temperature[i] as number, rain: (w.hourly.precipitation_probability[i] ?? 0) as number }] : [];
   });
   const wind = Math.round(w.daily.wind_speed_10m_max[0] ?? 0);
+  // The hours around now (home's clock): a few gone by, so now sits on the line, and most of the day ahead.
+  const thisHour = w.current.time ? (w.current.time as string).slice(0, 13) : '';
+  const at = Math.max(0, (w.hourly.time as string[]).findIndex((t) => t.slice(0, 13) >= thisHour));
+  const first = Math.max(0, at - HOURS_BEFORE);
+  const hours = (w.hourly.time as string[]).slice(first, at + HOURS_AFTER + 1).map((t, j) => {
+    const i = first + j;
+    return {
+      time: instant(t),
+      temp: Math.round(w.hourly.temperature_2m?.[i] ?? w.hourly.apparent_temperature[i]),
+      feels: Math.round(w.hourly.apparent_temperature[i]),
+      rain: Math.round(w.hourly.precipitation_probability[i] ?? 0),
+      code: w.hourly.weather_code?.[i] ?? w.current.weather_code,
+    };
+  });
   return {
     temp: Math.round(w.current.temperature_2m),
+    feels: Math.round(w.current.apparent_temperature ?? w.current.temperature_2m),
     high: Math.round(w.daily.temperature_2m_max[0]),
     low: Math.round(w.daily.temperature_2m_min[0]),
     humidity: Math.round(w.current.relative_humidity_2m),
@@ -124,7 +146,12 @@ export async function forecast(place: Place, fetchImpl: typeof fetch = fetch): P
       high: Math.round(w.daily.temperature_2m_max[i]),
       low: Math.round(w.daily.temperature_2m_min[i]),
       code: w.daily.weather_code[i],
+      rain: Math.round(w.daily.precipitation_probability_max[i] ?? 0),
+      wind: Math.round(w.daily.wind_speed_10m_max[i] ?? 0),
+      feelsHigh: Math.round(w.daily.apparent_temperature_max?.[i] ?? w.daily.temperature_2m_max[i]),
+      feelsLow: Math.round(w.daily.apparent_temperature_min?.[i] ?? w.daily.temperature_2m_min[i]),
     })),
+    hours,
     rainChance: Math.round(w.daily.precipitation_probability_max[0] ?? 0),
     cloudCover: Math.round(w.daily.cloud_cover_mean[0] ?? 0),
     wind,
