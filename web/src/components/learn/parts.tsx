@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import s from "../../styles/Learn.module.css";
 import sheet from "../../styles/Sheet.module.css";
+import Sheet from "../Sheet";
 
 /** The game being played, for its How to play: its name, and how to play it, for a grown-up to explain. */
 export const HowTo = createContext<{ title: string; how: string[] } | null>(null);
@@ -148,15 +149,9 @@ export function Cheer({ move }: { move?: "slide" | "fall" }) {
 
 /** How to play a game, for a grown-up to explain to the kid (the games themselves never talk). */
 function HowToPlay({ title, how, onClose }: { title: string; how: string[]; onClose: () => void }) {
-	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-		window.addEventListener("keydown", onKey);
-		return () => window.removeEventListener("keydown", onKey);
-	}, [onClose]);
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<div className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-modal="true" aria-label={`How to play ${title}`}>
+			<Sheet label={`How to play ${title}`} onClose={onClose} className={sheet.confirm}>
 				<div className={s.howHead}>
 					<img className={s.howMascot} src="/mascot/sprig-inky.png" alt="" />
 					<h2 className={sheet.heading}>{title}</h2>
@@ -168,7 +163,7 @@ function HowToPlay({ title, how, onClose }: { title: string; how: string[]; onCl
 					<span className={sheet.spacer} />
 					<button type="button" className={sheet.primary} onClick={onClose}>Got it</button>
 				</div>
-			</div>
+			</Sheet>
 		</>
 	);
 }

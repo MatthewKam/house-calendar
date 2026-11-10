@@ -12,6 +12,7 @@ import s from '../styles/EventDialog.module.css';
 import DateInput from './DateInput';
 import { CalendarPick, useNewEventCalendar } from './CalendarPick';
 import { isKid, firstName } from '../lib/people';
+import Sheet from './Sheet';
 
 interface Props {
   day: string;
@@ -107,8 +108,7 @@ function SyncedEvent({ event, members, onClose, onEdit, locked }: {
     : `${longDate(new Date(event.start))}, ${timeLabel(event.start)} – ${timeLabel(event.end)}`;
   return (
     <>
-      <div className={sheet.scrim} onClick={onClose} role="presentation" />
-      <div className={sheet.sheet} role="dialog" aria-label={event.title}>
+      <Sheet label={event.title} onClose={onClose}>
         <header className={sheet.head}>
           <h2 className={sheet.heading}>{event.title}</h2>
           <button type="button" className={sheet.close} onClick={onClose} aria-label="Close">×</button>
@@ -160,7 +160,7 @@ function SyncedEvent({ event, members, onClose, onEdit, locked }: {
             <button type="button" className={sheet.primary} onClick={onClose} autoFocus>Close</button>
           )}
         </div>
-      </div>
+      </Sheet>
     </>
   );
 }
@@ -247,8 +247,7 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
 
   return (
     <>
-      <div className={sheet.scrim} onClick={onClose} role="presentation" />
-      <form className={sheet.sheet} onSubmit={submit}>
+      <Sheet label={event ? 'Edit event' : 'New event'} onClose={onClose} onSubmit={submit}>
         <header className={sheet.head}>
           <h2 className={sheet.heading}>{event ? 'Edit event' : 'New event'}</h2>
           <button type="button" className={sheet.close} onClick={onClose} aria-label="Close">×</button>
@@ -349,7 +348,7 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
             <button type="submit" className={sheet.primary} disabled={!!problem}>Save</button>
           </div>
         )}
-      </form>
+      </Sheet>
     </>
   );
 }

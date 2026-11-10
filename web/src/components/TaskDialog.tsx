@@ -22,6 +22,7 @@ import sheet from "../styles/Sheet.module.css";
 import s from "../styles/EventDialog.module.css";
 import c from "../styles/Tasks.module.css";
 import DateInput from "./DateInput";
+import Sheet from "./Sheet";
 
 interface Props {
 	task?: Task;
@@ -147,8 +148,7 @@ export default function TaskDialog({
 
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<form className={sheet.sheet} onSubmit={submit}>
+			<Sheet label={task ? (isGoal ? "Edit goal" : "Edit task") : isGoal ? "New goal" : "New task"} onClose={onClose} onSubmit={submit}>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>{task ? (isGoal ? "Edit goal" : "Edit task") : isGoal ? "New goal" : "New task"}</h2>
 					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
@@ -404,7 +404,7 @@ export default function TaskDialog({
 						</button>
 					)}
 				</div>
-			</form>
+			</Sheet>
 			{task && confirmDelete && (
 				<ConfirmDialog
 					title={`Delete "${task.title}"?`}

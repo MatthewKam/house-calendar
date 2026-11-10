@@ -1,18 +1,13 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useParent } from "../lib/useParent";
 import PinPad, { pinSheet } from "./PinPad";
 import sheet from "../styles/Sheet.module.css";
+import Sheet from "./Sheet";
 
 /** Unlocks this device for parent changes with any guardian's PIN (then `onDone`, e.g. opening Settings). */
 export default function ParentUnlock({ onClose, onDone }: { onClose: () => void; onDone?: () => void }) {
 	const { unlock } = useParent();
 	const [pin, setPin] = useState("");
-
-	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-		window.addEventListener("keydown", onKey);
-		return () => window.removeEventListener("keydown", onKey);
-	}, [onClose]);
 
 	function submit(e?: FormEvent, typed = pin) {
 		e?.preventDefault();
@@ -30,8 +25,7 @@ export default function ParentUnlock({ onClose, onDone }: { onClose: () => void;
 
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<form className={`${sheet.sheet} ${sheet.confirm} ${pinSheet}`} role="dialog" aria-modal="true" aria-label="Parent unlock" onSubmit={submit}>
+			<Sheet label="Parent unlock" onClose={onClose} className={`${sheet.confirm} ${pinSheet}`} onSubmit={submit}>
 				<h2 className={sheet.heading}>Guardians only</h2>
 				<div className={sheet.body}>
 					Unlock to add, change or delete events, tasks, jars, photos, lists and settings. It locks again after a few
@@ -47,7 +41,7 @@ export default function ParentUnlock({ onClose, onDone }: { onClose: () => void;
 						Unlock
 					</button>
 				</div>
-			</form>
+			</Sheet>
 		</>
 	);
 }

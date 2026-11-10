@@ -9,6 +9,7 @@ import Fab from "./Fab";
 import ScreenSaverSettings from "./ScreenSaverSettings";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Photos.module.css";
+import Sheet from "./Sheet";
 
 interface Props {
 	/** Starts the screen saver now (to see how it looks). */
@@ -491,16 +492,7 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 
 			{settingsOpen && (
 				<>
-					<div
-						className={sheet.scrim}
-						onClick={() => setSettingsOpen(false)}
-						role="presentation"
-					/>
-					<div
-						className={sheet.sheet}
-						role="dialog"
-						aria-label="Screen saver settings"
-					>
+					<Sheet label="Screen saver settings" onClose={() => setSettingsOpen(false)}>
 						<header className={sheet.head}>
 							<h2 className={sheet.heading}>Screen saver settings</h2>
 							<button
@@ -527,7 +519,7 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 								? `${inCount} ${inCount === 1 ? "photo is" : "photos are"} in the screen saver.`
 								: "No photos are in the screen saver yet."}
 						</p>
-					</div>
+					</Sheet>
 				</>
 			)}
 
@@ -552,12 +544,7 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 
 			{uploadOpen && (
 				<>
-					<div
-						className={sheet.scrim}
-						onClick={() => setUploadOpen(false)}
-						role="presentation"
-					/>
-					<div className={sheet.sheet} role="dialog" aria-label="Upload photos">
+					<Sheet label="Upload photos" onClose={() => setUploadOpen(false)}>
 						<header className={sheet.head}>
 							<h2 className={sheet.heading}>Upload photos and videos</h2>
 							<button
@@ -599,7 +586,7 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 							/>
 							Add them to the screen saver
 						</label>
-					</div>
+					</Sheet>
 				</>
 			)}
 

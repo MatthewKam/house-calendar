@@ -9,6 +9,7 @@ import ConfirmDialog from "./ConfirmDialog";
 import { StarIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Potty.module.css";
+import Sheet from "./Sheet";
 
 type Kind = PottyKind | null;
 
@@ -203,8 +204,7 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact, atta
 
 			{choosing && (
 				<>
-					<div className={sheet.scrim} onClick={() => setChoosing(false)} role="presentation" />
-					<div className={`${sheet.sheet} ${s.chooser}`} role="dialog" aria-modal="true" aria-label="Pee or poop?">
+					<Sheet label="Pee or poop?" onClose={() => setChoosing(false)} className={s.chooser}>
 						<div className={sheet.head}>
 							<h2 className={s.chooseHeading}>Pee or poop?</h2>
 							<button type="button" className={sheet.close} onClick={() => setChoosing(false)} aria-label="Close">×</button>
@@ -229,7 +229,7 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact, atta
 								OK ✓
 							</button>
 						</div>
-					</div>
+					</Sheet>
 				</>
 			)}
 			{cheer && <Celebration cheer={cheer} onDone={() => setCheer(null)} />}

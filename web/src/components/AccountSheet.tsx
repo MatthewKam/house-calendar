@@ -1,19 +1,14 @@
-import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, type AuthStatus, type SignedIn } from "../lib/api";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Account.module.css";
+import Sheet from "./Sheet";
 
 const ROLE = { guardian: "Guardian", kid: "Kid", wall: "The family wall" };
 
 /** Who this device is signed in as, from the bar's avatar: switch household, sign out, or lock the wall. */
 export default function AccountSheet({ status, onClose, onKidMode }: { status: SignedIn; onClose: () => void; onKidMode?: () => void }) {
 	const qc = useQueryClient();
-	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-		window.addEventListener("keydown", onKey);
-		return () => window.removeEventListener("keydown", onKey);
-	}, [onClose]);
 
 	// Another household or signed out: nothing on screen belongs any more.
 	const restart = (next: AuthStatus) => {
@@ -31,8 +26,7 @@ export default function AccountSheet({ status, onClose, onKidMode }: { status: S
 
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<div className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-modal="true" aria-label="Signed in">
+			<Sheet label="Signed in" onClose={onClose} className={sheet.confirm}>
 				<div className={s.person}>
 					<Avatar status={status} big />
 					<span className={s.who}>
@@ -66,7 +60,7 @@ export default function AccountSheet({ status, onClose, onKidMode }: { status: S
 					)}
 					<button type="button" className={sheet.primary} onClick={onClose}>Done</button>
 				</div>
-			</div>
+			</Sheet>
 		</>
 	);
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
+import { useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { PALETTE } from '../lib/color';
 import { screenSaverSettings } from '../lib/screensaver';
 import { useAddMember, useAuthStatus, useCalendars, useLearn, useRemoveMember, useSetSetting, useSettings, useUpdateMember  } from '../lib/queries';
@@ -16,6 +16,7 @@ import DateInput from './DateInput';
 import AlertsSetting, { ALERTS_NOTE } from './AlertsSetting';
 import LearnSettings, { learnNote } from './LearnSettings';
 import { usePush } from '../lib/usePush';
+import Sheet from './Sheet';
 
 interface Props { members: Member[]; uiScale: number; onClose: () => void }
 
@@ -152,12 +153,6 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
   const push = usePush();
   const hasCalendars = (useCalendars().data ?? []).length > 0;
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   const nextColor = PALETTE.find((c) => !members.some((m) => m.color === c)) ?? PALETTE[0];
   const newColor = pickedColor ?? nextColor;
 
@@ -181,8 +176,7 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
 
   return (
     <>
-      <div className={sheet.scrim} onClick={onClose} role="presentation" />
-      <div className={sheet.sheet} role="dialog" aria-label="Settings">
+      <Sheet label="Settings" onClose={onClose}>
         <header className={sheet.head}>
           <h2 className={sheet.heading}>Settings</h2>
           <button className={sheet.close} onClick={onClose} aria-label="Close Settings">×</button>
@@ -327,7 +321,7 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
           <span className={sheet.spacer} />
           <button className={sheet.secondary} onClick={onClose}>Done</button>
         </div>
-      </div>
+      </Sheet>
     </>
   );
 }

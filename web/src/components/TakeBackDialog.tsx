@@ -1,9 +1,10 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useRewardActions } from "../lib/queries";
 import type { Member } from "../lib/types";
 import { PickChip } from "./NameChip";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Rewards.module.css";
+import Sheet from "./Sheet";
 
 interface Props {
 	jar: { id: string; title: string };
@@ -19,12 +20,6 @@ export default function TakeBackDialog({ jar, kids, onClose }: Props) {
 	const { kid, max } = kids[whose];
 	const [n, setN] = useState(1);
 
-	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-		window.addEventListener("keydown", onKey);
-		return () => window.removeEventListener("keydown", onKey);
-	}, [onClose]);
-
 	function submit(e: FormEvent) {
 		e.preventDefault();
 		takeBack.mutate({ id: jar.id, memberId: kid.id, stars: n }, { onSuccess: onClose });
@@ -32,8 +27,7 @@ export default function TakeBackDialog({ jar, kids, onClose }: Props) {
 
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<form className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-modal="true" aria-label="Take stars back" onSubmit={submit}>
+			<Sheet label="Take stars back" onClose={onClose} className={sheet.confirm} onSubmit={submit}>
 				<h2 className={sheet.heading}>Take stars back from {jar.title}</h2>
 				{kids.length > 1 && (
 					<div className={s.whose}>
@@ -75,7 +69,7 @@ export default function TakeBackDialog({ jar, kids, onClose }: Props) {
 						Take back
 					</button>
 				</div>
-			</form>
+			</Sheet>
 		</>
 	);
 }

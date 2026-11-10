@@ -22,6 +22,7 @@ import { ago } from "../lib/dates";
 import s from "../styles/ListView.module.css";
 import { useParent } from "../lib/useParent";
 import { textOn } from "../lib/color";
+import Sheet from "./Sheet";
 
 /** Soft colors for a list's rows, light enough for dark text. */
 const LIST_COLORS = ["#f2dcb3", "#ecb0ea", "#c9dcf7", "#cdebd3", "#ddd3f5", "#f8cfb8", "#f6e7a1", "#c3ece4", "#e4e4e4"];
@@ -267,12 +268,7 @@ function ListCard({ list, members, color, onColor, order, onReorder }: CardProps
 			{settingUp && <ListSheet list={list} onClose={() => setSettingUp(false)} />}
 			{picking && (
 				<>
-					<div
-						className={sheet.scrim}
-						onClick={() => setPicking(null)}
-						role="presentation"
-					/>
-					<div className={sheet.sheet} role="dialog" aria-label="Pick an icon">
+					<Sheet label="Pick an icon" onClose={() => setPicking(null)}>
 						<header className={sheet.head}>
 							<h2 className={sheet.heading}>
 								Icon for {splitIcon(picking.title).text || "the new item"}
@@ -303,7 +299,7 @@ function ListCard({ list, members, color, onColor, order, onReorder }: CardProps
 								shows on your phones too.
 							</p>
 						)}
-					</div>
+					</Sheet>
 				</>
 			)}
 		</section>
@@ -436,9 +432,7 @@ function NewListSheet({ onClose }: { onClose: () => void }) {
 	const [title, setTitle] = useState("");
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<form className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-label="New list"
-				onSubmit={(e) => {
+			<Sheet label="New list" onClose={onClose} className={sheet.confirm} onSubmit={(e) => {
 					e.preventDefault();
 					if (title.trim()) addList.mutate(title, { onSuccess: onClose });
 				}}>
@@ -451,7 +445,7 @@ function NewListSheet({ onClose }: { onClose: () => void }) {
 					<button type="button" className={sheet.secondary} onClick={onClose}>Cancel</button>
 					<button type="submit" className={sheet.primary} disabled={!title.trim() || addList.isPending}>Make it</button>
 				</div>
-			</form>
+			</Sheet>
 		</>
 	);
 }
@@ -469,9 +463,7 @@ export function AddToListSheet({ onClose, onNewList }: { onClose: () => void; /*
 	const chosen = lists?.find((l) => l.id === listId) ?? lists?.[0];
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<form className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-label="Add to a list"
-				onSubmit={(e) => {
+			<Sheet label="Add to a list" onClose={onClose} className={sheet.confirm} onSubmit={(e) => {
 					e.preventDefault();
 					if (!chosen || !title.trim()) return;
 					add.mutate({ listId: chosen.id, title: title.trim() });
@@ -510,7 +502,7 @@ export function AddToListSheet({ onClose, onNewList }: { onClose: () => void; /*
 						</div>
 					</>
 				)}
-			</form>
+			</Sheet>
 		</>
 	);
 }
@@ -522,9 +514,7 @@ function ListSheet({ list, onClose }: { list: CardList; onClose: () => void }) {
 	const [deleting, setDeleting] = useState(false);
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<form className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-label={`Change ${list.title}`}
-				onSubmit={(e) => {
+			<Sheet label={`Change ${list.title}`} onClose={onClose} className={sheet.confirm} onSubmit={(e) => {
 					e.preventDefault();
 					if (title.trim() && title.trim() !== list.title) renameList.mutate({ id: list.id, title }, { onSuccess: onClose });
 					else onClose();
@@ -541,7 +531,7 @@ function ListSheet({ list, onClose }: { list: CardList; onClose: () => void }) {
 					<button type="button" className={sheet.secondary} onClick={onClose}>Cancel</button>
 					<button type="submit" className={sheet.primary} disabled={!title.trim()}>Save</button>
 				</div>
-			</form>
+			</Sheet>
 		</>
 	);
 }
@@ -561,8 +551,7 @@ function ItemSheet({ item, members, onClose }: { item: CardItem; members: Member
 	}
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
-			<div className={`${sheet.sheet} ${sheet.confirm}`} role="dialog" aria-label={text}>
+			<Sheet label={text} onClose={onClose} className={sheet.confirm}>
 				<div className={sheet.head}>
 					<h2 className={sheet.heading}>{text}</h2>
 					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">×</button>
@@ -596,7 +585,7 @@ function ItemSheet({ item, members, onClose }: { item: CardItem; members: Member
 					<button type="button" className={sheet.secondary} onClick={onClose}>Cancel</button>
 					<button type="button" className={sheet.primary} onClick={save}>Save</button>
 				</div>
-			</div>
+			</Sheet>
 		</>
 	);
 }
