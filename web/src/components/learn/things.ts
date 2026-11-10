@@ -1,38 +1,9 @@
 // What the games are made of: animals and their noises, toys, fruit, and words with a picture (art.tsx
 // draws each by its id).
 
-export interface Animal {
-	id: string;
-	name: string;
-	/** Its noise as a word, said aloud when there's no recording. */
-	says: string;
-	/** Where it lives: the farm's are the first ones a 2-year-old meets. */
-	home: "farm" | "house" | "wild";
-}
-
-export const ANIMALS: Animal[] = [
-	{ id: "cow", name: "cow", says: "Moo", home: "farm" },
-	{ id: "pig", name: "pig", says: "Oink", home: "farm" },
-	{ id: "duck", name: "duck", says: "Quack", home: "farm" },
-	{ id: "sheep", name: "sheep", says: "Baa", home: "farm" },
-	{ id: "horse", name: "horse", says: "Neigh", home: "farm" },
-	{ id: "chicken", name: "chicken", says: "Cluck cluck", home: "farm" },
-	{ id: "rooster", name: "rooster", says: "Cock-a-doodle-doo", home: "farm" },
-	{ id: "goat", name: "goat", says: "Maa", home: "farm" },
-	{ id: "dog", name: "dog", says: "Woof", home: "house" },
-	{ id: "cat", name: "cat", says: "Meow", home: "house" },
-	{ id: "frog", name: "frog", says: "Ribbit", home: "wild" },
-	{ id: "owl", name: "owl", says: "Hoo hoo", home: "wild" },
-	{ id: "bee", name: "bee", says: "Buzz", home: "wild" },
-	{ id: "seagull", name: "seagull", says: "Caw caw", home: "wild" },
-	{ id: "hawk", name: "hawk", says: "Screech", home: "wild" },
-	{ id: "lion", name: "lion", says: "Roar", home: "wild" },
-	{ id: "leopard", name: "leopard", says: "Grrr", home: "wild" },
-	{ id: "bear", name: "bear", says: "Growl", home: "wild" },
-	{ id: "wolf", name: "wolf", says: "Awoo", home: "wild" },
-	{ id: "elephant", name: "elephant", says: "Pawoo", home: "wild" },
-	{ id: "monkey", name: "monkey", says: "Ooh ooh ah ah", home: "wild" },
-];
+// The animals with a noise: shared with the server, which keeps grown-ups' recordings of them.
+export { ANIMALS, type Animal } from "../../../../shared/learn.ts";
+import { ANIMALS } from "../../../../shared/learn.ts";
 
 /** Animals to play with at a level: farm ones first, then pets, then the wild ones too. */
 export function animalsUpTo(level: number) {
