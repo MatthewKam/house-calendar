@@ -274,7 +274,8 @@ export default function TodayPage({
 	const twoColumns = useMediaQuery(TWO_COLUMNS);
 
 	// The cards. A tablet on its side and anything bigger: two columns, the calendar on the right (today,
-	// then tomorrow and the rest of the week under it), the rest down the left. Otherwise one list.
+	// then tomorrow and the rest of the week under it) with the special days under it, the rest down the
+	// left. Otherwise one list.
 	const calendarCard = (
 		<section className={`${s.card} ${s.wide}`} aria-label="Calendar">
 			<DayCalendar days={calendar} styles={s} stacked={twoColumns} />
@@ -470,12 +471,14 @@ export default function TodayPage({
 							{quoteCard}
 							{encouragementCard}
 							{weatherCard}
-							{specialCard}
 							{kidsCard}
 							{needsCard}
 							{photosCard}
 						</div>
-						<div className={s.column}>{calendarCard}</div>
+						<div className={s.column}>
+							{calendarCard}
+							{specialCard}
+						</div>
 					</div>
 				) : (
 					<div className={s.cards}>
