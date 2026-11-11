@@ -785,6 +785,23 @@ const migrations: string[] = [
     PRIMARY KEY (calendar_id, series_key)
   );
   `,
+  // Learn's daily limit (learnDay.ts): games a day (2 unless a guardian sets it) and an optional time
+  // limit per kid; each day, extra games or minutes a grown-up gave, whether a grown-up unlocked or
+  // locked it (it opens by itself once the kid's Daily tasks are done), and the time played.
+  `
+  ALTER TABLE learn_kids ADD COLUMN games_a_day INTEGER NOT NULL DEFAULT 2;
+  ALTER TABLE learn_kids ADD COLUMN minutes_a_day INTEGER;
+  CREATE TABLE learn_days (
+    member_id     TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    day           TEXT NOT NULL,
+    extra_games   INTEGER NOT NULL DEFAULT 0,
+    extra_minutes INTEGER NOT NULL DEFAULT 0,
+    -- 1: a grown-up unlocked it today, 0: locked it, NULL: it opens once the Daily tasks are done.
+    open          INTEGER,
+    seconds       INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (member_id, day)
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

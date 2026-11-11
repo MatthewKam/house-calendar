@@ -5,6 +5,7 @@ import { DAY_VALUE } from './schemas.ts';
 import { grownUpDevices, sendOnce, type Pusher } from './push.ts';
 import { stageOf, type Stage } from './stages.ts';
 import { ANIMALS, GAME_LEVELS, GAME_NAMES, type Game } from '../shared/learn.ts';
+import { addTime, changeDay, learnDay } from './learnDay.ts';
 
 // Learning (docs/kids-growth.md): short picture-first games in kid mode, with no fail states. A
 // guardian turns it on for each kid, who then picks any of their stage's games. Each game has levels:
@@ -62,6 +63,8 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
       // Their stage's games, each at the level they'd play it, its highest, and whether it's waiting for a
       // grown-up to move it up.
       games: games.map((game) => ({ game, level: levelOf(r.id, game), maxLevel: GAME_LEVELS[game], ready: isReady(r.id, game) })),
+      // Today's Learn: games and time used and allowed, and whether a game can start (learnDay.ts).
+      today: learnDay(db, r.id, today),
     };
   }
 
@@ -75,11 +78,15 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
       .map((r) => state(r, req.query.today));
   });
 
-  // A guardian turns learning on or off for a kid, and moves games' levels up or down.
-  app.put<{ Params: { memberId: string }; Body: { enabled?: boolean; levels?: Partial<Record<Game, number>>; today: string } }>(
+  // A guardian turns learning on or off for a kid, sets their games and minutes a day (null minutes: no
+  // time limit), and moves games' levels up or down.
+  app.put<{ Params: { memberId: string }; Body: { enabled?: boolean; gamesADay?: number; minutesADay?: number | null;
+    levels?: Partial<Record<Game, number>>; today: string } }>(
     '/api/learn/:memberId', {
       schema: { body: { type: 'object', required: ['today'], additionalProperties: false, minProperties: 2, properties: {
         enabled: { type: 'boolean' }, today: DAY_VALUE,
+        gamesADay: { type: 'integer', minimum: 1, maximum: 10 },
+        minutesADay: { anyOf: [{ type: 'integer', minimum: 5, maximum: 240 }, { type: 'null' }] },
         levels: { type: 'object', additionalProperties: { type: 'integer', minimum: 1, maximum: 9 } } } } },
     }, async (req, reply) => {
       const r = kid(req.params.memberId);
@@ -94,9 +101,44 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
           db.prepare(`INSERT INTO learn_kids (member_id, enabled) VALUES (?, ?)
             ON CONFLICT (member_id) DO UPDATE SET enabled = excluded.enabled`).run(r.id, req.body.enabled ? 1 : 0);
         }
+        const limits = db.prepare('INSERT OR IGNORE INTO learn_kids (member_id) VALUES (?)');
+        if (req.body.gamesADay !== undefined) {
+          limits.run(r.id);
+          db.prepare('UPDATE learn_kids SET games_a_day = ? WHERE member_id = ?').run(req.body.gamesADay, r.id);
+        }
+        if (req.body.minutesADay !== undefined) {
+          limits.run(r.id);
+          db.prepare('UPDATE learn_kids SET minutes_a_day = ? WHERE member_id = ?').run(req.body.minutesADay, r.id);
+        }
         for (const [game, level] of levels) setLevel(r.id, game, level);
       })();
       return state(kid(r.id)!, today);
+    });
+
+  // A grown-up's change to a kid's day (parent-only, auth.ts): unlock or lock today (null: back to opening
+  // once the Daily tasks are done), or give them more games or minutes.
+  app.post<{ Params: { memberId: string }; Body: { today: string; open?: boolean | null; moreGames?: boolean; moreMinutes?: boolean } }>(
+    '/api/learn/:memberId/today', {
+      schema: { body: { type: 'object', required: ['today'], additionalProperties: false, minProperties: 2, properties: {
+        today: DAY_VALUE, open: { type: ['boolean', 'null'] }, moreGames: { const: true }, moreMinutes: { const: true } } } },
+    }, async (req, reply) => {
+      const r = kid(req.params.memberId);
+      if (!r) return reply.code(404).send({ error: 'Member not found' });
+      changeDay(db, r.id, req.body.today, req.body);
+      return state(kid(r.id)!, req.body.today);
+    });
+
+  // Time spent in a game, sent every so often while they play and when they leave it (for a time limit).
+  app.post<{ Params: { memberId: string }; Body: { today: string; seconds: number } }>(
+    '/api/learn/:memberId/time', {
+      schema: { body: { type: 'object', required: ['today', 'seconds'], additionalProperties: false, properties: {
+        today: DAY_VALUE, seconds: { type: 'integer', minimum: 1, maximum: 600 } } } },
+    }, async (req, reply) => {
+      const r = kid(req.params.memberId);
+      if (!r) return reply.code(404).send({ error: 'Member not found' });
+      if (req.raw.viewer?.role === 'kid' && req.raw.viewer.memberId !== r.id) return reply.code(403).send({ error: 'Not your activity' });
+      addTime(db, r.id, req.body.today, req.body.seconds);
+      return state(kid(r.id)!, req.body.today);
     });
 
   // A finished game: rounds played and how many were right the first time. The last few plays at its
