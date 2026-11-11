@@ -118,7 +118,7 @@
 .big {
 	position: fixed;
 	inset: 0;
-	z-index: 60;
+	z-index: var(--layer-photo);
 	padding: max(30px, env(safe-area-inset-top)) max(30px, env(safe-area-inset-right)) max(30px, env(safe-area-inset-bottom))
 		max(30px, env(safe-area-inset-left));
 	background: rgb(0 0 0 / 0.55);

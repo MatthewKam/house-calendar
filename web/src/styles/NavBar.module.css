@@ -85,7 +85,7 @@
 	background: var(--surface);
 	border-top: 1px solid var(--line);
 	position: relative;
-	z-index: 14;
+	z-index: calc(var(--layer-nav) + 1);
 }
 .tab {
 	min-width: 0;
@@ -124,13 +124,13 @@
 .moreScrim {
 	position: fixed;
 	inset: 0;
-	z-index: 13;
+	z-index: var(--layer-nav);
 	background: rgb(0 0 0 / 0.3);
 }
 /* More: a sheet rising from just above the bar. */
 .moreSheet {
 	position: fixed;
-	z-index: 13;
+	z-index: var(--layer-nav);
 	left: 0;
 	right: 0;
 	bottom: calc(3.8rem + env(safe-area-inset-bottom));

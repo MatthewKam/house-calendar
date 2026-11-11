@@ -14,7 +14,7 @@
 	color: var(--surface);
 	box-shadow: 0 0.4rem 1rem rgb(20 108 67 / 0.35);
 	position: relative;
-	z-index: 16;
+	z-index: calc(var(--layer-menu) + 1);
 	transition: transform 0.2s, background 0.2s;
 }
 .plus svg {
@@ -37,13 +37,13 @@
 .scrim {
 	position: fixed;
 	inset: 0;
-	z-index: 15;
+	z-index: var(--layer-menu);
 	background: rgb(246 245 242 / 0.9);
 	animation: fade 0.2s;
 }
 .stack {
 	position: fixed;
-	z-index: 16;
+	z-index: calc(var(--layer-menu) + 1);
 	left: 0;
 	right: 0;
 	bottom: calc(5.4rem + env(safe-area-inset-bottom));

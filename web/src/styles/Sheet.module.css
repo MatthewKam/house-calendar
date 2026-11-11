@@ -1,8 +1,8 @@
 /* Shared modal sheet styles. */
 /* Above the day panel (z-index 10-11), which can open these sheets. */
-.scrim { position: fixed; inset: 0; z-index: 20; background: rgb(0 0 0 / 0.35); }
+.scrim { position: fixed; inset: 0; z-index: var(--layer-sheet); background: rgb(0 0 0 / 0.35); }
 .sheet {
-  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 21;
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: calc(var(--layer-sheet) + 1);
   width: min(36rem, 92vw); max-height: 92vh; overflow-y: auto;
   background: var(--surface); border-radius: 1.2rem; padding: 1.4rem;
   display: flex; flex-direction: column; gap: 0.8rem; box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.25);
