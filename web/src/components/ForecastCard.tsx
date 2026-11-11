@@ -25,7 +25,7 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 		return h >= rise && h < set;
 	};
 	return (
-		<section className={`${s.card} ${s.forecast}`} aria-label="Weather">
+		<section className={s.card} aria-label="Weather">
 			<h2 className={s.cardHead}>Weather</h2>
 			<div className={s.weatherNow}>
 				<span className={s.weatherIcon} aria-hidden="true">

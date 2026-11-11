@@ -217,7 +217,7 @@ export default function TodayPage({
 	const kidsCard = <KidsToday today={today} members={members} parent={parent} onPage={onPage} />;
 	const needsCard = <NeedsYou me={me} onPage={onPage} />;
 	const quoteCard = (
-		<section className={`${s.card} ${s.words}`} aria-label="Quote of the day">
+		<section className={s.card} aria-label="Quote of the day">
 			<h2 className={s.cardHead}>Quote of the day</h2>
 			<blockquote className={s.quote}>
 				<p>“{quote.text}”</p>
@@ -226,7 +226,7 @@ export default function TodayPage({
 		</section>
 	);
 	const encouragementCard = (
-		<section className={`${s.card} ${s.words}`} aria-label="Encouragement">
+		<section className={s.card} aria-label="Encouragement">
 			<h2 className={s.cardHead}>Encouragement</h2>
 			<p className={s.kindWords}>
 				<span className={s.kindPicture} aria-hidden="true">

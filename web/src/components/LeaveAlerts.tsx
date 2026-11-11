@@ -53,7 +53,7 @@ export default function LeaveAlerts() {
 		<>
 		{/* Outside the stack: its transform would pin a fixed child to the stack instead of the screen. */}
 		<div className={s.zoom} aria-hidden="true">
-			<span className={s.car}>🚗</span>
+			<span aria-hidden="true">🚗</span>
 			<span className={s.dust}>💨</span>
 		</div>
 		<div className={s.stack} role="alert">
