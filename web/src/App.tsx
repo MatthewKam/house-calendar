@@ -68,7 +68,7 @@ import Celebration from "./components/Celebration";
 import MembersPanel from "./components/MembersPanel";
 import Toast, { type ToastMessage } from "./components/Toast";
 import { UNASSIGNED } from "./lib/color";
-import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from "./lib/useMediaQuery";
+import { PHONE, PHONE_SIDEWAYS, useMediaQuery, NARROW } from "./lib/useMediaQuery";
 import { useFlyerDrop } from "./lib/useFlyerDrop";
 import s from "./styles/App.module.css";
 import { isKid } from "./lib/people";
@@ -162,7 +162,7 @@ export default function App() {
 	// The phone's bar (and its +): along the bottom, or down the left with the phone on its side.
 	const phoneBar = useMediaQuery(PHONE_SIDEWAYS) || phone;
 	// Below 960px the week is one scrolling list of days, and the weather scrolls at its end.
-	const narrow = useMediaQuery("(max-width: 959.98px)");
+	const narrow = useMediaQuery(NARROW);
 	const listDays =
 		view === "month" && phone
 			? days.filter((d) => d.getMonth() === cursor.getMonth())

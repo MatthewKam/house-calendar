@@ -15,6 +15,16 @@
 	font-display: swap;
 }
 
+/*
+ * Screen sizes: the same few everywhere, in the CSS and in code (lib/useMediaQuery.ts names them):
+ *   Phone              (max-width: 700px)                               the bar along the bottom
+ *   Phone on its side  (orientation: landscape) and (max-height: 500px) the bar down the left, little height
+ *   Narrow             (max-width: 959.98px)                            phones and tablets upright
+ *   Tablet             (min-width: 744px) and (min-height: 600px)       an iPad either way up, and bigger
+ *   Wide               (min-width: 1401px)                              a big screen
+ * A component may also use a size of its own content (a small phone, 480px; the game-over pop-up on a
+ * short tablet), said so where it is.
+ */
 :root {
 	/* Room for the phone's notch on each side. iOS reports the same room on both sides in landscape;
      main.tsx marks which side the notch is really on, and the other side gets none. */
@@ -23,6 +33,18 @@
 	/* Room above the first line of a page, under the phone's clock and status bar: iOS fades the
 	   top of the screen a little further down than the status bar itself, so there's this much more. */
 	--top-room: calc(env(safe-area-inset-top, 0px) + 1.75rem);
+	/* Layers, bottom to top: what sits over what across the app. Within one thing, small numbers (0 to 5)
+	   order its own parts; something just over its partner (a sheet over its backdrop) is + 1. */
+	--layer-panel: 10; /* the day panel beside the calendar */
+	--layer-fab: 12; /* the round + button */
+	--layer-nav: 13; /* the phone bar and its More sheet */
+	--layer-menu: 15; /* menus over the page (More, quick add), and a Learn game, full screen */
+	--layer-sheet: 20; /* dialogs (Sheet), kid mode's name menu, the photo viewer */
+	--layer-saver: 24; /* the screen saver */
+	--layer-alert: 25; /* time-to-leave alerts, even over the screen saver */
+	--layer-toast: 30; /* toasts, and a flyer dragged over the page */
+	--layer-celebration: 40; /* a cheer, over everything */
+	--layer-photo: 60; /* a photo opened big */
 	--bg: #f6f5f2;
 	--surface: #ffffff;
 	--text: #1d1f23;

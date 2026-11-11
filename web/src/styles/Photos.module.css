@@ -311,7 +311,7 @@
 .viewer {
 	position: fixed;
 	inset: 0;
-	z-index: 20;
+	z-index: var(--layer-sheet);
 	display: flex;
 	flex-direction: column;
 	background: rgb(12 14 18 / 0.96);
@@ -451,7 +451,7 @@
 .dropOverlay {
 	position: fixed;
 	inset: 0;
-	z-index: 19;
+	z-index: calc(var(--layer-sheet) - 1);
 	display: grid;
 	place-items: center;
 	background: rgb(20 24 30 / 0.45);

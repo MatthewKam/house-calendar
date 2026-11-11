@@ -92,7 +92,7 @@
 }
 
 /* Phones on their side: as wide as the day list. */
-@media (max-height: 520px) {
+@media (max-height: 500px) {
 	.card {
 		max-width: none;
 	}

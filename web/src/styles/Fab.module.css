@@ -1,7 +1,7 @@
 /* A round + floating at the bottom right of a page, clear of the phone's home bar. */
 .fab {
 	position: fixed;
-	z-index: 12;
+	z-index: var(--layer-fab);
 	right: calc(1.5rem + var(--inset-right));
 	bottom: calc(1.5rem + env(safe-area-inset-bottom));
 	width: 3.6rem;

@@ -108,8 +108,17 @@
 }
 
 /* Phones on their side: the page runs to the bottom edge, so the grid keeps a little room above the home bar. */
-@media (max-width: 959.98px), (max-height: 520px) {
+@media (max-width: 959.98px), (max-height: 500px) {
 	.month {
 		padding-bottom: calc(0.6rem + env(safe-area-inset-bottom));
+	}
+}
+
+/* A phone on its side: each week at least tall enough for its dates and an event, and the page
+   scrolls (App.module.css) rather than squash them. */
+@media (orientation: landscape) and (max-height: 500px) {
+	.month {
+		min-height: auto;
+		grid-template-rows: auto repeat(var(--rows), minmax(3.6rem, 1fr));
 	}
 }

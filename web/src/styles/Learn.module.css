@@ -172,7 +172,7 @@
 	left: 50%;
 	top: 50%;
 	transform: translate(-50%, -50%);
-	z-index: 21;
+	z-index: calc(var(--layer-sheet) + 1);
 	width: max-content;
 	max-width: calc(100vw - 2rem);
 	-webkit-user-select: none;
@@ -257,7 +257,7 @@
 	-webkit-user-select: none;
 	user-select: none;
 	-webkit-touch-callout: none;
-	z-index: 15;
+	z-index: var(--layer-menu);
 	display: flex;
 	flex-direction: column;
 	gap: 0.6rem;

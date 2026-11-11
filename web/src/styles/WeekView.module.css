@@ -150,7 +150,7 @@
 	padding-top: 0.2rem;
 }
 /* Phones on their side: the day list uses the full width rather than a centered column. */
-@media (max-height: 520px) {
+@media (max-height: 500px) {
 	.week {
 		max-width: none;
 	}

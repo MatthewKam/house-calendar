@@ -4,7 +4,7 @@
 	user-select: none;
 	position: fixed;
 	inset: 0;
-	z-index: 24;
+	z-index: var(--layer-saver);
 	background: #000;
 	overflow: hidden;
 	perspective: 1600px;
@@ -238,8 +238,8 @@
 	gap: 0.1rem;
 	min-width: 0;
 }
-/* Under 450px: the corner runs edge to edge (1rem in), the events across its full width. */
-@media (max-width: 449.98px) {
+/* Under 480px: the corner runs edge to edge (1rem in), the events across its full width. */
+@media (max-width: 480px) {
 	.corner {
 		left: 1rem;
 		right: 1rem;

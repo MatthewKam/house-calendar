@@ -2,7 +2,7 @@
 .overlay {
 	position: fixed;
 	inset: 0;
-	z-index: 40;
+	z-index: var(--layer-celebration);
 	display: grid;
 	place-items: center;
 	background: rgb(20 24 30 / 0.25);

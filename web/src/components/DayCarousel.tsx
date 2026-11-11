@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from "react";
-import { useMediaQuery } from "../lib/useMediaQuery";
+import { PHONE_SIDEWAYS, TABLET, useMediaQuery, WIDE } from "../lib/useMediaQuery";
 
 /** A day (or a few) of the calendar: its button's name, and what's on. */
 interface CalendarDay {
@@ -18,8 +18,8 @@ type CalendarStyles = { readonly [name: string]: string };
  * How the calendar's laid out: side by side on a phone on its side, and on a tablet either way up (or
  * anything bigger; all three when there's room). Matches the tablet layouts in the pages' styles.
  */
-const SIDE_BY_SIDE = "(orientation: landscape) and (max-height: 500px), (min-width: 744px) and (min-height: 600px)";
-const ALL_THREE = "(min-width: 1401px)";
+const SIDE_BY_SIDE = `${PHONE_SIDEWAYS}, ${TABLET}`;
+const ALL_THREE = WIDE;
 
 /**
  * The calendar's days. Upright: a carousel of all three, big buttons along the top to go to each (or a
