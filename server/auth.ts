@@ -71,6 +71,8 @@ const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean]
   ['POST', '/api/lists'], ['PATCH', '/api/lists/:id'], ['DELETE', '/api/lists/:id'], ['DELETE', '/api/lists/items/:id'],
   ['PATCH', '/api/lists/items/:id', (req) => Object.keys(req.body ?? {}).some((k) => k !== 'done')],
   ['PUT', '/api/events/:id/special'],
+  // Learn's day: unlocking, locking, more games or minutes.
+  ['POST', '/api/learn/:memberId/today'],
 ];
 const needsParent = (req: Req) =>
   PARENT_ONLY.some(([method, route, when]) => req.method === method && req.routeOptions.url === route && (!when || when(req)));

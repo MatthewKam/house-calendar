@@ -1,7 +1,5 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { fromDayKey, startOfWeek, timeLabel, longDate } from "../lib/dates";
-import { api } from "../lib/api";
 import { useMediaQuery } from "../lib/useMediaQuery";
 import { useNow } from "../lib/useNow";
 import {
@@ -22,13 +20,13 @@ import KidJars from "./KidJars";
 import KidToday from "./KidToday";
 import LearnTab from "./learn/LearnTab";
 import { RewardsIcon, TasksIcon, TodayIcon } from "./NavBar";
-import PinPad, { pinSheet } from "./PinPad";
 import PottyCard from "./PottyCard";
 import { StarIcon } from "./icons";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/KidMode.module.css";
 import { firstName } from "../lib/people";
 import Sheet from "./Sheet";
+import GrownUpPin from "./GrownUpPin";
 
 interface Props {
 	today: string;
@@ -239,7 +237,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin, startWi
 					</section>
 				)}
 
-				{tab === "learn" && learning && <LearnTab key={kid.id} kid={kid} today={today} learn={learning} together={bothOn} />}
+				{tab === "learn" && learning && <LearnTab key={kid.id} kid={kid} today={today} learn={learning} together={bothOn} askPin={askPin} />}
 
 				{tab === "rewards" && (
 					<KidJars
@@ -380,41 +378,6 @@ function LeaveButton({ onLeave, inNav }: { onLeave: () => void; inNav?: boolean 
 			</svg>
 			{inNav && "Exit"}
 		</button>
-	);
-}
-
-/** A guardian's PIN, checked (nothing else changes): to leave kid mode, or let a kid put stars in jars. */
-export function GrownUpPin({ title, body, okLabel, onClose, onOk }: {
-	title: string;
-	body: string;
-	okLabel: string;
-	onClose: () => void;
-	onOk: () => void;
-}) {
-	const [pin, setPin] = useState("");
-	const check = useMutation({ mutationFn: api.checkPin, meta: { inline: true } });
-
-	function submit(e?: FormEvent, typed = pin) {
-		e?.preventDefault();
-		if (!typed || check.isPending) return;
-		// Awaited rather than mutate's callbacks, which are dropped if the dialog re-renders from new while
-		// the PIN is checked (it stayed open, with the button off, on phones).
-		check.mutateAsync(typed).then(onOk, () => setPin(""));
-	}
-
-	return (
-		<>
-			<Sheet label={title} onClose={onClose} className={`${sheet.confirm} ${pinSheet}`} onSubmit={submit}>
-				<h2 className={sheet.heading}>{title}</h2>
-				<div className={sheet.body}>{body}</div>
-				<PinPad value={pin} onChange={setPin} onEnter={(typed) => submit(undefined, typed)} error={check.error?.message} done={okLabel} />
-				<div className={sheet.actions}>
-					<span className={sheet.spacer} />
-					<button type="button" className={sheet.secondary} onClick={onClose}>Cancel</button>
-					<button type="submit" className={sheet.primary} disabled={!pin || check.isPending}>{okLabel}</button>
-				</div>
-			</Sheet>
-		</>
 	);
 }
 

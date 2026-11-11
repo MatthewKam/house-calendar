@@ -170,9 +170,9 @@ function HowToPlay({ title, how, onClose }: { title: string; how: string[]; onCl
 
 /**
  * A game's over: a pop-up over it, the mascot hopping, then play again or back to the games (a level up
- * says so, for a grown-up to read out).
+ * says so, for a grown-up to read out). No `onAgain`: that was the day's last (only back).
  */
-export function Over({ title, note, onAgain, onBack }: { title: string; note?: string; onAgain: () => void; onBack: () => void }) {
+export function Over({ title, note, onAgain, onBack }: { title: string; note?: string; onAgain?: () => void; onBack: () => void }) {
 	return (
 		<>
 			<div className={sheet.scrim} role="presentation" />
@@ -183,8 +183,8 @@ export function Over({ title, note, onAgain, onBack }: { title: string; note?: s
 					<h2 className={s.overTitle}>{title}</h2>
 					{note && <p className={s.note}>{note}</p>}
 					<div className={s.overButtons}>
-						<button type="button" className={s.go} onClick={onAgain}>Play again</button>
-						<button type="button" className={s.quiet} onClick={onBack}>Back to games</button>
+						{onAgain && <button type="button" className={s.go} onClick={onAgain}>Play again</button>}
+						<button type="button" className={onAgain ? s.quiet : s.go} onClick={onBack}>Back to games</button>
 					</div>
 				</div>
 			</div>

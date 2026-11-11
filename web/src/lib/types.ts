@@ -359,4 +359,26 @@ export interface LearnState {
   enabled: boolean;
   /** `ready`: a little one's game that would have moved up, waiting for a grown-up to move it. */
   games: { game: Game; level: number; maxLevel: number; ready: boolean }[];
+  /** Today's Learn (server/learnDay.ts). */
+  today: LearnToday;
 }
+
+/** A kid's Learn today: what they've used and have, and why they can't start a game (null: they can). */
+export interface LearnToday {
+  gamesADay: number;
+  /** Their time a day (null: no time limit). */
+  minutesADay: number | null;
+  played: number;
+  /** Games today: their games a day plus any more from a grown-up. */
+  games: number;
+  seconds: number;
+  /** Minutes today (null: no time limit). */
+  minutes: number | null;
+  /** A grown-up unlocked (true) or locked (false) it today; null: it opens once the Daily tasks are done. */
+  unlocked: boolean | null;
+  tasksDone: boolean;
+  why: 'tasks' | 'locked' | 'games' | 'time' | null;
+}
+
+/** A grown-up's change to a kid's Learn today. */
+export interface LearnDayChange { open?: boolean | null; moreGames?: true; moreMinutes?: true }

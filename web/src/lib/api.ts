@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, LearnState, LearnSound, Game, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility, SprigList, SprigItem, Proposal } from './types';
+import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, LearnState, LearnSound, Game, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility, SprigList, SprigItem, Proposal, LearnDayChange } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, {
@@ -87,10 +87,16 @@ export const api = {
   updateMember: (id: string, m: MemberPatch) => call<Member>('PATCH', `/api/members/${id}`, m),
   removeMember: (id: string) => call<void>('DELETE', `/api/members/${id}`),
   learn: (today: string) => call<LearnState[]>('GET', `/api/learn?today=${today}`),
-  setLearn: (memberId: string, today: string, p: { enabled?: boolean; levels?: Partial<Record<Game, number>> }) =>
+  setLearn: (memberId: string, today: string, p: { enabled?: boolean; gamesADay?: number; minutesADay?: number | null; levels?: Partial<Record<Game, number>> }) =>
     call<LearnState>('PUT', `/api/learn/${memberId}`, { ...p, today }),
   learnDone: (memberId: string, p: { today: string; game: Game; level: number; rounds: number; firstTry: number }) =>
     call<LearnState & { leveledUp: boolean }>('POST', `/api/learn/${memberId}/done`, p),
+  /** A grown-up unlocking or locking a kid's Learn today, or giving more games or minutes (parent-only). */
+  changeLearnDay: (memberId: string, today: string, change: LearnDayChange) =>
+    call<LearnState>('POST', `/api/learn/${memberId}/today`, { ...change, today }),
+  /** Time spent in a game, for a time limit. */
+  learnTime: (memberId: string, today: string, seconds: number) =>
+    call<LearnState>('POST', `/api/learn/${memberId}/time`, { today, seconds }),
   /** Animal noises a grown-up recorded, and when (for each one's address, so a new one isn't cached). */
   learnSounds: () => call<LearnSound[]>('GET', '/api/learn/sounds'),
   recordLearnSound: async (animal: string, audio: Blob) => {

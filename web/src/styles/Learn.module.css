@@ -3,6 +3,7 @@
 /* The games to pick from. */
 /* The space for the games under the name, which the cards size themselves to. */
 .menuArea {
+	position: relative;
 	flex: 1 1 0;
 	min-height: 8rem;
 	container-type: size;
@@ -45,6 +46,113 @@
 .gameTile {
 	position: relative;
 }
+/* Resting for today: the games faded behind why, and a grown-up can give more. */
+.gameTileResting {
+	opacity: 0.35;
+	filter: grayscale(0.6);
+}
+/* A card of its own, in the middle of the games. */
+.rest {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	translate: -50% -50%;
+	z-index: 1;
+	width: min(24rem, calc(100% - 1rem));
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 1.4rem 1.2rem;
+	border-radius: 1.6rem;
+	background: var(--surface);
+	box-shadow: 0 0.8rem 2rem rgb(29 31 35 / 0.16);
+	text-align: center;
+}
+.restMascot {
+	width: min(8rem, 26cqmin);
+	height: auto;
+}
+.restTitle {
+	margin: 0;
+	font-size: clamp(1.6rem, 6cqmin, 2.4rem);
+	font-weight: 800;
+}
+.restText {
+	margin: 0;
+	font-size: 1.2rem;
+	color: var(--muted);
+}
+.askGrownUp {
+	margin-top: 0.6rem;
+	min-height: 3.4rem;
+	padding: 0 1.6rem;
+	border-radius: 999px;
+	border: 2px solid var(--c, var(--accent));
+	background: var(--surface);
+	color: var(--text);
+	font-size: 1.1rem;
+	font-weight: 750;
+}
+/* A short space (a phone on its side): the mascot beside the words, so it all fits. */
+@container (max-height: 22rem) {
+	.rest {
+		width: min(34rem, calc(100% - 1rem));
+		display: grid;
+		grid-template-columns: auto 1fr;
+		grid-template-rows: auto auto auto;
+		column-gap: 1rem;
+		row-gap: 0.3rem;
+		padding: 0.9rem 1.1rem;
+		text-align: left;
+		justify-items: start;
+	}
+	.restMascot {
+		grid-row: 1 / span 3;
+		width: min(6rem, 40cqh);
+	}
+	.restTitle {
+		font-size: 1.5rem;
+	}
+	.restText {
+		font-size: 1rem;
+	}
+	.askGrownUp {
+		margin-top: 0.2rem;
+		min-height: 2.8rem;
+	}
+}
+/* Games left today: a dot each, filled until it's played (and minutes left, with a time limit). */
+.gamesLeft {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.5rem 0.8rem;
+	border-radius: 999px;
+	background: var(--surface);
+	box-shadow: 0 0.2rem 0.6rem rgb(29 31 35 / 0.08);
+}
+.gameDot {
+	width: 1.1rem;
+	height: 1.1rem;
+	border-radius: 50%;
+	background: var(--c, var(--accent));
+}
+.gameDotUsed {
+	background: none;
+	border: 2px solid color-mix(in srgb, var(--c, var(--accent)) 45%, var(--surface));
+}
+.minutesLeft {
+	margin-left: 0.3rem;
+	font-weight: 750;
+	color: var(--muted);
+	font-variant-numeric: tabular-nums;
+}
+
 /* The game's level, as a Roman numeral, in the tile's top right corner. */
 .gameLevel {
 	position: absolute;

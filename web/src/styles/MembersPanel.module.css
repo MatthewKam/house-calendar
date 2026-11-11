@@ -83,6 +83,29 @@
   padding: 0.6rem 0;
   border-top: 1px solid var(--line);
 }
+/* Learn's day for a kid: games a day, time a day, and today (with unlock, lock and more). */
+.learnDay {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 0.7rem;
+  background: var(--bg);
+}
+.learnTime { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.learnTime select { padding: 0.4rem 0.5rem; border: 1px solid var(--line); border-radius: 0.5rem; background: var(--surface); color: var(--text); }
+.learnToday { margin: 0; font-size: 0.9rem; color: var(--muted); }
+.learnTodayButtons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.learnChip {
+  min-height: 2.4rem;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-weight: 650;
+  font-size: 0.9rem;
+}
+.learnChip:disabled { opacity: 0.5; }
 /* A game's level, with a step down and up. */
 .learnGame {
   display: grid;
