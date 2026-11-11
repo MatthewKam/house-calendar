@@ -9,7 +9,7 @@ import type { Member } from './types';
 export interface Cheer { names: string[]; emoji: string; message: string }
 
 /** "a", "a and b", "a, b and c". */
-const listOf = (parts: string[]) => (parts.length < 2 ? parts.join('') : `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`);
+export const listOf = (parts: string[]) => (parts.length < 2 ? parts.join('') : `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`);
 
 /**
  * Who's been cheered for finishing today, on this device (kept through a refresh), and when each
