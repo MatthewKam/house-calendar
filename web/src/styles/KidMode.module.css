@@ -800,6 +800,39 @@ button.kidName {
 
 /* A phone on its side: four tabs down the left still fit, and the tasks get the height. */
 @media (orientation: landscape) and (max-height: 500px) {
+	/* The tabs down the left, even on a small phone (under 700px wide, which would put them along the
+	   bottom and take the little height there is). */
+	.shell {
+		flex-direction: row;
+	}
+	.kidNav {
+		order: 0;
+		flex-direction: column;
+		justify-content: flex-start;
+		border-top: none;
+		border-right: 1px solid var(--line);
+		padding-left: max(0.6rem, env(safe-area-inset-left));
+		padding-right: 0.6rem;
+	}
+	/* The days' buttons share what room there is. */
+	.dayButton {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		padding: 0.3rem 0.5rem;
+		font-size: 0.85rem;
+	}
+	/* The time, date and whose it is on one row (the date gives way first). */
+	.top {
+		flex-wrap: nowrap;
+	}
+	.clock {
+		min-width: 0;
+	}
+	.clockDate {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 	.page {
 		gap: 0.6rem;
 		padding-bottom: 0.6rem;
@@ -830,16 +863,17 @@ button.kidName {
 	}
 	.today {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
-	/* What to remember and the calendar across the whole width, the calendar's days side by side. */
+	/* What to remember and the calendar across the whole width, the calendar's days side by side
+	   (each column no wider than its share, however long what's in it). */
 	.remember,
 	.calendar {
 		grid-column: 1 / -1;
 	}
 	.calendar {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 		align-items: start;
 	}
 	.pottyToggle {
@@ -851,6 +885,7 @@ button.kidName {
 		padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 	}
 	.kidTab {
+		width: 5.2rem;
 		min-height: 0;
 		flex: 1;
 		font-size: 0.9rem;
