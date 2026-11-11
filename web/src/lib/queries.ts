@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClie
 import { api } from './api';
 import { addDays, dayKey, fromDayKey } from './dates';
 import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, RewardInput, CalEvent, Reward, RewardWin, Bucket, StarPlacing,
-  ReminderList, Photo, LeaveAlert, OutboxStatus, PottyChart, Visibility, SprigList, SprigItem, Game } from './types';
+  ReminderList, Photo, LeaveAlert, OutboxStatus, PottyChart, Visibility, SprigList, SprigItem, Game, LearnDayChange } from './types';
 
 // ---- Edits show straight away ---------------------------------------------------------------
 // Every edit changes what's on screen first (the cached data), then saves in the background. If
@@ -487,7 +487,17 @@ export function useSetLearnSound() {
 export function useSetLearn(today: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ memberId, ...p }: { memberId: string; enabled?: boolean; levels?: Partial<Record<Game, number>> }) => api.setLearn(memberId, today, p),
+    mutationFn: ({ memberId, ...p }: { memberId: string; enabled?: boolean; gamesADay?: number; minutesADay?: number | null;
+      levels?: Partial<Record<Game, number>> }) => api.setLearn(memberId, today, p),
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.learn(today) }),
+  });
+}
+
+/** A grown-up unlocking or locking a kid's Learn today, or giving more games or minutes. */
+export function useChangeLearnDay(today: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ memberId, ...change }: { memberId: string } & LearnDayChange) => api.changeLearnDay(memberId, today, change),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.learn(today) }),
   });
 }
