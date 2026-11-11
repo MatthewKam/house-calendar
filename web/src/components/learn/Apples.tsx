@@ -5,6 +5,7 @@ import { FRUIT } from "./things";
 import { at, between, CHEER_MS, fresh, shuffle, type GameProps, useLater } from "./rounds";
 import { sayNumber } from "./sound";
 import s from "../../styles/Learn.module.css";
+import g from "../../styles/LearnApples.module.css";
 
 /** The most there can be, by level. From level 3 there's a "How many?" after counting. */
 const MOST = [3, 4, 5, 7, 9, 10];
@@ -89,12 +90,12 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 				const grid = fit(n, { w: box.w, h: box.h - below - top - 16 }, { gap: 12, most: 220 });
 				return (
 					<div className={s.column}>
-						<span key={`count-${done}`} className={`${s.countNow} ${done ? s.pop : ""}`} style={{ fontSize: top * 0.9, height: top }}
+						<span key={`count-${done}`} className={`${g.countNow} ${done ? s.pop : ""}`} style={{ fontSize: top * 0.9, height: top }}
 							aria-live="polite">{done}</span>
 						{/* Between rounds these slide away to the left, and the next round's slide in from the right. */}
 						<div key={`round-${round}`} className={`${s.grid} ${phase === "next" ? s.slideAway : ""}`} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 12 }}>
 							{Array.from({ length: n }, (_, i) => (
-								<button key={i} type="button" className={`${s.fruit} ${s.slideIn} ${counted[i] !== undefined ? s.counted : ""}`}
+								<button key={i} type="button" className={`${g.fruit} ${s.slideIn} ${counted[i] !== undefined ? g.counted : ""}`}
 									disabled={counted[i] !== undefined}
 									style={{ width: grid.size, height: grid.size, animationDelay: `${i * 70}ms` }} onClick={() => count(i)}
 									aria-label={counted[i] !== undefined ? `${fruit.one} ${counted[i]}` : `${fruit.one}, not counted yet`}>

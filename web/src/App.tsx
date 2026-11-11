@@ -1,17 +1,6 @@
-import {
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from "react";
-import {
-	addDays,
-	addMonths,
-	dayKey,
-	fromDayKey,
-	monthGridDays,
-	startOfWeek,
-} from "./lib/dates";
+import { useCallback, useEffect, useState } from "react";
+import { dayKey, fromDayKey, startOfWeek } from "./lib/dates";
+import { useCalendarView, type View } from "./lib/useCalendarView";
 import type { CalEvent, Task, TaskInput, EventInput, Scope } from "./lib/types";
 import {
 	useTasks,
@@ -22,7 +11,6 @@ import {
 	useSaveTask,
 	useMembers,
 	useSaveEvent,
-	useSetSetting,
 	useSettings,
 	useSyncStatus,
 	useRangeEvents,
@@ -56,7 +44,8 @@ import { useWakeLock } from "./lib/useWakeLock";
 import { useAutoLock, useParent } from "./lib/useParent";
 import ParentUnlock from "./components/ParentUnlock";
 import AccountSheet from "./components/AccountSheet";
-import KidMode, { KidModeStart } from "./components/KidMode";
+import KidMode from "./components/KidMode";
+import KidModeStart from "./components/KidModeStart";
 import GrownUpPin from "./components/GrownUpPin";
 import { useKidMode } from "./lib/useKidMode";
 import { useQuery } from "@tanstack/react-query";
@@ -83,7 +72,6 @@ function useToday() {
 	return today;
 }
 
-type View = "month" | "week";
 const VIEWS: [View, string][] = [
 	["month", "Month"],
 	["week", "Week"],
@@ -94,10 +82,6 @@ const EVERYONE = "everyone";
 
 export default function App() {
 	const today = useToday();
-	// Any day inside the month or week on screen.
-	const [cursor, setCursor] = useState(() => new Date());
-	// Day shown in the right-hand day panel; null when the panel is closed.
-	const [selected, setSelected] = useState<string | null>(null);
 	// Header filter: a member id, EVERYONE, or null to show all events.
 	const [focus, setFocus] = useState<string[]>([]);
 	const [dialog, setDialog] = useState<{
@@ -126,11 +110,7 @@ export default function App() {
 
 	const members = useMembers().data ?? [];
 	const settings = useSettings();
-	const setSetting = useSetSetting();
 	const uiScale = (settings.data?.uiScale as number | undefined) ?? 1;
-	// Saved with the display's settings, so a refresh or restart reopens the same view.
-	const view: View =
-		VIEWS.find(([v]) => v === settings.data?.view)?.[0] ?? "week";
 	const saveEvent = useSaveEvent();
 	const saveTask = useSaveTask();
 	const deleteTask = useDeleteTask();
@@ -149,13 +129,8 @@ export default function App() {
 	const cheer = useCheer(members, today);
 	const restoreEvent = useRestoreEvent();
 
-	const days = useMemo(
-		() =>
-			view === "month"
-				? monthGridDays(cursor)
-				: Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(cursor), i)),
-		[view, cursor],
-	);
+	// The month or week on screen, the day open in the panel, and moving between them.
+	const { view, changeView, cursor, selected, setSelected, days, step, goToday, newEventDay } = useCalendarView(today);
 	const eventsQuery = useRangeEvents(days[0], days.length);
 	// Phones show Month as the same day-by-day list as Week, just for every day of the month.
 	const phone = useMediaQuery(PHONE);
@@ -236,29 +211,6 @@ export default function App() {
 		</div>
 	);
 
-	// At midnight, move to the new day if the old one was on screen.
-	const [shownToday, setShownToday] = useState(today);
-	if (today !== shownToday) {
-		setShownToday(today);
-		if (days.some((d) => dayKey(d) === shownToday))
-			setCursor(fromDayKey(today));
-		if (selected === shownToday) setSelected(today);
-	}
-
-	const step = (n: number) =>
-		setCursor(view === "month" ? addMonths(cursor, n) : addDays(cursor, 7 * n));
-
-	function goToday() {
-		setCursor(new Date());
-		if (selected) setSelected(today);
-	}
-
-	function changeView(next: View) {
-		// Keep the selected day in view when switching between month and week.
-		if (selected) setCursor(fromDayKey(selected));
-		setSetting.mutate({ key: "view", value: next });
-	}
-
 	// Back from connecting Google Calendar (…/?calendar=connected, or what went wrong).
 	useEffect(() => {
 		const url = new URL(window.location.href);
@@ -323,14 +275,6 @@ export default function App() {
 						}),
 				}),
 		});
-	}
-
-	// The day a new event starts on: the day open in the panel, else today if it's on screen, else
-	// the first day shown (the 1st, in Month view).
-	function newEventDay() {
-		if (selected) return selected;
-		const shownDays = view === "month" ? days.filter((d) => d.getMonth() === cursor.getMonth()) : days;
-		return shownDays.some((d) => dayKey(d) === today) ? today : dayKey(shownDays[0]);
 	}
 
 	const fmt = (d: Date, withYear = false) =>

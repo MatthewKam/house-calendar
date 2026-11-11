@@ -5,6 +5,7 @@ import { ANIMALS, type Animal } from "./things";
 import { at, CHEER_MS, fresh, shuffle, type GameProps, useLater } from "./rounds";
 import { noise } from "./sound";
 import s from "../../styles/Learn.module.css";
+import g from "../../styles/LearnPeekaboo.module.css";
 
 /** Hiding places (always three: the garden's three pots), and animals hiding in them over a play, by level. */
 const BUSHES = [3];
@@ -111,27 +112,27 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 				const grid = { cols, size: Math.floor(Math.min((room.w - 12 * (cols - 1)) / cols, ((room.h - 12 * (rows - 1)) / rows) * shape, 260)) };
 				const placeHeight = grid.size / place.wide;
 				return (
-					<div className={s.farm}>
+					<div className={g.farm}>
 						<img className={s.farmBack} src={art(place.id)} alt="" draggable={false} />
-						<div className={s.bushes} style={{ maxWidth: grid.cols * grid.size + (grid.cols - 1) * 12 + 24, marginBottom: lift }}>
+						<div className={g.bushes} style={{ maxWidth: grid.cols * grid.size + (grid.cols - 1) * 12 + 24, marginBottom: lift }}>
 							{bushes.map((b, i) => (
-								<button key={i} type="button" className={s.bushSpot} onClick={() => tap(i)}
+								<button key={i} type="button" className={g.bushSpot} onClick={() => tap(i)}
 									style={{ width: grid.size, height: grid.size / shape }}
 									aria-label={b.out && b.animal ? `${b.animal.name}: tap to hear it again` : `A ${place.name}. Who's hiding?`}>
 									{/* Out: it jumps up from behind (its feet over the top of the hiding place, whose height
 									    is known from its picture's shape), and lands in front, on the grass. Tapped again: a hop. */}
 									{b.out && b.animal && (
-										<span key={b.animal.id} className={s.jumper}
+										<span key={b.animal.id} className={g.jumper}
 											style={{ width: grid.size * animalShare, "--behind": `${placeHeight * place.peek}px`, "--over": `${placeHeight + grid.size * 0.06}px` } as CSSProperties}>
 											<span key={b.taps} className={b.taps > 1 ? s.hop : ""}>
 												<Pic id={b.animal.id} />
 											</span>
 										</span>
 									)}
-									<span key={`b${b.taps}`} className={`${s.bush} ${b.taps ? s.rustle : ""}`}>
+									<span key={`b${b.taps}`} className={`${g.bush} ${b.taps ? s.rustle : ""}`}>
 										<img src={art(spots[i % spots.length])} alt="" draggable={false} />
 									</span>
-									{b.out && b.animal && <span className={s.bushName}>{b.animal.name}</span>}
+									{b.out && b.animal && <span className={g.bushName}>{b.animal.name}</span>}
 								</button>
 							))}
 						</div>

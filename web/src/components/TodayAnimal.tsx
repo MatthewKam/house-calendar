@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { noise } from "./learn/sound";
-import s from "../styles/KidMode.module.css";
+import g from "../styles/TodayAnimal.module.css";
 
 /**
  * The animals that can sit on a little one's Today: each one's noise (an animal in Learn's sounds) and
@@ -138,11 +138,11 @@ export default function TodayAnimal() {
 	}
 
 	return (
-		<div ref={stage} className={s.animalStage}>
-			<button ref={walker} type="button" className={s.animal} aria-label={`${animal.name}: tap to hear it`}
+		<div ref={stage} className={g.animalStage}>
+			<button ref={walker} type="button" className={g.animal} aria-label={`${animal.name}: tap to hear it`}
 				onPointerDown={tap} onClick={(e) => e.detail === 0 && tap()}>
 				<img src={src(pose)} alt="" draggable={false}
-					className={`${s.animalPic} ${pose.startsWith("walk") ? s.animalWalking : pose === "sitting" ? s.animalSat : ""}`} />
+					className={`${g.animalPic} ${pose.startsWith("walk") ? g.animalWalking : pose === "sitting" ? g.animalSat : ""}`} />
 			</button>
 		</div>
 	);

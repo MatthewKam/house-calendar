@@ -4,6 +4,7 @@ import { Board, SLIDE_MS } from "./parts";
 import { FRUIT } from "./things";
 import { at, between, fresh, shuffle, useRounds, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
+import g from "../../styles/LearnAdding.module.css";
 
 /** Each side's smallest and biggest number, by level. */
 const SIDES: [number, number][] = [[1, 3], [1, 4], [2, 5], [2, 5], [3, 7], [4, 10]];
@@ -120,24 +121,24 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 					const item = Math.floor((D * 0.62) / perRow);
 					const extraSize = Math.min(84, D * 0.3);
 					const sign = (
-						<span className={`${s.sign} ${over ? s.signOver : n === want && (bowl || !r.take) ? s.signDone : ""}`} style={{ fontSize: Math.max(30, Math.min(56, D * 0.22)) }}>
+						<span className={`${g.sign} ${over ? g.signOver : n === want && (bowl || !r.take) ? g.signDone : ""}`} style={{ fontSize: Math.max(30, Math.min(56, D * 0.22)) }}>
 							{bowl ? `− ${want}` : want}
 						</span>
 					);
 					const basket = !r.take && (
-						<button type="button" className={s.basket} onClick={() => put(side, 1)} disabled={rounds.got} aria-label={`Put a ${fruit.one} on`}
+						<button type="button" className={g.basket} onClick={() => put(side, 1)} disabled={rounds.got} aria-label={`Put a ${fruit.one} on`}
 							style={{ width: extraSize, height: extraSize }}>
 							<Pic id={fruit.id} />
 							<span aria-hidden="true">+</span>
 						</button>
 					);
 					const dish = (
-						<div className={`${bowl ? s.bowl : s.plate} ${over ? s.plateOver : ""}`} style={{ width: D, height: D }}>
-							<div className={`${s.onPlates} ${rounds.got ? s.wiped : ""}`}
+						<div className={`${bowl ? g.bowl : g.plate} ${over ? g.plateOver : ""}`} style={{ width: D, height: D }}>
+							<div className={`${g.onPlates} ${rounds.got ? g.wiped : ""}`}
 								// Wiped as the mascot passes: side by side, the left plate first; one above the other, both as it crosses the middle.
 								style={{ gridTemplateColumns: `repeat(${perRow}, ${item}px)`, "--wipeAt": wide ? (side === "a" ? 0.4 : 0.55) : 0.47 } as CSSProperties}>
 								{Array.from({ length: n }, (_, i) => (
-									<button key={i} type="button" className={s.onPlate} style={{ width: item, height: item }}
+									<button key={i} type="button" className={g.onPlate} style={{ width: item, height: item }}
 										onClick={() => put(side, r.take ? (bowl ? -1 : 1) : -1)}
 										aria-label={bowl ? `Put a ${fruit.one} back` : r.take ? `Take a ${fruit.one} away` : `Take a ${fruit.one} off`}>
 										<Pic id={fruit.id} />
@@ -149,22 +150,22 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 					// On its side: the sign, the plate, then the basket, top to bottom. Upright: the sign with the
 					// basket under it, then the plate.
 					return wide ? (
-						<div className={s.side}>
-							<div className={s.sideTagRow}>{sign}{basket}</div>
+						<div className={g.side}>
+							<div className={g.sideTagRow}>{sign}{basket}</div>
 							{dish}
 						</div>
 					) : (
-						<div className={s.sideRow}>
-							<div className={s.sideTag}>{sign}{basket}</div>
+						<div className={g.sideRow}>
+							<div className={g.sideTag}>{sign}{basket}</div>
 							{dish}
 						</div>
 					);
 				};
 				const picking = ready && !rounds.got;
 				const answers = pad ? (
-					<div className={s.numPad} style={{ gridTemplateColumns: `repeat(3, ${keySize}px)`, opacity: picking ? 1 : 0.35 }}>
+					<div className={g.numPad} style={{ gridTemplateColumns: `repeat(3, ${keySize}px)`, opacity: picking ? 1 : 0.35 }}>
 						{KEYS.map((k) => (
-							<button key={k} type="button" className={`${s.choice} ${k === "ok" ? s.choiceGo : ""}`}
+							<button key={k} type="button" className={`${s.choice} ${k === "ok" ? g.choiceGo : ""}`}
 								style={{ width: keySize, height: keySize, fontSize: keySize * 0.42 }}
 								disabled={!picking || ((k === "ok" || k === "back") && !typed)}
 								aria-label={k === "back" ? "Delete" : k === "ok" ? "That's it" : k}
@@ -186,15 +187,15 @@ export default function Adding({ level, onDone, onBack }: GameProps) {
 				);
 				return (
 					<div className={padBeside ? s.row : s.column}>
-						<div className={wide ? s.plates : s.platesUp}>
+						<div className={wide ? g.plates : g.platesUp}>
 							{plate("a")}
-							{!r.take && <span className={s.plus} aria-hidden="true">+</span>}
+							{!r.take && <span className={g.plus} aria-hidden="true">+</span>}
 							{plate("b")}
 						</div>
-						<div className={s.answerArea}>
-							<div className={s.equals}>
-								<span className={s.plus} aria-hidden="true">=</span>
-								<span key={pad ? misses : 0} className={`${s.answer} ${rounds.got ? s.answerGot : pad && misses ? s.wiggle : ""}`} style={{ fontSize: Math.max(28, keySize * 0.5), minWidth: keySize * 1.2 }}>
+						<div className={g.answerArea}>
+							<div className={g.equals}>
+								<span className={g.plus} aria-hidden="true">=</span>
+								<span key={pad ? misses : 0} className={`${s.answer} ${rounds.got ? g.answerGot : pad && misses ? s.wiggle : ""}`} style={{ fontSize: Math.max(28, keySize * 0.5), minWidth: keySize * 1.2 }}>
 									{rounds.got ? answerIs : typed || "?"}
 								</span>
 							</div>

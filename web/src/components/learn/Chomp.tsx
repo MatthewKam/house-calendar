@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } fr
 import { Board } from "./parts";
 import { fresh, useLater } from "./rounds";
 import s from "../../styles/Learn.module.css";
+import g from "../../styles/LearnChomp.module.css";
 
 /** The two players, taking turns. */
 const PLAYERS = [
@@ -220,18 +221,18 @@ export default function Chomp({ animal: id, onBack }: { animal: string; onBack: 
 				// Each player: their number in a badge and their name, in their color. Whose turn it is lifts up,
 				// lit in their color; the winner of a chomp bounces.
 				const tag = (i: number) => (
-					<span key={i} className={`${s.chompTag} ${(i === turn && !closed) || i === winner ? s.chompUp : ""} ${i === winner ? s.chompWin : ""}`}
+					<span key={i} className={`${g.chompTag} ${(i === turn && !closed) || i === winner ? g.chompUp : ""} ${i === winner ? s.chompWin : ""}`}
 						style={{ "--pc": players[i].color, fontSize: tagFont } as CSSProperties}>
-						<span className={s.chompBadge}>{i + 1}</span>
+						<span className={g.chompBadge}>{i + 1}</span>
 						{players[i].name}
 					</span>
 				);
 				return (
 					// Anywhere but a tooth (while the mouth's open): the nudge.
-					<div className={sides ? s.chompSides : s.column} onPointerDown={missed}>
-						{sides ? tag(0) : <div className={s.chompPlayers} style={{ height: tagSize }}>{players.map((_, i) => tag(i))}</div>}
-						<div className={s.chompStage} style={{ width }}>
-							<svg className={`${s.chompHead} ${laughing ? s.chompLaugh : ""}`} viewBox={`0 0 ${fw} ${fh}`}
+					<div className={sides ? g.chompSides : s.column} onPointerDown={missed}>
+						{sides ? tag(0) : <div className={g.chompPlayers} style={{ height: tagSize }}>{players.map((_, i) => tag(i))}</div>}
+						<div className={g.chompStage} style={{ width }}>
+							<svg className={`${g.chompHead} ${laughing ? s.chompLaugh : ""}`} viewBox={`0 0 ${fw} ${fh}`}
 								role="img" aria-label={`${animal.name}, mouth ${closed ? "shut" : "open"}`} onPointerDown={tapMouth}>
 								{/* Grinning, open wide, and chomped, all there so the snap doesn't wait for a picture. */}
 								<image href={`${ART}/${animal.id}/shut.webp`} width={fw} height={fh} opacity={!open ? 1 : 0} />
@@ -239,11 +240,11 @@ export default function Chomp({ animal: id, onBack }: { animal: string; onBack: 
 								<image href={`${ART}/${animal.id}/chomped.webp`} width={fw} height={fh} opacity={open && chomped !== null ? 1 : 0} />
 								{/* The bottom teeth, to press (only while it's open; the top ones are in the picture). */}
 								{/* (Two nudges, taking turns, so each miss starts the pulse over.) */}
-								<g className={closed ? s.teethHidden : hint ? (hint % 2 ? s.teethNudge : s.teethNudgeAgain) : undefined}>
+								<g className={closed ? g.teethHidden : hint ? (hint % 2 ? s.teethNudge : s.teethNudgeAgain) : undefined}>
 									{animal.teeth.map(([x, y, w, h], i) => {
 										const down = pressed.includes(i);
 										return (
-											<g key={i} className={s.toothHit} role="button" tabIndex={closed ? -1 : 0}
+											<g key={i} className={g.toothHit} role="button" tabIndex={closed ? -1 : 0}
 												aria-label={`Tooth ${i + 1}${down ? ", pressed" : ""}`}
 												onClick={(e) => {
 													// A finger's press goes to the nearest tooth (above); this is for a click with no
@@ -270,8 +271,8 @@ export default function Chomp({ animal: id, onBack }: { animal: string; onBack: 
 							{hint > 0 && <p key={hint} className={s.chompHint} role="status">Tap a bottom tooth!</p>}
 							{/* Waiting for Ready!: who won the last game, along the bottom. */}
 							{!open && lastWinner !== null && (
-								<p className={s.chompLast} style={{ "--pc": players[lastWinner].color } as CSSProperties}>
-									Last game: <span className={s.chompBadge}>{lastWinner + 1}</span> {players[lastWinner].name} won
+								<p className={g.chompLast} style={{ "--pc": players[lastWinner].color } as CSSProperties}>
+									Last game: <span className={g.chompBadge}>{lastWinner + 1}</span> {players[lastWinner].name} won
 								</p>
 							)}
 							{/* Chomp! And who won, stamped under it. */}

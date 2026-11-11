@@ -3,7 +3,7 @@ import { Pic } from "./art";
 import { Board } from "./parts";
 import { ANIMALS, type Animal } from "./things";
 import { any, at, CHEER_MS, fresh, type GameProps, useLater } from "./rounds";
-import s from "../../styles/Learn.module.css";
+import g from "../../styles/LearnPop.module.css";
 
 /**
  * Each level: what counts (any bubble; one with an animal in; the animal on the sign; the colour on the
@@ -138,20 +138,20 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 				// Big for little fingers (biggest at the first levels).
 				const size = Math.max(84, Math.min(180, Math.min(box.w, box.h) * (level <= 2 ? 0.28 : 0.24)));
 				return (
-					<div className={s.popSky}>
+					<div className={g.popSky}>
 						{/* What to find, on a sign at the top. */}
 						{wanted && (
-							<div className={s.popSign} aria-label={find === "colour" ? `Pop the ${(wanted as Colour).name} ones` : `Pop the ${(wanted as Animal).name}s`}>
-								<span className={s.popSignWord}>Pop</span>
+							<div className={g.popSign} aria-label={find === "colour" ? `Pop the ${(wanted as Colour).name} ones` : `Pop the ${(wanted as Animal).name}s`}>
+								<span className={g.popSignWord}>Pop</span>
 								{find === "colour"
-									? <span className={s.popSwatch} style={{ background: (wanted as Colour).fill }} />
-									: <span className={s.popSignPic}><Pic id={(wanted as Animal).id} /></span>}
+									? <span className={g.popSwatch} style={{ background: (wanted as Colour).fill }} />
+									: <span className={g.popSignPic}><Pic id={(wanted as Animal).id} /></span>}
 							</div>
 						)}
 						{/* Sprig, blowing them, at the bottom. */}
-						<img className={s.popSprig} src="/pop/sprig.webp" alt="" draggable={false} style={{ height: Math.min(box.h * 0.38, 260) }} />
+						<img className={g.popSprig} src="/pop/sprig.webp" alt="" draggable={false} style={{ height: Math.min(box.h * 0.38, 260) }} />
 						{bubbles.map((b) => (
-							<button key={b.id} type="button" className={`${s.bubble} ${b.hint ? s.bubbleHint : ""} ${b.popped ? s.bubblePopped : ""}`}
+							<button key={b.id} type="button" className={`${g.bubble} ${b.hint ? g.bubbleHint : ""} ${b.popped ? g.bubblePopped : ""}`}
 								aria-label={b.animal ? `A bubble with a ${b.animal.name}` : b.colour ? `A ${b.colour.name} bubble` : "A bubble"}
 								style={{
 									"--size": `${size * b.size}px`, "--to": `${b.to * (box.w - size)}px`, "--rise": `${box.h + size}px`,
@@ -164,10 +164,10 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 									setBubbles((all) => all.filter((x) => x.id !== b.id));
 									if (b.hint) setStarted(true);
 								}}>
-								<span className={s.bubbleWobble}>
-									{b.colour && <span className={s.bubbleFill} style={{ background: b.colour.fill }} />}
-									{b.animal && <span className={s.bubbleAnimal}><Pic id={b.animal.id} /></span>}
-									<img className={s.bubbleRing} src="/pop/bubble.webp" alt="" draggable={false} />
+								<span className={g.bubbleWobble}>
+									{b.colour && <span className={g.bubbleFill} style={{ background: b.colour.fill }} />}
+									{b.animal && <span className={g.bubbleAnimal}><Pic id={b.animal.id} /></span>}
+									<img className={g.bubbleRing} src="/pop/bubble.webp" alt="" draggable={false} />
 								</span>
 							</button>
 						))}

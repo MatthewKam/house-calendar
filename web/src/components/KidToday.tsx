@@ -9,6 +9,7 @@ import { sky } from "../lib/weather";
 import { DayCalendar } from "./DayCarousel";
 import TodayAnimal from "./TodayAnimal";
 import s from "../styles/KidMode.module.css";
+import g from "../styles/KidToday.module.css";
 import { isKid } from "../lib/people";
 
 /** How many days ahead a kid sees: today, tomorrow, and later this week. */
@@ -143,7 +144,7 @@ export default function KidToday({
 									<p className={s.none}>Nothing on the calendar today.</p>
 								</>
 							) : (
-								<ul className={s.events}>{todays.map((e) => event(e))}</ul>
+								<ul className={g.events}>{todays.map((e) => event(e))}</ul>
 							),
 					},
 					{
@@ -152,7 +153,7 @@ export default function KidToday({
 							tomorrows.length === 0 ? (
 								<p className={s.none}>Nothing on tomorrow.</p>
 							) : (
-								<ul className={s.events}>{tomorrows.map((e) => event(e))}</ul>
+								<ul className={g.events}>{tomorrows.map((e) => event(e))}</ul>
 							),
 					},
 					{
@@ -161,7 +162,7 @@ export default function KidToday({
 							later.length === 0 ? (
 								<p className={s.none}>Nothing later this week.</p>
 							) : (
-								<ul className={s.events}>
+								<ul className={g.events}>
 									{later.map(({ e, day }) => event(e, day))}
 								</ul>
 							),
@@ -205,25 +206,25 @@ function WhatToWear({ weather: w }: { weather: Weather }) {
 	];
 	const look = sky(w.days[0]?.code ?? w.code, true);
 	return (
-		<section className={s.wear} aria-label="What to wear">
-			<span className={s.nextLabel}>What to wear</span>
-			<ul className={s.clothes}>
+		<section className={g.wear} aria-label="What to wear">
+			<span className={g.nextLabel}>What to wear</span>
+			<ul className={g.clothes}>
 				{clothes.map((c) => (
-					<li key={c.name} className={s.clothing}>
-						<span className={s.clothingPicture} aria-hidden="true">
+					<li key={c.name} className={g.clothing}>
+						<span className={g.clothingPicture} aria-hidden="true">
 							{c.picture}
 						</span>
 						{c.name}
 					</li>
 				))}
 			</ul>
-			<p className={s.weatherLine}>
-				<span className={s.weatherStats}>
-					<span className={s.currentWeather}>
+			<p className={g.weatherLine}>
+				<span className={g.weatherStats}>
+					<span className={g.currentWeather}>
 						{w.temp}
 						<span>°F</span>
 					</span>
-					<span className={s.weatherBlock}>
+					<span className={g.weatherBlock}>
 						<span>
 							High {w.high}° · Low {w.low}°
 						</span>
@@ -256,7 +257,7 @@ function jacket({
 	rain?: boolean;
 }) {
 	return (
-		<svg viewBox="0 0 120 120" className={s.clothingDrawn}>
+		<svg viewBox="0 0 120 120" className={g.clothingDrawn}>
 			{/* The hood, behind. */}
 			<path
 				d={
@@ -316,14 +317,14 @@ const RAIN_JACKET = jacket({ cloth: "#f6c624", trim: "#d99a10", rain: true });
 function Remember({ items }: { items: SprigItem[] }) {
 	return (
 		<section className={s.remember} aria-label="Don't forget">
-			<span className={s.nextLabel}>Don't forget</span>
-			<ul className={s.events}>
+			<span className={g.nextLabel}>Don't forget</span>
+			<ul className={g.events}>
 				{items.map((i) => (
-					<li key={i.id} className={s.rememberItem}>
-						<span className={s.eventPicture} aria-hidden="true">
+					<li key={i.id} className={g.rememberItem}>
+						<span className={g.eventPicture} aria-hidden="true">
 							{picture(i.title, "📌")}
 						</span>
-						<span className={s.eventTitle}>{i.title}</span>
+						<span className={g.eventTitle}>{i.title}</span>
 					</li>
 				))}
 			</ul>
@@ -334,12 +335,12 @@ function Remember({ items }: { items: SprigItem[] }) {
 /** A card for the day: a big picture and one short sentence, for a grown-up to read aloud. */
 function Card({ label, item }: { label: string; item: KidFact }) {
 	return (
-		<div className={s.fact}>
-			<span className={s.factPicture} aria-hidden="true">
+		<div className={g.fact}>
+			<span className={g.factPicture} aria-hidden="true">
 				{item.picture}
 			</span>
-			<span className={s.factText}>
-				<span className={s.nextLabel}>{label}</span>
+			<span className={g.factText}>
+				<span className={g.nextLabel}>{label}</span>
 				{item.text}
 			</span>
 		</div>
@@ -370,24 +371,24 @@ function SpecialDays({ today, kidId }: { today: string; kidId: string }) {
 	const days = specialDaysFor(today, (year) => [...birthdays(people, year), ...special.filter((d) => d.day.startsWith(`${year}-`))]);
 	const month = fromDayKey(today).toLocaleDateString([], { month: "long" });
 	return (
-		<section className={s.special} aria-label={`${month}'s special days`}>
-			<span className={s.nextLabel}>{month}'s special days</span>
+		<section className={g.special} aria-label={`${month}'s special days`}>
+			<span className={g.nextLabel}>{month}'s special days</span>
 			{days.length === 0 ? (
-				<p className={s.specialNone}>Nothing special this month yet.</p>
+				<p className={g.specialNone}>Nothing special this month yet.</p>
 			) : (
-				<ul className={s.specialList}>
+				<ul className={g.specialList}>
 					{days.map((d) => {
 						const sleeps = sleepsUntil(today, d.day);
 						return (
-							<li key={`${d.day}-${d.name}`} className={`${s.specialDay} ${sleeps < 0 ? s.specialPast : sleeps === 0 ? s.specialToday : ""}`}>
-								<span className={s.specialPicture} aria-hidden="true">{d.picture}</span>
-								<span className={s.specialText}>
-									<span className={s.specialName}>{d.name}</span>
-									<span className={s.specialDate}>{fromDayKey(d.day).toLocaleDateString([], { month: "short", day: "numeric" })}</span>
+							<li key={`${d.day}-${d.name}`} className={`${g.specialDay} ${sleeps < 0 ? g.specialPast : sleeps === 0 ? g.specialToday : ""}`}>
+								<span className={g.specialPicture} aria-hidden="true">{d.picture}</span>
+								<span className={g.specialText}>
+									<span className={g.specialName}>{d.name}</span>
+									<span className={g.specialDate}>{fromDayKey(d.day).toLocaleDateString([], { month: "short", day: "numeric" })}</span>
 								</span>
 								{sleeps >= 0 && (
-									<span className={s.sleeps}>
-										{sleeps === 0 ? "Today!" : <>{sleeps} <span className={s.sleepsWord}>{sleeps === 1 ? "sleep" : "sleeps"}</span></>}
+									<span className={g.sleeps}>
+										{sleeps === 0 ? "Today!" : <>{sleeps} <span className={g.sleepsWord}>{sleeps === 1 ? "sleep" : "sleeps"}</span></>}
 									</span>
 								)}
 							</li>
@@ -413,24 +414,24 @@ function KidEvent({
 }) {
 	return (
 		<li
-			className={`${s.event} ${next ? s.eventNext : ""} ${over ? s.eventOver : ""}`}
+			className={`${g.event} ${next ? g.eventNext : ""} ${over ? g.eventOver : ""}`}
 		>
-			<span className={s.eventPicture} aria-hidden="true">
+			<span className={g.eventPicture} aria-hidden="true">
 				{picture(e.title)}
 			</span>
-			<span className={s.eventText}>
-				{next && <span className={s.nextLabel}>Next</span>}
-				<span className={s.eventTitle}>{e.title}</span>
+			<span className={g.eventText}>
+				{next && <span className={g.nextLabel}>Next</span>}
+				<span className={g.eventTitle}>{e.title}</span>
 			</span>
-			<span className={s.eventTime}>
+			<span className={g.eventTime}>
 				{e.allDay ? (
 					<>
-						{day && <span className={s.eventDay}>{day}</span>}
+						{day && <span className={g.eventDay}>{day}</span>}
 						<span aria-hidden="true">🌈</span> All day
 					</>
 				) : (
 					<>
-						{day && <span className={s.eventDay}>{day}</span>}
+						{day && <span className={g.eventDay}>{day}</span>}
 						<span aria-hidden="true">{partOfDay(e.start)}</span>{" "}
 						{timeLabel(e.start)}
 					</>

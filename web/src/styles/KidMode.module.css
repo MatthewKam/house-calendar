@@ -86,6 +86,7 @@
 	.leaveTab {
 		margin-top: 0;
 	}
+
 }
 
 .page {
@@ -152,6 +153,7 @@
 	.clockDate {
 		font-size: 1.1rem;
 	}
+
 }
 /* Whose it is, top right: the stars, then their name in their colour, which opens the other kids. */
 .who {
@@ -266,6 +268,7 @@ button.kidName {
 	button.kidName {
 		padding-right: 0.7rem;
 	}
+
 }
 .faceDot {
 	opacity: 0.55;
@@ -337,14 +340,6 @@ button.kidName {
 .stickers {
 	font-size: 1.6rem;
 	letter-spacing: 0.1em;
-}
-
-.nextLabel {
-	font-size: 0.85rem;
-	font-weight: 800;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-	color: var(--muted);
 }
 
 /* Daily tasks: a punch card, a circle for each of today's required tasks, filled in as each is done. */
@@ -670,15 +665,11 @@ button.kidName {
 .pop {
 	animation: pop 0.45s ease;
 }
-@keyframes pop {
-	40% {
-		transform: scale(1.08) rotate(-2deg);
-	}
-}
 @media (prefers-reduced-motion: reduce) {
 	.pop {
 		animation: none;
 	}
+
 }
 
 /* Their jars (the Rewards page's card). */
@@ -711,61 +702,6 @@ button.kidName {
 	color: var(--muted);
 }
 
-/* Kid mode's Today: each event as a big picture, its title and when. */
-.events {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 0.6rem;
-}
-.event {
-	display: flex;
-	align-items: center;
-	gap: 0.9rem;
-	padding: 0.8rem 1.1rem;
-	border-radius: 1.2rem;
-	background: var(--surface);
-	border-left: 0.5rem solid transparent;
-}
-.eventNext {
-	border-left-color: var(--c);
-	box-shadow: 0 0.3rem 1rem color-mix(in srgb, var(--c) 25%, transparent);
-}
-/* Already over today. */
-.eventOver {
-	opacity: 0.5;
-}
-.eventPicture {
-	font-size: 2.6rem;
-	line-height: 1;
-}
-.eventText {
-	flex: 1;
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 0.1rem;
-}
-.eventTitle {
-	font-size: 1.3rem;
-	font-weight: 700;
-}
-.eventTime {
-	flex: none;
-	font-size: 1.15rem;
-	font-weight: 650;
-	color: var(--muted);
-	white-space: nowrap;
-}
-/* Later this week: the day, over the time. */
-.eventDay {
-	display: block;
-	text-align: right;
-	font-weight: 800;
-}
-
 /* Today's cards and events, one under another (on its side: rows of two or three). */
 .today,
 .calendar {
@@ -790,6 +726,7 @@ button.kidName {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		align-items: start;
 	}
+
 }
 /* Wider than 1400px: the calendar's three days side by side. */
 @media (min-width: 1401px) {
@@ -798,6 +735,7 @@ button.kidName {
 		grid-template-columns: repeat(3, 1fr);
 		align-items: start;
 	}
+
 }
 
 /* The calendar's carousel: a big button for each day along the top, the day under them. */
@@ -845,106 +783,12 @@ button.kidName {
 .dayFromLeft {
 	animation: dayFromLeft 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
-@keyframes dayFromRight {
-	from {
-		opacity: 0;
-		transform: translateX(2.5rem);
-	}
-}
-@keyframes dayFromLeft {
-	from {
-		opacity: 0;
-		transform: translateX(-2.5rem);
-	}
-}
 @media (prefers-reduced-motion: reduce) {
 	.dayFromRight,
 	.dayFromLeft {
 		animation: none;
 	}
-}
 
-/* What to wear: a card, the clothes as big pictures in a row, the weather under them in small print. */
-.wear {
-	display: flex;
-	flex-direction: column;
-	gap: 0.6rem;
-	padding: 1rem 1.2rem;
-	border-radius: 1.4rem;
-	background: var(--surface);
-	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
-	box-shadow: 0 0.3rem 1rem color-mix(in srgb, var(--c) 18%, transparent);
-}
-.clothes {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.6rem 1.4rem;
-}
-.clothing {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 0.2rem;
-	font-size: 1rem;
-	font-weight: 700;
-}
-.clothingPicture {
-	font-size: 5rem;
-	line-height: 1;
-}
-/* A drawn one (the jackets): as big as the emoji. */
-.clothingDrawn {
-	display: block;
-	width: 5.6rem;
-	height: 5.6rem;
-	margin: -0.3rem;
-}
-.weatherLine {
-	margin: 0;
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 0.1rem 0.9rem;
-	font-size: 0.95rem;
-	font-weight: 600;
-	color: var(--muted);
-}
-.weatherLine span {
-	white-space: nowrap;
-}
-
-.weatherStats {
-	display: flex;
-	align-items: center;
-	gap: 15px;
-}
-.weatherBlock {
-	/* Beside the temperature, as wide as there's room for (its lines wrap inside it). */
-	flex: 1 1 0;
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 5px;
-	padding: 10px;
-}
-/* The conditions, rain and wind: spaced apart, and onto another line if the card's narrow. */
-.weatherBlock > span:last-child {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0 0.7rem;
-}
-
-.currentWeather {
-	font-size: 54px;
-}
-.currentWeather span {
-	font-size: 24px;
-	display: inline-block;
-	vertical-align: top;
-	line-height: 40px;
 }
 
 /* Don't forget: today's things to remember, from the family's lists. */
@@ -952,178 +796,6 @@ button.kidName {
 	display: flex;
 	flex-direction: column;
 	gap: 0.6rem;
-}
-.rememberItem {
-	display: flex;
-	align-items: center;
-	gap: 0.9rem;
-	padding: 0.8rem 1.1rem;
-	border-radius: 1.2rem;
-	background: color-mix(in srgb, var(--c) 14%, var(--surface));
-}
-
-/* The month's special days: a card, a row for each, the sleeps until it on the right. */
-.special {
-	display: flex;
-	flex-direction: column;
-	gap: 0.6rem;
-	padding: 1rem 1.2rem;
-	border-radius: 1.4rem;
-	background: var(--surface);
-	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
-	box-shadow: 0 0.3rem 1rem color-mix(in srgb, var(--c) 18%, transparent);
-}
-.specialList {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 0.4rem;
-}
-.specialDay {
-	display: flex;
-	align-items: center;
-	gap: 0.8rem;
-	padding: 0.3rem 0.5rem;
-	border-radius: 0.9rem;
-}
-.specialPicture {
-	flex: none;
-	font-size: 2.4rem;
-	line-height: 1;
-}
-.specialText {
-	flex: 1;
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
-}
-.specialName {
-	font-size: 1.15rem;
-	font-weight: 750;
-}
-.specialDate {
-	font-size: 0.9rem;
-	font-weight: 650;
-	color: var(--muted);
-}
-.sleeps {
-	flex: none;
-	font-size: 1.5rem;
-	font-weight: 800;
-	color: var(--c);
-	text-align: right;
-}
-.sleepsWord {
-	font-size: 0.9rem;
-}
-/* Gone by: dimmed. Today: picked out. */
-.specialPast {
-	opacity: 0.45;
-}
-.specialToday {
-	background: color-mix(in srgb, var(--c) 16%, var(--surface));
-}
-.specialNone {
-	margin: 0;
-	color: var(--muted);
-	font-weight: 600;
-}
-
-/* The day's cards: a fun fact, and kind words. */
-.fact {
-	/* In rows of two: across the whole width. */
-	grid-column: 1 / -1;
-	display: flex;
-	align-items: center;
-	gap: 1rem;
-	padding: 1.1rem 1.2rem;
-	border-radius: 1.4rem;
-	/* A card, like What to wear. */
-	background: var(--surface);
-	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
-	box-shadow: 0 0.3rem 1rem color-mix(in srgb, var(--c) 18%, transparent);
-}
-.factPicture {
-	font-size: 5rem;
-	line-height: 1;
-}
-.factText {
-	flex: 1;
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 0.2rem;
-	font-size: 1.35rem;
-	font-weight: 650;
-}
-/* The littlest's Today: an animal to tap, which walks off one side and back in the other. */
-.animalStage {
-	display: flex;
-	justify-content: center;
-	/* Off the sides is out of sight; the bob above stays in. */
-	overflow-x: clip;
-}
-.animal {
-	flex: none;
-	padding: 0;
-	border: 0;
-	background: none;
-	width: min(16rem, 62vw);
-	aspect-ratio: 1;
-	cursor: pointer;
-	touch-action: manipulation;
-	-webkit-tap-highlight-color: transparent;
-}
-.animal:focus {
-	outline: none;
-}
-.animal:focus-visible {
-	outline: 3px solid var(--c);
-	outline-offset: 4px;
-	border-radius: 1.4rem;
-}
-.animalPic {
-	display: block;
-	width: 100%;
-	height: 100%;
-	transform-origin: 50% 95%;
-}
-/* Walking: a bob each step. Sitting down: a little squash. */
-.animalWalking {
-	animation: bob 0.34s ease-in-out infinite;
-}
-.animalSat {
-	animation: sitDown 0.4s ease-out;
-}
-@keyframes bob {
-	50% {
-		transform: translateY(-4%);
-	}
-}
-@keyframes sitDown {
-	0% {
-		transform: scale(1.04, 0.92);
-	}
-	60% {
-		transform: scale(0.98, 1.03);
-	}
-}
-@media (prefers-reduced-motion: reduce) {
-	.animalWalking,
-	.animalSat {
-		animation: none;
-	}
-}
-
-@media (max-width: 700px) {
-	.factPicture {
-		font-size: 3.6rem;
-	}
-	.factText {
-		font-size: 1.15rem;
-	}
 }
 
 /* A phone on its side: four tabs down the left still fit, and the tasks get the height. */
@@ -1156,9 +828,6 @@ button.kidName {
 	.pottyHead {
 		min-height: 2.8rem;
 	}
-	.animal {
-		width: min(12rem, 45vh);
-	}
 	.today {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
@@ -1190,10 +859,29 @@ button.kidName {
 		width: 1.8rem;
 		height: 1.8rem;
 	}
+
 }
 
 /* No dragging pictures out, either. */
 .shell img,
 .shell svg {
 	-webkit-user-drag: none;
+}
+
+@keyframes pop {
+	40% {
+		transform: scale(1.08) rotate(-2deg);
+	}
+}
+@keyframes dayFromRight {
+	from {
+		opacity: 0;
+		transform: translateX(2.5rem);
+	}
+}
+@keyframes dayFromLeft {
+	from {
+		opacity: 0;
+		transform: translateX(-2.5rem);
+	}
 }
