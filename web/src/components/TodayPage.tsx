@@ -30,7 +30,7 @@ import {
 } from "../lib/specialDays";
 import { sky } from "../lib/weather";
 import { useNow } from "../lib/useNow";
-import { useMediaQuery } from "../lib/useMediaQuery";
+import { LANDSCAPE_TABLET, useMediaQuery } from "../lib/useMediaQuery";
 import { momentKind } from "../lib/moments";
 import { dueLabel, isDue, isLate } from "../lib/lists";
 import { percent, taskProgress, tasksFor } from "../lib/tasks";
@@ -66,8 +66,6 @@ const WEEK = 7;
 /** Special days this far ahead, and at most this many of them. */
 const SPECIAL_DAYS_AHEAD = 60;
 const SPECIAL_DAYS_SHOWN = 6;
-/** A tablet on its side, or anything bigger: the calendar in a column of its own on the right. */
-const TWO_COLUMNS = "(orientation: landscape) and (min-width: 1000px)";
 
 /** "Good morning", "Good afternoon" or "Good evening". */
 function greeting(now: Date) {
@@ -272,7 +270,8 @@ export default function TodayPage({
 	const look = weather && sky(weather.code, weather.isDay);
 	const quote = quoteFor(today);
 	const kind = grownUpKindWordsFor(today);
-	const twoColumns = useMediaQuery(TWO_COLUMNS);
+	// A tablet on its side, or anything bigger: the calendar in a column of its own on the right.
+	const twoColumns = useMediaQuery(LANDSCAPE_TABLET);
 
 	// The cards. A tablet on its side and anything bigger: two columns, the calendar on the right (today,
 	// then tomorrow and the rest of the week under it) with the special days under it, the rest down the

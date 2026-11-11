@@ -363,7 +363,7 @@
 }
 
 /* Phones: smaller day dots so the whole week fits beside the task names. */
-@media (max-width: 600px) {
+@media (max-width: 700px) {
 	.cell,
 	.notDue {
 		width: 1.5rem;

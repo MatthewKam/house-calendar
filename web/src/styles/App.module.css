@@ -233,7 +233,7 @@
 
 /* Phones on their side, and narrow screens: the page runs to the bottom edge too (the scrolling
    lists keep their own room at the end for the home bar). */
-@media (max-width: 959.98px), (max-height: 520px) {
+@media (max-width: 959.98px), (max-height: 500px) {
 	.shell {
 		padding-bottom: 0;
 	}
