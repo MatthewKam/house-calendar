@@ -283,6 +283,50 @@
 	}
 }
 
+/* ---- A phone on its side ---- */
+/* Little height: the month's name, the time and weather, and the name filters share one row, the
+   buttons are slimmer, and the calendar scrolls rather than squash its days. */
+@media (orientation: landscape) and (max-height: 500px) {
+	/* The nav down the left and the page beside it, even on a small phone (under 700px wide, which
+	   would otherwise stack them and leave the page below the nav). */
+	.app {
+		flex-direction: row;
+	}
+	.shell {
+		height: 100%;
+		gap: 0.4rem;
+	}
+	.monthHeaderTitle {
+		flex-wrap: nowrap;
+	}
+	.monthHeaderTitle > div {
+		display: flex;
+		align-items: baseline;
+		flex-wrap: wrap;
+		gap: 0 1rem;
+		min-width: 0;
+	}
+	.monthTitle {
+		margin: 0;
+		font-size: 1.4rem;
+	}
+	.now {
+		font-size: 1rem;
+	}
+	.pill,
+	.segmented button {
+		min-height: 2.2rem;
+		padding: 0 0.75rem;
+		font-size: 1rem;
+	}
+	.title {
+		font-size: 1.2rem;
+	}
+	.body {
+		overflow-y: auto;
+	}
+}
+
 /* A flyer's photo being dragged over the page (Snap a flyer by dropping it). */
 .flyerDrop {
 	position: fixed;
