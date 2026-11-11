@@ -4,6 +4,7 @@ import { Board, fit } from "./parts";
 import { TOYS } from "./things";
 import { at, between, CHEER_MS, fresh, shuffle, type GameProps, useLater } from "./rounds";
 import s from "../../styles/Learn.module.css";
+import g from "../../styles/LearnFindIt.module.css";
 
 /** Kinds of thing in the room, the most of each, how many hide under others, and rooms a play, by level. */
 const KINDS = [2, 2, 3, 3, 4, 4];
@@ -108,18 +109,18 @@ export default function FindIt({ level, onDone, onBack }: GameProps) {
 				return (
 					<div className={wide ? s.row : s.column}>
 						{/* The index: each kind, how many are left, and those collected lined up beside it. */}
-						<div className={s.findIndex} style={{ width: wide ? indexW : undefined, flexDirection: wide ? "column" : "row" }}>
+						<div className={g.findIndex} style={{ width: wide ? indexW : undefined, flexDirection: wide ? "column" : "row" }}>
 							{room.kinds.map((k) => {
 								const left = k.count - found.filter((f) => f.kind === k.id).length;
 								return (
-									<span key={k.id} className={`${s.indexCard} ${left === 0 ? s.indexDone : ""}`} aria-label={`${k.many}: ${left} more`}>
-										<span className={s.indexPic} style={{ width: chip, height: chip }}><Pic id={k.id} /></span>
-										<span key={left} className={`${s.indexCount} ${left < k.count ? s.pop : ""}`} style={{ fontSize: chip * 0.7 }}>{left}</span>
-										<span className={s.indexTray}>
+									<span key={k.id} className={`${g.indexCard} ${left === 0 ? g.indexDone : ""}`} aria-label={`${k.many}: ${left} more`}>
+										<span className={g.indexPic} style={{ width: chip, height: chip }}><Pic id={k.id} /></span>
+										<span key={left} className={`${g.indexCount} ${left < k.count ? s.pop : ""}`} style={{ fontSize: chip * 0.7 }}>{left}</span>
+										<span className={g.indexTray}>
 											{Array.from({ length: k.count }, (_, i) => {
 												const here = found.filter((f) => f.kind === k.id)[i];
 												return (
-													<span key={i} ref={(el) => { slots.current[`${k.id}-${i}`] = el; }} className={s.traySlot} style={{ width: chip * 0.62, height: chip * 0.62 }}>
+													<span key={i} ref={(el) => { slots.current[`${k.id}-${i}`] = el; }} className={g.traySlot} style={{ width: chip * 0.62, height: chip * 0.62 }}>
 														{here && landed.includes(here.id) && <span className={s.pop}><Pic id={k.id} /></span>}
 													</span>
 												);
@@ -131,13 +132,13 @@ export default function FindIt({ level, onDone, onBack }: GameProps) {
 						</div>
 						{/* On their way to the index. */}
 						{flying.filter((f) => !landed.includes(f.thing.id)).map((f) => (
-							<span key={f.thing.id} className={s.flyer} onAnimationEnd={() => setLanded((l) => [...l, f.thing.id])}
+							<span key={f.thing.id} className={g.flyer} onAnimationEnd={() => setLanded((l) => [...l, f.thing.id])}
 								style={{ left: f.from.left, top: f.from.top, width: f.from.width, height: f.from.height,
 									"--dx": `${f.dx}px`, "--dy": `${f.dy}px`, "--s": f.scale } as CSSProperties}>
 								<Pic id={f.thing.kind} />
 							</span>
 						))}
-						<div className={s.room} style={{ width: area.w, height: area.h }}>
+						<div className={g.room} style={{ width: area.w, height: area.h }}>
 							<Room look={look} />
 							{room.shown.map((t, i) => {
 								const col = i % grid.cols;
@@ -145,17 +146,17 @@ export default function FindIt({ level, onDone, onBack }: GameProps) {
 								const left = 8 + (col + 0.5) * cellW + t.jx * (cellW - size) - size / 2;
 								const top = area.h * 0.25 + 4 + (row + 0.5) * cellH + t.jy * (cellH - size) - size / 2;
 								return (
-									<div key={`${round}-${t.id}`} className={s.spot} style={{ left, top, width: size, height: size }}>
+									<div key={`${round}-${t.id}`} className={g.spot} style={{ left, top, width: size, height: size }}>
 										{/* What was hiding under it, there once it's been collected. */}
 										{t.under && (
 											<button type="button" onClick={(e) => collect(t.under!, e.currentTarget)} disabled={!gone(t)}
 												aria-label={TOYS.find((x) => x.id === t.under!.kind)?.one} aria-hidden={!gone(t)}
-												className={`${s.thing} ${gone(t.under) ? s.thingGone : ""}`} style={{ "--tilt": `${t.under.tilt}deg` } as CSSProperties}>
+												className={`${s.thing} ${gone(t.under) ? g.thingGone : ""}`} style={{ "--tilt": `${t.under.tilt}deg` } as CSSProperties}>
 												<Pic id={t.under.kind} />
 											</button>
 										)}
 										<button type="button" onClick={(e) => collect(t, e.currentTarget)}
-											className={`${s.thing} ${gone(t) ? s.thingGone : ""}`} style={{ "--tilt": `${t.tilt}deg` } as CSSProperties}
+											className={`${s.thing} ${gone(t) ? g.thingGone : ""}`} style={{ "--tilt": `${t.tilt}deg` } as CSSProperties}
 											aria-label={TOYS.find((x) => x.id === t.kind)?.one}>
 											<Pic id={t.kind} />
 										</button>

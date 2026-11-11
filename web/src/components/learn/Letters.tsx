@@ -4,6 +4,7 @@ import { Board } from "./parts";
 import { LOOK_ALIKE, WORDS } from "./things";
 import { at, fresh, shuffle, useRounds, type GameProps } from "./rounds";
 import s from "../../styles/Learn.module.css";
+import g from "../../styles/LearnLetters.module.css";
 
 /** Letters to choose from, whether look-alike letters are offered, and capitals, by level. */
 const CHOICES = [2, 3, 3, 3, 4, 4];
@@ -53,10 +54,10 @@ export default function Letters({ level, onDone, onBack }: GameProps) {
 				const font = Math.floor(Math.min(120, (wide ? box.w - pic - 60 : box.w - 40) / (letters * 0.75 + 0.6), pic * 0.5));
 				return (
 					<div className={s.column}>
-						<div className={wide ? s.rowTight : s.columnTight}>
-							<span className={s.wordPic} style={{ width: pic, height: pic }}><Pic id={r.pic} label={r.word} /></span>
-							<div className={s.word} style={{ fontSize: font }} aria-label={rounds.got ? r.word : `blank, then ${r.word.slice(1)}`}>
-								<span className={`${s.gap} ${rounds.got ? `${s.gapFilled} ${s.pop}` : ""}`}>{rounds.got ? show(r.first) : ""}</span>
+						<div className={wide ? g.rowTight : g.columnTight}>
+							<span className={g.wordPic} style={{ width: pic, height: pic }}><Pic id={r.pic} label={r.word} /></span>
+							<div className={g.word} style={{ fontSize: font }} aria-label={rounds.got ? r.word : `blank, then ${r.word.slice(1)}`}>
+								<span className={`${g.gap} ${rounds.got ? `${g.gapFilled} ${s.pop}` : ""}`}>{rounds.got ? show(r.first) : ""}</span>
 								{show(r.word.slice(1))}
 							</div>
 						</div>

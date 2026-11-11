@@ -4,6 +4,7 @@ import { Board, SLIDE_MS, type Box } from "./parts";
 import { makeMap } from "./mazeMap";
 import { at, fresh, type GameProps, useLater } from "./rounds";
 import s from "../../styles/Learn.module.css";
+import g from "../../styles/LearnMaze.module.css";
 
 /** The map's size in stops (rows, columns) and its keys and gates, by level. Level 1 is already a real maze. */
 const SIZES: [number, number, number][] = [[4, 5, 0], [4, 6, 0], [5, 6, 1], [5, 7, 1], [6, 7, 2], [6, 8, 2]];
@@ -156,11 +157,11 @@ function OneMaze({ level, box, onHome, clearing }: { level: number; box: Box; on
 		return (
 			<div className={s.column}>
 				{keys > 0 && (
-					<span className={s.keysHeld} style={{ height: keysRow - 8 }} aria-label={`${keysHeld} ${keysHeld === 1 ? "key" : "keys"}`}>
-						{Array.from({ length: keys }, (_, i) => <span key={i} className={i < keysHeld ? "" : s.keyEmpty}><Pic id="key" /></span>)}
+					<span className={g.keysHeld} style={{ height: keysRow - 8 }} aria-label={`${keysHeld} ${keysHeld === 1 ? "key" : "keys"}`}>
+						{Array.from({ length: keys }, (_, i) => <span key={i} className={i < keysHeld ? "" : g.keyEmpty}><Pic id="key" /></span>)}
 					</span>
 				)}
-				<div className={`${s.map} ${clearing ? s.cleared : ""}`} style={{ gridTemplateColumns: `repeat(${shown[0].length}, ${square}px)`, "--wall": look.wall, "--path": look.path, "--been": look.been } as CSSProperties}>
+				<div className={`${g.map} ${clearing ? g.cleared : ""}`} style={{ gridTemplateColumns: `repeat(${shown[0].length}, ${square}px)`, "--wall": look.wall, "--path": look.path, "--been": look.been } as CSSProperties}>
 					{shown.map((row, i) => row.map((cell, j) => {
 						const [r, c] = turned ? [j, i] : [i, j];
 						const key = `${r},${c}`;
@@ -170,11 +171,11 @@ function OneMaze({ level, box, onHome, clearing }: { level: number; box: Box; on
 						return (
 							<button key={`${key}-${bump?.at === key ? bump.n : 0}`} type="button" aria-label={label} onClick={() => tap(r, c)}
 								style={{ width: square, height: square }}
-								className={`${s.square} ${cell === "#" ? s.wall : trail.includes(key) ? s.been : ""} ${cell === "H" ? s.goalSquare : ""} ${bump?.at === key ? s.wiggle : ""}`}>
+								className={`${g.square} ${cell === "#" ? g.wall : trail.includes(key) ? g.been : ""} ${cell === "H" ? s.goalSquare : ""} ${bump?.at === key ? s.wiggle : ""}`}>
 								{cell === "H" && <Pic id={look.wants} label={look.what} />}
 								{cell === "K" && !taken.includes(key) && <Pic id="key" />}
 								{cell === "G" && !opened.includes(key) && <Pic id="gate" />}
-								{here && <span key={trail.length} className={`${s.walker} ${home ? s.hopForever : s.step}`}><Pic id={look.who} label={look.name} /></span>}
+								{here && <span key={trail.length} className={`${g.walker} ${home ? s.hopForever : s.step}`}><Pic id={look.who} label={look.name} /></span>}
 								{/* Where to start: an arrow bobbing at the animal until its first step. */}
 								{here && trail.length === 0 && (
 									<span className={s.startArrow} aria-hidden="true">

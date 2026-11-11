@@ -1,0 +1,42 @@
+/* Pairs. */
+.card {
+	padding: 0;
+	perspective: 40rem;
+	background: none;
+}
+.cardBack,
+.cardFace {
+	position: absolute;
+	inset: 0;
+	border-radius: 12%/9%;
+	backface-visibility: hidden;
+	box-shadow: 0 0.3rem 0.8rem rgb(29 31 35 / 0.12);
+}
+.cardBack {
+	background: var(--back);
+	border: 0.3rem solid white;
+}
+/* On the back, the mascot's line drawing in a light shade of the card's color. */
+.cardBack::after {
+	content: "";
+	position: absolute;
+	inset: 12%;
+	background: color-mix(in srgb, var(--back) 30%, white);
+	-webkit-mask: url(/mascot/sprig-lines.png) center / contain no-repeat;
+	mask: url(/mascot/sprig-lines.png) center / contain no-repeat;
+}
+.cardFace {
+	display: grid;
+	place-items: center;
+	padding: 12%;
+	background: var(--surface);
+	transform: rotateY(180deg);
+}
+.cardFace svg {
+	width: 100%;
+	height: 100%;
+}
+/* Found: flat on the table, its shadow gone. */
+.cardMatched .cardFace {
+	box-shadow: none;
+}

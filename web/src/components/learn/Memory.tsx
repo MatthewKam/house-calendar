@@ -4,6 +4,7 @@ import { Board, fit } from "./parts";
 import { ANIMALS, FRUIT, TOYS } from "./things";
 import { at, fresh, shuffle, type GameProps, useLater } from "./rounds";
 import s from "../../styles/Learn.module.css";
+import g from "../../styles/LearnMemory.module.css";
 
 /** Pairs on the table, by level. */
 const PAIRS = [3, 4, 6, 8, 10, 12];
@@ -70,11 +71,11 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 							{cards.map((c, i) => {
 								const face = up.includes(i) || matched.includes(i);
 								return (
-									<button key={i} type="button" className={`${s.card} ${face ? s.cardUp : ""} ${matched.includes(i) ? s.cardMatched : ""} ${shaking.includes(i) ? s.cardShake : ""}`}
+									<button key={i} type="button" className={`${g.card} ${face ? s.cardUp : ""} ${matched.includes(i) ? g.cardMatched : ""} ${shaking.includes(i) ? s.cardShake : ""}`}
 										style={{ width: grid.size, height: grid.size / 0.75 }} onClick={() => flip(i)} aria-label={face ? c.name : "A card, face down"}>
 										<span className={s.cardInner}>
-											<span className={s.cardBack} aria-hidden="true" />
-											<span className={s.cardFace}><Pic id={c.id} /></span>
+											<span className={g.cardBack} aria-hidden="true" />
+											<span className={g.cardFace}><Pic id={c.id} /></span>
 										</span>
 									</button>
 								);

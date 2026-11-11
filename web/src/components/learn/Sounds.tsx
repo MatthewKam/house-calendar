@@ -5,6 +5,7 @@ import { animalsUpTo, type Animal } from "./things";
 import { at, fresh, pick, shuffle, useRounds, type GameProps } from "./rounds";
 import { noise } from "./sound";
 import s from "../../styles/Learn.module.css";
+import g from "../../styles/LearnSounds.module.css";
 
 /** Animals to choose from, by level. */
 const CHOICES = [2, 3, 3, 4, 4, 6];
@@ -84,8 +85,8 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 					// A new one each round, sliding in; got (not the last), it slides away.
 					<div key={rounds.round} className={`${s.column} ${rounds.got && !last ? s.slideAway : ""}`}>
 						{/* The noise as a word, and the play button beside it if they need to hear it. */}
-						<div className={`${s.sayRow} ${s.slideIn}`} style={{ height: prompt - space, marginBottom: space }}>
-							<span className={s.sayWord} style={{ fontSize: font, maxWidth: room, whiteSpace: lines === 1 ? "nowrap" : "normal" }}>{word}</span>
+						<div className={`${g.sayRow} ${s.slideIn}`} style={{ height: prompt - space, marginBottom: space }}>
+							<span className={g.sayWord} style={{ fontSize: font, maxWidth: room, whiteSpace: lines === 1 ? "nowrap" : "normal" }}>{word}</span>
 							<Hear size={button} onTap={() => noise(answer)} label="Hear it" />
 						</div>
 						<div className={`${s.grid} ${s.slideIn}`} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 16 }}>
@@ -94,10 +95,10 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 								const right = (found || rounds.got) && a.id === answer.id;
 								return (
 									<button key={`${a.id}-${isTapped ? tapped.n : 0}`} type="button" aria-label={a.name}
-										className={`${s.tile} ${right ? `${s.tileRight} ${s.hop}` : isTapped ? s.wiggle : ""}`}
+										className={`${g.tile} ${right ? `${g.tileRight} ${s.hop}` : isTapped ? s.wiggle : ""}`}
 										style={{ width: grid.size, height: grid.size }} onClick={() => tap(a)}>
 										<Pic id={a.id} />
-										{saying === a.id && <span className={s.tileSays}>{a.says}!</span>}
+										{saying === a.id && <span className={g.tileSays}>{a.says}!</span>}
 									</button>
 								);
 							})}
