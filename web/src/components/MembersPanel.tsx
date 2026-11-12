@@ -1,4 +1,6 @@
 import { useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { api } from '../lib/api';
 import { PALETTE } from '../lib/color';
 import { screenSaverSettings } from '../lib/screensaver';
 import { useAddMember, useAuthStatus, useCalendars, useLearn, useRemoveMember, useSetSetting, useSettings, useUpdateMember, useSetMemberColor } from '../lib/queries';
@@ -165,6 +167,14 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
   // Signed out there's no holder. A grown-up's color is only theirs to change.
   const holder = !auth?.signedIn || auth.holder;
   const wall = auth?.signedIn && auth.role === 'wall' ? auth : null;
+  // Wall mode: everything on screen was this person's, so it all loads again as the wall's (or back).
+  const qc = useQueryClient();
+  const [wallModeAsk, setWallModeAsk] = useState(false);
+  const switchWallMode = (on: boolean) => void api.setWallMode(on).then((st) => {
+    qc.clear();
+    qc.setQueryData(['auth'], st);
+    onClose();
+  });
   const canColor = (m: Member) => !auth?.signedIn || !m.guardian || m.id === auth.memberId;
   const push = usePush();
   const hasCalendars = (useCalendars().data ?? []).length > 0;
@@ -324,6 +334,21 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
           <HouseholdAccess />
         </Section>
 
+        {/* Like kid mode, for the wall: a guardian's own device becomes the wall until a PIN turns it back. */}
+        {(grownUp || auth?.signedIn && auth.wallMode) && (
+          <Section title="Wall mode" note={auth?.signedIn && auth.wallMode ? 'On' : 'Off'}>
+            <p className={s.themeNote}>
+              {auth?.signedIn && auth.wallMode
+                ? 'This device is the family wall. Leaving wall mode puts it back to your own account.'
+                : "Make this device the family wall: everyone's shared calendar, your private events hidden, and changes and Settings behind a guardian's PIN. A guardian's PIN turns it off."}
+            </p>
+            <button type="button" className={sheet.secondary} style={{ alignSelf: 'flex-start' }}
+              onClick={() => (auth?.signedIn && auth.wallMode ? switchWallMode(false) : setWallModeAsk(true))}>
+              {auth?.signedIn && auth.wallMode ? 'Leave wall mode' : 'Turn on wall mode'}
+            </button>
+          </Section>
+        )}
+
         <Section title="Light or dark" note={THEMES.find(([v]) => v === theme)![1]}>
           <div className={s.theme} role="radiogroup" aria-label="Light or dark">
             {THEMES.map(([v, label]) => (
@@ -375,6 +400,12 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
           <button className={sheet.secondary} onClick={onClose}>Done</button>
         </div>
       </Sheet>
+      {wallModeAsk && (
+        <ConfirmDialog title="Turn on wall mode?" confirmLabel="Turn on" safe
+          onCancel={() => setWallModeAsk(false)} onConfirm={() => { setWallModeAsk(false); switchWallMode(true); }}>
+          Your private events go out of sight here. To get back to your account, a guardian types their PIN.
+        </ConfirmDialog>
+      )}
       {removing && (
         <ConfirmDialog title={`Remove ${removing.name}?`} confirmLabel="Remove"
           onCancel={() => setRemoving(null)}

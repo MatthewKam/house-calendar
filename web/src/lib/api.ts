@@ -31,6 +31,8 @@ export type AuthStatus = { signedIn: false } | {
   me: { name: string; color: string } | null;
   /** The guardian whose PIN unlocked this wall or kid's device. */
   unlockedBy: string | null;
+  /** A guardian's own device acting as the wall (Settings turns it on; a guardian's PIN turns it off). */
+  wallMode: boolean;
   /** The wall: a guardian's PIN has been typed. */
   entered: boolean;
   /** May change parent-only things now; always, on a guardian's own device. */
@@ -76,6 +78,8 @@ export const api = {
   setMyPin: (pin: string) => call<AuthStatus>('PUT', '/api/account/pin', { pin }),
   enterWall: (pin: string) => call<AuthStatus>('POST', '/api/auth/enter', { pin }),
   lockWall: () => call<AuthStatus>('POST', '/api/auth/lock-wall'),
+  /** Wall mode on this guardian's device, or off again (unlocked with a guardian's PIN first). */
+  setWallMode: (on: boolean) => call<AuthStatus>('POST', '/api/auth/wall-mode', { on }),
   unlockParent: (pin: string) => call<AuthStatus>('POST', '/api/auth/parent', { pin }),
   lockParent: () => call<AuthStatus>('POST', '/api/auth/parent/lock'),
   checkPin: (pin: string) => call<void>('POST', '/api/auth/check-pin', { pin }),
