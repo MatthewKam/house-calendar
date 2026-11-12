@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { PALETTE } from '../lib/color';
@@ -59,20 +59,24 @@ function ColorSet({ value, label, onPick }: { value: string; label: string; onPi
   );
 }
 
+/** Which part of Settings is showing (its title), or null for the list of them all. */
+const SettingsView = createContext<{ view: string | null; open: (title: string) => void }>({ view: null, open: () => {} });
+
 /**
- * One part of Settings, folded to its heading (and a word on how it's set) until tapped. Opening
- * one closes the others, so the sheet stays short.
+ * One part of Settings: in the list, a row with its title and a word on how it's set; tapped, the
+ * sheet shows just this part (with a back arrow to the list).
  */
 function Section({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
-  return (
-    <details className={s.fold} {...{ name: 'settings' }}>
-      <summary className={s.foldHead}>
+  const { view, open } = useContext(SettingsView);
+  if (view === null) {
+    return (
+      <button type="button" className={s.fold} onClick={() => open(title)}>
         <span>{title}</span>
         {note && <span className={s.foldNote}>{note}</span>}
-      </summary>
-      <div className={s.foldBody}>{children}</div>
-    </details>
-  );
+      </button>
+    );
+  }
+  return view === title ? <div className={s.foldBody}>{children}</div> : null;
 }
 
 /** Where travel times start from. Saved with Save, so a half-typed address isn't used. */
@@ -173,6 +177,10 @@ export default function MembersPanel({ members, onClose }: Props) {
   const holder = !auth?.signedIn || auth.holder;
   const wall = auth?.signedIn && auth.role === 'wall' ? auth : null;
   const wallModeOn = !!auth?.signedIn && auth.wallMode;
+  // The part showing (null: the list), back at the top each time it changes.
+  const [view, setView] = useState<string | null>(null);
+  const top = useRef<HTMLElement>(null);
+  useEffect(() => top.current?.scrollIntoView({ block: 'start' }), [view]);
   // Wall mode: everything on screen was this person's, so it all loads again as the wall's (or back).
   const qc = useQueryClient();
   const [wallModeAsk, setWallModeAsk] = useState(false);
@@ -204,12 +212,20 @@ export default function MembersPanel({ members, onClose }: Props) {
   return (
     <>
       <Sheet label="Settings" onClose={onClose}>
-        <header className={sheet.head}>
-          <h2 className={sheet.heading}>Settings</h2>
+        <header className={sheet.head} ref={top}>
+          {view === null ? (
+            <h2 className={sheet.heading}>Settings</h2>
+          ) : (
+            <h2 className={`${sheet.heading} ${s.viewTitle}`}>
+              <button type="button" className={s.back} onClick={() => setView(null)} aria-label="Back to Settings">‹</button>
+              {view}
+            </h2>
+          )}
           <button className={sheet.close} onClick={onClose} aria-label="Close Settings">×</button>
         </header>
-        {auth?.signedIn && <SignedInAs status={auth} onClose={onClose} />}
-        <h3 className={s.group}>Family</h3>
+        <SettingsView.Provider value={{ view, open: setView }}>
+        {view === null && auth?.signedIn && <SignedInAs status={auth} onClose={onClose} />}
+        {view === null && <h3 className={s.group}>Family</h3>}
         <Section title="Family" note={members.map((m) => m.name).join(", ")}>
         <p className={s.hint}>
           Tap the pencil to change a name, color or birthday. A birthday sets each kid's stage, which decides how they earn stars.
@@ -332,7 +348,7 @@ export default function MembersPanel({ members, onClose }: Props) {
           <HouseholdAccess />
         </Section>
 
-        <h3 className={s.group}>Appearance</h3>
+        {view === null && <h3 className={s.group}>Appearance</h3>}
         {/* Each a circle, half its light shade and half its dark: one pick, a shade for each. The wall
             wears the account holder's, and their pick becomes the household's. */}
         {wall ? (
@@ -379,7 +395,7 @@ export default function MembersPanel({ members, onClose }: Props) {
           </label>
         </Section>
 
-        {(grownUp || wallModeOn || !phone) && <h3 className={s.group}>This device</h3>}
+        {view === null && (grownUp || wallModeOn || !phone) && <h3 className={s.group}>This device</h3>}
         {/* Like kid mode, for the wall: a guardian's own device becomes the wall until a PIN turns it back. */}
         {(grownUp || wallModeOn) && (
           <Section title="Wall mode" note={auth?.signedIn && auth.wallMode ? 'On' : 'Off'}>
@@ -408,9 +424,11 @@ export default function MembersPanel({ members, onClose }: Props) {
           </Section>
         )}
 
+        </SettingsView.Provider>
+
         {/* Signing out (or locking the wall) last, away from everything else. */}
         <div className={sheet.actions}>
-          {auth?.signedIn && <SignOut status={auth} onClose={onClose} />}
+          {view === null && auth?.signedIn && <SignOut status={auth} onClose={onClose} />}
           <span className={sheet.spacer} />
           <button className={sheet.secondary} onClick={onClose}>Done</button>
         </div>
