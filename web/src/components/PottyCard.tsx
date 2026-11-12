@@ -26,6 +26,27 @@ interface Props {
 	    (the header has a pencil, which bumps `editAsked`). */
 	attached?: boolean;
 	editAsked?: number;
+	/** The Tasks page: its title folds the chart away and back (kept on this device, a kid at a time). */
+	foldable?: boolean;
+}
+
+/** Kids whose chart is folded away on the Tasks page, on this device. */
+const FOLDED = 'sprig:potty-folded';
+function foldedKids(): string[] {
+	try {
+		const ids = JSON.parse(localStorage.getItem(FOLDED) ?? '[]');
+		return Array.isArray(ids) ? ids : [];
+	} catch {
+		return [];
+	}
+}
+function setFolded(kidId: string, folded: boolean) {
+	try {
+		const rest = foldedKids().filter((id) => id !== kidId);
+		localStorage.setItem(FOLDED, JSON.stringify(folded ? [...rest, kidId] : rest));
+	} catch {
+		// Private browsing or storage blocked: just this visit.
+	}
 }
 
 /** "took 6 days", from a card's start to when it filled. */
@@ -43,7 +64,8 @@ const zero = (): Record<PottyStep, number> => ({ ask: 0, sit: 0, go: 0, wipe: 0,
  * poop or both); stickers already there do nothing. A row takes one new sticker at a time, kept on
  * Save. Parents' Edit takes stickers back (a row's last one first) or stops the chart.
  */
-export default function PottyCard({ kid, chart, canEdit, askFirst, compact, attached, editAsked }: Props) {
+export default function PottyCard({ kid, chart, canEdit, askFirst, compact, attached, editAsked, foldable }: Props) {
+	const [folded, fold] = useState(() => !!foldable && foldedKids().includes(kid.id));
 	const { setOn, punch, takeBack } = usePottyActions();
 	// Stickers added and not saved yet, per row.
 	const [adding, setAdding] = useState(none);
@@ -139,15 +161,26 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact, atta
 			{!attached && (
 				<div className={s.head}>
 					<h3 className={s.title}>
-						Potty chart <span className={s.logo} aria-hidden="true">🚽</span>
+						{foldable ? (
+							// Tap to fold away (and back); a chevron shows which.
+							<button type="button" className={s.foldTitle} aria-expanded={!folded}
+								onClick={() => { setFolded(kid.id, !folded); fold(!folded); }}>
+								Potty chart <span className={s.logo} aria-hidden="true">🚽</span>
+							</button>
+						) : (
+							<>Potty chart <span className={s.logo} aria-hidden="true">🚽</span></>
+						)}
 					</h3>
-					{canEdit && !editing && !changed && (
+					{canEdit && !editing && !changed && !folded && (
 						<button type="button" className={s.edit} onClick={() => (askFirst ? askFirst(() => setEditing(true)) : setEditing(true))}>
 							Edit
 						</button>
 					)}
 				</div>
 			)}
+			{/* Folded away (the Tasks page): just the title. */}
+			{!folded && (
+			<>
 			{editing && <p className={s.hint}>Tap a row's last sticker to take it off, then Save.</p>}
 
 			{POTTY_STEPS.map(({ step, emoji, label }) => {
@@ -247,6 +280,8 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact, atta
 				>
 					Their card and stars are kept. Start it again any time to pick up where they left off.
 				</ConfirmDialog>
+			)}
+			</>
 			)}
 		</section>
 	);
