@@ -18,7 +18,7 @@ import sheet from '../styles/Sheet.module.css';
 import s from '../styles/MembersPanel.module.css';
 import DateInput from './DateInput';
 import AlertsSetting, { ALERTS_NOTE } from './AlertsSetting';
-import LearnSettings, { learnNote } from './LearnSettings';
+import LearnSettings, { LearnAbout, learnNote } from './LearnSettings';
 import { usePush } from '../lib/usePush';
 import { useThemeSetting, type Theme } from '../lib/useTheme';
 import { ACCENTS, accentOf, useAccentSetting } from '../lib/accent';
@@ -63,6 +63,11 @@ function ColorSet({ value, label, onPick }: { value: string; label: string; onPi
       </label>
     </div>
   );
+}
+
+/** ⓘ beside a title: shows what it is (and hides it again). */
+function InfoButton({ about, open, onToggle }: { about: string; open: boolean; onToggle: () => void }) {
+  return <button type="button" className={s.info} aria-label={`About ${about}`} aria-expanded={open} onClick={onToggle}>i</button>;
 }
 
 /** Which group of Settings is showing (its title), or null for the list of them. */
@@ -112,7 +117,7 @@ function SwitchRow({ title, on, onChange, hint, children }: { title: string; on:
       <div className={s.switchHead}>
         <span className={s.switchTitle}>
           {title}
-          <button type="button" className={s.info} aria-label={`About ${title}`} aria-expanded={info} onClick={() => setInfo(!info)}>i</button>
+          <InfoButton about={title} open={info} onToggle={() => setInfo(!info)} />
         </span>
         <Switch on={on} onChange={onChange} label={title} />
       </div>
@@ -225,10 +230,13 @@ export default function MembersPanel({ members, onClose, onKidMode }: Props) {
   const wallModeOn = !!auth?.signedIn && auth.wallMode;
   // The part showing (null: the list), back at the top each time it changes.
   const [view, setView] = useState<string | null>(null);
+  // How Learning works, shown with the ⓘ by its title.
+  const [learnInfo, setLearnInfo] = useState(false);
   const top = useRef<HTMLElement>(null);
-  // In braces: scrollIntoView returns a Promise in newer Chrome, and an effect may only return a clean-up.
+  // The sheet itself scrolls (its title stays pinned, so scrolling that into view would do nothing).
   useEffect(() => {
-    top.current?.scrollIntoView({ block: 'start' });
+    const sheetBox = top.current?.parentElement;
+    if (sheetBox) sheetBox.scrollTop = 0;
   }, [view]);
   // Wall mode: everything on screen was this person's, so it all loads again as the wall's (or back).
   const qc = useQueryClient();
@@ -268,6 +276,7 @@ export default function MembersPanel({ members, onClose, onKidMode }: Props) {
             <h2 className={`${sheet.heading} ${s.viewTitle}`}>
               <button type="button" className={s.back} onClick={() => setView(null)} aria-label="Back to Settings">‹</button>
               {view}
+              {view === 'Learning' && <InfoButton about="Learning" open={learnInfo} onToggle={() => setLearnInfo(!learnInfo)} />}
             </h2>
           )}
           <button className={sheet.close} onClick={onClose} aria-label="Close Settings">×</button>
@@ -394,6 +403,7 @@ export default function MembersPanel({ members, onClose, onKidMode }: Props) {
         {/* A big one: its own group, not folded inside Family. */}
         <Group title="Learning" note={learnNote(learn, members)}>
           <div className={s.foldBody}>
+            {learnInfo && <LearnAbout />}
             <LearnSettings members={members} today={today} />
           </div>
         </Group>

@@ -431,7 +431,8 @@
 	min-width: 0;
 	min-height: 0;
 	padding: 0;
-	margin: 0 -0.2rem;
+	/* A little room from the title before it. */
+	margin: 0 -0.2rem 0 0.15rem;
 	background: none;
 	color: var(--muted);
 	font:
@@ -554,10 +555,6 @@
 	font-size: 0.9rem;
 }
 /* Learning's animal sounds: each animal, its sound to hear, and recording your own. */
-.soundsHead {
-	margin: 0.6rem 0 0;
-	font-size: 1rem;
-}
 .soundList {
 	display: flex;
 	flex-direction: column;

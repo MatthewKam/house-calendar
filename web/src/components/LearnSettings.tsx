@@ -11,6 +11,26 @@ export function learnNote(kids: LearnState[], members: Member[]) {
   return on.length ? `On for ${on.join(', ')}` : 'Off';
 }
 
+/** How Learning works (behind the ⓘ beside Learning's title in Settings). */
+export function LearnAbout() {
+  return (
+    <>
+      <p className={s.hint}>
+        Games in kid mode's Learn tab: pictures and sounds, no wrong answers, and no stars. A game moves up a level by
+        itself after 3 perfect plays in a row; Math and Pairs after 5 perfect or 20 plays at a level, Maze after 20
+        plays. The 2-year-olds' games don't move up by themselves: after 3 perfect plays, it says they're ready here
+        (and your phone gets a heads-up), and you move them up when you think so. When one reaches its top level, it
+        says so here and your phone gets a heads-up, so you can ask for more levels.
+      </p>
+      <p className={s.hint}>
+        Each day the games open once a kid's Daily tasks are done (or you unlock them here, or with your PIN on their
+        screen), for their games a day, and their time a day if you set one. Whichever runs out first ends the day; a
+        game already started always finishes. Chomp! is always free.
+      </p>
+    </>
+  );
+}
+
 /** Time a day to pick from (minutes; null: no time limit). */
 const MINUTES = [null, 10, 15, 20, 30, 45, 60];
 
@@ -35,18 +55,6 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
   if (kids.length === 0) return <p className={s.hint}>Add a kid with a birthday first.</p>;
   return (
     <section className={s.bare}>
-      <p className={s.hint}>
-        Games in kid mode's Learn tab: pictures and sounds, no wrong answers, and no stars. A game moves up a level by
-        itself after 3 perfect plays in a row; Math and Pairs after 5 perfect or 20 plays at a level, Maze after 20
-        plays. The 2-year-olds' games don't move up by themselves: after 3 perfect plays, it says they're ready here
-        (and your phone gets a heads-up), and you move them up when you think so. When one reaches its top level, it
-        says so here and your phone gets a heads-up, so you can ask for more levels.
-      </p>
-      <p className={s.hint}>
-        Each day the games open once a kid's Daily tasks are done (or you unlock them here, or with your PIN on their
-        screen), for their games a day, and their time a day if you set one. Whichever runs out first ends the day; a
-        game already started always finishes. Chomp! is always free.
-      </p>
       {kids.map((k) => {
         const kid = members.find((m) => m.id === k.memberId);
         if (!kid) return null;
@@ -126,8 +134,13 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
       })}
       {set.isError && <p className={s.error}>{set.error.message}</p>}
       {change.isError && <p className={s.error}>{change.error.message}</p>}
-      <h3 className={s.soundsHead}>Animal sounds</h3>
-      <LearnSounds />
+      {/* Folded away until wanted: a long list. */}
+      <details className={s.fold}>
+        <summary className={s.foldHead}><span>Animal sounds</span></summary>
+        <div className={s.foldBody}>
+          <LearnSounds />
+        </div>
+      </details>
     </section>
   );
 }
