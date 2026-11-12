@@ -98,6 +98,8 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
     } else if (household && s.kind === 'device') {
       membership = accounts.prepare('SELECT * FROM memberships WHERE id = ? AND household_id = ?').get(s.membership_id, household.id) as MembershipRow ?? null;
     }
+    // A guardian's device in wall mode is the wall: no one in particular, unlocked only with a PIN.
+    if (household && s.kind === 'user' && s.wall_mode && membership?.role === 'guardian') return { s, household, membership: null, role: 'wall' as const };
     const role = s.kind === 'wall' ? (household ? 'wall' as const : null) : membership?.role ?? null;
     return { s, household: role ? household : null, membership, role };
   }
@@ -122,6 +124,13 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
     if (!c.household || !isParent(c)) return false;
     const holder = holderOf(c.household.id);
     return !!holder && (ownParent(c) ? c.membership?.id === holder : c.s.parent_by === holder);
+  };
+  /** Who is making changes: the person on this device, or on one unlocked with a PIN, whose PIN it was. */
+  const actorOf = (c: Ctx) => {
+    if (!ownParent(c) && isParent(c) && c.s.parent_by) {
+      return (accounts.prepare('SELECT member_id FROM memberships WHERE id = ?').get(c.s.parent_by) as { member_id: string } | undefined)?.member_id ?? null;
+    }
+    return c.membership?.member_id ?? null;
   };
   /** The guardians, as members of the household's own database. */
   const guardiansOf = (householdId: string) => (accounts.prepare(`SELECT member_id FROM memberships WHERE household_id = ? AND role = 'guardian'`)
@@ -197,6 +206,8 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
       me: person ? { name: person.name, color: person.color } : null,
       /** The guardian whose PIN unlocked this wall or kid's device. */
       unlockedBy: people.find((m) => m.id === unlocker?.member_id)?.name ?? null,
+      /** A guardian's own device acting as the wall (turned on in Settings; a PIN turns it off). */
+      wallMode: s.kind === 'user' && c.role === 'wall',
       /** The wall: a guardian's PIN has been typed. */
       entered: s.kind !== 'wall' || s.entered === 1,
       parent: isParent(c),
@@ -234,7 +245,7 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
     return c as Ctx & { household: HouseholdRow };
   };
 
-  return { started, sessionOf, householdById, contextOf, ownParent, isParent, holderOf, isHolder, guardiansOf, setParentUntil, startSession, addMember,
+  return { started, sessionOf, householdById, contextOf, ownParent, isParent, holderOf, isHolder, guardiansOf, actorOf, setParentUntil, startSession, addMember,
     membersOf, status, needUser, needParent };
 }
 export type Sessions = ReturnType<typeof sessions>;

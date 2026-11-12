@@ -410,3 +410,40 @@ describe("the account holder and people's colors", () => {
     expect((await jordan.get('/api/settings')).body.accent).toBe('blue');
   });
 });
+
+describe('wall mode', () => {
+  it("turns a guardian's own device into the wall, and back only with a PIN", async () => {
+    const alex = await guardian();
+    await alex.put('/api/account/pin', { pin: '1357' });
+    const jordan = device();
+    await jordan.signIn('jordan@example.com');
+    await jordan.post('/api/account/join', { code: (await alex.post('/api/account/invites', { kind: 'guardian', name: 'Jordan' })).body.code });
+    await jordan.put('/api/account/pin', { pin: '2468' });
+    await device().post('/api/account/join', { code: (await alex.post('/api/account/invites', { kind: 'kid', name: 'Sam' })).body.code });
+    const people = (await alex.get('/api/members')).body as { id: string; name: string }[];
+    const id = (name: string) => people.find((p) => p.name === name)!.id;
+    await alex.post('/api/events', { ...event, title: 'Therapy', memberIds: [id('Alex')], visibility: 'private' });
+
+    // Alex's iPad: Alex, until wall mode is on.
+    const ipad = device();
+    await ipad.signIn('alex@example.com');
+    expect((await ipad.post('/api/auth/wall-mode', { on: true })).body).toMatchObject({ role: 'wall', wallMode: true, parent: false, memberId: null, me: null });
+    // The wall: Alex's private event hidden, and changes locked.
+    const range = '/api/events?from=2098-12-31T00:00:00.000Z&to=2099-01-02T00:00:00.000Z&fromDay=2098-12-31&toDay=2099-01-02';
+    expect((await ipad.get(range)).body.map((e: { title: string }) => e.title)).toEqual([]);
+    expect((await ipad.post('/api/events', event)).status).toBe(403);
+    // Back to Alex's account: not without a PIN.
+    expect((await ipad.post('/api/auth/wall-mode', { on: false })).status).toBe(403);
+
+    // Jordan's PIN unlocks it: a new color asked for there is Jordan's asking.
+    expect((await ipad.post('/api/auth/parent', { pin: '2468' })).body).toMatchObject({ parent: true, unlockedBy: 'Jordan' });
+    expect((await ipad.put(`/api/members/${id('Sam')}/color`, { color: '#13a3b5' })).body.member.colorAsked).toEqual({ color: '#13a3b5', by: 'Jordan' });
+
+    expect((await ipad.post('/api/auth/wall-mode', { on: false })).body).toMatchObject({ role: 'guardian', wallMode: false, parentAlways: true, me: { name: 'Alex' } });
+    expect((await ipad.get(range)).body.map((e: { title: string }) => e.title)).toEqual(['Therapy']);
+    // Only a guardian's own device turns it on.
+    const wall = device();
+    await wall.post('/api/account/join', { code: (await alex.post('/api/account/invites', { kind: 'wall' })).body.code });
+    expect((await wall.post('/api/auth/wall-mode', { on: true })).status).toBe(401);
+  });
+});

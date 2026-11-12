@@ -48,7 +48,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
     },
   });
   const x = sessions(accounts, households);
-  const { sessionOf, contextOf, ownParent, isParent, isHolder, guardiansOf, setParentUntil } = x;
+  const { sessionOf, contextOf, ownParent, isParent, isHolder, guardiansOf, actorOf, setParentUntil } = x;
 
   // ---- Passing calls to households ----------------------------------------
 
@@ -69,7 +69,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
         .run(now(), s.token_hash, new Date(Date.now() - 60_000).toISOString());
       req.viewer = {
         role: c.role, memberId: c.membership?.member_id ?? null, parent: isParent(c),
-        holder: isHolder(c), guardians: guardiansOf(c.household.id),
+        holder: isHolder(c), guardians: guardiansOf(c.household.id), actor: actorOf(c),
         stillParent: () => { if (!ownParent(c)) setParentUntil(s, later(PARENT_MS)); },
       };
       return (await households.get(c.household)).app.routing(req, res);

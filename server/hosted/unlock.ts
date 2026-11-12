@@ -7,7 +7,7 @@ import { PARENT_MS, later, limiter, type Sessions } from './session.ts';
 // device for changes (and locking it again), checking a PIN to leave kid mode, and signing a device out.
 
 export function unlockRoutes(app: FastifyInstance, accounts: AccountsDB, x: Sessions) {
-  const { sessionOf, contextOf, ownParent, setParentUntil, status, needParent } = x;
+  const { sessionOf, contextOf, ownParent, isParent, setParentUntil, status, needParent } = x;
 
   const pinTries = limiter();
   /** Checks a PIN against every guardian's in the household: whose it is, or what's wrong. */
@@ -56,6 +56,25 @@ export function unlockRoutes(app: FastifyInstance, accounts: AccountsDB, x: Sess
     const pin = checkPin(s, req.body.pin);
     if ('error' in pin) return reply.code(403).send(pin);
     return reply.code(204).send();
+  });
+
+  // Wall mode: a guardian turns their own device into the wall; turning it back takes a guardian's PIN
+  // (this device unlocked with one), so a kid can't get back to the grown-up's account.
+  app.post<{ Body: { on: boolean } }>('/api/auth/wall-mode', {
+    schema: { body: { type: 'object', required: ['on'], additionalProperties: false, properties: { on: { type: 'boolean' } } } },
+  }, async (req, reply) => {
+    const s = sessionOf(req);
+    const c = s && contextOf(s);
+    if (s?.kind !== 'user' || !c?.household) return reply.code(401).send({ error: 'Sign in first' });
+    if (req.body.on) {
+      if (!ownParent(c)) return reply.code(403).send({ error: 'Only a guardian turns on wall mode' });
+      accounts.prepare('UPDATE sessions SET wall_mode = 1, parent_until = NULL, parent_by = NULL WHERE token_hash = ?').run(s.token_hash);
+    } else {
+      if (c.role !== 'wall') return status(req);
+      if (!isParent(c)) return reply.code(403).send({ error: "Unlock with a guardian's PIN first", locked: true });
+      accounts.prepare('UPDATE sessions SET wall_mode = 0, parent_until = NULL, parent_by = NULL WHERE token_hash = ?').run(s.token_hash);
+    }
+    return status(req);
   });
 
   app.post('/api/auth/parent/lock', async (req) => {

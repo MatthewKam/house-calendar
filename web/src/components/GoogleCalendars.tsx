@@ -27,7 +27,7 @@ export default function GoogleCalendars({ members }: { members: Member[] }) {
 	});
 	// The server has no Google client set up.
 	if (list === undefined || list === null) return null;
-	const ownAccount = status?.signedIn && status.kind === "user";
+	const ownAccount = status?.signedIn && status.kind === "user" && !status.wallMode;
 	const mine = list.some((c) => c.memberId === (status?.signedIn ? status.memberId : null));
 
 	return (

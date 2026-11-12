@@ -109,7 +109,7 @@ export function registerMembers(app: FastifyInstance, db: DB, opts: {
         if (color === row.color) db.prepare('DELETE FROM color_requests WHERE member_id = ?').run(row.id);
         else db.prepare(`INSERT INTO color_requests (member_id, color, asked_by) VALUES (?, ?, ?)
           ON CONFLICT(member_id) DO UPDATE SET color = excluded.color, asked_by = excluded.asked_by, asked_at = excluded.asked_at`)
-          .run(row.id, color, v.memberId);
+          .run(row.id, color, v.actor);
         if (v.parent) v.stillParent();
         return { member: toMember(get(row.id)!, v.guardians), asked: color !== row.color };
       }

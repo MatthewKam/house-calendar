@@ -109,6 +109,10 @@ const migrations: string[] = [
   UPDATE households SET holder_id = (SELECT m.id FROM memberships m WHERE m.household_id = households.id
     AND m.role = 'guardian' ORDER BY m.created_at, m.rowid LIMIT 1);
   `,
+  // Wall mode: a guardian's own device acting as the wall (turned on in Settings, off with a PIN).
+  `
+  ALTER TABLE sessions ADD COLUMN wall_mode INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 export function openAccounts(file: string): AccountsDB {
@@ -152,7 +156,7 @@ export interface MembershipRow {
 }
 export interface SessionRow {
   token_hash: string; kind: 'user' | 'device' | 'wall'; user_id: string | null; household_id: string | null;
-  membership_id: string | null; label: string; entered: number; parent_until: string | null; parent_by: string | null;
+  membership_id: string | null; label: string; entered: number; parent_until: string | null; parent_by: string | null; wall_mode: number;
   last_seen: string; created_at: string;
 }
 export interface InviteRow {

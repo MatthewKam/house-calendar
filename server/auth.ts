@@ -14,6 +14,8 @@ export interface Viewer {
   parent: boolean;
   /** The account holder (on their own device, or a device they unlocked with their PIN): approves color changes. */
   holder: boolean;
+  /** Who is making the change: the person signed in, or on a device unlocked with a PIN, whose PIN it was. */
+  actor: string | null;
   /** The guardians, as members of this household: only they change their own color. */
   guardians: string[];
   /** A parent-only change was made: keeps a wall or kid device's unlock going. */

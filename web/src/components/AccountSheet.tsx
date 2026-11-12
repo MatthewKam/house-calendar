@@ -6,7 +6,10 @@ import Sheet from "./Sheet";
 
 const ROLE = { guardian: "Guardian", kid: "Kid", wall: "The family wall" };
 
-/** Who this device is signed in as, from the bar's avatar: switch household, sign out, or lock the wall. */
+/**
+ * Who this device is signed in as, from the bar's avatar: switch household, sign out, lock the wall, or
+ * leave wall mode (a guardian's device acting as the wall: unlocked with a PIN first).
+ */
 export default function AccountSheet({ status, onClose, onKidMode }: { status: SignedIn; onClose: () => void; onKidMode?: () => void }) {
 	const qc = useQueryClient();
 
@@ -17,10 +20,13 @@ export default function AccountSheet({ status, onClose, onKidMode }: { status: S
 		onClose();
 	};
 	const wall = status.kind === "wall";
+	const wallMode = status.wallMode;
 	const how = [
 		status.role ? ROLE[status.role] : null,
 		status.kind === "device" ? "on this device" : null,
-		status.user?.email,
+		wallMode ? "wall mode" : null,
+		// Not on a shared screen: whose account the wall is on.
+		wallMode ? null : status.user?.email,
 		status.household?.name,
 	].filter(Boolean).join(" · ");
 
@@ -30,7 +36,7 @@ export default function AccountSheet({ status, onClose, onKidMode }: { status: S
 				<div className={s.person}>
 					<Avatar status={status} big />
 					<span className={s.who}>
-						<strong>{status.me?.name ?? (wall ? "The wall" : "Signed in")}</strong>
+						<strong>{status.me?.name ?? (wall || wallMode ? "The wall" : "Signed in")}</strong>
 						<span className={s.how}>{how}</span>
 					</span>
 				</div>
@@ -43,8 +49,14 @@ export default function AccountSheet({ status, onClose, onKidMode }: { status: S
 						{status.households.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
 					</select>
 				)}
+				{wallMode && !status.parent && <p className={s.hint}>Unlock with a guardian's PIN to leave wall mode.</p>}
 				<div className={sheet.actions}>
-					{wall ? (
+					{wallMode ? (
+						<button type="button" className={sheet.secondary} disabled={!status.parent}
+							onClick={() => void api.setWallMode(false).then(restart)}>
+							Leave wall mode
+						</button>
+					) : wall ? (
 						<button type="button" className={sheet.secondary} onClick={() => void api.lockWall().then(restart)}>
 							Lock the wall
 						</button>
