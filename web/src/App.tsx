@@ -80,26 +80,32 @@ const VIEWS: [View, string][] = [
 /** Header filter value for events that aren't for anyone in particular. */
 const EVERYONE = "everyone";
 
+/** The one sheet or dialog open over the app (one at a time: opening another closes it). */
+type Open =
+	/** An event: a new one on `day`, or `event`. special: a new special day, from Today. */
+	| { kind: "event"; day: string; event?: CalEvent; special?: boolean }
+	/** A task: one to edit, or a kid to start a new one for (as a goal). blank: from the round +, no one picked yet. */
+	| { kind: "task"; blank?: boolean; task?: Task; memberId?: string; goal?: boolean }
+	/** A guardian's PIN, then `then` (e.g. opening Settings). */
+	| { kind: "unlock"; then?: () => void }
+	| { kind: "settings" }
+	| { kind: "account" }
+	| { kind: "kidModeStart" }
+	| { kind: "kidModeLeave" }
+	/** The phone's +: Add to a list, Caught being good. */
+	| { kind: "list" }
+	| { kind: "good" }
+	/** Say it, or Snap a flyer (with its photo). */
+	| { kind: "capture"; photo?: File };
+
 export default function App() {
 	const today = useToday();
 	// Header filter: a member id, EVERYONE, or null to show all events.
 	const [focus, setFocus] = useState<string[]>([]);
-	const [dialog, setDialog] = useState<{
-		day: string;
-		event?: CalEvent;
-		/** A new special day, from Today. */
-		special?: boolean;
-	} | null>(null);
-	// Task sheet: an existing task to edit, or a kid to start a new one for.
-	// blank: opened from the round +, so no one is picked yet.
-	const [taskDialog, setTaskDialog] = useState<{
-		blank?: boolean;
-		task?: Task;
-		memberId?: string;
-		/** A new one starts as a goal. */
-		goal?: boolean;
-	} | null>(null);
-	const [showMembers, setShowMembers] = useState(false);
+	const [open, setOpen] = useState<Open | null>(null);
+	const close = () => setOpen(null);
+	const dialog = open?.kind === "event" ? open : null;
+	const taskDialog = open?.kind === "task" ? open : null;
 	// The pop-up of names that aren't shown in the header (people without tasks, and Everyone).
 	const [moreOpen, setMoreOpen] = useState(false);
 	// Which page fills the main area. Kept in the address (#tasks), so a refresh stays on it.
@@ -158,28 +164,21 @@ export default function App() {
 	// The parent lock: what kids can't change. It locks itself again when idle or the screen saver starts.
 	const parentLock = useParent();
 	useAutoLock(saver.on);
-	const [unlocking, setUnlocking] = useState<{ then?: () => void } | null>(null);
 	// Who's signed in here, shown at the bottom of the bar.
 	const auth = useAuthStatus().data;
 	const signedIn = auth?.signedIn ? auth : null;
-	const [showAccount, setShowAccount] = useState(false);
 	// Kid mode: turned on for this device by a parent, or a kid's own device (added by code) while it's locked.
 	const [kidModeFor, setKidMode] = useKidMode();
-	const [startingKidMode, setStartingKidMode] = useState(false);
-	const [leavingKidMode, setLeavingKidMode] = useState(false);
 	const kids = members.filter(isKid);
-	// Phones: what the + in the bottom bar opened (Add to a list, Caught being good), and photos it
-	// picked, on their way to the Photos page.
-	const [quick, setQuick] = useState<"list" | "good" | null>(null);
+	// Photos the phone's + picked, on their way to the Photos page.
 	const [pickedPhotos, setPickedPhotos] = useState<File[] | null>(null);
-	// Say it, or Snap a flyer (with its photo); on when the server has Claude.
-	const [capture, setCapture] = useState<{ photo?: File } | null>(null);
+	// Say it, or Snap a flyer: on when the server has Claude.
 	const captureOn = useQuery({ queryKey: ["capture"], queryFn: api.captureOn, staleTime: Infinity }).data?.on ?? false;
 	const kidDevice = signedIn?.kind === "device" && signedIn.role === "kid" && !parentLock.parent ? signedIn.memberId : null;
 	// A flyer's photo dragged onto the page is read like Snap a flyer (on Photos, a drop adds to the album).
-	const takeFlyer = useCallback((photo: File) => setCapture({ photo }), []);
+	const takeFlyer = useCallback((photo: File) => setOpen({ kind: "capture", photo }), []);
 	const notAPhoto = useCallback(() => setToast({ text: "Drop a photo of the flyer (a JPEG, PNG or HEIC)" }), []);
-	const draggingFlyer = useFlyerDrop(parentLock.parent && captureOn && !kidModeFor && !kidDevice && page !== "photos" && !capture,
+	const draggingFlyer = useFlyerDrop(parentLock.parent && captureOn && !kidModeFor && !kidDevice && page !== "photos" && open?.kind !== "capture",
 		takeFlyer, notAPhoto);
 	// Kid mode turned on here: every kid, to switch between, starting with the one picked. A kid's own
 	// device: just them.
@@ -191,8 +190,8 @@ export default function App() {
 	// Leaving: a kid's own device unlocks for a parent (and comes back when it locks again); anywhere
 	// else a guardian's PIN turns it off, or just the tap when there's no PIN to ask for.
 	function leaveKidMode() {
-		if (!kidModeFor) setUnlocking({});
-		else if (signedIn && signedIn.guardianPins > 0) setLeavingKidMode(true);
+		if (!kidModeFor) setOpen({ kind: "unlock" });
+		else if (signedIn && signedIn.guardianPins > 0) setOpen({ kind: "kidModeLeave" });
 		else setKidMode(null);
 	}
 	// With the screen saver on, the screen stays on (it takes over instead of the device sleeping),
@@ -234,28 +233,28 @@ export default function App() {
 
 	/** Opens an event, unless it's someone else's Busy time (nothing to show). */
 	function openEvent(event: CalEvent, day: string) {
-		if (!event.busy) setDialog({ day, event });
+		if (!event.busy) setOpen({ kind: "event", day, event });
 	}
 
 	function save(input: EventInput) {
 		const id = dialog?.event?.id;
-		setDialog(null);
+		close();
 		saveEvent.mutate({ id, input });
 	}
 
 	function saveTaskInput(input: TaskInput) {
 		const id = taskDialog?.task?.id;
-		setTaskDialog(null);
+		close();
 		saveTask.mutate({ id, input });
 	}
 
 	function removeTask(task: Task) {
-		setTaskDialog(null);
+		close();
 		deleteTask.mutate(task.id);
 	}
 
 	function remove(ev: CalEvent, scope: Scope = "one") {
-		setDialog(null);
+		close();
 		const synced = ev.calendarId !== "local";
 		deleteEvent.mutate({ id: ev.id, scope }, {
 			onSuccess: () =>
@@ -364,19 +363,19 @@ export default function App() {
 				{members.length > 0 && <KidMode today={today} kids={kidView} members={members} onLeave={leaveKidMode}
 					startWith={kidModeFor ?? undefined}
 					askPin={!!signedIn && signedIn.guardianPins > 0} />}
-				{leavingKidMode && (
+				{open?.kind === "kidModeLeave" && (
 					<GrownUpPin
 						title="Leave kid mode"
 						body="Type a guardian's PIN to go back to the whole app."
 						okLabel="Leave"
-						onClose={() => setLeavingKidMode(false)}
+						onClose={close}
 						onOk={() => {
-							setLeavingKidMode(false);
+							close();
 							setKidMode(null);
 						}}
 					/>
 				)}
-				{unlocking && <ParentUnlock onClose={() => setUnlocking(null)} onDone={unlocking.then} />}
+				{open?.kind === "unlock" && <ParentUnlock onClose={close} onDone={open.then} />}
 				{saver.on && <ScreenSaver photos={saver.photos} settings={saver.settings} onClose={saver.hide} onOpenEvent={saver.hide} />}
 				{cheer.cheer && <Celebration cheer={cheer.cheer} onDone={cheer.done} />}
 				{toast && <Toast message={toast} onDone={closeToast} />}
@@ -387,18 +386,18 @@ export default function App() {
 	// The phone's +, top of the stack first. Adding events, tasks and moments needs a parent; anyone
 	// adds to a list or a photo.
 	const quickActions: QuickAction[] = [
-		...(parentLock.parent ? [{ kind: "event" as const, onPick: () => setDialog({ day: page === "calendar" ? newEventDay() : today }) }] : []),
-		{ kind: "list", onPick: () => setQuick("list") },
-		...(parentLock.parent && kids.length ? [{ kind: "good" as const, onPick: () => setQuick("good") }] : []),
-		...(parentLock.parent ? [{ kind: "task" as const, onPick: () => setTaskDialog({ blank: true }) }] : []),
+		...(parentLock.parent ? [{ kind: "event" as const, onPick: () => setOpen({ kind: "event", day: page === "calendar" ? newEventDay() : today }) }] : []),
+		{ kind: "list", onPick: () => setOpen({ kind: "list" }) },
+		...(parentLock.parent && kids.length ? [{ kind: "good" as const, onPick: () => setOpen({ kind: "good" }) }] : []),
+		...(parentLock.parent ? [{ kind: "task" as const, onPick: () => setOpen({ kind: "task", blank: true }) }] : []),
 		{ kind: "photo", files: (files) => {
 			setPickedPhotos(files);
 			setPage("photos");
 		} },
 		// Nearest the thumb.
 		...(parentLock.parent && captureOn ? [
-			{ kind: "snap" as const, files: (files: File[]) => setCapture({ photo: files[0] }) },
-			{ kind: "say" as const, onPick: () => setCapture({}) },
+			{ kind: "snap" as const, files: (files: File[]) => setOpen({ kind: "capture", photo: files[0] }) },
+			{ kind: "say" as const, onPick: () => setOpen({ kind: "capture" }) },
 		] : []),
 	];
 
@@ -408,18 +407,18 @@ export default function App() {
 				<NavBar
 					phone={phoneBar}
 					center={<QuickAdd actions={quickActions} />}
-					onKidMode={kids.length ? () => setStartingKidMode(true) : undefined}
-					capture={parentLock.parent && captureOn ? { onSay: () => setCapture({}), onSnap: (photo) => setCapture({ photo }) } : undefined}
+					onKidMode={kids.length ? () => setOpen({ kind: "kidModeStart" }) : undefined}
+					capture={parentLock.parent && captureOn ? { onSay: () => setOpen({ kind: "capture" }), onSnap: (photo) => setOpen({ kind: "capture", photo }) } : undefined}
 					page={page}
-					settingsOpen={showMembers}
+					settingsOpen={open?.kind === "settings"}
 					onPage={setPage}
 					// Settings is for parents: unlock first if locked.
-					onSettings={() => (parentLock.parent ? setShowMembers(true) : setUnlocking({ then: () => setShowMembers(true) }))}
-					me={signedIn ? { status: signedIn, onTap: () => setShowAccount(true) } : undefined}
+					onSettings={() => setOpen(parentLock.parent ? { kind: "settings" } : { kind: "unlock", then: () => setOpen({ kind: "settings" }) })}
+					me={signedIn ? { status: signedIn, onTap: () => setOpen({ kind: "account" }) } : undefined}
 					lock={parentLock.lockable ? {
 						parent: parentLock.parent,
 						by: signedIn?.unlockedBy ?? null,
-						onTap: () => (parentLock.parent ? parentLock.lock.mutate() : setUnlocking({})),
+						onTap: () => (parentLock.parent ? parentLock.lock.mutate() : setOpen({ kind: "unlock" })),
 					} : undefined}
 				/>
 				<div className={s.shell}>
@@ -431,7 +430,7 @@ export default function App() {
 							parent={parentLock.parent}
 							onPage={setPage}
 							onOpenEvent={(event) => openEvent(event, event.allDay ? event.start : dayKey(new Date(event.start)))}
-							onAddSpecial={parentLock.parent ? () => setDialog({ day: today, special: true }) : undefined}
+							onAddSpecial={parentLock.parent ? () => setOpen({ kind: "event", day: today, special: true }) : undefined}
 							onPlaySlideshow={saver.show}
 						/>
 					) : page === "tasks" ? (
@@ -440,8 +439,8 @@ export default function App() {
 							members={members}
 							focus={focus.length === 1 ? focus[0] : null}
 							locked={!parentLock.parent}
-							onAdd={(memberId, goal) => setTaskDialog({ memberId, goal })}
-							onEdit={(task) => setTaskDialog({ task })}
+							onAdd={(memberId, goal) => setOpen({ kind: "task", memberId, goal })}
+							onEdit={(task) => setOpen({ kind: "task", task })}
 						/>
 					) : page === "lists" ? (
 						<ListView />
@@ -551,7 +550,7 @@ export default function App() {
 								day={selected}
 								today={today}
 								members={members}
-								onAdd={parentLock.parent ? (day) => setDialog({ day }) : undefined}
+								onAdd={parentLock.parent ? (day) => setOpen({ kind: "event", day }) : undefined}
 								onOpen={openEvent}
 								onClose={() => setSelected(null)}
 							/>
@@ -571,7 +570,7 @@ export default function App() {
 					members={members}
 					onSave={save}
 					onDelete={remove}
-					onClose={() => setDialog(null)}
+					onClose={close}
 					canEditSynced={!!sync?.canWrite}
 					locked={!parentLock.parent}
 				/>
@@ -591,54 +590,51 @@ export default function App() {
 					members={members}
 					onSave={saveTaskInput}
 					onDelete={removeTask}
-					onClose={() => setTaskDialog(null)}
+					onClose={close}
 				/>
 			)}
 
-			{unlocking && <ParentUnlock onClose={() => setUnlocking(null)} onDone={unlocking.then} />}
-			{showAccount && signedIn && (
+			{open?.kind === "unlock" && <ParentUnlock onClose={close} onDone={open.then} />}
+			{open?.kind === "account" && signedIn && (
 				<AccountSheet
 					status={signedIn}
-					onClose={() => setShowAccount(false)}
-					onKidMode={() => {
-						setShowAccount(false);
-						setStartingKidMode(true);
-					}}
+					onClose={close}
+					onKidMode={() => setOpen({ kind: "kidModeStart" })}
 				/>
 			)}
-			{startingKidMode && (
+			{open?.kind === "kidModeStart" && (
 				<KidModeStart
 					kids={kids}
 					needsPin={!!signedIn && signedIn.guardianPins === 0}
 					onPick={(id) => {
-						setStartingKidMode(false);
+						close();
 						setKidMode(id);
 					}}
-					onClose={() => setStartingKidMode(false)}
+					onClose={close}
 				/>
 			)}
-			{showMembers && (
+			{open?.kind === "settings" && (
 				<MembersPanel
 					members={members}
 					uiScale={uiScale}
-					onClose={() => setShowMembers(false)}
+					onClose={close}
 				/>
 			)}
 
-			{quick === "list" && <AddToListSheet onClose={() => setQuick(null)} onNewList={() => { setQuick(null); setPage("lists"); }} />}
-			{quick === "good" && <MomentDialog kids={kids} today={today} onClose={() => setQuick(null)} />}
+			{open?.kind === "list" && <AddToListSheet onClose={close} onNewList={() => { close(); setPage("lists"); }} />}
+			{open?.kind === "good" && <MomentDialog kids={kids} today={today} onClose={close} />}
 			{draggingFlyer && (
 				<div className={s.flyerDrop} aria-live="polite">
 					<span className={s.flyerDropBox}>Drop the flyer to read it</span>
 				</div>
 			)}
-			{capture && <CaptureSheet photo={capture.photo} members={members} onClose={() => setCapture(null)} onAdded={(text) => setToast({ text })} />}
+			{open?.kind === "capture" && <CaptureSheet photo={open.photo} members={members} onClose={close} onAdded={(text) => setToast({ text })} />}
 
 			{/* The round + at the bottom right: add an event or a task (phones have the bar's + instead). */}
 			{/* Adding needs a parent (the lock in the left bar). */}
-			{!phoneBar && page === "calendar" && parentLock.parent && <Fab label="Add event" onClick={() => setDialog({ day: newEventDay() })} />}
+			{!phoneBar && page === "calendar" && parentLock.parent && <Fab label="Add event" onClick={() => setOpen({ kind: "event", day: newEventDay() })} />}
 			{/* Add a task, for no one in particular yet (each kid's card has its own Add a task). */}
-			{!phoneBar && page === "tasks" && parentLock.parent && <Fab label="Add a task or goal" onClick={() => setTaskDialog({ blank: true })} />}
+			{!phoneBar && page === "tasks" && parentLock.parent && <Fab label="Add a task or goal" onClick={() => setOpen({ kind: "task", blank: true })} />}
 			{saver.on && (
 				<ScreenSaver
 					photos={saver.photos}
