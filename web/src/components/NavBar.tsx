@@ -130,6 +130,10 @@ export default function NavBar({
 	);
 	return (
 		<nav className={s.nav} aria-label="Main">
+			{/* Sprig at the top, like most apps: tapping it goes home (Today). */}
+			<button type="button" className={s.logoButton} onClick={() => onPage("today")} aria-label="Sprig: go to Today">
+				<img className={s.logo} src="/favicon.svg" alt="" />
+			</button>
 			{item("today", "Today", <TodayIcon />)}
 			{item("calendar", "Calendar", <CalendarIcon />)}
 			{item("tasks", "Tasks", <TasksIcon />)}
@@ -160,8 +164,8 @@ export default function NavBar({
 					<span className={s.label}>Kid mode</span>
 				</button>
 			)}
-			{/* Pinned to the bottom of the bar: the logo, the parent lock, then Settings (who's signed in is at its top). */}
-			<img className={s.logo} src="/favicon.svg" alt="" />
+			{/* Pinned to the bottom of the bar: the parent lock, then Settings (who's signed in is at its top). */}
+			<span className={s.push} aria-hidden="true" />
 			{lock && (
 				<button
 					className={`${s.item} ${lock.parent ? s.unlocked : ""}`}
