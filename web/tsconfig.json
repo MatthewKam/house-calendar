@@ -12,5 +12,7 @@
     "jsx": "react-jsx",
     "types": ["vite/client"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "../shared/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "../shared/**/*.ts"],
+  // Reads the stylesheets with Node: checked with the server's settings (../tsconfig.json) instead.
+  "exclude": ["src/styles/*.test.ts"]
 }

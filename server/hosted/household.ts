@@ -9,7 +9,7 @@ import { ALPHABET, INVITE_MS, NAME, later, limiter, normalizeCode, now, showCode
 // joining with one, who's in it for Settings, taking someone out, and a guardian's PIN.
 
 export function householdRoutes(app: FastifyInstance, accounts: AccountsDB, x: Sessions) {
-  const { sessionOf, householdById, contextOf, startSession, addMember, membersOf, status, needUser, needParent, holderOf, isHolder, pinTries } = x;
+  const { sessionOf, householdById, startSession, addMember, membersOf, status, needUser, needParent, holderOf, isHolder, pinTries } = x;
 
   app.post<{ Body: { name: string; yourName: string; color?: string } }>('/api/account/households', {
     schema: { body: { type: 'object', required: ['name', 'yourName'], additionalProperties: false,

@@ -1,0 +1,331 @@
+.nextLabel {
+	font-size: 0.85rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--muted);
+}
+
+/* Kid mode's Today: each event as a big picture, its title and when. */
+.events {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	container-type: inline-size;
+}
+.event {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.9rem;
+	padding: 0.8rem 1.1rem;
+	border-radius: var(--radius-lg);
+	background: var(--surface);
+	border-left: 0.5rem solid transparent;
+}
+.eventNext {
+	border-left-color: var(--c);
+	box-shadow: 0 0.3rem 1rem color-mix(in srgb, var(--c) 25%, transparent);
+}
+/* Already over today. */
+.eventOver {
+	opacity: 0.5;
+}
+.eventPicture {
+	font-size: 2.6rem;
+	line-height: 1;
+}
+.eventText {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+}
+.eventTitle {
+	font-size: 1.3rem;
+	font-weight: 700;
+}
+.eventTime {
+	flex: none;
+	font-size: 1.15rem;
+	font-weight: 650;
+	color: var(--muted);
+	white-space: nowrap;
+}
+/* A narrow list (a phone on its side, beside the other days): the time under the title, not beside it. */
+@container (max-width: 18rem) {
+	.event {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		column-gap: 0.7rem;
+		padding: 0.7rem 0.9rem;
+	}
+	.eventPicture {
+		grid-row: span 2;
+		font-size: 2.2rem;
+	}
+	.eventTitle {
+		font-size: 1.15rem;
+		overflow-wrap: break-word;
+	}
+	.eventTime {
+		font-size: 1rem;
+	}
+}
+/* Later this week: the day, over the time. */
+/* What to bring: a row of big pictures under the event, each bouncing when tapped. */
+.bring {
+	flex-basis: 100%;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+.bringThing {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.15rem;
+	min-width: 4.4rem;
+	padding: 0.45rem 0.5rem 0.35rem;
+	border-radius: var(--radius);
+	background: var(--bg);
+}
+.bringPicture {
+	display: block;
+	font-size: 2.4rem;
+	line-height: 1;
+}
+.bringName {
+	max-width: 5.5rem;
+	font-size: 0.8rem;
+	font-weight: 650;
+	color: var(--muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.bounce {
+	animation: bounce 0.6s ease;
+}
+@keyframes bounce {
+	0%, 100% { transform: translateY(0) scale(1); }
+	30% { transform: translateY(-0.6rem) scale(1.15); }
+	60% { transform: translateY(0) scale(0.95); }
+	80% { transform: translateY(-0.15rem) scale(1.03); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.bounce { animation: none; }
+}
+
+.eventDay {
+	display: block;
+	text-align: right;
+	font-weight: 800;
+}
+
+/* What to wear: a card, the clothes as big pictures in a row, the weather under them in small print. */
+.wear {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	padding: 1rem 1.2rem;
+	border-radius: var(--radius-xl);
+	background: var(--surface);
+	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
+	box-shadow: 0 0.3rem 1rem color-mix(in srgb, var(--c) 18%, transparent);
+}
+.clothes {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem 1.4rem;
+}
+.clothing {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.2rem;
+	font-size: 1rem;
+	font-weight: 700;
+}
+.clothingPicture {
+	font-size: 5rem;
+	line-height: 1;
+}
+/* A drawn one (the jackets): as big as the emoji. */
+.clothingDrawn {
+	display: block;
+	width: 5.6rem;
+	height: 5.6rem;
+	margin: -0.3rem;
+}
+.weatherLine {
+	margin: 0;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.1rem 0.9rem;
+	font-size: 0.95rem;
+	font-weight: 600;
+	color: var(--muted);
+}
+.weatherLine span {
+	white-space: nowrap;
+}
+
+.weatherStats {
+	display: flex;
+	align-items: center;
+	gap: 15px;
+}
+.weatherBlock {
+	/* Beside the temperature, as wide as there's room for (its lines wrap inside it). */
+	flex: 1 1 0;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+	padding: 10px;
+}
+/* The conditions, rain and wind: spaced apart, and onto another line if the card's narrow. */
+.weatherBlock > span:last-child {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0 0.7rem;
+}
+
+.currentWeather {
+	font-size: 54px;
+}
+.currentWeather span {
+	font-size: 24px;
+	display: inline-block;
+	vertical-align: top;
+	line-height: 40px;
+}
+.rememberItem {
+	display: flex;
+	align-items: center;
+	gap: 0.9rem;
+	padding: 0.8rem 1.1rem;
+	border-radius: var(--radius-lg);
+	background: color-mix(in srgb, var(--c) 14%, var(--surface));
+}
+
+/* The month's special days: a card, a row for each, the sleeps until it on the right. */
+.special {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	padding: 1rem 1.2rem;
+	border-radius: var(--radius-xl);
+	background: var(--surface);
+	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
+	box-shadow: 0 0.3rem 1rem color-mix(in srgb, var(--c) 18%, transparent);
+}
+.specialList {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.specialDay {
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	padding: 0.3rem 0.5rem;
+	border-radius: var(--radius);
+}
+.specialPicture {
+	flex: none;
+	font-size: 2.4rem;
+	line-height: 1;
+}
+.specialText {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+.specialName {
+	font-size: 1.15rem;
+	font-weight: 750;
+	/* A long word (Thanksgiving) breaks with a hyphen in a narrow card, rather than run into the sleeps. */
+	hyphens: auto;
+	overflow-wrap: break-word;
+}
+.specialDate {
+	font-size: 0.9rem;
+	font-weight: 650;
+	color: var(--muted);
+}
+.sleeps {
+	flex: none;
+	font-size: 1.5rem;
+	font-weight: 800;
+	color: var(--c);
+	text-align: right;
+}
+.sleepsWord {
+	font-size: 0.9rem;
+}
+/* Gone by: dimmed. Today: picked out. */
+.specialPast {
+	opacity: 0.45;
+}
+.specialToday {
+	background: color-mix(in srgb, var(--c) 16%, var(--surface));
+}
+.specialNone {
+	margin: 0;
+	color: var(--muted);
+	font-weight: 600;
+}
+
+/* The day's cards: a fun fact, and kind words. */
+.fact {
+	/* In rows of two: across the whole width. */
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 1.1rem 1.2rem;
+	border-radius: var(--radius-xl);
+	/* A card, like What to wear. */
+	background: var(--surface);
+	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
+	box-shadow: 0 0.3rem 1rem color-mix(in srgb, var(--c) 18%, transparent);
+}
+.factPicture {
+	font-size: 5rem;
+	line-height: 1;
+}
+.factText {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	font-size: 1.35rem;
+	font-weight: 650;
+}
+
+@media (max-width: 700px) {
+	.factPicture {
+		font-size: 3.6rem;
+	}
+	.factText {
+		font-size: 1.15rem;
+	}
+}

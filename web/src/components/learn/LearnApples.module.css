@@ -1,0 +1,30 @@
+/* Count the apples. */
+.fruit {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 6%;
+	box-sizing: border-box;
+	border-radius: var(--radius-lg);
+	background: var(--surface);
+	box-shadow: var(--shadow-md);
+}
+.fruit svg {
+	width: 100%;
+	flex: 1;
+	min-height: 0;
+}
+.counted {
+	background: color-mix(in srgb, var(--c, var(--accent)) 16%, var(--surface));
+	/* Counted: flat (no shadow), and it can't be tapped again. */
+	box-shadow: none;
+	cursor: default;
+}
+/* Counting's count so far, big at the top. */
+.countNow {
+	display: grid;
+	place-items: center;
+	font-weight: 800;
+	line-height: 1;
+	color: var(--c, var(--accent));
+}

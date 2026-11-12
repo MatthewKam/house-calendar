@@ -1,5 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react';
-import type { Page } from '../components/NavBar';
+import type { Page } from '../components/nav/NavBar';
 import { PHONE } from './useMediaQuery';
 
 /** Pages that live in the address after "#"; the calendar is the plain address. */

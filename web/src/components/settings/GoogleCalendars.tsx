@@ -4,9 +4,9 @@ import { api } from "../../lib/api";
 import { useAuthStatus } from "../../lib/queries";
 import { ago } from "../../lib/dates";
 import type { Member } from "../../lib/types";
-import s from "../../styles/Account.module.css";
-import panel from "../../styles/Settings.module.css";
-import ConfirmDialog from "../ConfirmDialog";
+import s from "../account/Account.module.css";
+import panel from "./Settings.module.css";
+import ConfirmDialog from "../ui/ConfirmDialog";
 
 /**
  * Settings → Calendars: each person's Google Calendar. Connecting is from your own phone (Google

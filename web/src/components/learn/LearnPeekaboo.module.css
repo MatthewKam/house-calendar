@@ -1,0 +1,114 @@
+/* Peekaboo. */
+.farm {
+	position: relative;
+	flex: 1;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	border-radius: var(--radius-xl);
+}
+
+.bushes {
+	position: relative;
+	/* Rows of them, a short last row in the middle. */
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 12px;
+	justify-content: center;
+	margin-inline: auto;
+	padding: 0 12px 12px;
+}
+.bushSpot {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-end;
+	padding: 0;
+	background: none;
+}
+
+/* Peekaboo's animal, out: from behind the hiding place (--behind up from the ground), up until its feet
+   are over the top (--over), then in front of it, landing on the grass with a little squash. */
+.jumper {
+	position: absolute;
+	bottom: 0;
+	z-index: 0;
+	pointer-events: none;
+	animation: jumpOver 0.85s cubic-bezier(0.3, 0.8, 0.4, 1) forwards;
+}
+.jumper svg {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+	.jumper {
+		animation: none;
+		z-index: 2;
+	}
+}
+/* The animal's name, in front of its hiding place (and the animal) while it's out. */
+.bushName {
+	position: absolute;
+	z-index: 3;
+	bottom: 10%;
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 0.15em 0.7em;
+	border-radius: var(--radius-round);
+	background: #fff;
+	color: var(--text);
+	font-size: clamp(1rem, 5vmin, 1.7rem);
+	font-weight: 800;
+	text-transform: capitalize;
+	white-space: nowrap;
+	box-shadow: var(--shadow-md);
+	animation: pop 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.bush svg,
+.bush img {
+	display: block;
+	width: 100%;
+	height: auto;
+	user-select: none;
+}
+.bush {
+	position: relative;
+	z-index: 1;
+	width: 100%;
+	transform-origin: 50% 100%;
+}
+@keyframes jumpOver {
+	0% {
+		transform: translateY(calc(-1 * var(--behind)));
+		z-index: 0;
+		animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
+	}
+	/* The top: clear of it, still behind. */
+	45% {
+		transform: translateY(calc(-1 * var(--over)));
+		z-index: 0;
+		animation-timing-function: cubic-bezier(0.5, 0, 0.8, 0.6);
+	}
+	/* Over it: now in front. */
+	46% {
+		transform: translateY(calc(-1 * var(--over)));
+		z-index: 2;
+	}
+	85% {
+		transform: translateY(0) scale(1.08, 0.9);
+		z-index: 2;
+	}
+	100% {
+		transform: translateY(0);
+		z-index: 2;
+	}
+}
+@keyframes pop {
+	from {
+		transform: scale(0.3);
+	}
+}

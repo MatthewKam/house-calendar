@@ -1,0 +1,745 @@
+/* ---- Page (in place of the calendar) ---- */
+.page {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+}
+.pageHead {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	gap: 0.5rem;
+}
+.pageTitle {
+	margin: 0;
+	font-size: 2rem;
+}
+.scroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 1.1rem;
+	border-bottom: 1px solid lightgrey;
+}
+.kid {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding-bottom: 1rem;
+	border-bottom: 1px solid var(--line);
+}
+.kid:last-child {
+	border-bottom: none;
+}
+.head {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+}
+/* Name fills with the kid's color as far as they've got today, like the header buttons. */
+.namePill {
+	padding: 0.3rem 0.9rem;
+	border-radius: var(--radius);
+	font-weight: 650;
+	font-size: 1.15rem;
+	border: 1.5px solid color-mix(in srgb, var(--c) 55%, var(--line));
+	background: linear-gradient(
+		to right,
+		color-mix(in srgb, var(--c) 40%, transparent) var(--p),
+		transparent var(--p)
+	);
+	transition: background 0.4s ease;
+}
+/* Half-strength color: lighter than the person's own, so dark text stays readable. */
+.nameDone {
+	background: color-mix(in srgb, var(--c) 50%, var(--surface));
+}
+.progress {
+	color: var(--muted);
+	font-size: 0.95rem;
+}
+.allDone {
+	color: var(--text);
+	font-weight: 650;
+	font-size: 1.1rem;
+	animation: pop 0.4s ease-out;
+}
+@keyframes pop {
+	0% {
+		transform: scale(0.85);
+		opacity: 0;
+	}
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+/* Today's tasks: big targets for small fingers. */
+.today {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+}
+.task {
+	width: 100%;
+	min-height: 3.5rem;
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	text-align: left;
+	padding: 0.5rem 0.8rem;
+	font-size: 1.15rem;
+	border-radius: var(--radius);
+	background: color-mix(in srgb, var(--c) 10%, var(--surface));
+	border: 2px solid color-mix(in srgb, var(--c) 35%, var(--surface));
+}
+.ticked {
+	background: color-mix(in srgb, var(--c) 50%, var(--surface));
+	border-color: color-mix(in srgb, var(--c) 50%, var(--surface));
+}
+.box {
+	width: 2rem;
+	height: 2rem;
+	flex: none;
+	border-radius: var(--radius-xs);
+	display: grid;
+	place-items: center;
+	border: 2px solid var(--c);
+	background: var(--surface);
+	color: var(--c);
+	font-weight: 800;
+	font-size: 1.2rem;
+}
+.ticked .box {
+	border-color: var(--surface);
+}
+.taskName {
+	min-height: 2.5rem;
+	text-align: left;
+	padding: 0 0.2rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	flex: 1;
+	min-width: 0;
+}
+/* Sun or moon after a task's name in history: morning or evening. */
+.partOfDay {
+	margin-left: 0.35rem;
+	font-size: 0.85em;
+}
+.cell,
+.notDue {
+	width: 1.8rem;
+	height: 1.8rem;
+	min-width: 0;
+	min-height: 0;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	font-size: 0.85rem;
+	font-weight: 800;
+}
+.notDue {
+	color: var(--line);
+}
+.cellDone {
+	background: var(--c);
+	color: white;
+}
+.cellToday {
+	border: 2px solid var(--c);
+}
+.cellMissed {
+	border: 2px dashed var(--danger-line);
+	cursor: pointer;
+}
+.cellMissed:hover {
+	background: var(--danger-bg);
+}
+.tip {
+	margin: 0.1rem 0 0;
+	color: var(--muted);
+	font-size: 0.8rem;
+}
+.cellLater {
+	border: 2px solid var(--line);
+	cursor: default;
+}
+
+.actions {
+	display: flex;
+	gap: 0.5rem;
+	padding-bottom: 10px;
+}
+/* Under a kid's task list: a plain text link. */
+.addText {
+	align-self: flex-start;
+	padding: 0 0.3rem;
+	color: var(--muted);
+	font-weight: 600;
+	font-size: 1rem;
+}
+.addText:hover {
+	color: var(--text);
+}
+.editToggle {
+	padding: 0 1.1rem;
+	border: 1px solid var(--line);
+	background: var(--surface);
+	font-weight: 600;
+}
+.editToggle[aria-pressed="true"] {
+	background: var(--today);
+	border-color: var(--warn-line);
+}
+
+/* Edit mode: every task with Delete. */
+.editList {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+.editRow {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.sharedTag {
+	display: inline-block;
+	margin-left: 0.3rem;
+	padding: 0 0.45rem;
+	border-radius: var(--radius-xs);
+	vertical-align: middle;
+	font-size: 0.7rem;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: var(--muted);
+	background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+.problem {
+	margin: 0;
+	color: var(--danger);
+	font-size: 0.9rem;
+}
+.none {
+	color: var(--muted);
+}
+
+/* ---- Times of day, categories and points ---- */
+.timeGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+.timeHead {
+	margin: 0.3rem 0 0;
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--muted);
+}
+.taskTitle {
+	flex: 1;
+	min-width: 0;
+}
+.catTag {
+	display: inline-block;
+	margin-left: 0.3rem;
+	padding: 0 0.45rem;
+	border-radius: var(--radius-xs);
+	vertical-align: middle;
+	font-size: 0.7rem;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+}
+.catTag {
+	color: var(--muted);
+	border: 1px solid var(--line);
+	background: var(--surface);
+	padding: 2px 5px;
+}
+/* One-time: "Today only" or "By Fri", in a warmer color. */
+.catTag.dueTag {
+	color: var(--soon);
+	border-color: var(--soon-line);
+	background: var(--soon-bg);
+}
+/* Extras: a dashed outline instead of the person's tint, so required tasks stand out. */
+.extra:not(.ticked) {
+	background: var(--surface);
+	border-style: dashed;
+}
+
+/* ---- Task icons ---- */
+.taskIcon {
+	margin-right: 0.4rem;
+	font-size: 1.15em;
+	line-height: 1;
+}
+.titleRow {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+}
+.titleRow input {
+	flex: 1;
+	min-width: 0;
+}
+.iconPreview {
+	width: 2.9rem;
+	height: 2.9rem;
+	flex: none;
+	display: grid;
+	place-items: center;
+	font-size: 1.6rem;
+	color: var(--muted);
+	background: var(--bg);
+	border-radius: var(--radius-sm);
+	min-width: 0;
+	min-height: 0;
+}
+.iconPreview[aria-expanded="true"] {
+	box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* ---- Task sheet ---- */
+.points {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.points input {
+	width: 5rem;
+	padding: 0.45rem 0.6rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+}
+.hint {
+	margin: -0.3rem 0 0;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.chipOn {
+	background: var(--accent);
+	color: var(--on-accent);
+}
+/* A one-time task's due date, beside its quick picks. */
+.dueDate {
+	font-size: 1rem;
+	padding: 0.45rem 0.6rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	color: var(--text);
+	background: var(--surface);
+}
+.dayPicker {
+	display: flex;
+	gap: 0.35rem;
+	flex-wrap: wrap;
+}
+.dayToggle {
+	padding: 0 0.7rem;
+	border: 1px solid var(--line);
+	background: var(--surface);
+}
+.dayOn {
+	background: var(--accent);
+	color: var(--on-accent);
+	border-color: var(--accent);
+}
+
+/* Phones: smaller day dots so the whole week fits beside the task names. */
+@media (max-width: 700px) {
+	.cell,
+	.notDue {
+		width: 1.5rem;
+		height: 1.5rem;
+		font-size: 0.75rem;
+	}
+}
+
+/* ---- Every kid at once: cards side by side, up to 300px wide; full width on phones ---- */
+.board {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 0.9rem;
+}
+.board .kid {
+	flex: 1 1 260px;
+	max-width: 550px;
+	min-width: 0;
+}
+/* On the right end of the name row. */
+.historyLink {
+	margin-left: auto;
+	min-height: 0;
+	padding: 0.2rem 0.3rem;
+	color: var(--muted);
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+.historyLink:hover {
+	color: var(--text);
+}
+.historyTools {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	flex-wrap: wrap;
+}
+/* Week | Month on its own row, and ‹ This week › under it, kept together. */
+.historyTools .periods {
+	flex: 1 0 100%;
+}
+.historyTools .periods button {
+	flex: 1;
+}
+.pager {
+	flex: 1 0 100%;
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+.rangeLabel {
+	flex: 1;
+	text-align: center;
+	font-weight: 600;
+}
+/* In a narrow card, a task's tags drop below its title instead of squeezing it. */
+.board .task {
+	flex-wrap: wrap;
+	row-gap: 0.2rem;
+}
+.board .kid {
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-top: 0.35rem solid var(--c);
+	border-radius: var(--radius);
+	padding: 0.9rem;
+}
+.board .kid .head {
+	flex-wrap: wrap;
+}
+.toolButton {
+	padding: 0 1rem;
+	border: 1px solid var(--line);
+	background: var(--surface);
+	font-weight: 600;
+}
+.toolButton:disabled {
+	opacity: 0.35;
+}
+.periods {
+	display: flex;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	padding: 0.2rem;
+}
+.periods button {
+	padding: 0 0.9rem;
+	min-height: 2.35rem;
+	border-radius: var(--radius-sm);
+}
+.periodOn {
+	background: var(--accent);
+	color: var(--on-accent);
+}
+
+/* ---- History: a row of day dots per task (week or month) ---- */
+.history {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	padding: 0.6rem;
+	background: var(--bg);
+	border-radius: var(--radius);
+	overflow-x: auto;
+}
+/* Each task on its own card: the name with its count at the right end, one line under both,
+   and its row of days below. */
+.historyRow {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	grid-template-areas: "name count" "cells cells";
+	align-items: center;
+	row-gap: 0.5rem;
+	padding: 0.4rem 0.75rem 0.75rem;
+	background: var(--surface);
+	border-radius: var(--radius-sm);
+}
+/* The line under the name and count, unbroken from one to the other. */
+.historyRow::before {
+	content: "";
+	grid-area: 1 / 1 / 2 / 3;
+	align-self: end;
+	border-bottom: 1px solid var(--line);
+	pointer-events: none;
+}
+.historyRow > :nth-child(1) {
+	grid-area: name;
+}
+.historyRow > :nth-child(2) {
+	grid-area: cells;
+}
+.historyRow > :nth-child(3) {
+	grid-area: count;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	padding-left: 0.6rem;
+}
+/* The day letters line up over the circles; the head needs no name or count. */
+.historyHead > :nth-child(1),
+.historyHead > :nth-child(3),
+.historyHead::before {
+	display: none;
+}
+.historyHead {
+	/* Day letters over the circles: on the grey, not a card, with no line. */
+	background: none;
+	padding-top: 0;
+	padding-bottom: 0;
+	color: var(--muted);
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+/* The days spread out to fill most of the card (not edge to edge), letters and circles alike. */
+.cells {
+	display: grid;
+	grid-template-columns: repeat(var(--cols), minmax(1.9rem, 1fr));
+	gap: 0.2rem;
+	justify-items: center;
+	max-width: 22rem;
+}
+.count {
+	text-align: right;
+	color: var(--muted);
+	font-size: 0.9rem;
+	font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 700px) {
+	.pageHead {
+		flex-wrap: wrap;
+	}
+	.board .kid {
+		flex-basis: 100%;
+		max-width: 100%;
+	}
+}
+
+/* ---- Card header: name row and stars to spend ---- */
+.kidHead {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+.star {
+	width: 1em;
+	height: 1em;
+	flex: none;
+	vertical-align: -0.12em;
+}
+.starsLine {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	color: var(--muted);
+}
+.starsLine b {
+	color: var(--text);
+}
+/* "5 ★" on an extra, in gold. */
+.starTag {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.15rem;
+	margin-left: 0.3rem;
+	padding: 0 0.45rem;
+	border-radius: var(--radius-xs);
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: var(--warn);
+	background: var(--warn-bg);
+}
+
+/* ---- Edit mode: drag handle, title, edit and delete icons ---- */
+.grip {
+	display: grid;
+	place-items: center;
+	width: 1.8rem;
+	min-height: 2.6rem;
+	color: var(--muted);
+	flex: none;
+}
+.grip svg,
+.iconButton svg {
+	width: 1.2rem;
+	height: 1.2rem;
+}
+.iconButton svg {
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.editTitle {
+	flex: 1;
+	min-width: 0;
+	padding: 0.4rem 0;
+}
+.iconButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.3rem;
+	min-width: 2.6rem;
+	min-height: 2.6rem;
+	padding: 0 0.5rem;
+	color: var(--muted);
+	flex: none;
+}
+.iconButton:hover {
+	background: var(--bg);
+	color: var(--text);
+}
+.trash:hover {
+	color: var(--danger);
+}
+/* The row being dragged lifts above the others. */
+.dragging {
+	position: relative;
+	z-index: 1;
+	background: var(--surface);
+	border-radius: var(--radius-sm);
+	box-shadow: var(--shadow-lg);
+}
+
+/* ---- Month history: a calendar ---- */
+.monthGrid {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	gap: 0.3rem;
+	max-width: 42rem;
+}
+.monthDow {
+	text-align: center;
+	color: var(--muted);
+	font-size: 0.75rem;
+	text-transform: uppercase;
+}
+/* Fills from the bottom with the kid's color, as far as that day's required tasks were done. */
+.monthDay {
+	position: relative;
+	min-height: 3.6rem;
+	min-width: 0;
+	padding: 0.25rem 0.35rem;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: space-between;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: linear-gradient(
+		to top,
+		color-mix(in srgb, var(--c) 35%, var(--surface)) var(--fill),
+		var(--surface) var(--fill)
+	);
+}
+.monthComplete {
+	background: color-mix(in srgb, var(--c) 50%, var(--surface));
+	border-color: transparent;
+}
+.monthFuture {
+	background: transparent;
+	opacity: 0.45;
+	cursor: default;
+}
+.monthToday {
+	border: 2px solid var(--c);
+}
+.monthPicked {
+	outline: 2px solid var(--accent);
+	outline-offset: 1px;
+}
+.monthNum {
+	font-weight: 650;
+	font-size: 0.9rem;
+}
+.monthCheck {
+	position: absolute;
+	top: 0.2rem;
+	right: 0.35rem;
+	font-weight: 800;
+}
+.monthStars {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.1rem;
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: var(--warn);
+}
+.dayDetail {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	max-width: 42rem;
+}
+@media (max-width: 700px) {
+	.monthDay {
+		min-height: 2.9rem;
+		padding: 0.15rem 0.25rem;
+	}
+}
+
+/* Room at the end, so the last item can scroll up past the round + button (and a phone's home bar). */
+.scroll {
+	padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+
+/* Top right of the Tasks page: Caught being good, for any kid. */
+.catchButton {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	min-height: 2.75rem;
+	padding: 0 1.1rem;
+	border: 1px dashed var(--accent);
+	border-radius: var(--radius-round);
+	background: var(--surface);
+	color: var(--accent);
+	font-weight: 650;
+	flex: none;
+}
+/* Beside Caught being good: kid mode for this device. */
+.headButtons {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+}
+/* Under a kid's list: Add task/goal, and Start potty chart. */
+.addRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem 1rem;
+}

@@ -18,8 +18,8 @@ import Chomp, { ChompPic, pickAnimal } from "./Chomp";
 import { HowTo, Over } from "./parts";
 import type { GameProps } from "./rounds";
 import { hush, setRecorded } from "./sound";
-import GrownUpPin from "../GrownUpPin";
-import s from "../../styles/Learn.module.css";
+import GrownUpPin from "../account/GrownUpPin";
+import s from "./Learn.module.css";
 
 /** How to play Chomp! (a game for two), for a grown-up to explain. */
 const CHOMP_HOW = {
@@ -235,7 +235,7 @@ export default function LearnTab({ kid, today, learn, together, askPin }: {
 			{!together && (day.why ? (
 				// Resting: why, over the games, and a grown-up can give more.
 				<div className={s.rest} role="status">
-					<img className={s.restMascot} src="/mascot/sprig.png" alt="" />
+					<img className={s.restMascot} src="/mascot/sprig.webp" alt="" />
 					<h2 className={s.restTitle}>{RESTING[day.why].title}</h2>
 					<p className={s.restText}>{RESTING[day.why].text}</p>
 					<button type="button" className={s.askGrownUp}

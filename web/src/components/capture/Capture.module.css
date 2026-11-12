@@ -1,0 +1,180 @@
+/* Say it and Snap a flyer (CaptureSheet): talk or type, then a card for each thing found. */
+.capture {
+	width: min(32rem, 94vw);
+}
+.say {
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+}
+.mic {
+	align-self: center;
+	width: 6rem;
+	height: 6rem;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	background: var(--accent);
+	color: var(--on-accent);
+	box-shadow: 0 0.5rem 1.2rem color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.mic svg {
+	width: 2.8rem;
+	height: 2.8rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.7;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.listening {
+	background: #c2412d;
+	animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+	50% { box-shadow: 0 0 0 0.9rem rgb(194 65 45 / 0.18); }
+}
+.hint {
+	margin: 0;
+	color: var(--muted);
+	text-align: center;
+}
+.text {
+	width: 100%;
+	box-sizing: border-box;
+	font: inherit;
+	font-size: 1.05rem;
+	padding: 0.6rem 0.7rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	resize: vertical;
+}
+.error {
+	margin: 0;
+	color: var(--danger);
+}
+
+.cards {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.card {
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	padding: 0.5rem 0.7rem 0.7rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+}
+.cardHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+.kind {
+	font-size: 0.8rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+.drop {
+	font-size: 1.5rem;
+	color: var(--muted);
+	margin-right: -0.5rem;
+}
+.title {
+	font: inherit;
+	font-size: 1.1rem;
+	font-weight: 650;
+	padding: 0.45rem 0.6rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+}
+.field {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.field input {
+	flex: 1;
+	min-width: 0;
+	font: inherit;
+	color: var(--text);
+	padding: 0.4rem 0.6rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+}
+.new {
+	color: var(--accent);
+	font-weight: 600;
+	white-space: nowrap;
+}
+.when {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem;
+}
+.date,
+.time {
+	font: inherit;
+	padding: 0.4rem 0.5rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+}
+.note {
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.who {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+.person {
+	padding: 0 0.85rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-round);
+	background: var(--surface);
+	font-weight: 600;
+}
+
+.notes {
+	font: inherit;
+	font-size: 0.95rem;
+	padding: 0.45rem 0.6rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	resize: vertical;
+}
+/* The flyer, shown small above the cards. */
+.kept {
+	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.kept img {
+	width: 3rem;
+	height: 3rem;
+	object-fit: cover;
+	border-radius: var(--radius-xs);
+	border: 1px solid var(--line);
+}
+
+/* Which calendar the events go to (CalendarPick), over the buttons. */
+.calendarPick { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; color: var(--muted); }
+.calendarPick select {
+	font-size: 1.05rem; padding: 0.55rem 0.6rem; border: 1px solid var(--line); border-radius: var(--radius-sm);
+	color: var(--text); background: var(--surface);
+}

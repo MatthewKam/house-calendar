@@ -1,0 +1,197 @@
+/* Its surface runs all the way up behind the phone's status bar and down to the bottom edge; the
+   icons keep clear of the notch and home bar. */
+.nav {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	box-sizing: border-box;
+	height: 100%;
+	padding: var(--top-room) 0.5rem calc(1rem + env(safe-area-inset-bottom))
+		max(0.5rem, var(--inset-left));
+	background: var(--surface);
+	border-right: 1px solid var(--line);
+	flex: none;
+	overflow-y: auto;
+}
+.item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.2rem;
+	width: 4.2rem;
+	padding: 0.55rem 0;
+	color: var(--muted);
+	border-radius: var(--radius);
+}
+.item svg {
+	width: 1.7rem;
+	height: 1.7rem;
+	flex: none;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.7;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.item:hover {
+	background: var(--bg);
+	color: var(--text);
+}
+/* The page on screen: green and bold in its box, like the phone's bar. */
+.on,
+.on:hover {
+	background: var(--bg);
+	color: var(--accent);
+	font-weight: 700;
+	/* Raised a little off the bar. */
+	box-shadow: var(--shadow-sm);
+}
+/* Pushes the lock and Settings to the bottom of the bar. */
+.push {
+	margin-top: auto;
+}
+.label {
+	font-size: 0.75rem;
+	font-weight: 600;
+}
+
+/* The parent lock while unlocked: in green, so a parent sees it's open. */
+.unlocked {
+	color: var(--accent);
+}
+
+/* Phones: the bar along the bottom, above the home bar, with the quick-add button raised in the
+   middle (QuickAdd). */
+.bar {
+	order: 2;
+	flex: none;
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	align-items: start;
+	padding: 0.3rem max(0.25rem, var(--inset-right)) calc(0.3rem + env(safe-area-inset-bottom)) max(0.25rem, var(--inset-left));
+	background: var(--surface);
+	border-top: 1px solid var(--line);
+	position: relative;
+	z-index: calc(var(--layer-nav) + 1);
+}
+.tab {
+	min-width: 0;
+	min-height: 3.2rem;
+	margin: 0 0.15rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.15rem;
+	color: var(--muted);
+	font-size: 0.72rem;
+	font-weight: 550;
+}
+.tab svg {
+	width: 1.6rem;
+	height: 1.6rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.7;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.tabOn {
+	color: var(--accent);
+	font-weight: 700;
+	/* A soft box behind it too, as in the bar on the left. */
+	background: var(--bg);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-sm);
+}
+.center {
+	display: flex;
+	justify-content: center;
+}
+.moreScrim {
+	position: fixed;
+	inset: 0;
+	z-index: var(--layer-nav);
+	background: rgb(0 0 0 / 0.3);
+}
+/* More: a sheet rising from just above the bar. */
+.moreSheet {
+	position: fixed;
+	z-index: var(--layer-nav);
+	left: 0;
+	right: 0;
+	bottom: calc(3.8rem + env(safe-area-inset-bottom));
+	padding: 0.6rem max(0.75rem, var(--inset-right)) 0.6rem max(0.75rem, var(--inset-left));
+	background: var(--surface);
+	border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+	box-shadow: 0 -0.5rem 1.5rem rgb(0 0 0 / 0.12);
+	display: flex;
+	flex-direction: column;
+	animation: rise 0.2s ease-out;
+}
+@keyframes rise {
+	from { transform: translateY(1.5rem); opacity: 0; }
+}
+.moreItem {
+	display: flex;
+	align-items: center;
+	gap: 0.9rem;
+	min-height: 3.3rem;
+	padding: 0 0.6rem;
+	border-radius: var(--radius);
+	font-size: 1.05rem;
+	font-weight: 600;
+	text-align: left;
+}
+.moreItem svg {
+	width: 1.6rem;
+	height: 1.6rem;
+	flex: none;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.7;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.moreOn {
+	color: var(--accent);
+	background: var(--bg);
+}
+.moreRule {
+	width: 100%;
+	border: 0;
+	border-top: 1px solid var(--line);
+	margin: 0.3rem 0;
+}
+
+/* A phone on its side: the same bar and More, down the left edge. */
+@media (orientation: landscape) and (max-height: 500px) {
+	.bar {
+		order: 0;
+		height: 100%;
+		box-sizing: border-box;
+		grid-template-columns: none;
+		grid-template-rows: repeat(5, minmax(0, 1fr));
+		align-items: center;
+		width: calc(4.4rem + var(--inset-left));
+		padding: var(--top-room) 0.25rem calc(0.3rem + env(safe-area-inset-bottom)) max(0.25rem, var(--inset-left));
+		border-top: none;
+		border-right: 1px solid var(--line);
+	}
+	.moreSheet {
+		left: calc(4.4rem + var(--inset-left));
+		right: auto;
+		top: 0;
+		bottom: 0;
+		width: 17rem;
+		overflow-y: auto;
+		padding: calc(0.6rem + env(safe-area-inset-top)) 0.75rem calc(0.6rem + env(safe-area-inset-bottom));
+		border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+		box-shadow: 0.5rem 0 1.5rem rgb(0 0 0 / 0.12);
+		animation-name: slide;
+	}
+}
+@keyframes slide {
+	from { transform: translateX(-1.5rem); opacity: 0; }
+}

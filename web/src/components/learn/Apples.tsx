@@ -4,8 +4,8 @@ import { Board, fit } from "./parts";
 import { FRUIT } from "./things";
 import { at, between, CHEER_MS, fresh, shuffle, type GameProps, useLater } from "./rounds";
 import { sayNumber } from "./sound";
-import s from "../../styles/Learn.module.css";
-import g from "../../styles/LearnApples.module.css";
+import s from "./Learn.module.css";
+import g from "./LearnApples.module.css";
 
 /** The most there can be, by level. From level 3 there's a "How many?" after counting. */
 const MOST = [3, 4, 5, 7, 9, 10];

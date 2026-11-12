@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, type AuthStatus, type SignedIn } from "../../lib/api";
 import Avatar from "./Avatar";
-import ConfirmDialog from "../ConfirmDialog";
-import s from "../../styles/Account.module.css";
-import sheet from "../../styles/Sheet.module.css";
+import ConfirmDialog from "../ui/ConfirmDialog";
+import s from "../account/Account.module.css";
+import sheet from "../ui/Sheet.module.css";
 
 /** "Nov 12, 10:04 AM". */
 const when = (iso: string) =>

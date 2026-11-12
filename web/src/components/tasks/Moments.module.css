@@ -1,0 +1,98 @@
+/* Catching a moment (MomentDialog), and the stickers on a kid's card (KidHeader). */
+.note {
+	font: inherit;
+	font-size: 1.05rem;
+	padding: 0.65rem 0.75rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	color: var(--text);
+	min-width: 0;
+}
+/* Big pictures: one tap saves. */
+.kinds {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+	gap: 0.6rem;
+}
+.kind {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.3rem;
+	min-height: 6rem;
+	padding: 0.7rem 0.4rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--bg);
+	font-weight: 600;
+	font-size: 0.9rem;
+	color: var(--text);
+}
+.kind:active {
+	transform: scale(0.97);
+}
+.kind[aria-pressed="true"] {
+	border-color: var(--accent);
+	background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+	box-shadow: 0 0 0 2px var(--accent);
+}
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.kids {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+/* Catch one | History */
+.tabs {
+	display: flex;
+	background: var(--bg);
+	border-radius: var(--radius);
+	padding: 0.2rem;
+}
+.tabs button {
+	flex: 1;
+	min-height: 2.5rem;
+	border-radius: var(--radius-sm);
+	font-weight: 600;
+	color: var(--muted);
+}
+.tabs button[aria-selected="true"] {
+	background: var(--surface);
+	color: var(--text);
+	box-shadow: var(--shadow-sm);
+}
+.kindEmoji {
+	font-size: 2.2rem;
+	line-height: 1;
+}
+.problem {
+	margin: 0;
+	color: var(--danger);
+	font-size: 0.95rem;
+}
+
+/* On the kid's card: today's stickers. */
+.row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+}
+.sticker {
+	display: grid;
+	place-items: center;
+	width: 2.4rem;
+	height: 2.4rem;
+	padding: 0;
+	border-radius: 50%;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	box-shadow: var(--shadow-sm);
+	font-size: 1.35rem;
+	line-height: 1;
+}

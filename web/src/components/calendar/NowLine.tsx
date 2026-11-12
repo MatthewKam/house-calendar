@@ -1,0 +1,28 @@
+import { useWeather } from "../../lib/queries";
+import { sky } from "../../lib/weather";
+import { timeLabel } from "../../lib/dates";
+import { useNow } from "../../lib/useNow";
+import s from "../../App.module.css";
+
+/** Under the month: the time, then the weather at home (now, with today's high and low muted). */
+export default function NowLine() {
+	const weather = useWeather().data;
+	const now = useNow();
+	const look = weather && sky(weather.code, weather.isDay);
+	return (
+		<div className={s.now}>
+			<span className={s.clock}>{timeLabel(now)}</span>
+			{weather && look && (
+				<span className={s.weather} title={look.label}>
+					<span className={s.sky} role="img" aria-label={look.label}>
+						{look.icon}
+					</span>
+					<span className={s.temp}>{weather.temp}°</span>
+					<span className={s.highLow}>
+						H {weather.high}° · L {weather.low}°
+					</span>
+				</span>
+			)}
+		</div>
+	);
+}

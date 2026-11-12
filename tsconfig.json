@@ -10,5 +10,5 @@
     "allowImportingTsExtensions": true,
     "types": ["node"]
   },
-  "include": ["server/**/*.ts", "shared/**/*.ts"]
+  "include": ["server/**/*.ts", "shared/**/*.ts", "web/src/styles/*.test.ts"]
 }

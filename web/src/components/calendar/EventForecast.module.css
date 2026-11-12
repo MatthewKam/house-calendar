@@ -1,0 +1,40 @@
+/* The weather at a far-away event, in its sheet: a light box like What to bring's. */
+.box {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	padding: 0.8rem 0.9rem;
+	border-radius: var(--radius);
+	background: var(--info-bg);
+}
+.head {
+	display: flex;
+	align-items: baseline;
+	gap: 0.6rem;
+	flex-wrap: wrap;
+}
+.label {
+	font-weight: 700;
+}
+.miles {
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.day {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.95rem;
+}
+.icon {
+	font-size: 1.3rem;
+	line-height: 1;
+}
+.pack {
+	font-weight: 600;
+}
+.note {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.9rem;
+}

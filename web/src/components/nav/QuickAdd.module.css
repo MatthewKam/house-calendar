@@ -1,0 +1,117 @@
+/* The round + raised out of the middle of the phone's bottom bar; open, it turns into a dark ✕. */
+.plus {
+	width: 3.6rem;
+	height: 3.6rem;
+	min-height: 0;
+	min-width: 0;
+	margin-top: -1.5rem;
+	padding: 0;
+	border-radius: 50%;
+	border: 0.25rem solid var(--bg);
+	display: grid;
+	place-items: center;
+	background: var(--accent);
+	color: var(--on-accent);
+	box-shadow: 0 0.4rem 1rem color-mix(in srgb, var(--accent) 35%, transparent);
+	position: relative;
+	z-index: calc(var(--layer-menu) + 1);
+	transition: transform 0.2s, background 0.2s;
+}
+.plus svg {
+	width: 1.7rem;
+	height: 1.7rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.4;
+	stroke-linecap: round;
+}
+.open {
+	background: var(--text);
+	transform: rotate(45deg);
+}
+.open:active {
+	transform: rotate(45deg) scale(0.97);
+}
+
+/* The page fades behind the stack. */
+.scrim {
+	position: fixed;
+	inset: 0;
+	z-index: var(--layer-menu);
+	background: color-mix(in srgb, var(--bg) 90%, transparent);
+	animation: fade 0.2s;
+}
+.stack {
+	position: fixed;
+	z-index: calc(var(--layer-menu) + 1);
+	left: 0;
+	right: 0;
+	bottom: calc(5.4rem + env(safe-area-inset-bottom));
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.6rem;
+}
+.action {
+	min-width: 15rem;
+	min-height: 3.25rem;
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0 1.25rem 0 0.5rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-round);
+	background: var(--surface);
+	color: var(--text);
+	font-size: 1.05rem;
+	font-weight: 700;
+	box-shadow: var(--shadow-md);
+	animation: pop 0.2s ease-out both;
+}
+/* Each action's own colors (--tint behind --ink); in dark mode, a deep shade of the ink with it lightened. */
+.icon {
+	width: 2.4rem;
+	height: 2.4rem;
+	flex: none;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	background: var(--tint);
+	color: var(--ink);
+}
+:global([data-theme="dark"]) .icon:not(.solid) {
+	background: color-mix(in srgb, var(--ink) 30%, var(--surface));
+	color: color-mix(in srgb, var(--ink), white 55%);
+}
+.icon svg {
+	width: 1.3rem;
+	height: 1.3rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+@keyframes pop {
+	from { opacity: 0; transform: translateY(1rem) scale(0.96); }
+}
+@keyframes fade {
+	from { opacity: 0; }
+}
+
+/* A phone on its side: the + sits in the bar on the left, and the actions open beside it in two
+   columns (one would run off the short screen). */
+@media (orientation: landscape) and (max-height: 500px) {
+	.plus {
+		margin-top: 0;
+	}
+	.stack {
+		left: calc(5.5rem + var(--inset-left));
+		right: auto;
+		top: 0;
+		bottom: 0;
+		display: grid;
+		grid-template-columns: repeat(2, auto);
+		align-content: center;
+	}
+}

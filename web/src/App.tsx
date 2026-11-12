@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { dayKey, fromDayKey, startOfWeek } from "./lib/dates";
 import { useCalendarView, type View } from "./lib/useCalendarView";
 import type { CalEvent, Task, TaskInput, EventInput, Scope } from "./lib/types";
@@ -16,49 +16,52 @@ import {
 	useRangeEvents,
 	useAuthStatus,
 } from "./lib/queries";
-import WeekView from "./components/WeekView";
-import MonthView from "./components/MonthView";
-import DayPanel from "./components/DayPanel";
-import EventDialog from "./components/EventDialog";
-import TasksPage from "./components/TasksPage";
-import TodayPage from "./components/TodayPage";
-import NavBar from "./components/NavBar";
-import LeaveAlerts from "./components/LeaveAlerts";
-import NowLine from "./components/NowLine";
-import WeatherCard from "./components/WeatherCard";
-import DailyCards from "./components/DailyCards";
-import PhotoCard from "./components/PhotoCard";
-import OutboxNotices from "./components/OutboxNotices";
-import Fab from "./components/Fab";
-import { FilterChip } from "./components/NameChip";
+import WeekView from "./components/calendar/WeekView";
+import MonthView from "./components/calendar/MonthView";
+import DayPanel from "./components/calendar/DayPanel";
+import EventDialog from "./components/calendar/EventDialog";
+import TasksPage from "./components/tasks/TasksPage";
+import TodayPage from "./components/today/TodayPage";
+import NavBar from "./components/nav/NavBar";
+import LeaveAlerts from "./components/calendar/LeaveAlerts";
+import NowLine from "./components/calendar/NowLine";
+import WeatherCard from "./components/calendar/WeatherCard";
+import DailyCards from "./components/calendar/DailyCards";
+import PhotoCard from "./components/photos/PhotoCard";
+import OutboxNotices from "./components/calendar/OutboxNotices";
+import Fab from "./components/nav/Fab";
+import { FilterChip } from "./components/ui/NameChip";
 import { usePage } from "./lib/usePage";
-import ListView, { AddToListSheet } from "./components/ListView";
-import QuickAdd, { type QuickAction } from "./components/QuickAdd";
-import MomentDialog from "./components/MomentDialog";
-import CaptureSheet from "./components/CaptureSheet";
-import RewardsPage from "./components/RewardsPage";
-import PhotosPage from "./components/PhotosPage";
-import ScreenSaver from "./components/ScreenSaver";
+import ListView, { AddToListSheet } from "./components/lists/ListView";
+import QuickAdd, { type QuickAction } from "./components/nav/QuickAdd";
+import MomentDialog from "./components/tasks/MomentDialog";
+import CaptureSheet from "./components/capture/CaptureSheet";
+import RewardsPage from "./components/rewards/RewardsPage";
 import { useScreenSaver } from "./lib/useScreenSaver";
 import { useWakeLock } from "./lib/useWakeLock";
 import { useAutoLock, useParent } from "./lib/useParent";
-import ParentUnlock from "./components/ParentUnlock";
-import KidMode from "./components/KidMode";
-import KidModeStart from "./components/KidModeStart";
-import GrownUpPin from "./components/GrownUpPin";
+import ParentUnlock from "./components/account/ParentUnlock";
+import KidModeStart from "./components/kid/KidModeStart";
+import GrownUpPin from "./components/account/GrownUpPin";
 import { useKidMode } from "./lib/useKidMode";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./lib/api";
 import { useCheer } from "./lib/useCheer";
-import TaskDialog from "./components/TaskDialog";
+import TaskDialog from "./components/tasks/TaskDialog";
 import { taskProgress, percent, tasksFor } from "./lib/tasks";
-import Celebration from "./components/Celebration";
-import Settings from "./components/settings/Settings";
-import Toast, { type ToastMessage } from "./components/Toast";
+import Celebration from "./components/ui/Celebration";
+import Toast, { type ToastMessage } from "./components/ui/Toast";
 import { UNASSIGNED } from "./lib/color";
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery, NARROW } from "./lib/useMediaQuery";
 import { useFlyerDrop } from "./lib/useFlyerDrop";
-import s from "./styles/App.module.css";
+import s from "./App.module.css";
+
+// Loaded when first opened, so a phone opening the calendar doesn't download them: kid mode (with
+// Learn's games), Photos, the screen saver and Settings. Each is shown inside <Suspense fallback={null}>.
+const KidMode = lazy(() => import("./components/kid/KidMode"));
+const PhotosPage = lazy(() => import("./components/photos/PhotosPage"));
+const ScreenSaver = lazy(() => import("./components/photos/ScreenSaver"));
+const Settings = lazy(() => import("./components/settings/Settings"));
 import { isKid } from "./lib/people";
 import { useTheme } from "./lib/useTheme";
 import { useAccent } from "./lib/accent";
@@ -366,9 +369,13 @@ export default function App() {
 		return (
 			<>
 				{/* Wait for the family, so it doesn't flash "No kids yet". */}
-				{members.length > 0 && <KidMode today={today} kids={kidView} members={members} onLeave={leaveKidMode}
-					startWith={kidModeFor ?? undefined}
-					askPin={!!signedIn && signedIn.guardianPins > 0} ownDevice={!!kidDevice} />}
+				{members.length > 0 && (
+					<Suspense fallback={null}>
+						<KidMode today={today} kids={kidView} members={members} onLeave={leaveKidMode}
+							startWith={kidModeFor ?? undefined}
+							askPin={!!signedIn && signedIn.guardianPins > 0} ownDevice={!!kidDevice} />
+					</Suspense>
+				)}
 				{open?.kind === "kidModeLeave" && (
 					<GrownUpPin
 						title="Leave kid mode"
@@ -382,7 +389,11 @@ export default function App() {
 					/>
 				)}
 				{open?.kind === "unlock" && <ParentUnlock onClose={close} onDone={open.then} />}
-				{saver.on && <ScreenSaver photos={saver.photos} settings={saver.settings} onClose={saver.hide} onOpenEvent={saver.hide} />}
+				{saver.on && (
+					<Suspense fallback={null}>
+						<ScreenSaver photos={saver.photos} settings={saver.settings} onClose={saver.hide} onOpenEvent={saver.hide} />
+					</Suspense>
+				)}
 				{cheer.cheer && <Celebration cheer={cheer.cheer} onDone={cheer.done} />}
 				{toast && <Toast message={toast} onDone={closeToast} />}
 			</>
@@ -451,7 +462,9 @@ export default function App() {
 					) : page === "rewards" ? (
 						<RewardsPage today={today} members={members} />
 					) : page === "photos" ? (
-						<PhotosPage onPreview={saver.show} incoming={pickedPhotos} onTaken={() => setPickedPhotos(null)} />
+						<Suspense fallback={null}>
+							<PhotosPage onPreview={saver.show} incoming={pickedPhotos} onTaken={() => setPickedPhotos(null)} />
+						</Suspense>
 					) : (<>
 					<div className={s.monthHeaderTitle}>
 						<div>
@@ -611,12 +624,14 @@ export default function App() {
 				/>
 			)}
 			{open?.kind === "settings" && (
-				<Settings
-					members={members}
-					// Kid mode starts from Settings (Screen); a kid's own device is in it already.
-					onKidMode={kids.length && signedIn?.role !== "kid" ? () => setOpen({ kind: "kidModeStart" }) : undefined}
-					onClose={close}
-				/>
+				<Suspense fallback={null}>
+					<Settings
+						members={members}
+						// Kid mode starts from Settings (Screen); a kid's own device is in it already.
+						onKidMode={kids.length && signedIn?.role !== "kid" ? () => setOpen({ kind: "kidModeStart" }) : undefined}
+						onClose={close}
+					/>
+				</Suspense>
 			)}
 
 			{open?.kind === "list" && <AddToListSheet onClose={close} onNewList={() => { close(); setPage("lists"); }} />}
@@ -634,16 +649,18 @@ export default function App() {
 			{/* Add a task, for no one in particular yet (each kid's card has its own Add a task). */}
 			{!phoneBar && page === "tasks" && parentLock.parent && <Fab label="Add a task or goal" onClick={() => setOpen({ kind: "task", blank: true })} />}
 			{saver.on && (
-				<ScreenSaver
-					photos={saver.photos}
-					settings={saver.settings}
-					onClose={saver.hide}
-					onOpenEvent={(event, day) => {
-						saver.hide();
-						setPage("calendar");
-						openEvent(event, day);
-					}}
-				/>
+				<Suspense fallback={null}>
+					<ScreenSaver
+						photos={saver.photos}
+						settings={saver.settings}
+						onClose={saver.hide}
+						onOpenEvent={(event, day) => {
+							saver.hide();
+							setPage("calendar");
+							openEvent(event, day);
+						}}
+					/>
+				</Suspense>
 			)}
 			{cheer.cheer && <Celebration cheer={cheer.cheer} onDone={cheer.done} />}
 			{/* "Time to leave" alerts, on whichever page is showing (above the screen saver too). */}

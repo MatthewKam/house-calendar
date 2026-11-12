@@ -14,7 +14,8 @@
     "build": "vite build",
     "start": "NODE_ENV=production tsx server/index.ts",
     "test": "vitest run",
-    "check": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json"
+    "check": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
@@ -33,6 +34,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",
@@ -40,8 +42,12 @@
     "@types/web-push": "^3.6.4",
     "@vitejs/plugin-react": "^6.1.2",
     "concurrently": "^10.0.5",
+    "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
     "light-my-request": "^6.8.0",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.2",
     "vite": "^8.3.3",
     "vitest": "^5.0.3"
   },

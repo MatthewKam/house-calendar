@@ -4,10 +4,10 @@ import { dayKey } from '../../lib/dates';
 import { useAuthStatus, useSetMemberColor, useUpdateMember } from '../../lib/queries';
 import { STAGE_AGES, STAGE_LIST, STAGE_NAMES } from '../../lib/stages';
 import type { Member, MemberPatch, Stage } from '../../lib/types';
-import ColorAsked from '../ColorAsked';
-import DateInput from '../DateInput';
-import sheet from '../../styles/Sheet.module.css';
-import s from '../../styles/Settings.module.css';
+import ColorAsked from '../account/ColorAsked';
+import DateInput from '../ui/DateInput';
+import sheet from '../ui/Sheet.module.css';
+import s from './Settings.module.css';
 
 /**
  * Palette shown under a row when its color circle is tapped. Palette taps are final (`done` true);

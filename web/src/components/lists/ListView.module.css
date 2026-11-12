@@ -1,0 +1,433 @@
+/* The page: title on top, then the lists. */
+.page {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+}
+.pageTitle {
+	margin: 0;
+	font-size: 2rem;
+}
+.pageHead {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+.choose {
+	padding: 0.45rem 0.9rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-round);
+	background: var(--surface);
+	color: var(--muted);
+}
+.choose[aria-pressed="true"] {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--on-accent);
+}
+/* Which lists show: a check per list, tapped on or off. */
+.picker {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+.pick {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.4rem 0.9rem 0.4rem 0.5rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-round);
+	background: var(--surface);
+}
+.pick[aria-pressed="false"] {
+	color: var(--muted);
+}
+.pick[aria-pressed="true"] .box {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--on-accent);
+}
+.board {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	/* A column per list, as many as fit at 400–450px each; the next list wraps to a new row. No empty columns. */
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(400px, 450px));
+	align-content: start;
+	gap: 0.75rem;
+}
+.card {
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	padding: 0.9rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.head {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+}
+.head .title {
+	flex: 1;
+}
+.title {
+	margin: 0;
+	font-size: 1.25rem;
+}
+.synced {
+	color: var(--muted);
+	font-size: 0.8rem;
+	white-space: nowrap;
+}
+.items {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+/* One item: tick circle, icon, name. Tapping the circle or the name ticks it; the icon picks one. */
+/* Each item is a rounded bar in its list's color (--c). */
+.row {
+	display: flex;
+	align-items: center;
+	gap: 0.15rem;
+	padding: 0.25rem 0.3rem 0.25rem 0.2rem;
+	border-radius: var(--radius);
+	background: color-mix(in srgb, var(--c) var(--pastel), var(--surface));
+	color: var(--text);
+}
+.row:hover {
+	filter: brightness(0.97);
+}
+/* Done items: the same color, faded. */
+.done.row {
+	background: color-mix(in srgb, var(--c) calc(var(--pastel) * 0.4), var(--surface));
+}
+/* Drag handle at the end of each open item. */
+.grip {
+	display: grid;
+	place-items: center;
+	width: 2.2rem;
+	height: 2.4rem;
+	flex: none;
+	color: color-mix(in srgb, var(--text) 28%, transparent);
+}
+.grip svg {
+	width: 1.2rem;
+	height: 1.2rem;
+}
+/* The item being dragged lifts off the list. */
+.dragging {
+	position: relative;
+	z-index: 2;
+}
+.dragging .row {
+	box-shadow: var(--shadow-lg);
+	transform: scale(1.02);
+}
+/* The list's color: a dot by its name, and the swatches it opens. */
+.colorDot {
+	width: 1.1rem;
+	height: 1.1rem;
+	min-width: 0;
+	min-height: 0;
+	padding: 0;
+	flex: 0 0 1.1rem;
+	aspect-ratio: 1;
+	align-self: center;
+	border-radius: 50%;
+	border: 2px solid var(--surface);
+	box-shadow: 0 0 0 1px var(--line);
+}
+.swatches {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+.swatch {
+	width: 2rem;
+	height: 2rem;
+	min-width: 0;
+	min-height: 0;
+	padding: 0;
+	border-radius: 50%;
+	border: 2px solid var(--surface);
+	box-shadow: 0 0 0 1px var(--line);
+}
+.swatchOn {
+	box-shadow: 0 0 0 2.5px var(--accent);
+}
+.boxButton {
+	min-width: 0;
+	min-height: 2.6rem;
+	padding: 0 0.3rem 0 0.4rem;
+	display: grid;
+	place-items: center;
+}
+.iconSpot {
+	min-width: 0;
+	width: 2.3rem;
+	min-height: 2.3rem;
+	flex: none;
+	font-size: 1.3rem;
+	border-radius: var(--radius-xs);
+}
+.iconSpot:hover {
+	background: var(--surface);
+	box-shadow: 0 0 0 1px var(--line);
+}
+
+/* Suggested, not yet in its name. */
+.suggested {
+	opacity: 0.55;
+}
+/* No icon yet: an outlined + to add one. */
+.noIcon {
+	color: var(--muted);
+	box-shadow: inset 0 0 0 1px var(--line);
+	font-size: 1.1rem;
+	font-weight: 700;
+}
+.item {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	text-align: left;
+	padding: 0.35rem 0.4rem 0.35rem 0.2rem;
+	border-radius: var(--radius-sm);
+	font-size: 1.05rem;
+}
+.pickNote {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+.box {
+	width: 1.5rem;
+	height: 1.5rem;
+	flex: none;
+	border-radius: 50%;
+	border: 2px solid var(--line);
+	background: var(--surface);
+	display: grid;
+	place-items: center;
+	font-size: 0.85rem;
+	font-weight: 800;
+}
+.done .box {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--on-accent);
+}
+.done .text {
+	color: var(--muted);
+	text-decoration: line-through;
+}
+.text {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	overflow-wrap: anywhere;
+}
+.pending {
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.empty {
+	color: var(--muted);
+	padding: 0.3rem 0.4rem;
+}
+.add {
+	display: flex;
+	gap: 0.4rem;
+	margin-top: auto;
+}
+.add input {
+	flex: 1;
+	min-width: 0;
+	padding: 0.5rem 0.7rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+}
+/* Add: the list's color once there's something to add, gray until then. Its text is dark on a light color. */
+.add button {
+	background: var(--c, var(--accent));
+	color: var(--on, #fff);
+	font-weight: 650;
+	padding: 0 1rem;
+	border-radius: var(--radius-sm);
+}
+.add button:disabled {
+	background: var(--line);
+	color: var(--muted);
+	cursor: default;
+}
+
+.add button.iconAdd {
+	align-self: center;
+	border: 1px solid var(--line);
+	background: var(--surface);
+	padding: 0;
+	background-color: transparent;
+	color: var(--muted);
+	min-width: 2.3rem;
+	min-height: 2.3rem;
+}
+.error {
+	margin: 0;
+	color: var(--danger);
+	font-size: 0.9rem;
+}
+.setup {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	color: var(--muted);
+	gap: 0.3rem;
+}
+.setup h2 {
+	margin: 0;
+	color: var(--text);
+}
+.setup p {
+	max-width: 32rem;
+	margin: 0;
+}
+
+/* Phones: one list per row. */
+@media (max-width: 700px) {
+	/* One column, as wide as the screen allows (never wider, whatever's inside). */
+	.board {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.card {
+		min-width: 0;
+	}
+}
+
+/* Phones (upright or on their side): the page runs to the bottom edge; the end of the list stays
+   clear of the home bar. */
+@media (max-width: 959.98px), (max-height: 500px) {
+	.board {
+		padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+	}
+}
+
+/* Locked (parents only): the icon and color show, but don't open anything. */
+.iconSpot:disabled,
+.colorDot:disabled {
+	cursor: default;
+	opacity: 1;
+}
+.iconSpot:disabled:hover {
+	background: none;
+	box-shadow: none;
+}
+
+/* Sprig's own lists: + New list in the page head, ⋯ for a list or an item, when and who under an
+   item's name, and Clear done. */
+.spacer {
+	flex: 1;
+}
+.more {
+	flex: none;
+	min-width: 2.2rem;
+	min-height: 2.2rem;
+	padding: 0;
+	border-radius: 50%;
+	color: var(--muted);
+	font-size: 1.2rem;
+	font-weight: 800;
+	line-height: 1;
+}
+.meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.2rem 0.7rem;
+	margin-top: 0.1rem;
+	font-size: 0.82rem;
+	color: var(--muted);
+}
+.late {
+	color: var(--danger);
+	font-weight: 700;
+}
+.clearDone {
+	align-self: flex-start;
+	min-height: 0;
+	padding: 0.2rem 0.3rem;
+	color: var(--muted);
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+.nameInput {
+	font-size: 1.1rem;
+	padding: 0.6rem 0.7rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+}
+.whenRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.8rem;
+}
+.whenRow label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+.whenRow input {
+	font-size: 1.05rem;
+	padding: 0.5rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	color: var(--text);
+}
+.whoRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+/* Add to a list (the phone's +): which list, as buttons; and what was just added. */
+.listPicks {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+.listPick {
+	padding: 0 1rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-round);
+	background: var(--surface);
+	font-weight: 600;
+}
+.listPicked {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--on-accent);
+}
+.added {
+	margin: 0;
+	color: var(--accent);
+	font-weight: 600;
+}

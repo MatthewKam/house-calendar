@@ -4,8 +4,8 @@ import { Board, fit, Hear, SLIDE_MS } from "./parts";
 import { animalsUpTo, type Animal } from "./things";
 import { at, fresh, pick, shuffle, useRounds, type GameProps } from "./rounds";
 import { noise } from "./sound";
-import s from "../../styles/Learn.module.css";
-import g from "../../styles/LearnSounds.module.css";
+import s from "./Learn.module.css";
+import g from "./LearnSounds.module.css";
 
 /** Animals to choose from, by level. */
 const CHOICES = [2, 3, 3, 4, 4, 6];
@@ -35,6 +35,8 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 	}, [level, total]);
 	const { answer, choices } = plan[rounds.round];
 	const [tapped, setTapped] = useState<{ id: string; n: number } | null>(null);
+	// The right one's been tapped and its noise is playing: the cheer waits for it to finish.
+	const [found, setFound] = useState(false);
 
 	useEffect(() => {
 		setTapped(null);
@@ -44,8 +46,6 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 	// The animal whose noise is playing: its word shows under it until the noise ends (a second at least,
 	// so there's time to see it).
 	const [saying, setSaying] = useState<string | null>(null);
-	// The right one's been tapped and its noise is playing: the cheer waits for it to finish.
-	const [found, setFound] = useState(false);
 	function tap(a: Animal) {
 		if (found) return;
 		const right = a.id === answer.id;

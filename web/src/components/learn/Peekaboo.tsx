@@ -4,8 +4,8 @@ import { Board } from "./parts";
 import { ANIMALS, type Animal } from "./things";
 import { at, CHEER_MS, fresh, shuffle, type GameProps, useLater } from "./rounds";
 import { noise } from "./sound";
-import s from "../../styles/Learn.module.css";
-import g from "../../styles/LearnPeekaboo.module.css";
+import s from "./Learn.module.css";
+import g from "./LearnPeekaboo.module.css";
 
 /** Hiding places (always three: the garden's three pots), and animals hiding in them over a play, by level. */
 const BUSHES = [3];

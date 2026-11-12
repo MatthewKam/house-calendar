@@ -1,0 +1,348 @@
+/* Nav bar on the left, calendar filling the rest. */
+.app {
+	display: flex;
+	height: 100%;
+}
+.shell {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	box-sizing: border-box;
+	background: var(--bg);
+	/* Installed on a phone, the app reaches under the notch and home bar: the content keeps clear of them. */
+	/* On the sides, the notch's space or the usual margin, whichever is larger (not both). */
+	padding: var(--top-room) max(1.25rem, var(--inset-right))
+		calc(1.25rem + env(safe-area-inset-bottom)) 1.25rem;
+	gap: 0.75rem;
+}
+.header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+.group {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+.stepper {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+.title {
+	font-size: 1.5rem;
+	margin: 0 0 0 0.5rem;
+	font-weight: 650;
+}
+.pill {
+	background: var(--surface);
+	border: 1px solid var(--line);
+	padding: 0 1rem;
+	font-size: 1.1rem;
+}
+.segmented {
+	display: flex;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	padding: 0.2rem;
+}
+.segmented button {
+	padding: 0 1rem;
+	font-size: 1.1rem;
+	min-height: 2.35rem;
+	border-radius: var(--radius-sm);
+}
+.segmented .on {
+	background: var(--accent);
+	color: var(--on-accent);
+}
+.body {
+	flex: 1;
+	display: flex;
+	gap: 0.75rem;
+	min-height: 0;
+}
+.banner {
+	background: var(--danger-bg);
+	color: var(--danger-strong);
+	padding: 0.6rem 1rem;
+	border-radius: var(--radius);
+}
+/* Month name on the left, name filters on the right. */
+.monthHeaderTitle {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+}
+.monthTitle {
+}
+/* Under the month: the time and the weather, with the high and low muted. */
+.now {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.3rem 0.9rem;
+	font-size: 1.1rem;
+}
+.clock {
+	font-weight: 650;
+}
+.weather {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+.sky {
+	font-size: 1.4rem;
+	line-height: 1;
+}
+.temp {
+	font-weight: 650;
+}
+.highLow {
+	color: var(--muted);
+}
+
+.people {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	margin-left: auto;
+}
+/* A text button that turns every filter off, sitting just above the names' top right so the row
+   doesn't shift when it appears. */
+.clearFilter {
+	position: absolute;
+	bottom: 100%;
+	right: 0;
+	composes: quiet from "./components/ui/Buttons.module.css";
+	margin-bottom: 5px;
+	padding: 0.15rem 0.2rem;
+	font-size: 0.85rem;
+}
+.clearFilter:hover {
+	color: var(--text);
+}
+/* The filter button and its pop-up of the other names. */
+.moreWrap {
+	position: relative;
+	display: flex;
+}
+.moreButton {
+	padding: 0 0.7rem;
+	color: var(--muted);
+	/* Outlined like the name buttons beside it. */
+	border: 1.5px solid var(--line);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.moreButton svg {
+	width: 1.2rem;
+	height: 1.2rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linejoin: round;
+}
+/* Someone in the pop-up is picked. */
+.moreOn {
+	border-color: var(--accent);
+	border-width: 2.5px;
+}
+.moreButton[aria-expanded="true"] {
+	color: var(--text);
+	background: var(--bg);
+}
+.moreScrim {
+	position: fixed;
+	inset: 0;
+	z-index: var(--layer-menu);
+}
+.morePanel {
+	position: absolute;
+	top: calc(100% + 0.4rem);
+	right: 0;
+	z-index: calc(var(--layer-menu) + 1);
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 0.4rem;
+	min-width: 11rem;
+	padding: 0.6rem;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-lg);
+}
+/* The names in it, one under another. */
+.morePanel button {
+	justify-content: flex-start;
+	min-height: 2.6rem;
+}
+
+/* Under the week: the weather card, then the day's joke and quote. */
+.cards {
+	flex: none;
+	display: flex;
+	gap: 0.75rem;
+	align-items: stretch;
+}
+/* Beside the photos: the weather across the top, the joke and quote side by side beneath. */
+.cardsSide {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.cards .cardsSide > * {
+	width: auto;
+	min-width: 0;
+}
+.cardsDaily {
+	display: flex;
+	gap: 0.75rem;
+	align-items: stretch;
+}
+@media (max-width: 959.98px) {
+	.cards,
+	.cardsDaily {
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+	/* Stacked: the weather across the full width, like the photos above it (not its own centered column). */
+	.cards .cardsSide > * {
+		width: 100%;
+		max-width: none;
+		margin-inline: 0;
+	}
+}
+
+/* Phones on their side, and narrow screens: the page runs to the bottom edge too (the scrolling
+   lists keep their own room at the end for the home bar). */
+@media (max-width: 959.98px), (max-height: 500px) {
+	.shell {
+		padding-bottom: 0;
+	}
+}
+
+/* ---- Phones ---- */
+@media (max-width: 700px) {
+	/* Phones: the page runs to the bottom edge of the screen; scrolling lists keep their own room
+	   for the home bar at their end. */
+	/* The page above, the bar along the bottom (NavBar). */
+	.app {
+		flex-direction: column;
+	}
+	.shell {
+		height: auto;
+		flex: 1;
+		min-height: 0;
+		padding: var(--top-room) max(0.75rem, var(--inset-right)) 0 0.75rem;
+		gap: 0.5rem;
+	}
+	.monthTitle {
+		margin: 0;
+		font-size: 1.5rem;
+	}
+	.header {
+		gap: 0.5rem;
+	}
+	.group {
+		width: 100%;
+		gap: 0.4rem;
+	}
+	.title {
+		font-size: 1.1rem;
+		margin-left: 0.25rem;
+	}
+	.pill,
+	.segmented button {
+		padding: 0 0.75rem;
+		font-size: 1rem;
+	}
+	/* Their own row under the time and weather, from the left. */
+	.people {
+		gap: 0.4rem;
+		flex-basis: 100%;
+		justify-content: flex-start;
+		margin-left: 0;
+	}
+}
+
+/* ---- A phone on its side ---- */
+/* Little height: the month's name, the time and weather, and the name filters share one row, the
+   buttons are slimmer, and the calendar scrolls rather than squash its days. */
+@media (orientation: landscape) and (max-height: 500px) {
+	/* The nav down the left and the page beside it, even on a small phone (under 700px wide, which
+	   would otherwise stack them and leave the page below the nav). */
+	.app {
+		flex-direction: row;
+	}
+	.shell {
+		height: 100%;
+		gap: 0.4rem;
+	}
+	.monthHeaderTitle {
+		flex-wrap: nowrap;
+	}
+	.monthHeaderTitle > div {
+		display: flex;
+		align-items: baseline;
+		flex-wrap: wrap;
+		gap: 0 1rem;
+		min-width: 0;
+	}
+	.monthTitle {
+		margin: 0;
+		font-size: 1.4rem;
+	}
+	.now {
+		font-size: 1rem;
+	}
+	.pill,
+	.segmented button {
+		min-height: 2.2rem;
+		padding: 0 0.75rem;
+		font-size: 1rem;
+	}
+	.title {
+		font-size: 1.2rem;
+	}
+	.body {
+		overflow-y: auto;
+	}
+}
+
+/* A flyer's photo being dragged over the page (Snap a flyer by dropping it). */
+.flyerDrop {
+	position: fixed;
+	inset: 0;
+	z-index: var(--layer-toast);
+	display: grid;
+	place-items: center;
+	background: color-mix(in srgb, var(--bg) 85%, transparent);
+	pointer-events: none;
+}
+.flyerDropBox {
+	padding: 2.5rem 3.5rem;
+	border: 3px dashed var(--accent);
+	border-radius: var(--radius-xl);
+	background: var(--surface);
+	font-size: 1.4rem;
+	font-weight: 700;
+	color: var(--accent);
+}

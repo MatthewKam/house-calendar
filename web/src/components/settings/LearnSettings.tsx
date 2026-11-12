@@ -1,10 +1,10 @@
 import { GAME_NAMES } from '../../../../shared/learn.ts';
 import { firstName } from '../../lib/people';
 import LearnSounds from './LearnSounds';
-import Switch from '../Switch';
+import Switch from '../ui/Switch';
 import { useChangeLearnDay, useLearn, useSetLearn } from '../../lib/queries';
 import type { LearnState, LearnToday, Member } from '../../lib/types';
-import s from '../../styles/Settings.module.css';
+import s from './Settings.module.css';
 
 /** The word beside Learning in Settings while it's folded: who has it on. */
 export function learnNote(kids: LearnState[], members: Member[]) {
