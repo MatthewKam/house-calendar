@@ -619,11 +619,9 @@ function useMemberMutation<T>(fn: (arg: T) => Promise<unknown>, show?: (arg: T, 
   });
 }
 
-export const useAddMember = () => useMemberMutation((m: { name: string; color: string }) => api.addMember(m));
 export const useUpdateMember = () =>
   useMemberMutation(({ id, patch }: { id: string; patch: MemberPatch }) =>
     api.updateMember(id, patch), ({ id, patch }, members) => members.map((m) => (m.id === id ? { ...m, ...patch } : m)));
-export const useRemoveMember = () => useMemberMutation((id: string) => api.removeMember(id));
 /** A new color: shown at once when it's made, or as asked for (waiting for the account holder). */
 export const useSetMemberColor = () =>
   useMemberMutation(({ id, color }: { id: string; color: string; holder: boolean }) => api.setMemberColor(id, color),

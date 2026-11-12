@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pic } from './learn/art';
-import { noiseUrl, play, setRecorded } from './learn/sound';
-import { ANIMALS } from './learn/things';
-import { useLearnSounds, useSetLearnSound } from '../lib/queries';
-import s from '../styles/MembersPanel.module.css';
+import { Pic } from '../learn/art';
+import { noiseUrl, play, setRecorded } from '../learn/sound';
+import { ANIMALS } from '../learn/things';
+import { useLearnSounds, useSetLearnSound } from '../../lib/queries';
+import s from '../../styles/Settings.module.css';
 
 /** Longest a recording runs before it stops by itself. */
 const MAX_MS = 4000;

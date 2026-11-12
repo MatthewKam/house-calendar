@@ -1,4 +1,4 @@
-import type { SignedIn } from "../lib/api";
+import type { SignedIn } from "../../lib/api";
 
 /** The person's initial in their color; the wall gets a screen. */
 export default function Avatar({ status, big }: { status: SignedIn; big?: boolean }) {

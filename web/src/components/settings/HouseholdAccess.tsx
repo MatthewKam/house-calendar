@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, type AuthStatus } from "../lib/api";
-import { useAuthStatus } from "../lib/queries";
-import { ago } from "../lib/dates";
-import s from "../styles/Account.module.css";
-import panel from "../styles/MembersPanel.module.css";
-import ConfirmDialog from "./ConfirmDialog";
+import { api, type AuthStatus } from "../../lib/api";
+import { useAuthStatus } from "../../lib/queries";
+import { ago } from "../../lib/dates";
+import s from "../../styles/Account.module.css";
+import panel from "../../styles/Settings.module.css";
+import ConfirmDialog from "../ConfirmDialog";
 
 type Kind = "guardian" | "kid" | "wall";
 const ROLE = { guardian: "Guardian", kid: "Kid" };

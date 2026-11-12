@@ -1,7 +1,7 @@
-import { useCalendars, useUpdateCalendar } from '../lib/queries';
-import { UNASSIGNED } from '../lib/color';
-import type { Member, Visibility } from '../lib/types';
-import s from '../styles/CalendarList.module.css';
+import { useCalendars, useUpdateCalendar } from '../../lib/queries';
+import { UNASSIGNED } from '../../lib/color';
+import type { Member, Visibility } from '../../lib/types';
+import s from '../../styles/CalendarList.module.css';
 
 /** Synced calendars: whose each one is, who sees its events, and whether it shows on the wall. */
 export default function CalendarList({ members }: { members: Member[] }) {

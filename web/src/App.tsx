@@ -53,7 +53,7 @@ import { useCheer } from "./lib/useCheer";
 import TaskDialog from "./components/TaskDialog";
 import { taskProgress, percent, tasksFor } from "./lib/tasks";
 import Celebration from "./components/Celebration";
-import MembersPanel from "./components/MembersPanel";
+import Settings from "./components/settings/Settings";
 import Toast, { type ToastMessage } from "./components/Toast";
 import { UNASSIGNED } from "./lib/color";
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery, NARROW } from "./lib/useMediaQuery";
@@ -611,7 +611,7 @@ export default function App() {
 				/>
 			)}
 			{open?.kind === "settings" && (
-				<MembersPanel
+				<Settings
 					members={members}
 					// Kid mode starts from Settings (Screen); a kid's own device is in it already.
 					onKidMode={kids.length && signedIn?.role !== "kid" ? () => setOpen({ kind: "kidModeStart" }) : undefined}

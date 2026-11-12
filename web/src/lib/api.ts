@@ -99,14 +99,12 @@ export const api = {
   connectICloud: (c: { appleId: string; password: string }) => call<void>('POST', '/api/connections/icloud', c),
   removeConnection: (id: string) => call<void>('DELETE', `/api/connections/${id}`),
   members: () => call<Member[]>('GET', '/api/members'),
-  addMember: (m: { name: string; color: string }) => call<Member>('POST', '/api/members', m),
   updateMember: (id: string, m: MemberPatch) => call<Member>('PATCH', `/api/members/${id}`, m),
   /** A new color for someone: made at once by the account holder, otherwise asked for (asked: true). */
   setMemberColor: (id: string, color: string) => call<{ member: Member; asked: boolean }>('PUT', `/api/members/${id}/color`, { color }),
   answerColor: (id: string, approve: boolean) => call<Member>('POST', `/api/members/${id}/color/answer`, { approve }),
   /** Hands the account holder's role to another guardian. */
   setHolder: (membershipId: string) => call<AuthStatus>('POST', '/api/account/holder', { membershipId }),
-  removeMember: (id: string) => call<void>('DELETE', `/api/members/${id}`),
   learn: (today: string) => call<LearnState[]>('GET', `/api/learn?today=${today}`),
   setLearn: (memberId: string, today: string, p: { enabled?: boolean; gamesADay?: number; minutesADay?: number | null; levels?: Partial<Record<Game, number>> }) =>
     call<LearnState>('PUT', `/api/learn/${memberId}`, { ...p, today }),
