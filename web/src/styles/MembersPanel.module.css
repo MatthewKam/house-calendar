@@ -478,13 +478,12 @@
 	color: var(--accent);
 }
 
-/* Learning: each kid's switches, one block each. */
+/* Learning: inside each kid's dropdown, their switch, day and games. */
 .learnKid {
 	display: flex;
 	flex-direction: column;
 	gap: 0.3rem;
-	padding: 0.6rem 0;
-	border-top: 1px solid var(--line);
+	padding: 0 0 0.8rem;
 }
 /* Learn's day for a kid: games a day, time a day, and today (with unlock, lock and more). */
 .learnDay {

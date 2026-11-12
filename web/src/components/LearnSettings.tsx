@@ -1,6 +1,7 @@
 import { GAME_NAMES } from '../../../shared/learn.ts';
 import { firstName } from '../lib/people';
 import LearnSounds from './LearnSounds';
+import Switch from './Switch';
 import { useChangeLearnDay, useLearn, useSetLearn } from '../lib/queries';
 import type { LearnState, LearnToday, Member } from '../lib/types';
 import s from '../styles/MembersPanel.module.css';
@@ -59,12 +60,18 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
         const kid = members.find((m) => m.id === k.memberId);
         if (!kid) return null;
         return (
-          <div key={k.memberId} className={s.learnKid}>
-            <label className={s.saverRow}>
-              <input type="checkbox" checked={k.enabled} disabled={set.isPending}
-                onChange={(e) => set.mutate({ memberId: k.memberId, enabled: e.target.checked })} />
-              <b>{kid.name}</b>: Learn in kid mode
-            </label>
+          // A dropdown each: their name and whether it's on; inside, the switch, then their day and games.
+          <details key={k.memberId} className={s.fold}>
+            <summary className={s.foldHead}>
+              <span>{kid.name}</span>
+              <span className={s.foldNote}>{k.enabled ? 'On' : 'Off'}</span>
+            </summary>
+            <div className={s.learnKid}>
+            <div className={s.switchHead}>
+              <span>Learn in kid mode</span>
+              <Switch on={k.enabled} disabled={set.isPending} label={`${kid.name}: Learn in kid mode`}
+                onChange={(on) => set.mutate({ memberId: k.memberId, enabled: on })} />
+            </div>
             {k.enabled && (
               <div className={s.learnDay}>
                 <div className={s.learnGame}>
@@ -129,7 +136,8 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
                   onClick={() => set.mutate({ memberId: k.memberId, levels: { [game]: level + 1 } })}>+</button>
               </div>
             ))}
-          </div>
+            </div>
+          </details>
         );
       })}
       {set.isError && <p className={s.error}>{set.error.message}</p>}
