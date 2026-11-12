@@ -59,24 +59,40 @@ function ColorSet({ value, label, onPick }: { value: string; label: string; onPi
   );
 }
 
-/** Which part of Settings is showing (its title), or null for the list of them all. */
+/** Which group of Settings is showing (its title), or null for the list of them. */
 const SettingsView = createContext<{ view: string | null; open: (title: string) => void }>({ view: null, open: () => {} });
 
 /**
- * One part of Settings: in the list, a row with its title and a word on how it's set; tapped, the
- * sheet shows just this part (with a back arrow to the list).
+ * A group of Settings (Family, Learning, Appearance, This device): in the list, a row (with a word on
+ * how it's set, for one that's a single thing); tapped, the sheet shows just it (a back arrow to the list).
  */
-function Section({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   const { view, open } = useContext(SettingsView);
   if (view === null) {
     return (
-      <button type="button" className={s.fold} onClick={() => open(title)}>
+      <button type="button" className={s.groupRow} onClick={() => open(title)}>
         <span>{title}</span>
         {note && <span className={s.foldNote}>{note}</span>}
       </button>
     );
   }
-  return view === title ? <div className={s.foldBody}>{children}</div> : null;
+  return view === title ? <>{children}</> : null;
+}
+
+/**
+ * One part of a group, folded to its heading (and a word on how it's set) until tapped. Opening one
+ * closes the others, so the view stays short.
+ */
+function Section({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+  return (
+    <details className={s.fold} {...{ name: 'settings' }}>
+      <summary className={s.foldHead}>
+        <span>{title}</span>
+        {note && <span className={s.foldNote}>{note}</span>}
+      </summary>
+      <div className={s.foldBody}>{children}</div>
+    </details>
+  );
 }
 
 /** Where travel times start from. Saved with Save, so a half-typed address isn't used. */
@@ -231,7 +247,7 @@ export default function MembersPanel({ members, onClose }: Props) {
         </header>
         <SettingsView.Provider value={{ view, open: setView }}>
         {view === null && auth?.signedIn && <SignedInAs status={auth} onClose={onClose} />}
-        {view === null && <h3 className={s.group}>Family</h3>}
+        <Group title="Family">
         <Section title="Family" note={members.map((m) => m.name).join(", ")}>
         <p className={s.hint}>
           Tap the pencil to change a name, color or birthday. A birthday sets each kid's stage, which decides how they earn stars.
@@ -340,10 +356,6 @@ export default function MembersPanel({ members, onClose }: Props) {
           <HomeAddress />
         </Section>
 
-        <Section title="Learning" note={learnNote(learn, members)}>
-          <LearnSettings members={members} today={today} />
-        </Section>
-
         <Section title="Calendars">
           <ICloudCalendars members={members} />
           <GoogleCalendars members={members} />
@@ -354,7 +366,16 @@ export default function MembersPanel({ members, onClose }: Props) {
           <HouseholdAccess />
         </Section>
 
-        {view === null && <h3 className={s.group}>Appearance</h3>}
+        </Group>
+
+        {/* A big one: its own group, not folded inside Family. */}
+        <Group title="Learning" note={learnNote(learn, members)}>
+          <div className={s.foldBody}>
+            <LearnSettings members={members} today={today} />
+          </div>
+        </Group>
+
+        <Group title="Appearance">
         {/* Each a circle, half its light shade and half its dark: one pick, a shade for each. The wall
             wears the account holder's, and their pick becomes the household's. */}
         {wall ? (
@@ -401,7 +422,11 @@ export default function MembersPanel({ members, onClose }: Props) {
           </label>
         </Section>
 
-        {view === null && (grownUp || wallModeOn || !phone) && <h3 className={s.group}>This device</h3>}
+        </Group>
+
+        {/* Empty on a phone that isn't a grown-up's own: no group at all then. */}
+        {(grownUp || wallModeOn || !phone) && (
+        <Group title="This device">
         {/* Like kid mode, for the wall: a guardian's own device becomes the wall until a PIN turns it back. */}
         {(grownUp || wallModeOn) && (
           <Section title="Wall mode" note={auth?.signedIn && auth.wallMode ? 'On' : 'Off'}>
@@ -430,6 +455,8 @@ export default function MembersPanel({ members, onClose }: Props) {
           </Section>
         )}
 
+        </Group>
+        )}
         </SettingsView.Provider>
 
         {/* Signing out (or locking the wall) last, away from everything else. */}

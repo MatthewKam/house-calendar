@@ -48,8 +48,6 @@
   background: linear-gradient(135deg, var(--light) 50%, var(--dark) 50%); box-shadow: 0 0 0 1px var(--line); }
 .accentDot.picked { box-shadow: 0 0 0 3px var(--accent); }
 .kidColorsHead { margin: 0.4rem 0 0; font-size: 1rem; }
-/* Settings' groups: Family, Appearance, This device. */
-.group { margin: 0.9rem 0 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
 .themeNote { margin: 0; color: var(--muted); font-size: 0.9rem; }
 .home { display: flex; flex-direction: column; gap: 0.4rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
 /* Screen saver settings. */
@@ -71,21 +69,34 @@
 .pinForm input { font-size: 1.05rem; padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: 0.6rem; }
 .pinError { margin: 0; color: var(--danger); font-size: 0.9rem; }
 
-/* Settings: the list of its parts, a row each (its title, how it's set, a chevron); tapped, just that part. */
-.fold {
-  width: 100%; display: flex; align-items: center; gap: 0.8rem; min-height: 3rem; padding: 0.4rem 0;
+/* Settings: a row for each group (Family, Appearance, This device); tapped, just that group. */
+.groupRow {
+  width: 100%; display: flex; align-items: center; gap: 0.8rem; min-height: 3.2rem; padding: 0.4rem 0;
   border-top: 1px solid var(--line); border-radius: 0; background: none; color: var(--text); text-align: left;
+  font-size: 1.1rem; font-weight: 650; cursor: pointer;
+}
+/* A chevron: tap to go in. */
+.groupRow::after {
+  content: ''; flex: none; width: 0.55rem; height: 0.55rem; margin: 0 0.3rem 0 auto;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); rotate: -45deg;
+}
+/* A group's parts, each folded to its heading (and how it's set) until tapped. */
+.fold { border-top: 1px solid var(--line); }
+.foldHead {
+  list-style: none; display: flex; align-items: center; gap: 0.8rem; min-height: 3rem; padding: 0.4rem 0;
   font-size: 1.05rem; font-weight: 650; cursor: pointer;
 }
+.foldHead::-webkit-details-marker { display: none; }
 .foldNote {
   flex: 1; min-width: 0; text-align: right; color: var(--muted); font-size: 0.9rem; font-weight: 400;
   overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
-/* A chevron: tap to go in. */
-.fold::after {
+/* A chevron that turns down when open. */
+.foldHead::after {
   content: ''; flex: none; width: 0.55rem; height: 0.55rem; margin: 0 0.3rem 0 auto;
-  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); rotate: -45deg;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); rotate: -45deg; transition: rotate 0.2s;
 }
+.fold[open] > .foldHead::after { rotate: 45deg; }
 .foldBody { display: flex; flex-direction: column; gap: 0.6rem; padding-bottom: 1rem; }
 /* A part's title, with the way back to the list before it. */
 .viewTitle { display: flex; align-items: center; }
