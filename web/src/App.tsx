@@ -61,6 +61,7 @@ import { PHONE, PHONE_SIDEWAYS, useMediaQuery, NARROW } from "./lib/useMediaQuer
 import { useFlyerDrop } from "./lib/useFlyerDrop";
 import s from "./styles/App.module.css";
 import { isKid } from "./lib/people";
+import { useTheme } from "./lib/useTheme";
 
 /** Today's date key, updated when the clock passes midnight. */
 function useToday() {
@@ -188,6 +189,8 @@ export default function App() {
 		: kidDevice
 			? members.filter((m) => m.id === kidDevice)
 			: null;
+	// Light or dark, as picked in Settings (or the device's own); kid mode stays light.
+	useTheme(!!kidView);
 	// Leaving: a kid's own device unlocks for a parent (and comes back when it locks again); anywhere
 	// else a guardian's PIN turns it off, or just the tap when there's no PIN to ask for.
 	function leaveKidMode() {

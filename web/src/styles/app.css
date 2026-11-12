@@ -45,13 +45,6 @@
 	--layer-toast: 30; /* toasts, and a flyer dragged over the page */
 	--layer-celebration: 40; /* a cheer, over everything */
 	--layer-photo: 60; /* a photo opened big */
-	--bg: #f6f5f2;
-	--surface: #ffffff;
-	--text: #1d1f23;
-	--muted: #6b7079;
-	--line: #e3e1dc;
-	--today: #fff6dc;
-	--accent: #146c43;
 	--radius: 0.9rem;
 	font-family:
 		"Aleo",
@@ -61,9 +54,9 @@
 		Roboto,
 		sans-serif;
 	color: var(--text);
-	/* White outside the page (the strip behind a phone's clock and battery joins the white nav bar);
-     the page itself is beige. */
-	background: #fff;
+	/* The surface outside the page (the strip behind a phone's clock and battery joins the nav bar);
+     the page itself is the background. */
+	background: var(--surface);
 	/* Base size; the UI scale setting overrides this so one layout fits 15.6" and 21.5" panels. */
 	font-size: 18px;
 	-webkit-tap-highlight-color: transparent;
@@ -78,7 +71,7 @@ body,
 	height: 100%;
 	overflow: hidden;
 }
-/* White here too (iOS colors the strip behind the clock from it); the page area is beige (App.module.css). */
+/* The surface here too (iOS colors the strip behind the clock from it); the page area is the background (App.module.css). */
 /* A touch screen's long press shouldn't select text or open the system menu (Copy, Look Up, Save
    Image) instead of pressing the button; Safari needs its own -webkit- names for both. Typing fields
    still can (below). */
@@ -87,7 +80,7 @@ body {
 	user-select: none;
 	-webkit-touch-callout: none;
 	touch-action: manipulation;
-	background: #fff;
+	background: var(--surface);
 }
 img,
 video {
@@ -127,10 +120,76 @@ input {
 	--inset-left: 0px;
 }
 
+/*
+ * Colors: light, or dark (lib/useTheme.ts sets data-theme on the page from Settings, or the device's own
+ * setting; index.html sets it before the first paint). Kid mode stays light (data-theme="light" on it):
+ * its pictures and games are made bright.
+ */
+:root,
+[data-theme="light"] {
+	color-scheme: light;
+	--bg: #f6f5f2;
+	--surface: #ffffff;
+	--text: #1d1f23;
+	--muted: #6b7079;
+	--line: #e3e1dc;
+	--today: #fff6dc;
+	--accent: #146c43;
+	/* Something wrong: text, a box's background and its border, and darker text in that box. */
+	--danger: #b42318;
+	--danger-bg: #fef3f2;
+	--danger-line: #fecdca;
+	--danger-strong: #8a1f1f;
+	/* A heads-up (amber). */
+	--warn: #8a5a00;
+	--warn-bg: #fff8e6;
+	--warn-line: #f0d68a;
+	/* Done, or all good. */
+	--good: #1a7f4b;
+	--good-bg: #ecfbf3;
+	--good-line: #b7e4cb;
+	/* Soon: a countdown or a due date (orange). */
+	--soon: #9a4a00;
+	--soon-bg: #fff1e6;
+	--soon-line: #f3c79f;
+	/* A note to know (blue). */
+	--info-bg: #eef6ff;
+	/* Dark pills over the page: toasts, time-to-leave alerts. */
+	--float: #1d1f23;
+	/* How much of a picked pastel (a list's color) shows: all of it on light, a hint of it on dark. */
+	--pastel: 100%;
+}
+[data-theme="dark"] {
+	color-scheme: dark;
+	--bg: #141518;
+	--surface: #1e2024;
+	--text: #ebe9e4;
+	--muted: #9da2ab;
+	--line: #34373d;
+	--today: #3a3220;
+	--accent: #258f5c;
+	--danger: #ff8b7e;
+	--danger-bg: #3a1c1a;
+	--danger-line: #6e2c26;
+	--danger-strong: #ffb3aa;
+	--warn: #f2c35b;
+	--warn-bg: #3a2f14;
+	--warn-line: #6b5420;
+	--good: #6fd39b;
+	--good-bg: #15301f;
+	--good-line: #2c5a3e;
+	--soon: #ffb27a;
+	--soon-bg: #3a2416;
+	--soon-line: #6e4325;
+	--info-bg: #1b2738;
+	--float: #3a3d44;
+	--pastel: 28%;
+}
+
 /* Someone else's Busy time (server/privacy.ts): just the time, faded and striped, and it doesn't open. */
 [data-busy] {
 	opacity: 0.6;
 	font-style: italic;
 	cursor: default;
-	background-image: repeating-linear-gradient(135deg, transparent 0 6px, rgb(0 0 0 / 0.06) 6px 12px);
+	background-image: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--text) 6%, transparent) 6px 12px);
 }

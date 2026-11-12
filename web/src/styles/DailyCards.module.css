@@ -14,10 +14,10 @@
 }
 /* A soft tint on each, so they read as different cards. */
 .joke {
-	background: linear-gradient(160deg, #fff8e7 0%, var(--surface) 70%);
+	background: linear-gradient(160deg, var(--warn-bg) 0%, var(--surface) 70%);
 }
 .quote {
-	background: linear-gradient(160deg, #eef4ff 0%, var(--surface) 70%);
+	background: linear-gradient(160deg, var(--info-bg) 0%, var(--surface) 70%);
 }
 .label {
 	margin: 0;
@@ -51,7 +51,7 @@
 }
 .answer {
 	font-size: 1.05rem;
-	color: #9a5b00;
+	color: var(--warn);
 	font-weight: 650;
 	animation: pop 0.3s ease-out;
 }

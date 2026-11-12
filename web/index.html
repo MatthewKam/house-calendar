@@ -13,9 +13,21 @@
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-title" content="Sprig" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-		<!-- White, like the nav bar: the strip behind the phone's clock and battery joins up with it. -->
+		<!-- The nav bar's color: the strip behind the phone's clock and battery joins up with it (lib/useTheme.ts sets it for dark). -->
 		<meta name="theme-color" content="#ffffff" />
 		<title>Sprig</title>
+		<!-- Dark before the first paint, when picked or the device is dark (lib/useTheme.ts takes over;
+		     kid mode turns it light again). -->
+		<script>
+			try {
+				var t = localStorage.getItem("sprig:theme");
+				var kid = localStorage.getItem("sprig:kid-mode");
+				if (!kid && (t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches))) {
+					document.documentElement.dataset.theme = "dark";
+					document.querySelector('meta[name="theme-color"]').setAttribute("content", "#1e2024");
+				}
+			} catch (e) {}
+		</script>
 	</head>
 	<body>
 		<div id="app"></div>

@@ -42,11 +42,11 @@
 }
 .complete {
 	/* Half-strength color, matching ticked tasks. */
-	background: color-mix(in srgb, var(--c) 50%, white) !important;
+	background: color-mix(in srgb, var(--c) 50%, var(--surface)) !important;
 	font-weight: 650;
 }
 .complete i {
-	box-shadow: 0 0 0 2px rgb(255 255 255 / 0.8);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--surface) 80%, transparent);
 }
 .filterOn {
 	border-color: var(--accent) !important;

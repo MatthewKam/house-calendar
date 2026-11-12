@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import s from "../styles/QuickAdd.module.css";
 
 type QuickKind = "event" | "list" | "good" | "task" | "photo" | "snap" | "say";
@@ -106,7 +106,7 @@ export default function QuickAdd({ actions }: { actions: QuickAction[] }) {
 								<button key={a.kind} role="menuitem" className={s.action} onClick={() => pick(a)}
 									// From the bottom up, nearest the + first.
 									style={{ animationDelay: `${(actions.length - 1 - i) * 25}ms` }}>
-									<span className={s.icon} style={{ background: look.tint, color: look.ink }}>{look.icon}</span>
+									<span className={`${s.icon} ${look.ink === "#ffffff" ? s.solid : ""}`} style={{ "--tint": look.tint, "--ink": look.ink } as CSSProperties}>{look.icon}</span>
 									{look.label}
 								</button>
 							);

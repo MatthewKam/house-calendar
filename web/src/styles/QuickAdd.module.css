@@ -11,7 +11,7 @@
 	display: grid;
 	place-items: center;
 	background: var(--accent);
-	color: var(--surface);
+	color: #fff;
 	box-shadow: 0 0.4rem 1rem rgb(20 108 67 / 0.35);
 	position: relative;
 	z-index: calc(var(--layer-menu) + 1);
@@ -38,7 +38,7 @@
 	position: fixed;
 	inset: 0;
 	z-index: var(--layer-menu);
-	background: rgb(246 245 242 / 0.9);
+	background: color-mix(in srgb, var(--bg) 90%, transparent);
 	animation: fade 0.2s;
 }
 .stack {
@@ -68,6 +68,7 @@
 	box-shadow: 0 0.25rem 0.9rem rgb(29 31 35 / 0.08);
 	animation: pop 0.2s ease-out both;
 }
+/* Each action's own colors (--tint behind --ink); in dark mode, a deep shade of the ink with it lightened. */
 .icon {
 	width: 2.4rem;
 	height: 2.4rem;
@@ -75,6 +76,12 @@
 	border-radius: 50%;
 	display: grid;
 	place-items: center;
+	background: var(--tint);
+	color: var(--ink);
+}
+:global([data-theme="dark"]) .icon:not(.solid) {
+	background: color-mix(in srgb, var(--ink) 30%, var(--surface));
+	color: color-mix(in srgb, var(--ink), white 55%);
 }
 .icon svg {
 	width: 1.3rem;

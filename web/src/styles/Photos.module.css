@@ -26,7 +26,7 @@
 .upload {
 	padding: 0 1rem;
 	background: var(--accent);
-	color: var(--surface);
+	color: #fff;
 	font-weight: 650;
 }
 
@@ -126,11 +126,11 @@
 	transition: width 0.2s;
 }
 .failed {
-	border-color: #f1b4ad !important;
+	border-color: var(--danger-line) !important;
 }
 .uploadError {
 	flex: 1;
-	color: #b42318;
+	color: var(--danger);
 	font-size: 0.9rem;
 }
 .dismiss {
@@ -300,7 +300,7 @@
 .save {
 	padding: 0 1.1rem;
 	background: var(--accent);
-	color: var(--surface);
+	color: #fff;
 	font-weight: 700;
 }
 .save:disabled {
