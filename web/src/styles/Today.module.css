@@ -602,6 +602,13 @@ details > summary.cardHead {
 	fill: var(--muted);
 	font-size: 11px;
 }
+/* The AM or PM after an hour: smaller, on the hour's own bottom line (under the graph, and in its tooltip). */
+.graphAmPm {
+	font-size: 0.72em;
+}
+.tipAmPm {
+	font-size: 0.8em;
+}
 .graphTemp {
 	fill: var(--text);
 	font-size: 12px;

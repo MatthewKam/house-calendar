@@ -9,9 +9,33 @@ import s from "../styles/Today.module.css";
 
 type Hour = Weather["hours"][number];
 
-/** "5 PM". */
+/** "5 PM" (the tooltip). */
 const hourLabel = (iso: string) =>
 	new Date(iso).toLocaleTimeString([], { hour: "numeric" });
+/** The hour and AM or PM, apart, so the AM or PM can be set smaller on the hour's bottom line. */
+const hourParts = (iso: string) => {
+	const h = new Date(iso).getHours();
+	return [h % 12 || 12, h < 12 ? "AM" : "PM"] as const;
+};
+/** Under the graph: the hour, then a small AM or PM, so they don't run together. */
+const graphHour = (iso: string) => {
+	const [hour, half] = hourParts(iso);
+	return (
+		<>
+			{hour}
+			<tspan className={s.graphAmPm}>{half}</tspan>
+		</>
+	);
+};
+/** The picked hour's tooltip: the same, a touch bigger. */
+const tipHour = (iso: string) => {
+	const [hour, half] = hourParts(iso);
+	return (
+		<>
+			{hour} <span className={s.tipAmPm}>{half}</span>
+		</>
+	);
+};
 
 /**
  * The grown-ups' Today weather: now (how warm it feels, the sky, the day's high and low, rain and wind),
@@ -307,7 +331,7 @@ function HourGraph({
 									y={HEIGHT - 6}
 									textAnchor={anchor(x(i))}
 								>
-									{hourLabel(h.time)}
+									{graphHour(h.time)}
 								</text>
 							</g>
 						) : null,
@@ -392,7 +416,7 @@ function HourGraph({
 							points[picked!][0] < width / 2 ? points[picked!][0] + 12 : points[picked!][0] - 12 - TIP)),
 					}}
 				>
-					<b>{hourLabel(shown.time)}</b>
+					<b>{tipHour(shown.time)}</b>
 					<span>
 						{shown.temp}° · Feels {shown.feels}°
 					</span>
