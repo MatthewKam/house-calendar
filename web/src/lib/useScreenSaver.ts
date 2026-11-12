@@ -1,20 +1,23 @@
 import { useEffect, useState } from 'react';
-import { usePhotos, useSettings } from './queries';
-import { screenSaverSettings } from './screensaver';
+import { usePhotos } from './queries';
+import { useScreenSaverSettings } from './useScreenSaverSettings';
+import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from './useMediaQuery';
 
 /**
- * The photo screen saver: on after the wall has been idle for the set time (any touch, mouse
- * movement or key starts the count over). If a pop-up is open when time runs out, it waits another
- * minute rather than covering what someone was doing. `show` starts it now (Play it now).
+ * The photo screen saver: on after the screen has been idle for the set time (any touch, mouse
+ * movement or key starts the count over), on tablets and computers, never by itself on a phone. If a
+ * pop-up is open when time runs out, it waits another minute rather than covering what someone was
+ * doing. `show` starts it now (Play it now, the slideshow), phones too.
  */
 export function useScreenSaver() {
-  const settings = screenSaverSettings(useSettings().data?.screensaver);
+  const [settings] = useScreenSaverSettings();
+  const phone = useMediaQuery(PHONE) || useMediaQuery(PHONE_SIDEWAYS);
   // The photos and videos picked for it (on the Photos page), once ready.
   const photos = (usePhotos().data ?? []).filter((p) => p.inSlideshow && p.ready);
   const [on, setOn] = useState(false);
 
   useEffect(() => {
-    if (!settings.enabled || photos.length === 0) return;
+    if (!settings.enabled || phone || photos.length === 0) return;
     let timer: ReturnType<typeof setTimeout>;
     const fire = () => {
       if (document.querySelector('[class*="_scrim_"], [role="dialog"]')) {
@@ -34,7 +37,7 @@ export function useScreenSaver() {
       clearTimeout(timer);
       events.forEach((e) => window.removeEventListener(e, arm));
     };
-  }, [settings.enabled, settings.idleMinutes, photos.length]);
+  }, [settings.enabled, settings.idleMinutes, phone, photos.length]);
 
   return { on: on && photos.length > 0, photos, settings, show: () => setOn(true), hide: () => setOn(false) };
 }

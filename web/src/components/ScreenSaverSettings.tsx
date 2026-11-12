@@ -1,5 +1,5 @@
-import { useSetSetting, useSettings } from '../lib/queries';
-import { screenSaverSettings, TRANSITIONS } from '../lib/screensaver';
+import { TRANSITIONS } from '../lib/screensaver';
+import { useScreenSaverSettings } from '../lib/useScreenSaverSettings';
 import type { ScreenSaverSettings as Settings } from '../lib/types';
 import { useWakeStatus, type WakeStatus } from '../lib/useWakeLock';
 import s from '../styles/MembersPanel.module.css';
@@ -25,16 +25,14 @@ const SECONDS: [number, string][] = [[10, '10 seconds'], [20, '20 seconds'], [30
  * picked on the Photos page.
  */
 export default function ScreenSaverSettings({ onPreview, bare }: { onPreview?: () => void; /** In its own pop-up: no heading or divider. */ bare?: boolean }) {
-  const saver = screenSaverSettings(useSettings().data?.screensaver);
-  const setSetting = useSetSetting();
+  const [saver, save] = useScreenSaverSettings();
   const wake = useWakeStatus();
-  const save = (patch: Partial<Settings>) => setSetting.mutate({ key: 'screensaver', value: { ...saver, ...patch } });
   return (
     <section className={bare ? s.bare : s.home}>
       {!bare && <h3 className={s.section}>Screen saver</h3>}
       <label className={s.saverRow}>
         <input type="checkbox" checked={saver.enabled} onChange={(e) => save({ enabled: e.target.checked })} />
-        Show photos when the wall is idle
+        Show photos when this screen is idle
       </label>
       {saver.enabled && (
         <>

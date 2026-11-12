@@ -2,7 +2,8 @@ import { useState, type CSSProperties, type FormEvent, type ReactNode } from 're
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { PALETTE } from '../lib/color';
-import { screenSaverSettings } from '../lib/screensaver';
+import { useScreenSaverSettings } from '../lib/useScreenSaverSettings';
+import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../lib/useMediaQuery';
 import { useAddMember, useAuthStatus, useCalendars, useLearn, useRemoveMember, useSetSetting, useSettings, useUpdateMember, useSetMemberColor } from '../lib/queries';
 import ColorAsked from './ColorAsked';
 import type { Member, MemberPatch, Stage } from '../lib/types';
@@ -161,7 +162,8 @@ export default function MembersPanel({ members, onClose }: Props) {
   const setSetting = useSetSetting();
   // For the folded sections' summaries.
   const settings = useSettings().data;
-  const saver = screenSaverSettings(settings?.screensaver);
+  const [saver] = useScreenSaverSettings();
+  const phone = useMediaQuery(PHONE) || useMediaQuery(PHONE_SIDEWAYS);
   // Alerts are a grown-up's own phone's (not the wall's or a kid's device).
   const auth = useAuthStatus().data;
   const grownUp = !!auth?.signedIn && auth.role === 'guardian' && auth.kind === 'user';
@@ -313,10 +315,6 @@ export default function MembersPanel({ members, onClose }: Props) {
         <HomeAddress />
         </Section>
 
-        <Section title="People and sign-in">
-          <HouseholdAccess />
-        </Section>
-
         <Section title="Learning" note={learnNote(learn, members)}>
           <LearnSettings members={members} today={today} />
         </Section>
@@ -327,22 +325,11 @@ export default function MembersPanel({ members, onClose }: Props) {
           {hasCalendars && <CalendarList members={members} />}
         </Section>
 
-        <Section title="Screen saver" note={saver.enabled ? `On · after ${idleLabel(saver.idleMinutes)}` : "Off"}>
-          <ScreenSaverSettings bare />
+        <Section title="Users">
+          <HouseholdAccess />
         </Section>
 
         <h3 className={s.group}>Appearance</h3>
-        <Section title="Light or dark" note={THEMES.find(([v]) => v === theme)![1]}>
-          <div className={s.theme} role="radiogroup" aria-label="Light or dark">
-            {THEMES.map(([v, label]) => (
-              <button key={v} role="radio" aria-checked={theme === v} className={theme === v ? s.themeOn : ''} onClick={() => setTheme(v)}>
-                {label}
-              </button>
-            ))}
-          </div>
-          <p className={s.themeNote}>Kid mode stays light.</p>
-        </Section>
-
         {/* Each a circle, half its light shade and half its dark: one pick, a shade for each. The wall
             wears the account holder's, and their pick becomes the household's. */}
         {wall ? (
@@ -370,6 +357,17 @@ export default function MembersPanel({ members, onClose }: Props) {
         </Section>
         )}
 
+        <Section title="Light or dark" note={THEMES.find(([v]) => v === theme)![1]}>
+          <div className={s.theme} role="radiogroup" aria-label="Light or dark">
+            {THEMES.map(([v, label]) => (
+              <button key={v} role="radio" aria-checked={theme === v} className={theme === v ? s.themeOn : ''} onClick={() => setTheme(v)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className={s.themeNote}>Kid mode stays light.</p>
+        </Section>
+
         <Section title="Text size" note={`${Math.round(uiScale * 100)}%`}>
           <label className={s.scale}>
             <input type="range" min={0.8} max={1.6} step={0.05} value={uiScale} aria-label="Text size"
@@ -378,13 +376,7 @@ export default function MembersPanel({ members, onClose }: Props) {
           </label>
         </Section>
 
-        {(grownUp || wallModeOn) && <h3 className={s.group}>This device</h3>}
-        {grownUp && (
-          <Section title="Notifications" note={ALERTS_NOTE[push.state]}>
-            <AlertsSetting push={push} />
-          </Section>
-        )}
-
+        {(grownUp || wallModeOn || !phone) && <h3 className={s.group}>This device</h3>}
         {/* Like kid mode, for the wall: a guardian's own device becomes the wall until a PIN turns it back. */}
         {(grownUp || wallModeOn) && (
           <Section title="Wall mode" note={auth?.signedIn && auth.wallMode ? 'On' : 'Off'}>
@@ -397,6 +389,19 @@ export default function MembersPanel({ members, onClose }: Props) {
               onClick={() => (auth?.signedIn && auth.wallMode ? switchWallMode(false) : setWallModeAsk(true))}>
               {auth?.signedIn && auth.wallMode ? 'Leave wall mode' : 'Turn on wall mode'}
             </button>
+          </Section>
+        )}
+
+        {/* Tablets and computers only: never on a phone. */}
+        {!phone && (
+        <Section title="Screen saver" note={saver.enabled ? `On · after ${idleLabel(saver.idleMinutes)}` : "Off"}>
+          <ScreenSaverSettings bare />
+        </Section>
+        )}
+
+        {grownUp && (
+          <Section title="Notifications" note={ALERTS_NOTE[push.state]}>
+            <AlertsSetting push={push} />
           </Section>
         )}
 
