@@ -216,7 +216,7 @@
 	background:
 		var(--stripe) left / 0.4rem 100% no-repeat,
 		rgb(255 255 255 / 0.72);
-	box-shadow: 0 0.3rem 1rem rgb(0 0 0 / 0.25);
+	box-shadow: 0 0.3rem 1rem rgb(0 0 0 / 0.25); /* own: stands out on any photo */
 	-webkit-backdrop-filter: blur(10px);
 	backdrop-filter: blur(10px);
 }

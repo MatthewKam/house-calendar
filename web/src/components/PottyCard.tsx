@@ -92,7 +92,9 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact, atta
 
 	// The header's pencil (attached): edit, as the Edit button would.
 	useEffect(() => {
-		if (editAsked) (askFirst ? askFirst(() => setEditing(true)) : setEditing(true));
+		if (!editAsked) return;
+		if (askFirst) askFirst(() => setEditing(true));
+		else setEditing(true);
 		// Only when it's tapped.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [editAsked]);

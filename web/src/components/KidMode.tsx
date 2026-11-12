@@ -327,7 +327,6 @@ function TaskPages({ kidId, pages, hold }: {
 		const pageOf = el.querySelector("[data-todo]")?.closest("section") as HTMLElement | null;
 		el.scrollTo({ left: pageOf?.offsetLeft ?? 0 });
 		// Not as each one's ticked, or when the screen turns.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [kidId, laidOut]);
 
 	// Lay each out: as one page if its blocks are big enough, or split over as many pages as it takes.

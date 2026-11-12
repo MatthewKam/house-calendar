@@ -9,6 +9,8 @@ import s from '../../styles/Settings.module.css';
 const MAX_MS = 4000;
 /** What this browser records in: Safari makes audio/mp4, most others audio/webm. */
 const TYPES = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'];
+/** The same empty list each time while loading, so the effect below doesn't run on every render. */
+const NONE: never[] = [];
 
 /**
  * The games' animal noises, which a grown-up can record in their own voice ("Moo!"): each animal's
@@ -16,7 +18,7 @@ const TYPES = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'];
  * the built-in one.
  */
 export default function LearnSounds() {
-  const sounds = useLearnSounds().data ?? [];
+  const sounds = useLearnSounds().data ?? NONE;
   const save = useSetLearnSound();
   const [recording, setRecording] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);

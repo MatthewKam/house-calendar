@@ -2,7 +2,7 @@
 
 How Sprig's CSS is put together, and which shared names to use. The names all live in `app.css` (this folder), each with a comment saying what it's for.
 
-**The rule:** if a shared name fits, use it instead of a number or colour of your own. A one-off value is fine when it's part of a drawn thing (a picture made in CSS, a game piece), and then a comment says why.
+**The rule:** if a shared name fits, use it instead of a number or colour of your own. A one-off value is fine when it's part of a drawn thing (a picture made in CSS, a game piece), and then a comment says why. For corners and plain drop shadows, `scale.test.ts` checks this: a value of your own needs `/* own: why */` on its line or the line before, like the shadow that stands out on any photo.
 
 ## Where styles go
 

@@ -231,6 +231,8 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 		if (!incoming?.length) return;
 		onTaken?.();
 		void add(incoming);
+		// Only when new photos come in.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [incoming]);
 
 	// Arrow keys and Escape in the viewer.

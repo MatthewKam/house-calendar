@@ -88,6 +88,7 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 	// again once the fingers have rested), and it doesn't go Back in the browser.
 	const stepRef = useRef(step);
 	stepRef.current = step;
+	const hasPhotos = order.length > 0;
 	useEffect(() => {
 		const el = card.current;
 		if (!el) return;
@@ -114,7 +115,7 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 			el.removeEventListener("wheel", wheel);
 			clearTimeout(rest);
 		};
-	}, [order.length > 0]);
+	}, [hasPhotos]);
 
 	// A tap anywhere else closes the menu.
 	useEffect(() => {

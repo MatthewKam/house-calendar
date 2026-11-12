@@ -19,7 +19,10 @@ Before calling something done:
 ```sh
 npm test          # server and web logic (vitest)
 npm run check     # TypeScript, server and web
+npm run lint      # likely mistakes (ESLint): unused code, hooks used wrongly
 ```
+
+GitHub runs all three on every push and pull request (`.github/workflows/checks.yml`).
 
 ## Who it's for
 

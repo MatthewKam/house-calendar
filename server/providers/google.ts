@@ -103,7 +103,7 @@ export class GoogleSource implements CalendarSource {
     try {
       if (!this.access || this.access.expiresAt < Date.now() + 60_000) this.access = await this.oauth.accessToken(this.refreshToken);
     } catch (err) {
-      throw new Error(`Google Calendar (${this.account}): ${err instanceof AccessRevoked ? 'access was removed. Connect it again in Settings.' : (err as Error).message}`);
+      throw new Error(`Google Calendar (${this.account}): ${err instanceof AccessRevoked ? 'access was removed. Connect it again in Settings.' : (err as Error).message}`, { cause: err });
     }
     const res = await this.fetchImpl(`${API}${path}?${new URLSearchParams(params)}`, { headers: { authorization: `Bearer ${this.access.token}` } });
     if (res.status === 401 && !retried) {

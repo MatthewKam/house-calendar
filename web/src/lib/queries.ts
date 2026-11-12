@@ -252,7 +252,7 @@ export function useRewardActions() {
     ({ key: ['tasksDone', 'rewards'], skip: (k) => !/^\d{4}-/.test(String(k[2] ?? '')), apply });
   const history = (apply: (list: RewardWin[]) => RewardWin[]): Patch => ({ key: keys.rewardHistory, apply });
   const buckets = (apply: (list: Bucket[]) => Bucket[]): Patch => ({ key: keys.buckets, apply });
-  const mutation = <V>(mutationFn: (v: V) => Promise<unknown>, patches: (v: V) => Patch[]) => useMutation({
+  const useEdit = <V>(mutationFn: (v: V) => Promise<unknown>, patches: (v: V) => Patch[]) => useMutation({
     mutationFn,
     onMutate: (v: V) => showNow(qc, patches(v)),
     onError: putBack(qc),
@@ -260,13 +260,13 @@ export function useRewardActions() {
   });
   const redeemed = (id: string, givenAt: string | null) => [history((wins) => wins.map((w) => (w.id === id ? { ...w, givenAt } : w)))];
   return {
-    save: mutation(({ id, reward, today }: { id?: string; reward: RewardInput; today: string }) =>
+    save: useEdit(({ id, reward, today }: { id?: string; reward: RewardInput; today: string }) =>
       (id ? api.updateReward(id, reward, today) : api.addReward(reward, today)),
     ({ id, reward }) => [jars((list) => id
       ? list.map((r) => (r.id === id ? { ...r, ...reward } : r))
       : [...list, { ...reward, id: newId('reward'), stars: 0, memberStars: {}, status: 'filling' }])]),
     /** Stars into jars: out of the bucket (or the missed jar they're moved from) and into each jar. */
-    place: mutation((p: StarPlacing) => api.placeStars(p), ({ memberId, from, places }) => {
+    place: useEdit((p: StarPlacing) => api.placeStars(p), ({ memberId, from, places }) => {
       const spent = places.reduce((a, x) => a + x.stars, 0);
       const freed = from
         ? qc.getQueriesData<Reward[]>({ queryKey: ['tasksDone', 'rewards'] }).flatMap(([, d]) => (Array.isArray(d) ? d : []))
@@ -281,7 +281,7 @@ export function useRewardActions() {
         })),
       ];
     }),
-    restore: mutation(({ id, deadline, today }: { id: string; deadline: string | null; today: string }) => api.restoreReward(id, deadline, today),
+    restore: useEdit(({ id, deadline, today }: { id: string; deadline: string | null; today: string }) => api.restoreReward(id, deadline, today),
       ({ id, deadline }) => [jars((list) => list.map((r) => (r.id === id ? { ...r, deadline, status: 'filling' as const } : r)))]),
     /** A parent takes a kid's stars back out of a jar (with the master PIN). A wrong PIN is shown in its dialog, not as a toast. */
     takeBack: useMutation({
@@ -290,9 +290,9 @@ export function useRewardActions() {
       meta: { inline: true },
       onSettled: refresh,
     }),
-    redeem: mutation((id: string) => api.redeem(id), (id) => redeemed(id, new Date().toISOString())),
-    undoRedeem: mutation((id: string) => api.undoRedeem(id), (id) => redeemed(id, null)),
-    remove: mutation((id: string) => api.removeReward(id), (id) => [jars((list) => list.filter((r) => r.id !== id))]),
+    redeem: useEdit((id: string) => api.redeem(id), (id) => redeemed(id, new Date().toISOString())),
+    undoRedeem: useEdit((id: string) => api.undoRedeem(id), (id) => redeemed(id, null)),
+    remove: useEdit((id: string) => api.removeReward(id), (id) => [jars((list) => list.filter((r) => r.id !== id))]),
   };
 }
 
@@ -375,12 +375,12 @@ export function useListActions() {
   const key = ['lists'];
   const replace = (lists: SprigList[]) => qc.setQueryData(key, lists);
   const items = (apply: (l: SprigList) => SprigList): Patch => ({ key, apply: (lists: SprigList[]) => lists.map(apply) });
-  const plain = <V>(mutationFn: (v: V) => Promise<SprigList[]>) => useMutation({ mutationFn, onSuccess: replace });
+  const usePlain = <V>(mutationFn: (v: V) => Promise<SprigList[]>) => useMutation({ mutationFn, onSuccess: replace });
   return {
-    addList: plain(api.addList),
-    renameList: plain(({ id, title }: { id: string; title: string }) => api.renameList(id, title)),
-    deleteList: plain(api.deleteList),
-    clearDone: plain(api.clearDone),
+    addList: usePlain(api.addList),
+    renameList: usePlain(({ id, title }: { id: string; title: string }) => api.renameList(id, title)),
+    deleteList: usePlain(api.deleteList),
+    clearDone: usePlain(api.clearDone),
     add: useMutation({
       mutationFn: ({ listId, ...item }: { listId: string; title: string; due?: string | null; memberId?: string | null }) => api.addListItem(listId, item),
       onMutate: ({ listId, title, due = null, memberId = null }) => showNow(qc, [items((l) => (l.id === listId
@@ -395,7 +395,7 @@ export function useListActions() {
       onError: putBack(qc),
       onSuccess: replace,
     }),
-    remove: plain(api.deleteListItem),
+    remove: usePlain(api.deleteListItem),
   };
 }
 

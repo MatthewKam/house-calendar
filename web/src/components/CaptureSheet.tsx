@@ -170,7 +170,6 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 			setError(e instanceof Error ? e.message : String(e));
 		});
 		return () => { live = false; };
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [photo]);
 
 	useEffect(() => () => rec.current?.abort(), []);
