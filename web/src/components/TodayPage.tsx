@@ -1,6 +1,6 @@
 import { type CSSProperties, type ReactNode } from "react";
 import { addDays, dayKey, fromDayKey, timeLabel, longDate } from "../lib/dates";
-import { useRangeEvents, useTravelTimes, useWeather } from "../lib/queries";
+import { useEventWeather, useRangeEvents, useTravelTimes, useWeather } from "../lib/queries";
 import { grownUpKindWordsFor, quoteFor } from "../lib/grownUpWords";
 import { sky } from "../lib/weather";
 import { useNow } from "../lib/useNow";
@@ -15,6 +15,7 @@ import KidsToday from "./KidsToday";
 import NeedsYou from "./NeedsYou";
 import SpecialDays from "./SpecialDays";
 import { packed } from "./EventChecklist";
+import { forecastBadge } from "./EventForecast";
 import s from "../styles/Today.module.css";
 
 interface Props {
@@ -66,6 +67,8 @@ export default function TodayPage({
 
 	// The week ahead: today, tomorrow and the five days after.
 	const events = useRangeEvents(day, WEEK).data ?? [];
+	// The weather at the ones far from home (the server leaves out nearby ones).
+	const away = useEventWeather(events.filter((e) => e.location && !e.busy).map((e) => e.id)).data ?? {};
 	const ended = (e: CalEvent) =>
 		e.allDay ? e.end <= today : Date.parse(e.end) <= now.getTime();
 	const onDay = (e: CalEvent, d: string) =>
@@ -128,6 +131,10 @@ export default function TodayPage({
 							<span className={s.where}>
 								{people.map((p) => p.name).join(", ")}
 							</span>
+						)}
+						{/* Far from home: the weather there (opening the event shows more). */}
+						{away[e.id] && forecastBadge(away[e.id]) && (
+							<span className={s.leave}>{forecastBadge(away[e.id])} there</span>
 						)}
 						{/* What to bring: how much is packed (opening the event shows the list). */}
 						{e.checklist.length > 0 && (

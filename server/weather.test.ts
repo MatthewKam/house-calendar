@@ -92,3 +92,60 @@ describe('weather', () => {
     expect(calls[1]).toContain('name=Irvine');
   });
 });
+
+describe('weather away from home', () => {
+  // Home in Irvine; Honolulu is far, Tustin is close by.
+  const AT: Record<string, { x: number; y: number }> = { Irvine: { x: -117.8, y: 33.7 }, Honolulu: { x: -157.86, y: 21.31 }, Tustin: { x: -117.83, y: 33.74 } };
+  const HAWAII = {
+    utc_offset_seconds: -36000,
+    daily: { time: ['2026-10-07', '2026-10-08', '2026-10-09'], temperature_2m_max: [84.2, 85, 83], temperature_2m_min: [72, 73.4, 71],
+      apparent_temperature_max: [88, 90, 87], apparent_temperature_min: [74, 75, 73], weather_code: [1, 61, 2],
+      precipitation_probability_max: [10, 70, 20], wind_speed_10m_max: [12, 15, 10] },
+    hourly: { time: ['2026-10-08T09:00', '2026-10-08T10:00'], temperature_2m: [79.6, 81], apparent_temperature: [82, 84],
+      precipitation_probability: [40, 50], weather_code: [61, 61] },
+  };
+  function setup() {
+    const calls: string[] = [];
+    const net = (async (url: string) => {
+      calls.push(url);
+      if (url.includes('census.gov')) {
+        const town = Object.keys(AT).find((t) => decodeURIComponent(url).includes(t));
+        return json({ result: { addressMatches: town ? [{ coordinates: AT[town] }] : [] } });
+      }
+      if (url.includes('geocoding-api')) return json({ results: [] });
+      return json(url.includes('forecast_days=16') ? HAWAII : FORECAST);
+    }) as unknown as typeof fetch;
+    const db = openDb(':memory:');
+    db.prepare(`INSERT INTO settings (key, value) VALUES ('homeAddress', ?)`).run(JSON.stringify('1 Main St, Irvine, CA'));
+    const app = buildApp(db, { weatherFetch: net });
+    const add = async (title: string, location: string, allDay: boolean, start: string, end: string) =>
+      (await app.inject({ method: 'POST', url: '/api/events', payload: { title, location, allDay, start, end } })).json().id as string;
+    return { app, calls, add };
+  }
+
+  it("gives where this device is today's weather, rounded to about a kilometre", async () => {
+    const { app, calls } = setup();
+    const res = await app.inject({ url: '/api/weather?lat=21.30694&lon=-157.85833' });
+    expect(res.statusCode).toBe(200);
+    expect(calls.at(-1)).toContain('latitude=21.310&longitude=-157.860');
+    expect((await app.inject({ url: '/api/weather?lat=200&lon=0' })).statusCode).toBe(400);
+  });
+
+  it('forecasts far-away events on their days, and leaves nearby ones be', async () => {
+    const { app, add } = setup();
+    const trip = await add('Hawaii trip', 'Waikiki, Honolulu, HI', true, '2026-10-08', '2026-10-10');
+    // 9 AM in Honolulu (UTC-10).
+    const luau = await add('Luau', 'Beach, Honolulu, HI', false, '2026-10-08T19:00:00.000Z', '2026-10-08T21:00:00.000Z');
+    const park = await add('Park', '1 Park Rd, Tustin, CA', false, '2026-10-08T19:00:00.000Z', '2026-10-08T20:00:00.000Z');
+    const far = await add('Next year', 'Waikiki, Honolulu, HI', true, '2027-10-08', '2027-10-09');
+    const res = (await app.inject({ url: `/api/weather/events?ids=${[trip, luau, park, far].join(',')}` })).json();
+    expect(Object.keys(res).sort()).toEqual([trip, luau, far].sort());
+    expect(res[trip]).toEqual({ miles: 2581, later: false,
+      days: [{ date: '2026-10-08', high: 85, low: 73, code: 61, rain: 70, feelsHigh: 90, feelsLow: 75 },
+        { date: '2026-10-09', high: 83, low: 71, code: 2, rain: 20, feelsHigh: 87, feelsLow: 73 }],
+      wear: { pants: false, jacket: false, rain: true } });
+    expect(res[luau].at).toEqual({ temp: 80, feels: 82, rain: 40, code: 61 });
+    expect(res[luau].days.map((d: { date: string }) => d.date)).toEqual(['2026-10-08']);
+    expect(res[far]).toMatchObject({ days: [], wear: null, later: true });
+  });
+});

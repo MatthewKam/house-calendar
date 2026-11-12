@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { fromDayKey, longDate } from "../lib/dates";
 import { sky } from "../lib/weather";
 import type { Weather } from "../lib/types";
+import { canFindHere, findHere, setHere, useWeatherHere } from "../lib/useWeatherHere";
 import s from "../styles/Today.module.css";
 
 type Hour = Weather["hours"][number];
@@ -26,7 +27,10 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 	};
 	return (
 		<section className={s.card} aria-label="Weather">
-			<h2 className={s.cardHead}>Weather</h2>
+			<div className={s.weatherHead}>
+				<h2 className={s.cardHead}>Weather</h2>
+				<PlaceSwitch />
+			</div>
 			<div className={s.weatherNow}>
 				<span className={s.weatherIcon} aria-hidden="true">
 					{now.icon}
@@ -47,6 +51,40 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 			{w.hours.length > 1 && <HourGraph hours={w.hours} isDay={isDay} />}
 			<Week days={w.days.slice(1)} />
 		</section>
+	);
+}
+
+/**
+ * Home or Here: the forecast at home, or where this device is (it asks permission the first time). Kept
+ * on this device; everything here that shows the weather follows it.
+ */
+function PlaceSwitch() {
+	const here = useWeatherHere();
+	const [finding, setFinding] = useState(false);
+	const [problem, setProblem] = useState<string | null>(null);
+	if (!canFindHere() && !here) return null;
+	function goHere() {
+		setFinding(true);
+		setProblem(null);
+		findHere().then(
+			(at) => setHere(at),
+			(err: GeolocationPositionError) =>
+				setProblem(err.code === err.PERMISSION_DENIED ? "Location is off for Sprig on this device" : "Couldn't find where you are"),
+		).finally(() => setFinding(false));
+	}
+	const option = (on: boolean, label: string, pick: () => void) => (
+		<button type="button" role="radio" aria-checked={on} className={s.placeOption} onClick={pick} disabled={finding}>
+			{label}
+		</button>
+	);
+	return (
+		<div className={s.place}>
+			<div className={s.placeSwitch} role="radiogroup" aria-label="Weather for">
+				{option(!here && !finding, "🏠 Home", () => { setProblem(null); setHere(null); })}
+				{option(!!here || finding, finding ? "📍 Finding…" : "📍 Here", goHere)}
+			</div>
+			{problem && <span className={s.placeProblem}>{problem}</span>}
+		</div>
 	);
 }
 

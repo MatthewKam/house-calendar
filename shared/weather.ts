@@ -29,3 +29,17 @@ export interface Weather {
 
 /** What to wear today: long pants, a jacket, rain gear (boots, rain jacket, umbrella). */
 export interface Wear { pants: boolean; jacket: boolean; rain: boolean }
+
+/** A far-away event's forecast (GET /api/weather/events): at its place, on its days. */
+export interface EventWeather {
+  /** How far from home, in miles. */
+  miles: number;
+  /** Its days within the forecast (up to a week): the place's own dates. */
+  days: { date: string; high: number; low: number; code: number; rain: number; feelsHigh: number; feelsLow: number }[];
+  /** A timed event: the hour it starts. */
+  at?: { temp: number; feels: number; rain: number; code: number };
+  /** What to pack for it (see wearFor); null with no days in the forecast yet. */
+  wear: Wear | null;
+  /** Too far ahead: the forecast doesn't reach it yet. */
+  later: boolean;
+}
