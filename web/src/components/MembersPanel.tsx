@@ -18,7 +18,7 @@ import sheet from '../styles/Sheet.module.css';
 import s from '../styles/MembersPanel.module.css';
 import DateInput from './DateInput';
 import AlertsSetting, { ALERTS_NOTE } from './AlertsSetting';
-import LearnSettings, { learnNote } from './LearnSettings';
+import LearnSettings, { LearnAbout, learnNote } from './LearnSettings';
 import { usePush } from '../lib/usePush';
 import { useThemeSetting, type Theme } from '../lib/useTheme';
 import { ACCENTS, accentOf, useAccentSetting } from '../lib/accent';
@@ -65,11 +65,16 @@ function ColorSet({ value, label, onPick }: { value: string; label: string; onPi
   );
 }
 
+/** ⓘ beside a title: shows what it is (and hides it again). */
+function InfoButton({ about, open, onToggle }: { about: string; open: boolean; onToggle: () => void }) {
+  return <button type="button" className={s.info} aria-label={`About ${about}`} aria-expanded={open} onClick={onToggle}>i</button>;
+}
+
 /** Which group of Settings is showing (its title), or null for the list of them. */
 const SettingsView = createContext<{ view: string | null; open: (title: string) => void }>({ view: null, open: () => {} });
 
 /**
- * A group of Settings (Family, Users, Learning, Appearance, Screen, Notifications): in the list, a row (with a word on
+ * A group of Settings (Family, Learning, Appearance, Screen, Notifications, Users): in the list, a row (with a word on
  * how it's set, for one that's a single thing); tapped, the sheet shows just it (a back arrow to the list).
  */
 function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
@@ -112,7 +117,7 @@ function SwitchRow({ title, on, onChange, hint, children }: { title: string; on:
       <div className={s.switchHead}>
         <span className={s.switchTitle}>
           {title}
-          <button type="button" className={s.info} aria-label={`About ${title}`} aria-expanded={info} onClick={() => setInfo(!info)}>i</button>
+          <InfoButton about={title} open={info} onToggle={() => setInfo(!info)} />
         </span>
         <Switch on={on} onChange={onChange} label={title} />
       </div>
@@ -225,10 +230,13 @@ export default function MembersPanel({ members, onClose, onKidMode }: Props) {
   const wallModeOn = !!auth?.signedIn && auth.wallMode;
   // The part showing (null: the list), back at the top each time it changes.
   const [view, setView] = useState<string | null>(null);
+  // How Learning works, shown with the ⓘ by its title.
+  const [learnInfo, setLearnInfo] = useState(false);
   const top = useRef<HTMLElement>(null);
-  // In braces: scrollIntoView returns a Promise in newer Chrome, and an effect may only return a clean-up.
+  // The sheet itself scrolls (its title stays pinned, so scrolling that into view would do nothing).
   useEffect(() => {
-    top.current?.scrollIntoView({ block: 'start' });
+    const sheetBox = top.current?.parentElement;
+    if (sheetBox) sheetBox.scrollTop = 0;
   }, [view]);
   // Wall mode: everything on screen was this person's, so it all loads again as the wall's (or back).
   const qc = useQueryClient();
@@ -268,6 +276,7 @@ export default function MembersPanel({ members, onClose, onKidMode }: Props) {
             <h2 className={`${sheet.heading} ${s.viewTitle}`}>
               <button type="button" className={s.back} onClick={() => setView(null)} aria-label="Back to Settings">‹</button>
               {view}
+              {view === 'Learning' && <InfoButton about="Learning" open={learnInfo} onToggle={() => setLearnInfo(!learnInfo)} />}
             </h2>
           )}
           <button className={sheet.close} onClick={onClose} aria-label="Close Settings">×</button>
@@ -391,16 +400,10 @@ export default function MembersPanel({ members, onClose, onKidMode }: Props) {
 
         </Group>
 
-        {/* Who signs in and how (invites, PINs, devices): its own group. */}
-        <Group title="Users">
-          <div className={s.foldBody}>
-            <HouseholdAccess />
-          </div>
-        </Group>
-
         {/* A big one: its own group, not folded inside Family. */}
         <Group title="Learning" note={learnNote(learn, members)}>
           <div className={s.foldBody}>
+            {learnInfo && <LearnAbout />}
             <LearnSettings members={members} today={today} />
           </div>
         </Group>
@@ -480,11 +483,19 @@ export default function MembersPanel({ members, onClose, onKidMode }: Props) {
         {/* Its own group: what this phone tells you, and more to come. A grown-up's own phone's only. */}
         {grownUp && (
           <Group title="Notifications" note={ALERTS_NOTE[push.state]}>
-            <div className={s.foldBody}>
+            {/* A dropdown each: alerts now, more to come. */}
+            <Section title="Alerts" note={ALERTS_NOTE[push.state]}>
               <AlertsSetting push={push} />
-            </div>
+            </Section>
           </Group>
         )}
+
+        {/* Who signs in and how (invites, PINs, devices): its own group. */}
+        <Group title="Users">
+          <div className={s.foldBody}>
+            <HouseholdAccess />
+          </div>
+        </Group>
         </SettingsView.Provider>
 
         {/* Signing out (or locking the wall) last, away from everything else. */}

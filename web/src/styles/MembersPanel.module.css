@@ -334,7 +334,7 @@
 	font-size: 0.9rem;
 }
 
-/* Settings: a row for each group (Family, Users, Learning, Appearance, Screen, Notifications); tapped, just that group. */
+/* Settings: a row for each group (Family, Learning, Appearance, Screen, Notifications, Users); tapped, just that group. */
 .groupRow {
 	width: 100%;
 	display: flex;
@@ -431,7 +431,8 @@
 	min-width: 0;
 	min-height: 0;
 	padding: 0;
-	margin: 0 -0.2rem;
+	/* A little room from the title before it. */
+	margin: 0 -0.2rem 0 0.15rem;
 	background: none;
 	color: var(--muted);
 	font:
@@ -477,13 +478,12 @@
 	color: var(--accent);
 }
 
-/* Learning: each kid's switches, one block each. */
+/* Learning: inside each kid's dropdown, their switch, day and games. */
 .learnKid {
 	display: flex;
 	flex-direction: column;
 	gap: 0.3rem;
-	padding: 0.6rem 0;
-	border-top: 1px solid var(--line);
+	padding: 0 0 0.8rem;
 }
 /* Learn's day for a kid: games a day, time a day, and today (with unlock, lock and more). */
 .learnDay {
@@ -554,10 +554,6 @@
 	font-size: 0.9rem;
 }
 /* Learning's animal sounds: each animal, its sound to hear, and recording your own. */
-.soundsHead {
-	margin: 0.6rem 0 0;
-	font-size: 1rem;
-}
 .soundList {
 	display: flex;
 	flex-direction: column;
