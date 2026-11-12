@@ -553,6 +553,16 @@ details > summary.cardHead {
 	stroke: var(--muted);
 	stroke-opacity: 0.45;
 }
+.graphFeels {
+	fill: none;
+	stroke: var(--muted);
+	stroke-width: 1.75px;
+	stroke-dasharray: 4 4;
+	stroke-linecap: round;
+}
+.graphFeelsPast {
+	stroke-opacity: 0.35;
+}
 .graphTick {
 	stroke: var(--line);
 	stroke-width: 1px;
@@ -598,9 +608,17 @@ details > summary.cardHead {
 }
 .graphHint {
 	margin: 0.1rem 0 0;
-	text-align: center;
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	column-gap: 0.9rem;
 	font-size: 0.75rem;
 	color: var(--muted);
+}
+.graphKey {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
 }
 
 /* The next seven days (Week), a row each: the day, its sky, its low, a bar to its high on one scale for

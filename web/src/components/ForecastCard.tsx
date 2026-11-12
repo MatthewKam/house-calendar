@@ -150,7 +150,8 @@ const BOTTOM = 24;
 const SIDE = 14;
 
 /**
- * The hours around now as a line of temperatures: the hours gone by faint, a dot where now is, every third
+ * The hours around now as a line of temperatures, and how warm they feel as a dashed line on the same
+ * scale: the hours gone by faint, a dot where now is, every third
  * hour named underneath, and the high and low labelled (above their points). Tap (or point at) the line for an hour: when, the
  * temperature, how warm it feels, the sky, and the chance of rain when there is one.
  */
@@ -177,11 +178,15 @@ function HourGraph({
 	const temps = hours.map((h) => h.temp);
 	const hi = Math.max(...temps);
 	const lo = Math.min(...temps);
-	const span = Math.max(hi - lo, 4);
+	// One scale for both lines, so the feels line sits above or below the temperature where it should.
+	const feels = hours.map((h) => h.feels);
+	const top = Math.max(hi, ...feels);
+	const span = Math.max(top - Math.min(lo, ...feels), 4);
 	const x = (i: number) => SIDE + (i * (width - 2 * SIDE)) / (hours.length - 1);
 	const y = (t: number) =>
-		TOP + 6 + ((hi - t) / span) * (HEIGHT - TOP - BOTTOM - 10);
+		TOP + 6 + ((top - t) / span) * (HEIGHT - TOP - BOTTOM - 10);
 	const points = hours.map((h, i) => [x(i), y(h.temp)] as const);
+	const feelsPoints = hours.map((h, i) => [x(i), y(h.feels)] as const);
 
 	// Now, between two hours on the line.
 	const times = hours.map((h) => Date.parse(h.time));
@@ -197,15 +202,16 @@ function HourGraph({
 					(nowMs - times[after - 1]) / (times[after] - times[after - 1]);
 	const whole = Math.min(Math.floor(at), hours.length - 1);
 	const part = at - whole;
-	const nowPoint = [
-		x(at),
-		whole + 1 < hours.length
-			? y(
-					hours[whole].temp +
-						(hours[whole + 1].temp - hours[whole].temp) * part,
-				)
-			: y(hours[whole].temp),
-	] as const;
+	// A value at now, between its two hours.
+	const nowOf = (v: (h: Hour) => number) =>
+		[
+			x(at),
+			whole + 1 < hours.length
+				? y(v(hours[whole]) + (v(hours[whole + 1]) - v(hours[whole])) * part)
+				: y(v(hours[whole])),
+		] as const;
+	const nowPoint = nowOf((h) => h.temp);
+	const nowFeels = nowOf((h) => h.feels);
 	const line = (ps: (readonly [number, number])[]) =>
 		ps
 			.map(([px, py], i) => `${i ? "L" : "M"}${px.toFixed(1)},${py.toFixed(1)}`)
@@ -269,6 +275,15 @@ function HourGraph({
 							</g>
 						) : null,
 					)}
+					{/* How warm it feels, dashed, under the temperature line: gone by, fainter. */}
+					<path
+						className={`${s.graphFeels} ${s.graphFeelsPast}`}
+						d={line([...feelsPoints.slice(0, whole + 1), nowFeels])}
+					/>
+					<path
+						className={s.graphFeels}
+						d={line([nowFeels, ...feelsPoints.slice(whole + 1)])}
+					/>
 					{/* Gone by, faint; ahead, solid. */}
 					<path
 						className={s.graphPast}
@@ -348,7 +363,15 @@ function HourGraph({
 				className={s.graphHint}
 				style={picked === null ? undefined : { visibility: "hidden" }}
 			>
-				Tap the line for an hour's weather
+				<span className={s.graphKey}>
+					<svg width="18" height="6" aria-hidden="true"><line className={s.graphLine} x1="1" x2="17" y1="3" y2="3" /></svg>
+					Temperature
+				</span>
+				<span className={s.graphKey}>
+					<svg width="18" height="6" aria-hidden="true"><line className={s.graphFeels} x1="1" x2="17" y1="3" y2="3" /></svg>
+					Feels like
+				</span>
+				<span>Tap for an hour</span>
 			</p>
 		</div>
 	);
