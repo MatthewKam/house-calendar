@@ -16,10 +16,13 @@ import DateInput from './DateInput';
 import AlertsSetting, { ALERTS_NOTE } from './AlertsSetting';
 import LearnSettings, { learnNote } from './LearnSettings';
 import { usePush } from '../lib/usePush';
+import { useThemeSetting, type Theme } from '../lib/useTheme';
 import Sheet from './Sheet';
 import ConfirmDialog from './ConfirmDialog';
 
 interface Props { members: Member[]; uiScale: number; onClose: () => void }
+
+const THEMES: [Theme, string][] = [['auto', 'Same as this device'], ['light', 'Light'], ['dark', 'Dark']];
 
 /** "30 seconds", "2 minutes", "1 hour". */
 const idleLabel = (minutes: number) =>
@@ -108,6 +111,8 @@ function HomeAddress() {
 }
 
 export default function MembersPanel({ members, uiScale, onClose }: Props) {
+  // Light or dark, for this device (Same as this device: its own setting).
+  const [theme, setTheme] = useThemeSetting();
   const [newName, setNewName] = useState('');
   const today = dayKey(new Date());
   const learn = useLearn(today).data ?? [];
@@ -304,6 +309,17 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
 
         <Section title="People and sign-in">
           <HouseholdAccess />
+        </Section>
+
+        <Section title="Light or dark" note={THEMES.find(([v]) => v === theme)![1]}>
+          <div className={s.theme} role="radiogroup" aria-label="Light or dark">
+            {THEMES.map(([v, label]) => (
+              <button key={v} role="radio" aria-checked={theme === v} className={theme === v ? s.themeOn : ''} onClick={() => setTheme(v)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className={s.themeNote}>Kid mode stays light.</p>
         </Section>
 
         <Section title="Text size" note={`${Math.round(uiScale * 100)}%`}>

@@ -104,15 +104,15 @@
 	gap: 0.15rem;
 	padding: 0.25rem 0.3rem 0.25rem 0.2rem;
 	border-radius: 0.8rem;
-	background: var(--c);
-	color: #23262b;
+	background: color-mix(in srgb, var(--c) var(--pastel), var(--surface));
+	color: var(--text);
 }
 .row:hover {
 	filter: brightness(0.97);
 }
 /* Done items: the same color, faded. */
 .done.row {
-	background: color-mix(in srgb, var(--c) 40%, var(--surface));
+	background: color-mix(in srgb, var(--c) calc(var(--pastel) * 0.4), var(--surface));
 }
 /* Drag handle at the end of each open item. */
 .grip {
@@ -121,7 +121,7 @@
 	width: 2.2rem;
 	height: 2.4rem;
 	flex: none;
-	color: rgb(0 0 0 / 0.28);
+	color: color-mix(in srgb, var(--text) 28%, transparent);
 }
 .grip svg {
 	width: 1.2rem;
@@ -230,7 +230,7 @@
 .done .box {
 	background: var(--accent);
 	border-color: var(--accent);
-	color: var(--surface);
+	color: #fff;
 }
 .done .text {
 	color: var(--muted);
@@ -265,7 +265,7 @@
 /* Add: the list's color once there's something to add, gray until then. Its text is dark on a light color. */
 .add button {
 	background: var(--c, var(--accent));
-	color: var(--on, var(--surface));
+	color: var(--on, #fff);
 	font-weight: 650;
 	padding: 0 1rem;
 	border-radius: 0.6rem;
@@ -282,13 +282,13 @@
 	background: var(--surface);
 	padding: 0;
 	background-color: transparent;
-	color: #6b7079;
+	color: var(--muted);
 	min-width: 2.3rem;
 	min-height: 2.3rem;
 }
 .error {
 	margin: 0;
-	color: #b42318;
+	color: var(--danger);
 	font-size: 0.9rem;
 }
 .setup {
@@ -362,10 +362,10 @@
 	gap: 0.2rem 0.7rem;
 	margin-top: 0.1rem;
 	font-size: 0.82rem;
-	color: #4a4f57;
+	color: var(--muted);
 }
 .late {
-	color: #b42318;
+	color: var(--danger);
 	font-weight: 700;
 }
 .clearDone {
@@ -424,7 +424,7 @@
 .listPicked {
 	background: var(--accent);
 	border-color: var(--accent);
-	color: var(--surface);
+	color: #fff;
 }
 .added {
 	margin: 0;

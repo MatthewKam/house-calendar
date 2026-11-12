@@ -11,4 +11,4 @@
 .who { font: inherit; font-size: 0.95rem; min-height: 2.75rem; padding: 0 0.6rem; border: 1px solid var(--line); border-radius: 0.6rem; background: var(--surface); }
 .show { display: flex; align-items: center; gap: 0.35rem; color: var(--muted); font-size: 0.9rem; min-height: 2.75rem; }
 .show input { width: 1.2rem; height: 1.2rem; }
-.problem { margin: 0; color: #b42318; font-size: 0.9rem; }
+.problem { margin: 0; color: var(--danger); font-size: 0.9rem; }

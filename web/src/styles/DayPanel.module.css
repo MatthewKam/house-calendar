@@ -12,4 +12,4 @@
 .date { margin: 0.1rem 0 0; font-size: 1.6rem; font-weight: 650; }
 .close { font-size: 1.6rem; color: var(--muted); }
 .empty { color: var(--muted); margin: 0; }
-.add { background: var(--accent); color: var(--surface); font-weight: 600; }
+.add { background: var(--accent); color: #fff; font-weight: 600; }

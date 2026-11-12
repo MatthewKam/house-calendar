@@ -26,4 +26,4 @@
 .confirm { width: min(28rem, 92vw); }
 .body { color: var(--muted); line-height: 1.4; }
 .destructive { background: #b42318; color: #fff; padding: 0 1.4rem; font-weight: 650; }
-.danger { color: #b42318; padding: 0 1rem; font-weight: 600; }
+.danger { color: var(--danger); padding: 0 1rem; font-weight: 600; }

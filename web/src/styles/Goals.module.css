@@ -18,7 +18,7 @@
 }
 .problem {
 	margin: 0;
-	color: #b42318;
+	color: var(--danger);
 	font-size: 0.95rem;
 }
 .list {
@@ -121,14 +121,14 @@
 	margin: 0.3rem 0 0 2.8rem;
 	padding: 0.5rem 0.7rem;
 	border-radius: 0.7rem;
-	background: #fef3f2;
-	border: 1px solid #fecdca;
+	background: var(--danger-bg);
+	border: 1px solid var(--danger-line);
 }
 .confirmText {
 	flex: 1;
 	min-width: 10rem;
 	font-size: 0.9rem;
-	color: #7a271a;
+	color: var(--danger-strong);
 }
 .confirmCancel {
 	min-height: 2.4rem;
@@ -168,9 +168,9 @@
 
 /* On the kid's list: the GOAL tag and what it's worth. */
 .goalTag {
-	color: #1a7f4b;
-	border-color: #b7e4cb;
-	background: #ecfbf3;
+	color: var(--good);
+	border-color: var(--good-line);
+	background: var(--good-bg);
 }
 
 /* Choosing which show: Show all · Hide all. */
@@ -195,9 +195,9 @@
 	margin: 0;
 	padding: 0.6rem 0.8rem;
 	border-radius: 0.7rem;
-	background: #fffaeb;
-	border: 1px solid #fedf89;
-	color: #7a4a00;
+	background: var(--warn-bg);
+	border: 1px solid var(--warn-line);
+	color: var(--warn);
 	font-size: 0.95rem;
 }
 

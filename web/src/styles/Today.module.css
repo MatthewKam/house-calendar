@@ -221,9 +221,9 @@ details > summary.cardHead {
 	white-space: nowrap;
 }
 .leaveSoon {
-	background: #fff1e6;
-	border-color: #f3c79f;
-	color: #9a4a00;
+	background: var(--soon-bg);
+	border-color: var(--soon-line);
+	color: var(--soon);
 }
 
 /* The kids: name, a bar filling with their color, then tasks, stickers and stars. */
@@ -247,8 +247,8 @@ details > summary.cardHead {
 	text-align: left;
 	padding: 0.6rem 0.7rem;
 	border-radius: 0.8rem;
-	background: color-mix(in srgb, var(--c) 10%, white);
-	border: 2px solid color-mix(in srgb, var(--c) 35%, white);
+	background: color-mix(in srgb, var(--c) 10%, var(--surface));
+	border: 2px solid color-mix(in srgb, var(--c) 35%, var(--surface));
 }
 .kidName {
 	grid-area: name;
@@ -259,7 +259,7 @@ details > summary.cardHead {
 	grid-area: bar;
 	height: 0.6rem;
 	border-radius: 999px;
-	background: white;
+	background: var(--surface);
 	overflow: hidden;
 }
 .kidBar > span {
@@ -324,7 +324,7 @@ details > summary.cardHead {
 	color: var(--muted);
 }
 .needText .late {
-	color: #b42318;
+	color: var(--danger);
 }
 
 /* The calendar: today, tomorrow and the rest of the week (DayCalendar): a carousel with a button for
@@ -640,7 +640,7 @@ details > summary.cardHead {
 	flex: 1;
 	max-width: 2rem;
 	min-width: 0;
-	background: white;
+	background: var(--surface);
 	border-radius: 5px;
 }
 .weekPair .weekHigh,

@@ -6,7 +6,7 @@
 	padding: 0.8rem 1rem;
 	border: 1.5px solid #e3a008;
 	border-radius: var(--radius);
-	background: #fff8e6;
+	background: var(--warn-bg);
 }
 .headline {
 	font-weight: 650;
@@ -41,7 +41,7 @@
 }
 .primary {
 	background: var(--accent);
-	color: var(--surface);
+	color: #fff;
 }
 .secondary {
 	background: var(--surface);
@@ -49,8 +49,8 @@
 }
 /* Edits stuck waiting (offline, or iCloud refusing). */
 .waiting {
-	color: #8a5a00;
-	background: #fff8e6;
+	color: var(--warn);
+	background: var(--warn-bg);
 	padding: 0.5rem 1rem;
 	border-radius: var(--radius);
 }

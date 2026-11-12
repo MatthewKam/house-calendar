@@ -7,7 +7,7 @@
 	padding: 1rem 1.1rem;
 	border-radius: 1.4rem;
 	background: var(--surface);
-	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
+	border: 3px solid color-mix(in srgb, var(--c) 40%, var(--surface));
 }
 /* Joined to the button it opened out of: square at the top, no line between them, sliding down. */
 .attached {
@@ -17,10 +17,10 @@
 	animation: slideOut 0.25s ease;
 	transform-origin: top;
 }
-/* Under a filled header, each row's own header is white, with a line under it. */
+/* Under a filled header, each row's own header is plain, with a line under it. */
 .attached .rowLabel {
 	background: var(--surface);
-	border-bottom: 3px solid color-mix(in srgb, var(--c) 40%, white);
+	border-bottom: 3px solid color-mix(in srgb, var(--c) 40%, var(--surface));
 }
 @keyframes slideOut {
 	from {
@@ -72,7 +72,7 @@
 .row {
 	display: flex;
 	flex-direction: column;
-	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
+	border: 3px solid color-mix(in srgb, var(--c) 40%, var(--surface));
 	border-radius: 1.1rem;
 	overflow: hidden;
 }
@@ -81,7 +81,7 @@
 	align-items: center;
 	gap: 0.6rem;
 	padding: 0.8rem 1.1rem;
-	background: color-mix(in srgb, var(--c) 40%, white);
+	background: color-mix(in srgb, var(--c) 40%, var(--surface));
 	font-size: 1.4rem;
 	font-weight: 750;
 }
@@ -96,7 +96,7 @@
 	gap: 0.5rem;
 	align-items: center;
 	padding: 1.1rem 1.4rem;
-	background: color-mix(in srgb, var(--c) 7%, white);
+	background: color-mix(in srgb, var(--c) 7%, var(--surface));
 }
 @media (max-width: 700px) {
 	.spots {
@@ -114,9 +114,9 @@
 	display: grid;
 	place-items: center;
 	border-radius: 50%;
-	border: 3px dashed color-mix(in srgb, var(--c) 40%, white);
+	border: 3px dashed color-mix(in srgb, var(--c) 40%, var(--surface));
 	background: var(--surface);
-	color: color-mix(in srgb, var(--c) 70%, black);
+	color: color-mix(in srgb, var(--c) 70%, var(--text));
 	font-size: clamp(1.2rem, 6vw, 2.3rem);
 	font-weight: 800;
 	line-height: 1;
@@ -137,13 +137,13 @@
 }
 .saved {
 	border: 3px solid var(--c);
-	background: color-mix(in srgb, var(--c) 35%, white);
+	background: color-mix(in srgb, var(--c) 35%, var(--surface));
 }
 /* Added, waiting for Save. */
 .new {
 	cursor: pointer;
 	border: 3px dashed var(--c);
-	background: color-mix(in srgb, var(--c) 18%, white);
+	background: color-mix(in srgb, var(--c) 18%, var(--surface));
 	animation: stick 0.35s ease;
 }
 /* Editing: coming off on Save. */
@@ -207,7 +207,7 @@
 	font-weight: 650;
 }
 .stop {
-	color: #b42318;
+	color: var(--danger);
 }
 .foot {
 	font-size: 0.95rem;
@@ -215,7 +215,7 @@
 }
 .problem {
 	margin: 0;
-	color: #b42318;
+	color: var(--danger);
 }
 
 /* Pee or poo: two huge choices. */
@@ -242,14 +242,14 @@
 	min-height: 11rem;
 	padding: 0.5rem 0.3rem;
 	border-radius: 1.4rem;
-	border: 3px solid color-mix(in srgb, var(--c, var(--accent)) 40%, white);
+	border: 3px solid color-mix(in srgb, var(--c, var(--accent)) 40%, var(--surface));
 	background: var(--surface);
 	font-size: 2rem;
 	font-weight: 800;
 }
 .choice[aria-pressed="true"] {
 	border-color: var(--c, var(--accent));
-	background: color-mix(in srgb, var(--c, var(--accent)) 25%, white);
+	background: color-mix(in srgb, var(--c, var(--accent)) 25%, var(--surface));
 }
 .choiceEmoji {
 	font-size: 5.5rem;
@@ -319,9 +319,9 @@
 .compact .row {
 	gap: 0.35rem;
 	padding: 0.5rem 0.8rem;
-	border: 2px solid color-mix(in srgb, var(--c) 35%, white);
+	border: 2px solid color-mix(in srgb, var(--c) 35%, var(--surface));
 	border-radius: 0.8rem;
-	background: color-mix(in srgb, var(--c) 10%, white);
+	background: color-mix(in srgb, var(--c) 10%, var(--surface));
 }
 .compact .rowLabel {
 	padding: 0;
