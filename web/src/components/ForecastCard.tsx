@@ -16,10 +16,11 @@ const hourLabel = (iso: string) =>
 /**
  * The grown-ups' Today weather: now (how warm it feels, the sky, the day's high and low, rain and wind),
  * the hours around now as a line (a dot where now is; tap the line for an hour's details), then the next
- * seven days side by side (Week).
+ * seven days (Week), folded away behind See next 7 days.
  */
 export default function ForecastCard({ weather: w }: { weather: Weather }) {
 	const now = sky(w.code, w.isDay);
+	const [weekOpen, setWeekOpen] = useState(false);
 	// Day or night for an hour: between today's sunrise and sunset, by the clock.
 	const rise = new Date(w.sunrise).getHours();
 	const set = new Date(w.sunset).getHours();
@@ -51,7 +52,10 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 				</span>
 			</div>
 			{w.hours.length > 1 && <HourGraph hours={w.hours} isDay={isDay} />}
-			<Week days={w.days.slice(1)} />
+			<button type="button" className={s.weekToggle} aria-expanded={weekOpen} onClick={() => setWeekOpen(!weekOpen)}>
+				{weekOpen ? "Hide next 7 days" : "See next 7 days"}
+			</button>
+			{weekOpen && <Week days={w.days.slice(1)} />}
 		</section>
 	);
 }
