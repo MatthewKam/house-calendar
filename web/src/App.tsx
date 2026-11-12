@@ -413,7 +413,6 @@ export default function App() {
 				<NavBar
 					phone={phoneBar}
 					center={<QuickAdd actions={quickActions} />}
-					onKidMode={kids.length ? () => setOpen({ kind: "kidModeStart" }) : undefined}
 					capture={parentLock.parent && captureOn ? { onSay: () => setOpen({ kind: "capture" }), onSnap: (photo) => setOpen({ kind: "capture", photo }) } : undefined}
 					page={page}
 					settingsOpen={open?.kind === "settings"}
@@ -614,6 +613,8 @@ export default function App() {
 			{open?.kind === "settings" && (
 				<MembersPanel
 					members={members}
+					// Kid mode starts from Settings (This device); a kid's own device is in it already.
+					onKidMode={kids.length && signedIn?.role !== "kid" ? () => setOpen({ kind: "kidModeStart" }) : undefined}
 					onClose={close}
 				/>
 			)}

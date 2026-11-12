@@ -97,6 +97,18 @@
   border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); rotate: -45deg; transition: rotate 0.2s;
 }
 .fold[open] > .foldHead::after { rotate: 45deg; }
+/* A part that's on or off: its title and switch, then a line on what it does. */
+.switchHead { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; min-height: 3rem; padding: 0.4rem 0; font-size: 1.05rem; font-weight: 650; }
+.switchTitle { display: flex; align-items: center; gap: 0.2rem; }
+/* ⓘ beside a title: what it does, shown when tapped. A small circle, with room around it to tap. */
+.info {
+  display: grid; place-items: center; width: 2.75rem; height: 2.75rem; min-width: 0; min-height: 0; padding: 0; margin: -0.4rem -0.6rem;
+  background: none; color: var(--muted); font: italic 700 0.85rem/1 Georgia, serif;
+}
+.info::before { content: ''; position: absolute; width: 1.3rem; height: 1.3rem; border: 1.5px solid currentColor; border-radius: 50%; }
+.info { position: relative; }
+.info[aria-expanded='true'] { color: var(--accent); }
+.switchHint { margin: 0 0 0.7rem; color: var(--muted); font-size: 0.9rem; }
 .foldBody { display: flex; flex-direction: column; gap: 0.6rem; padding-bottom: 1rem; }
 /* A part's title, with the way back to the list before it. */
 .viewTitle { display: flex; align-items: center; }

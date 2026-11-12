@@ -26,8 +26,14 @@ import { useUiScale } from '../lib/useUiScale';
 import { SignedInAs, SignOut } from './SettingsAccount';
 import Sheet from './Sheet';
 import ConfirmDialog from './ConfirmDialog';
+import Switch from './Switch';
 
-interface Props { members: Member[]; onClose: () => void }
+interface Props {
+  members: Member[];
+  onClose: () => void;
+  /** Starts kid mode on this device (when there are kids, and it isn't a kid's own). */
+  onKidMode?: () => void;
+}
 
 const THEMES: [Theme, string][] = [['auto', 'Same as this device'], ['light', 'Light'], ['dark', 'Dark']];
 
@@ -95,6 +101,27 @@ function Section({ title, note, children }: { title: string; note?: string; chil
   );
 }
 
+/**
+ * One part of a group that's on or off: its title (with an ⓘ that shows what it does) and a switch,
+ * and (on) its settings under it.
+ */
+function SwitchRow({ title, on, onChange, hint, children }: { title: string; on: boolean; onChange: (on: boolean) => void; hint: string; children?: ReactNode }) {
+  const [info, setInfo] = useState(false);
+  return (
+    <div className={s.fold}>
+      <div className={s.switchHead}>
+        <span className={s.switchTitle}>
+          {title}
+          <button type="button" className={s.info} aria-label={`About ${title}`} aria-expanded={info} onClick={() => setInfo(!info)}>i</button>
+        </span>
+        <Switch on={on} onChange={onChange} label={title} />
+      </div>
+      {info && <p className={s.switchHint}>{hint}</p>}
+      {on && children && <div className={s.foldBody}>{children}</div>}
+    </div>
+  );
+}
+
 /** Where travel times start from. Saved with Save, so a half-typed address isn't used. */
 function HomeAddress() {
   const saved = (useSettings().data?.homeAddress as string | undefined) ?? '';
@@ -137,7 +164,7 @@ function HomeAddress() {
   );
 }
 
-export default function MembersPanel({ members, onClose }: Props) {
+export default function MembersPanel({ members, onClose, onKidMode }: Props) {
   // Light or dark, for this device (Same as this device: its own setting).
   const [theme, setTheme] = useThemeSetting();
   const [accent, setAccent] = useAccentSetting();
@@ -183,7 +210,7 @@ export default function MembersPanel({ members, onClose }: Props) {
   // For the folded sections' summaries.
   const settings = useSettings().data;
   const homeAddress = ((settings?.homeAddress as string | undefined) ?? '').trim();
-  const [saver] = useScreenSaverSettings();
+  const [saver, saveSaver] = useScreenSaverSettings();
   // Both asked every time (hooks can't be skipped).
   const upright = useMediaQuery(PHONE);
   const sideways = useMediaQuery(PHONE_SIDEWAYS);
@@ -424,38 +451,36 @@ export default function MembersPanel({ members, onClose }: Props) {
 
         </Group>
 
-        {/* Empty on a phone that isn't a grown-up's own: no group at all then. */}
-        {(grownUp || wallModeOn || !phone) && (
+        {/* Empty on a phone that isn't a grown-up's own, with no kids: no group at all then. */}
+        {(grownUp || wallModeOn || !phone || !!onKidMode) && (
         <Group title="This device">
-        {/* Like kid mode, for the wall: a guardian's own device becomes the wall until a PIN turns it back. */}
-        {(grownUp || wallModeOn) && (
-          <Section title="Wall mode" note={auth?.signedIn && auth.wallMode ? 'On' : 'Off'}>
-            <p className={s.themeNote}>
-              {auth?.signedIn && auth.wallMode
-                ? 'This device is the family wall. Leaving wall mode puts it back to your own account.'
-                : "Make this device the family wall: everyone's shared calendar, your private events hidden, and changes and Settings behind a guardian's PIN. A guardian's PIN turns it off."}
-            </p>
-            <button type="button" className={sheet.secondary} style={{ alignSelf: 'flex-start' }}
-              onClick={() => (auth?.signedIn && auth.wallMode ? switchWallMode(false) : setWallModeAsk(true))}>
-              {auth?.signedIn && auth.wallMode ? 'Leave wall mode' : 'Turn on wall mode'}
-            </button>
-          </Section>
-        )}
-
-        {/* Tablets and computers only: never on a phone. */}
-        {!phone && (
-        <Section title="Screen saver" note={saver.enabled ? `On · after ${idleLabel(saver.idleMinutes)}` : "Off"}>
-          <ScreenSaverSettings bare />
-        </Section>
-        )}
-
-        {grownUp && (
-          <Section title="Notifications" note={ALERTS_NOTE[push.state]}>
-            <AlertsSetting push={push} />
-          </Section>
-        )}
-
+          {(grownUp || wallModeOn) && (
+            <SwitchRow title="Wall mode" on={wallModeOn} onChange={(on) => (on ? setWallModeAsk(true) : switchWallMode(false))}
+              hint={wallModeOn
+                ? 'This device is the family wall. Turning it off puts it back to your own account.'
+                : "Make this device the family wall: everyone's shared calendar, your private events hidden, and changes and Settings behind a guardian's PIN. A guardian's PIN turns it off."} />
+          )}
+          {/* Tablets and computers only: never on a phone. */}
+          {!phone && (
+            <SwitchRow title="Screen saver" on={saver.enabled} onChange={(on) => saveSaver({ enabled: on })}
+              hint={saver.enabled ? `Photos after ${idleLabel(saver.idleMinutes)} without a touch.` : 'Show photos when this screen is idle.'}>
+              <ScreenSaverSettings bare switched />
+            </SwitchRow>
+          )}
+          {onKidMode && (
+            <SwitchRow title="Kid mode" on={false} onChange={(on) => on && onKidMode()}
+              hint="Hand this device to a kid: their day, tasks, stars and games, and nothing else. A guardian's PIN turns it off." />
+          )}
         </Group>
+        )}
+
+        {/* Its own group: what this phone tells you, and more to come. A grown-up's own phone's only. */}
+        {grownUp && (
+          <Group title="Notifications" note={ALERTS_NOTE[push.state]}>
+            <div className={s.foldBody}>
+              <AlertsSetting push={push} />
+            </div>
+          </Group>
         )}
         </SettingsView.Provider>
 
