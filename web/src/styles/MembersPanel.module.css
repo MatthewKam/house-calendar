@@ -68,7 +68,7 @@
 .deviceSeen { color: var(--muted); font-size: 0.85rem; }
 .textLink { composes: textButton from "./Buttons.module.css"; padding: 0.2rem; }
 .pinForm { display: flex; flex-direction: column; gap: 0.5rem; }
-.pinForm input[type="password"] { font-size: 1.05rem; padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: 0.6rem; }
+.pinForm input { font-size: 1.05rem; padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: 0.6rem; }
 .pinError { margin: 0; color: var(--danger); font-size: 0.9rem; }
 
 /* Settings: each part folded to its heading (and how it's set) until tapped. */

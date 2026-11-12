@@ -133,7 +133,9 @@ describe('invites', () => {
     await alex.put('/api/account/pin', { pin: '13579' });
     // Different lengths: the number pad can't check as the last digit goes in. The same: it can.
     expect((await alex.get('/api/auth/status')).body).toMatchObject({ guardianPins: 2, pinLength: null });
-    await alex.put('/api/account/pin', { pin: '1357' });
+    // Changing it takes the current one.
+    expect((await alex.put('/api/account/pin', { pin: '1357' })).status).toBe(403);
+    await alex.put('/api/account/pin', { pin: '1357', current: '13579' });
     expect((await alex.get('/api/auth/status')).body).toMatchObject({ guardianPins: 2, pinLength: 4 });
     const wallCode = (await alex.post('/api/account/invites', { kind: 'wall' })).body.code;
 
@@ -445,5 +447,51 @@ describe('wall mode', () => {
     const wall = device();
     await wall.post('/api/account/join', { code: (await alex.post('/api/account/invites', { kind: 'wall' })).body.code });
     expect((await wall.post('/api/auth/wall-mode', { on: true })).status).toBe(401);
+  });
+});
+
+describe('a forgotten PIN', () => {
+  it('changes a PIN only with the current one, and resets a forgotten one with an emailed code', async () => {
+    const alex = await guardian();
+    await alex.put('/api/account/pin', { pin: '1357' });
+    expect((await alex.put('/api/account/pin', { pin: '2222', current: '0000' })).status).toBe(403);
+
+    // A kid's device locked out by wrong PINs.
+    const ipad = device();
+    await ipad.post('/api/account/join', { code: (await alex.post('/api/account/invites', { kind: 'kid', name: 'Sam' })).body.code });
+    for (let i = 0; i < 5; i++) await ipad.post('/api/auth/parent', { pin: '0000' });
+    expect((await ipad.post('/api/auth/parent', { pin: '1357' })).status).toBe(403);
+
+    // Forgot it: a code to Alex's email, then a new PIN; the lockout lifts.
+    // Settings shows it locked, and a guardian can let it try again from there.
+    const locked = ((await alex.get('/api/account/household')).body.devices as { id: string; locked: boolean }[]).find((d) => d.locked)!;
+    expect((await alex.post(`/api/account/devices/${locked.id}/unlock`)).status).toBe(204);
+    expect((await ipad.post('/api/auth/parent', { pin: '1357' })).body).toMatchObject({ parent: true });
+    await ipad.post('/api/auth/parent/lock');
+    for (let i = 0; i < 5; i++) await ipad.post('/api/auth/parent', { pin: '0000' });
+
+    expect((await alex.post('/api/account/pin/forgot')).body).toEqual({ sentTo: 'alex@example.com' });
+    expect((await alex.post('/api/account/pin/forgot')).status).toBe(429);
+    expect((await alex.post('/api/account/pin/reset', { code: '000000', pin: '2468' })).status).toBe(401);
+    expect((await alex.post('/api/account/pin/reset', { code: codes.get('alex@example.com')!, pin: '2468' })).status).toBe(200);
+    expect((await ipad.post('/api/auth/parent', { pin: '2468' })).body).toMatchObject({ parent: true });
+    // Used once.
+    expect((await alex.post('/api/account/pin/reset', { code: codes.get('alex@example.com')!, pin: '1111' })).status).toBe(401);
+  });
+
+  it("lets the account holder clear another guardian's PIN, and no one else", async () => {
+    const alex = await guardian();
+    await alex.put('/api/account/pin', { pin: '1357' });
+    const jordan = device();
+    await jordan.signIn('jordan@example.com');
+    await jordan.post('/api/account/join', { code: (await alex.post('/api/account/invites', { kind: 'guardian', name: 'Jordan' })).body.code });
+    await jordan.put('/api/account/pin', { pin: '2468' });
+    const people = (await alex.get('/api/account/household')).body.people as { name: string; membershipId: string; hasPin: boolean }[];
+    const ship = (name: string) => people.find((p) => p.name === name)!.membershipId;
+    expect((await jordan.del(`/api/account/memberships/${ship('Alex')}/pin`)).status).toBe(403);
+    expect((await alex.del(`/api/account/memberships/${ship('Jordan')}/pin`)).status).toBe(204);
+    expect((await jordan.get('/api/auth/status')).body.hasPin).toBe(false);
+    // With none, Jordan sets a new one without the old.
+    expect((await jordan.put('/api/account/pin', { pin: '8642' })).status).toBe(200);
   });
 });

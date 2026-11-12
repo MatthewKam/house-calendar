@@ -22,6 +22,8 @@ export default function HouseholdAccess() {
 	const [removing, setRemoving] = useState<{ id: string; name: string } | null>(null);
 	// The account holder handing their role to another guardian, while that's asked.
 	const [handing, setHanding] = useState<{ id: string; name: string } | null>(null);
+	// The account holder clearing another guardian's forgotten PIN, while that's asked.
+	const [clearing, setClearing] = useState<{ id: string; name: string } | null>(null);
 	const data = useQuery({ queryKey: ["account", "household"], queryFn: api.household }).data;
 	const refresh = () => qc.invalidateQueries({ queryKey: ["account"] });
 	const [issued, setIssued] = useState<{ code: string; expiresAt: string; what: string } | null>(null);
@@ -35,6 +37,8 @@ export default function HouseholdAccess() {
 	const cancel = useMutation({ mutationFn: api.cancelInvite, onSettled: refresh });
 	const remove = useMutation({ mutationFn: api.removeSignIn, onSettled: refresh });
 	const signOut = useMutation({ mutationFn: api.signOutDevice, onSettled: refresh });
+	const clearPin = useMutation({ mutationFn: api.clearPin, onSettled: refresh });
+	const unlockDevice = useMutation({ mutationFn: api.unlockDevice, onSettled: refresh });
 	const handOver = useMutation({ mutationFn: api.setHolder, onSuccess: (st) => qc.setQueryData(["auth"], st), onSettled: refresh });
 	const [newName, setNewName] = useState("");
 	const [newKind, setNewKind] = useState<Kind>("guardian");
@@ -85,6 +89,12 @@ export default function HouseholdAccess() {
 									Invite as guardian
 								</button>
 							)}
+							{me.holder && p.role === "guardian" && p.hasPin && p.memberId !== me.memberId && p.membershipId && (
+								<button type="button" className={panel.textLink}
+									onClick={() => setClearing({ id: p.membershipId!, name: p.name })}>
+									Reset PIN
+								</button>
+							)}
 							{me.holder && p.role === "guardian" && !p.holder && p.membershipId && (
 								<button type="button" className={panel.textLink}
 									onClick={() => setHanding({ id: p.membershipId!, name: p.name })}>
@@ -107,6 +117,7 @@ export default function HouseholdAccess() {
 			</p>
 			{remove.isError && <p className={s.error}>{remove.error.message}</p>}
 			{handOver.isError && <p className={s.error}>{handOver.error.message}</p>}
+			{clearPin.isError && <p className={s.error}>{clearPin.error.message}</p>}
 
 			<form className={s.row} onSubmit={inviteNew}>
 				<input className={s.input} value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Someone new" aria-label="Name" maxLength={40} />
@@ -152,6 +163,9 @@ export default function HouseholdAccess() {
 							{d.thisDevice && <strong> (this one)</strong>}
 						</span>
 						<span className={panel.deviceSeen}>{ago(d.lastSeen)}</span>
+						{d.locked && (
+							<button type="button" className={panel.textLink} onClick={() => unlockDevice.mutate(d.id)}>Unlock (too many wrong PINs)</button>
+						)}
 						{!d.thisDevice && (
 							<button type="button" className={panel.textLink} onClick={() => signOut.mutate(d.id)}>Sign out</button>
 						)}
@@ -164,6 +178,13 @@ export default function HouseholdAccess() {
 					onCancel={() => setRemoving(null)}
 					onConfirm={() => { remove.mutate(removing.id); setRemoving(null); }}>
 					They stay in the family.
+				</ConfirmDialog>
+			)}
+			{clearing && (
+				<ConfirmDialog title={`Reset ${clearing.name}'s PIN?`} confirmLabel="Reset PIN"
+					onCancel={() => setClearing(null)}
+					onConfirm={() => { clearPin.mutate(clearing.id); setClearing(null); }}>
+					Their PIN stops working. They set a new one in Settings on their own phone; any device locked by wrong tries can try again.
 				</ConfirmDialog>
 			)}
 			{handing && (
@@ -200,40 +221,71 @@ function Issued({ code, expiresAt, what, onClose }: { code: string; expiresAt: s
 
 /** This guardian's PIN: opens the wall and unlocks it (or a kid's device) for changes. */
 function MyPin({ hasPin, onSaved }: { hasPin: boolean; onSaved: (s: AuthStatus) => void }) {
-	const [editing, setEditing] = useState(!hasPin);
+	// Showing the PIN set; changing it (current PIN, then the new one twice); or, forgotten, a code by email.
+	const [mode, setMode] = useState<"set" | "change" | "forgot">(hasPin ? "set" : "change");
+	const [current, setCurrent] = useState("");
+	const [code, setCode] = useState("");
 	const [pin, setPin] = useState("");
 	const [again, setAgain] = useState("");
+	const [sentTo, setSentTo] = useState<string | null>(null);
+	const done = (st: AuthStatus) => {
+		onSaved(st);
+		setMode("set");
+		setCurrent(""); setCode(""); setPin(""); setAgain(""); setSentTo(null);
+	};
 	const save = useMutation({
-		mutationFn: () => api.setMyPin(pin),
-		onSuccess: (st) => {
-			onSaved(st);
-			setEditing(false);
-			setPin("");
-			setAgain("");
-		},
+		mutationFn: () => (mode === "forgot" ? api.resetPin(code, pin) : api.setMyPin(pin, hasPin ? current : undefined)),
+		onSuccess: done,
 	});
-	const problem = !/^\d{4,8}$/.test(pin) ? "4 to 8 digits" : pin !== again ? "The two don't match" : null;
+	const forgot = useMutation({ mutationFn: api.forgotPin, onSuccess: (r) => setSentTo(r.sentTo) });
+	const problem = mode === "change" && hasPin && !current ? "Your current PIN first"
+		: mode === "forgot" && !/^\d{6}$/.test(code.replace(/\D/g, "")) ? "The 6-digit code from the email"
+		: !/^\d{4,8}$/.test(pin) ? "4 to 8 digits" : pin !== again ? "The two don't match" : null;
+	const cancel = () => { setMode("set"); setCurrent(""); setCode(""); setPin(""); setAgain(""); setSentTo(null); save.reset(); forgot.reset(); };
 
-	if (!editing) {
+	if (mode === "set") {
 		return (
 			<p className={s.hint}>
 				Your PIN is set: it opens the wall and unlocks changes there.{" "}
-				<button type="button" className={panel.textLink} onClick={() => setEditing(true)}>Change it</button>
+				<button type="button" className={panel.textLink} onClick={() => setMode("change")}>Change it</button>
 			</p>
 		);
 	}
 	return (
 		<form className={panel.pinForm} onSubmit={(e) => { e.preventDefault(); if (!problem) save.mutate(); }}>
-			<p className={s.hint}>Your guardian PIN opens the wall, and unlocks changes there or on a kid's device.</p>
-			<input type="password" inputMode="numeric" autoComplete="new-password" placeholder="New PIN" aria-label="New PIN"
-				value={pin} onChange={(e) => setPin(e.target.value)} maxLength={8} />
-			<input type="password" inputMode="numeric" autoComplete="new-password" placeholder="Again" aria-label="New PIN again"
-				value={again} onChange={(e) => setAgain(e.target.value)} maxLength={8} />
-			{pin && problem && <p className={panel.pinError}>{problem}</p>}
-			{save.isError && <p className={panel.pinError}>{save.error.message}</p>}
+			<p className={s.hint}>
+				{mode === "forgot"
+					? sentTo ? `A code is on its way to ${sentTo}. Type it here with your new PIN.` : "We'll email you a code, so you can set a new PIN without the old one."
+					: "Your guardian PIN opens the wall, and unlocks changes there or on a kid's device."}
+			</p>
+			{mode === "forgot" && !sentTo && (
+				<button type="button" className={s.primary} disabled={forgot.isPending} onClick={() => forgot.mutate()}>Email me a code</button>
+			)}
+			{mode === "forgot" && forgot.isError && <p className={panel.pinError}>{forgot.error.message}</p>}
+			{(mode === "change" || sentTo) && (
+				<>
+					{mode === "change" && hasPin && (
+						<input type="password" inputMode="numeric" autoComplete="current-password" placeholder="Current PIN" aria-label="Current PIN"
+							value={current} onChange={(e) => setCurrent(e.target.value)} maxLength={8} />
+					)}
+					{mode === "forgot" && (
+						<input inputMode="numeric" autoComplete="one-time-code" placeholder="Code from the email" aria-label="Code from the email"
+							value={code} onChange={(e) => setCode(e.target.value)} maxLength={7} />
+					)}
+					<input type="password" inputMode="numeric" autoComplete="new-password" placeholder="New PIN" aria-label="New PIN"
+						value={pin} onChange={(e) => setPin(e.target.value)} maxLength={8} />
+					<input type="password" inputMode="numeric" autoComplete="new-password" placeholder="Again" aria-label="New PIN again"
+						value={again} onChange={(e) => setAgain(e.target.value)} maxLength={8} />
+					{(pin || current || code) && problem && <p className={panel.pinError}>{problem}</p>}
+					{save.isError && <p className={panel.pinError}>{save.error.message}</p>}
+				</>
+			)}
 			<div className={s.row}>
-				<button className={s.primary} disabled={!!problem || save.isPending}>Save PIN</button>
-				{hasPin && <button type="button" className={panel.textLink} onClick={() => setEditing(false)}>Cancel</button>}
+				{(mode === "change" || sentTo) && <button className={s.primary} disabled={!!problem || save.isPending}>Save PIN</button>}
+				{hasPin && mode === "change" && (
+					<button type="button" className={panel.textLink} onClick={() => { cancel(); setMode("forgot"); }}>Forgot PIN?</button>
+				)}
+				{hasPin && <button type="button" className={panel.textLink} onClick={cancel}>Cancel</button>}
 			</div>
 		</form>
 	);

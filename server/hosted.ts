@@ -10,6 +10,7 @@ import { ALPHABET, PARENT_MS, later, now, sessions, showCode, type ServerOptions
 import { signInRoutes } from './hosted/signIn.ts';
 import { householdRoutes } from './hosted/household.ts';
 import { unlockRoutes } from './hosted/unlock.ts';
+import { pinRoutes } from './hosted/pin.ts';
 import { googleRoutes } from './hosted/google.ts';
 
 // The front of the hosted app. It signs people in (Apple, Google, or a code by email), keeps track
@@ -24,8 +25,8 @@ import { googleRoutes } from './hosted/google.ts';
 // A wall or kid's device can be unlocked for parent changes with any guardian's PIN, for 10 minutes
 // (each change starts it over).
 //
-// Its routes are in hosted/: signing in, households and joining, the wall and the parent unlock, and
-// connecting Google Calendar; hosted/session.ts is who a request's session is, shared by them all.
+// Its routes are in hosted/: signing in, households and joining, the wall and the parent unlock, guardians'
+// PINs, and connecting Google Calendar; hosted/session.ts is who a request's session is, shared by them all.
 
 function sendJson(res: ServerResponse, code: number, body: unknown) {
   res.writeHead(code, { 'content-type': 'application/json; charset=utf-8' });
@@ -81,6 +82,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
   app.get('/api/auth/status', async (req) => x.status(req));
   householdRoutes(app, accounts, x);
   unlockRoutes(app, accounts, x);
+  pinRoutes(app, accounts, x, opts);
   googleRoutes(app, accounts, households, x, opts);
 
   // For the host's health check: up, and the accounts database answers.

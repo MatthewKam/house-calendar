@@ -1,15 +1,14 @@
 import type { FastifyInstance } from 'fastify';
 import type { AccountsDB, SessionRow } from '../accounts.ts';
 import { pinMatches } from '../auth.ts';
-import { PARENT_MS, later, limiter, type Sessions } from './session.ts';
+import { PARENT_MS, later, type Sessions } from './session.ts';
 
 // The wall and the parent unlock: entering the wall with a guardian's PIN, unlocking a wall or kid's
 // device for changes (and locking it again), checking a PIN to leave kid mode, and signing a device out.
 
 export function unlockRoutes(app: FastifyInstance, accounts: AccountsDB, x: Sessions) {
-  const { sessionOf, contextOf, ownParent, isParent, setParentUntil, status, needParent } = x;
+  const { sessionOf, contextOf, ownParent, isParent, setParentUntil, status, needParent, pinTries } = x;
 
-  const pinTries = limiter();
   /** Checks a PIN against every guardian's in the household: whose it is, or what's wrong. */
   function checkPin(s: SessionRow, pin: string): { by: string } | { error: string } {
     const blocked = pinTries.blocked(s.token_hash);

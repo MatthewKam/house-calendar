@@ -24,18 +24,15 @@ function useRestart(onClose: () => void) {
  */
 export function SignedInAs({ status, onClose }: { status: SignedIn; onClose: () => void }) {
 	const restart = useRestart(onClose);
-	const wall = status.role === "wall";
-	const how = [
-		// Not on a shared screen: whose account the wall is on.
-		wall ? null : status.user?.email,
-		`${status.kind === "user" ? "Signed in" : "Added"} on this device ${when(status.signedInAt)}`,
-	].filter(Boolean).join(" · ");
+	// Not on a shared screen: whose account the wall is on.
+	const email = status.role === "wall" ? null : status.user?.email;
 	return (
 		<div className={s.person}>
 			<Avatar status={status} big />
 			<span className={s.who}>
 				<strong>{status.me?.name ?? "The wall"}{status.household && ` · ${status.household.name}`}</strong>
-				<span className={s.how}>{how}</span>
+				{email && <span className={s.how}>{email}</span>}
+				<span className={s.how}>{status.kind === "user" ? "Signed in" : "Added"} on this device {when(status.signedInAt)}</span>
 			</span>
 			{status.households.length > 1 && (
 				<select className={s.input} value={status.household?.id} aria-label="Household"
