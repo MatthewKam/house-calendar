@@ -162,6 +162,7 @@ export default function MembersPanel({ members, onClose }: Props) {
   const setSetting = useSetSetting();
   // For the folded sections' summaries.
   const settings = useSettings().data;
+  const homeAddress = ((settings?.homeAddress as string | undefined) ?? '').trim();
   const [saver] = useScreenSaverSettings();
   const phone = useMediaQuery(PHONE) || useMediaQuery(PHONE_SIDEWAYS);
   // Alerts are a grown-up's own phone's (not the wall's or a kid's device).
@@ -311,8 +312,10 @@ export default function MembersPanel({ members, onClose }: Props) {
           )}
         </form>
         )}
-        <h3 className={s.section}>Home address</h3>
-        <HomeAddress />
+        </Section>
+
+        <Section title="Home address" note={homeAddress || 'Not set'}>
+          <HomeAddress />
         </Section>
 
         <Section title="Learning" note={learnNote(learn, members)}>
