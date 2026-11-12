@@ -8,6 +8,7 @@ import type {
 	Trip,
 	TaskDone,
 	TaskInput,
+	TaskPatch,
 	EventInput,
 	Member,
 	ReminderList,
@@ -290,7 +291,7 @@ export const api = {
 
 	tasks: () => call<Task[]>('GET', '/api/tasks'),
 	addTask: (c: TaskInput) => call<Task>('POST', '/api/tasks', c),
-	updateTask: (id: string, c: Partial<TaskInput>) => call<Task>('PATCH', `/api/tasks/${id}`, c),
+	updateTask: (id: string, c: TaskPatch) => call<Task>('PATCH', `/api/tasks/${id}`, c),
 	removeTask: (id: string) => call<void>('DELETE', `/api/tasks/${id}`),
 	rewards: (today: string) => call<Reward[]>('GET', `/api/rewards?${new URLSearchParams({ today })}`),
 	rewardHistory: () => call<RewardWin[]>('GET', '/api/rewards/history'),
