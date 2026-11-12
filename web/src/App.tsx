@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { dayKey, fromDayKey, startOfWeek } from "./lib/dates";
 import { useCalendarView, type View } from "./lib/useCalendarView";
 import type { CalEvent, Task, TaskInput, EventInput, Scope } from "./lib/types";
@@ -37,13 +37,10 @@ import QuickAdd, { type QuickAction } from "./components/QuickAdd";
 import MomentDialog from "./components/MomentDialog";
 import CaptureSheet from "./components/CaptureSheet";
 import RewardsPage from "./components/RewardsPage";
-import PhotosPage from "./components/PhotosPage";
-import ScreenSaver from "./components/ScreenSaver";
 import { useScreenSaver } from "./lib/useScreenSaver";
 import { useWakeLock } from "./lib/useWakeLock";
 import { useAutoLock, useParent } from "./lib/useParent";
 import ParentUnlock from "./components/ParentUnlock";
-import KidMode from "./components/KidMode";
 import KidModeStart from "./components/KidModeStart";
 import GrownUpPin from "./components/GrownUpPin";
 import { useKidMode } from "./lib/useKidMode";
@@ -53,12 +50,18 @@ import { useCheer } from "./lib/useCheer";
 import TaskDialog from "./components/TaskDialog";
 import { taskProgress, percent, tasksFor } from "./lib/tasks";
 import Celebration from "./components/Celebration";
-import Settings from "./components/settings/Settings";
 import Toast, { type ToastMessage } from "./components/Toast";
 import { UNASSIGNED } from "./lib/color";
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery, NARROW } from "./lib/useMediaQuery";
 import { useFlyerDrop } from "./lib/useFlyerDrop";
 import s from "./styles/App.module.css";
+
+// Loaded when first opened, so a phone opening the calendar doesn't download them: kid mode (with
+// Learn's games), Photos, the screen saver and Settings. Each is shown inside <Suspense fallback={null}>.
+const KidMode = lazy(() => import("./components/KidMode"));
+const PhotosPage = lazy(() => import("./components/PhotosPage"));
+const ScreenSaver = lazy(() => import("./components/ScreenSaver"));
+const Settings = lazy(() => import("./components/settings/Settings"));
 import { isKid } from "./lib/people";
 import { useTheme } from "./lib/useTheme";
 import { useAccent } from "./lib/accent";
@@ -366,9 +369,13 @@ export default function App() {
 		return (
 			<>
 				{/* Wait for the family, so it doesn't flash "No kids yet". */}
-				{members.length > 0 && <KidMode today={today} kids={kidView} members={members} onLeave={leaveKidMode}
-					startWith={kidModeFor ?? undefined}
-					askPin={!!signedIn && signedIn.guardianPins > 0} ownDevice={!!kidDevice} />}
+				{members.length > 0 && (
+					<Suspense fallback={null}>
+						<KidMode today={today} kids={kidView} members={members} onLeave={leaveKidMode}
+							startWith={kidModeFor ?? undefined}
+							askPin={!!signedIn && signedIn.guardianPins > 0} ownDevice={!!kidDevice} />
+					</Suspense>
+				)}
 				{open?.kind === "kidModeLeave" && (
 					<GrownUpPin
 						title="Leave kid mode"
@@ -382,7 +389,11 @@ export default function App() {
 					/>
 				)}
 				{open?.kind === "unlock" && <ParentUnlock onClose={close} onDone={open.then} />}
-				{saver.on && <ScreenSaver photos={saver.photos} settings={saver.settings} onClose={saver.hide} onOpenEvent={saver.hide} />}
+				{saver.on && (
+					<Suspense fallback={null}>
+						<ScreenSaver photos={saver.photos} settings={saver.settings} onClose={saver.hide} onOpenEvent={saver.hide} />
+					</Suspense>
+				)}
 				{cheer.cheer && <Celebration cheer={cheer.cheer} onDone={cheer.done} />}
 				{toast && <Toast message={toast} onDone={closeToast} />}
 			</>
@@ -451,7 +462,9 @@ export default function App() {
 					) : page === "rewards" ? (
 						<RewardsPage today={today} members={members} />
 					) : page === "photos" ? (
-						<PhotosPage onPreview={saver.show} incoming={pickedPhotos} onTaken={() => setPickedPhotos(null)} />
+						<Suspense fallback={null}>
+							<PhotosPage onPreview={saver.show} incoming={pickedPhotos} onTaken={() => setPickedPhotos(null)} />
+						</Suspense>
 					) : (<>
 					<div className={s.monthHeaderTitle}>
 						<div>
@@ -611,12 +624,14 @@ export default function App() {
 				/>
 			)}
 			{open?.kind === "settings" && (
-				<Settings
-					members={members}
-					// Kid mode starts from Settings (Screen); a kid's own device is in it already.
-					onKidMode={kids.length && signedIn?.role !== "kid" ? () => setOpen({ kind: "kidModeStart" }) : undefined}
-					onClose={close}
-				/>
+				<Suspense fallback={null}>
+					<Settings
+						members={members}
+						// Kid mode starts from Settings (Screen); a kid's own device is in it already.
+						onKidMode={kids.length && signedIn?.role !== "kid" ? () => setOpen({ kind: "kidModeStart" }) : undefined}
+						onClose={close}
+					/>
+				</Suspense>
 			)}
 
 			{open?.kind === "list" && <AddToListSheet onClose={close} onNewList={() => { close(); setPage("lists"); }} />}
@@ -634,16 +649,18 @@ export default function App() {
 			{/* Add a task, for no one in particular yet (each kid's card has its own Add a task). */}
 			{!phoneBar && page === "tasks" && parentLock.parent && <Fab label="Add a task or goal" onClick={() => setOpen({ kind: "task", blank: true })} />}
 			{saver.on && (
-				<ScreenSaver
-					photos={saver.photos}
-					settings={saver.settings}
-					onClose={saver.hide}
-					onOpenEvent={(event, day) => {
-						saver.hide();
-						setPage("calendar");
-						openEvent(event, day);
-					}}
-				/>
+				<Suspense fallback={null}>
+					<ScreenSaver
+						photos={saver.photos}
+						settings={saver.settings}
+						onClose={saver.hide}
+						onOpenEvent={(event, day) => {
+							saver.hide();
+							setPage("calendar");
+							openEvent(event, day);
+						}}
+					/>
+				</Suspense>
 			)}
 			{cheer.cheer && <Celebration cheer={cheer.cheer} onDone={cheer.done} />}
 			{/* "Time to leave" alerts, on whichever page is showing (above the screen saver too). */}

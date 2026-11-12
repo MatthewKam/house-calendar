@@ -1,15 +1,15 @@
 /* Aleo (Google Fonts, SIL Open Font License; see fonts/Aleo/OFL.txt), bundled so the wall needs no
-   internet for it. The variable files cover every weight from 100 to 900. */
+   internet for it. The variable files cover every weight from 100 to 900; WOFF2, half the size of the TTFs. */
 @font-face {
 	font-family: "Aleo";
-	src: url("../fonts/Aleo/Aleo-VariableFont_wght.ttf") format("truetype");
+	src: url("../fonts/Aleo/Aleo-VariableFont_wght.woff2") format("woff2");
 	font-weight: 100 900;
 	font-style: normal;
 	font-display: swap;
 }
 @font-face {
 	font-family: "Aleo";
-	src: url("../fonts/Aleo/Aleo-Italic-VariableFont_wght.ttf") format("truetype");
+	src: url("../fonts/Aleo/Aleo-Italic-VariableFont_wght.woff2") format("woff2");
 	font-weight: 100 900;
 	font-style: italic;
 	font-display: swap;

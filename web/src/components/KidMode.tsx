@@ -1,6 +1,6 @@
 import KidColors from "./KidColors";
 import { isOlderKid } from "../lib/people";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { fromDayKey, startOfWeek, timeLabel, longDate } from "../lib/dates";
 import { useMediaQuery } from "../lib/useMediaQuery";
 import { useNow } from "../lib/useNow";
@@ -20,13 +20,15 @@ import type { Member, Task } from "../lib/types";
 import { textOn } from "../lib/color";
 import KidJars from "./KidJars";
 import KidToday from "./KidToday";
-import LearnTab from "./learn/LearnTab";
 import { RewardsIcon, TasksIcon, TodayIcon } from "./NavBar";
 import PottyCard from "./PottyCard";
 import { StarIcon } from "./icons";
 import s from "../styles/KidMode.module.css";
 import { firstName } from "../lib/people";
 import GrownUpPin from "./GrownUpPin";
+
+/** Learn's games load when the tab is first opened, so Today shows without waiting for them. */
+const LearnTab = lazy(() => import("./learn/LearnTab"));
 
 interface Props {
 	today: string;
@@ -252,7 +254,11 @@ export default function KidMode({ today, kids, members, onLeave, askPin, startWi
 					</section>
 				)}
 
-				{tab === "learn" && learning && <LearnTab key={kid.id} kid={kid} today={today} learn={learning} together={bothOn} askPin={askPin} />}
+				{tab === "learn" && learning && (
+					<Suspense fallback={null}>
+						<LearnTab key={kid.id} kid={kid} today={today} learn={learning} together={bothOn} askPin={askPin} />
+					</Suspense>
+				)}
 
 				{tab === "rewards" && (
 					<KidJars

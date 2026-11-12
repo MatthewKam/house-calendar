@@ -142,7 +142,7 @@ export function Cheer({ move }: { move?: "slide" | "fall" }) {
 					} as CSSProperties} />
 				))}
 			</span>
-			<img className={s.cheerMascot} src="/mascot/sprig.png" alt="" />
+			<img className={s.cheerMascot} src="/mascot/sprig.webp" alt="" />
 		</div>
 	);
 }
@@ -153,7 +153,7 @@ function HowToPlay({ title, how, onClose }: { title: string; how: string[]; onCl
 		<>
 			<Sheet label={`How to play ${title}`} onClose={onClose} className={sheet.confirm}>
 				<div className={s.howHead}>
-					<img className={s.howMascot} src="/mascot/sprig-inky.png" alt="" />
+					<img className={s.howMascot} src="/mascot/sprig-inky.webp" alt="" />
 					<h2 className={sheet.heading}>{title}</h2>
 				</div>
 				<ul className={s.howList}>
@@ -177,7 +177,7 @@ export function Over({ title, note, onAgain, onBack }: { title: string; note?: s
 		<>
 			<div className={sheet.scrim} role="presentation" />
 			<div className={s.over} role="dialog" aria-modal="true" aria-label={title}>
-				<img className={`${s.mascot} ${s.hop}`} src="/mascot/sprig.png" alt="" />
+				<img className={`${s.mascot} ${s.hop}`} src="/mascot/sprig.webp" alt="" />
 				{/* The words and buttons: beside the mascot on a short screen, under it otherwise. */}
 				<div className={s.overText}>
 					<h2 className={s.overTitle}>{title}</h2>
