@@ -619,6 +619,15 @@ export const useUpdateMember = () =>
   useMemberMutation(({ id, patch }: { id: string; patch: MemberPatch }) =>
     api.updateMember(id, patch), ({ id, patch }, members) => members.map((m) => (m.id === id ? { ...m, ...patch } : m)));
 export const useRemoveMember = () => useMemberMutation((id: string) => api.removeMember(id));
+/** A new color: shown at once when it's made, or as asked for (waiting for the account holder). */
+export const useSetMemberColor = () =>
+  useMemberMutation(({ id, color }: { id: string; color: string; holder: boolean }) => api.setMemberColor(id, color),
+    ({ id, color, holder }, members) => members.map((m) => (m.id !== id ? m : holder ? { ...m, color, colorAsked: null }
+      : { ...m, colorAsked: color === m.color ? null : { color, by: m.colorAsked?.by ?? null } })));
+export const useAnswerColor = () =>
+  useMemberMutation(({ id, approve }: { id: string; approve: boolean }) => api.answerColor(id, approve),
+    ({ id, approve }, members) => members.map((m) => (m.id !== id || !m.colorAsked ? m
+      : { ...m, color: approve ? m.colorAsked.color : m.color, colorAsked: null })));
 
 /** The photo album, newest first. */
 export function usePhotos() {

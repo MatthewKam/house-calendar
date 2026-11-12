@@ -102,6 +102,13 @@ const migrations: string[] = [
   `
   ALTER TABLE memberships ADD COLUMN pin_length INTEGER;
   `,
+  // The account holder: the guardian who made the household (the first guardian in one from before),
+  // who approves changes to people's colors and can hand the role to another guardian.
+  `
+  ALTER TABLE households ADD COLUMN holder_id TEXT REFERENCES memberships(id) ON DELETE SET NULL;
+  UPDATE households SET holder_id = (SELECT m.id FROM memberships m WHERE m.household_id = households.id
+    AND m.role = 'guardian' ORDER BY m.created_at, m.rowid LIMIT 1);
+  `,
 ];
 
 export function openAccounts(file: string): AccountsDB {
@@ -139,7 +146,7 @@ export function relativizePaths(db: AccountsDB, dataDir: string) {
   }
 }
 
-export interface HouseholdRow { id: string; name: string; db_file: string; photos_dir: string; legacy: number }
+export interface HouseholdRow { id: string; name: string; db_file: string; photos_dir: string; legacy: number; holder_id: string | null }
 export interface MembershipRow {
   id: string; household_id: string; member_id: string; user_id: string | null; role: 'guardian' | 'kid'; pin_hash: string | null;
 }

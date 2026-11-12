@@ -95,7 +95,11 @@ export function buildApp(db: DB, opts: CalendarOptions & {
   app.put<{ Params: { key: string }; Body: { value: unknown } }>('/api/settings/:key', {
     schema: { params: { type: 'object', properties: { key: { type: 'string', pattern: '^[a-zA-Z][a-zA-Z0-9_.]{0,63}$' } } },
       body: { type: 'object', required: ['value'], properties: { value: {} } } },
-  }, async (req) => {
+  }, async (req, reply) => {
+    // The household's accent (the wall wears it) is the account holder's pick.
+    if (req.params.key === 'accent' && req.raw.viewer && !req.raw.viewer.holder) {
+      return reply.code(403).send({ error: "The wall's accent follows the account holder's" });
+    }
     db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
       .run(req.params.key, JSON.stringify(req.body.value));
     return { [req.params.key]: req.body.value };

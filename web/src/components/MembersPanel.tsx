@@ -1,7 +1,8 @@
 import { useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { PALETTE } from '../lib/color';
 import { screenSaverSettings } from '../lib/screensaver';
-import { useAddMember, useAuthStatus, useCalendars, useLearn, useRemoveMember, useSetSetting, useSettings, useUpdateMember  } from '../lib/queries';
+import { useAddMember, useAuthStatus, useCalendars, useLearn, useRemoveMember, useSetSetting, useSettings, useUpdateMember, useSetMemberColor } from '../lib/queries';
+import ColorAsked from './ColorAsked';
 import type { Member, MemberPatch, Stage } from '../lib/types';
 import { dayKey } from '../lib/dates';
 import { STAGE_AGES, STAGE_LIST, STAGE_NAMES } from '../lib/stages';
@@ -17,7 +18,7 @@ import AlertsSetting, { ALERTS_NOTE } from './AlertsSetting';
 import LearnSettings, { learnNote } from './LearnSettings';
 import { usePush } from '../lib/usePush';
 import { useThemeSetting, type Theme } from '../lib/useTheme';
-import { ACCENTS, useAccentSetting } from '../lib/accent';
+import { ACCENTS, accentOf, useAccentSetting } from '../lib/accent';
 import Sheet from './Sheet';
 import ConfirmDialog from './ConfirmDialog';
 
@@ -139,10 +140,10 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
     const name = editing.name.trim();
     const patch: MemberPatch = {};
     if (name && name !== m.name) patch.name = name;
-    if (editing.color !== m.color) patch.color = editing.color;
     if ((editing.birthdate || null) !== m.birthdate) patch.birthdate = editing.birthdate || null;
     if (editing.stage !== m.stageChosen) patch.stage = editing.stage;
     if (Object.keys(patch).length) updateMember.mutate({ id: m.id, patch });
+    if (editing.color !== m.color) setColor.mutate({ id: m.id, color: editing.color, holder });
     stopEdit();
   }
   // Whose color set is showing: a member id, 'new' for the add row, or null.
@@ -150,6 +151,7 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
   const toggleSet = (key: string) => setOpenSet((open) => (open === key ? null : key));
   const addMember = useAddMember();
   const updateMember = useUpdateMember();
+  const setColor = useSetMemberColor();
   const removeMember = useRemoveMember();
   const setSetting = useSetSetting();
   // For the folded sections' summaries.
@@ -159,6 +161,11 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
   // Alerts are a grown-up's own phone's (not the wall's or a kid's device).
   const auth = useAuthStatus().data;
   const grownUp = !!auth?.signedIn && auth.role === 'guardian' && auth.kind === 'user';
+  // People's colors are the household's: the account holder's changes are made, anyone else's asked for.
+  // Signed out there's no holder. A grown-up's color is only theirs to change.
+  const holder = !auth?.signedIn || auth.holder;
+  const wall = auth?.signedIn && auth.role === 'wall' ? auth : null;
+  const canColor = (m: Member) => !auth?.signedIn || !m.guardian || m.id === auth.memberId;
   const push = usePush();
   const hasCalendars = (useCalendars().data ?? []).length > 0;
 
@@ -186,7 +193,10 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
           <button className={sheet.close} onClick={onClose} aria-label="Close Settings">×</button>
         </header>
         <Section title="Family" note={members.map((m) => m.name).join(", ")}>
-        <p className={s.hint}>Tap the pencil to change a name, color or birthday. A birthday sets each kid's stage, which decides how they earn stars.</p>
+        <p className={s.hint}>
+          Tap the pencil to change a name, color or birthday. A birthday sets each kid's stage, which decides how they earn stars.
+          {!holder && auth?.signedIn && ` A new color waits for ${auth.holderName ?? 'the account holder'} to OK it.`}
+        </p>
 
         <ul className={s.list}>
           {members.map((m) => {
@@ -196,7 +206,7 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
               <li key={m.id} className={s.member}>
                 <div className={s.row}>
                   {/* The color can only be changed while editing. */}
-                  {isEditing ? (
+                  {isEditing && canColor(m) ? (
                     <button type="button" className={`${s.swatch} ${s.swatchEditable}`} style={{ background: color }}
                       aria-label={`Change color for ${m.name}`} aria-expanded={openSet === m.id}
                       onClick={() => toggleSet(m.id)} />
@@ -254,6 +264,7 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
                     </label>
                   </div>
                 )}
+                {!isEditing && m.colorAsked && <ColorAsked member={m} />}
                 {isEditing && openSet === m.id && (
                   <ColorSet value={color} label={`Color for ${m.name}`} onPick={(c, done) => {
                     setEditing({ ...editing, color: c });
@@ -324,19 +335,32 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
           <p className={s.themeNote}>Kid mode stays light.</p>
         </Section>
 
-        {/* Each a circle, half its light shade and half its dark: one pick, a shade for each. */}
+        {/* Each a circle, half its light shade and half its dark: one pick, a shade for each. The wall
+            wears the account holder's, and their pick becomes the household's. */}
+        {wall ? (
+          <Section title="Accent color" note={accentOf(settings?.accent).name}>
+            <p className={s.themeNote}>The wall wears {wall.holderName ?? 'the account holder'}'s accent color.</p>
+          </Section>
+        ) : (
         <Section title="Accent color" note={accent.name}>
           <div className={s.accents} role="radiogroup" aria-label="Accent color">
             {ACCENTS.map((a) => (
-              <button key={a.id} type="button" role="radio" aria-checked={accent === a} className={s.accent} onClick={() => setAccent(a)}>
+              <button key={a.id} type="button" role="radio" aria-checked={accent === a} className={s.accent} onClick={() => {
+                setAccent(a);
+                if (auth?.signedIn && auth.holder && auth.role === 'guardian') setSetting.mutate({ key: 'accent', value: a.id });
+              }}>
                 <span className={`${s.accentDot} ${accent === a ? s.picked : ''}`} aria-hidden="true"
                   style={{ '--light': a.light.accent, '--dark': a.dark.accent } as CSSProperties} />
                 {a.name}
               </button>
             ))}
           </div>
-          <p className={s.themeNote}>Buttons and highlights on this device. Each has a shade for light and one for dark.</p>
+          <p className={s.themeNote}>
+            Buttons and highlights on this device. Each has a shade for light and one for dark.
+            {auth?.signedIn && auth.holder && auth.role === 'guardian' && ' The wall wears yours too.'}
+          </p>
         </Section>
+        )}
 
         <Section title="Text size" note={`${Math.round(uiScale * 100)}%`}>
           <label className={s.scale}>

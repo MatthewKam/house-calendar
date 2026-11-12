@@ -105,6 +105,28 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
   /** A guardian on their own account, or a device unlocked with a guardian's PIN. */
   const ownParent = (c: Ctx) => c.role === 'guardian' && c.s.kind === 'user';
   const isParent = (c: Ctx) => ownParent(c) || (!!c.s.parent_until && c.s.parent_until > now());
+  /**
+   * The household's account holder (a membership). Theirs if they're still a guardian in it; otherwise
+   * (taken out, or a household from before) the longest-standing guardian takes it on.
+   */
+  function holderOf(householdId: string): string | null {
+    const h = accounts.prepare('SELECT holder_id FROM households WHERE id = ?').get(householdId) as { holder_id: string | null } | undefined;
+    if (h?.holder_id && accounts.prepare(`SELECT 1 FROM memberships WHERE id = ? AND household_id = ? AND role = 'guardian'`).get(h.holder_id, householdId)) return h.holder_id;
+    const first = accounts.prepare(`SELECT id FROM memberships WHERE household_id = ? AND role = 'guardian' ORDER BY created_at, rowid LIMIT 1`)
+      .get(householdId) as { id: string } | undefined;
+    accounts.prepare('UPDATE households SET holder_id = ? WHERE id = ?').run(first?.id ?? null, householdId);
+    return first?.id ?? null;
+  }
+  /** The holder, on their own device or one they unlocked with their PIN. */
+  const isHolder = (c: Ctx) => {
+    if (!c.household || !isParent(c)) return false;
+    const holder = holderOf(c.household.id);
+    return !!holder && (ownParent(c) ? c.membership?.id === holder : c.s.parent_by === holder);
+  };
+  /** The guardians, as members of the household's own database. */
+  const guardiansOf = (householdId: string) => (accounts.prepare(`SELECT member_id FROM memberships WHERE household_id = ? AND role = 'guardian'`)
+    .all(householdId) as { member_id: string }[]).map((r) => r.member_id);
+
   /** Unlocks (by a guardian's membership) until then, or locks (null). */
   const setParentUntil = (s: SessionRow, until: string | null, by?: string) =>
     accounts.prepare('UPDATE sessions SET parent_until = ?, parent_by = COALESCE(?, parent_by) WHERE token_hash = ?')
@@ -159,6 +181,8 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
     // Who this device is, as the app shows them, and whose PIN has it unlocked.
     const people = c.household ? await membersOf(c.household) : [];
     const person = people.find((m) => m.id === c.membership?.member_id);
+    const holder = c.household ? holderOf(c.household.id) : null;
+    const holderMember = holder ? accounts.prepare('SELECT member_id FROM memberships WHERE id = ?').get(holder) as { member_id: string } | undefined : undefined;
     const unlocker = isParent(c) && !ownParent(c) && s.parent_by
       ? accounts.prepare('SELECT member_id FROM memberships WHERE id = ?').get(s.parent_by) as { member_id: string } | undefined
       : undefined;
@@ -178,6 +202,9 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
       parent: isParent(c),
       /** A guardian's own device: never locked. */
       parentAlways: ownParent(c),
+      /** This is the account holder (or a device they unlocked): approves color changes, and the wall wears their accent. */
+      holder: isHolder(c),
+      holderName: people.find((m) => m.id === holderMember?.member_id)?.name ?? null,
       hasPin: !!c.membership?.pin_hash,
       guardianPins,
       /** How long every guardian's PIN is, when they're all the same (and known): the pad checks it at that length. */
@@ -207,6 +234,7 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
     return c as Ctx & { household: HouseholdRow };
   };
 
-  return { started, sessionOf, householdById, contextOf, ownParent, isParent, setParentUntil, startSession, addMember, membersOf, status, needUser, needParent };
+  return { started, sessionOf, householdById, contextOf, ownParent, isParent, holderOf, isHolder, guardiansOf, setParentUntil, startSession, addMember,
+    membersOf, status, needUser, needParent };
 }
 export type Sessions = ReturnType<typeof sessions>;

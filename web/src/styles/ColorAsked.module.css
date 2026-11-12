@@ -1,0 +1,53 @@
+/* A new color asked for someone (ColorAsked): the two colors, who asked, and OK or No. */
+.asked {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	padding: 0.5rem 0.7rem;
+	border-radius: 0.8rem;
+	background: var(--bg);
+	font-weight: 600;
+}
+.dots {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	color: var(--muted);
+}
+.dot {
+	width: 1.4rem;
+	height: 1.4rem;
+	border-radius: 50%;
+	box-shadow: 0 0 0 1px var(--line);
+}
+.text {
+	flex: 1 1 10rem;
+	display: flex;
+	flex-direction: column;
+}
+.waiting {
+	font-size: 0.85rem;
+	font-weight: 500;
+	color: var(--muted);
+}
+.answer {
+	display: flex;
+	gap: 0.4rem;
+	margin-left: auto;
+}
+.ok,
+.no {
+	min-height: 2.6rem;
+	padding: 0 1rem;
+	border-radius: 999px;
+	font-weight: 700;
+}
+.ok {
+	background: var(--accent);
+	color: var(--on-accent);
+}
+.no {
+	background: var(--surface);
+	border: 1px solid var(--line);
+}

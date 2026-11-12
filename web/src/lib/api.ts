@@ -35,6 +35,8 @@ export type AuthStatus = { signedIn: false } | {
   entered: boolean;
   /** May change parent-only things now; always, on a guardian's own device. */
   parent: boolean; parentAlways: boolean;
+  /** This is the account holder (or a device they unlocked): approves color changes; the wall wears their accent. */
+  holder: boolean; holderName: string | null;
   /** This guardian has set their PIN; how many guardians have. */
   hasPin: boolean; guardianPins: number;
   /** Every guardian's PIN has this many digits (null: they differ, or aren't known). */
@@ -49,7 +51,7 @@ interface AccountConfig { google: string | null; apple: string | null; email: bo
 export interface JoinPreview { kind: 'guardian' | 'kid' | 'wall'; household: string; for: string | null; choose: { id: string; name: string }[] | null }
 export interface HouseholdAccess {
   name: string;
-  people: { memberId: string; name: string; color: string; membershipId: string | null; role: 'guardian' | 'kid' | null; email: string | null; account: boolean; hasPin: boolean }[];
+  people: { memberId: string; name: string; color: string; membershipId: string | null; role: 'guardian' | 'kid' | null; holder: boolean; email: string | null; account: boolean; hasPin: boolean }[];
   invites: { id: string; kind: 'guardian' | 'kid' | 'wall'; for: string | null; expiresAt: string }[];
   devices: { id: string; label: string; kind: 'user' | 'device' | 'wall'; who: string | null; signedInAt: string; lastSeen: string; thisDevice: boolean }[];
 }
@@ -85,6 +87,11 @@ export const api = {
   members: () => call<Member[]>('GET', '/api/members'),
   addMember: (m: { name: string; color: string }) => call<Member>('POST', '/api/members', m),
   updateMember: (id: string, m: MemberPatch) => call<Member>('PATCH', `/api/members/${id}`, m),
+  /** A new color for someone: made at once by the account holder, otherwise asked for (asked: true). */
+  setMemberColor: (id: string, color: string) => call<{ member: Member; asked: boolean }>('PUT', `/api/members/${id}/color`, { color }),
+  answerColor: (id: string, approve: boolean) => call<Member>('POST', `/api/members/${id}/color/answer`, { approve }),
+  /** Hands the account holder's role to another guardian. */
+  setHolder: (membershipId: string) => call<AuthStatus>('POST', '/api/account/holder', { membershipId }),
   removeMember: (id: string) => call<void>('DELETE', `/api/members/${id}`),
   learn: (today: string) => call<LearnState[]>('GET', `/api/learn?today=${today}`),
   setLearn: (memberId: string, today: string, p: { enabled?: boolean; gamesADay?: number; minutesADay?: number | null; levels?: Partial<Record<Game, number>> }) =>

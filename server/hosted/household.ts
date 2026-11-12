@@ -9,7 +9,7 @@ import { ALPHABET, INVITE_MS, NAME, PIN, later, limiter, normalizeCode, now, sho
 // joining with one, who's in it for Settings, taking someone out, and a guardian's PIN.
 
 export function householdRoutes(app: FastifyInstance, accounts: AccountsDB, x: Sessions) {
-  const { sessionOf, householdById, contextOf, startSession, addMember, membersOf, status, needUser, needParent } = x;
+  const { sessionOf, householdById, contextOf, startSession, addMember, membersOf, status, needUser, needParent, holderOf, isHolder } = x;
 
   app.post<{ Body: { name: string; yourName: string; color?: string } }>('/api/account/households', {
     schema: { body: { type: 'object', required: ['name', 'yourName'], additionalProperties: false,
@@ -24,9 +24,12 @@ export function householdRoutes(app: FastifyInstance, accounts: AccountsDB, x: S
       .run(id, req.body.name.trim(), join(dir, 'calendar.db'), join(dir, 'photos'));
     const h = householdById(id)!;
     const memberId = await addMember(h, req.body.yourName, req.body.color?.toLowerCase());
+    const membershipId = randomUUID();
     accounts.transaction(() => {
       accounts.prepare(`INSERT INTO memberships (id, household_id, member_id, user_id, role) VALUES (?, ?, ?, ?, 'guardian')`)
-        .run(randomUUID(), id, memberId, s.user_id);
+        .run(membershipId, id, memberId, s.user_id);
+      // Whoever makes the household holds it.
+      accounts.prepare('UPDATE households SET holder_id = ? WHERE id = ?').run(membershipId, id);
       accounts.prepare('UPDATE sessions SET household_id = ? WHERE token_hash = ?').run(id, s.token_hash);
     })();
     reply.code(201);
@@ -172,13 +175,14 @@ export function householdRoutes(app: FastifyInstance, accounts: AccountsDB, x: S
       LEFT JOIN memberships m ON m.id = s.membership_id OR (s.kind = 'user' AND m.household_id = s.household_id AND m.user_id = s.user_id)
       WHERE s.household_id = ? ORDER BY s.last_seen DESC`).all(h.id) as (SessionRow & { member_id: string | null })[];
     const invites = accounts.prepare('SELECT * FROM invites WHERE household_id = ? AND expires_at > ? ORDER BY created_at').all(h.id, now()) as InviteRow[];
+    const holder = holderOf(h.id);
     return {
       name: h.name,
       people: members.map((m) => {
         const ship = ms.find((x) => x.member_id === m.id);
         return {
           memberId: m.id, name: m.name, color: m.color,
-          membershipId: ship?.id ?? null, role: ship?.role ?? null,
+          membershipId: ship?.id ?? null, role: ship?.role ?? null, holder: !!ship && ship.id === holder,
           // How they sign in: their own account (email shown), or devices added by code.
           email: ship?.email ?? null, account: !!ship?.user_id, hasPin: !!ship?.pin_hash,
         };
@@ -204,6 +208,19 @@ export function householdRoutes(app: FastifyInstance, accounts: AccountsDB, x: S
       accounts.prepare('DELETE FROM memberships WHERE id = ?').run(m.id);
     })();
     return reply.code(204).send();
+  });
+
+  // The account holder hands the role to another guardian.
+  app.post<{ Body: { membershipId: string } }>('/api/account/holder', {
+    schema: { body: { type: 'object', required: ['membershipId'], additionalProperties: false, properties: { membershipId: { type: 'string' } } } },
+  }, async (req, reply) => {
+    const c = needParent(req, reply);
+    if (!c) return;
+    if (!isHolder(c)) return reply.code(403).send({ error: 'Only the account holder can hand it over' });
+    const to = accounts.prepare(`SELECT id FROM memberships WHERE id = ? AND household_id = ? AND role = 'guardian'`).get(req.body.membershipId, c.household.id);
+    if (!to) return reply.code(400).send({ error: 'Only a guardian can hold the account' });
+    accounts.prepare('UPDATE households SET holder_id = ? WHERE id = ?').run(req.body.membershipId, c.household.id);
+    return status(req);
   });
 
   // A guardian's PIN, for entering the wall and unlocking it (or a kid's device) for changes.

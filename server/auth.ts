@@ -12,6 +12,10 @@ export interface Viewer {
   memberId: string | null;
   /** May make parent-only changes right now. */
   parent: boolean;
+  /** The account holder (on their own device, or a device they unlocked with their PIN): approves color changes. */
+  holder: boolean;
+  /** The guardians, as members of this household: only they change their own color. */
+  guardians: string[];
   /** A parent-only change was made: keeps a wall or kid device's unlock going. */
   stillParent(): void;
 }

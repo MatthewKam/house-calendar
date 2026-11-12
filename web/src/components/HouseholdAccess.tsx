@@ -20,6 +20,8 @@ export default function HouseholdAccess() {
 	const status = useAuthStatus().data;
 	// The sign-in being removed, while that's asked.
 	const [removing, setRemoving] = useState<{ id: string; name: string } | null>(null);
+	// The account holder handing their role to another guardian, while that's asked.
+	const [handing, setHanding] = useState<{ id: string; name: string } | null>(null);
 	const data = useQuery({ queryKey: ["account", "household"], queryFn: api.household }).data;
 	const refresh = () => qc.invalidateQueries({ queryKey: ["account"] });
 	const [issued, setIssued] = useState<{ code: string; expiresAt: string; what: string } | null>(null);
@@ -33,6 +35,7 @@ export default function HouseholdAccess() {
 	const cancel = useMutation({ mutationFn: api.cancelInvite, onSettled: refresh });
 	const remove = useMutation({ mutationFn: api.removeSignIn, onSettled: refresh });
 	const signOut = useMutation({ mutationFn: api.signOutDevice, onSettled: refresh });
+	const handOver = useMutation({ mutationFn: api.setHolder, onSuccess: (st) => qc.setQueryData(["auth"], st), onSettled: refresh });
 	const [newName, setNewName] = useState("");
 	const [newKind, setNewKind] = useState<Kind>("guardian");
 	const me = status?.signedIn ? status : null;
@@ -65,7 +68,7 @@ export default function HouseholdAccess() {
 							</span>
 							<span className={s.how}>
 								{p.role
-									? `${ROLE[p.role]} · ${p.account ? (p.email ?? "own account") : "signs in on devices added by code"}${p.role === "guardian" && !p.hasPin ? " · no PIN yet" : ""}`
+									? `${p.holder ? "Account holder" : ROLE[p.role]} · ${p.account ? (p.email ?? "own account") : "signs in on devices added by code"}${p.role === "guardian" && !p.hasPin ? " · no PIN yet" : ""}`
 									: "Doesn't sign in"}
 							</span>
 						</span>
@@ -82,6 +85,12 @@ export default function HouseholdAccess() {
 									Invite as guardian
 								</button>
 							)}
+							{me.holder && p.role === "guardian" && !p.holder && p.membershipId && (
+								<button type="button" className={panel.textLink}
+									onClick={() => setHanding({ id: p.membershipId!, name: p.name })}>
+									Make account holder
+								</button>
+							)}
 							{p.membershipId && p.memberId !== me.memberId && (
 								<button type="button" className={panel.textLink}
 									onClick={() => setRemoving({ id: p.membershipId!, name: p.name })}>
@@ -94,8 +103,10 @@ export default function HouseholdAccess() {
 			</ul>
 			<p className={s.hint}>
 				A kid with their own phone and account can be invited as a guardian would be, then signs in themselves; younger kids' devices just use a code.
+				The account holder OKs new colors for people, and the wall wears their accent color.
 			</p>
 			{remove.isError && <p className={s.error}>{remove.error.message}</p>}
+			{handOver.isError && <p className={s.error}>{handOver.error.message}</p>}
 
 			<form className={s.row} onSubmit={inviteNew}>
 				<input className={s.input} value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Someone new" aria-label="Name" maxLength={40} />
@@ -171,6 +182,13 @@ export default function HouseholdAccess() {
 					onCancel={() => setRemoving(null)}
 					onConfirm={() => { remove.mutate(removing.id); setRemoving(null); }}>
 					They stay in the family.
+				</ConfirmDialog>
+			)}
+			{handing && (
+				<ConfirmDialog title={`Make ${handing.name} the account holder?`} confirmLabel="Hand it over"
+					onCancel={() => setHanding(null)}
+					onConfirm={() => { handOver.mutate(handing.id); setHanding(null); }}>
+					They'll OK new colors for people, and the wall will wear their accent color. Only they can hand it back.
 				</ConfirmDialog>
 			)}
 		</section>

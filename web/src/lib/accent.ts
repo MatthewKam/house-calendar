@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
  * later), each with its own shade for light and for dark, and the color of text on it, so every pick
  * reads well in both (charcoal is near black on light, light grey on dark). Sprig green is app.css's own,
  * the default. Kept on the device, like light or dark; index.html puts the pick on before the first paint.
+ * The wall doesn't pick: it wears the household's, the account holder's pick (the `accent` setting).
  */
 export interface Accent {
   id: string;
@@ -27,7 +28,7 @@ const KEY = 'sprig:accent';
 const CSS_KEY = 'sprig:accent-css';
 const STYLE_ID = 'sprig-accent';
 
-const accentOf = (id: string | null) => ACCENTS.find((a) => a.id === id) ?? DEFAULT_ACCENT;
+export const accentOf = (id: unknown) => ACCENTS.find((a) => a.id === id) ?? DEFAULT_ACCENT;
 
 function load() {
   try {
@@ -67,24 +68,37 @@ export function useAccentSetting() {
     return () => window.removeEventListener(KEY, update);
   }, []);
   const set = (next: Accent) => {
-    try {
-      if (next === DEFAULT_ACCENT) {
-        localStorage.removeItem(KEY);
-        localStorage.removeItem(CSS_KEY);
-      } else {
-        localStorage.setItem(KEY, next.id);
-        localStorage.setItem(CSS_KEY, accentCss(next));
-      }
-    } catch {
-      // Private browsing or storage blocked: just this visit.
-    }
+    keep(next);
     apply(next);
     window.dispatchEvent(new Event(KEY));
   };
   return [accent, set] as const;
 }
 
-/** Keeps this device's accent on the page (index.html put it on first; this catches a stale copy). */
-export function useAccent() {
-  useEffect(() => apply(load()), []);
+function keep(a: Accent) {
+  try {
+    if (a === DEFAULT_ACCENT) {
+      localStorage.removeItem(KEY);
+      localStorage.removeItem(CSS_KEY);
+    } else {
+      localStorage.setItem(KEY, a.id);
+      localStorage.setItem(CSS_KEY, accentCss(a));
+    }
+  } catch {
+    // Private browsing or storage blocked: just this visit.
+  }
+}
+
+/**
+ * Keeps this device's accent on the page (index.html put it on first; this catches a stale copy). The
+ * wall passes the household's (undefined until it's known): it wears that, and keeps it for next time.
+ */
+export function useAccent(household?: unknown) {
+  const wall = household !== undefined;
+  useEffect(() => {
+    if (!wall) return apply(load());
+    const a = accentOf(household);
+    keep(a);
+    apply(a);
+  }, [wall, household]);
 }

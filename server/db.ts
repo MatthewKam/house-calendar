@@ -820,6 +820,15 @@ const migrations: string[] = [
     PRIMARY KEY (item_id, occurrence)
   );
   `,
+  // A new color asked for someone, waiting for the account holder: one at a time per person.
+  `
+  CREATE TABLE color_requests (
+    member_id  TEXT PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
+    color      TEXT NOT NULL,
+    asked_by   TEXT,
+    asked_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */
