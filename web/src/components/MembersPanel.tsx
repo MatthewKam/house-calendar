@@ -69,7 +69,7 @@ function ColorSet({ value, label, onPick }: { value: string; label: string; onPi
 const SettingsView = createContext<{ view: string | null; open: (title: string) => void }>({ view: null, open: () => {} });
 
 /**
- * A group of Settings (Family, Users, Learning, Appearance, Screen, Notifications): in the list, a row (with a word on
+ * A group of Settings (Family, Learning, Appearance, Screen, Notifications, Users): in the list, a row (with a word on
  * how it's set, for one that's a single thing); tapped, the sheet shows just it (a back arrow to the list).
  */
 function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
@@ -391,13 +391,6 @@ export default function MembersPanel({ members, onClose, onKidMode }: Props) {
 
         </Group>
 
-        {/* Who signs in and how (invites, PINs, devices): its own group. */}
-        <Group title="Users">
-          <div className={s.foldBody}>
-            <HouseholdAccess />
-          </div>
-        </Group>
-
         {/* A big one: its own group, not folded inside Family. */}
         <Group title="Learning" note={learnNote(learn, members)}>
           <div className={s.foldBody}>
@@ -480,11 +473,19 @@ export default function MembersPanel({ members, onClose, onKidMode }: Props) {
         {/* Its own group: what this phone tells you, and more to come. A grown-up's own phone's only. */}
         {grownUp && (
           <Group title="Notifications" note={ALERTS_NOTE[push.state]}>
-            <div className={s.foldBody}>
+            {/* A dropdown each: alerts now, more to come. */}
+            <Section title="Alerts" note={ALERTS_NOTE[push.state]}>
               <AlertsSetting push={push} />
-            </div>
+            </Section>
           </Group>
         )}
+
+        {/* Who signs in and how (invites, PINs, devices): its own group. */}
+        <Group title="Users">
+          <div className={s.foldBody}>
+            <HouseholdAccess />
+          </div>
+        </Group>
         </SettingsView.Provider>
 
         {/* Signing out (or locking the wall) last, away from everything else. */}

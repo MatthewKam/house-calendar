@@ -334,7 +334,7 @@
 	font-size: 0.9rem;
 }
 
-/* Settings: a row for each group (Family, Users, Learning, Appearance, Screen, Notifications); tapped, just that group. */
+/* Settings: a row for each group (Family, Learning, Appearance, Screen, Notifications, Users); tapped, just that group. */
 .groupRow {
 	width: 100%;
 	display: flex;
