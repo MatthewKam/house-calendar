@@ -643,6 +643,9 @@ details > summary.cardHead {
 	background: var(--surface);
 	border-radius: 5px;
 }
+.weekPairFeels {
+	background: none;
+}
 .weekPair .weekHigh,
 .weekPair .weekLow {
 	font-size: 0.72rem;
