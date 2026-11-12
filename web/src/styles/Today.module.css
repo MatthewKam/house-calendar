@@ -225,6 +225,12 @@ details > summary.cardHead {
 	border-color: var(--soon-line);
 	color: var(--soon);
 }
+/* What to bring, all packed. */
+.packed {
+	background: var(--good-bg);
+	border-color: var(--good-line);
+	color: var(--good);
+}
 
 /* The kids: name, a bar filling with their color, then tasks, stickers and stars. */
 .catch {

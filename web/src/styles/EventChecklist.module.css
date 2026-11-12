@@ -1,0 +1,159 @@
+/* What to bring on an event: a light box in the event sheet, things to tick, or the list being changed. */
+.box {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.8rem 0.9rem;
+	border-radius: 0.9rem;
+	background: var(--bg);
+}
+.head {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	flex-wrap: wrap;
+}
+.label {
+	font-weight: 700;
+}
+.count {
+	color: var(--muted);
+	font-size: 0.9rem;
+	white-space: nowrap;
+}
+.edit {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	padding: 0 0.8rem;
+	border-radius: 999px;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	font-size: 0.9rem;
+	margin-left: auto;
+}
+.items {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+.item {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.35rem 0.6rem;
+	border-radius: 0.7rem;
+	background: var(--surface);
+	text-align: left;
+	font-size: 1.05rem;
+}
+.tick {
+	flex: none;
+	display: grid;
+	place-items: center;
+	width: 1.5rem;
+	height: 1.5rem;
+	border-radius: 0.45rem;
+	border: 2px solid var(--line);
+	font-weight: 800;
+}
+.done .tick {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: #fff;
+}
+.done .title {
+	color: var(--muted);
+	text-decoration: line-through;
+}
+.picture {
+	font-size: 1.4rem;
+	line-height: 1;
+}
+.guess {
+	opacity: 0.45;
+}
+.title {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+.note {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+
+/* Changing the list: a picture button, the name and × on each row, and a row to add one. */
+.editRow {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	flex-wrap: wrap;
+}
+.pick {
+	flex: none;
+	display: grid;
+	place-items: center;
+	width: 2.6rem;
+	height: 2.6rem;
+	border-radius: 0.7rem;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	font-size: 1.4rem;
+}
+.noPicture {
+	color: var(--muted);
+	font-size: 1.1rem;
+}
+.input {
+	flex: 1;
+	min-width: 0;
+	font-size: 1.05rem;
+	padding: 0.5rem 0.65rem;
+	border: 1px solid var(--line);
+	border-radius: 0.6rem;
+	background: var(--surface);
+	color: var(--text);
+}
+.remove {
+	flex: none;
+	font-size: 1.5rem;
+	color: var(--muted);
+	padding: 0 0.6rem;
+}
+.addButton {
+	flex: none;
+	padding: 0 1rem;
+	border-radius: 0.6rem;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	font-weight: 600;
+}
+.addButton:disabled {
+	opacity: 0.4;
+}
+.picker {
+	flex-basis: 100%;
+	padding: 0.5rem;
+	border-radius: 0.7rem;
+	background: var(--surface);
+}
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+.cancel {
+	padding: 0 1rem;
+}
+.save {
+	padding: 0 1.2rem;
+	border-radius: 0.6rem;
+	background: var(--accent);
+	color: #fff;
+	font-weight: 650;
+}

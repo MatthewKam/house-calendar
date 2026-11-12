@@ -96,6 +96,15 @@ export interface StarPlacing { memberId: string; today: string; from?: string; p
 /** Who sees an event: everyone; busy (others see "Busy" at that time); private (others don't see it). */
 export type Visibility = 'everyone' | 'busy' | 'private';
 
+/** One thing to bring to an event; `done`: ticked for this time it happens. */
+export interface ChecklistItem {
+  id: string;
+  title: string;
+  /** An emoji, shown to the kids instead of the words. */
+  picture: string | null;
+  done: boolean;
+}
+
 export interface CalEvent {
   id: string;
   calendarId: string;
@@ -120,6 +129,8 @@ export interface CalEvent {
   /** Sprig's own events: notes, and the flyer photo it was read from (Snap a flyer). */
   notes: string | null;
   photoUrl: string | null;
+  /** What to bring (every repeat of it), ticked for this time it happens. */
+  checklist: ChecklistItem[];
   /** Someone else's Busy time: no title or place, and it can't be opened. */
   busy?: boolean;
 }
