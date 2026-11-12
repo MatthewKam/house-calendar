@@ -13,28 +13,28 @@ const DARK = '(prefers-color-scheme: dark)';
 const BAR = { light: '#ffffff', dark: '#1e2024' };
 
 function load(): Theme {
-  try {
-    const saved = localStorage.getItem(KEY);
-    return saved === 'light' || saved === 'dark' ? saved : 'auto';
-  } catch {
-    return 'auto';
-  }
+	try {
+		const saved = localStorage.getItem(KEY);
+		return saved === 'light' || saved === 'dark' ? saved : 'auto';
+	} catch {
+		return 'auto';
+	}
 }
 
 /** This device's pick, and changing it. */
 export function useThemeSetting() {
-  const [theme, setTheme] = useState<Theme>(load);
-  const set = (next: Theme) => {
-    try {
-      if (next === 'auto') localStorage.removeItem(KEY);
-      else localStorage.setItem(KEY, next);
-    } catch {
-      // Private browsing or storage blocked: just this visit.
-    }
-    setTheme(next);
-    window.dispatchEvent(new Event(KEY));
-  };
-  return [theme, set] as const;
+	const [theme, setTheme] = useState<Theme>(load);
+	const set = (next: Theme) => {
+		try {
+			if (next === 'auto') localStorage.removeItem(KEY);
+			else localStorage.setItem(KEY, next);
+		} catch {
+			// Private browsing or storage blocked: just this visit.
+		}
+		setTheme(next);
+		window.dispatchEvent(new Event(KEY));
+	};
+	return [theme, set] as const;
 }
 
 /**
@@ -43,20 +43,20 @@ export function useThemeSetting() {
  * bright, stays light.
  */
 export function useTheme(lightOnly: boolean) {
-  useEffect(() => {
-    const media = window.matchMedia(DARK);
-    const apply = () => {
-      const pick = load();
-      const mode = lightOnly ? 'light' : pick === 'auto' ? (media.matches ? 'dark' : 'light') : pick;
-      document.documentElement.dataset.theme = mode;
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', BAR[mode]);
-    };
-    apply();
-    media.addEventListener('change', apply);
-    window.addEventListener(KEY, apply);
-    return () => {
-      media.removeEventListener('change', apply);
-      window.removeEventListener(KEY, apply);
-    };
-  }, [lightOnly]);
+	useEffect(() => {
+		const media = window.matchMedia(DARK);
+		const apply = () => {
+			const pick = load();
+			const mode = lightOnly ? 'light' : pick === 'auto' ? (media.matches ? 'dark' : 'light') : pick;
+			document.documentElement.dataset.theme = mode;
+			document.querySelector('meta[name="theme-color"]')?.setAttribute('content', BAR[mode]);
+		};
+		apply();
+		media.addEventListener('change', apply);
+		window.addEventListener(KEY, apply);
+		return () => {
+			media.removeEventListener('change', apply);
+			window.removeEventListener(KEY, apply);
+		};
+	}, [lightOnly]);
 }

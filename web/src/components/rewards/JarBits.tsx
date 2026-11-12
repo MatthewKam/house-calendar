@@ -1,19 +1,19 @@
-import type { CSSProperties } from "react";
-import { fromDayKey } from "../../lib/dates";
-import { textOn } from "../../lib/color";
-import type { Member, Reward } from "../../lib/types";
-import { StarIcon } from "../ui/icons";
-import s from "./Rewards.module.css";
+import type { CSSProperties } from 'react';
+import { fromDayKey } from '../../lib/dates';
+import { textOn } from '../../lib/color';
+import type { Member, Reward } from '../../lib/types';
+import { StarIcon } from '../ui/icons';
+import s from './Rewards.module.css';
 
 /** A day key as a date, or an ISO instant (e.g. when it was redeemed) in local time. */
 export const toDate = (d: string) => (d.length > 10 ? new Date(d) : fromDayKey(d));
 
 /** "Oct 9". */
-export const shortDay = (d: string) => toDate(d).toLocaleDateString([], { month: "short", day: "numeric" });
+export const shortDay = (d: string) => toDate(d).toLocaleDateString([], { month: 'short', day: 'numeric' });
 
 /** "Oct 9 at 7:45 PM", from an ISO instant. */
 export const dayAndTime = (iso: string) =>
-	`${shortDay(iso)} at ${new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+	`${shortDay(iso)} at ${new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
 
 /** The kids' names, each in their color; "together" when there's more than one. */
 export function Who({ ids, members }: { ids: string[]; members: Member[] }) {
@@ -31,18 +31,26 @@ export function Who({ ids, members }: { ids: string[]; members: Member[] }) {
 }
 
 /** Each fills it: every kid needs the full amount on their own. */
-export const eachFills = (r: Reward) => r.teamMode === "each" && r.memberIds.length > 1;
+export const eachFills = (r: Reward) => r.teamMode === 'each' && r.memberIds.length > 1;
 
 /**
  * Stars in a jar: one bar split by who put what in, or (each fills it) one bar per kid.
  * `adding` shows stars a kid has placed but not yet confirmed, striped.
  */
-export function JarProgress({ r, members, adding }: { r: Reward; members: Member[]; adding?: { kid: Member; n: number } }) {
+export function JarProgress({
+	r,
+	members,
+	adding,
+}: {
+	r: Reward;
+	members: Member[];
+	adding?: { kid: Member; n: number };
+}) {
 	const who = members.filter((m) => r.memberIds.includes(m.id));
 	const width = (n: number) => `${Math.min(100, (n / r.goal) * 100)}%`;
 	const extra = (m: Member) => (adding?.kid.id === m.id ? adding.n : 0);
 	const staged = (m: Member) =>
-		extra(m) > 0 && <span className={s.adding} style={{ width: width(extra(m)), "--c": m.color } as CSSProperties} />;
+		extra(m) > 0 && <span className={s.adding} style={{ width: width(extra(m)), '--c': m.color } as CSSProperties} />;
 	if (eachFills(r)) {
 		return (
 			<div className={s.eachBars}>

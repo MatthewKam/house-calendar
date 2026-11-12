@@ -1,9 +1,9 @@
-import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
-import { addDays, dayKey, rangeLabel, timeLabel } from "../../lib/dates";
-import { eventPaint, eventsOn, isOver } from "../../lib/events";
-import { useNow } from "../../lib/useNow";
-import type { CalEvent, Member } from "../../lib/types";
-import s from "./WeekView.module.css";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+import { addDays, dayKey, rangeLabel, timeLabel } from '../../lib/dates';
+import { eventPaint, eventsOn, isOver } from '../../lib/events';
+import { useNow } from '../../lib/useNow';
+import type { CalEvent, Member } from '../../lib/types';
+import s from './WeekView.module.css';
 
 interface Props {
 	days: Date[];
@@ -18,16 +18,7 @@ interface Props {
 	footer?: ReactNode;
 }
 
-export default function WeekView({
-	days,
-	today,
-	selected,
-	events,
-	members,
-	onSelect,
-	onOpen,
-	footer,
-}: Props) {
+export default function WeekView({ days, today, selected, events, members, onSelect, onOpen, footer }: Props) {
 	// When the days are a scrolling list (phones), open on today, or the top if today isn't shown.
 	const list = useRef<HTMLDivElement>(null);
 	// Events that have ended fade back (checked every minute).
@@ -39,18 +30,14 @@ export default function WeekView({
 			const el = list.current;
 			if (!el || el.scrollHeight <= el.clientHeight) return;
 			const card = el.querySelector<HTMLElement>(`[data-day="${today}"]`);
-			el.scrollTop = card
-				? card.getBoundingClientRect().top -
-					el.getBoundingClientRect().top +
-					el.scrollTop
-				: 0;
+			el.scrollTop = card ? card.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop : 0;
 		});
 		return () => cancelAnimationFrame(frame);
 	}, [first, days.length, today]);
 
 	function MostFrequentSentence(text: string) {
 		const counts: Record<string, number> = {};
-		const words = text.split(" ");
+		const words = text.split(' ');
 		for (const w of words) {
 			counts[w] = (counts[w] || 0) + 1;
 		}
@@ -61,11 +48,11 @@ export default function WeekView({
 			if (topWords.includes(w)) return `'${w}'`;
 			return w;
 		});
-		const sentence = result.join(" ");
+		const sentence = result.join(' ');
 		return sentence;
 	}
 
-	MostFrequentSentence("the bear and the boy got some coffee");
+	MostFrequentSentence('the bear and the boy got some coffee');
 
 	return (
 		<div className={s.week} ref={list}>
@@ -77,16 +64,14 @@ export default function WeekView({
 					<section
 						key={key}
 						data-day={key}
-						className={`${s.day} ${key === today ? s.today : ""} ${key === selected ? s.selected : ""}`}
+						className={`${s.day} ${key === today ? s.today : ''} ${key === selected ? s.selected : ''}`}
 						onClick={() => onSelect(key)}
 						role="button"
 						tabIndex={0}
-						onKeyDown={(e) => e.key === "Enter" && onSelect(key)}
+						onKeyDown={(e) => e.key === 'Enter' && onSelect(key)}
 					>
 						<div className={s.date}>
-							<span className={s.dow}>
-								{day.toLocaleDateString([], { weekday: "short" })}
-							</span>
+							<span className={s.dow}>{day.toLocaleDateString([], { weekday: 'short' })}</span>
 							<span className={s.num}>{day.getDate()}</span>
 						</div>
 						<ul className={s.list}>
@@ -95,7 +80,7 @@ export default function WeekView({
 								return (
 									<li key={ev.id}>
 										<button
-											className={`${s.ev} ${ev.allDay ? s.allday : ""} ${isOver(ev, now) ? s.past : ""}`}
+											className={`${s.ev} ${ev.allDay ? s.allday : ''} ${isOver(ev, now) ? s.past : ''}`}
 											style={
 												{
 													...paint.vars,

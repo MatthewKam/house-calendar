@@ -7,45 +7,65 @@ import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypt
 // viewer (tests, or a household app used on its own) everything is open.
 
 export interface Viewer {
-  role: 'guardian' | 'kid' | 'wall';
-  /** The person in this household's members, for a guardian or kid. */
-  memberId: string | null;
-  /** May make parent-only changes right now. */
-  parent: boolean;
-  /** The account holder (on their own device, or a device they unlocked with their PIN): approves color changes. */
-  holder: boolean;
-  /** Who is making the change: the person signed in, or on a device unlocked with a PIN, whose PIN it was. */
-  actor: string | null;
-  /** The guardians, as members of this household: only they change their own color. */
-  guardians: string[];
-  /** A parent-only change was made: keeps a wall or kid device's unlock going. */
-  stillParent(): void;
+	role: 'guardian' | 'kid' | 'wall';
+	/** The person in this household's members, for a guardian or kid. */
+	memberId: string | null;
+	/** May make parent-only changes right now. */
+	parent: boolean;
+	/** The account holder (on their own device, or a device they unlocked with their PIN): approves color changes. */
+	holder: boolean;
+	/** Who is making the change: the person signed in, or on a device unlocked with a PIN, whose PIN it was. */
+	actor: string | null;
+	/** The guardians, as members of this household: only they change their own color. */
+	guardians: string[];
+	/** A parent-only change was made: keeps a wall or kid device's unlock going. */
+	stillParent(): void;
 }
 
 declare module 'node:http' {
-  interface IncomingMessage { viewer?: Viewer }
+	interface IncomingMessage {
+		viewer?: Viewer;
+	}
 }
 
 export const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 
 export function hashPin(pin: string) {
-  const salt = randomBytes(16).toString('hex');
-  return `${salt}:${scryptSync(pin, salt, 32).toString('hex')}`;
+	const salt = randomBytes(16).toString('hex');
+	return `${salt}:${scryptSync(pin, salt, 32).toString('hex')}`;
 }
 export function pinMatches(pin: string, stored: string) {
-  const [salt, hash] = stored.split(':');
-  const got = scryptSync(pin, salt, 32);
-  const want = Buffer.from(hash, 'hex');
-  return got.length === want.length && timingSafeEqual(got, want);
+	const [salt, hash] = stored.split(':');
+	const got = scryptSync(pin, salt, 32);
+	const want = Buffer.from(hash, 'hex');
+	return got.length === want.length && timingSafeEqual(got, want);
 }
 
 /** "iPhone · Safari", "Mac · Chrome": enough to tell devices apart in Settings. */
 export function deviceLabel(ua = '') {
-  const device = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android'
-    : /Macintosh/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : /Windows/.test(ua) ? 'Windows' : 'Device';
-  const browser = /Edg\//.test(ua) ? 'Edge' : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /FxiOS|Firefox\//.test(ua) ? 'Firefox'
-    : /Safari\//.test(ua) ? 'Safari' : 'browser';
-  return `${device} · ${browser}`;
+	const device = /iPhone/.test(ua)
+		? 'iPhone'
+		: /iPad/.test(ua)
+			? 'iPad'
+			: /Android/.test(ua)
+				? 'Android'
+				: /Macintosh/.test(ua)
+					? 'Mac'
+					: /Linux/.test(ua)
+						? 'Linux'
+						: /Windows/.test(ua)
+							? 'Windows'
+							: 'Device';
+	const browser = /Edg\//.test(ua)
+		? 'Edge'
+		: /CriOS|Chrome\//.test(ua)
+			? 'Chrome'
+			: /FxiOS|Firefox\//.test(ua)
+				? 'Firefox'
+				: /Safari\//.test(ua)
+					? 'Safari'
+					: 'browser';
+	return `${device} · ${browser}`;
 }
 
 /**
@@ -55,42 +75,75 @@ export function deviceLabel(ua = '') {
  */
 type Req = FastifyRequest<{ Params: Record<string, string>; Body: Record<string, unknown> | undefined }>;
 const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean][] = [
-  ['POST', '/api/events'], ['PATCH', '/api/events/:id'], ['DELETE', '/api/events/:id'], ['POST', '/api/events/:id/restore'],
-  ['PUT', '/api/events/:id/people'], ['POST', '/api/outbox/:id/resolve'], ['POST', '/api/connections/icloud'], ['POST', '/api/alerts'], ['DELETE', '/api/alerts/:id'],
-  ['POST', '/api/capture'], ['PUT', '/api/learn/:memberId'], ['PUT', '/api/learn/sounds/:animal'], ['DELETE', '/api/learn/sounds/:animal'],
-  ['POST', '/api/tasks'], ['PATCH', '/api/tasks/:id'], ['DELETE', '/api/tasks/:id'], ['PUT', '/api/tasks/order'],
-  ['POST', '/api/rewards'], ['PATCH', '/api/rewards/:id'], ['DELETE', '/api/rewards/:id'], ['POST', '/api/rewards/:id/restore'],
-  ['POST', '/api/rewards/:id/take-back'],
-  // A kid's own device puts stars in jars only with a parent there.
-  ['POST', '/api/rewards/place', (req) => req.raw.viewer?.role === 'kid'],
-  ['PUT', '/api/events/:id/visibility'], ['POST', '/api/moments'], ['DELETE', '/api/moments/:id'],
-  // Kids punch their own potty card; starting, stopping and taking a punch back are a parent's.
-  ['PUT', '/api/potty/:memberId'], ['DELETE', '/api/potty/:memberId/:step'],
-  ['PUT', '/api/goals/library/:key'], ['PUT', '/api/goals/library'], ['POST', '/api/goals/library'],
-  ['POST', '/api/members'], ['PATCH', '/api/members/:id'], ['DELETE', '/api/members/:id'], ['PATCH', '/api/calendars/:id'],
-  // Month or week is anyone's choice; the rest of Settings isn't.
-  ['PUT', '/api/settings/:key', (req) => req.params.key !== 'view'],
-  ['PATCH', '/api/photos/:id'], ['DELETE', '/api/photos/:id'], ['POST', '/api/photos/slideshow'], ['POST', '/api/photos/delete'],
-  // Ticking a list item is fine; renaming it (or its icon) isn't.
-  ['PATCH', '/api/reminders/:id', (req) => req.body?.title !== undefined],
-  // Sprig's own lists: adding and ticking are anyone's; the rest is a parent's.
-  ['POST', '/api/lists'], ['PATCH', '/api/lists/:id'], ['DELETE', '/api/lists/:id'], ['DELETE', '/api/lists/items/:id'],
-  ['PATCH', '/api/lists/items/:id', (req) => Object.keys(req.body ?? {}).some((k) => k !== 'done')],
-  ['PUT', '/api/events/:id/special'],
-  // What to bring: changing the list is a parent's; ticking it is anyone's.
-  ['PUT', '/api/events/:id/checklist'],
-  // Learn's day: unlocking, locking, more games or minutes.
-  ['POST', '/api/learn/:memberId/today'],
+	['POST', '/api/events'],
+	['PATCH', '/api/events/:id'],
+	['DELETE', '/api/events/:id'],
+	['POST', '/api/events/:id/restore'],
+	['PUT', '/api/events/:id/people'],
+	['POST', '/api/outbox/:id/resolve'],
+	['POST', '/api/connections/icloud'],
+	['POST', '/api/alerts'],
+	['DELETE', '/api/alerts/:id'],
+	['POST', '/api/capture'],
+	['PUT', '/api/learn/:memberId'],
+	['PUT', '/api/learn/sounds/:animal'],
+	['DELETE', '/api/learn/sounds/:animal'],
+	['POST', '/api/tasks'],
+	['PATCH', '/api/tasks/:id'],
+	['DELETE', '/api/tasks/:id'],
+	['PUT', '/api/tasks/order'],
+	['POST', '/api/rewards'],
+	['PATCH', '/api/rewards/:id'],
+	['DELETE', '/api/rewards/:id'],
+	['POST', '/api/rewards/:id/restore'],
+	['POST', '/api/rewards/:id/take-back'],
+	// A kid's own device puts stars in jars only with a parent there.
+	['POST', '/api/rewards/place', (req) => req.raw.viewer?.role === 'kid'],
+	['PUT', '/api/events/:id/visibility'],
+	['POST', '/api/moments'],
+	['DELETE', '/api/moments/:id'],
+	// Kids punch their own potty card; starting, stopping and taking a punch back are a parent's.
+	['PUT', '/api/potty/:memberId'],
+	['DELETE', '/api/potty/:memberId/:step'],
+	['PUT', '/api/goals/library/:key'],
+	['PUT', '/api/goals/library'],
+	['POST', '/api/goals/library'],
+	['POST', '/api/members'],
+	['PATCH', '/api/members/:id'],
+	['DELETE', '/api/members/:id'],
+	['PATCH', '/api/calendars/:id'],
+	// Month or week is anyone's choice; the rest of Settings isn't.
+	['PUT', '/api/settings/:key', (req) => req.params.key !== 'view'],
+	['PATCH', '/api/photos/:id'],
+	['DELETE', '/api/photos/:id'],
+	['POST', '/api/photos/slideshow'],
+	['POST', '/api/photos/delete'],
+	// Ticking a list item is fine; renaming it (or its icon) isn't.
+	['PATCH', '/api/reminders/:id', (req) => req.body?.title !== undefined],
+	// Sprig's own lists: adding and ticking are anyone's; the rest is a parent's.
+	['POST', '/api/lists'],
+	['PATCH', '/api/lists/:id'],
+	['DELETE', '/api/lists/:id'],
+	['DELETE', '/api/lists/items/:id'],
+	['PATCH', '/api/lists/items/:id', (req) => Object.keys(req.body ?? {}).some((k) => k !== 'done')],
+	['PUT', '/api/events/:id/special'],
+	// What to bring: changing the list is a parent's; ticking it is anyone's.
+	['PUT', '/api/events/:id/checklist'],
+	// Learn's day: unlocking, locking, more games or minutes.
+	['POST', '/api/learn/:memberId/today'],
 ];
 const needsParent = (req: Req) =>
-  PARENT_ONLY.some(([method, route, when]) => req.method === method && req.routeOptions.url === route && (!when || when(req)));
+	PARENT_ONLY.some(
+		([method, route, when]) => req.method === method && req.routeOptions.url === route && (!when || when(req)),
+	);
 
 /** Parent changes from a locked device are refused; a parent's change keeps the unlock going. */
 export function registerGuard(app: FastifyInstance) {
-  app.addHook('preHandler', async (req, reply) => {
-    const viewer = req.raw.viewer;
-    if (!viewer || !needsParent(req as Req)) return;
-    if (!viewer.parent) return reply.code(403).send({ error: "Locked: unlock with a guardian's PIN to change this", locked: true });
-    viewer.stillParent();
-  });
+	app.addHook('preHandler', async (req, reply) => {
+		const viewer = req.raw.viewer;
+		if (!viewer || !needsParent(req as Req)) return;
+		if (!viewer.parent)
+			return reply.code(403).send({ error: "Locked: unlock with a guardian's PIN to change this", locked: true });
+		viewer.stillParent();
+	});
 }

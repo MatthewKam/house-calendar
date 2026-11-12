@@ -121,7 +121,6 @@
 		margin-top: 0.2rem;
 		min-height: 2.8rem;
 	}
-
 }
 /* Games left today: a dot each, filled until it's played (and minutes left, with a time limit). */
 .gamesLeft {
@@ -159,7 +158,7 @@
 	position: absolute;
 	top: 0.6rem;
 	right: 0.8rem;
-	font-family: Georgia, "Times New Roman", serif;
+	font-family: Georgia, 'Times New Roman', serif;
 	font-size: 1.15rem;
 	font-weight: 700;
 	letter-spacing: 0.04em;
@@ -210,7 +209,6 @@
 	.mascot {
 		height: min(10rem, 40vh);
 	}
-
 }
 .overTitle {
 	margin: 0;
@@ -640,7 +638,9 @@ img.farmBack {
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
 	white-space: nowrap;
-	box-shadow: inset 0 0 0 0.08em #fff, inset 0 0 0 0.14em var(--pc);
+	box-shadow:
+		inset 0 0 0 0.08em #fff,
+		inset 0 0 0 0.14em var(--pc);
 	translate: -50% -50%;
 	rotate: -7deg;
 	pointer-events: none;
@@ -652,7 +652,9 @@ img.farmBack {
 .tooth {
 	transform-box: fill-box;
 	transform-origin: 50% 50%;
-	transition: transform 0.15s ease, opacity 0.15s ease;
+	transition:
+		transform 0.15s ease,
+		opacity 0.15s ease;
 }
 /* Pressed: a shake, then gone. */
 .toothDown {
@@ -751,7 +753,6 @@ img.farmBack {
 	.farmBack path {
 		transition: none;
 	}
-
 }
 
 /* No dragging the pictures (the mascot, the drawings) out. */
@@ -820,7 +821,9 @@ img.farmBack {
 }
 @keyframes goalPulse {
 	50% {
-		box-shadow: 0 0 0 3px #f4b400, 0 0 0.9rem 0.3rem rgb(244 180 0 / 0.6);
+		box-shadow:
+			0 0 0 3px #f4b400,
+			0 0 0.9rem 0.3rem rgb(244 180 0 / 0.6);
 	}
 }
 @keyframes bob {

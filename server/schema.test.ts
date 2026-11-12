@@ -9,20 +9,30 @@ import { openAccounts } from './accounts.ts';
 
 /** Every table with its indexes and triggers after it, as SQLite keeps them. */
 function schema(db: Database.Database, title: string) {
-  const rows = db.prepare(`SELECT type, name, tbl_name, sql FROM sqlite_master
-    WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' ORDER BY tbl_name, type = 'table' DESC, name`).all() as
-    { type: string; name: string; sql: string }[];
-  const version = db.pragma('user_version', { simple: true });
-  return `-- ${title}, at version ${version}. Written by server/schema.test.ts; don't edit by hand.\n\n`
-    + rows.map((r) => `${r.sql};`).join('\n\n') + '\n';
+	const rows = db
+		.prepare(
+			`SELECT type, name, tbl_name, sql FROM sqlite_master
+    WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' ORDER BY tbl_name, type = 'table' DESC, name`,
+		)
+		.all() as { type: string; name: string; sql: string }[];
+	const version = db.pragma('user_version', { simple: true });
+	return (
+		`-- ${title}, at version ${version}. Written by server/schema.test.ts; don't edit by hand.\n\n` +
+		rows.map((r) => `${r.sql};`).join('\n\n') +
+		'\n'
+	);
 }
 
 describe('schema', () => {
-  it("a household's database", async () => {
-    await expect(schema(openDb(':memory:'), "A household's database (server/db.ts)")).toMatchFileSnapshot('./schema/household.sql');
-  });
+	it("a household's database", async () => {
+		await expect(schema(openDb(':memory:'), "A household's database (server/db.ts)")).toMatchFileSnapshot(
+			'./schema/household.sql',
+		);
+	});
 
-  it('the accounts database', async () => {
-    await expect(schema(openAccounts(':memory:'), 'The accounts database (server/accounts.ts)')).toMatchFileSnapshot('./schema/accounts.sql');
-  });
+	it('the accounts database', async () => {
+		await expect(schema(openAccounts(':memory:'), 'The accounts database (server/accounts.ts)')).toMatchFileSnapshot(
+			'./schema/accounts.sql',
+		);
+	});
 });

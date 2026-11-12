@@ -18,7 +18,7 @@
 }
 /* On the back, the mascot's line drawing in a light shade of the card's color. */
 .cardBack::after {
-	content: "";
+	content: '';
 	position: absolute;
 	inset: 12%;
 	background: color-mix(in srgb, var(--back) 30%, white);

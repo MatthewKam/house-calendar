@@ -39,7 +39,7 @@
 	flex: none;
 	padding: 0;
 }
-.swatch[aria-expanded="true"] {
+.swatch[aria-expanded='true'] {
 	box-shadow:
 		0 0 0 3px var(--surface),
 		0 0 0 5px var(--accent);
@@ -67,19 +67,7 @@
 }
 /* Rainbow until a custom color is chosen, then that color. */
 .custom {
-	background: var(
-		--c,
-		conic-gradient(
-			#e0457b,
-			#f08a24,
-			#b08900,
-			#2fa66a,
-			#13a3b5,
-			#2f7de1,
-			#8e5bd8,
-			#e0457b
-		)
-	);
+	background: var(--c, conic-gradient(#e0457b, #f08a24, #b08900, #2fa66a, #13a3b5, #2f7de1, #8e5bd8, #e0457b));
 }
 .custom input {
 	position: absolute;
@@ -215,7 +203,7 @@
 	font-size: 0.8rem;
 	color: var(--muted);
 }
-.accent[aria-checked="true"] {
+.accent[aria-checked='true'] {
 	color: var(--text);
 	font-weight: 650;
 }
@@ -278,7 +266,7 @@
 	color: var(--text);
 }
 .saverPreview {
-	composes: textButton from "../ui/Buttons.module.css";
+	composes: textButton from '../ui/Buttons.module.css';
 	align-self: flex-start;
 	padding: 0.2rem 0;
 }
@@ -309,7 +297,7 @@
 	font-size: 0.85rem;
 }
 .textLink {
-	composes: textButton from "../ui/Buttons.module.css";
+	composes: textButton from '../ui/Buttons.module.css';
 	padding: 0.2rem;
 }
 .pinForm {
@@ -348,7 +336,7 @@
 }
 /* A chevron: tap to go in. */
 .groupRow::after {
-	content: "";
+	content: '';
 	flex: none;
 	width: 0.55rem;
 	height: 0.55rem;
@@ -388,7 +376,7 @@
 }
 /* A chevron that turns down when open. */
 .foldHead::after {
-	content: "";
+	content: '';
 	flex: none;
 	width: 0.55rem;
 	height: 0.55rem;
@@ -435,7 +423,7 @@
 		serif;
 }
 .info::before {
-	content: "";
+	content: '';
 	position: absolute;
 	width: 1rem;
 	height: 1rem;
@@ -445,7 +433,7 @@
 .info {
 	position: relative;
 }
-.info[aria-expanded="true"] {
+.info[aria-expanded='true'] {
 	color: var(--accent);
 }
 .switchHint {

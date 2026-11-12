@@ -1,9 +1,9 @@
 // Small line icons drawn in the current text color (the star is filled gold).
 
-const svg = { viewBox: "0 0 24 24", "aria-hidden": true } as const;
+const svg = { viewBox: '0 0 24 24', 'aria-hidden': true } as const;
 
 export const StarIcon = ({ className }: { className?: string }) => (
-	<svg {...svg} className={className} style={{ fill: "#e3a008", stroke: "none" }}>
+	<svg {...svg} className={className} style={{ fill: '#e3a008', stroke: 'none' }}>
 		<path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z" />
 	</svg>
 );
@@ -22,7 +22,7 @@ export const TrashIcon = () => (
 );
 
 export const GripIcon = () => (
-	<svg {...svg} style={{ fill: "currentColor", stroke: "none" }}>
+	<svg {...svg} style={{ fill: 'currentColor', stroke: 'none' }}>
 		{[6, 12, 18].map((y) => (
 			<g key={y}>
 				<circle cx="9" cy={y} r="1.6" />
@@ -31,4 +31,3 @@ export const GripIcon = () => (
 		))}
 	</svg>
 );
-

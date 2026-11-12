@@ -4,17 +4,21 @@ import { applySnapshot, claimPending } from './reminders.ts';
 
 /** Runs a JavaScript for Automation script with osascript, passing it JSON and reading JSON back. */
 function jxa<T>(script: string, input: unknown): Promise<T> {
-  return new Promise((resolve, reject) => {
-    execFile('/usr/bin/osascript', ['-l', 'JavaScript', '-e', script, JSON.stringify(input)], { timeout: 120_000, maxBuffer: 8 * 1024 * 1024 },
-      (err, out, stderr) => {
-        if (err) return reject(new Error(stderr.trim() || err.message));
-        try {
-          resolve(JSON.parse(out) as T);
-        } catch {
-          reject(new Error(`Unexpected reply from Reminders: ${out.slice(0, 120)}`));
-        }
-      });
-  });
+	return new Promise((resolve, reject) => {
+		execFile(
+			'/usr/bin/osascript',
+			['-l', 'JavaScript', '-e', script, JSON.stringify(input)],
+			{ timeout: 120_000, maxBuffer: 8 * 1024 * 1024 },
+			(err, out, stderr) => {
+				if (err) return reject(new Error(stderr.trim() || err.message));
+				try {
+					resolve(JSON.parse(out) as T);
+				} catch {
+					reject(new Error(`Unexpected reply from Reminders: ${out.slice(0, 120)}`));
+				}
+			},
+		);
+	});
 }
 
 // Every list, with the titles of its open reminders. Asking for just the open ones keeps it fast:
@@ -48,13 +52,15 @@ const APPLY = `function run(argv) {
 }`;
 
 export interface MacReminders {
-  read(): Promise<{ name: string; open: string[] }[]>;
-  apply(changes: { id: number; op: string; list: string; title: string; newTitle?: string | null }[]): Promise<number[]>;
+	read(): Promise<{ name: string; open: string[] }[]>;
+	apply(
+		changes: { id: number; op: string; list: string; title: string; newTitle?: string | null }[],
+	): Promise<number[]>;
 }
 
 const osascriptReminders: MacReminders = {
-  read: () => jxa(READ, null),
-  apply: (changes) => jxa(APPLY, changes),
+	read: () => jxa(READ, null),
+	apply: (changes) => jxa(APPLY, changes),
 };
 
 /**
@@ -63,11 +69,17 @@ const osascriptReminders: MacReminders = {
  * control Reminders. On the Pi, phones run the Shortcut instead.
  */
 export function macRemindersSync(db: DB, device = 'Mac', reminders: MacReminders = osascriptReminders) {
-  return async () => {
-    const changes = claimPending(db, device);
-    const applied = changes.length ? await reminders.apply(changes) : [];
-    const lists = await reminders.read();
-    applySnapshot(db, device, lists.flatMap((l) => l.open.map((title) => ({ list: l.name, title }))), applied, new Date(),
-      lists.map((l) => l.name));
-  };
+	return async () => {
+		const changes = claimPending(db, device);
+		const applied = changes.length ? await reminders.apply(changes) : [];
+		const lists = await reminders.read();
+		applySnapshot(
+			db,
+			device,
+			lists.flatMap((l) => l.open.map((title) => ({ list: l.name, title }))),
+			applied,
+			new Date(),
+			lists.map((l) => l.name),
+		);
+	};
 }

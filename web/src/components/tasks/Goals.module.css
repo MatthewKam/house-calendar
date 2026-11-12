@@ -1,8 +1,6 @@
 /* Goals in the task and goal dialogs: the library to pick from (GoalPicker), what one's worth
    (PointsStepper), confirming a removal (ConfirmBelow), and which goals show. */
 
-
-
 /* The sheet. */
 .subhead {
 	margin: 0.4rem 0 0;
@@ -53,7 +51,7 @@
 	color: var(--muted);
 }
 .textButton {
-	composes: textButton from "../ui/Buttons.module.css";
+	composes: textButton from '../ui/Buttons.module.css';
 	padding: 0.3rem;
 	align-self: flex-start;
 }
@@ -232,7 +230,7 @@
 	line-height: 1.15;
 	padding: 0.3rem;
 }
-.modeSwitch button[aria-pressed="true"] {
+.modeSwitch button[aria-pressed='true'] {
 	background: var(--surface);
 	color: var(--text);
 	box-shadow: var(--shadow-sm);

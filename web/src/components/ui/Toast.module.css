@@ -1,8 +1,26 @@
 .toast {
-  position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%); z-index: var(--layer-toast);
-  background: var(--float); color: #fff; border-radius: var(--radius);
-  padding: 0.4rem 0.5rem 0.4rem 1.2rem; display: flex; align-items: center; gap: 1rem; font-size: 1.05rem;
+	position: fixed;
+	left: 50%;
+	bottom: 1.5rem;
+	transform: translateX(-50%);
+	z-index: var(--layer-toast);
+	background: var(--float);
+	color: #fff;
+	border-radius: var(--radius);
+	padding: 0.4rem 0.5rem 0.4rem 1.2rem;
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	font-size: 1.05rem;
 }
-.toast button { color: #ffd76a; font-weight: 650; padding: 0 1rem; }
+.toast button {
+	color: #ffd76a;
+	font-weight: 650;
+	padding: 0 1rem;
+}
 /* Phones: above the bottom bar. */
-@media (max-width: 700px) { .toast { bottom: calc(5.5rem + env(safe-area-inset-bottom)); } }
+@media (max-width: 700px) {
+	.toast {
+		bottom: calc(5.5rem + env(safe-area-inset-bottom));
+	}
+}

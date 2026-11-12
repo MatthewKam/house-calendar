@@ -1,5 +1,5 @@
-import { useMemo, useState, type CSSProperties } from "react";
-import { fromDayKey, startOfWeek, longDate } from "../../lib/dates";
+import { useMemo, useState, type CSSProperties } from 'react';
+import { fromDayKey, startOfWeek, longDate } from '../../lib/dates';
 import {
 	useTasks,
 	useTasksDone,
@@ -11,19 +11,19 @@ import {
 	useMomentActions,
 	usePotty,
 	usePottyActions,
-} from "../../lib/queries";
-import { taskProgress, tasksFor, percent } from "../../lib/tasks";
-import type { Task, Member, Moment } from "../../lib/types";
-import { momentKind } from "../../lib/moments";
-import KidHeader from "./KidHeader";
-import TodayList from "./TodayList";
-import TaskHistory from "./TaskHistory";
-import ConfirmDialog from "../ui/ConfirmDialog";
-import MomentDialog from "./MomentDialog";
-import PottyCard from "./PottyCard";
-import panel from "../calendar/DayPanel.module.css";
-import s from "./Tasks.module.css";
-import { isKid } from "../../lib/people";
+} from '../../lib/queries';
+import { taskProgress, tasksFor, percent } from '../../lib/tasks';
+import type { Task, Member, Moment } from '../../lib/types';
+import { momentKind } from '../../lib/moments';
+import KidHeader from './KidHeader';
+import TodayList from './TodayList';
+import TaskHistory from './TaskHistory';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import MomentDialog from './MomentDialog';
+import PottyCard from './PottyCard';
+import panel from '../calendar/DayPanel.module.css';
+import s from './Tasks.module.css';
+import { isKid } from '../../lib/people';
 
 interface Props {
 	today: string;
@@ -49,7 +49,12 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 	const deleteTask = useDeleteTask();
 	const reorder = useReorderTasks();
 	// The day's bar counts required tasks only; extras earn stars instead.
-	const progress = taskProgress(tasks, done, today, members.map((m) => m.id));
+	const progress = taskProgress(
+		tasks,
+		done,
+		today,
+		members.map((m) => m.id),
+	);
 	const buckets = useBuckets().data ?? [];
 	const moments = useMoments(today).data ?? [];
 	// Caught being good is open.
@@ -84,9 +89,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 			<header className={s.pageHead}>
 				<div>
 					<h1 className={s.pageTitle}>Tasks</h1>
-					<div className={panel.dow}>
-						{longDate(fromDayKey(today))}
-					</div>
+					<div className={panel.dow}>{longDate(fromDayKey(today))}</div>
 				</div>
 				<div className={s.headButtons}>
 					{!locked && kids.length > 0 && (
@@ -100,8 +103,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 			<div className={s.scroll}>
 				{tasks.length === 0 && (
 					<p className={s.none}>
-						No tasks yet. Add one for each kid and pick the days it's due; they
-						tick it off here.
+						No tasks yet. Add one for each kid and pick the days it's due; they tick it off here.
 					</p>
 				)}
 				<div className={s.board}>
@@ -112,7 +114,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 							<section
 								key={kid.id}
 								className={s.kid}
-								style={{ "--c": kid.color, "--p": `${percent(progress.get(kid.id))}%` } as CSSProperties}
+								style={{ '--c': kid.color, '--p': `${percent(progress.get(kid.id))}%` } as CSSProperties}
 							>
 								<KidHeader
 									kid={kid}
@@ -124,7 +126,13 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 									onMoment={locked ? undefined : (moment) => setUnsticking({ kid, moment })}
 								/>
 								{!showHistory && potty.some((c) => c.memberId === kid.id) && (
-									<PottyCard kid={kid} chart={potty.find((c) => c.memberId === kid.id)!} canEdit={!locked} compact foldable />
+									<PottyCard
+										kid={kid}
+										chart={potty.find((c) => c.memberId === kid.id)!}
+										canEdit={!locked}
+										compact
+										foldable
+									/>
 								)}
 								{showHistory ? (
 									<TaskHistory kid={kid} tasks={mine} today={today} onEdit={locked ? undefined : onEdit} />
@@ -136,7 +144,9 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 											done={done}
 											today={today}
 											editing={editing}
-											onTick={(c, ticked) => setDone.mutate({ taskId: c.id, memberId: kid.id, day: today, done: !ticked })}
+											onTick={(c, ticked) =>
+												setDone.mutate({ taskId: c.id, memberId: kid.id, day: today, done: !ticked })
+											}
 											onEdit={onEdit}
 											onDelete={setToDelete}
 											onReorder={reorderGroup}
@@ -147,8 +157,11 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 													+ Add task/goal
 												</button>
 												{isKid(kid) && !potty.some((c) => c.memberId === kid.id) && (
-													<button className={s.addText} disabled={pottyActions.setOn.isPending}
-														onClick={() => pottyActions.setOn.mutate({ memberId: kid.id, on: true })}>
+													<button
+														className={s.addText}
+														disabled={pottyActions.setOn.isPending}
+														onClick={() => pottyActions.setOn.mutate({ memberId: kid.id, on: true })}
+													>
 														🚽 Start potty chart
 													</button>
 												)}
@@ -166,7 +179,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 			<div className={s.actions}>
 				{tasks.length > 0 && !locked && (
 					<button className={s.editToggle} aria-pressed={editing} onClick={() => setEditing(!editing)}>
-						{editing ? "Done editing" : "Edit tasks"}
+						{editing ? 'Done editing' : 'Edit tasks'}
 					</button>
 				)}
 			</div>
@@ -174,7 +187,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 			{toDelete && (
 				<ConfirmDialog
 					title={`Delete "${toDelete.title}"?`}
-					confirmLabel={toDelete.memberId ? "Delete" : "Delete for everyone"}
+					confirmLabel={toDelete.memberId ? 'Delete' : 'Delete for everyone'}
 					onCancel={() => setToDelete(null)}
 					onConfirm={() => {
 						deleteTask.mutate(toDelete.id);
@@ -197,10 +210,9 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 					}}
 					onConfirm={() => momentActions.remove.mutate(unsticking.moment.id, { onSuccess: () => setUnsticking(null) })}
 				>
-					{momentKind(unsticking.moment.kind).emoji}{" "}
-					{unsticking.moment.note ?? "Caught being good today."}
+					{momentKind(unsticking.moment.kind).emoji} {unsticking.moment.note ?? 'Caught being good today.'}
 					{unsticking.moment.stars > 0 &&
-						` Its ${unsticking.moment.stars} ${unsticking.moment.stars === 1 ? "star goes" : "stars go"} too.`}
+						` Its ${unsticking.moment.stars} ${unsticking.moment.stars === 1 ? 'star goes' : 'stars go'} too.`}
 					{/* Not once its stars are in a jar. */}
 					{momentActions.remove.isError && <p className={s.problem}>{momentActions.remove.error.message}</p>}
 				</ConfirmDialog>

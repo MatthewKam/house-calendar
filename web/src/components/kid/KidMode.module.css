@@ -50,7 +50,7 @@
 .leaveTab {
 	margin-top: auto;
 }
-.kidTab[aria-current="page"] {
+.kidTab[aria-current='page'] {
 	background: var(--c);
 	color: var(--on);
 	/* Raised a little, like the selected tab in the grown-ups' bar. */
@@ -65,8 +65,7 @@
 		flex-direction: row;
 		justify-content: space-around;
 		gap: 0.4rem;
-		padding: 0.4rem max(0.6rem, env(safe-area-inset-right))
-			max(0.4rem, env(safe-area-inset-bottom))
+		padding: 0.4rem max(0.6rem, env(safe-area-inset-right)) max(0.4rem, env(safe-area-inset-bottom))
 			max(0.6rem, env(safe-area-inset-left));
 		border-right: none;
 		border-top: 1px solid var(--line);
@@ -84,7 +83,6 @@
 	.leaveTab {
 		margin-top: 0;
 	}
-
 }
 
 .page {
@@ -94,14 +92,13 @@
 	overflow-y: auto;
 	box-sizing: border-box;
 	/* The top's room is the shell's (--top-room). */
-	padding: 0 max(1rem, env(safe-area-inset-right)) 2rem
-		max(1rem, env(safe-area-inset-left));
+	padding: 0 max(1rem, env(safe-area-inset-right)) 2rem max(1rem, env(safe-area-inset-left));
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
 }
 /* Not the pop-ups (and their dimmed backdrop), which sit over the page at their own size. */
-.page > :not([role="dialog"], [role="presentation"]) {
+.page > :not([role='dialog'], [role='presentation']) {
 	width: 100%;
 	/* 56rem, or on a big screen (where that's under 80% of it), 80% of the width, so it doesn't sit small in the middle. */
 	max-width: max(56rem, 80%);
@@ -151,7 +148,6 @@
 	.clockDate {
 		font-size: 1.1rem;
 	}
-
 }
 /* Whose it is, top right: the stars, then their name in their colour, which opens the other kids. */
 .who {
@@ -264,7 +260,6 @@ button.kidName {
 	button.kidName {
 		padding-right: 0.7rem;
 	}
-
 }
 .faceDot {
 	opacity: 0.55;
@@ -665,7 +660,6 @@ button.kidName {
 	.pop {
 		animation: none;
 	}
-
 }
 
 /* Their jars (the Rewards page's card). */
@@ -722,7 +716,6 @@ button.kidName {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		align-items: start;
 	}
-
 }
 /* Wider than 1400px: the calendar's three days side by side. */
 @media (min-width: 1401px) {
@@ -731,7 +724,6 @@ button.kidName {
 		grid-template-columns: repeat(3, 1fr);
 		align-items: start;
 	}
-
 }
 
 /* The calendar's carousel: a big button for each day along the top, the day under them. */
@@ -784,7 +776,6 @@ button.kidName {
 	.dayFromLeft {
 		animation: none;
 	}
-
 }
 
 /* Don't forget: today's things to remember, from the family's lists. */
@@ -890,7 +881,6 @@ button.kidName {
 		width: 1.8rem;
 		height: 1.8rem;
 	}
-
 }
 
 /* No dragging pictures out, either. */

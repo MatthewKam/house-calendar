@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Pic } from "./art";
-import { Board } from "./parts";
-import { ANIMALS, type Animal } from "./things";
-import { at, CHEER_MS, fresh, shuffle, type GameProps, useLater } from "./rounds";
-import { noise } from "./sound";
-import s from "./Learn.module.css";
-import g from "./LearnPeekaboo.module.css";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Pic } from './art';
+import { Board } from './parts';
+import { ANIMALS, type Animal } from './things';
+import { at, CHEER_MS, fresh, shuffle, type GameProps, useLater } from './rounds';
+import { noise } from './sound';
+import s from './Learn.module.css';
+import g from './LearnPeekaboo.module.css';
 
 /** Hiding places (always three: the garden's three pots), and animals hiding in them over a play, by level. */
 const BUSHES = [3];
@@ -21,11 +21,11 @@ const STAY_AT_LEAST = 2500;
  * hidden), as a share of its height.
  */
 const PLACES = [
-	{ id: "farm", name: "haystack", spots: ["haystack"], wide: 560 / 333, peek: 0.55 },
-	{ id: "field", name: "tractor", spots: ["tractor"], wide: 560 / 381, peek: 0.5 },
-	{ id: "forest", name: "bush", spots: ["bush"], wide: 560 / 308, peek: 0.5 },
-	{ id: "garden", name: "flower pot", spots: ["pot-1", "pot-2", "pot-3"], wide: 420 / 390, peek: 0.62 },
-	{ id: "safari", name: "rock", spots: ["boulder"], wide: 560 / 252, peek: 0.45 },
+	{ id: 'farm', name: 'haystack', spots: ['haystack'], wide: 560 / 333, peek: 0.55 },
+	{ id: 'field', name: 'tractor', spots: ['tractor'], wide: 560 / 381, peek: 0.5 },
+	{ id: 'forest', name: 'bush', spots: ['bush'], wide: 560 / 308, peek: 0.5 },
+	{ id: 'garden', name: 'flower pot', spots: ['pot-1', 'pot-2', 'pot-3'], wide: 420 / 390, peek: 0.62 },
+	{ id: 'safari', name: 'rock', spots: ['boulder'], wide: 560 / 252, peek: 0.45 },
 ] as const;
 const art = (file: string) => `/hide/${file}.webp`;
 
@@ -33,7 +33,12 @@ const art = (file: string) => `/hide/${file}.webp`;
  * A hiding place (a haystack, a tractor, a bush, a flower pot, a rock): who's hiding in it now, whether they're out, how many times it's
  * been tapped (for its rustle), and `last`: it's out for good, with nobody new left to hide there.
  */
-interface Bush { animal: Animal | null; out: boolean; taps: number; last?: boolean }
+interface Bush {
+	animal: Animal | null;
+	out: boolean;
+	taps: number;
+	last?: boolean;
+}
 
 /**
  * Peekaboo (age 2): not a game to win, just fun. Tap a haystack on the farm (or a tractor in the
@@ -44,14 +49,19 @@ interface Bush { animal: Animal | null; out: boolean; taps: number; last?: boole
  * turn, the mascot cheers with confetti and that's the end. A new set of animals each play.
  */
 export default function Peekaboo({ level, onDone, onBack }: GameProps) {
-	const place = useMemo(() => fresh("peekaboo.places", PLACES, 1, (p) => p.id)[0], []);
+	const place = useMemo(() => fresh('peekaboo.places', PLACES, 1, (p) => p.id)[0], []);
 	// Each hiding place's picture: the garden's pots in a new order each play (round again past three).
 	const spots = useMemo(() => shuffle(place.spots), [place]);
 	const bushCount = at(BUSHES, level);
 	// Everyone hiding this play, in the order they'll turn up.
-	const queue = useMemo(() => fresh("peekaboo.animals", ANIMALS, Math.max(bushCount, at(ANIMALS_PER_PLAY, level)), (a) => a.id), [level, bushCount]);
+	const queue = useMemo(
+		() => fresh('peekaboo.animals', ANIMALS, Math.max(bushCount, at(ANIMALS_PER_PLAY, level)), (a) => a.id),
+		[level, bushCount],
+	);
 	const next = useRef(bushCount);
-	const [bushes, setBushes] = useState<Bush[]>(() => queue.slice(0, bushCount).map((animal) => ({ animal, out: false, taps: 0 })));
+	const [bushes, setBushes] = useState<Bush[]>(() =>
+		queue.slice(0, bushCount).map((animal) => ({ animal, out: false, taps: 0 })),
+	);
 	// Everyone's had their turn: the cheer, then the end.
 	const [finished, setFinished] = useState(false);
 	const later = useLater();
@@ -80,15 +90,18 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 				setBushes((all) => all.map((b, j) => (j === i ? { ...b, last: true } : b)));
 				return;
 			}
-			hideTimers.current[i] = setTimeout(() => {
-				// Back down, and someone new hides there (if nobody's taken the last one meanwhile).
-				if (next.current >= queue.length) {
-					setBushes((all) => all.map((b, j) => (j === i ? { ...b, last: true } : b)));
-					return;
-				}
-				const newcomer = queue[next.current++];
-				setBushes((all) => all.map((b, j) => (j === i ? { ...b, animal: newcomer, out: false } : b)));
-			}, Math.max(STAY_AFTER, STAY_AT_LEAST - (Date.now() - from)));
+			hideTimers.current[i] = setTimeout(
+				() => {
+					// Back down, and someone new hides there (if nobody's taken the last one meanwhile).
+					if (next.current >= queue.length) {
+						setBushes((all) => all.map((b, j) => (j === i ? { ...b, last: true } : b)));
+						return;
+					}
+					const newcomer = queue[next.current++];
+					setBushes((all) => all.map((b, j) => (j === i ? { ...b, animal: newcomer, out: false } : b)));
+				},
+				Math.max(STAY_AFTER, STAY_AT_LEAST - (Date.now() - from)),
+			);
 		});
 	}
 
@@ -109,27 +122,51 @@ export default function Peekaboo({ level, onDone, onBack }: GameProps) {
 				const row = box.w > box.h || box.w >= 600;
 				const cols = row ? bushes.length : 2;
 				const rows = Math.ceil(bushes.length / cols);
-				const grid = { cols, size: Math.floor(Math.min((room.w - 12 * (cols - 1)) / cols, ((room.h - 12 * (rows - 1)) / rows) * shape, 260)) };
+				const grid = {
+					cols,
+					size: Math.floor(
+						Math.min((room.w - 12 * (cols - 1)) / cols, ((room.h - 12 * (rows - 1)) / rows) * shape, 260),
+					),
+				};
 				const placeHeight = grid.size / place.wide;
 				return (
 					<div className={g.farm}>
 						<img className={s.farmBack} src={art(place.id)} alt="" draggable={false} />
-						<div className={g.bushes} style={{ maxWidth: grid.cols * grid.size + (grid.cols - 1) * 12 + 24, marginBottom: lift }}>
+						<div
+							className={g.bushes}
+							style={{ maxWidth: grid.cols * grid.size + (grid.cols - 1) * 12 + 24, marginBottom: lift }}
+						>
 							{bushes.map((b, i) => (
-								<button key={i} type="button" className={g.bushSpot} onClick={() => tap(i)}
+								<button
+									key={i}
+									type="button"
+									className={g.bushSpot}
+									onClick={() => tap(i)}
 									style={{ width: grid.size, height: grid.size / shape }}
-									aria-label={b.out && b.animal ? `${b.animal.name}: tap to hear it again` : `A ${place.name}. Who's hiding?`}>
+									aria-label={
+										b.out && b.animal ? `${b.animal.name}: tap to hear it again` : `A ${place.name}. Who's hiding?`
+									}
+								>
 									{/* Out: it jumps up from behind (its feet over the top of the hiding place, whose height
 									    is known from its picture's shape), and lands in front, on the grass. Tapped again: a hop. */}
 									{b.out && b.animal && (
-										<span key={b.animal.id} className={g.jumper}
-											style={{ width: grid.size * animalShare, "--behind": `${placeHeight * place.peek}px`, "--over": `${placeHeight + grid.size * 0.06}px` } as CSSProperties}>
-											<span key={b.taps} className={b.taps > 1 ? s.hop : ""}>
+										<span
+											key={b.animal.id}
+											className={g.jumper}
+											style={
+												{
+													width: grid.size * animalShare,
+													'--behind': `${placeHeight * place.peek}px`,
+													'--over': `${placeHeight + grid.size * 0.06}px`,
+												} as CSSProperties
+											}
+										>
+											<span key={b.taps} className={b.taps > 1 ? s.hop : ''}>
 												<Pic id={b.animal.id} />
 											</span>
 										</span>
 									)}
-									<span key={`b${b.taps}`} className={`${g.bush} ${b.taps ? s.rustle : ""}`}>
+									<span key={`b${b.taps}`} className={`${g.bush} ${b.taps ? s.rustle : ''}`}>
 										<img src={art(spots[i % spots.length])} alt="" draggable={false} />
 									</span>
 									{b.out && b.animal && <span className={g.bushName}>{b.animal.name}</span>}

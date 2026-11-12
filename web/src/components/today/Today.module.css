@@ -79,8 +79,7 @@
 	gap: 0.9rem;
 }
 /* A tablet either way up, or a phone on its side: rows of two, the calendar and the photos across both. */
-@media (orientation: landscape) and (max-height: 500px),
-	(min-width: 744px) and (min-height: 600px) {
+@media (orientation: landscape) and (max-height: 500px), (min-width: 744px) and (min-height: 600px) {
 	.cards {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -171,7 +170,7 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-.placeOption[aria-checked="true"] {
+.placeOption[aria-checked='true'] {
 	background: var(--surface);
 	color: var(--text);
 	box-shadow: var(--shadow-sm);
@@ -314,7 +313,7 @@ details > summary.cardHead {
 	width: 100%;
 	display: grid;
 	grid-template-columns: auto 1fr;
-	grid-template-areas: "name bar" "meta meta";
+	grid-template-areas: 'name bar' 'meta meta';
 	align-items: center;
 	gap: 0.35rem 0.8rem;
 	text-align: left;
@@ -408,8 +407,7 @@ details > summary.cardHead {
 	flex-direction: column;
 	gap: 0.9rem;
 }
-@media (orientation: landscape) and (max-height: 500px),
-	(min-width: 744px) and (min-height: 600px) {
+@media (orientation: landscape) and (max-height: 500px), (min-width: 744px) and (min-height: 600px) {
 	.calendar {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -512,7 +510,7 @@ details > summary.cardHead {
 }
 /* A chevron: down while they're folded away, up once open. */
 .earlier > summary::after {
-	content: "";
+	content: '';
 	width: 0.45rem;
 	height: 0.45rem;
 	margin-top: -0.25rem;
@@ -667,7 +665,7 @@ details > summary.cardHead {
 
 /* Opens and closes the next seven days. */
 .weekToggle {
-	composes: textButton from "../ui/Buttons.module.css";
+	composes: textButton from '../ui/Buttons.module.css';
 	align-self: flex-start;
 	margin-top: 0.2rem;
 	min-height: 2.75rem;
@@ -752,11 +750,7 @@ details > summary.cardHead {
 	border-radius: var(--radius-round);
 	top: 0.2rem;
 	height: 0.55rem;
-	background: linear-gradient(
-		to right,
-		color-mix(in srgb, var(--accent) 40%, var(--surface)),
-		var(--accent)
-	);
+	background: linear-gradient(to right, color-mix(in srgb, var(--accent) 40%, var(--surface)), var(--accent));
 }
 /* Special days: a picture, the name and date, and how long until it. */
 .specials {
@@ -808,7 +802,7 @@ details > summary.cardHead {
 	font-size: 0.9rem;
 }
 .quote footer::before {
-	content: "— ";
+	content: '— ';
 }
 .kindWords {
 	margin: 0;

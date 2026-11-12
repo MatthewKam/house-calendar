@@ -1,15 +1,15 @@
-import { useEffect, useRef } from "react";
-import type { Cheer } from "../../lib/useCheer";
-import s from "./Celebration.module.css";
+import { useEffect, useRef } from 'react';
+import type { Cheer } from '../../lib/useCheer';
+import s from './Celebration.module.css';
 
-const COLORS = ["#f6c445", "#ef6f6c", "#4ea8de", "#5cc28a", "#b48ae6", "#f59e4c", "#ff8fc7"];
+const COLORS = ['#f6c445', '#ef6f6c', '#4ea8de', '#5cc28a', '#b48ae6', '#f59e4c', '#ff8fc7'];
 
 /** Confetti falling from the top of the screen for a few seconds (drawn on a canvas, so it stays smooth). */
 function Confetti() {
 	const canvas = useRef<HTMLCanvasElement>(null);
 	useEffect(() => {
 		const c = canvas.current!;
-		const ctx = c.getContext("2d")!;
+		const ctx = c.getContext('2d')!;
 		const dpr = Math.min(2, window.devicePixelRatio || 1);
 		const w = (c.width = innerWidth * dpr);
 		const h = (c.height = innerHeight * dpr);
@@ -61,15 +61,21 @@ function Confetti() {
  * The big "Hooray!" when a kid finishes all of today's daily tasks or fills a reward jar: confetti,
  * their name and what for, for a few seconds (a tap closes it sooner).
  */
-export default function Celebration({ cheer: { names, emoji, message }, onDone }: { cheer: Cheer; onDone: () => void }) {
-	const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+export default function Celebration({
+	cheer: { names, emoji, message },
+	onDone,
+}: {
+	cheer: Cheer;
+	onDone: () => void;
+}) {
+	const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 	useEffect(() => {
 		const t = setTimeout(onDone, 5000);
 		// A happy buzz, on phones that can (Android; iPhones don't let web apps vibrate).
 		navigator.vibrate?.([80, 60, 80, 60, 160]);
 		return () => clearTimeout(t);
 	}, [onDone]);
-	const who = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0];
+	const who = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0];
 	return (
 		<div className={s.overlay} onClick={onDone} role="alert">
 			<div className={s.card}>

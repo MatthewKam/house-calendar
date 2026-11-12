@@ -8,29 +8,29 @@ import { useEffect, useState } from 'react';
 const KEY = 'sprig:ui-scale';
 
 function load(): number | null {
-  try {
-    const n = Number(localStorage.getItem(KEY));
-    return n > 0 ? n : null;
-  } catch {
-    return null;
-  }
+	try {
+		const n = Number(localStorage.getItem(KEY));
+		return n > 0 ? n : null;
+	} catch {
+		return null;
+	}
 }
 
 export function useUiScale(household?: unknown) {
-  const [mine, setMine] = useState(load);
-  useEffect(() => {
-    const update = () => setMine(load());
-    window.addEventListener(KEY, update);
-    return () => window.removeEventListener(KEY, update);
-  }, []);
-  const set = (next: number) => {
-    try {
-      localStorage.setItem(KEY, String(next));
-    } catch {
-      // Private browsing or storage blocked: just this visit.
-    }
-    setMine(next);
-    window.dispatchEvent(new Event(KEY));
-  };
-  return [mine ?? (typeof household === 'number' ? household : 1), set] as const;
+	const [mine, setMine] = useState(load);
+	useEffect(() => {
+		const update = () => setMine(load());
+		window.addEventListener(KEY, update);
+		return () => window.removeEventListener(KEY, update);
+	}, []);
+	const set = (next: number) => {
+		try {
+			localStorage.setItem(KEY, String(next));
+		} catch {
+			// Private browsing or storage blocked: just this visit.
+		}
+		setMine(next);
+		window.dispatchEvent(new Event(KEY));
+	};
+	return [mine ?? (typeof household === 'number' ? household : 1), set] as const;
 }

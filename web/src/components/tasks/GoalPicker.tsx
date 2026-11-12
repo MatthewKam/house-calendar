@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { useGoalActions, useGoalLibrary } from "../../lib/queries";
-import type { GoalTemplate, Stage } from "../../lib/types";
-import s from "./Goals.module.css";
+import { useState } from 'react';
+import { useGoalActions, useGoalLibrary } from '../../lib/queries';
+import type { GoalTemplate, Stage } from '../../lib/types';
+import s from './Goals.module.css';
 
 interface Props {
 	/** The kid's stage, to show goals for their age first; null shows every age. */
@@ -31,39 +31,59 @@ export default function GoalPicker({ stage, picked, onPick }: Props) {
 		<div className={s.picker}>
 			{choosing && (
 				<>
-					<p className={s.hint}>Tap a goal to hide it from the list, or tap it again to bring it back. Your own goals stay here until you hide them.</p>
+					<p className={s.hint}>
+						Tap a goal to hide it from the list, or tap it again to bring it back. Your own goals stay here until you
+						hide them.
+					</p>
 					<div className={s.allButtons}>
-						<button type="button" className={s.allButton} disabled={busy || hiddenCount === 0} onClick={() => hideAll.mutate(false)}>
+						<button
+							type="button"
+							className={s.allButton}
+							disabled={busy || hiddenCount === 0}
+							onClick={() => hideAll.mutate(false)}
+						>
 							Show all
 						</button>
-						<button type="button" className={s.allButton} disabled={busy || hiddenCount === library.length} onClick={() => hideAll.mutate(true)}>
+						<button
+							type="button"
+							className={s.allButton}
+							disabled={busy || hiddenCount === library.length}
+							onClick={() => hideAll.mutate(true)}
+						>
 							Hide all
 						</button>
 					</div>
 				</>
 			)}
-			{shown.length === 0 && !choosing && <p className={s.hint}>Every goal is hidden. Type your own above, or choose which show.</p>}
+			{shown.length === 0 && !choosing && (
+				<p className={s.hint}>Every goal is hidden. Type your own above, or choose which show.</p>
+			)}
 			<div className={s.library}>
 				{shown.map((g) => (
-					<button key={g.key} type="button"
-						className={`${s.tile} ${choosing && g.hidden ? s.tileHidden : ""} ${!choosing && picked === g.key ? s.tilePicked : ""}`}
+					<button
+						key={g.key}
+						type="button"
+						className={`${s.tile} ${choosing && g.hidden ? s.tileHidden : ''} ${!choosing && picked === g.key ? s.tilePicked : ''}`}
 						disabled={busy}
 						aria-pressed={choosing ? !g.hidden : picked === g.key}
-						onClick={() => (choosing ? hide.mutate({ key: g.key, hidden: !g.hidden }) : onPick(g))}>
-						<span className={s.tileEmoji} aria-hidden="true">{g.emoji}</span>
+						onClick={() => (choosing ? hide.mutate({ key: g.key, hidden: !g.hidden }) : onPick(g))}
+					>
+						<span className={s.tileEmoji} aria-hidden="true">
+							{g.emoji}
+						</span>
 						<span>{g.title}</span>
-						{choosing && <span className={s.tileState}>{g.hidden ? "Hidden" : "Showing"}</span>}
+						{choosing && <span className={s.tileState}>{g.hidden ? 'Hidden' : 'Showing'}</span>}
 					</button>
 				))}
 			</div>
 			<div className={s.libraryLinks}>
 				{!choosing && stage && (
 					<button type="button" className={s.textButton} onClick={() => setShowAll(!showAll)}>
-						{showAll ? "Just ones for their age" : "Show goals for every age"}
+						{showAll ? 'Just ones for their age' : 'Show goals for every age'}
 					</button>
 				)}
 				<button type="button" className={s.textButton} onClick={() => setChoosing(!choosing)}>
-					{choosing ? "Done" : `Choose which show${hiddenCount ? ` (${hiddenCount} hidden)` : ""}`}
+					{choosing ? 'Done' : `Choose which show${hiddenCount ? ` (${hiddenCount} hidden)` : ''}`}
 				</button>
 			</div>
 		</div>

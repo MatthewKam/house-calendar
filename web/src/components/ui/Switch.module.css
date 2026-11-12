@@ -13,11 +13,11 @@
 }
 /* A bigger area to tap than it looks. */
 .switch::before {
-	content: "";
+	content: '';
 	position: absolute;
 	inset: -0.4rem;
 }
-.switch[aria-checked="true"] {
+.switch[aria-checked='true'] {
 	background: var(--accent);
 }
 .knob {
@@ -31,7 +31,7 @@
 	box-shadow: 0 1px 3px rgb(0 0 0 / 0.25); /* own: a switch knob, as iOS draws it */
 	transition: translate 0.2s;
 }
-.switch[aria-checked="true"] .knob {
+.switch[aria-checked='true'] .knob {
 	translate: 1.3rem 0;
 }
 .switch:disabled {

@@ -4,8 +4,27 @@
 
 /** Animals with a built-in noise in web/public/sounds/animals (`<id>.m4a`). */
 const BUILT_IN = new Set<string>([
-	"cow", "pig", "duck", "sheep", "horse", "chicken", "rooster", "goat", "dog", "cat", "frog", "owl", "bee", "seagull", "hawk",
-	"lion", "leopard", "bear", "wolf", "elephant", "monkey",
+	'cow',
+	'pig',
+	'duck',
+	'sheep',
+	'horse',
+	'chicken',
+	'rooster',
+	'goat',
+	'dog',
+	'cat',
+	'frog',
+	'owl',
+	'bee',
+	'seagull',
+	'hawk',
+	'lion',
+	'leopard',
+	'bear',
+	'wolf',
+	'elephant',
+	'monkey',
 ]);
 
 /** A grown-up's recordings: animal → when (set from the server's list as it loads). */
@@ -40,15 +59,15 @@ export function play(url: string, onEnd?: () => void) {
 		ended = true;
 		onEnd?.();
 	};
-	audio.addEventListener("ended", end);
-	audio.addEventListener("pause", end);
-	audio.addEventListener("error", end);
+	audio.addEventListener('ended', end);
+	audio.addEventListener('pause', end);
+	audio.addEventListener('error', end);
 	audio.play().catch(end);
 }
 
 /** Says a number in the device's voice (Counting's one exception to "no speech": counting out loud). */
 export function sayNumber(n: number) {
-	if (!("speechSynthesis" in window)) return;
+	if (!('speechSynthesis' in window)) return;
 	window.speechSynthesis.cancel();
 	const words = new SpeechSynthesisUtterance(String(n));
 	words.rate = 0.9;

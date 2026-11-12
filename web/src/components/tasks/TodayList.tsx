@@ -1,10 +1,10 @@
-import { fromDayKey } from "../../lib/dates";
-import { didTask, dueOn, expired, TIMES } from "../../lib/tasks";
-import type { Member, Task, TaskDone } from "../../lib/types";
-import SortableList from "../ui/SortableList";
-import { TaskName, TaskTags, TaskTick } from "./TaskBits";
-import { GripIcon, PencilIcon, TrashIcon } from "../ui/icons";
-import s from "./Tasks.module.css";
+import { fromDayKey } from '../../lib/dates';
+import { didTask, dueOn, expired, TIMES } from '../../lib/tasks';
+import type { Member, Task, TaskDone } from '../../lib/types';
+import SortableList from '../ui/SortableList';
+import { TaskName, TaskTags, TaskTick } from './TaskBits';
+import { GripIcon, PencilIcon, TrashIcon } from '../ui/icons';
+import s from './Tasks.module.css';
 
 interface Props {
 	kid: Member;
@@ -24,7 +24,7 @@ interface Props {
 /** Required tasks by part of the day, then goals in their own section. */
 const GROUPS: { label: string; has: (c: Task) => boolean }[] = [
 	...TIMES.map((t) => ({ label: t.label, has: (c: Task) => c.required && c.time === t.id })),
-	{ label: "Goals", has: (c: Task) => !c.required },
+	{ label: 'Goals', has: (c: Task) => !c.required },
 ];
 
 /**
@@ -42,7 +42,13 @@ export default function TodayList({ kid, tasks, done, today, editing, onTick, on
 					return (
 						<div key={gr.label} className={s.timeGroup}>
 							<h3 className={s.timeHead}>{gr.label}</h3>
-							<SortableList items={group} getId={(c) => c.id} onReorder={onReorder} className={s.editList} draggingClass={s.dragging}>
+							<SortableList
+								items={group}
+								getId={(c) => c.id}
+								onReorder={onReorder}
+								className={s.editList}
+								draggingClass={s.dragging}
+							>
 								{(c, handle) => (
 									<div className={s.editRow}>
 										<span className={s.grip} {...handle}>
@@ -55,7 +61,11 @@ export default function TodayList({ kid, tasks, done, today, editing, onTick, on
 											<button className={s.iconButton} onClick={() => onEdit(c)} aria-label={`Edit ${c.title}`}>
 												<PencilIcon />
 											</button>
-											<button className={`${s.iconButton} ${s.trash}`} onClick={() => onDelete(c)} aria-label={`Delete ${c.title}`}>
+											<button
+												className={`${s.iconButton} ${s.trash}`}
+												onClick={() => onDelete(c)}
+												aria-label={`Delete ${c.title}`}
+											>
 												<TrashIcon />
 											</button>
 										</div>

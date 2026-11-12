@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { noise } from "../learn/sound";
-import g from "./TodayAnimal.module.css";
+import { useEffect, useRef, useState } from 'react';
+import { noise } from '../learn/sound';
+import g from './TodayAnimal.module.css';
 
 /**
  * The animals that can sit on a little one's Today: each one's noise (an animal in Learn's sounds) and
@@ -8,17 +8,17 @@ import g from "./TodayAnimal.module.css";
  * it gets about by walking or hopping.
  */
 const ANIMALS: { id: string; name: string; sound: string; gait: Gait }[] = [
-	{ id: "puppy", name: "Puppy", sound: "dog", gait: "walk" },
-	{ id: "cat", name: "Cat", sound: "cat", gait: "walk" },
-	{ id: "frog", name: "Frog", sound: "frog", gait: "hop" },
+	{ id: 'puppy', name: 'Puppy', sound: 'dog', gait: 'walk' },
+	{ id: 'cat', name: 'Cat', sound: 'cat', gait: 'walk' },
+	{ id: 'frog', name: 'Frog', sound: 'frog', gait: 'hop' },
 ];
 
 /** The poses, one picture each: the same few for every animal, then two steps (walking) or three (hopping). */
-type Gait = "walk" | "hop";
-type Pose = "sitting" | "noise" | "standing" | "side" | "walk-a" | "walk-b" | "crouch" | "jump-a" | "jump-b";
+type Gait = 'walk' | 'hop';
+type Pose = 'sitting' | 'noise' | 'standing' | 'side' | 'walk-a' | 'walk-b' | 'crouch' | 'jump-a' | 'jump-b';
 const POSES: Record<Gait, Pose[]> = {
-	walk: ["sitting", "noise", "standing", "side", "walk-a", "walk-b"],
-	hop: ["sitting", "noise", "standing", "side", "crouch", "jump-a", "jump-b"],
+	walk: ['sitting', 'noise', 'standing', 'side', 'walk-a', 'walk-b'],
+	hop: ['sitting', 'noise', 'standing', 'side', 'crouch', 'jump-a', 'jump-b'],
 };
 
 /**
@@ -43,7 +43,7 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
  */
 export default function TodayAnimal() {
 	const [animal] = useState(() => ANIMALS[Math.floor(Math.random() * ANIMALS.length)]);
-	const [pose, setPose] = useState<Pose>("sitting");
+	const [pose, setPose] = useState<Pose>('sitting');
 	const stage = useRef<HTMLDivElement>(null);
 	const walker = useRef<HTMLButtonElement>(null);
 	const busy = useRef(false);
@@ -64,11 +64,17 @@ export default function TodayAnimal() {
 		const el = walker.current;
 		if (!el) return;
 		let step = 0;
-		setPose("walk-a");
-		const steps = setInterval(() => setPose(++step % 2 ? "walk-b" : "walk-a"), STEP);
+		setPose('walk-a');
+		const steps = setInterval(() => setPose(++step % 2 ? 'walk-b' : 'walk-a'), STEP);
 		// The last walk let go of (each one holds where it ended until the next takes over).
 		el.getAnimations().forEach((a) => a.cancel());
-		await el.animate([{ transform: `translateX(${from}px)` }, { transform: `translateX(${to}px)` }], { duration: WALK, easing: "linear", fill: "forwards" }).finished.catch(() => {});
+		await el
+			.animate([{ transform: `translateX(${from}px)` }, { transform: `translateX(${to}px)` }], {
+				duration: WALK,
+				easing: 'linear',
+				fill: 'forwards',
+			})
+			.finished.catch(() => {});
 		clearInterval(steps);
 	}
 
@@ -81,20 +87,25 @@ export default function TodayAnimal() {
 		for (let i = 0; i < hops; i++) {
 			const a = from + ((to - from) * i) / hops;
 			const b = from + ((to - from) * (i + 1)) / hops;
-			setPose("crouch");
+			setPose('crouch');
 			await wait(CROUCH);
 			if (gone.current) return;
 			// Taking off on the way up, stretched out over the top.
-			setPose("jump-a");
-			const top = setTimeout(() => setPose("jump-b"), AIR * 0.3);
+			setPose('jump-a');
+			const top = setTimeout(() => setPose('jump-b'), AIR * 0.3);
 			el.getAnimations().forEach((x) => x.cancel());
-			await el.animate([
-				{ transform: `translate(${a}px, 0)`, easing: "ease-out" },
-				{ transform: `translate(${(a + b) / 2}px, ${-high}px)`, easing: "ease-in" },
-				{ transform: `translate(${b}px, 0)` },
-			], { duration: AIR, fill: "forwards" }).finished.catch(() => {});
+			await el
+				.animate(
+					[
+						{ transform: `translate(${a}px, 0)`, easing: 'ease-out' },
+						{ transform: `translate(${(a + b) / 2}px, ${-high}px)`, easing: 'ease-in' },
+						{ transform: `translate(${b}px, 0)` },
+					],
+					{ duration: AIR, fill: 'forwards' },
+				)
+				.finished.catch(() => {});
 			clearTimeout(top);
-			setPose("side");
+			setPose('side');
 			await wait(LAND);
 			if (gone.current) return;
 		}
@@ -105,44 +116,54 @@ export default function TodayAnimal() {
 		busy.current = true;
 		// The noise all the way through before it gets up (at least NOISE, at most LONGEST if it never says it's done).
 		const heard = new Promise<void>((done) => noise({ id: animal.sound }, done));
-		setPose("noise");
+		setPose('noise');
 		await Promise.race([Promise.all([heard, wait(NOISE)]), wait(LONGEST)]);
 		// Just the noise when motion is turned down.
-		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-			if (!gone.current) setPose("sitting");
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			if (!gone.current) setPose('sitting');
 			busy.current = false;
 			return;
 		}
 		if (gone.current) return;
-		setPose("standing");
+		setPose('standing');
 		await wait(350);
 		if (gone.current) return;
-		setPose("side");
+		setPose('side');
 		await wait(250);
 		// Far enough that it's all the way off the side (the stage's edge) before it comes back.
 		const width = stage.current?.clientWidth ?? 400;
 		const out = width / 2 + (walker.current?.clientWidth ?? 200) / 2 + 8;
-		const go = animal.gait === "hop" ? hop : walk;
+		const go = animal.gait === 'hop' ? hop : walk;
 		await go(0, out);
 		if (gone.current) return;
 		await go(-out, 0);
 		if (gone.current) return;
-		setPose("side");
+		setPose('side');
 		await wait(200);
 		if (gone.current) return;
-		setPose("standing");
+		setPose('standing');
 		await wait(300);
 		if (gone.current) return;
-		setPose("sitting");
+		setPose('sitting');
 		busy.current = false;
 	}
 
 	return (
 		<div ref={stage} className={g.animalStage}>
-			<button ref={walker} type="button" className={g.animal} aria-label={`${animal.name}: tap to hear it`}
-				onPointerDown={tap} onClick={(e) => e.detail === 0 && tap()}>
-				<img src={src(pose)} alt="" draggable={false}
-					className={`${g.animalPic} ${pose.startsWith("walk") ? g.animalWalking : pose === "sitting" ? g.animalSat : ""}`} />
+			<button
+				ref={walker}
+				type="button"
+				className={g.animal}
+				aria-label={`${animal.name}: tap to hear it`}
+				onPointerDown={tap}
+				onClick={(e) => e.detail === 0 && tap()}
+			>
+				<img
+					src={src(pose)}
+					alt=""
+					draggable={false}
+					className={`${g.animalPic} ${pose.startsWith('walk') ? g.animalWalking : pose === 'sitting' ? g.animalSat : ''}`}
+				/>
 			</button>
 		</div>
 	);

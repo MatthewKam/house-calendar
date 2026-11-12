@@ -1,10 +1,10 @@
-import { useEffect, type ReactNode } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { api, type AuthStatus } from "../../lib/api";
-import { keys, useAuthStatus } from "../../lib/queries";
-import PinScreen from "./PinScreen";
-import SignIn from "./SignIn";
-import Welcome from "./Welcome";
+import { useEffect, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { api, type AuthStatus } from '../../lib/api';
+import { keys, useAuthStatus } from '../../lib/queries';
+import PinScreen from './PinScreen';
+import SignIn from './SignIn';
+import Welcome from './Welcome';
 
 /**
  * Shows the app once this device is in a household; before that, signing in, then starting or
@@ -16,14 +16,14 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 	const status = useAuthStatus();
 	useEffect(() => {
 		const signedOut = () => void qc.invalidateQueries({ queryKey: keys.auth });
-		window.addEventListener("household:signed-out", signedOut);
-		return () => window.removeEventListener("household:signed-out", signedOut);
+		window.addEventListener('household:signed-out', signedOut);
+		return () => window.removeEventListener('household:signed-out', signedOut);
 	}, [qc]);
 
 	// Everything is fetched again now that this device may see something else.
 	const update = (s: AuthStatus) => {
-		qc.removeQueries({ predicate: (q) => q.queryKey[0] !== "auth" && q.queryKey[0] !== "account-config" });
-		qc.setQueryData(["auth"], s);
+		qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'auth' && q.queryKey[0] !== 'account-config' });
+		qc.setQueryData(['auth'], s);
 	};
 
 	if (status.isPending) return null;

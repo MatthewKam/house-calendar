@@ -291,7 +291,7 @@
 
 /* Night hours: a dark layer over the photos (under the clock and buttons), faded in. */
 .saver::after {
-	content: "";
+	content: '';
 	position: absolute;
 	inset: 0;
 	z-index: 2;

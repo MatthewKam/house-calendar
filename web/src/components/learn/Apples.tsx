@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Pic } from "./art";
-import { Board, fit } from "./parts";
-import { FRUIT } from "./things";
-import { at, between, CHEER_MS, fresh, shuffle, type GameProps, useLater } from "./rounds";
-import { sayNumber } from "./sound";
-import s from "./Learn.module.css";
-import g from "./LearnApples.module.css";
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Pic } from './art';
+import { Board, fit } from './parts';
+import { FRUIT } from './things';
+import { at, between, CHEER_MS, fresh, shuffle, type GameProps, useLater } from './rounds';
+import { sayNumber } from './sound';
+import s from './Learn.module.css';
+import g from './LearnApples.module.css';
 
 /** The most there can be, by level. From level 3 there's a "How many?" after counting. */
 const MOST = [3, 4, 5, 7, 9, 10];
@@ -26,7 +26,7 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 	// last, a moment, then the hooray, then the end.
 	const [round, setRound] = useState(0);
 	const [got, setGot] = useState(false);
-	const [phase, setPhase] = useState<"play" | "next" | "hooray">("play");
+	const [phase, setPhase] = useState<'play' | 'next' | 'hooray'>('play');
 	const missed = useRef(false);
 	const firstTry = useRef(0);
 	const later = useLater();
@@ -34,23 +34,27 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 		setGot(true);
 		if (!missed.current) firstTry.current += 1;
 		if (round + 1 >= ROUNDS) {
-			later(() => setPhase("hooray"), PAUSE);
+			later(() => setPhase('hooray'), PAUSE);
 			later(() => onDone(ROUNDS, firstTry.current), PAUSE + CHEER_MS + 400);
 		} else {
-			later(() => setPhase("next"), PAUSE);
+			later(() => setPhase('next'), PAUSE);
 			later(() => {
 				setRound(round + 1);
 				setGot(false);
 				missed.current = false;
-				setPhase("play");
+				setPhase('play');
 			}, PAUSE + SLIDE_AWAY);
 		}
 	}
 	const asking = level >= ASK_FROM;
-	const plan = useMemo(() => fresh("apples.fruit", FRUIT, ROUNDS, (f) => f.id).map((fruit) => ({
-		fruit,
-		n: between(Math.max(2, at(MOST, level) - 2), at(MOST, level)),
-	})), [level]);
+	const plan = useMemo(
+		() =>
+			fresh('apples.fruit', FRUIT, ROUNDS, (f) => f.id).map((fruit) => ({
+				fruit,
+				n: between(Math.max(2, at(MOST, level) - 2), at(MOST, level)),
+			})),
+		[level],
+	);
 	const { fruit, n } = plan[round];
 	// Each fruit's number, in the order tapped.
 	const [counted, setCounted] = useState<Record<number, number>>({});
@@ -81,7 +85,7 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 	}
 
 	return (
-		<Board onBack={onBack} total={ROUNDS} done={round + (got ? 1 : 0)} cheer={phase === "hooray"}>
+		<Board onBack={onBack} total={ROUNDS} done={round + (got ? 1 : 0)} cheer={phase === 'hooray'}>
 			{(box) => {
 				// Room under the fruit for the numbers to pick (from level 3).
 				const below = asking ? Math.min(110, box.h * 0.22) : 0;
@@ -90,28 +94,49 @@ export default function Apples({ level, onDone, onBack }: GameProps) {
 				const grid = fit(n, { w: box.w, h: box.h - below - top - 16 }, { gap: 12, most: 220 });
 				return (
 					<div className={s.column}>
-						<span key={`count-${done}`} className={`${g.countNow} ${done ? s.pop : ""}`} style={{ fontSize: top * 0.9, height: top }}
-							aria-live="polite">{done}</span>
+						<span
+							key={`count-${done}`}
+							className={`${g.countNow} ${done ? s.pop : ''}`}
+							style={{ fontSize: top * 0.9, height: top }}
+							aria-live="polite"
+						>
+							{done}
+						</span>
 						{/* Between rounds these slide away to the left, and the next round's slide in from the right. */}
-						<div key={`round-${round}`} className={`${s.grid} ${phase === "next" ? s.slideAway : ""}`} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 12 }}>
+						<div
+							key={`round-${round}`}
+							className={`${s.grid} ${phase === 'next' ? s.slideAway : ''}`}
+							style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 12 }}
+						>
 							{Array.from({ length: n }, (_, i) => (
-								<button key={i} type="button" className={`${g.fruit} ${s.slideIn} ${counted[i] !== undefined ? g.counted : ""}`}
+								<button
+									key={i}
+									type="button"
+									className={`${g.fruit} ${s.slideIn} ${counted[i] !== undefined ? g.counted : ''}`}
 									disabled={counted[i] !== undefined}
-									style={{ width: grid.size, height: grid.size, animationDelay: `${i * 70}ms` }} onClick={() => count(i)}
-									aria-label={counted[i] !== undefined ? `${fruit.one} ${counted[i]}` : `${fruit.one}, not counted yet`}>
-									<Pic id={fruit.id} className={counted[i] !== undefined ? s.pop : ""} />
+									style={{ width: grid.size, height: grid.size, animationDelay: `${i * 70}ms` }}
+									onClick={() => count(i)}
+									aria-label={counted[i] !== undefined ? `${fruit.one} ${counted[i]}` : `${fruit.one}, not counted yet`}
+								>
+									<Pic id={fruit.id} className={counted[i] !== undefined ? s.pop : ''} />
 								</button>
 							))}
 						</div>
 						{asking && (
 							<div className={s.choices} style={{ minHeight: below }}>
-								{all && options.map((x) => (
-									<button key={x} type="button" disabled={got} onClick={() => answer(x)}
-										className={`${s.choice} ${got && x === n ? s.choiceRight : wrong === x ? s.wiggle : ""}`}
-										style={{ width: below * 0.8, height: below * 0.8, fontSize: below * 0.4 }}>
-										{x}
-									</button>
-								))}
+								{all &&
+									options.map((x) => (
+										<button
+											key={x}
+											type="button"
+											disabled={got}
+											onClick={() => answer(x)}
+											className={`${s.choice} ${got && x === n ? s.choiceRight : wrong === x ? s.wiggle : ''}`}
+											style={{ width: below * 0.8, height: below * 0.8, fontSize: below * 0.4 }}
+										>
+											{x}
+										</button>
+									))}
 							</div>
 						)}
 					</div>

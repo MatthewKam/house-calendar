@@ -14,7 +14,7 @@ import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 export type AccountsDB = Database.Database;
 
 const migrations: string[] = [
-  `
+	`
   CREATE TABLE users (
     id          TEXT PRIMARY KEY,
     name        TEXT NOT NULL,
@@ -93,28 +93,28 @@ const migrations: string[] = [
     tries       INTEGER NOT NULL DEFAULT 0
   );
   `,
-  // Which guardian's PIN unlocked a wall or kid's device, to show who it's open for.
-  `
+	// Which guardian's PIN unlocked a wall or kid's device, to show who it's open for.
+	`
   ALTER TABLE sessions ADD COLUMN parent_by TEXT REFERENCES memberships(id) ON DELETE SET NULL;
   `,
-  // How many digits a guardian's PIN has, so the number pad can check it as the last one goes in
-  // (unknown for PINs set before this).
-  `
+	// How many digits a guardian's PIN has, so the number pad can check it as the last one goes in
+	// (unknown for PINs set before this).
+	`
   ALTER TABLE memberships ADD COLUMN pin_length INTEGER;
   `,
-  // The account holder: the guardian who made the household (the first guardian in one from before),
-  // who approves changes to people's colors and can hand the role to another guardian.
-  `
+	// The account holder: the guardian who made the household (the first guardian in one from before),
+	// who approves changes to people's colors and can hand the role to another guardian.
+	`
   ALTER TABLE households ADD COLUMN holder_id TEXT REFERENCES memberships(id) ON DELETE SET NULL;
   UPDATE households SET holder_id = (SELECT m.id FROM memberships m WHERE m.household_id = households.id
     AND m.role = 'guardian' ORDER BY m.created_at, m.rowid LIMIT 1);
   `,
-  // Wall mode: a guardian's own device acting as the wall (turned on in Settings, off with a PIN).
-  `
+	// Wall mode: a guardian's own device acting as the wall (turned on in Settings, off with a PIN).
+	`
   ALTER TABLE sessions ADD COLUMN wall_mode INTEGER NOT NULL DEFAULT 0;
   `,
-  // A forgotten PIN: a code emailed to the guardian, to set a new one without the old.
-  `
+	// A forgotten PIN: a code emailed to the guardian, to set a new one without the old.
+	`
   CREATE TABLE pin_resets (
     membership_id TEXT PRIMARY KEY REFERENCES memberships(id) ON DELETE CASCADE,
     code_hash     TEXT NOT NULL,
@@ -126,18 +126,18 @@ const migrations: string[] = [
 ];
 
 export function openAccounts(file: string): AccountsDB {
-  if (file !== ':memory:') mkdirSync(dirname(file), { recursive: true });
-  const db = new Database(file);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
-  const current = db.pragma('user_version', { simple: true }) as number;
-  for (let v = current; v < migrations.length; v++) {
-    db.transaction(() => {
-      db.exec(migrations[v]);
-      db.pragma(`user_version = ${v + 1}`);
-    })();
-  }
-  return db;
+	if (file !== ':memory:') mkdirSync(dirname(file), { recursive: true });
+	const db = new Database(file);
+	db.pragma('journal_mode = WAL');
+	db.pragma('foreign_keys = ON');
+	const current = db.pragma('user_version', { simple: true }) as number;
+	for (let v = current; v < migrations.length; v++) {
+		db.transaction(() => {
+			db.exec(migrations[v]);
+			db.pragma(`user_version = ${v + 1}`);
+		})();
+	}
+	return db;
 }
 
 /**
@@ -145,30 +145,60 @@ export function openAccounts(file: string): AccountsDB {
  * backup) as a whole. `toStored` makes a path relative when it's inside; `fromStored` resolves it.
  */
 export const toStored = (dataDir: string, p: string) => {
-  const abs = resolve(dataDir, p);
-  return abs.startsWith(resolve(dataDir) + sep) ? relative(dataDir, abs) : abs;
+	const abs = resolve(dataDir, p);
+	return abs.startsWith(resolve(dataDir) + sep) ? relative(dataDir, abs) : abs;
 };
 export const fromStored = (dataDir: string, p: string) => resolve(dataDir, p);
 
 /** Paths saved before they were relative: made relative now (done on each start; quick when there's nothing to do). */
 export function relativizePaths(db: AccountsDB, dataDir: string) {
-  const rows = db.prepare('SELECT id, db_file, photos_dir FROM households').all() as { id: string; db_file: string; photos_dir: string }[];
-  const update = db.prepare('UPDATE households SET db_file = ?, photos_dir = ? WHERE id = ?');
-  for (const r of rows) {
-    if (!isAbsolute(r.db_file) && !isAbsolute(r.photos_dir)) continue;
-    update.run(toStored(dataDir, r.db_file), toStored(dataDir, r.photos_dir), r.id);
-  }
+	const rows = db.prepare('SELECT id, db_file, photos_dir FROM households').all() as {
+		id: string;
+		db_file: string;
+		photos_dir: string;
+	}[];
+	const update = db.prepare('UPDATE households SET db_file = ?, photos_dir = ? WHERE id = ?');
+	for (const r of rows) {
+		if (!isAbsolute(r.db_file) && !isAbsolute(r.photos_dir)) continue;
+		update.run(toStored(dataDir, r.db_file), toStored(dataDir, r.photos_dir), r.id);
+	}
 }
 
-export interface HouseholdRow { id: string; name: string; db_file: string; photos_dir: string; legacy: number; holder_id: string | null }
+export interface HouseholdRow {
+	id: string;
+	name: string;
+	db_file: string;
+	photos_dir: string;
+	legacy: number;
+	holder_id: string | null;
+}
 export interface MembershipRow {
-  id: string; household_id: string; member_id: string; user_id: string | null; role: 'guardian' | 'kid'; pin_hash: string | null;
+	id: string;
+	household_id: string;
+	member_id: string;
+	user_id: string | null;
+	role: 'guardian' | 'kid';
+	pin_hash: string | null;
 }
 export interface SessionRow {
-  token_hash: string; kind: 'user' | 'device' | 'wall'; user_id: string | null; household_id: string | null;
-  membership_id: string | null; label: string; entered: number; parent_until: string | null; parent_by: string | null; wall_mode: number;
-  last_seen: string; created_at: string;
+	token_hash: string;
+	kind: 'user' | 'device' | 'wall';
+	user_id: string | null;
+	household_id: string | null;
+	membership_id: string | null;
+	label: string;
+	entered: number;
+	parent_until: string | null;
+	parent_by: string | null;
+	wall_mode: number;
+	last_seen: string;
+	created_at: string;
 }
 export interface InviteRow {
-  code_hash: string; household_id: string; kind: 'guardian' | 'kid' | 'wall'; member_id: string | null; new_name: string | null; expires_at: string;
+	code_hash: string;
+	household_id: string;
+	kind: 'guardian' | 'kid' | 'wall';
+	member_id: string | null;
+	new_name: string | null;
+	expires_at: string;
 }

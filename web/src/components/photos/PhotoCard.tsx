@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
-import { createPortal } from "react-dom";
-import { usePhotos } from "../../lib/queries";
-import { useScreenSaverSettings } from "../../lib/useScreenSaverSettings";
-import { preload, slideSeconds } from "../../lib/photos";
-import type { Photo } from "../../lib/types";
-import s from "./PhotoCard.module.css";
-import { shuffle } from "../../lib/random";
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { createPortal } from 'react-dom';
+import { usePhotos } from '../../lib/queries';
+import { useScreenSaverSettings } from '../../lib/useScreenSaverSettings';
+import { preload, slideSeconds } from '../../lib/photos';
+import type { Photo } from '../../lib/types';
+import s from './PhotoCard.module.css';
+import { shuffle } from '../../lib/random';
 
 /** A swipe: at least this far sideways, and more sideways than up or down. */
 const SWIPE_PX = 40;
@@ -16,7 +16,7 @@ const TAP_PX = 10;
 
 /** A photo, or a video playing muted (looping if it runs short of its turn). */
 function Media({ photo, className }: { photo: Photo; className?: string }) {
-	return photo.kind === "video" ? (
+	return photo.kind === 'video' ? (
 		<video className={className} src={photo.url} poster={photo.thumbUrl} autoPlay muted loop playsInline />
 	) : (
 		<img className={className} src={photo.url} alt="" draggable={false} />
@@ -76,12 +76,12 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 	useEffect(() => {
 		if (!big) return;
 		const key = (e: KeyboardEvent) => {
-			if (e.key === "Escape") setBig(false);
-			else if (e.key === "ArrowRight") stepRef.current(1);
-			else if (e.key === "ArrowLeft") stepRef.current(-1);
+			if (e.key === 'Escape') setBig(false);
+			else if (e.key === 'ArrowRight') stepRef.current(1);
+			else if (e.key === 'ArrowLeft') stepRef.current(-1);
 		};
-		window.addEventListener("keydown", key);
-		return () => window.removeEventListener("keydown", key);
+		window.addEventListener('keydown', key);
+		return () => window.removeEventListener('keydown', key);
 	}, [big]);
 
 	// A two-finger swipe on a trackpad comes as sideways scrolling: one photo per swipe (it counts
@@ -110,9 +110,9 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 				stepRef.current(sum > 0 ? 1 : -1);
 			}
 		};
-		el.addEventListener("wheel", wheel, { passive: false });
+		el.addEventListener('wheel', wheel, { passive: false });
 		return () => {
-			el.removeEventListener("wheel", wheel);
+			el.removeEventListener('wheel', wheel);
 			clearTimeout(rest);
 		};
 	}, [hasPhotos]);
@@ -123,8 +123,8 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 		const close = (e: globalThis.PointerEvent) => {
 			if (!card.current?.querySelector(`.${s.menu}`)?.contains(e.target as Node)) setMenu(false);
 		};
-		window.addEventListener("pointerdown", close);
-		return () => window.removeEventListener("pointerdown", close);
+		window.addEventListener('pointerdown', close);
+		return () => window.removeEventListener('pointerdown', close);
 	}, [menu]);
 
 	/** A swipe steps; on the card, a tap on the photo (not its buttons) opens it big. */
@@ -135,14 +135,15 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 		const dx = e.clientX - start.x;
 		const dy = e.clientY - start.y;
 		if (Math.abs(dx) >= SWIPE_PX && Math.abs(dx) > Math.abs(dy)) step(dx < 0 ? 1 : -1);
-		else if (open && Math.abs(dx) < TAP_PX && Math.abs(dy) < TAP_PX && !(e.target as Element).closest("button")) setBig(true);
+		else if (open && Math.abs(dx) < TAP_PX && Math.abs(dy) < TAP_PX && !(e.target as Element).closest('button'))
+			setBig(true);
 	}
 
 	if (!current) return null;
 	return (
 		<div
 			ref={card}
-			className={`${s.card} ${className ?? ""}`}
+			className={`${s.card} ${className ?? ''}`}
 			role="region"
 			aria-roledescription="carousel"
 			aria-label="Photos"
@@ -150,13 +151,13 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 				swipe.current = { x: e.clientX, y: e.clientY };
 				wake();
 			}}
-			onPointerMove={(e) => e.pointerType === "mouse" && wake()}
+			onPointerMove={(e) => e.pointerType === 'mouse' && wake()}
 			onPointerUp={(e) => up(e, true)}
 		>
 			{under && under.id !== current.id && <Media key={under.id} photo={under} className={s.photo} />}
-			<Media key={current.id} photo={current} className={`${s.photo} ${under ? s.fadeIn : ""}`} />
+			<Media key={current.id} photo={current} className={`${s.photo} ${under ? s.fadeIn : ''}`} />
 			{order.length > 1 && (
-				<div className={`${s.arrows} ${arrows ? s.awake : ""}`}>
+				<div className={`${s.arrows} ${arrows ? s.awake : ''}`}>
 					<button className={`${s.step} ${s.prev}`} onClick={() => step(-1)} aria-label="Previous photo">
 						‹
 					</button>
@@ -188,7 +189,11 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 					// Over the whole page: the photo in a rounded frame with a see-through border, ‹ › and ✕. A tap
 					// on the border closes it.
 					// (Its touches stop here: React would pass them on to the card it's drawn from.)
-					<div className={s.big} role="dialog" aria-modal="true" aria-label="Photo"
+					<div
+						className={s.big}
+						role="dialog"
+						aria-modal="true"
+						aria-label="Photo"
 						onPointerDown={(e) => {
 							e.stopPropagation();
 							swipe.current = { x: e.clientX, y: e.clientY };
@@ -198,7 +203,8 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 							e.stopPropagation();
 							up(e, false);
 						}}
-						onClick={(e) => e.target === e.currentTarget && setBig(false)}>
+						onClick={(e) => e.target === e.currentTarget && setBig(false)}
+					>
 						<div className={s.bigFrame}>
 							<Media key={current.id} photo={current} className={s.bigPhoto} />
 							{order.length > 1 && (

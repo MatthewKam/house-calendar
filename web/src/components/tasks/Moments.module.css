@@ -32,7 +32,7 @@
 .kind:active {
 	transform: scale(0.97);
 }
-.kind[aria-pressed="true"] {
+.kind[aria-pressed='true'] {
 	border-color: var(--accent);
 	background: color-mix(in srgb, var(--accent) 12%, var(--surface));
 	box-shadow: 0 0 0 2px var(--accent);
@@ -61,7 +61,7 @@
 	font-weight: 600;
 	color: var(--muted);
 }
-.tabs button[aria-selected="true"] {
+.tabs button[aria-selected='true'] {
 	background: var(--surface);
 	color: var(--text);
 	box-shadow: var(--shadow-sm);

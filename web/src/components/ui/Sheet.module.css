@@ -1,29 +1,90 @@
 /* Shared modal sheet styles. */
 /* Above the day panel (z-index 10-11), which can open these sheets. */
-.scrim { position: fixed; inset: 0; z-index: var(--layer-sheet); background: rgb(0 0 0 / 0.35); }
-.sheet {
-  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: calc(var(--layer-sheet) + 1);
-  width: min(36rem, 92vw); max-height: 92vh; overflow-y: auto;
-  background: var(--surface); border-radius: var(--radius-lg); padding: 1.4rem;
-  display: flex; flex-direction: column; gap: 0.8rem; box-shadow: var(--shadow-xl);
+.scrim {
+	position: fixed;
+	inset: 0;
+	z-index: var(--layer-sheet);
+	background: rgb(0 0 0 / 0.35);
 }
-.heading { margin: 0; font-size: 1.3rem; }
+.sheet {
+	position: fixed;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	z-index: calc(var(--layer-sheet) + 1);
+	width: min(36rem, 92vw);
+	max-height: 92vh;
+	overflow-y: auto;
+	background: var(--surface);
+	border-radius: var(--radius-lg);
+	padding: 1.4rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+	box-shadow: var(--shadow-xl);
+}
+.heading {
+	margin: 0;
+	font-size: 1.3rem;
+}
 /* Title row with an × to close. It stays at the top while the rest scrolls under it: pulled out to
    the sheet's edges (over its padding), with the sheet's background behind it. */
 .head {
-  display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;
-  position: sticky; top: -1.4rem; z-index: 2; flex: none;
-  margin: -1.4rem -1.4rem 0; padding: 1.4rem 1.4rem 0.6rem;
-  background: var(--surface); border-bottom: 1px solid transparent;
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 0.5rem;
+	position: sticky;
+	top: -1.4rem;
+	z-index: 2;
+	flex: none;
+	margin: -1.4rem -1.4rem 0;
+	padding: 1.4rem 1.4rem 0.6rem;
+	background: var(--surface);
+	border-bottom: 1px solid transparent;
 }
-.close { font-size: 1.6rem; color: var(--muted); margin: -0.5rem -0.6rem 0 0; }
-.actions { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
-.spacer { flex: 1; }
-.primary { background: var(--accent); color: var(--on-accent); padding: 0 1.6rem; font-weight: 650; }
-.primary:disabled { opacity: 0.4; }
-.secondary { background: var(--bg); padding: 0 1.2rem; }
+.close {
+	font-size: 1.6rem;
+	color: var(--muted);
+	margin: -0.5rem -0.6rem 0 0;
+}
+.actions {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 0.4rem;
+}
+.spacer {
+	flex: 1;
+}
+.primary {
+	background: var(--accent);
+	color: var(--on-accent);
+	padding: 0 1.6rem;
+	font-weight: 650;
+}
+.primary:disabled {
+	opacity: 0.4;
+}
+.secondary {
+	background: var(--bg);
+	padding: 0 1.2rem;
+}
 /* Confirmation pop-ups: narrower, with a filled red button for the action. */
-.confirm { width: min(28rem, 92vw); }
-.body { color: var(--muted); line-height: 1.4; }
-.destructive { background: #b42318; color: #fff; padding: 0 1.4rem; font-weight: 650; }
-.danger { color: var(--danger); padding: 0 1rem; font-weight: 600; }
+.confirm {
+	width: min(28rem, 92vw);
+}
+.body {
+	color: var(--muted);
+	line-height: 1.4;
+}
+.destructive {
+	background: #b42318;
+	color: #fff;
+	padding: 0 1.4rem;
+	font-weight: 650;
+}
+.danger {
+	color: var(--danger);
+	padding: 0 1rem;
+	font-weight: 600;
+}

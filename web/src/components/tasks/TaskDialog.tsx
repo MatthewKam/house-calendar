@@ -1,28 +1,21 @@
-import { useState, type FormEvent } from "react";
-import { addDays, dayKey, fromDayKey, startOfWeek } from "../../lib/dates";
-import { UNASSIGNED } from "../../lib/color";
-import { goalsOf, MAX_GOALS, QUICK_TASKS, TASK_CATEGORIES, TASK_ICONS, TIMES } from "../../lib/tasks";
-import { MOMENT_KINDS } from "../../lib/moments";
-import { useGoalActions, useGoalLibrary, useTasks } from "../../lib/queries";
-import type {
-	Task,
-	TaskCategory,
-	TaskInput,
-	TaskTime,
-	Member,
-	MomentKind,
-} from "../../lib/types";
-import ConfirmDialog from "../ui/ConfirmDialog";
-import GoalPicker from "./GoalPicker";
-import PointsStepper from "./PointsStepper";
-import g from "./Goals.module.css";
-import IconPicker from "../ui/IconPicker";
-import { PickChip } from "../ui/NameChip";
-import sheet from "../ui/Sheet.module.css";
-import s from "../calendar/EventDialog.module.css";
-import c from "./Tasks.module.css";
-import DateInput from "../ui/DateInput";
-import Sheet from "../ui/Sheet";
+import { useState, type FormEvent } from 'react';
+import { addDays, dayKey, fromDayKey, startOfWeek } from '../../lib/dates';
+import { UNASSIGNED } from '../../lib/color';
+import { goalsOf, MAX_GOALS, QUICK_TASKS, TASK_CATEGORIES, TASK_ICONS, TIMES } from '../../lib/tasks';
+import { MOMENT_KINDS } from '../../lib/moments';
+import { useGoalActions, useGoalLibrary, useTasks } from '../../lib/queries';
+import type { Task, TaskCategory, TaskInput, TaskTime, Member, MomentKind } from '../../lib/types';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import GoalPicker from './GoalPicker';
+import PointsStepper from './PointsStepper';
+import g from './Goals.module.css';
+import IconPicker from '../ui/IconPicker';
+import { PickChip } from '../ui/NameChip';
+import sheet from '../ui/Sheet.module.css';
+import s from '../calendar/EventDialog.module.css';
+import c from './Tasks.module.css';
+import DateInput from '../ui/DateInput';
+import Sheet from '../ui/Sheet';
 
 interface Props {
 	task?: Task;
@@ -40,9 +33,9 @@ interface Props {
 
 const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
 const PRESETS: [string, number[]][] = [
-	["Every day", EVERY_DAY],
-	["Weekdays", [1, 2, 3, 4, 5]],
-	["Weekends", [0, 6]],
+	['Every day', EVERY_DAY],
+	['Weekdays', [1, 2, 3, 4, 5]],
+	['Weekends', [0, 6]],
 ];
 
 const TODAY = () => dayKey(new Date());
@@ -50,16 +43,14 @@ const TODAY = () => dayKey(new Date());
 const GOAL_STARS = 5;
 /** Quick picks for a one-time task's due date: today, tomorrow, and this Saturday. */
 const DUE_PICKS = (): [string, string][] => [
-	["Today", TODAY()],
-	["Tomorrow", dayKey(addDays(new Date(), 1))],
-	["End of week", dayKey(addDays(startOfWeek(new Date()), 6))],
+	['Today', TODAY()],
+	['Tomorrow', dayKey(addDays(new Date(), 1))],
+	['End of week', dayKey(addDays(startOfWeek(new Date()), 6))],
 ];
 
 // One letter per weekday in the display's language, Sunday first.
 const sunday = startOfWeek(new Date());
-const LETTERS = EVERY_DAY.map((d) =>
-	addDays(sunday, d).toLocaleDateString([], { weekday: "short" }),
-);
+const LETTERS = EVERY_DAY.map((d) => addDays(sunday, d).toLocaleDateString([], { weekday: 'short' }));
 
 export default function TaskDialog({
 	task,
@@ -73,18 +64,14 @@ export default function TaskDialog({
 }: Props) {
 	// The parent remounts this dialog for each open, so initial state is enough.
 	// A task is required for the day; a goal is ticked any day they do it, for its stars.
-	const [mode, setMode] = useState<"task" | "goal">(task ? (task.required ? "task" : "goal") : startAsGoal ? "goal" : "task");
-	const isGoal = mode === "goal";
-	const [title, setTitle] = useState(task?.title ?? "");
+	const [mode, setMode] = useState<'task' | 'goal'>(
+		task ? (task.required ? 'task' : 'goal') : startAsGoal ? 'goal' : 'task',
+	);
+	const isGoal = mode === 'goal';
+	const [title, setTitle] = useState(task?.title ?? '');
 	// null means everyone: each person gets the task and ticks off their own. undefined: not picked yet.
 	const [memberId, setMemberId] = useState<string | null | undefined>(
-		task
-			? task.memberId
-			: blank
-				? undefined
-				: preset !== undefined
-					? preset
-					: (members[0]?.id ?? null),
+		task ? task.memberId : blank ? undefined : preset !== undefined ? preset : (members[0]?.id ?? null),
 	);
 	const [days, setDays] = useState<number[]>(task?.days ?? EVERY_DAY);
 	// One-time: the last day it can be done (it's on the list until then, or until it's done).
@@ -93,39 +80,40 @@ export default function TaskDialog({
 	const [icon, setIcon] = useState<string | null>(task?.icon ?? null);
 	// The icon picker opens under the name when the icon square is tapped.
 	const [pickingIcon, setPickingIcon] = useState(false);
-	const [category, setCategory] = useState<TaskCategory>(
-		task?.required ? task.category : "non_negotiable",
-	);
+	const [category, setCategory] = useState<TaskCategory>(task?.required ? task.category : 'non_negotiable');
 	const [points, setPoints] = useState(task && !task.required ? task.points : GOAL_STARS);
 	// A goal picked from the list, or the activity for one of your own (saved to the list too).
 	const library = useGoalLibrary().data ?? [];
 	const fromList = library.find((x) => x.title.toLowerCase() === title.trim().toLowerCase());
-	const [kind, setKind] = useState<MomentKind>("self_care");
+	const [kind, setKind] = useState<MomentKind>('self_care');
 	const { save: saveToList } = useGoalActions();
 	// Goals on their list already: at most MAX_GOALS at once.
 	const tasks = useTasks().data ?? [];
-	const goalCount = memberId === undefined ? 0
-		: memberId === null
-			? Math.max(0, ...members.map((m) => goalsOf(tasks, m.id, TODAY(), task?.id).length))
-			: goalsOf(tasks, memberId, TODAY(), task?.id).length;
+	const goalCount =
+		memberId === undefined
+			? 0
+			: memberId === null
+				? Math.max(0, ...members.map((m) => goalsOf(tasks, m.id, TODAY(), task?.id).length))
+				: goalsOf(tasks, memberId, TODAY(), task?.id).length;
 	const full = isGoal && goalCount >= MAX_GOALS;
 	const who = members.find((m) => m.id === memberId);
 	// Delete asks in a confirmation pop-up first.
 	const [confirmDelete, setConfirmDelete] = useState(false);
 
 	const problem = !title.trim()
-		? isGoal ? "Pick or name a goal" : "Add a task"
+		? isGoal
+			? 'Pick or name a goal'
+			: 'Add a task'
 		: full
 			? `That's ${MAX_GOALS} goals already`
-		: memberId === undefined
-			? "Pick who it's for"
-		: dueBy === null && days.length === 0
-			? "Pick at least one day"
-		: dueBy !== null && dueBy < TODAY() && dueBy !== task?.dueBy
-			? "Pick a due date from today on"
-			: null;
-	const same = (a: number[], b: number[]) =>
-		a.length === b.length && a.every((d) => b.includes(d));
+			: memberId === undefined
+				? "Pick who it's for"
+				: dueBy === null && days.length === 0
+					? 'Pick at least one day'
+					: dueBy !== null && dueBy < TODAY() && dueBy !== task?.dueBy
+						? 'Pick a due date from today on'
+						: null;
+	const same = (a: number[], b: number[]) => a.length === b.length && a.every((d) => b.includes(d));
 
 	function submit(e: FormEvent) {
 		e.preventDefault();
@@ -137,7 +125,7 @@ export default function TaskDialog({
 				memberId: memberId ?? null,
 				days: dueBy ? EVERY_DAY : [...days].sort(),
 				time: isGoal ? null : time,
-				category: isGoal ? "bonus" : category,
+				category: isGoal ? 'bonus' : category,
 				required: !isGoal,
 				points: isGoal ? points : 0,
 				icon,
@@ -148,20 +136,26 @@ export default function TaskDialog({
 
 	return (
 		<>
-			<Sheet label={task ? (isGoal ? "Edit goal" : "Edit task") : isGoal ? "New goal" : "New task"} onClose={onClose} onSubmit={submit}>
+			<Sheet
+				label={task ? (isGoal ? 'Edit goal' : 'Edit task') : isGoal ? 'New goal' : 'New task'}
+				onClose={onClose}
+				onSubmit={submit}
+			>
 				<header className={sheet.head}>
-					<h2 className={sheet.heading}>{task ? (isGoal ? "Edit goal" : "Edit task") : isGoal ? "New goal" : "New task"}</h2>
+					<h2 className={sheet.heading}>
+						{task ? (isGoal ? 'Edit goal' : 'Edit task') : isGoal ? 'New goal' : 'New task'}
+					</h2>
 					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
 						×
 					</button>
 				</header>
 
 				<div className={g.modeSwitch} role="group" aria-label="Task or goal">
-					<button type="button" aria-pressed={!isGoal} onClick={() => setMode("task")}>
+					<button type="button" aria-pressed={!isGoal} onClick={() => setMode('task')}>
 						Task
 						<span className={g.modeHint}>Required for the day</span>
 					</button>
-					<button type="button" aria-pressed={isGoal} onClick={() => setMode("goal")}>
+					<button type="button" aria-pressed={isGoal} onClick={() => setMode('goal')}>
 						Goal
 						<span className={g.modeHint}>Earns stars any day they do it</span>
 					</button>
@@ -173,14 +167,14 @@ export default function TaskDialog({
 						type="button"
 						className={c.iconPreview}
 						aria-expanded={pickingIcon}
-						aria-label={icon ? "Change icon" : "Add an icon"}
+						aria-label={icon ? 'Change icon' : 'Add an icon'}
 						onClick={() => setPickingIcon(!pickingIcon)}
 					>
-						{icon ?? "+"}
+						{icon ?? '+'}
 					</button>
 					<input
 						className={s.title}
-						placeholder={isGoal ? "Pick a goal below, or type your own" : "What needs doing?"}
+						placeholder={isGoal ? 'Pick a goal below, or type your own' : 'What needs doing?'}
 						value={title}
 						maxLength={80}
 						autoFocus={!task}
@@ -201,23 +195,33 @@ export default function TaskDialog({
 					<>
 						<div className={s.wrap} role="group" aria-label="Activity">
 							{MOMENT_KINDS.map((k) => (
-								<button key={k.kind} type="button" aria-pressed={kind === k.kind}
-									className={`${s.chip} ${kind === k.kind ? c.chipOn : ""}`} onClick={() => setKind(k.kind)}>
+								<button
+									key={k.kind}
+									type="button"
+									aria-pressed={kind === k.kind}
+									className={`${s.chip} ${kind === k.kind ? c.chipOn : ''}`}
+									onClick={() => setKind(k.kind)}
+								>
 									{k.emoji} {k.label}
 								</button>
 							))}
 						</div>
 						<p className={c.hint}>
-							{icon ? "Your own goal: it joins the goal list for every kid, until you hide it." : "Tap the square to give it a picture."}
+							{icon
+								? 'Your own goal: it joins the goal list for every kid, until you hide it.'
+								: 'Tap the square to give it a picture.'}
 						</p>
 					</>
 				)}
 				{isGoal && (
-					<GoalPicker stage={who?.stage ?? null} picked={fromList?.key ?? null}
+					<GoalPicker
+						stage={who?.stage ?? null}
+						picked={fromList?.key ?? null}
 						onPick={(x) => {
 							setTitle(x.title);
 							setIcon(x.emoji);
-						}} />
+						}}
+					/>
 				)}
 				{!task && !isGoal && (
 					<div className={s.wrap}>
@@ -237,30 +241,26 @@ export default function TaskDialog({
 					</div>
 				)}
 
-
 				<div className={s.label}>Who</div>
 				<div className={s.wrap}>
-					{[...members, { id: null, name: "Everyone", color: UNASSIGNED }].map(
-						(m) => (
-							<PickChip
-								key={m.id ?? "everyone"}
-								name={m.name}
-								color={m.color}
-								on={memberId === m.id}
-								onClick={() => setMemberId(m.id)}
-							/>
-						),
-					)}
+					{[...members, { id: null, name: 'Everyone', color: UNASSIGNED }].map((m) => (
+						<PickChip
+							key={m.id ?? 'everyone'}
+							name={m.name}
+							color={m.color}
+							on={memberId === m.id}
+							onClick={() => setMemberId(m.id)}
+						/>
+					))}
 				</div>
 				{memberId === null && (
-					<p className={c.hint}>
-						Everyone gets this {isGoal ? "goal" : "task"} and ticks off their own.
-					</p>
+					<p className={c.hint}>Everyone gets this {isGoal ? 'goal' : 'task'} and ticks off their own.</p>
 				)}
 				{full && (
 					<p className={g.warning} role="status">
-						{memberId === null ? "Someone" : who?.name} has {MAX_GOALS} goals already, the most at once. Remove one from their list to add another.
-						{!fromList && icon && title.trim() ? " You can still save this one to the goal list for later." : ""}
+						{memberId === null ? 'Someone' : who?.name} has {MAX_GOALS} goals already, the most at once. Remove one from
+						their list to add another.
+						{!fromList && icon && title.trim() ? ' You can still save this one to the goal list for later.' : ''}
 					</p>
 				)}
 				{isGoal && (
@@ -276,7 +276,7 @@ export default function TaskDialog({
 						<button
 							key={label}
 							type="button"
-							className={`${s.chip} ${dueBy === null && same(days, set) ? c.chipOn : ""}`}
+							className={`${s.chip} ${dueBy === null && same(days, set) ? c.chipOn : ''}`}
 							onClick={() => {
 								setDays(set);
 								setDueBy(null);
@@ -287,7 +287,7 @@ export default function TaskDialog({
 					))}
 					<button
 						type="button"
-						className={`${s.chip} ${dueBy !== null ? c.chipOn : ""}`}
+						className={`${s.chip} ${dueBy !== null ? c.chipOn : ''}`}
 						onClick={() => setDueBy(dueBy ?? TODAY())}
 					>
 						One time
@@ -300,7 +300,7 @@ export default function TaskDialog({
 								<button
 									key={label}
 									type="button"
-									className={`${s.chip} ${dueBy === day ? c.chipOn : ""}`}
+									className={`${s.chip} ${dueBy === day ? c.chipOn : ''}`}
 									onClick={() => setDueBy(day)}
 								>
 									{label}
@@ -317,28 +317,26 @@ export default function TaskDialog({
 						<p className={c.hint}>
 							{dueBy === TODAY()
 								? "Just today: it's gone tomorrow."
-								: `On the list until it's done, through ${fromDayKey(dueBy).toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}. Then it's gone.`}
+								: `On the list until it's done, through ${fromDayKey(dueBy).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })}. Then it's gone.`}
 						</p>
 					</>
 				) : (
-				<div className={c.dayPicker} role="group" aria-label="Days it's due">
-					{LETTERS.map((label, d) => {
-						const on = days.includes(d);
-						return (
-							<button
-								key={d}
-								type="button"
-								aria-pressed={on}
-								className={`${c.dayToggle} ${on ? c.dayOn : ""}`}
-								onClick={() =>
-									setDays(on ? days.filter((x) => x !== d) : [...days, d])
-								}
-							>
-								{label}
-							</button>
-						);
-					})}
-				</div>
+					<div className={c.dayPicker} role="group" aria-label="Days it's due">
+						{LETTERS.map((label, d) => {
+							const on = days.includes(d);
+							return (
+								<button
+									key={d}
+									type="button"
+									aria-pressed={on}
+									className={`${c.dayToggle} ${on ? c.dayOn : ''}`}
+									onClick={() => setDays(on ? days.filter((x) => x !== d) : [...days, d])}
+								>
+									{label}
+								</button>
+							);
+						})}
+					</div>
 				)}
 
 				{!isGoal && (
@@ -350,7 +348,7 @@ export default function TaskDialog({
 									key={t.label}
 									type="button"
 									aria-pressed={time === t.id}
-									className={`${s.chip} ${time === t.id ? c.chipOn : ""}`}
+									className={`${s.chip} ${time === t.id ? c.chipOn : ''}`}
 									onClick={() => setTime(t.id)}
 								>
 									{t.label}
@@ -366,7 +364,7 @@ export default function TaskDialog({
 									type="button"
 									aria-pressed={category === k.id}
 									title={k.hint}
-									className={`${s.chip} ${category === k.id ? c.chipOn : ""}`}
+									className={`${s.chip} ${category === k.id ? c.chipOn : ''}`}
 									onClick={() => setCategory(k.id)}
 								>
 									{k.label}
@@ -381,11 +379,7 @@ export default function TaskDialog({
 
 				<div className={sheet.actions}>
 					{task && (
-						<button
-							type="button"
-							className={sheet.danger}
-							onClick={() => setConfirmDelete(true)}
-						>
+						<button type="button" className={sheet.danger} onClick={() => setConfirmDelete(true)}>
 							Delete
 						</button>
 					)}
@@ -394,8 +388,12 @@ export default function TaskDialog({
 						Cancel
 					</button>
 					{full && !fromList && icon && title.trim() ? (
-						<button type="button" className={sheet.primary} disabled={saveToList.isPending}
-							onClick={() => saveToList.mutate({ title: title.trim(), emoji: icon, kind }, { onSuccess: onClose })}>
+						<button
+							type="button"
+							className={sheet.primary}
+							disabled={saveToList.isPending}
+							onClick={() => saveToList.mutate({ title: title.trim(), emoji: icon, kind }, { onSuccess: onClose })}
+						>
 							Save to the goal list
 						</button>
 					) : (
@@ -408,7 +406,7 @@ export default function TaskDialog({
 			{task && confirmDelete && (
 				<ConfirmDialog
 					title={`Delete "${task.title}"?`}
-					confirmLabel={task.memberId ? "Delete" : "Delete for everyone"}
+					confirmLabel={task.memberId ? 'Delete' : 'Delete for everyone'}
 					onCancel={() => setConfirmDelete(false)}
 					onConfirm={() => onDelete(task)}
 				>

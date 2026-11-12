@@ -1,19 +1,19 @@
-import { useMemo, useState, type CSSProperties } from "react";
-import { Pic } from "./art";
-import { Board, fit } from "./parts";
-import { ANIMALS, FRUIT, TOYS } from "./things";
-import { at, fresh, shuffle, type GameProps, useLater } from "./rounds";
-import s from "./Learn.module.css";
-import g from "./LearnMemory.module.css";
+import { useMemo, useState, type CSSProperties } from 'react';
+import { Pic } from './art';
+import { Board, fit } from './parts';
+import { ANIMALS, FRUIT, TOYS } from './things';
+import { at, fresh, shuffle, type GameProps, useLater } from './rounds';
+import s from './Learn.module.css';
+import g from './LearnMemory.module.css';
 
 /** Pairs on the table, by level. */
 const PAIRS = [3, 4, 6, 8, 10, 12];
 
 /** A different set of cards each play, each with its own back. */
 const SETS = [
-	{ name: "animals", back: "#5aa0e6", cards: ANIMALS.map((a) => ({ id: a.id, name: a.name })) },
-	{ name: "fruit", back: "#e8707c", cards: FRUIT.map((f) => ({ id: f.id, name: f.one })) },
-	{ name: "toys", back: "#7a5cc8", cards: TOYS.map((t) => ({ id: t.id, name: t.one })) },
+	{ name: 'animals', back: '#5aa0e6', cards: ANIMALS.map((a) => ({ id: a.id, name: a.name })) },
+	{ name: 'fruit', back: '#e8707c', cards: FRUIT.map((f) => ({ id: f.id, name: f.one })) },
+	{ name: 'toys', back: '#7a5cc8', cards: TOYS.map((t) => ({ id: t.id, name: t.one })) },
 ];
 
 /**
@@ -22,9 +22,12 @@ const SETS = [
  * each play. First try is finding them all without too many misses (one per pair).
  */
 export default function Memory({ level, onDone, onBack }: GameProps) {
-	const set = useMemo(() => fresh("pairs.sets", SETS, 1, (x) => x.name)[0], []);
+	const set = useMemo(() => fresh('pairs.sets', SETS, 1, (x) => x.name)[0], []);
 	const pairs = Math.min(at(PAIRS, level), set.cards.length);
-	const cards = useMemo(() => shuffle(fresh(`pairs.${set.name}`, set.cards, pairs, (x) => x.id).flatMap((c) => [c, c])), [set, pairs]);
+	const cards = useMemo(
+		() => shuffle(fresh(`pairs.${set.name}`, set.cards, pairs, (x) => x.id).flatMap((c) => [c, c])),
+		[set, pairs],
+	);
 	const [up, setUp] = useState<number[]>([]);
 	const [matched, setMatched] = useState<number[]>([]);
 	const [misses, setMisses] = useState(0);
@@ -67,15 +70,32 @@ export default function Memory({ level, onDone, onBack }: GameProps) {
 				const grid = fit(cards.length, box, { gap: 10, shape: 0.75, most: 170 });
 				return (
 					<div className={s.column}>
-						<div className={s.grid} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 10, "--back": set.back } as CSSProperties}>
+						<div
+							className={s.grid}
+							style={
+								{
+									gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`,
+									gap: 10,
+									'--back': set.back,
+								} as CSSProperties
+							}
+						>
 							{cards.map((c, i) => {
 								const face = up.includes(i) || matched.includes(i);
 								return (
-									<button key={i} type="button" className={`${g.card} ${face ? s.cardUp : ""} ${matched.includes(i) ? g.cardMatched : ""} ${shaking.includes(i) ? s.cardShake : ""}`}
-										style={{ width: grid.size, height: grid.size / 0.75 }} onClick={() => flip(i)} aria-label={face ? c.name : "A card, face down"}>
+									<button
+										key={i}
+										type="button"
+										className={`${g.card} ${face ? s.cardUp : ''} ${matched.includes(i) ? g.cardMatched : ''} ${shaking.includes(i) ? s.cardShake : ''}`}
+										style={{ width: grid.size, height: grid.size / 0.75 }}
+										onClick={() => flip(i)}
+										aria-label={face ? c.name : 'A card, face down'}
+									>
 										<span className={s.cardInner}>
 											<span className={g.cardBack} aria-hidden="true" />
-											<span className={g.cardFace}><Pic id={c.id} /></span>
+											<span className={g.cardFace}>
+												<Pic id={c.id} />
+											</span>
 										</span>
 									</button>
 								);

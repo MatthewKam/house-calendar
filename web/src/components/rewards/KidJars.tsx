@@ -1,12 +1,12 @@
-import { useRef, useState, type CSSProperties } from "react";
-import { useRewardActions } from "../../lib/queries";
-import { flyStar } from "../../lib/flyStar";
-import type { Member, Reward } from "../../lib/types";
-import { PencilIcon, StarIcon } from "../ui/icons";
-import ConfirmDialog from "../ui/ConfirmDialog";
-import { JarProgress, eachFills, shortDay } from "./JarBits";
-import s from "./Rewards.module.css";
-import DateInput from "../ui/DateInput";
+import { useRef, useState, type CSSProperties } from 'react';
+import { useRewardActions } from '../../lib/queries';
+import { flyStar } from '../../lib/flyStar';
+import type { Member, Reward } from '../../lib/types';
+import { PencilIcon, StarIcon } from '../ui/icons';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import { JarProgress, eachFills, shortDay } from './JarBits';
+import s from './Rewards.module.css';
+import DateInput from '../ui/DateInput';
 
 interface Props {
 	kid: Member;
@@ -32,34 +32,23 @@ type Stage = { from?: Reward; counts: Record<string, number> };
 
 /** "a", "a and b", "a, b and c". */
 const listOf = (parts: string[]) =>
-	parts.length < 2
-		? parts.join("")
-		: `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`;
+	parts.length < 2 ? parts.join('') : `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`;
 /** Under a jar's name: its deadline, and how a shared jar fills. */
 const subtitle = (j: Reward) =>
 	[
-		j.deadline ? `Redeem by ${shortDay(j.deadline)}` : "No deadline",
-		j.memberIds.length > 1 && (eachFills(j) ? "each fills it" : "filled together"),
+		j.deadline ? `Redeem by ${shortDay(j.deadline)}` : 'No deadline',
+		j.memberIds.length > 1 && (eachFills(j) ? 'each fills it' : 'filled together'),
 	]
 		.filter(Boolean)
-		.join(" · ");
-const stars = (n: number) => `${n} ${n === 1 ? "star" : "stars"}`;
+		.join(' · ');
+const stars = (n: number) => `${n} ${n === 1 ? 'star' : 'stars'}`;
 
 /**
  * One kid on the Rewards page: their bucket, missed jars to sort out, the jars they're filling, and
  * full ones waiting to be redeemed. "Use stars" places stars by the jars (tap a jar, − to take one
  * back), then asks before they go in for good.
  */
-export default function KidJars({
-	kid,
-	members,
-	today,
-	bucket,
-	jars,
-	onEdit,
-	askFirst,
-	big,
-}: Props) {
+export default function KidJars({ kid, members, today, bucket, jars, onEdit, askFirst, big }: Props) {
 	const { place, restore, remove } = useRewardActions();
 	const [stage, setStage] = useState<Stage | null>(null);
 	const [confirming, setConfirming] = useState(false);
@@ -71,9 +60,8 @@ export default function KidJars({
 	const grownUp = (then: () => void) => (askFirst ? askFirst(then) : then());
 	// Parents only: the jar a kid's stars are being taken back out of, and how many of theirs are in it.
 
-
-	const filling = jars.filter((j) => j.status === "filling");
-	const missed = jars.filter((j) => j.status === "missed");
+	const filling = jars.filter((j) => j.status === 'filling');
+	const missed = jars.filter((j) => j.status === 'missed');
 	const mine = (j: Reward) => j.memberStars[kid.id] ?? 0;
 	const count = (j: Reward) => stage?.counts[j.id] ?? 0;
 	const placed = filling.filter((j) => count(j) > 0);
@@ -81,8 +69,7 @@ export default function KidJars({
 	const budget = stage?.from ? mine(stage.from) : bucket;
 	const left = budget - staged;
 	/** Room left in a jar, after what's placed by it. */
-	const room = (j: Reward) =>
-		j.goal - (eachFills(j) ? mine(j) : j.stars) - count(j);
+	const room = (j: Reward) => j.goal - (eachFills(j) ? mine(j) : j.stars) - count(j);
 	const canAdd = (j: Reward) => !!stage && left > 0 && room(j) > 0;
 	const bump = (j: Reward, n: number) =>
 		setStage(
@@ -108,7 +95,8 @@ export default function KidJars({
 		// Each fills it: this kid's own bar; otherwise the jar's one bar.
 		const bar = bars?.[eachFills(j) ? Math.max(0, j.memberIds.indexOf(kid.id)) : 0] ?? null;
 		const have = (eachFills(j) ? mine(j) : j.stars) + count(j) + 1;
-		if (flyStar(section?.querySelector(`.${s.bucket} svg`) ?? null, bar, have / j.goal, () => fly(j.id, -1))) fly(j.id, 1);
+		if (flyStar(section?.querySelector(`.${s.bucket} svg`) ?? null, bar, have / j.goal, () => fly(j.id, -1)))
+			fly(j.id, 1);
 		bump(j, 1);
 	}
 
@@ -127,27 +115,23 @@ export default function KidJars({
 	return (
 		<section
 			ref={sectionRef}
-			className={`${s.kid} ${big ? s.big : ""}`}
-			style={{ "--c": kid.color } as CSSProperties}
+			className={`${s.kid} ${big ? s.big : ''}`}
+			style={{ '--c': kid.color } as CSSProperties}
 			aria-label={kid.name}
 		>
 			<header className={s.kidHead}>
 				<span className={s.kidName}>{kid.name}</span>
 				<span className={s.bucket}>
 					<StarIcon className={s.star} />
-					<b>{stage && !stage.from ? left : bucket}</b>{" "}
-					{stage && !stage.from ? "left" : bucket === 1 ? "star" : "stars"}
+					<b>{stage && !stage.from ? left : bucket}</b>{' '}
+					{stage && !stage.from ? 'left' : bucket === 1 ? 'star' : 'stars'}
 				</span>
 				{stage ? (
 					<>
 						<button className={s.cancel} onClick={() => setStage(null)}>
 							Cancel
 						</button>
-						<button
-							className={s.use}
-							disabled={!staged}
-							onClick={() => setConfirming(true)}
-						>
+						<button className={s.use} disabled={!staged} onClick={() => setConfirming(true)}>
 							Done
 						</button>
 					</>
@@ -164,20 +148,18 @@ export default function KidJars({
 				<p className={s.stageHint}>
 					{stage.from
 						? `Moving ${stars(budget)} from ${stage.from.title}. Tap a jar to put one in; any left go back to your bucket.`
-						: "Tap a jar to put a star by it. Tap − if you put one in the wrong place."}
+						: 'Tap a jar to put a star by it. Tap − if you put one in the wrong place.'}
 				</p>
 			)}
 
 			{/* Jars past their deadline: the kid moves their stars out, then a parent adds it back or removes it. */}
 			{missed.map((j) => {
 				const n = mine(j);
-				const others = members
-					.filter((m) => m.id !== kid.id && (j.memberStars[m.id] ?? 0) > 0)
-					.map((m) => m.name);
+				const others = members.filter((m) => m.id !== kid.id && (j.memberStars[m.id] ?? 0) > 0).map((m) => m.name);
 				return (
 					<div key={j.id} className={s.missed}>
 						<span className={s.missedText}>
-							⏰ <b>{j.title}</b> missed its deadline ({shortDay(j.deadline!)}).{" "}
+							⏰ <b>{j.title}</b> missed its deadline ({shortDay(j.deadline!)}).{' '}
 							{n > 0
 								? `${stars(n)} of yours are in it.`
 								: others.length
@@ -202,10 +184,7 @@ export default function KidJars({
 									Back to my bucket
 								</button>
 								{filling.length > 0 && (
-									<button
-										className={s.use}
-										onClick={() => grownUp(() => setStage({ from: j, counts: {} }))}
-									>
+									<button className={s.use} onClick={() => grownUp(() => setStage({ from: j, counts: {} }))}>
 										Move to another jar
 									</button>
 								)}
@@ -216,10 +195,7 @@ export default function KidJars({
 								<button className={s.quiet} onClick={() => setRemoving(j)}>
 									Remove
 								</button>
-								<button
-									className={s.use}
-									onClick={() => setRestoring({ jar: j, deadline: "" })}
-								>
+								<button className={s.use} onClick={() => setRestoring({ jar: j, deadline: '' })}>
 									Add back
 								</button>
 							</span>
@@ -237,7 +213,7 @@ export default function KidJars({
 						<li
 							key={j.id}
 							data-jar={j.id}
-							className={`${s.row} ${stage ? s.picking : ""} ${count(j) ? s.picked : ""}`}
+							className={`${s.row} ${stage ? s.picking : ''} ${count(j) ? s.picked : ''}`}
 							// While placing stars, tapping a jar puts one more by it.
 							onClick={() => addStar(j)}
 						>
@@ -266,7 +242,7 @@ export default function KidJars({
 									>
 										−
 									</button>
-									<span className={s.staged}>{count(j) ? `+${count(j)}` : room(j) > 0 ? "" : "Full"}</span>
+									<span className={s.staged}>{count(j) ? `+${count(j)}` : room(j) > 0 ? '' : 'Full'}</span>
 									<button
 										className={s.step}
 										disabled={!canAdd(j)}
@@ -293,9 +269,7 @@ export default function KidJars({
 					onCancel={() => setConfirming(false)}
 					onConfirm={confirm}
 				>
-					{stage.from &&
-						left > 0 &&
-						`The other ${stars(left)} go back to your bucket. `}
+					{stage.from && left > 0 && `The other ${stars(left)} go back to your bucket. `}
 					Stars can't come back out once they're in a jar.
 				</ConfirmDialog>
 			)}
@@ -320,9 +294,7 @@ export default function KidJars({
 							className={s.date}
 							value={restoring.deadline}
 							min={today}
-							onChange={(e) =>
-								setRestoring({ ...restoring, deadline: e.target.value })
-							}
+							onChange={(e) => setRestoring({ ...restoring, deadline: e.target.value })}
 						/>
 					</label>
 				</ConfirmDialog>

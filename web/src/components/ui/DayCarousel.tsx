@@ -1,5 +1,5 @@
-import { useRef, useState, type ReactNode } from "react";
-import { PHONE_SIDEWAYS, TABLET, useMediaQuery, WIDE } from "../../lib/useMediaQuery";
+import { useRef, useState, type ReactNode } from 'react';
+import { PHONE_SIDEWAYS, TABLET, useMediaQuery, WIDE } from '../../lib/useMediaQuery';
 
 /** A day (or a few) of the calendar: its button's name, and what's on. */
 interface CalendarDay {
@@ -26,7 +26,15 @@ const ALL_THREE = WIDE;
  * swipe). On its side: the first, and a carousel of the others beside it. Wider than 1400px: all three
  * side by side. `stacked` (a column of its own): the first, and a carousel of the others under it.
  */
-export function DayCalendar({ days, styles: s, stacked = false }: { days: CalendarDay[]; styles: CalendarStyles; stacked?: boolean }) {
+export function DayCalendar({
+	days,
+	styles: s,
+	stacked = false,
+}: {
+	days: CalendarDay[];
+	styles: CalendarStyles;
+	stacked?: boolean;
+}) {
 	const sideBySide = useMediaQuery(SIDE_BY_SIDE);
 	const allThree = useMediaQuery(ALL_THREE);
 	const day = (d: CalendarDay) => (
@@ -63,10 +71,10 @@ export function DayCalendar({ days, styles: s, stacked = false }: { days: Calend
 function Carousel({ days, styles: s }: { days: CalendarDay[]; styles: CalendarStyles }) {
 	const [at, setAt] = useState(0);
 	// Which way the last move went, so the new day slides in from that side.
-	const [from, setFrom] = useState<"right" | "left">("right");
+	const [from, setFrom] = useState<'right' | 'left'>('right');
 	const go = (i: number) => {
 		if (i < 0 || i >= days.length || i === at) return;
-		setFrom(i > at ? "right" : "left");
+		setFrom(i > at ? 'right' : 'left');
 		setAt(i);
 	};
 	const swipe = useRef<{ x: number; y: number } | null>(null);
@@ -81,8 +89,7 @@ function Carousel({ days, styles: s }: { days: CalendarDay[]; styles: CalendarSt
 				if (!start) return;
 				const dx = e.clientX - start.x;
 				// Mostly sideways, and far enough to mean it.
-				if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(e.clientY - start.y))
-					go(at + (dx < 0 ? 1 : -1));
+				if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(e.clientY - start.y)) go(at + (dx < 0 ? 1 : -1));
 			}}
 		>
 			<div className={s.dayButtons} role="tablist">
@@ -92,7 +99,7 @@ function Carousel({ days, styles: s }: { days: CalendarDay[]; styles: CalendarSt
 						type="button"
 						role="tab"
 						aria-selected={i === at}
-						className={`${s.dayButton} ${i === at ? s.dayButtonOn : ""}`}
+						className={`${s.dayButton} ${i === at ? s.dayButtonOn : ''}`}
 						onClick={() => go(i)}
 					>
 						{d.label}
@@ -103,7 +110,7 @@ function Carousel({ days, styles: s }: { days: CalendarDay[]; styles: CalendarSt
 				key={shown.label}
 				role="tabpanel"
 				aria-label={shown.label}
-				className={`${s.dayPage} ${from === "right" ? s.dayFromRight : s.dayFromLeft}`}
+				className={`${s.dayPage} ${from === 'right' ? s.dayFromRight : s.dayFromLeft}`}
 			>
 				{shown.body}
 			</section>

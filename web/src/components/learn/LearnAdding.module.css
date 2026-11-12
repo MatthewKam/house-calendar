@@ -54,20 +54,22 @@
 	place-items: center;
 	box-sizing: border-box;
 	border-radius: 50%;
-	background:
-		radial-gradient(circle at 50% 50%, #fff 0 56%, #e9edf1 57% 60%, #fbfcfd 61% 74%, #edf0f3 75% 100%);
+	background: radial-gradient(circle at 50% 50%, #fff 0 56%, #e9edf1 57% 60%, #fbfcfd 61% 74%, #edf0f3 75% 100%);
 	border: 2px solid #dfe4e9;
-	box-shadow: 0 0.35rem 0.8rem rgb(29 31 35 / 0.16), inset 0 -0.2rem 0.4rem rgb(29 31 35 / 0.06);
+	box-shadow:
+		0 0.35rem 0.8rem rgb(29 31 35 / 0.16),
+		inset 0 -0.2rem 0.4rem rgb(29 31 35 / 0.06);
 }
 /* The take-away bowl: wooden, deeper inside. */
 .bowl {
-	background:
-		radial-gradient(circle at 50% 45%, #f3e3cc 0 55%, #d9b88f 60% 72%, #b98a5a 76% 100%);
+	background: radial-gradient(circle at 50% 45%, #f3e3cc 0 55%, #d9b88f 60% 72%, #b98a5a 76% 100%);
 	border-color: #a87a4c;
 }
 .plateOver {
 	border-color: #d92d20;
-	box-shadow: 0 0 0 0.3rem #d92d20, 0 0.35rem 0.8rem rgb(29 31 35 / 0.16);
+	box-shadow:
+		0 0 0 0.3rem #d92d20,
+		0 0.35rem 0.8rem rgb(29 31 35 / 0.16);
 }
 /* The fruit on a plate, in its middle. */
 .onPlates {

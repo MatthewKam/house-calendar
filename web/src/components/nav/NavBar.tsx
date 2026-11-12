@@ -1,7 +1,7 @@
-import { useRef, useState, type ReactNode } from "react";
-import s from "./NavBar.module.css";
+import { useRef, useState, type ReactNode } from 'react';
+import s from './NavBar.module.css';
 
-export type Page = "calendar" | "today" | "tasks" | "rewards" | "lists" | "photos";
+export type Page = 'calendar' | 'today' | 'tasks' | 'rewards' | 'lists' | 'photos';
 
 interface Props {
 	page: Page;
@@ -80,7 +80,7 @@ const MoreIcon = () => (
 const LockIcon = ({ open }: { open: boolean }) => (
 	<svg viewBox="0 0 24 24" aria-hidden="true">
 		<rect x="5" y="11" width="14" height="10" rx="2.2" />
-		<path d={open ? "M8.5 11V7.5a3.5 3.5 0 0 1 6.8-1.2" : "M8.5 11V7.5a3.5 3.5 0 0 1 7 0V11"} />
+		<path d={open ? 'M8.5 11V7.5a3.5 3.5 0 0 1 6.8-1.2' : 'M8.5 11V7.5a3.5 3.5 0 0 1 7 0V11'} />
 	</svg>
 );
 const SettingsIcon = () => (
@@ -94,22 +94,13 @@ const SettingsIcon = () => (
  * Bar down the left edge: the Today, Calendar, Tasks, Lists, Rewards and Photos pages, Say it and Snap
  * (grown-ups), and the parent lock and Settings at the bottom (kid mode starts from Settings, Screen).
  */
-export default function NavBar({
-	page,
-	settingsOpen,
-	onPage,
-	onSettings,
-	lock,
-	phone,
-	center,
-	capture,
-}: Props) {
+export default function NavBar({ page, settingsOpen, onPage, onSettings, lock, phone, center, capture }: Props) {
 	const snap = useRef<HTMLInputElement>(null);
 	if (phone) return <BottomBar {...{ page, settingsOpen, onPage, onSettings, lock, center }} />;
 	const item = (p: Page, label: string, icon: ReactNode) => (
 		<button
-			className={`${s.item} ${page === p ? s.on : ""}`}
-			aria-current={page === p ? "page" : undefined}
+			className={`${s.item} ${page === p ? s.on : ''}`}
+			aria-current={page === p ? 'page' : undefined}
 			onClick={() => onPage(p)}
 			aria-label={label}
 		>
@@ -119,12 +110,12 @@ export default function NavBar({
 	);
 	return (
 		<nav className={s.nav} aria-label="Main">
-			{item("today", "Today", <TodayIcon />)}
-			{item("calendar", "Calendar", <CalendarIcon />)}
-			{item("tasks", "Tasks", <TasksIcon />)}
-			{item("lists", "Lists", <ListsIcon />)}
-			{item("rewards", "Rewards", <RewardsIcon />)}
-			{item("photos", "Photos", <PhotosIcon />)}
+			{item('today', 'Today', <TodayIcon />)}
+			{item('calendar', 'Calendar', <CalendarIcon />)}
+			{item('tasks', 'Tasks', <TasksIcon />)}
+			{item('lists', 'Lists', <ListsIcon />)}
+			{item('rewards', 'Rewards', <RewardsIcon />)}
+			{item('photos', 'Photos', <PhotosIcon />)}
 			{capture && (
 				<>
 					<button className={s.item} onClick={capture.onSay} aria-label="Say it">
@@ -136,27 +127,33 @@ export default function NavBar({
 						<SnapIcon />
 						<span className={s.label}>Snap</span>
 					</button>
-					<input ref={snap} type="file" accept="image/*" hidden onChange={(e) => {
-						const photo = e.target.files?.[0];
-						e.target.value = "";
-						if (photo) capture.onSnap(photo);
-					}} />
+					<input
+						ref={snap}
+						type="file"
+						accept="image/*"
+						hidden
+						onChange={(e) => {
+							const photo = e.target.files?.[0];
+							e.target.value = '';
+							if (photo) capture.onSnap(photo);
+						}}
+					/>
 				</>
 			)}
 			{/* Pinned to the bottom of the bar: the parent lock, then Settings (who's signed in is at its top). */}
 			<span className={s.push} aria-hidden="true" />
 			{lock && (
 				<button
-					className={`${s.item} ${lock.parent ? s.unlocked : ""}`}
+					className={`${s.item} ${lock.parent ? s.unlocked : ''}`}
 					onClick={lock.onTap}
-					aria-label={lock.parent ? `Unlocked${lock.by ? ` by ${lock.by}` : ""}: tap to lock` : "Unlock (guardians)"}
+					aria-label={lock.parent ? `Unlocked${lock.by ? ` by ${lock.by}` : ''}: tap to lock` : 'Unlock (guardians)'}
 				>
 					<LockIcon open={lock.parent} />
-					<span className={s.label}>{lock.parent ? lock.by ?? "Unlocked" : "Locked"}</span>
+					<span className={s.label}>{lock.parent ? (lock.by ?? 'Unlocked') : 'Locked'}</span>
 				</button>
 			)}
 			<button
-				className={`${s.item} ${settingsOpen ? s.on : ""}`}
+				className={`${s.item} ${settingsOpen ? s.on : ''}`}
 				aria-pressed={settingsOpen}
 				onClick={onSettings}
 				aria-label="Settings"
@@ -170,22 +167,26 @@ export default function NavBar({
 
 /** Pages behind More on a phone. */
 const MORE: [Page, string, () => ReactNode][] = [
-	["lists", "Lists", ListsIcon],
-	["rewards", "Rewards", RewardsIcon],
-	["photos", "Photos", PhotosIcon],
+	['lists', 'Lists', ListsIcon],
+	['rewards', 'Rewards', RewardsIcon],
+	['photos', 'Photos', PhotosIcon],
 ];
 
 /**
  * Phones: Today, Calendar ("Cal"), the quick-add button, Tasks and More along the bottom, in thumb's reach.
  * More holds the other pages, who's signed in, the parent lock and Settings.
  */
-function BottomBar({ page, settingsOpen, onPage, onSettings, lock, center }: Omit<Props, "phone">) {
+function BottomBar({ page, settingsOpen, onPage, onSettings, lock, center }: Omit<Props, 'phone'>) {
 	const [more, setMore] = useState(false);
 	const inMore = MORE.some(([p]) => p === page);
 	// `short`: a shorter name to show (the full one still read out).
 	const tab = (p: Page, label: string, icon: ReactNode, short?: string) => (
-		<button className={`${s.tab} ${page === p ? s.tabOn : ""}`} aria-current={page === p ? "page" : undefined}
-			aria-label={short ? label : undefined} onClick={() => onPage(p)}>
+		<button
+			className={`${s.tab} ${page === p ? s.tabOn : ''}`}
+			aria-current={page === p ? 'page' : undefined}
+			aria-label={short ? label : undefined}
+			onClick={() => onPage(p)}
+		>
 			{icon}
 			<span>{short ?? label}</span>
 		</button>
@@ -198,12 +199,15 @@ function BottomBar({ page, settingsOpen, onPage, onSettings, lock, center }: Omi
 	return (
 		<>
 			<nav className={s.bar} aria-label="Main">
-				{tab("today", "Today", <TodayIcon />)}
-				{tab("calendar", "Calendar", <CalendarIcon />, "Cal")}
+				{tab('today', 'Today', <TodayIcon />)}
+				{tab('calendar', 'Calendar', <CalendarIcon />, 'Cal')}
 				<div className={s.center}>{center}</div>
-				{tab("tasks", "Tasks", <TasksIcon />)}
-				<button className={`${s.tab} ${inMore || more || settingsOpen ? s.tabOn : ""}`} aria-expanded={more}
-					onClick={() => setMore(!more)}>
+				{tab('tasks', 'Tasks', <TasksIcon />)}
+				<button
+					className={`${s.tab} ${inMore || more || settingsOpen ? s.tabOn : ''}`}
+					aria-expanded={more}
+					onClick={() => setMore(!more)}
+				>
 					<MoreIcon />
 					<span>More</span>
 				</button>
@@ -213,16 +217,18 @@ function BottomBar({ page, settingsOpen, onPage, onSettings, lock, center }: Omi
 					<div className={s.moreScrim} onClick={() => setMore(false)} role="presentation" />
 					<div className={s.moreSheet} role="dialog" aria-label="More">
 						{MORE.map(([p, label, Icon]) => (
-							<button key={p} className={`${s.moreItem} ${page === p ? s.moreOn : ""}`} onClick={then(() => onPage(p))}>
+							<button key={p} className={`${s.moreItem} ${page === p ? s.moreOn : ''}`} onClick={then(() => onPage(p))}>
 								<Icon />
 								{label}
 							</button>
 						))}
 						<hr className={s.moreRule} />
 						{lock && (
-							<button className={`${s.moreItem} ${lock.parent ? s.unlocked : ""}`} onClick={then(lock.onTap)}>
+							<button className={`${s.moreItem} ${lock.parent ? s.unlocked : ''}`} onClick={then(lock.onTap)}>
 								<LockIcon open={lock.parent} />
-								{lock.parent ? `Unlocked${lock.by ? ` by ${lock.by}` : ""}: tap to lock` : "Locked: unlock for grown-ups"}
+								{lock.parent
+									? `Unlocked${lock.by ? ` by ${lock.by}` : ''}: tap to lock`
+									: 'Locked: unlock for grown-ups'}
 							</button>
 						)}
 						<button className={s.moreItem} onClick={then(onSettings)}>

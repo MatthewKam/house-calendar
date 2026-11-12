@@ -1,15 +1,15 @@
-import { useState, type FormEvent } from "react";
-import { useMembers, useRewardActions } from "../../lib/queries";
-import type { Member, Reward, TeamMode } from "../../lib/types";
-import ConfirmDialog from "../ui/ConfirmDialog";
-import TakeBackDialog from "./TakeBackDialog";
-import { PickChip } from "../ui/NameChip";
-import sheet from "../ui/Sheet.module.css";
-import s from "../calendar/EventDialog.module.css";
-import t from "../tasks/Tasks.module.css";
-import r from "./Rewards.module.css";
-import DateInput from "../ui/DateInput";
-import Sheet from "../ui/Sheet";
+import { useState, type FormEvent } from 'react';
+import { useMembers, useRewardActions } from '../../lib/queries';
+import type { Member, Reward, TeamMode } from '../../lib/types';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import TakeBackDialog from './TakeBackDialog';
+import { PickChip } from '../ui/NameChip';
+import sheet from '../ui/Sheet.module.css';
+import s from '../calendar/EventDialog.module.css';
+import t from '../tasks/Tasks.module.css';
+import r from './Rewards.module.css';
+import DateInput from '../ui/DateInput';
+import Sheet from '../ui/Sheet';
 
 interface Props {
 	/** Who a new jar starts out for (e.g. the kid whose section it was added from). */
@@ -21,18 +21,18 @@ interface Props {
 }
 
 const TEAM: { id: TeamMode; label: string; hint: string }[] = [
-	{ id: "pooled", label: "Stars added together", hint: "Everyone's stars fill one jar." },
-	{ id: "each", label: "Each fills it", hint: "Every kid puts in the full amount; earned when they all have." },
+	{ id: 'pooled', label: 'Stars added together', hint: "Everyone's stars fill one jar." },
+	{ id: 'each', label: 'Each fills it', hint: 'Every kid puts in the full amount; earned when they all have.' },
 ];
 
 /** Add or change a reward jar: for one kid, or several together. */
 export default function RewardDialog({ member, reward, today, onClose }: Props) {
 	const members = useMembers().data ?? [];
 	const { save, remove } = useRewardActions();
-	const [title, setTitle] = useState(reward?.title ?? "");
+	const [title, setTitle] = useState(reward?.title ?? '');
 	const [goal, setGoal] = useState(reward?.goal ?? 20);
 	const [memberIds, setMemberIds] = useState<string[]>(reward?.memberIds ?? (member ? [member.id] : []));
-	const [teamMode, setTeamMode] = useState<TeamMode>(reward?.teamMode ?? "pooled");
+	const [teamMode, setTeamMode] = useState<TeamMode>(reward?.teamMode ?? 'pooled');
 	// Last day to redeem it, or none (it then fills again after each time it's redeemed).
 	const [deadline, setDeadline] = useState<string | null>(reward?.deadline ?? null);
 	const [confirmDelete, setConfirmDelete] = useState(false);
@@ -42,18 +42,22 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 	const together = memberIds.length > 1;
 	const names = members.filter((m) => memberIds.includes(m.id)).map((m) => m.name);
 	const problem = !title.trim()
-		? "Name the reward"
+		? 'Name the reward'
 		: goal < 1
-			? "Pick how many stars"
+			? 'Pick how many stars'
 			: !memberIds.length
 				? "Pick who it's for"
 				: deadline !== null && deadline < today && deadline !== reward?.deadline
-					? "Pick a deadline from today on"
+					? 'Pick a deadline from today on'
 					: null;
 
 	function toggle(id: string) {
 		// Family order, so names read the same everywhere.
-		setMemberIds(memberIds.includes(id) ? memberIds.filter((x) => x !== id) : members.map((m) => m.id).filter((x) => x === id || memberIds.includes(x)));
+		setMemberIds(
+			memberIds.includes(id)
+				? memberIds.filter((x) => x !== id)
+				: members.map((m) => m.id).filter((x) => x === id || memberIds.includes(x)),
+		);
 	}
 
 	function submit(e: FormEvent) {
@@ -66,9 +70,9 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 
 	return (
 		<>
-			<Sheet label={reward ? "Change jar" : "New reward jar"} onClose={onClose} onSubmit={submit}>
+			<Sheet label={reward ? 'Change jar' : 'New reward jar'} onClose={onClose} onSubmit={submit}>
 				<header className={sheet.head}>
-					<h2 className={sheet.heading}>{reward ? "Change jar" : "New reward jar"}</h2>
+					<h2 className={sheet.heading}>{reward ? 'Change jar' : 'New reward jar'}</h2>
 					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
 						×
 					</button>
@@ -88,9 +92,7 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 				<div className={s.wrap}>
 					{members.map((m) => {
 						const on = memberIds.includes(m.id);
-						return (
-							<PickChip key={m.id} name={m.name} color={m.color} on={on} onClick={() => toggle(m.id)} />
-						);
+						return <PickChip key={m.id} name={m.name} color={m.color} on={on} onClick={() => toggle(m.id)} />;
 					})}
 				</div>
 				{together && (
@@ -101,7 +103,7 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 									key={x.id}
 									type="button"
 									aria-pressed={teamMode === x.id}
-									className={`${s.chip} ${teamMode === x.id ? t.chipOn : ""}`}
+									className={`${s.chip} ${teamMode === x.id ? t.chipOn : ''}`}
 									onClick={() => setTeamMode(x.id)}
 								>
 									{x.label}
@@ -109,15 +111,19 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 							))}
 						</div>
 						<p className={t.hint}>
-							{teamMode === "pooled"
-								? `${names.join(" and ")}'s stars fill one jar.`
-								: `${names.join(" and ")} each put in the full amount.`}
+							{teamMode === 'pooled'
+								? `${names.join(' and ')}'s stars fill one jar.`
+								: `${names.join(' and ')} each put in the full amount.`}
 						</p>
 					</>
 				)}
 
 				<label className={t.points}>
-					{together && teamMode === "pooled" ? "Stars to fill it, together" : together ? "Stars each" : "Stars to fill it"}
+					{together && teamMode === 'pooled'
+						? 'Stars to fill it, together'
+						: together
+							? 'Stars each'
+							: 'Stars to fill it'}
 					<input
 						type="number"
 						min={1}
@@ -132,7 +138,7 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 					<button
 						type="button"
 						aria-pressed={deadline === null}
-						className={`${s.chip} ${deadline === null ? t.chipOn : ""}`}
+						className={`${s.chip} ${deadline === null ? t.chipOn : ''}`}
 						onClick={() => setDeadline(null)}
 					>
 						None
@@ -140,7 +146,7 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 					<button
 						type="button"
 						aria-pressed={deadline !== null}
-						className={`${s.chip} ${deadline !== null ? t.chipOn : ""}`}
+						className={`${s.chip} ${deadline !== null ? t.chipOn : ''}`}
 						onClick={() => setDeadline(deadline ?? today)}
 					>
 						By a date
