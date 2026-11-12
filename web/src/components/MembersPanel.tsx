@@ -23,6 +23,7 @@ import { usePush } from '../lib/usePush';
 import { useThemeSetting, type Theme } from '../lib/useTheme';
 import { ACCENTS, accentOf, useAccentSetting } from '../lib/accent';
 import { useUiScale } from '../lib/useUiScale';
+import { useTempUnit } from '../lib/units';
 import { SignedInAs, SignOut } from './SettingsAccount';
 import Sheet from './Sheet';
 import ConfirmDialog from './ConfirmDialog';
@@ -173,6 +174,7 @@ export default function MembersPanel({ members, onClose, onKidMode }: Props) {
   // Light or dark, for this device (Same as this device: its own setting).
   const [theme, setTheme] = useThemeSetting();
   const [accent, setAccent] = useAccentSetting();
+  const [unit, setUnit] = useTempUnit();
   const [uiScale, setUiScale] = useUiScale(useSettings().data?.uiScale);
   const [newName, setNewName] = useState('');
   const today = dayKey(new Date());
@@ -445,6 +447,17 @@ export default function MembersPanel({ members, onClose, onKidMode }: Props) {
             ))}
           </div>
           <p className={s.themeNote}>Kid mode stays light.</p>
+        </Section>
+
+        <Section title="Temperature" note={unit === 'C' ? '°C · km/h' : '°F · mph'}>
+          <div className={s.theme} role="radiogroup" aria-label="Temperature">
+            {(['F', 'C'] as const).map((u) => (
+              <button key={u} role="radio" aria-checked={unit === u} className={unit === u ? s.themeOn : ''} onClick={() => setUnit(u)}>
+                °{u}
+              </button>
+            ))}
+          </div>
+          <p className={s.themeNote}>The weather on this device. Wind goes with it: mph with °F, km/h with °C.</p>
         </Section>
 
         <Section title="Text size" note={`${Math.round(uiScale * 100)}%`}>

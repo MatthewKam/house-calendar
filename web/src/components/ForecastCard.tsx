@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from "
 import { api } from "../lib/api";
 import { fromDayKey, longDate } from "../lib/dates";
 import { sky } from "../lib/weather";
+import { useTempUnit, windUnit } from "../lib/units";
 import type { Weather } from "../lib/types";
 import { canFindHere, findHere, setHere, useWeatherHere } from "../lib/useWeatherHere";
 import AddressInput from "./AddressInput";
@@ -9,17 +10,43 @@ import s from "../styles/Today.module.css";
 
 type Hour = Weather["hours"][number];
 
-/** "5 PM". */
+/** "5 PM" (the tooltip). */
 const hourLabel = (iso: string) =>
 	new Date(iso).toLocaleTimeString([], { hour: "numeric" });
+/** The hour and AM or PM, apart, so the AM or PM can be set smaller on the hour's bottom line. */
+const hourParts = (iso: string) => {
+	const h = new Date(iso).getHours();
+	return [h % 12 || 12, h < 12 ? "AM" : "PM"] as const;
+};
+/** Under the graph: the hour, then a small AM or PM, so they don't run together. */
+const graphHour = (iso: string) => {
+	const [hour, half] = hourParts(iso);
+	return (
+		<>
+			{hour}
+			<tspan className={s.graphAmPm}>{half}</tspan>
+		</>
+	);
+};
+/** The picked hour's tooltip: the same, a touch bigger. */
+const tipHour = (iso: string) => {
+	const [hour, half] = hourParts(iso);
+	return (
+		<>
+			{hour} <span className={s.tipAmPm}>{half}</span>
+		</>
+	);
+};
 
 /**
  * The grown-ups' Today weather: now (how warm it feels, the sky, the day's high and low, rain and wind),
  * the hours around now as a line (a dot where now is; tap the line for an hour's details), then the next
- * seven days side by side (Week).
+ * seven days (Week), folded away behind See next 7 days.
  */
 export default function ForecastCard({ weather: w }: { weather: Weather }) {
+	const [unit] = useTempUnit();
 	const now = sky(w.code, w.isDay);
+	const [weekOpen, setWeekOpen] = useState(false);
 	// Day or night for an hour: between today's sunrise and sunset, by the clock.
 	const rise = new Date(w.sunrise).getHours();
 	const set = new Date(w.sunset).getHours();
@@ -46,12 +73,15 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 					</span>
 					<span>
 						<span className={s.nowrap}>💧 {w.rainChance}% rain</span> ·{" "}
-						<span className={s.nowrap}>💨 {w.wind} mph</span>
+						<span className={s.nowrap}>💨 {w.wind} {windUnit(unit)}</span>
 					</span>
 				</span>
 			</div>
 			{w.hours.length > 1 && <HourGraph hours={w.hours} isDay={isDay} />}
-			<Week days={w.days.slice(1)} />
+			<button type="button" className={s.weekToggle} aria-expanded={weekOpen} onClick={() => setWeekOpen(!weekOpen)}>
+				{weekOpen ? "Hide next 7 days" : "See next 7 days"}
+			</button>
+			{weekOpen && <Week days={w.days.slice(1)} />}
 		</section>
 	);
 }
@@ -120,10 +150,10 @@ function PlaceSwitch() {
 	);
 }
 
-/** Rain worth a mention (%), likely rain (picked out), and wind worth a mention (mph). */
+/** Rain worth a mention (%), likely rain (picked out), and wind worth a mention (mph, or km/h with °C). */
 const RAIN_SHOWN = 30;
 const RAIN_LIKELY = 50;
-const WIND_SHOWN = 15;
+const WIND_SHOWN = { F: 15, C: 24 } as const;
 
 /**
  * The next seven days, a row each: the day, its sky, how warm it feels, and rain and wind when they're
@@ -131,6 +161,7 @@ const WIND_SHOWN = 15;
  * further right).
  */
 function Week({ days }: { days: Weather["days"] }) {
+	const [unit] = useTempUnit();
 	const top = Math.max(...days.map((d) => d.high));
 	const bottom = Math.min(...days.map((d) => d.low));
 	const span = Math.max(top - bottom, 1);
@@ -147,7 +178,7 @@ function Week({ days }: { days: Weather["days"] }) {
 					<li
 						key={d.date}
 						className={s.weekDay}
-						aria-label={`${longDate(date)}: ${look.label}, ${d.rain}% rain, high ${d.high}°, low ${d.low}°, wind ${d.wind} mph, feels like ${d.feelsHigh}° to ${d.feelsLow}°`}
+						aria-label={`${longDate(date)}: ${look.label}, ${d.rain}% rain, high ${d.high}°, low ${d.low}°, wind ${d.wind} ${windUnit(unit)}, feels like ${d.feelsHigh}° to ${d.feelsLow}°`}
 					>
 						<span className={s.weekTop} aria-hidden="true">
 							<span className={s.weekName}>
@@ -159,7 +190,7 @@ function Week({ days }: { days: Weather["days"] }) {
 								{d.rain >= RAIN_SHOWN && (
 									<span className={d.rain >= RAIN_LIKELY ? s.weekWet : undefined}>💧 {d.rain}%</span>
 								)}
-								{d.wind >= WIND_SHOWN && <span>💨 {d.wind} mph</span>}
+								{d.wind >= WIND_SHOWN[unit] && <span>💨 {d.wind} {windUnit(unit)}</span>}
 							</span>
 						</span>
 						<span className={s.weekLow} aria-hidden="true">{d.low}°</span>
@@ -303,7 +334,7 @@ function HourGraph({
 									y={HEIGHT - 6}
 									textAnchor={anchor(x(i))}
 								>
-									{hourLabel(h.time)}
+									{graphHour(h.time)}
 								</text>
 							</g>
 						) : null,
@@ -388,7 +419,7 @@ function HourGraph({
 							points[picked!][0] < width / 2 ? points[picked!][0] + 12 : points[picked!][0] - 12 - TIP)),
 					}}
 				>
-					<b>{hourLabel(shown.time)}</b>
+					<b>{tipHour(shown.time)}</b>
 					<span>
 						{shown.temp}° · Feels {shown.feels}°
 					</span>

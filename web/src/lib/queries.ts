@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query';
 import { api } from './api';
 import { useWeatherHere } from './useWeatherHere';
+import { eventWeatherIn, useTempUnit, weatherIn } from './units';
 import { addDays, dayKey, fromDayKey } from './dates';
 import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, RewardInput, CalEvent, Reward, RewardWin, Bucket, StarPlacing,
   ReminderList, Photo, LeaveAlert, ChecklistItem, OutboxStatus, PottyChart, Visibility, SprigList, SprigItem, Game, LearnDayChange } from './types';
@@ -398,19 +399,23 @@ export function useListActions() {
   };
 }
 
-/** Weather at home; the server asks for fresh numbers every 10 minutes. */
-/** Today's weather at home, or where this device is when it's on Here (useWeatherHere). */
+/**
+ * Today's weather at home, or where this device is when it's on Here (useWeatherHere); the server asks
+ * for fresh numbers every 10 minutes. In this device's °F or °C (units.ts).
+ */
 export function useWeather() {
   const here = useWeatherHere();
+  const [unit] = useTempUnit();
   return useQuery({ queryKey: ['weather', here ? `${here.lat},${here.lon}` : 'home'], queryFn: () => api.weather(here),
-    refetchInterval: 10 * 60_000, retry: false, placeholderData: keepPreviousData });
+    refetchInterval: 10 * 60_000, retry: false, placeholderData: keepPreviousData, select: (w) => weatherIn(w, unit) });
 }
 
 /** Forecasts for far-away events (by id); nearby ones and ones with no address aren't in it. */
 export function useEventWeather(ids: string[]) {
   const sorted = [...new Set(ids)].sort();
+  const [unit] = useTempUnit();
   return useQuery({ queryKey: ['weather', 'events', sorted.join(',')], queryFn: () => api.eventWeather(sorted),
-    enabled: sorted.length > 0, staleTime: 30 * 60_000, retry: false });
+    enabled: sorted.length > 0, staleTime: 30 * 60_000, retry: false, select: (all) => eventWeatherIn(all, unit) });
 }
 
 /** "Time to leave" alerts; checked often so the wall shows one on time. */
