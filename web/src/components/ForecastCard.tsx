@@ -88,76 +88,62 @@ function PlaceSwitch() {
 	);
 }
 
-/** The range bars' height: the week's warmest (or warmest-feeling) at the top, its coolest at the bottom. */
-const BAR_HEIGHT = 84;
-/** Room inside each bar's box above the warmest high and below the coolest low. */
-const BAR_PAD = 8;
+/** Rain worth a mention (%), likely rain (picked out), and wind worth a mention (mph). */
+const RAIN_SHOWN = 30;
+const RAIN_LIKELY = 50;
+const WIND_SHOWN = 15;
 
 /**
- * The next seven days side by side, a column each: the day, its date, its sky; then two bars, its high to
- * its low (green) and how warm it feels at most to least (grey), all on one scale so a warmer day sits
- * higher, each with its high over it and its low under it; then its wind and chance of rain. A key under
- * the columns says which bar is which.
+ * The next seven days, a row each: the day, its sky, then its low to its high as a bar on one scale for
+ * the week (a warmer day sits further right), with how warm it feels as a faint line under it; rain and
+ * wind under the bar when they're worth knowing.
  */
 function Week({ days }: { days: Weather["days"] }) {
 	const top = Math.max(...days.flatMap((d) => [d.high, d.feelsHigh]));
 	const bottom = Math.min(...days.flatMap((d) => [d.low, d.feelsLow]));
 	const span = Math.max(top - bottom, 1);
-	const at = (t: number) => BAR_PAD + ((top - t) / span) * BAR_HEIGHT;
-	const bar = (high: number, low: number) => ({ top: at(high) + 16, height: Math.max(at(low) - at(high), 6) });
+	const segment = (low: number, high: number) => ({
+		left: `${((low - bottom) / span) * 100}%`,
+		width: `max(${((high - low) / span) * 100}%, 0.5rem)`,
+	});
 	return (
 		<>
-		<ul className={s.week} aria-label="The next seven days">
-			{days.map((d) => {
-				const look = sky(d.code, true);
-				const date = fromDayKey(d.date);
-				return (
-					<li
-						key={d.date}
-						className={s.weekDay}
-						aria-label={`${longDate(date)}: ${look.label}, ${d.rain}% rain, high ${d.high}°, low ${d.low}°, wind ${d.wind} mph, feels like ${d.feelsHigh}° to ${d.feelsLow}°`}
-					>
-						<span className={s.weekName} aria-hidden="true">
-							{date.toLocaleDateString([], { weekday: "short" })}
-						</span>
-						<span className={s.weekDate} aria-hidden="true">
-							{date.getDate()}
-						</span>
-						<span className={s.weekIcon} aria-hidden="true">
-							{look.icon}
-						</span>
-
-						<span
-							className={s.weekRange}
-							aria-hidden="true"
-							style={{ height: BAR_HEIGHT + 40 + 2 * BAR_PAD }}
+			<ul className={s.week} aria-label="The next seven days">
+				{days.map((d) => {
+					const look = sky(d.code, true);
+					const date = fromDayKey(d.date);
+					return (
+						<li
+							key={d.date}
+							className={s.weekDay}
+							aria-label={`${longDate(date)}: ${look.label}, ${d.rain}% rain, high ${d.high}°, low ${d.low}°, wind ${d.wind} mph, feels like ${d.feelsHigh}° to ${d.feelsLow}°`}
 						>
-							{/* Each bar with its own high over it and low under it. */}
-							{[
-								{ high: d.high, low: d.low, feels: false },
-								{ high: d.feelsHigh, low: d.feelsLow, feels: true },
-							].map(({ high, low, feels }) => (
-								<span key={String(feels)} className={`${s.weekPair} ${feels ? s.weekPairFeels : ""}`}>
-									<span className={s.weekHigh} style={{ top: at(high) }}>{high}°</span>
-									<span className={s.weekBar} style={bar(high, low)} />
-									<span className={s.weekLow} style={{ top: at(low) + 20 }}>{low}°</span>
+							<span className={s.weekName} aria-hidden="true">
+								{date.toLocaleDateString([], { weekday: "short" })} <span className={s.weekDate}>{date.getDate()}</span>
+							</span>
+							<span className={s.weekIcon} aria-hidden="true">
+								{look.icon}
+							</span>
+							<span className={s.weekLow} aria-hidden="true">{d.low}°</span>
+							<span className={s.weekTrack} aria-hidden="true">
+								<span className={s.weekBar} style={segment(d.low, d.high)} />
+								<span className={s.weekFeels} style={segment(d.feelsLow, d.feelsHigh)} />
+							</span>
+							<span className={s.weekHigh} aria-hidden="true">{d.high}°</span>
+							{/* Under the bar, so the bar keeps the row's width. */}
+							{(d.rain >= RAIN_SHOWN || d.wind >= WIND_SHOWN) && (
+								<span className={s.weekExtra} aria-hidden="true">
+									{d.rain >= RAIN_SHOWN && (
+										<span className={d.rain >= RAIN_LIKELY ? s.weekWet : undefined}>💧 {d.rain}% rain</span>
+									)}
+									{d.wind >= WIND_SHOWN && <span>💨 {d.wind} mph</span>}
 								</span>
-							))}
-						</span>
-						<span className={s.weekWind} aria-hidden="true">
-							💨 {d.wind}
-						</span>
-						<span className={s.weekRain} aria-hidden="true">
-							💧{d.rain}%
-						</span>
-					</li>
-				);
-			})}
-		</ul>
-		<p className={s.weekKey} aria-hidden="true">
-			<span><span className={s.weekSwatch} /> Temperature</span>
-			<span><span className={`${s.weekSwatch} ${s.weekSwatchFeels}`} /> Feels like</span>
-		</p>
+							)}
+						</li>
+					);
+				})}
+			</ul>
+			<p className={s.weekKey} aria-hidden="true">Grey line: how warm it feels</p>
 		</>
 	);
 }

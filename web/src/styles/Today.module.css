@@ -603,139 +603,99 @@ details > summary.cardHead {
 	color: var(--muted);
 }
 
-/* The next seven days side by side (Week), a column each with a line between: the day, its date, sky and
-   rain, a bar from its high down to its low (all on one scale), then wind and how warm it feels. */
+/* The next seven days (Week), a row each: the day, its sky, its low, a bar to its high on one scale for
+   the week, and its high; rain and wind (when worth knowing) under the bar. */
 .week {
 	list-style: none;
 	margin: 0.3rem 0 0;
-	padding: 0;
-	display: grid;
-	grid-template-columns: repeat(7, minmax(0, 1fr));
+	padding: 0.3rem 0.7rem;
 	background: var(--bg);
-	border-radius: 5px;
-	padding: 15px 0;
+	border-radius: 0.6rem;
 }
 .weekDay {
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: 3.3rem 1.9rem 2rem minmax(0, 1fr) 2.2rem;
 	align-items: center;
-	gap: 0.25rem;
-	padding: 0.2rem 0;
-	text-align: center;
+	column-gap: 0.4rem;
+	min-height: 2.75rem;
+	padding: 0.35rem 0;
 	font-variant-numeric: tabular-nums;
 }
 .weekDay + .weekDay {
-	border-left: 1px solid var(--line);
+	border-top: 1px solid var(--line);
 }
 .weekName {
-	font-size: 0.75rem;
 	font-weight: 650;
-	color: var(--muted);
-}
-.weekDate {
-	font-weight: 750;
-	font-size: 0.95rem;
-	line-height: 1;
-}
-.weekIcon {
-	margin-top: 0.2rem;
-	font-size: 1.5rem;
-	line-height: 1.1;
-}
-.weekRain,
-.weekWind {
-	font-size: 0.7rem;
-	color: var(--muted);
 	white-space: nowrap;
 }
-/* The high over its bar, the low under it. */
-.weekRange {
-	position: relative;
-	width: 100%;
-	margin-top: 0.3rem;
-}
-.weekHigh,
-.weekLow {
-	position: absolute;
-	left: 0;
-	right: 0;
-	line-height: 1;
-}
-.weekHigh {
-	font-weight: 750;
-	font-size: 0.95rem;
-}
-.weekLow {
-	color: var(--muted);
-	font-size: 0.85rem;
-}
-/* Two bars side by side, each with its numbers: the temperature (green) and how warm it feels (grey). */
-.weekRange {
-	display: flex;
-	justify-content: space-around;
-	gap: 0;
-	padding: 0 0.3rem;
-}
-.weekPair {
-	position: relative;
-	flex: 1;
-	max-width: 2rem;
-	min-width: 0;
-	background: var(--surface);
-	border-radius: 5px;
-}
-.weekPairFeels {
-	background: none;
-}
-.weekPair .weekHigh,
-.weekPair .weekLow {
-	font-size: 0.72rem;
-}
-.weekPairFeels .weekHigh,
-.weekPairFeels .weekLow {
+.weekDate {
 	color: var(--muted);
 	font-weight: 500;
 }
-.weekBar {
-	position: absolute;
-	left: 50%;
-	width: 0.45rem;
-	translate: -50% 0;
-	border-radius: 999px;
-	background: linear-gradient(
-		var(--accent),
-		color-mix(in srgb, var(--accent) 30%, var(--surface))
-	);
+.weekIcon {
+	font-size: 1.45rem;
+	line-height: 1;
+	text-align: center;
 }
-.weekPairFeels .weekBar {
-	background: linear-gradient(
-		#8a8f98,
-		color-mix(in srgb, #8a8f98 30%, var(--surface))
-	);
-}
-/* Which bar is which. */
-.weekKey {
-	margin: 0.2rem 0 0;
+.weekExtra {
+	grid-column: 4 / 6;
 	display: flex;
-	justify-content: center;
-	gap: 1rem;
+	gap: 0.7rem;
+	margin: 0.15rem 0.25rem 0;
 	font-size: 0.75rem;
+	line-height: 1.2;
+	color: var(--muted);
+	white-space: nowrap;
+}
+/* Rain's likely: picked out. */
+.weekWet {
+	color: var(--text);
+	font-weight: 700;
+}
+.weekLow,
+.weekHigh {
+	text-align: right;
+	line-height: 1;
+}
+.weekLow {
 	color: var(--muted);
 }
-.weekKey > span {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.3rem;
+.weekHigh {
+	font-weight: 750;
 }
-.weekSwatch {
-	width: 0.7rem;
-	height: 0.7rem;
-	border-radius: 0.2rem;
-	background: var(--accent);
+/* The week's coolest at the left end, its warmest at the right: the day's bar sits where it falls. */
+.weekTrack {
+	position: relative;
+	height: 0.95rem;
+	margin: 0 0.25rem;
+	border-radius: 999px;
+	background: var(--surface);
 }
-.weekSwatchFeels {
+.weekBar,
+.weekFeels {
+	position: absolute;
+	border-radius: 999px;
+}
+.weekBar {
+	top: 0.15rem;
+	height: 0.45rem;
+	background: linear-gradient(
+		to right,
+		color-mix(in srgb, var(--accent) 40%, var(--surface)),
+		var(--accent)
+	);
+}
+.weekFeels {
+	bottom: 0.08rem;
+	height: 0.16rem;
 	background: #8a8f98;
+	opacity: 0.8;
+}
+.weekKey {
+	margin: 0.2rem 0 0;
+	text-align: right;
+	font-size: 0.75rem;
+	color: var(--muted);
 }
 /* Special days: a picture, the name and date, and how long until it. */
 .specials {
