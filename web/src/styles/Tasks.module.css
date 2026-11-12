@@ -97,7 +97,7 @@
 	text-align: left;
 	padding: 0.5rem 0.8rem;
 	font-size: 1.15rem;
-	border-radius: 0.8rem;
+	border-radius: var(--radius);
 	background: color-mix(in srgb, var(--c) 10%, var(--surface));
 	border: 2px solid color-mix(in srgb, var(--c) 35%, var(--surface));
 }
@@ -109,7 +109,7 @@
 	width: 2rem;
 	height: 2rem;
 	flex: none;
-	border-radius: 0.5rem;
+	border-radius: var(--radius-xs);
 	display: grid;
 	place-items: center;
 	border: 2px solid var(--c);
@@ -220,7 +220,7 @@
 	display: inline-block;
 	margin-left: 0.3rem;
 	padding: 0 0.45rem;
-	border-radius: 0.4rem;
+	border-radius: var(--radius-xs);
 	vertical-align: middle;
 	font-size: 0.7rem;
 	font-weight: 600;
@@ -259,7 +259,7 @@
 	display: inline-block;
 	margin-left: 0.3rem;
 	padding: 0 0.45rem;
-	border-radius: 0.4rem;
+	border-radius: var(--radius-xs);
 	vertical-align: middle;
 	font-size: 0.7rem;
 	font-weight: 600;
@@ -308,7 +308,7 @@
 	font-size: 1.6rem;
 	color: var(--muted);
 	background: var(--bg);
-	border-radius: 0.7rem;
+	border-radius: var(--radius-sm);
 	min-width: 0;
 	min-height: 0;
 }
@@ -326,7 +326,7 @@
 	width: 5rem;
 	padding: 0.45rem 0.6rem;
 	border: 1px solid var(--line);
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 }
 .hint {
 	margin: -0.3rem 0 0;
@@ -342,7 +342,7 @@
 	font-size: 1rem;
 	padding: 0.45rem 0.6rem;
 	border: 1px solid var(--line);
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 	color: var(--text);
 	background: var(--surface);
 }
@@ -454,7 +454,7 @@
 .periods button {
 	padding: 0 0.9rem;
 	min-height: 2.35rem;
-	border-radius: calc(var(--radius) - 0.2rem);
+	border-radius: var(--radius-sm);
 }
 .periodOn {
 	background: var(--accent);
@@ -481,7 +481,7 @@
 	row-gap: 0.5rem;
 	padding: 0.4rem 0.75rem 0.75rem;
 	background: var(--surface);
-	border-radius: calc(var(--radius) - 0.3rem);
+	border-radius: var(--radius-sm);
 }
 /* The line under the name and count, unbroken from one to the other. */
 .historyRow::before {
@@ -573,7 +573,7 @@
 	gap: 0.15rem;
 	margin-left: 0.3rem;
 	padding: 0 0.45rem;
-	border-radius: 0.4rem;
+	border-radius: var(--radius-xs);
 	font-size: 0.8rem;
 	font-weight: 700;
 	color: var(--warn);
@@ -629,8 +629,8 @@
 	position: relative;
 	z-index: 1;
 	background: var(--surface);
-	border-radius: 0.6rem;
-	box-shadow: 0 0.4rem 1.2rem rgb(0 0 0 / 0.15);
+	border-radius: var(--radius-sm);
+	box-shadow: var(--shadow-lg);
 }
 
 /* ---- Month history: a calendar ---- */
@@ -657,7 +657,7 @@
 	align-items: flex-start;
 	justify-content: space-between;
 	border: 1px solid var(--line);
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 	background: linear-gradient(
 		to top,
 		color-mix(in srgb, var(--c) 35%, var(--surface)) var(--fill),
@@ -724,7 +724,7 @@
 	min-height: 2.75rem;
 	padding: 0 1.1rem;
 	border: 1px dashed var(--accent);
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--surface);
 	color: var(--accent);
 	font-weight: 650;

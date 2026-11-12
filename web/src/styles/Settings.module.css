@@ -95,7 +95,7 @@
 	font-size: 1.1rem;
 	padding: 0.55rem 0.8rem;
 	border: 1px solid var(--line);
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 }
 /* A name shows as text; the pencil opens it for editing. */
 .nameText {
@@ -113,7 +113,7 @@
 	font-weight: 600;
 	color: var(--accent);
 	background: color-mix(in srgb, var(--accent) 10%, transparent);
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	padding: 0.15rem 0.55rem;
 }
 /* Birthday and stage, while editing a person: under the name, lined up with it. */
@@ -136,7 +136,7 @@
 	color: var(--text);
 	padding: 0.5rem 0.7rem;
 	border: 1px solid var(--line);
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 	background: var(--surface);
 	min-height: 2.75rem;
 }
@@ -192,7 +192,7 @@
 .theme button {
 	flex: 1 1 auto;
 	padding: 0 0.9rem;
-	border-radius: calc(var(--radius) - 0.2rem);
+	border-radius: var(--radius-sm);
 }
 .theme .themeOn {
 	background: var(--accent);
@@ -273,7 +273,7 @@
 	font-size: 1rem;
 	padding: 0.4rem 0.5rem;
 	border: 1px solid var(--line);
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 	background: var(--surface);
 	color: var(--text);
 }
@@ -321,7 +321,7 @@
 	font-size: 1.05rem;
 	padding: 0.55rem 0.7rem;
 	border: 1px solid var(--line);
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 }
 .pinError {
 	margin: 0;
@@ -486,7 +486,7 @@
 	flex-direction: column;
 	gap: 0.4rem;
 	padding: 0.5rem 0.7rem;
-	border-radius: 0.7rem;
+	border-radius: var(--radius-sm);
 	background: var(--bg);
 }
 .learnTime {
@@ -498,7 +498,7 @@
 .learnTime select {
 	padding: 0.4rem 0.5rem;
 	border: 1px solid var(--line);
-	border-radius: 0.5rem;
+	border-radius: var(--radius-xs);
 	background: var(--surface);
 	color: var(--text);
 }
@@ -515,7 +515,7 @@
 .learnChip {
 	min-height: 2.4rem;
 	padding: 0 0.9rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	border: 1px solid var(--line);
 	background: var(--surface);
 	font-weight: 650;
@@ -589,7 +589,7 @@
 	display: inline-block;
 	margin: 0.2rem 0 0 0.5rem;
 	padding: 0.2rem 0.65rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--good-bg);
 	color: var(--good);
 	font-size: 0.8rem;
@@ -601,7 +601,7 @@
 .learnTop {
 	margin-left: 0.5rem;
 	padding: 0.05rem 0.5rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--warn-bg);
 	color: var(--warn);
 	font-size: 0.8rem;

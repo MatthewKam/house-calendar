@@ -18,7 +18,7 @@
 	flex: none;
 	padding: 4%;
 	box-sizing: border-box;
-	border-radius: 1.6rem;
+	border-radius: var(--radius-xl);
 	background: var(--surface);
 }
 .wordPic svg {

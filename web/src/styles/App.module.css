@@ -58,7 +58,7 @@
 	padding: 0 1rem;
 	font-size: 1.1rem;
 	min-height: 2.35rem;
-	border-radius: calc(var(--radius) - 0.2rem);
+	border-radius: var(--radius-sm);
 }
 .segmented .on {
 	background: var(--accent);
@@ -185,7 +185,7 @@
 	background: var(--surface);
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
-	box-shadow: 0 0.8rem 2rem rgb(0 0 0 / 0.15);
+	box-shadow: var(--shadow-lg);
 }
 /* The names in it, one under another. */
 .morePanel button {
@@ -340,7 +340,7 @@
 .flyerDropBox {
 	padding: 2.5rem 3.5rem;
 	border: 3px dashed var(--accent);
-	border-radius: 1.5rem;
+	border-radius: var(--radius-xl);
 	background: var(--surface);
 	font-size: 1.4rem;
 	font-weight: 700;

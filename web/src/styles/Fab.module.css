@@ -13,7 +13,7 @@
 	place-items: center;
 	background: var(--accent);
 	color: var(--on-accent);
-	box-shadow: 0 0.5rem 1.2rem rgb(0 0 0 / 0.22), 0 0.1rem 0.3rem rgb(0 0 0 / 0.15);
+	box-shadow: var(--shadow-lg);
 	transition: transform 0.15s;
 }
 .fab:active {

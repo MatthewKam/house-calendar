@@ -96,16 +96,16 @@
 	right: 0;
 	min-width: 12rem;
 	padding: 0.3rem;
-	border-radius: 0.8rem;
+	border-radius: var(--radius);
 	background: var(--surface);
-	box-shadow: 0 0.6rem 1.6rem rgb(0 0 0 / 0.22);
+	box-shadow: var(--shadow-lg);
 }
 .actions button {
 	width: 100%;
 	min-height: 2.6rem;
 	padding: 0 0.8rem;
 	text-align: left;
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 	font-weight: 600;
 	color: var(--text);
 }

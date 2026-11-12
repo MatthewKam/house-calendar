@@ -22,7 +22,7 @@
 .animal:focus-visible {
 	outline: 3px solid var(--c);
 	outline-offset: 4px;
-	border-radius: 1.4rem;
+	border-radius: var(--radius-xl);
 }
 .animalPic {
 	display: block;

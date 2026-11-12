@@ -153,13 +153,13 @@
 .placeSwitch {
 	display: flex;
 	padding: 0.15rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--bg);
 }
 .placeOption {
 	min-height: 2.2rem;
 	padding: 0 0.75rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	font-size: 0.85rem;
 	font-weight: 600;
 	color: var(--muted);
@@ -174,7 +174,7 @@
 .placeOption[aria-checked="true"] {
 	background: var(--surface);
 	color: var(--text);
-	box-shadow: 0 0.05rem 0.25rem rgb(0 0 0 / 0.12);
+	box-shadow: var(--shadow-sm);
 }
 /* Typing a place in: its own line under the switch. */
 .placeForm {
@@ -188,7 +188,7 @@
 .placeGo {
 	min-height: 2.6rem;
 	padding: 0 1rem;
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 	background: var(--accent);
 	color: var(--on-accent);
 	font-weight: 700;
@@ -246,7 +246,7 @@ details > summary.cardHead {
 	gap: 0.8rem;
 	text-align: left;
 	padding: 0.55rem 0.7rem;
-	border-radius: 0.8rem;
+	border-radius: var(--radius);
 	border-left: 0.35rem solid var(--c);
 	background: var(--bg);
 	min-height: 3.2rem;
@@ -280,7 +280,7 @@ details > summary.cardHead {
 	align-self: flex-start;
 	margin-top: 0.35rem;
 	padding: 0.2rem 0.55rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--surface);
 	border: 1px solid var(--line);
 	font-size: 0.8rem;
@@ -304,7 +304,7 @@ details > summary.cardHead {
 	min-height: 2.5rem;
 	padding: 0 0.9rem;
 	border: 1px dashed var(--accent);
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--surface);
 	color: var(--accent);
 	font-weight: 650;
@@ -319,7 +319,7 @@ details > summary.cardHead {
 	gap: 0.35rem 0.8rem;
 	text-align: left;
 	padding: 0.6rem 0.7rem;
-	border-radius: 0.8rem;
+	border-radius: var(--radius);
 	background: color-mix(in srgb, var(--c) 10%, var(--surface));
 	border: 2px solid color-mix(in srgb, var(--c) 35%, var(--surface));
 }
@@ -331,7 +331,7 @@ details > summary.cardHead {
 .kidBar {
 	grid-area: bar;
 	height: 0.6rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--surface);
 	overflow: hidden;
 }
@@ -378,7 +378,7 @@ details > summary.cardHead {
 	text-align: left;
 	min-height: 2.9rem;
 	padding: 0.4rem 0.7rem;
-	border-radius: 0.8rem;
+	border-radius: var(--radius);
 	background: var(--bg);
 	font-weight: 600;
 }
@@ -455,7 +455,7 @@ details > summary.cardHead {
 	white-space: nowrap;
 	min-height: 2.6rem;
 	padding: 0.2rem 0.7rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	border: 1px solid var(--line);
 	background: var(--bg);
 	color: var(--text);
@@ -643,10 +643,10 @@ details > summary.cardHead {
 	flex-direction: column;
 	gap: 0.05rem;
 	padding: 0.4rem 0.6rem;
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 	background: var(--surface);
 	border: 1px solid var(--line);
-	box-shadow: 0 0.3rem 0.9rem rgb(0 0 0 / 0.12);
+	box-shadow: var(--shadow-md);
 	font-size: 0.82rem;
 	pointer-events: none;
 }
@@ -679,7 +679,7 @@ details > summary.cardHead {
 	margin: 0.3rem 0 0;
 	padding: 0.3rem 0.7rem;
 	background: var(--bg);
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 }
 .weekDay {
 	display: grid;
@@ -744,12 +744,12 @@ details > summary.cardHead {
 	position: relative;
 	height: 0.95rem;
 	margin: 0 0.25rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--surface);
 }
 .weekBar {
 	position: absolute;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	top: 0.2rem;
 	height: 0.55rem;
 	background: linear-gradient(
@@ -772,7 +772,7 @@ details > summary.cardHead {
 	align-items: center;
 	gap: 0.7rem;
 	padding: 0.45rem 0.7rem;
-	border-radius: 0.8rem;
+	border-radius: var(--radius);
 	background: var(--bg);
 }
 .specialToday {

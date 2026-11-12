@@ -45,7 +45,22 @@
 	--layer-toast: 30; /* toasts, and a flyer dragged over the page */
 	--layer-celebration: 40; /* a cheer, over everything */
 	--layer-photo: 60; /* a photo opened big */
-	--radius: 0.9rem;
+	/* Corners, small to large. Use one of these rather than a number of your own; a corner that's part of a
+	   drawn shape (a circle: 50%; an em that grows with its text) says its own. */
+	--radius-xs: 0.4rem; /* tags, small badges, a key on a keypad */
+	--radius-sm: 0.6rem; /* buttons, inputs, chips, and a card's inner parts */
+	--radius: 0.9rem; /* cards and panels */
+	--radius-lg: 1.2rem; /* sheets and dialogs, big tiles */
+	--radius-xl: 1.5rem; /* kid mode's big cards and Learn's game boards */
+	--radius-round: 999px; /* pills: ends fully round, whatever the length */
+	/* Shadows, by how far a thing sits above the page. One tinted with a person's colour keeps the shape of
+	   one of these and mixes the colour in where it's used (KidToday.module.css: a card's glow), as a
+	   colour set further down can't reach into these. Rings round a picked thing (0 0 0 2px var(--accent))
+	   and kid buttons' pressed edge (0 0.3rem 0 a darker colour) are written where they're used. */
+	--shadow-sm: 0 1px 2px rgb(0 0 0 / 0.08), 0 2px 6px rgb(0 0 0 / 0.08); /* raised a little: the picked tab, chips */
+	--shadow-md: 0 0.3rem 1rem rgb(0 0 0 / 0.1); /* cards on the page */
+	--shadow-lg: 0 0.6rem 1.6rem rgb(0 0 0 / 0.18); /* floating over the page: menus, the + button, a dragged card */
+	--shadow-xl: 0 1rem 3rem rgb(0 0 0 / 0.25); /* dialogs, alerts and cheers, over everything */
 	font-family:
 		"Aleo",
 		system-ui,

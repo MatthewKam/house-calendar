@@ -20,7 +20,7 @@
 .choose {
 	padding: 0.45rem 0.9rem;
 	border: 1px solid var(--line);
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--surface);
 	color: var(--muted);
 }
@@ -41,7 +41,7 @@
 	gap: 0.5rem;
 	padding: 0.4rem 0.9rem 0.4rem 0.5rem;
 	border: 1px solid var(--line);
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--surface);
 }
 .pick[aria-pressed="false"] {
@@ -103,7 +103,7 @@
 	align-items: center;
 	gap: 0.15rem;
 	padding: 0.25rem 0.3rem 0.25rem 0.2rem;
-	border-radius: 0.8rem;
+	border-radius: var(--radius);
 	background: color-mix(in srgb, var(--c) var(--pastel), var(--surface));
 	color: var(--text);
 }
@@ -133,7 +133,7 @@
 	z-index: 2;
 }
 .dragging .row {
-	box-shadow: 0 0.6rem 1.4rem rgb(0 0 0 / 0.18);
+	box-shadow: var(--shadow-lg);
 	transform: scale(1.02);
 }
 /* The list's color: a dot by its name, and the swatches it opens. */
@@ -181,7 +181,7 @@
 	min-height: 2.3rem;
 	flex: none;
 	font-size: 1.3rem;
-	border-radius: 0.5rem;
+	border-radius: var(--radius-xs);
 }
 .iconSpot:hover {
 	background: var(--surface);
@@ -207,7 +207,7 @@
 	gap: 0.5rem;
 	text-align: left;
 	padding: 0.35rem 0.4rem 0.35rem 0.2rem;
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 	font-size: 1.05rem;
 }
 .pickNote {
@@ -260,7 +260,7 @@
 	min-width: 0;
 	padding: 0.5rem 0.7rem;
 	border: 1px solid var(--line);
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 }
 /* Add: the list's color once there's something to add, gray until then. Its text is dark on a light color. */
 .add button {
@@ -268,7 +268,7 @@
 	color: var(--on, #fff);
 	font-weight: 650;
 	padding: 0 1rem;
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 }
 .add button:disabled {
 	background: var(--line);
@@ -380,7 +380,7 @@
 	font-size: 1.1rem;
 	padding: 0.6rem 0.7rem;
 	border: 1px solid var(--line);
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 }
 .whenRow {
 	display: flex;
@@ -399,7 +399,7 @@
 	font-size: 1.05rem;
 	padding: 0.5rem;
 	border: 1px solid var(--line);
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 	color: var(--text);
 }
 .whoRow {
@@ -417,7 +417,7 @@
 .listPick {
 	padding: 0 1rem;
 	border: 1px solid var(--line);
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--surface);
 	font-weight: 600;
 }

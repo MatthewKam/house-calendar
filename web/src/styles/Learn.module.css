@@ -26,9 +26,9 @@
 	min-height: 0;
 	gap: 0.4rem;
 	padding: 1rem 0.6rem 0.8rem;
-	border-radius: 1.6rem;
+	border-radius: var(--radius-xl);
 	background: var(--surface);
-	box-shadow: 0 0.4rem 1.2rem rgb(29 31 35 / 0.08);
+	box-shadow: var(--shadow-md);
 	transition: transform 0.15s ease;
 }
 .gameTile:active {
@@ -64,9 +64,9 @@
 	align-items: center;
 	gap: 0.5rem;
 	padding: 1.4rem 1.2rem;
-	border-radius: 1.6rem;
+	border-radius: var(--radius-xl);
 	background: var(--surface);
-	box-shadow: 0 0.8rem 2rem rgb(29 31 35 / 0.16);
+	box-shadow: var(--shadow-lg);
 	text-align: center;
 }
 .restMascot {
@@ -87,7 +87,7 @@
 	margin-top: 0.6rem;
 	min-height: 3.4rem;
 	padding: 0 1.6rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	border: 2px solid var(--c, var(--accent));
 	background: var(--surface);
 	color: var(--text);
@@ -133,9 +133,9 @@
 	align-items: center;
 	gap: 0.4rem;
 	padding: 0.5rem 0.8rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--surface);
-	box-shadow: 0 0.2rem 0.6rem rgb(29 31 35 / 0.08);
+	box-shadow: var(--shadow-md);
 }
 .gameDot {
 	width: 1.1rem;
@@ -184,9 +184,9 @@
 	align-items: center;
 	gap: 1rem;
 	padding: 1.5rem;
-	border-radius: 1.6rem;
+	border-radius: var(--radius-xl);
 	background: var(--surface);
-	box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.25);
+	box-shadow: var(--shadow-xl);
 	text-align: center;
 }
 .mascot {
@@ -230,7 +230,7 @@
 	min-width: 12rem;
 	min-height: 4.4rem;
 	padding: 0 2rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--c, var(--accent));
 	color: var(--on, var(--surface));
 	font-size: 1.6rem;
@@ -239,7 +239,7 @@
 .quiet {
 	min-height: 4.4rem;
 	padding: 0 1.6rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	border: 3px solid color-mix(in srgb, var(--c, var(--accent)) 50%, white);
 	background: var(--surface);
 	font-size: 1.3rem;
@@ -289,7 +289,7 @@
 	place-items: center;
 	border-radius: 50%;
 	background: var(--surface);
-	box-shadow: 0 0.2rem 0.6rem rgb(29 31 35 / 0.1);
+	box-shadow: var(--shadow-md);
 }
 .back svg {
 	width: 1.8rem;
@@ -467,7 +467,7 @@
 	left: var(--x);
 	width: 0.8rem;
 	height: 1.2rem;
-	border-radius: 0.2rem;
+	border-radius: var(--radius-xs);
 	background: hsl(calc(var(--i) * 47deg) 80% 58%);
 	animation: fall var(--fall) ease-in var(--wait) forwards;
 }
@@ -485,7 +485,7 @@
 	display: grid;
 	place-items: center;
 	padding: 0;
-	border-radius: 1.2rem;
+	border-radius: var(--radius-lg);
 	border: 3px solid color-mix(in srgb, var(--c, var(--accent)) 45%, white);
 	background: var(--surface);
 	font-weight: 800;
@@ -508,7 +508,7 @@
 }
 .answer {
 	padding: 0.1em 0.3em;
-	border-radius: 1rem;
+	border-radius: var(--radius);
 	border: 3px dashed var(--muted);
 	font-weight: 800;
 	text-align: center;
@@ -673,9 +673,9 @@ img.farmBack {
 	translate: -50% 0;
 	margin: 0;
 	padding: 0.5em 1.1em;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--surface);
-	box-shadow: 0 0.3rem 1rem rgb(0 0 0 / 0.18);
+	box-shadow: var(--shadow-md);
 	font-size: clamp(1rem, 4.5vmin, 1.6rem);
 	font-weight: 800;
 	white-space: nowrap;

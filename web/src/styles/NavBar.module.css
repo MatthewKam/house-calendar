@@ -45,7 +45,7 @@
 	color: var(--accent);
 	font-weight: 700;
 	/* Raised a little off the bar. */
-	box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 2px 6px rgb(0 0 0 / 0.08);
+	box-shadow: var(--shadow-sm);
 }
 /* Pushes the lock and Settings to the bottom of the bar. */
 .push {
@@ -103,7 +103,7 @@
 	/* A soft box behind it too, as in the bar on the left. */
 	background: var(--bg);
 	border-radius: var(--radius);
-	box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 2px 6px rgb(0 0 0 / 0.08);
+	box-shadow: var(--shadow-sm);
 }
 .center {
 	display: flex;
@@ -124,7 +124,7 @@
 	bottom: calc(3.8rem + env(safe-area-inset-bottom));
 	padding: 0.6rem max(0.75rem, var(--inset-right)) 0.6rem max(0.75rem, var(--inset-left));
 	background: var(--surface);
-	border-radius: 1.2rem 1.2rem 0 0;
+	border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 	box-shadow: 0 -0.5rem 1.5rem rgb(0 0 0 / 0.12);
 	display: flex;
 	flex-direction: column;
@@ -139,7 +139,7 @@
 	gap: 0.9rem;
 	min-height: 3.3rem;
 	padding: 0 0.6rem;
-	border-radius: 0.8rem;
+	border-radius: var(--radius);
 	font-size: 1.05rem;
 	font-weight: 600;
 	text-align: left;
@@ -187,7 +187,7 @@
 		width: 17rem;
 		overflow-y: auto;
 		padding: calc(0.6rem + env(safe-area-inset-top)) 0.75rem calc(0.6rem + env(safe-area-inset-bottom));
-		border-radius: 0 1.2rem 1.2rem 0;
+		border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
 		box-shadow: 0.5rem 0 1.5rem rgb(0 0 0 / 0.12);
 		animation-name: slide;
 	}

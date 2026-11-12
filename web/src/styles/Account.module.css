@@ -49,7 +49,7 @@
 	font-size: 1.05rem;
 	padding: 0.65rem 0.75rem;
 	border: 1px solid var(--line);
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 	background: var(--surface);
 	color: var(--text);
 	min-width: 0;
@@ -64,7 +64,7 @@
 .primary,
 .apple {
 	min-height: 2.9rem;
-	border-radius: 1.45rem;
+	border-radius: var(--radius-xl);
 	padding: 0 1.2rem;
 	font-weight: 650;
 	font-size: 1rem;
@@ -121,7 +121,7 @@
 .choice {
 	min-height: 2.5rem;
 	padding: 0 1rem;
-	border-radius: 1.25rem;
+	border-radius: var(--radius-lg);
 	border: 1px solid var(--line);
 	background: var(--surface);
 	font-weight: 600;

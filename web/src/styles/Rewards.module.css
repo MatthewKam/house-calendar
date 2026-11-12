@@ -98,7 +98,7 @@
 .stageHint {
 	margin: 0;
 	padding: 0.5rem 0.75rem;
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 	background: color-mix(in srgb, var(--c) 14%, var(--surface));
 	font-size: 0.95rem;
 }
@@ -110,7 +110,7 @@
 	align-items: center;
 	gap: 0.5rem 0.8rem;
 	padding: 0.6rem 0.8rem;
-	border-radius: 0.7rem;
+	border-radius: var(--radius-sm);
 	background: var(--soon-bg);
 	border: 1px solid var(--soon-line);
 }
@@ -149,7 +149,7 @@
 	padding: 0.6rem 0.6rem 0.6rem 0.85rem;
 	background: var(--bg);
 	border: 1px solid var(--line);
-	border-radius: 0.8rem;
+	border-radius: var(--radius);
 }
 .rowMain {
 	flex: 1;
@@ -222,7 +222,7 @@
 	justify-content: space-between;
 	gap: 0.6rem;
 	padding: 0.35rem 0.4rem 0.35rem 0.8rem;
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 	background: var(--bg);
 }
 /* Parents only (it asks for the master PIN): stars back out of a jar. */
@@ -278,7 +278,7 @@
 	font-size: 1.05rem;
 	padding: 0.45rem 0.6rem;
 	border: 1px solid var(--line);
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 	color: var(--text);
 	background: var(--surface);
 }
@@ -291,7 +291,7 @@
 }
 .name {
 	padding: 0.1rem 0.6rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	font-size: 0.85rem;
 	font-weight: 650;
 }
@@ -322,7 +322,7 @@
 	flex: 1;
 	display: flex;
 	height: 0.7rem;
-	border-radius: 1rem;
+	border-radius: var(--radius);
 	background: var(--line);
 	overflow: hidden;
 }
@@ -381,7 +381,7 @@
 	padding: 0.5rem 0.8rem;
 	background: var(--surface);
 	border: 1px solid var(--line);
-	border-radius: 0.7rem;
+	border-radius: var(--radius-sm);
 }
 /* Full, waiting to be redeemed: gold. */
 .givenList li.earned {
@@ -470,7 +470,7 @@
 .big .use {
 	min-height: 3.2rem;
 	padding: 0 1.5rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	font-size: 1.15rem;
 }
 .big .list {
@@ -480,7 +480,7 @@
 }
 .big .row {
 	padding: 1rem 1.1rem;
-	border-radius: 1.4rem;
+	border-radius: var(--radius-xl);
 	background: var(--surface);
 	border: 3px solid color-mix(in srgb, var(--c) 35%, var(--surface));
 	box-shadow: 0 0.3rem 0 color-mix(in srgb, var(--c) 35%, var(--surface));

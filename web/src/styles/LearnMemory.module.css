@@ -10,7 +10,7 @@
 	inset: 0;
 	border-radius: 12%/9%;
 	backface-visibility: hidden;
-	box-shadow: 0 0.3rem 0.8rem rgb(29 31 35 / 0.12);
+	box-shadow: var(--shadow-md);
 }
 .cardBack {
 	background: var(--back);

@@ -129,7 +129,7 @@
 	margin-top: 0.45rem;
 	min-height: 0;
 	padding: 0.25rem 0.7rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	font-size: 0.8rem;
 	font-weight: 700;
 	color: var(--ink);
@@ -149,7 +149,7 @@
 	gap: 0.15rem;
 	min-width: 0;
 	padding: 0.5rem 0.8rem;
-	border-radius: calc(var(--radius) - 0.2rem);
+	border-radius: var(--radius-sm);
 	background: var(--glass);
 	backdrop-filter: blur(6px);
 }
@@ -224,7 +224,7 @@
 	grid-template-columns: repeat(6, minmax(3.6rem, 1fr));
 	gap: 0.3rem;
 	overflow-x: auto;
-	border-radius: calc(var(--radius) - 0.2rem);
+	border-radius: var(--radius-sm);
 	background: var(--glass);
 	backdrop-filter: blur(6px);
 }
@@ -235,7 +235,7 @@
 	justify-content: center;
 	gap: 0.15rem;
 	padding: 0.4rem 0.2rem;
-	border-radius: calc(var(--radius) - 0.35rem);
+	border-radius: var(--radius-sm);
 }
 .dayName {
 	font-size: 0.8rem;
@@ -261,7 +261,7 @@
 .range {
 	width: 0.35rem;
 	height: 2.2rem;
-	border-radius: 1rem;
+	border-radius: var(--radius);
 	background:
 		linear-gradient(to top, transparent var(--from), #ffb15e var(--from), #ff7a45 var(--to), transparent var(--to)),
 		rgb(255 255 255 / 0.3);

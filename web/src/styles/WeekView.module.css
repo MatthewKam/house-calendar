@@ -36,7 +36,7 @@
 	min-width: 2rem;
 	height: 2rem;
 	padding: 0 0.3rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--accent);
 	color: var(--on-accent);
 	box-shadow: 0 0.2rem 0.5rem color-mix(in srgb, var(--accent) 45%, transparent);
@@ -79,7 +79,7 @@
 	flex-direction: column;
 	align-items: flex-start;
 	padding: 0.4rem 0.6rem 0.4rem 0.95rem;
-	border-radius: 0.2rem;
+	border-radius: var(--radius-xs);
 	min-height: 2.75rem;
 	justify-content: center;
 	/* Left bar and background split between everyone it's for (see eventPaint). */

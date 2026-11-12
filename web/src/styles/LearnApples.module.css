@@ -5,9 +5,9 @@
 	align-items: center;
 	padding: 6%;
 	box-sizing: border-box;
-	border-radius: 1.2rem;
+	border-radius: var(--radius-lg);
 	background: var(--surface);
-	box-shadow: 0 0.3rem 0.8rem rgb(29 31 35 / 0.06);
+	box-shadow: var(--shadow-md);
 }
 .fruit svg {
 	width: 100%;

@@ -4,8 +4,8 @@
 .sheet {
   position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: calc(var(--layer-sheet) + 1);
   width: min(36rem, 92vw); max-height: 92vh; overflow-y: auto;
-  background: var(--surface); border-radius: 1.2rem; padding: 1.4rem;
-  display: flex; flex-direction: column; gap: 0.8rem; box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.25);
+  background: var(--surface); border-radius: var(--radius-lg); padding: 1.4rem;
+  display: flex; flex-direction: column; gap: 0.8rem; box-shadow: var(--shadow-xl);
 }
 .heading { margin: 0; font-size: 1.3rem; }
 /* Title row with an × to close. It stays at the top while the rest scrolls under it: pulled out to

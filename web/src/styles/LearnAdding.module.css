@@ -115,7 +115,7 @@
 	display: grid;
 	place-items: center;
 	padding: 0;
-	border-radius: 1.2rem;
+	border-radius: var(--radius-lg);
 	/* White, so any fruit shows (yellow ones vanished on tan), in a wooden frame. */
 	background: #fff;
 	border: 3px solid #c9a06a;

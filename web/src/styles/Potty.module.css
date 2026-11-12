@@ -5,14 +5,14 @@
 	flex-direction: column;
 	gap: 0.9rem;
 	padding: 1rem 1.1rem;
-	border-radius: 1.4rem;
+	border-radius: var(--radius-xl);
 	background: var(--surface);
 	border: 3px solid color-mix(in srgb, var(--c) 40%, var(--surface));
 }
 /* Joined to the button it opened out of: square at the top, no line between them, sliding down. */
 .attached {
 	border-top: none;
-	border-radius: 0 0 1.2rem 1.2rem;
+	border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 	padding-top: 1.1rem;
 	animation: slideOut 0.25s ease;
 	transform-origin: top;
@@ -81,7 +81,7 @@
 .edit {
 	min-height: 2.75rem;
 	padding: 0 1.1rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	border: 1px solid var(--line);
 	background: var(--surface);
 	color: var(--muted);
@@ -97,7 +97,7 @@
 	display: flex;
 	flex-direction: column;
 	border: 3px solid color-mix(in srgb, var(--c) 40%, var(--surface));
-	border-radius: 1.1rem;
+	border-radius: var(--radius-lg);
 	overflow: hidden;
 }
 .rowLabel {
@@ -213,7 +213,7 @@
 .save {
 	min-height: 3.6rem;
 	padding: 0 1.8rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	border: none;
 	background: var(--c);
 	color: var(--on);
@@ -224,7 +224,7 @@
 .stop {
 	min-height: 3.6rem;
 	padding: 0 1.3rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	border: 1px solid var(--line);
 	background: var(--surface);
 	font-size: 1.1rem;
@@ -265,7 +265,7 @@
 	position: relative;
 	min-height: 11rem;
 	padding: 0.5rem 0.3rem;
-	border-radius: 1.4rem;
+	border-radius: var(--radius-xl);
 	border: 3px solid color-mix(in srgb, var(--c, var(--accent)) 40%, var(--surface));
 	background: var(--surface);
 	font-size: 2rem;
@@ -344,7 +344,7 @@
 	gap: 0.35rem;
 	padding: 0.5rem 0.8rem;
 	border: 2px solid color-mix(in srgb, var(--c) 35%, var(--surface));
-	border-radius: 0.8rem;
+	border-radius: var(--radius);
 	background: color-mix(in srgb, var(--c) 10%, var(--surface));
 }
 .compact .rowLabel {

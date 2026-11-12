@@ -53,7 +53,7 @@
 .tab {
 	min-height: 2.4rem;
 	padding: 0 0.9rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	color: var(--muted);
 	font-weight: 600;
 }
@@ -103,7 +103,7 @@
 	padding: 0.4rem 0.8rem;
 	background: var(--surface);
 	border: 1px solid var(--line);
-	border-radius: 0.6rem;
+	border-radius: var(--radius-sm);
 }
 .uploadName {
 	width: 14rem;
@@ -115,7 +115,7 @@
 .uploadBar {
 	flex: 1;
 	height: 0.5rem;
-	border-radius: 1rem;
+	border-radius: var(--radius);
 	background: var(--bg);
 	overflow: hidden;
 }
@@ -170,7 +170,7 @@
 	padding: 0;
 	min-height: 0;
 	aspect-ratio: 1;
-	border-radius: 0.7rem;
+	border-radius: var(--radius-sm);
 	overflow: hidden;
 	background: var(--line);
 }
@@ -190,7 +190,7 @@
 	left: 0.4rem;
 	bottom: 0.4rem;
 	padding: 0.1rem 0.45rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	font-size: 0.8rem;
 	font-weight: 650;
 	color: #fff;
@@ -279,7 +279,7 @@
 .picked img {
 	opacity: 1;
 	transform: scale(0.9);
-	border-radius: 0.4rem;
+	border-radius: var(--radius-xs);
 }
 .picked.selectable:hover img {
 	transform: scale(0.9);
@@ -345,7 +345,7 @@
 	max-width: 100%;
 	max-height: 100%;
 	object-fit: contain;
-	border-radius: 0.3rem;
+	border-radius: var(--radius-xs);
 	animation: appear 0.25s ease-out;
 }
 @keyframes appear {
@@ -460,7 +460,7 @@
 .dropOverlay div {
 	padding: 1.5rem 2.5rem;
 	border: 3px dashed #fff;
-	border-radius: 1.2rem;
+	border-radius: var(--radius-lg);
 	color: #fff;
 	font-size: 1.5rem;
 	font-weight: 700;

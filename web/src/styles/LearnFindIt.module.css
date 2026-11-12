@@ -12,9 +12,9 @@
 	align-items: center;
 	gap: 0.4rem;
 	padding: 0.2rem 0.9rem 0.2rem 0.4rem;
-	border-radius: 1.2rem;
+	border-radius: var(--radius-lg);
 	background: var(--surface);
-	box-shadow: 0 0.2rem 0.6rem rgb(29 31 35 / 0.1);
+	box-shadow: var(--shadow-md);
 }
 .indexPic svg,
 .traySlot svg,
@@ -39,7 +39,7 @@
 	gap: 0.3rem;
 }
 .traySlot {
-	border-radius: 0.8rem;
+	border-radius: var(--radius);
 	border: 2px dashed color-mix(in srgb, var(--c, var(--accent)) 35%, white);
 }
 /* A found one flying from the room to its place by the index. */
@@ -58,7 +58,7 @@
 .room {
 	position: relative;
 	flex: none;
-	border-radius: 1.6rem;
+	border-radius: var(--radius-xl);
 	overflow: hidden;
 }
 .spot {

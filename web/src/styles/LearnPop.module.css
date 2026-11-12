@@ -3,7 +3,7 @@
 	position: relative;
 	flex: 1;
 	overflow: hidden;
-	border-radius: 1.6rem;
+	border-radius: var(--radius-xl);
 	background: linear-gradient(#bfe6ff, #e8f6ff 65%, #d6efc4);
 	touch-action: none;
 }
@@ -26,9 +26,9 @@
 	align-items: center;
 	gap: 0.6rem;
 	padding: 0.4rem 1rem 0.4rem 1.2rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: #fff;
-	box-shadow: 0 0.3rem 1rem rgb(0 0 0 / 0.12);
+	box-shadow: var(--shadow-md);
 	pointer-events: none;
 }
 .popSignWord {

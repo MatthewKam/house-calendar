@@ -31,7 +31,7 @@
 	gap: 0.15rem;
 	width: 6rem;
 	min-height: 5.5rem;
-	border-radius: 1.2rem;
+	border-radius: var(--radius-lg);
 	background: none;
 	color: var(--muted);
 	font-weight: 750;
@@ -54,9 +54,7 @@
 	background: var(--c);
 	color: var(--on);
 	/* Raised a little, like the selected tab in the grown-ups' bar. */
-	box-shadow:
-		0 1px 2px rgb(0 0 0 / 0.08),
-		0 2px 6px rgb(0 0 0 / 0.08);
+	box-shadow: var(--shadow-sm);
 }
 @media (max-width: 700px) {
 	.shell {
@@ -177,16 +175,14 @@
 	min-height: 3.2rem;
 	padding: 0.3rem 1.2rem;
 	border: 0;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: var(--c);
 	color: var(--on);
 	font: inherit;
 	font-size: 1.6rem;
 	font-weight: 800;
 	line-height: 1.1;
-	box-shadow:
-		0 1px 2px rgb(0 0 0 / 0.08),
-		0 2px 6px rgb(0 0 0 / 0.08);
+	box-shadow: var(--shadow-sm);
 }
 button.kidName {
 	padding-right: 0.8rem;
@@ -217,10 +213,10 @@ button.kidName {
 	flex-direction: column;
 	gap: 0.2rem;
 	padding: 0.4rem;
-	border-radius: 1.2rem;
+	border-radius: var(--radius-lg);
 	background: var(--surface);
 	border: 1px solid var(--line);
-	box-shadow: 0 0.6rem 1.6rem rgb(0 0 0 / 0.18);
+	box-shadow: var(--shadow-lg);
 }
 .kidMenuItem {
 	display: flex;
@@ -229,7 +225,7 @@ button.kidName {
 	min-height: 3.2rem;
 	padding: 0.3rem 1rem;
 	border: 0;
-	border-radius: 0.9rem;
+	border-radius: var(--radius);
 	background: none;
 	color: var(--text);
 	font: inherit;
@@ -348,7 +344,7 @@ button.kidName {
 	flex-direction: column;
 	gap: 0.5rem;
 	padding: 0.8rem 1.1rem;
-	border-radius: 1.4rem;
+	border-radius: var(--radius-xl);
 	background: var(--surface);
 	border: 3px solid color-mix(in srgb, var(--c) 40%, white);
 }
@@ -420,7 +416,7 @@ button.kidName {
 	align-items: center;
 	justify-content: center;
 	gap: 0.4rem;
-	border-radius: 1.4rem;
+	border-radius: var(--radius-xl);
 	background: var(--surface);
 	border: 3px solid color-mix(in srgb, var(--c) 35%, white);
 	box-shadow: 0 0.3rem 0 color-mix(in srgb, var(--c) 35%, white);
@@ -448,7 +444,7 @@ button.kidName {
 	top: 0.5rem;
 	left: 0.6rem;
 	padding: 0.1rem 0.5rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: #fff4d6;
 	display: inline-flex;
 	align-items: center;
@@ -501,7 +497,7 @@ button.kidName {
 .pageDots span {
 	width: 0.6rem;
 	height: 0.6rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: color-mix(in srgb, var(--c) 30%, white);
 	transition:
 		width 0.2s ease,
@@ -568,7 +564,7 @@ button.kidName {
 	gap: 0.3rem;
 	min-height: 3.6rem;
 	padding: 0 0.5rem 0 0;
-	border-radius: 1.2rem;
+	border-radius: var(--radius-lg);
 	border: 3px solid color-mix(in srgb, var(--c) 35%, white);
 	background: var(--surface);
 	box-shadow: 0 0.25rem 0 color-mix(in srgb, var(--c) 35%, white);
@@ -636,7 +632,7 @@ button.kidName {
 	right: 0.6rem;
 	bottom: 0.5rem;
 	padding: 0.1rem 0.5rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	background: color-mix(in srgb, var(--c) 18%, white);
 	color: color-mix(in srgb, var(--c) 60%, black);
 	font-size: 0.9rem;
@@ -685,7 +681,7 @@ button.kidName {
 	gap: 0.7rem;
 	min-height: 3.6rem;
 	padding: 0.3rem 1rem 0.3rem 0.4rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	border: 1px solid var(--line);
 	background: var(--surface);
 	font-weight: 700;
@@ -757,7 +753,7 @@ button.kidName {
 	white-space: nowrap;
 	min-height: 3.2rem;
 	padding: 0.3rem 0.6rem;
-	border-radius: 999px;
+	border-radius: var(--radius-round);
 	border: 2px solid color-mix(in srgb, var(--c) 45%, white);
 	background: var(--surface);
 	color: var(--text);

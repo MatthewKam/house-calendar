@@ -8,7 +8,7 @@
 .toggleNote { color: var(--muted); font-size: 0.9rem; }
 .row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
 .row label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; color: var(--muted); }
-.row input { font-size: 1.1rem; padding: 0.5rem; border: 1px solid var(--line); border-radius: 0.6rem; color: var(--text); }
+.row input { font-size: 1.1rem; padding: 0.5rem; border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--text); }
 .problem { color: var(--danger); font-size: 0.95rem; }
 
 .note { color: var(--muted); margin: 0; font-size: 0.95rem; }
@@ -18,28 +18,28 @@
   border: 1px solid var(--line); background: var(--surface); font-weight: 600; }
 .editWho svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 /* Notes, and the flyer an event was read from. */
-.notes { font: inherit; font-size: 1rem; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 0.6rem;
+.notes { font: inherit; font-size: 1rem; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: var(--radius-sm);
   width: 100%; box-sizing: border-box; resize: vertical; }
 .flyer { display: flex; align-items: flex-end; gap: 0.8rem; }
-.flyer img { display: block; max-width: 9rem; max-height: 12rem; border-radius: 0.6rem; border: 1px solid var(--line); }
+.flyer img { display: block; max-width: 9rem; max-height: 12rem; border-radius: var(--radius-sm); border: 1px solid var(--line); }
 /* Address and travel time. */
-.locationInput { font-size: 1rem; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 0.6rem; width: 100%; box-sizing: border-box; }
+.locationInput { font-size: 1rem; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: var(--radius-sm); width: 100%; box-sizing: border-box; }
 /* Places suggested while typing the address, in a list just under it. */
 .addressField { position: relative; display: flex; flex-direction: column; }
 .suggestions { position: absolute; z-index: 5; top: calc(100% + 0.25rem); left: 0; right: 0; list-style: none; margin: 0; padding: 0.3rem;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 0.6rem; box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.15); }
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); box-shadow: var(--shadow-lg); }
 .suggestion { width: 100%; min-height: 2.75rem; display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
-  gap: 0.1rem; padding: 0.35rem 0.6rem; border-radius: 0.45rem; background: none; text-align: left; }
+  gap: 0.1rem; padding: 0.35rem 0.6rem; border-radius: var(--radius-xs); background: none; text-align: left; }
 .suggestion:hover, .suggestionActive { background: var(--bg); }
 .suggestionMain { font-weight: 600; }
 .suggestionMore { font-size: 0.85rem; color: var(--muted); }
 .travel { display: flex; flex-direction: column; gap: 0.4rem; }
 .address { color: var(--muted); }
 .travelButton { align-self: flex-start; padding: 0 1rem; border: 1px solid var(--line); background: var(--surface); font-weight: 600; }
-.trip { padding: 0.6rem 0.8rem; border-radius: 0.6rem; background: var(--info-bg); line-height: 1.4; }
+.trip { padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); background: var(--info-bg); line-height: 1.4; }
 .tripLate { background: var(--danger-bg); color: var(--danger-strong); }
 .remind { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
-.alertSet { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.5rem 0.8rem; border-radius: 0.6rem; background: var(--today); }
+.alertSet { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.5rem 0.8rem; border-radius: var(--radius-sm); background: var(--today); }
 .linkButton { composes: quiet from "./Buttons.module.css"; padding: 0.2rem 0.4rem; }
 
 /* An iCloud event with a wall edit not sent yet. */
@@ -52,7 +52,7 @@
 /* Which calendar a new event goes to. */
 .calendarPick { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; color: var(--muted); }
 .calendarPick select {
-  font-size: 1.05rem; padding: 0.55rem 0.6rem; border: 1px solid var(--line); border-radius: 0.6rem;
+  font-size: 1.05rem; padding: 0.55rem 0.6rem; border: 1px solid var(--line); border-radius: var(--radius-sm);
   color: var(--text); background: var(--surface);
 }
 

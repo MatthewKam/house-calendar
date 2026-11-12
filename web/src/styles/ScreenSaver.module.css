@@ -211,7 +211,7 @@
 	align-items: baseline;
 	gap: 0.7rem;
 	padding: 0.55rem 0.85rem 0.55rem 1.1rem;
-	border-radius: 0.8rem;
+	border-radius: var(--radius);
 	color: #1d1f23;
 	background:
 		var(--stripe) left / 0.4rem 100% no-repeat,
