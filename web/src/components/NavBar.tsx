@@ -130,10 +130,6 @@ export default function NavBar({
 	);
 	return (
 		<nav className={s.nav} aria-label="Main">
-			{/* Sprig at the top, like most apps: tapping it goes home (Today). */}
-			<button type="button" className={s.logoButton} onClick={() => onPage("today")} aria-label="Sprig: go to Today">
-				<img className={s.logo} src="/favicon.svg" alt="" />
-			</button>
 			{item("today", "Today", <TodayIcon />)}
 			{item("calendar", "Calendar", <CalendarIcon />)}
 			{item("tasks", "Tasks", <TasksIcon />)}

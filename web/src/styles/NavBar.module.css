@@ -47,19 +47,6 @@
 	/* Raised a little off the bar. */
 	box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 2px 6px rgb(0 0 0 / 0.08);
 }
-/* The logo at the top: home (Today). */
-.logoButton {
-	display: grid;
-	place-items: center;
-	min-height: 3rem;
-	margin-bottom: 0.3rem;
-	padding: 0;
-	background: none;
-}
-.logo {
-	width: 2.6rem;
-	height: 2.6rem;
-}
 /* Pushes the lock and Settings to the bottom of the bar. */
 .push {
 	margin-top: auto;
