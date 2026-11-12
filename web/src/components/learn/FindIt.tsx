@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Pic } from "./art";
-import { Board, fit } from "./parts";
-import { TOYS } from "./things";
-import { at, between, CHEER_MS, fresh, shuffle, type GameProps, useLater } from "./rounds";
-import s from "./Learn.module.css";
-import g from "./LearnFindIt.module.css";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Pic } from './art';
+import { Board, fit } from './parts';
+import { TOYS } from './things';
+import { at, between, CHEER_MS, fresh, shuffle, type GameProps, useLater } from './rounds';
+import s from './Learn.module.css';
+import g from './LearnFindIt.module.css';
 
 /** Kinds of thing in the room, the most of each, how many hide under others, and rooms a play, by level. */
 const KINDS = [2, 2, 3, 3, 4, 4];
@@ -14,21 +14,36 @@ const ROUNDS = [1, 1, 1, 2, 2, 2];
 
 /** Different rooms each play. */
 const ROOMS = [
-	{ name: "bedroom", wall: "#dbe9ff", floor: "#c9a77c", rug: "#f2a2b0" },
-	{ name: "playroom", wall: "#fff1c9", floor: "#b8d4a0", rug: "#8fc4f0" },
-	{ name: "kitchen", wall: "#e3f4e1", floor: "#e8d9c0", rug: "#f6cf3c" },
-	{ name: "living room", wall: "#f3e1f5", floor: "#c7b29a", rug: "#a5d6a7" },
+	{ name: 'bedroom', wall: '#dbe9ff', floor: '#c9a77c', rug: '#f2a2b0' },
+	{ name: 'playroom', wall: '#fff1c9', floor: '#b8d4a0', rug: '#8fc4f0' },
+	{ name: 'kitchen', wall: '#e3f4e1', floor: '#e8d9c0', rug: '#f6cf3c' },
+	{ name: 'living room', wall: '#f3e1f5', floor: '#c7b29a', rug: '#a5d6a7' },
 ];
 
 /** A thing in the room: what it is, where it sits in its spot, its tilt, and what's hiding under it. */
-interface Thing { id: number; kind: string; jx: number; jy: number; tilt: number; under: Thing | null }
+interface Thing {
+	id: number;
+	kind: string;
+	jx: number;
+	jy: number;
+	tilt: number;
+	under: Thing | null;
+}
 
 /** A room's things: a few kinds, one to a few of each, laid out at random, some tucked under others. */
 function roomFor(level: number) {
-	const kinds = fresh("findit.kinds", TOYS, at(KINDS, level), (t) => t.id).map((t) => ({ ...t, count: between(1, at(MOST, level)) }));
+	const kinds = fresh('findit.kinds', TOYS, at(KINDS, level), (t) => t.id).map((t) => ({
+		...t,
+		count: between(1, at(MOST, level)),
+	}));
 	let id = 0;
 	const all: Thing[] = shuffle(kinds.flatMap((k) => Array.from({ length: k.count }, () => k.id))).map((kind) => ({
-		id: id++, kind, jx: Math.random() - 0.5, jy: Math.random() - 0.5, tilt: between(-12, 12), under: null,
+		id: id++,
+		kind,
+		jx: Math.random() - 0.5,
+		jy: Math.random() - 0.5,
+		tilt: between(-12, 12),
+		under: null,
 	}));
 	// Some hide under others (never under one of their own kind).
 	const hidden = Math.min(at(HIDDEN, level), Math.floor(all.length / 2));
@@ -50,7 +65,7 @@ function roomFor(level: number) {
  */
 export default function FindIt({ level, onDone, onBack }: GameProps) {
 	const total = at(ROUNDS, level);
-	const look = useMemo(() => fresh("findit.rooms", ROOMS, 1, (r) => r.name)[0], []);
+	const look = useMemo(() => fresh('findit.rooms', ROOMS, 1, (r) => r.name)[0], []);
 	const [round, setRound] = useState(0);
 	const room = useMemo(() => roomFor(level), [level, round]); // eslint-disable-line react-hooks/exhaustive-deps
 	// What's been collected (by thing), and which have landed by the index after their flight.
@@ -77,10 +92,16 @@ export default function FindIt({ level, onDone, onBack }: GameProps) {
 		const start = from.getBoundingClientRect();
 		const end = slots.current[`${thing.kind}-${place}`]?.getBoundingClientRect();
 		if (end) {
-			setFlying((f) => [...f, {
-				thing, from: start, scale: end.width / start.width,
-				dx: end.left + end.width / 2 - (start.left + start.width / 2), dy: end.top + end.height / 2 - (start.top + start.height / 2),
-			}]);
+			setFlying((f) => [
+				...f,
+				{
+					thing,
+					from: start,
+					scale: end.width / start.width,
+					dx: end.left + end.width / 2 - (start.left + start.width / 2),
+					dy: end.top + end.height / 2 - (start.top + start.height / 2),
+				},
+			]);
 		} else setLanded((l) => [...l, thing.id]);
 		// Everything collected: the cheer, then the next room (or the end).
 		if (now.length === room.total) {
@@ -94,7 +115,7 @@ export default function FindIt({ level, onDone, onBack }: GameProps) {
 			{(box) => {
 				const wide = box.w > box.h * 1.1;
 				// The index: beside the room on its side, above it upright.
-				const chip = Math.min(64, Math.max(40, (wide ? box.h / room.kinds.length - 20 : box.h * 0.08)));
+				const chip = Math.min(64, Math.max(40, wide ? box.h / room.kinds.length - 20 : box.h * 0.08));
 				const indexW = wide ? chip * (1.9 + at(MOST, level) * 0.75) + 24 : box.w;
 				const perRow = wide ? 1 : Math.max(1, Math.floor(box.w / (chip * (1.9 + at(MOST, level) * 0.75) + 16)));
 				const indexH = wide ? box.h : Math.ceil(room.kinds.length / perRow) * (chip + 14);
@@ -109,19 +130,45 @@ export default function FindIt({ level, onDone, onBack }: GameProps) {
 				return (
 					<div className={wide ? s.row : s.column}>
 						{/* The index: each kind, how many are left, and those collected lined up beside it. */}
-						<div className={g.findIndex} style={{ width: wide ? indexW : undefined, flexDirection: wide ? "column" : "row" }}>
+						<div
+							className={g.findIndex}
+							style={{ width: wide ? indexW : undefined, flexDirection: wide ? 'column' : 'row' }}
+						>
 							{room.kinds.map((k) => {
 								const left = k.count - found.filter((f) => f.kind === k.id).length;
 								return (
-									<span key={k.id} className={`${g.indexCard} ${left === 0 ? g.indexDone : ""}`} aria-label={`${k.many}: ${left} more`}>
-										<span className={g.indexPic} style={{ width: chip, height: chip }}><Pic id={k.id} /></span>
-										<span key={left} className={`${g.indexCount} ${left < k.count ? s.pop : ""}`} style={{ fontSize: chip * 0.7 }}>{left}</span>
+									<span
+										key={k.id}
+										className={`${g.indexCard} ${left === 0 ? g.indexDone : ''}`}
+										aria-label={`${k.many}: ${left} more`}
+									>
+										<span className={g.indexPic} style={{ width: chip, height: chip }}>
+											<Pic id={k.id} />
+										</span>
+										<span
+											key={left}
+											className={`${g.indexCount} ${left < k.count ? s.pop : ''}`}
+											style={{ fontSize: chip * 0.7 }}
+										>
+											{left}
+										</span>
 										<span className={g.indexTray}>
 											{Array.from({ length: k.count }, (_, i) => {
 												const here = found.filter((f) => f.kind === k.id)[i];
 												return (
-													<span key={i} ref={(el) => { slots.current[`${k.id}-${i}`] = el; }} className={g.traySlot} style={{ width: chip * 0.62, height: chip * 0.62 }}>
-														{here && landed.includes(here.id) && <span className={s.pop}><Pic id={k.id} /></span>}
+													<span
+														key={i}
+														ref={(el) => {
+															slots.current[`${k.id}-${i}`] = el;
+														}}
+														className={g.traySlot}
+														style={{ width: chip * 0.62, height: chip * 0.62 }}
+													>
+														{here && landed.includes(here.id) && (
+															<span className={s.pop}>
+																<Pic id={k.id} />
+															</span>
+														)}
 													</span>
 												);
 											})}
@@ -131,13 +178,28 @@ export default function FindIt({ level, onDone, onBack }: GameProps) {
 							})}
 						</div>
 						{/* On their way to the index. */}
-						{flying.filter((f) => !landed.includes(f.thing.id)).map((f) => (
-							<span key={f.thing.id} className={g.flyer} onAnimationEnd={() => setLanded((l) => [...l, f.thing.id])}
-								style={{ left: f.from.left, top: f.from.top, width: f.from.width, height: f.from.height,
-									"--dx": `${f.dx}px`, "--dy": `${f.dy}px`, "--s": f.scale } as CSSProperties}>
-								<Pic id={f.thing.kind} />
-							</span>
-						))}
+						{flying
+							.filter((f) => !landed.includes(f.thing.id))
+							.map((f) => (
+								<span
+									key={f.thing.id}
+									className={g.flyer}
+									onAnimationEnd={() => setLanded((l) => [...l, f.thing.id])}
+									style={
+										{
+											left: f.from.left,
+											top: f.from.top,
+											width: f.from.width,
+											height: f.from.height,
+											'--dx': `${f.dx}px`,
+											'--dy': `${f.dy}px`,
+											'--s': f.scale,
+										} as CSSProperties
+									}
+								>
+									<Pic id={f.thing.kind} />
+								</span>
+							))}
 						<div className={g.room} style={{ width: area.w, height: area.h }}>
 							<Room look={look} />
 							{room.shown.map((t, i) => {
@@ -149,15 +211,25 @@ export default function FindIt({ level, onDone, onBack }: GameProps) {
 									<div key={`${round}-${t.id}`} className={g.spot} style={{ left, top, width: size, height: size }}>
 										{/* What was hiding under it, there once it's been collected. */}
 										{t.under && (
-											<button type="button" onClick={(e) => collect(t.under!, e.currentTarget)} disabled={!gone(t)}
-												aria-label={TOYS.find((x) => x.id === t.under!.kind)?.one} aria-hidden={!gone(t)}
-												className={`${s.thing} ${gone(t.under) ? g.thingGone : ""}`} style={{ "--tilt": `${t.under.tilt}deg` } as CSSProperties}>
+											<button
+												type="button"
+												onClick={(e) => collect(t.under!, e.currentTarget)}
+												disabled={!gone(t)}
+												aria-label={TOYS.find((x) => x.id === t.under!.kind)?.one}
+												aria-hidden={!gone(t)}
+												className={`${s.thing} ${gone(t.under) ? g.thingGone : ''}`}
+												style={{ '--tilt': `${t.under.tilt}deg` } as CSSProperties}
+											>
 												<Pic id={t.under.kind} />
 											</button>
 										)}
-										<button type="button" onClick={(e) => collect(t, e.currentTarget)}
-											className={`${s.thing} ${gone(t) ? g.thingGone : ""}`} style={{ "--tilt": `${t.tilt}deg` } as CSSProperties}
-											aria-label={TOYS.find((x) => x.id === t.kind)?.one}>
+										<button
+											type="button"
+											onClick={(e) => collect(t, e.currentTarget)}
+											className={`${s.thing} ${gone(t) ? g.thingGone : ''}`}
+											style={{ '--tilt': `${t.tilt}deg` } as CSSProperties}
+											aria-label={TOYS.find((x) => x.id === t.kind)?.one}
+										>
 											<Pic id={t.kind} />
 										</button>
 									</div>
@@ -188,10 +260,14 @@ function Room({ look }: { look: (typeof ROOMS)[number] }) {
 			<rect x="446" y="58" width="18" height="38" fill="#5aa0e6" />
 			<rect x="468" y="70" width="24" height="26" fill="#f6cf3c" />
 			<circle cx="560" cy="80" r="16" fill="#5cb85c" />
-			{look.name === "bedroom" && <path d="M760 150 V70 Q760 56 776 56 H930 Q946 56 946 70 V150z" fill="#7a5cc8" opacity=".85" />}
-			{look.name === "living room" && <path d="M740 150 V92 Q740 76 756 76 H944 Q960 76 960 92 V150z" fill="#e8707c" opacity=".85" />}
-			{look.name === "kitchen" && <rect x="740" y="70" width="220" height="80" fill="#fff" opacity=".85" />}
-			{look.name === "playroom" && <rect x="770" y="80" width="170" height="70" rx="8" fill="#f4a020" opacity=".85" />}
+			{look.name === 'bedroom' && (
+				<path d="M760 150 V70 Q760 56 776 56 H930 Q946 56 946 70 V150z" fill="#7a5cc8" opacity=".85" />
+			)}
+			{look.name === 'living room' && (
+				<path d="M740 150 V92 Q740 76 756 76 H944 Q960 76 960 92 V150z" fill="#e8707c" opacity=".85" />
+			)}
+			{look.name === 'kitchen' && <rect x="740" y="70" width="220" height="80" fill="#fff" opacity=".85" />}
+			{look.name === 'playroom' && <rect x="770" y="80" width="170" height="70" rx="8" fill="#f4a020" opacity=".85" />}
 		</svg>
 	);
 }

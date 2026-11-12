@@ -20,7 +20,13 @@
 	box-shadow: 0 0.18em 0 color-mix(in srgb, var(--pc) 35%, white);
 	opacity: 0.6;
 	scale: 0.92;
-	transition: scale 0.2s ease, opacity 0.2s ease, background 0.2s ease, color 0.2s ease, translate 0.2s ease, box-shadow 0.2s ease;
+	transition:
+		scale 0.2s ease,
+		opacity 0.2s ease,
+		background 0.2s ease,
+		color 0.2s ease,
+		translate 0.2s ease,
+		box-shadow 0.2s ease;
 }
 .chompBadge {
 	display: grid;
@@ -41,7 +47,9 @@
 	translate: 0 -0.12em;
 	background: var(--pc);
 	color: #fff;
-	box-shadow: 0 0.3em 0 color-mix(in srgb, var(--pc) 60%, black), 0 0.5em 1.2em color-mix(in srgb, var(--pc) 40%, transparent);
+	box-shadow:
+		0 0.3em 0 color-mix(in srgb, var(--pc) 60%, black),
+		0 0.5em 1.2em color-mix(in srgb, var(--pc) 40%, transparent);
 }
 .chompUp .chompBadge {
 	background: #fff;

@@ -25,19 +25,45 @@
 		shake 3s ease-in-out 0.8s infinite;
 }
 @keyframes bounce {
-	0% { transform: translateY(-6rem); opacity: 0; }
-	45% { transform: translateY(0.6rem); opacity: 1; }
-	65% { transform: translateY(-0.9rem); }
-	80% { transform: translateY(0.2rem); }
-	90% { transform: translateY(-0.25rem); }
-	100% { transform: none; }
+	0% {
+		transform: translateY(-6rem);
+		opacity: 0;
+	}
+	45% {
+		transform: translateY(0.6rem);
+		opacity: 1;
+	}
+	65% {
+		transform: translateY(-0.9rem);
+	}
+	80% {
+		transform: translateY(0.2rem);
+	}
+	90% {
+		transform: translateY(-0.25rem);
+	}
+	100% {
+		transform: none;
+	}
 }
 /* A quick shake in the first fifth of each cycle, then still. */
 @keyframes shake {
-	0%, 20%, 100% { transform: none; }
-	2%, 10% { transform: translateX(-0.6rem) rotate(-1.5deg); }
-	6%, 14% { transform: translateX(0.6rem) rotate(1.5deg); }
-	18% { transform: translateX(-0.2rem); }
+	0%,
+	20%,
+	100% {
+		transform: none;
+	}
+	2%,
+	10% {
+		transform: translateX(-0.6rem) rotate(-1.5deg);
+	}
+	6%,
+	14% {
+		transform: translateX(0.6rem) rotate(1.5deg);
+	}
+	18% {
+		transform: translateX(-0.2rem);
+	}
 }
 /* A car zooms across the screen when the alert appears, then again every 9 seconds. The emoji car
    faces left, so it drives right to left with its dust behind it. */
@@ -59,8 +85,13 @@
 	opacity: 0.8;
 }
 @keyframes zoom {
-	0% { transform: translateX(110vw); }
-	14%, 100% { transform: translateX(-80rem); }
+	0% {
+		transform: translateX(110vw);
+	}
+	14%,
+	100% {
+		transform: translateX(-80rem);
+	}
 }
 @media (prefers-reduced-motion: reduce) {
 	.alert {

@@ -20,9 +20,10 @@ Before calling something done:
 npm test          # server and web logic (vitest)
 npm run check     # TypeScript, server and web
 npm run lint      # likely mistakes (ESLint): unused code, hooks used wrongly
+npm run format    # Prettier: tabs, single quotes, lines up to 120 (your editor can run it on save)
 ```
 
-GitHub runs all three on every push and pull request (`.github/workflows/checks.yml`).
+GitHub runs these on every push and pull request, formatting included (`.github/workflows/checks.yml`). The commit that first formatted everything is in `.git-blame-ignore-revs`, so `git blame` looks past it once you run `git config blame.ignoreRevsFile .git-blame-ignore-revs`.
 
 ## Who it's for
 

@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import { api } from "../../lib/api";
-import { useAlertActions, useAlerts } from "../../lib/queries";
-import type { CalEvent, Trip } from "../../lib/types";
-import { timeLabel } from "../../lib/dates";
-import s from "./EventDialog.module.css";
+import { useEffect, useRef, useState } from 'react';
+import { api } from '../../lib/api';
+import { useAlertActions, useAlerts } from '../../lib/queries';
+import type { CalEvent, Trip } from '../../lib/types';
+import { timeLabel } from '../../lib/dates';
+import s from './EventDialog.module.css';
 
 /** Miles where people drive in miles, kilometres elsewhere. */
 const distance = (meters: number) =>
@@ -12,7 +12,11 @@ const distance = (meters: number) =>
 		: `${(meters / 1000).toFixed(meters < 10000 ? 1 : 0)} km`;
 
 /** The event's address and, on request, the drive time from home and when to leave. */
-export default function TravelInfo({ event, showAddress = true, locked }: {
+export default function TravelInfo({
+	event,
+	showAddress = true,
+	locked,
+}: {
 	event: CalEvent;
 	showAddress?: boolean;
 	/** The parent lock is on: the drive shows, but reminders can't be set or cancelled. */
@@ -32,13 +36,13 @@ export default function TravelInfo({ event, showAddress = true, locked }: {
 		const ctrl = new AbortController();
 		inFlight.current = ctrl;
 		// Google is usually quick; past this, give up rather than leave it spinning.
-		const giveUp = setTimeout(() => ctrl.abort("slow"), 12_000);
+		const giveUp = setTimeout(() => ctrl.abort('slow'), 12_000);
 		setLoading(true);
 		setError(null);
 		try {
 			setTrip(await api.travel(event.id, ctrl.signal));
 		} catch (e) {
-			if (ctrl.signal.aborted) setError(ctrl.signal.reason === "slow" ? "Taking too long — try again" : null);
+			if (ctrl.signal.aborted) setError(ctrl.signal.reason === 'slow' ? 'Taking too long — try again' : null);
 			else setError(e instanceof Error ? e.message : "Couldn't get a travel time");
 		} finally {
 			clearTimeout(giveUp);
@@ -57,21 +61,21 @@ export default function TravelInfo({ event, showAddress = true, locked }: {
 			{!trip && (
 				<div className={s.travelRow}>
 					<button type="button" className={s.travelButton} onClick={check} disabled={loading}>
-						🚗 {loading ? "Checking traffic…" : error ? "Try again" : "Travel time"}
+						🚗 {loading ? 'Checking traffic…' : error ? 'Try again' : 'Travel time'}
 					</button>
 					{loading && (
-						<button type="button" className={s.travelCancel} onClick={() => inFlight.current?.abort("cancel")}>
+						<button type="button" className={s.travelCancel} onClick={() => inFlight.current?.abort('cancel')}>
 							Cancel
 						</button>
 					)}
 				</div>
 			)}
 			{trip && (
-				<div className={`${s.trip} ${trip.late ? s.tripLate : ""}`}>
+				<div className={`${s.trip} ${trip.late ? s.tripLate : ''}`}>
 					<strong>{trip.minutes} min drive</strong> · {distance(trip.meters)}
 					<div>
 						{!trip.leaveAt
-							? "Leaving now"
+							? 'Leaving now'
 							: trip.late
 								? `Leave now: you needed to go at ${timeLabel(trip.leaveAt)}`
 								: `Leave by ${timeLabel(trip.leaveAt)} to be there 10 min early`}
@@ -82,7 +86,7 @@ export default function TravelInfo({ event, showAddress = true, locked }: {
 			{alert ? (
 				<div className={s.alertSet}>
 					🔔 Reminder at {timeLabel(alert.remindAt)}
-					{alert.minutesBefore ? ` (${alert.minutesBefore} min before leaving)` : " (time to leave)"}
+					{alert.minutesBefore ? ` (${alert.minutesBefore} min before leaving)` : ' (time to leave)'}
 					{!locked && (
 						<button type="button" className={s.linkButton} onClick={() => cancel.mutate(alert.id)}>
 							Cancel
@@ -96,9 +100,9 @@ export default function TravelInfo({ event, showAddress = true, locked }: {
 					<div className={s.remind}>
 						<span>🔔 Remind me</span>
 						{[
-							[0, "At leave time"],
-							[10, "10 min before"],
-							[15, "15 min before"],
+							[0, 'At leave time'],
+							[10, '10 min before'],
+							[15, '15 min before'],
 						].map(([min, label]) => (
 							<button
 								key={min}

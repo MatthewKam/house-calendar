@@ -3,7 +3,7 @@
 # The bucket's settings come from `fly storage create` (BUCKET_NAME, AWS_ENDPOINT_URL_S3, and the keys).
 dbs:
   - dir: ${DATA_DIR}
-    pattern: "*.db"
+    pattern: '*.db'
     recursive: true
     watch: true
     replica:

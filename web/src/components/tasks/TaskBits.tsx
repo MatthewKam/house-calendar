@@ -1,9 +1,9 @@
-import { dayKey, fromDayKey } from "../../lib/dates";
-import { categoryLabel } from "../../lib/tasks";
-import type { Task } from "../../lib/types";
-import { StarIcon } from "../ui/icons";
-import s from "./Tasks.module.css";
-import g from "./Goals.module.css";
+import { dayKey, fromDayKey } from '../../lib/dates';
+import { categoryLabel } from '../../lib/tasks';
+import type { Task } from '../../lib/types';
+import { StarIcon } from '../ui/icons';
+import s from './Tasks.module.css';
+import g from './Goals.module.css';
 
 /** A task's icon (if any) and title. */
 export function TaskName({ task }: { task: Task }) {
@@ -25,13 +25,13 @@ export function TaskTags({ task }: { task: Task }) {
 		<>
 			{/* Editing or deleting a shared task changes it for the whole family. */}
 			{!task.memberId && <span className={s.sharedTag}>Everyone</span>}
-			<span className={`${s.catTag} ${task.required ? "" : g.goalTag}`}>{categoryLabel(task.category)}</span>
+			<span className={`${s.catTag} ${task.required ? '' : g.goalTag}`}>{categoryLabel(task.category)}</span>
 			{/* One-time: when it's gone from the list. */}
 			{task.dueBy && (
 				<span className={`${s.catTag} ${s.dueTag}`}>
 					{task.dueBy === dayKey(new Date())
-						? "Today only"
-						: `By ${fromDayKey(task.dueBy).toLocaleDateString([], { weekday: "short" })}`}
+						? 'Today only'
+						: `By ${fromDayKey(task.dueBy).toLocaleDateString([], { weekday: 'short' })}`}
 				</span>
 			)}
 			{/* Stars, for an extra worth any (a chore can be worth none). */}
@@ -48,9 +48,13 @@ export function TaskTags({ task }: { task: Task }) {
 /** A task to tick off (today's list, or a day picked in History). */
 export function TaskTick({ task, ticked, onToggle }: { task: Task; ticked: boolean; onToggle: () => void }) {
 	return (
-		<button className={`${s.task} ${ticked ? s.ticked : ""} ${task.required ? "" : s.extra}`} aria-pressed={ticked} onClick={onToggle}>
+		<button
+			className={`${s.task} ${ticked ? s.ticked : ''} ${task.required ? '' : s.extra}`}
+			aria-pressed={ticked}
+			onClick={onToggle}
+		>
 			<span className={s.box} aria-hidden="true">
-				{ticked ? "✓" : ""}
+				{ticked ? '✓' : ''}
 			</span>
 			<span className={s.taskTitle}>
 				<TaskName task={task} />

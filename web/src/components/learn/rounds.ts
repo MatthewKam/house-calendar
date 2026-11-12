@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
 /** A game's props: its level, what to call when it's finished, and the way back to the games. */
 export interface GameProps {
@@ -9,11 +9,11 @@ export interface GameProps {
 }
 
 /** A copy in random order. */
-export { shuffle } from "../../lib/random";
-import { shuffle } from "../../lib/random";
+export { shuffle } from '../../lib/random';
+import { shuffle } from '../../lib/random';
 
 /** `n` different ones, at random. */
-export const pick = <T,>(list: readonly T[], n: number) => shuffle(list).slice(0, n);
+export const pick = <T>(list: readonly T[], n: number) => shuffle(list).slice(0, n);
 
 /**
  * `n` different ones at random, but not ones this game showed recently (on this device): it keeps a list
@@ -24,7 +24,7 @@ export function fresh<T>(memory: string, list: readonly T[], n: number, idOf: (t
 	const key = `sprig.learn.seen.${memory}`;
 	let seen: string[] = [];
 	try {
-		seen = JSON.parse(localStorage.getItem(key) ?? "[]");
+		seen = JSON.parse(localStorage.getItem(key) ?? '[]');
 	} catch {
 		// Not kept (a private window, say): every pick's just random.
 	}
@@ -45,13 +45,13 @@ export function fresh<T>(memory: string, list: readonly T[], n: number, idOf: (t
 }
 
 /** One at random. */
-export const any = <T,>(list: readonly T[]) => list[Math.floor(Math.random() * list.length)];
+export const any = <T>(list: readonly T[]) => list[Math.floor(Math.random() * list.length)];
 
 /** A whole number from `lo` to `hi`. */
 export const between = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1));
 
 /** A level's setting, from a list of one per level (the last for any above it). */
-export const at = <T,>(perLevel: readonly T[], level: number) => perLevel[Math.min(level, perLevel.length) - 1];
+export const at = <T>(perLevel: readonly T[], level: number) => perLevel[Math.min(level, perLevel.length) - 1];
 
 /** How long the cheer shows before the next round starts by itself. */
 export const CHEER_MS = 1600;
@@ -74,7 +74,11 @@ export function useLater() {
  * finishes); wrong just counts against the first try. `cheerMs` can be per round (the last one's cheer
  * can be longer).
  */
-export function useRounds(total: number, onDone: GameProps["onDone"], cheerMs: number | ((round: number) => number) = CHEER_MS) {
+export function useRounds(
+	total: number,
+	onDone: GameProps['onDone'],
+	cheerMs: number | ((round: number) => number) = CHEER_MS,
+) {
 	const [round, setRound] = useState(0);
 	const [got, setGot] = useState(false);
 	const [missed, setMissed] = useState(false);
@@ -90,14 +94,17 @@ export function useRounds(total: number, onDone: GameProps["onDone"], cheerMs: n
 			if (!ok) return setMissed(true);
 			setGot(true);
 			if (!missed) firstTry.current += 1;
-			timer.current = setTimeout(() => {
-				if (round + 1 >= total) onDone(total, firstTry.current);
-				else {
-					setRound(round + 1);
-					setGot(false);
-					setMissed(false);
-				}
-			}, typeof cheerMs === "function" ? cheerMs(round) : cheerMs);
+			timer.current = setTimeout(
+				() => {
+					if (round + 1 >= total) onDone(total, firstTry.current);
+					else {
+						setRound(round + 1);
+						setGot(false);
+						setMissed(false);
+					}
+				},
+				typeof cheerMs === 'function' ? cheerMs(round) : cheerMs,
+			);
 		},
 	};
 }

@@ -1,10 +1,10 @@
-import { useEffect, useRef, type CSSProperties } from "react";
-import { dayKey, timeLabel } from "../../lib/dates";
-import { eventPaint, eventsOn, isOver } from "../../lib/events";
-import { allDayOn, placeDay } from "../../lib/timegrid";
-import { useNow } from "../../lib/useNow";
-import type { CalEvent, Member } from "../../lib/types";
-import s from "./DayTimeline.module.css";
+import { useEffect, useRef, type CSSProperties } from 'react';
+import { dayKey, timeLabel } from '../../lib/dates';
+import { eventPaint, eventsOn, isOver } from '../../lib/events';
+import { allDayOn, placeDay } from '../../lib/timegrid';
+import { useNow } from '../../lib/useNow';
+import type { CalEvent, Member } from '../../lib/types';
+import s from './DayTimeline.module.css';
 
 interface Props {
 	day: Date;
@@ -17,7 +17,7 @@ interface Props {
 /** "8 AM" with a small "AM", and "Noon". */
 function HourName({ h }: { h: number }) {
 	if (h === 12) return <>Noon</>;
-	const [n, ampm] = new Date(2000, 0, 1, h).toLocaleTimeString([], { hour: "numeric" }).split(" ");
+	const [n, ampm] = new Date(2000, 0, 1, h).toLocaleTimeString([], { hour: 'numeric' }).split(' ');
 	return (
 		<>
 			{n} {ampm && <small>{ampm}</small>}
@@ -44,7 +44,9 @@ export default function DayTimeline({ day, today, events, members, onOpen }: Pro
 		const frame = requestAnimationFrame(() => {
 			const el = root.current;
 			// In that order of preference (one combined selector would take whichever comes first on the page).
-			const target = [`.${s.now}`, `.${s.event}`, '[data-hour="8"]'].map((q) => el?.querySelector<HTMLElement>(q)).find(Boolean);
+			const target = [`.${s.now}`, `.${s.event}`, '[data-hour="8"]']
+				.map((q) => el?.querySelector<HTMLElement>(q))
+				.find(Boolean);
 			if (!el || !target) return;
 			const middle = el.getBoundingClientRect().top + el.clientHeight / 2;
 			el.scrollTop += target.getBoundingClientRect().top - middle;
@@ -63,8 +65,12 @@ export default function DayTimeline({ day, today, events, members, onOpen }: Pro
 						const paint = eventPaint(ev, members);
 						return (
 							<li key={ev.id}>
-								<button className={s.allDayEvent} style={{ ...paint.vars, color: paint.text } as CSSProperties}
-									data-busy={ev.busy || undefined} onClick={() => onOpen(ev)}>
+								<button
+									className={s.allDayEvent}
+									style={{ ...paint.vars, color: paint.text } as CSSProperties}
+									data-busy={ev.busy || undefined}
+									onClick={() => onOpen(ev)}
+								>
 									{ev.title}
 								</button>
 							</li>
@@ -88,7 +94,7 @@ export default function DayTimeline({ day, today, events, members, onOpen }: Pro
 						return (
 							<button
 								key={p.ev.id}
-								className={`${s.event} ${short ? s.short : ""} ${isOver(p.ev, now) ? s.past : ""}`}
+								className={`${s.event} ${short ? s.short : ''} ${isOver(p.ev, now) ? s.past : ''}`}
 								style={
 									{
 										...eventPaint(p.ev, members).vars,
@@ -115,11 +121,13 @@ export default function DayTimeline({ day, today, events, members, onOpen }: Pro
 						);
 					})}
 					{/* The time now, moving down every minute. */}
-					{isToday && <div className={s.now} style={{ top: `${(nowHours / 24) * 100}%` }} aria-label={`Now, ${timeLabel(now)}`} />}
+					{isToday && (
+						<div className={s.now} style={{ top: `${(nowHours / 24) * 100}%` }} aria-label={`Now, ${timeLabel(now)}`} />
+					)}
 				</div>
 				{isToday && (
 					<span className={s.nowPill} style={{ top: `${(nowHours / 24) * 100}%` }}>
-						{timeLabel(now).replace(/\s?[AP]M$/i, "")}
+						{timeLabel(now).replace(/\s?[AP]M$/i, '')}
 					</span>
 				)}
 			</div>

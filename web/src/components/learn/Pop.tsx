@@ -1,23 +1,23 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Pic } from "./art";
-import { Board } from "./parts";
-import { ANIMALS, type Animal } from "./things";
-import { any, at, CHEER_MS, fresh, type GameProps, useLater } from "./rounds";
-import g from "./LearnPop.module.css";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Pic } from './art';
+import { Board } from './parts';
+import { ANIMALS, type Animal } from './things';
+import { any, at, CHEER_MS, fresh, type GameProps, useLater } from './rounds';
+import g from './LearnPop.module.css';
 
 /**
  * Each level: what counts (any bubble; one with an animal in; the animal on the sign; the colour on the
  * sign), how many to pop, how often a new bubble's one that counts, the most up at once, a new one every
  * so often (ms), and how long one takes to float away (ms). Every play starts with a burst of bubbles.
  */
-type Find = "any" | "anyAnimal" | "animal" | "colour";
+type Find = 'any' | 'anyAnimal' | 'animal' | 'colour';
 const LEVELS: { find: Find; total: number; share: number; most: number; every: number; rise: number }[] = [
-	{ find: "any", total: 12, share: 1, most: 8, every: 700, rise: 9000 },
-	{ find: "anyAnimal", total: 8, share: 0.55, most: 6, every: 800, rise: 8500 },
-	{ find: "animal", total: 6, share: 0.4, most: 6, every: 800, rise: 8000 },
-	{ find: "colour", total: 8, share: 0.4, most: 6, every: 800, rise: 8000 },
-	{ find: "animal", total: 8, share: 0.35, most: 7, every: 650, rise: 7000 },
-	{ find: "colour", total: 10, share: 0.35, most: 8, every: 600, rise: 6500 },
+	{ find: 'any', total: 12, share: 1, most: 8, every: 700, rise: 9000 },
+	{ find: 'anyAnimal', total: 8, share: 0.55, most: 6, every: 800, rise: 8500 },
+	{ find: 'animal', total: 6, share: 0.4, most: 6, every: 800, rise: 8000 },
+	{ find: 'colour', total: 8, share: 0.4, most: 6, every: 800, rise: 8000 },
+	{ find: 'animal', total: 8, share: 0.35, most: 7, every: 650, rise: 7000 },
+	{ find: 'colour', total: 10, share: 0.35, most: 8, every: 600, rise: 6500 },
 ];
 /** Bubbles at the start, a moment apart, before the steady stream. */
 const BURST = 7;
@@ -27,11 +27,11 @@ const HINT_SIZE = 1.35;
 const HINT_SLOW = 1.8;
 
 const COLOURS = [
-	{ id: "red", name: "red", fill: "#ff5a5a" },
-	{ id: "blue", name: "blue", fill: "#4a90ff" },
-	{ id: "yellow", name: "yellow", fill: "#ffd23a" },
-	{ id: "green", name: "green", fill: "#4cc76a" },
-	{ id: "purple", name: "purple", fill: "#a66bff" },
+	{ id: 'red', name: 'red', fill: '#ff5a5a' },
+	{ id: 'blue', name: 'blue', fill: '#4a90ff' },
+	{ id: 'yellow', name: 'yellow', fill: '#ffd23a' },
+	{ id: 'green', name: 'green', fill: '#4cc76a' },
+	{ id: 'purple', name: 'purple', fill: '#a66bff' },
 ] as const;
 type Colour = (typeof COLOURS)[number];
 
@@ -64,14 +64,17 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 	const rules = at(LEVELS, level);
 	const { total, find } = rules;
 	// What to find this play, and the animals this play's bubbles hold.
-	const animals = useMemo(() => fresh("pop.animals", ANIMALS, 6, (a) => a.id), []);
-	const wanted = useMemo(() => (find === "colour" ? any(COLOURS) : find === "animal" ? animals[0] : null), [find, animals]);
+	const animals = useMemo(() => fresh('pop.animals', ANIMALS, 6, (a) => a.id), []);
+	const wanted = useMemo(
+		() => (find === 'colour' ? any(COLOURS) : find === 'animal' ? animals[0] : null),
+		[find, animals],
+	);
 	const [bubbles, setBubbles] = useState<Bubble[]>([]);
 	const [got, setGot] = useState(0);
 	const [missed, setMissed] = useState(0);
 	const [finished, setFinished] = useState(false);
 	// Level 2 starts with one show-me bubble with an animal in, on its own; the rest come once it's gone.
-	const [started, setStarted] = useState(find !== "anyAnimal");
+	const [started, setStarted] = useState(find !== 'anyAnimal');
 	const nextId = useRef(0);
 	const later = useLater();
 
@@ -79,20 +82,35 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 	function blow(head = 0): Bubble {
 		const counts = Math.random() < rules.share;
 		const id = nextId.current++;
-		const base = { id, to: 0.2 + Math.random() * 0.8, wobble: 0.6 + Math.random() * 0.8, size: 0.85 + Math.random() * 0.3, head, popped: false };
-		if (find === "colour") return { ...base, colour: counts ? (wanted as Colour) : any(COLOURS.filter((c) => c !== wanted)) };
-		if (find === "animal") {
+		const base = {
+			id,
+			to: 0.2 + Math.random() * 0.8,
+			wobble: 0.6 + Math.random() * 0.8,
+			size: 0.85 + Math.random() * 0.3,
+			head,
+			popped: false,
+		};
+		if (find === 'colour')
+			return { ...base, colour: counts ? (wanted as Colour) : any(COLOURS.filter((c) => c !== wanted)) };
+		if (find === 'animal') {
 			// Not the one: mostly another animal, sometimes just a bubble.
-			return counts ? { ...base, animal: wanted as Animal } : Math.random() < 0.7 ? { ...base, animal: any(animals.slice(1)) } : base;
+			return counts
+				? { ...base, animal: wanted as Animal }
+				: Math.random() < 0.7
+					? { ...base, animal: any(animals.slice(1)) }
+					: base;
 		}
-		if (find === "anyAnimal") return counts ? { ...base, animal: any(animals) } : base;
+		if (find === 'anyAnimal') return counts ? { ...base, animal: any(animals) } : base;
 		return base;
 	}
 
 	// Level 2: the show-me bubble first.
 	useEffect(() => {
 		if (started) return;
-		const show = setTimeout(() => setBubbles([{ ...blow(), animal: any(animals), size: HINT_SIZE, to: 0.45, hint: true }]), 400);
+		const show = setTimeout(
+			() => setBubbles([{ ...blow(), animal: any(animals), size: HINT_SIZE, to: 0.45, hint: true }]),
+			400,
+		);
 		return () => clearTimeout(show);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
@@ -101,8 +119,15 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 	useEffect(() => {
 		if (finished || !started) return;
 		const burst = Array.from({ length: BURST }, (_, i) =>
-			setTimeout(() => setBubbles((all) => [...all, blow(rules.rise * (0.3 + Math.random() * 0.15))]), 300 + i * BURST_GAP));
-		const more = setInterval(() => setBubbles((all) => (all.filter((b) => !b.popped).length < rules.most ? [...all, blow()] : all)), rules.every);
+			setTimeout(
+				() => setBubbles((all) => [...all, blow(rules.rise * (0.3 + Math.random() * 0.15))]),
+				300 + i * BURST_GAP,
+			),
+		);
+		const more = setInterval(
+			() => setBubbles((all) => (all.filter((b) => !b.popped).length < rules.most ? [...all, blow()] : all)),
+			rules.every,
+		);
 		return () => {
 			burst.forEach(clearTimeout);
 			clearInterval(more);
@@ -111,7 +136,8 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 	}, [finished, started, level]);
 
 	const counts = (b: Bubble) =>
-		find === "any" || (find === "anyAnimal" ? !!b.animal : find === "colour" ? b.colour === wanted : b.animal === wanted);
+		find === 'any' ||
+		(find === 'anyAnimal' ? !!b.animal : find === 'colour' ? b.colour === wanted : b.animal === wanted);
 
 	function pop(b: Bubble) {
 		if (b.popped || finished) return;
@@ -141,32 +167,64 @@ export default function Pop({ level, onDone, onBack }: GameProps) {
 					<div className={g.popSky}>
 						{/* What to find, on a sign at the top. */}
 						{wanted && (
-							<div className={g.popSign} aria-label={find === "colour" ? `Pop the ${(wanted as Colour).name} ones` : `Pop the ${(wanted as Animal).name}s`}>
+							<div
+								className={g.popSign}
+								aria-label={
+									find === 'colour' ? `Pop the ${(wanted as Colour).name} ones` : `Pop the ${(wanted as Animal).name}s`
+								}
+							>
 								<span className={g.popSignWord}>Pop</span>
-								{find === "colour"
-									? <span className={g.popSwatch} style={{ background: (wanted as Colour).fill }} />
-									: <span className={g.popSignPic}><Pic id={(wanted as Animal).id} /></span>}
+								{find === 'colour' ? (
+									<span className={g.popSwatch} style={{ background: (wanted as Colour).fill }} />
+								) : (
+									<span className={g.popSignPic}>
+										<Pic id={(wanted as Animal).id} />
+									</span>
+								)}
 							</div>
 						)}
 						{/* Sprig, blowing them, at the bottom. */}
-						<img className={g.popSprig} src="/pop/sprig.webp" alt="" draggable={false} style={{ height: Math.min(box.h * 0.38, 260) }} />
+						<img
+							className={g.popSprig}
+							src="/pop/sprig.webp"
+							alt=""
+							draggable={false}
+							style={{ height: Math.min(box.h * 0.38, 260) }}
+						/>
 						{bubbles.map((b) => (
-							<button key={b.id} type="button" className={`${g.bubble} ${b.hint ? g.bubbleHint : ""} ${b.popped ? g.bubblePopped : ""}`}
-								aria-label={b.animal ? `A bubble with a ${b.animal.name}` : b.colour ? `A ${b.colour.name} bubble` : "A bubble"}
-								style={{
-									"--size": `${size * b.size}px`, "--to": `${b.to * (box.w - size)}px`, "--rise": `${box.h + size}px`,
-									"--time": `${b.hint ? rules.rise * HINT_SLOW : rules.rise}ms`, "--wobble": `${b.wobble * 2.4}s`, animationDelay: `-${b.head}ms`,
-								} as CSSProperties}
-								onPointerDown={() => pop(b)} onClick={(e) => e.detail === 0 && pop(b)}
+							<button
+								key={b.id}
+								type="button"
+								className={`${g.bubble} ${b.hint ? g.bubbleHint : ''} ${b.popped ? g.bubblePopped : ''}`}
+								aria-label={
+									b.animal ? `A bubble with a ${b.animal.name}` : b.colour ? `A ${b.colour.name} bubble` : 'A bubble'
+								}
+								style={
+									{
+										'--size': `${size * b.size}px`,
+										'--to': `${b.to * (box.w - size)}px`,
+										'--rise': `${box.h + size}px`,
+										'--time': `${b.hint ? rules.rise * HINT_SLOW : rules.rise}ms`,
+										'--wobble': `${b.wobble * 2.4}s`,
+										animationDelay: `-${b.head}ms`,
+									} as CSSProperties
+								}
+								onPointerDown={() => pop(b)}
+								onClick={(e) => e.detail === 0 && pop(b)}
 								onAnimationEnd={(e) => {
 									// Floated away without a pop: gone (another one's on its way).
-									if (!e.animationName.includes("floatAway")) return;
+									if (!e.animationName.includes('floatAway')) return;
 									setBubbles((all) => all.filter((x) => x.id !== b.id));
 									if (b.hint) setStarted(true);
-								}}>
+								}}
+							>
 								<span className={g.bubbleWobble}>
 									{b.colour && <span className={g.bubbleFill} style={{ background: b.colour.fill }} />}
-									{b.animal && <span className={g.bubbleAnimal}><Pic id={b.animal.id} /></span>}
+									{b.animal && (
+										<span className={g.bubbleAnimal}>
+											<Pic id={b.animal.id} />
+										</span>
+									)}
 									<img className={g.bubbleRing} src="/pop/bubble.webp" alt="" draggable={false} />
 								</span>
 							</button>

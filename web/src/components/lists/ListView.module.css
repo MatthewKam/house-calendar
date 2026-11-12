@@ -24,7 +24,7 @@
 	background: var(--surface);
 	color: var(--muted);
 }
-.choose[aria-pressed="true"] {
+.choose[aria-pressed='true'] {
 	background: var(--accent);
 	border-color: var(--accent);
 	color: var(--on-accent);
@@ -44,10 +44,10 @@
 	border-radius: var(--radius-round);
 	background: var(--surface);
 }
-.pick[aria-pressed="false"] {
+.pick[aria-pressed='false'] {
 	color: var(--muted);
 }
-.pick[aria-pressed="true"] .box {
+.pick[aria-pressed='true'] .box {
 	background: var(--accent);
 	border-color: var(--accent);
 	color: var(--on-accent);

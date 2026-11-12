@@ -39,9 +39,15 @@
 	animation: shake 0.35s;
 }
 @keyframes shake {
-	25% { transform: translateX(-0.6rem); }
-	50% { transform: translateX(0.6rem); }
-	75% { transform: translateX(-0.3rem); }
+	25% {
+		transform: translateX(-0.6rem);
+	}
+	50% {
+		transform: translateX(0.6rem);
+	}
+	75% {
+		transform: translateX(-0.3rem);
+	}
 }
 .error {
 	margin: 0;

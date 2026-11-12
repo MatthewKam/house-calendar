@@ -152,7 +152,7 @@
 	pointer-events: none;
 }
 .now::before {
-	content: "";
+	content: '';
 	position: absolute;
 	left: -0.3rem;
 	top: 50%;

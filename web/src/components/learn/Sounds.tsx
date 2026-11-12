@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { Pic } from "./art";
-import { Board, fit, Hear, SLIDE_MS } from "./parts";
-import { animalsUpTo, type Animal } from "./things";
-import { at, fresh, pick, shuffle, useRounds, type GameProps } from "./rounds";
-import { noise } from "./sound";
-import s from "./Learn.module.css";
-import g from "./LearnSounds.module.css";
+import { useEffect, useMemo, useState } from 'react';
+import { Pic } from './art';
+import { Board, fit, Hear, SLIDE_MS } from './parts';
+import { animalsUpTo, type Animal } from './things';
+import { at, fresh, pick, shuffle, useRounds, type GameProps } from './rounds';
+import { noise } from './sound';
+import s from './Learn.module.css';
+import g from './LearnSounds.module.css';
 
 /** Animals to choose from, by level. */
 const CHOICES = [2, 3, 3, 4, 4, 6];
@@ -30,7 +30,13 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 		const pool = animalsUpTo(level);
 		return fresh(`sounds.${level}`, pool, total, (a) => a.id).map((answer) => ({
 			answer,
-			choices: shuffle([answer, ...pick(pool.filter((a) => a.id !== answer.id), at(CHOICES, level) - 1)]),
+			choices: shuffle([
+				answer,
+				...pick(
+					pool.filter((a) => a.id !== answer.id),
+					at(CHOICES, level) - 1,
+				),
+			]),
 		}));
 	}, [level, total]);
 	const { answer, choices } = plan[rounds.round];
@@ -54,14 +60,24 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 		setSaying(a.id);
 		setTapped((t) => ({ id: a.id, n: (t?.n ?? 0) + 1 }));
 		const from = Date.now();
-		noise(a, () => setTimeout(() => {
-			setSaying((now) => (now === a.id ? null : now));
-			if (right) rounds.tap(true);
-		}, Math.max(0, 1000 - (Date.now() - from))));
+		noise(a, () =>
+			setTimeout(
+				() => {
+					setSaying((now) => (now === a.id ? null : now));
+					if (right) rounds.tap(true);
+				},
+				Math.max(0, 1000 - (Date.now() - from)),
+			),
+		);
 	}
 
 	return (
-		<Board onBack={onBack} total={total} done={rounds.round + (rounds.got ? 1 : 0)} cheer={rounds.got && last && "slide"}>
+		<Board
+			onBack={onBack}
+			total={total}
+			done={rounds.round + (rounds.got ? 1 : 0)}
+			cheer={rounds.got && last && 'slide'}
+		>
 			{(box) => {
 				// The noise as big as fits beside its play button: on one line, or (a long one, like
 				// cock-a-doodle-doo, on a narrow screen) more, with room kept for them.
@@ -69,7 +85,8 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 				const room = box.w - button - 32;
 				const word = `${answer.says}!`;
 				// As few lines as keep it big (it breaks at its hyphens and spaces, so a line can run a letter long).
-				const sizeFor = (n: number) => Math.min(button * (n === 1 ? 0.85 : 0.7), room / ((Math.ceil(word.length / n) + (n > 1 ? 1 : 0)) * 0.6));
+				const sizeFor = (n: number) =>
+					Math.min(button * (n === 1 ? 0.85 : 0.7), room / ((Math.ceil(word.length / n) + (n > 1 ? 1 : 0)) * 0.6));
 				const lines = [1, 2, 3].find((n) => sizeFor(n) >= 30) ?? 3;
 				const font = Math.floor(sizeFor(lines));
 				// On a tablet or bigger, more room between the word and the animals.
@@ -79,24 +96,42 @@ export default function Sounds({ level, onDone, onBack }: GameProps) {
 				// phone, the grid that fits best.
 				const wide = box.w > box.h || box.w >= 600;
 				const grid = wide
-					? { cols: choices.length, size: Math.floor(Math.min((box.w - 16 * (choices.length - 1)) / choices.length, box.h - prompt - 24, 340)) }
+					? {
+							cols: choices.length,
+							size: Math.floor(
+								Math.min((box.w - 16 * (choices.length - 1)) / choices.length, box.h - prompt - 24, 340),
+							),
+						}
 					: fit(choices.length, { w: box.w, h: box.h - prompt - 24 }, { gap: 16, most: 300 });
 				return (
 					// A new one each round, sliding in; got (not the last), it slides away.
-					<div key={rounds.round} className={`${s.column} ${rounds.got && !last ? s.slideAway : ""}`}>
+					<div key={rounds.round} className={`${s.column} ${rounds.got && !last ? s.slideAway : ''}`}>
 						{/* The noise as a word, and the play button beside it if they need to hear it. */}
 						<div className={`${g.sayRow} ${s.slideIn}`} style={{ height: prompt - space, marginBottom: space }}>
-							<span className={g.sayWord} style={{ fontSize: font, maxWidth: room, whiteSpace: lines === 1 ? "nowrap" : "normal" }}>{word}</span>
+							<span
+								className={g.sayWord}
+								style={{ fontSize: font, maxWidth: room, whiteSpace: lines === 1 ? 'nowrap' : 'normal' }}
+							>
+								{word}
+							</span>
 							<Hear size={button} onTap={() => noise(answer)} label="Hear it" />
 						</div>
-						<div className={`${s.grid} ${s.slideIn}`} style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 16 }}>
+						<div
+							className={`${s.grid} ${s.slideIn}`}
+							style={{ gridTemplateColumns: `repeat(${grid.cols}, ${grid.size}px)`, gap: 16 }}
+						>
 							{choices.map((a) => {
 								const isTapped = tapped?.id === a.id;
 								const right = (found || rounds.got) && a.id === answer.id;
 								return (
-									<button key={`${a.id}-${isTapped ? tapped.n : 0}`} type="button" aria-label={a.name}
-										className={`${g.tile} ${right ? `${g.tileRight} ${s.hop}` : isTapped ? s.wiggle : ""}`}
-										style={{ width: grid.size, height: grid.size }} onClick={() => tap(a)}>
+									<button
+										key={`${a.id}-${isTapped ? tapped.n : 0}`}
+										type="button"
+										aria-label={a.name}
+										className={`${g.tile} ${right ? `${g.tileRight} ${s.hop}` : isTapped ? s.wiggle : ''}`}
+										style={{ width: grid.size, height: grid.size }}
+										onClick={() => tap(a)}
+									>
 										<Pic id={a.id} />
 										{saying === a.id && <span className={g.tileSays}>{a.says}!</span>}
 									</button>

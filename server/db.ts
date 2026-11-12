@@ -6,7 +6,7 @@ export type DB = Database.Database;
 
 // Each entry runs once, in order. Never edit a shipped migration; add a new one.
 const migrations: string[] = [
-  `
+	`
   CREATE TABLE members (
     id          TEXT PRIMARY KEY,
     name        TEXT NOT NULL,
@@ -59,14 +59,14 @@ const migrations: string[] = [
 
   INSERT INTO calendars (id, provider, name) VALUES ('local', 'local', 'On this display');
   `,
-  // Synced calendars are matched by their remote id; sync replaces a calendar's events at once.
-  `
+	// Synced calendars are matched by their remote id; sync replaces a calendar's events at once.
+	`
   CREATE UNIQUE INDEX calendars_remote ON calendars(provider, remote_id) WHERE remote_id IS NOT NULL;
   CREATE INDEX events_calendar ON events(calendar_id);
   `,
-  // Who a synced event is for. Kept per series (one iCloud resource, every repeat of it) and
-  // outside the events table, which each sync replaces.
-  `
+	// Who a synced event is for. Kept per series (one iCloud resource, every repeat of it) and
+	// outside the events table, which each sync replaces.
+	`
   ALTER TABLE events ADD COLUMN series_id TEXT;
 
   CREATE TABLE event_people (
@@ -80,14 +80,14 @@ const migrations: string[] = [
     PRIMARY KEY (calendar_id, series_id)
   );
   `,
-  // Per synced calendar: hide it from the wall, and its color in Apple Calendar (to tell
-  // same-named calendars apart). calendars.member_id already links a calendar to a person.
-  `
+	// Per synced calendar: hide it from the wall, and its color in Apple Calendar (to tell
+	// same-named calendars apart). calendars.member_id already links a calendar to a person.
+	`
   ALTER TABLE calendars ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0;
   ALTER TABLE calendars ADD COLUMN color TEXT;
   `,
-  // Chores: who does each one and on which weekdays, plus a row per day it was done.
-  `
+	// Chores: who does each one and on which weekdays, plus a row per day it was done.
+	`
   CREATE TABLE chores (
     id          TEXT PRIMARY KEY,
     title       TEXT NOT NULL,
@@ -106,10 +106,10 @@ const migrations: string[] = [
     PRIMARY KEY (chore_id, day)
   );
   `,
-  // Chores for everyone (member_id NULL), so each tick now records who did it. SQLite can't relax
-  // NOT NULL in place, so both tables are rebuilt. Order matters: the new tick table points at the
-  // new chores table before the old ones are dropped, so no delete cascades into the copied rows.
-  `
+	// Chores for everyone (member_id NULL), so each tick now records who did it. SQLite can't relax
+	// NOT NULL in place, so both tables are rebuilt. Order matters: the new tick table points at the
+	// new chores table before the old ones are dropped, so no delete cascades into the copied rows.
+	`
   CREATE TABLE chores_new (
     id          TEXT PRIMARY KEY,
     title       TEXT NOT NULL,
@@ -137,10 +137,10 @@ const migrations: string[] = [
   ALTER TABLE chores_new RENAME TO chores;
   ALTER TABLE chore_done_new RENAME TO chore_done;
   `,
-  // Events can be for several people. events.member_id is superseded by event_members (cleared
-  // here, kept only because SQLite can't drop a foreign-key column in place), and a series' pick
-  // becomes a JSON list of member ids, where [] means everyone / no one in particular.
-  `
+	// Events can be for several people. events.member_id is superseded by event_members (cleared
+	// here, kept only because SQLite can't drop a foreign-key column in place), and a series' pick
+	// becomes a JSON list of member ids, where [] means everyone / no one in particular.
+	`
   CREATE TABLE event_members (
     event_id    TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -164,11 +164,11 @@ const migrations: string[] = [
   DROP TABLE event_people;
   ALTER TABLE event_people_new RENAME TO event_people;
   `,
-  // iCloud Reminders, synced by an iPhone Shortcut (Apple offers no API a Raspberry Pi can use).
-  // Each phone sends a snapshot of its lists; changes made on the wall wait in reminder_outbox
-  // until a phone that has that list applies them. Lists and items are matched by name, because
-  // Shortcuts doesn't expose Reminders' internal ids.
-  `
+	// iCloud Reminders, synced by an iPhone Shortcut (Apple offers no API a Raspberry Pi can use).
+	// Each phone sends a snapshot of its lists; changes made on the wall wait in reminder_outbox
+	// until a phone that has that list applies them. Lists and items are matched by name, because
+	// Shortcuts doesn't expose Reminders' internal ids.
+	`
   CREATE TABLE reminder_items (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     list        TEXT NOT NULL,
@@ -198,16 +198,16 @@ const migrations: string[] = [
     claimed_at  TEXT
   );
   `,
-  // "Chores" became "Tasks". Renaming keeps every task and its tick history; foreign keys follow.
-  `
+	// "Chores" became "Tasks". Renaming keeps every task and its tick history; foreign keys follow.
+	`
   ALTER TABLE chores RENAME TO tasks;
   ALTER TABLE chore_done RENAME TO task_done;
   ALTER TABLE task_done RENAME COLUMN chore_id TO task_id;
   `,
-  // Tasks get a time of day, a category, and required-or-extra. Required tasks fill the day's bar;
-  // extras earn points, recorded on each tick so later changes to a task don't rewrite history.
-  // Existing tasks become everyday, required, any time: the bar works as it did.
-  `
+	// Tasks get a time of day, a category, and required-or-extra. Required tasks fill the day's bar;
+	// extras earn points, recorded on each tick so later changes to a task don't rewrite history.
+	// Existing tasks become everyday, required, any time: the bar works as it did.
+	`
   ALTER TABLE tasks ADD COLUMN time TEXT CHECK (time IN ('morning', 'evening'));
   ALTER TABLE tasks ADD COLUMN category TEXT NOT NULL DEFAULT 'everyday'
     CHECK (category IN ('non_negotiable', 'chores', 'everyday', 'bonus'));
@@ -215,18 +215,18 @@ const migrations: string[] = [
   ALTER TABLE tasks ADD COLUMN points INTEGER NOT NULL DEFAULT 0;
   ALTER TABLE task_done ADD COLUMN points INTEGER NOT NULL DEFAULT 0;
   `,
-  // "Everyday" is gone: required ones become Daily (also always required), extras become Chores.
-  // Each person can have a reward for reaching a number of stars in a month.
-  `
+	// "Everyday" is gone: required ones become Daily (also always required), extras become Chores.
+	// Each person can have a reward for reaching a number of stars in a month.
+	`
   UPDATE tasks SET category = 'non_negotiable' WHERE category = 'everyday' AND required = 1;
   UPDATE tasks SET category = 'chores' WHERE category = 'everyday';
   ALTER TABLE members ADD COLUMN reward_title TEXT;
   ALTER TABLE members ADD COLUMN reward_goal INTEGER;
   `,
-  // Rewards get their own table: several per person, each either resetting monthly or counting
-  // stars from when it was set until it's earned (then marked as given). The one-per-person
-  // reward on members moves here as a monthly reward.
-  `
+	// Rewards get their own table: several per person, each either resetting monthly or counting
+	// stars from when it was set until it's earned (then marked as given). The one-per-person
+	// reward on members moves here as a monthly reward.
+	`
   CREATE TABLE rewards (
     id          TEXT PRIMARY KEY,
     member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -245,17 +245,17 @@ const migrations: string[] = [
   ALTER TABLE members DROP COLUMN reward_title;
   ALTER TABLE members DROP COLUMN reward_goal;
   `,
-  // An optional icon (an emoji) shown before a task's name.
-  `
+	// An optional icon (an emoji) shown before a task's name.
+	`
   ALTER TABLE tasks ADD COLUMN icon TEXT;
   `,
-  // Where an event is (from iCloud's LOCATION, or typed on the wall), for travel times.
-  `
+	// Where an event is (from iCloud's LOCATION, or typed on the wall), for travel times.
+	`
   ALTER TABLE events ADD COLUMN location TEXT;
   `,
-  // "Time to leave" alerts. Not tied to events by a foreign key: synced events are replaced on
-  // every sync (same ids), which would delete the alerts with them.
-  `
+	// "Time to leave" alerts. Not tied to events by a foreign key: synced events are replaced on
+	// every sync (same ids), which would delete the alerts with them.
+	`
   CREATE TABLE leave_alerts (
     id            TEXT PRIMARY KEY,
     event_id      TEXT NOT NULL,
@@ -274,9 +274,9 @@ const migrations: string[] = [
   );
   CREATE INDEX leave_alerts_remind ON leave_alerts(remind_at);
   `,
-  // Edits to iCloud events made on the wall, waiting to be sent. One row per occurrence: a second
-  // edit before sending merges into the first. The wall shows these on top of each sync's snapshot.
-  `
+	// Edits to iCloud events made on the wall, waiting to be sent. One row per occurrence: a second
+	// edit before sending merges into the first. The wall shows these on top of each sync's snapshot.
+	`
   CREATE TABLE event_outbox (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     calendar_id TEXT NOT NULL,
@@ -299,8 +299,8 @@ const migrations: string[] = [
     UNIQUE (calendar_id, remote_id)
   );
   `,
-  // New events made on the wall can go to iCloud too ('create'), into calendars that take changes.
-  `
+	// New events made on the wall can go to iCloud too ('create'), into calendars that take changes.
+	`
   ALTER TABLE calendars ADD COLUMN writable INTEGER NOT NULL DEFAULT 1;
   CREATE TABLE event_outbox_new (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -322,8 +322,8 @@ const migrations: string[] = [
   DROP TABLE event_outbox;
   ALTER TABLE event_outbox_new RENAME TO event_outbox;
   `,
-  // Reminders can be renamed from the wall (to put an icon at the start of an item's name).
-  `
+	// Reminders can be renamed from the wall (to put an icon at the start of an item's name).
+	`
   CREATE TABLE reminder_outbox_new (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     op          TEXT NOT NULL CHECK (op IN ('add', 'complete', 'uncomplete', 'rename')),
@@ -340,10 +340,10 @@ const migrations: string[] = [
   DROP TABLE reminder_outbox;
   ALTER TABLE reminder_outbox_new RENAME TO reminder_outbox;
   `,
-  // Rewards for several kids together (their stars pooled, or each reaching the goal), ones that
-  // start again once given, and a history of every reward earned. rewards.member_id stays as the
-  // first kid; reward_members says who it's for.
-  `
+	// Rewards for several kids together (their stars pooled, or each reaching the goal), ones that
+	// start again once given, and a history of every reward earned. rewards.member_id stays as the
+	// first kid; reward_members says who it's for.
+	`
   CREATE TABLE reward_members (
     reward_id   TEXT NOT NULL REFERENCES rewards(id) ON DELETE CASCADE,
     member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -374,8 +374,8 @@ const migrations: string[] = [
     SELECT lower(hex(randomblob(16))), id, start_day, title, json_array(member_id), goal, goal,
       substr(claimed_at, 1, 10), claimed_at FROM rewards WHERE claimed_at IS NOT NULL;
   `,
-  // The photo album (and screen saver). Files live in data/photos: <id>.jpg and <id>.thumb.jpg.
-  `
+	// The photo album (and screen saver). Files live in data/photos: <id>.jpg and <id>.thumb.jpg.
+	`
   CREATE TABLE photos (
     id            TEXT PRIMARY KEY,
     width         INTEGER NOT NULL,
@@ -390,9 +390,9 @@ const migrations: string[] = [
     created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
   `,
-  // The day's joke, quote and "on this day" events, fetched once a day and kept, so they stay the
-  // same all day (and still show if the internet drops).
-  `
+	// The day's joke, quote and "on this day" events, fetched once a day and kept, so they stay the
+	// same all day (and still show if the internet drops).
+	`
   CREATE TABLE daily_items (
     day   TEXT NOT NULL,
     kind  TEXT NOT NULL,
@@ -400,8 +400,8 @@ const migrations: string[] = [
     PRIMARY KEY (day, kind)
   );
   `,
-  // The family PIN (hashed) and the devices signed in with it.
-  `
+	// The family PIN (hashed) and the devices signed in with it.
+	`
   CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
     pin_hash  TEXT NOT NULL,
@@ -416,14 +416,14 @@ const migrations: string[] = [
     last_seen   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
   `,
-  // A master PIN (hashed): the one that can change the family PIN, and always signs in.
-  `
+	// A master PIN (hashed): the one that can change the family PIN, and always signs in.
+	`
   ALTER TABLE auth ADD COLUMN master_hash TEXT;
   `,
-  // Rewards become jars: each kid's stars sit in their bucket until they put them in a jar.
-  // Monthly rewards become ordinary jars; every jar starts empty (stars already earned stay in the
-  // buckets). A jar can have a deadline; missed ones wait for the kids to move their stars out.
-  `
+	// Rewards become jars: each kid's stars sit in their bucket until they put them in a jar.
+	// Monthly rewards become ordinary jars; every jar starts empty (stars already earned stay in the
+	// buckets). A jar can have a deadline; missed ones wait for the kids to move their stars out.
+	`
   UPDATE rewards SET mode = 'until_reached';
   ALTER TABLE rewards ADD COLUMN deadline TEXT;
   ALTER TABLE rewards ADD COLUMN missed_at TEXT;
@@ -442,26 +442,26 @@ const migrations: string[] = [
   CREATE INDEX jar_stars_reward ON jar_stars (reward_id);
   CREATE INDEX jar_stars_member ON jar_stars (member_id);
   `,
-  // One-time tasks: due by this day (on the list from when they're added until they're done, or
-  // until this day ends). Null for tasks that repeat on their weekdays.
-  `
+	// One-time tasks: due by this day (on the list from when they're added until they're done, or
+	// until this day ends). Null for tasks that repeat on their weekdays.
+	`
   ALTER TABLE tasks ADD COLUMN due_by TEXT;
   `,
-  // Videos in the album: converted on the server (ready = 0 until then), with their length.
-  `
+	// Videos in the album: converted on the server (ready = 0 until then), with their length.
+	`
   ALTER TABLE photos ADD COLUMN kind TEXT NOT NULL DEFAULT 'photo' CHECK (kind IN ('photo', 'video'));
   ALTER TABLE photos ADD COLUMN seconds REAL;
   ALTER TABLE photos ADD COLUMN ready INTEGER NOT NULL DEFAULT 1;
   `,
-  // The parent lock: a device unlocked with the master PIN can change things (until this instant,
-  // or 'always' for a parent's own phone).
-  `
+	// The parent lock: a device unlocked with the master PIN can change things (until this instant,
+	// or 'always' for a parent's own phone).
+	`
   ALTER TABLE sessions ADD COLUMN parent_until TEXT;
   `,
-  // Google Calendar, connected by each person with their own Google account. A calendar now notes
-  // which account it comes from (source: 'icloud', or 'google:<connection id>'), so several
-  // accounts sync side by side; a calendar two accounts both see comes from the first.
-  `
+	// Google Calendar, connected by each person with their own Google account. A calendar now notes
+	// which account it comes from (source: 'icloud', or 'google:<connection id>'), so several
+	// accounts sync side by side; a calendar two accounts both see comes from the first.
+	`
   CREATE TABLE connections (
     id          TEXT PRIMARY KEY,
     provider    TEXT NOT NULL CHECK (provider IN ('google')),
@@ -476,9 +476,9 @@ const migrations: string[] = [
   ALTER TABLE calendars ADD COLUMN source TEXT;
   UPDATE calendars SET source = provider;
   `,
-  // iCloud, connected in the app: the Apple ID is the account, and its app-specific password the
-  // token (encrypted). Calendars from it are 'icloud:<connection id>'; the .env one stays 'icloud'.
-  `
+	// iCloud, connected in the app: the Apple ID is the account, and its app-specific password the
+	// token (encrypted). Calendars from it are 'icloud:<connection id>'; the .env one stays 'icloud'.
+	`
   CREATE TABLE connections_new (
     id          TEXT PRIMARY KEY,
     provider    TEXT NOT NULL CHECK (provider IN ('google','icloud')),
@@ -492,15 +492,15 @@ const migrations: string[] = [
   DROP TABLE connections;
   ALTER TABLE connections_new RENAME TO connections;
   `,
-  // Stages (stages.ts): a birthdate (YYYY-MM-DD) gives each person a stage; a guardian can choose
-  // a different one (null: from the birthdate).
-  `
+	// Stages (stages.ts): a birthdate (YYYY-MM-DD) gives each person a stage; a guardian can choose
+	// a different one (null: from the birthdate).
+	`
   ALTER TABLE members ADD COLUMN birthdate TEXT;
   ALTER TABLE members ADD COLUMN stage TEXT CHECK (stage IN ('little','early','middle','tween','teen','adult'));
   `,
-  // Moments (moments.ts): something good a parent caught, on a local day. `stars`: what it earned
-  // (0 for a Little kid's sticker), kept so later stage changes don't change past stars.
-  `
+	// Moments (moments.ts): something good a parent caught, on a local day. `stars`: what it earned
+	// (0 for a Little kid's sticker), kept so later stage changes don't change past stars.
+	`
   CREATE TABLE moments (
     id          TEXT PRIMARY KEY,
     member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -512,9 +512,9 @@ const migrations: string[] = [
   );
   CREATE INDEX moments_day ON moments(day);
   `,
-  // Goals (goals.ts): worked on from `started_day`, done when a parent confirms (`done_day`).
-  // `library_key`: the starter goal it came from (goalLibrary.ts), null for a parent's own.
-  `
+	// Goals (goals.ts): worked on from `started_day`, done when a parent confirms (`done_day`).
+	// `library_key`: the starter goal it came from (goalLibrary.ts), null for a parent's own.
+	`
   CREATE TABLE goals (
     id          TEXT PRIMARY KEY,
     member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -530,11 +530,11 @@ const migrations: string[] = [
   );
   CREATE INDEX goals_member ON goals(member_id);
   `,
-  // Moments and goals share six activities now (helpful, attitude, bravery, cleanliness, problem
-  // solving, self care), each moved to the closest. A parent picks the points: a moment's when it's
-  // caught, a goal's (`points`) when it's added, earned as `stars` when it's done. Starter goals a
-  // family never uses can be hidden from the library (`hidden_goals`).
-  `
+	// Moments and goals share six activities now (helpful, attitude, bravery, cleanliness, problem
+	// solving, self care), each moved to the closest. A parent picks the points: a moment's when it's
+	// caught, a goal's (`points`) when it's added, earned as `stars` when it's done. Starter goals a
+	// family never uses can be hidden from the library (`hidden_goals`).
+	`
   CREATE TABLE moments_new (
     id          TEXT PRIMARY KEY,
     member_id   TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -576,9 +576,9 @@ const migrations: string[] = [
 
   CREATE TABLE hidden_goals (library_key TEXT PRIMARY KEY);
   `,
-  // A parent's own goals join the family's library (key 'own:<id>'), for any kid, until hidden.
-  // Own goals made before this are added, one per name.
-  `
+	// A parent's own goals join the family's library (key 'own:<id>'), for any kid, until hidden.
+	// Own goals made before this are added, one per name.
+	`
   CREATE TABLE own_goals (
     key         TEXT PRIMARY KEY,
     title       TEXT NOT NULL,
@@ -590,10 +590,10 @@ const migrations: string[] = [
     SELECT 'own:' || MIN(id), title, emoji, kind FROM goals WHERE library_key IS NULL GROUP BY title;
   UPDATE goals SET library_key = (SELECT key FROM own_goals o WHERE o.title = goals.title) WHERE library_key IS NULL;
   `,
-  // Goals are ticked each day now, for their points: what bonus tasks were. Tasks are the required
-  // ones, so extras of any kind become goals (category 'bonus'), and goals being worked on become
-  // goals on the list every day. Goals already done keep their stars in \`goals\`.
-  `
+	// Goals are ticked each day now, for their points: what bonus tasks were. Tasks are the required
+	// ones, so extras of any kind become goals (category 'bonus'), and goals being worked on become
+	// goals on the list every day. Goals already done keep their stars in \`goals\`.
+	`
   UPDATE tasks SET category = 'bonus' WHERE required = 0;
   INSERT INTO tasks (id, title, member_id, days, sort_order, time, category, required, points, icon, due_by)
     SELECT id, title, member_id, '0123456', (SELECT COALESCE(MAX(sort_order), -1) FROM tasks) + ROW_NUMBER() OVER (ORDER BY created_at),
@@ -601,10 +601,10 @@ const migrations: string[] = [
     FROM goals WHERE done_day IS NULL;
   DELETE FROM goals WHERE done_day IS NULL;
   `,
-  // Potty charts: for each kid on one, a card with a row of punches per step (said I need to go,
-  // sat on the potty, went, wiped and flushed, washed hands). A full row is a star; a full card
-  // starts the next one.
-  `
+	// Potty charts: for each kid on one, a card with a row of punches per step (said I need to go,
+	// sat on the potty, went, wiped and flushed, washed hands). A full row is a star; a full card
+	// starts the next one.
+	`
   CREATE TABLE potty_kids (
     member_id   TEXT PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
     started_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
@@ -627,8 +627,8 @@ const migrations: string[] = [
   );
   CREATE INDEX potty_punches_card ON potty_punches(card_id);
   `,
-  // The go row can be both, too.
-  `
+	// The go row can be both, too.
+	`
   CREATE TABLE potty_punches_new (
     id          TEXT PRIMARY KEY,
     card_id     TEXT NOT NULL REFERENCES potty_cards(id) ON DELETE CASCADE,
@@ -643,9 +643,9 @@ const migrations: string[] = [
   ALTER TABLE potty_punches_new RENAME TO potty_punches;
   CREATE INDEX potty_punches_card ON potty_punches(card_id);
   `,
-  // Privacy: who sees an event. everyone; busy (others see "Busy" at that time); private (others
-  // don't see it). Each calendar has a default; an event (every repeat of it) can have its own.
-  `
+	// Privacy: who sees an event. everyone; busy (others see "Busy" at that time); private (others
+	// don't see it). Each calendar has a default; an event (every repeat of it) can have its own.
+	`
   ALTER TABLE calendars ADD COLUMN visibility TEXT NOT NULL DEFAULT 'everyone'
     CHECK (visibility IN ('everyone','busy','private'));
   CREATE TABLE event_privacy (
@@ -656,9 +656,9 @@ const migrations: string[] = [
     PRIMARY KEY (calendar_id, series_key)
   );
   `,
-  // Lists kept in Sprig itself (no Reminders Shortcut needed). An item can say when (a reminder)
-  // and who it's for.
-  `
+	// Lists kept in Sprig itself (no Reminders Shortcut needed). An item can say when (a reminder)
+	// and who it's for.
+	`
   CREATE TABLE lists (
     id          TEXT PRIMARY KEY,
     title       TEXT NOT NULL,
@@ -677,9 +677,9 @@ const migrations: string[] = [
   );
   CREATE INDEX list_items_list ON list_items(list_id);
   `,
-  // Phones and browsers that turned alerts on (push.ts), and which alerts each has had, so none
-  // comes twice. The time zone says when "8 AM" is for a reminder that has a day but no time.
-  `
+	// Phones and browsers that turned alerts on (push.ts), and which alerts each has had, so none
+	// comes twice. The time zone says when "8 AM" is for a reminder that has a day but no time.
+	`
   CREATE TABLE push_devices (
     id            TEXT PRIMARY KEY,
     endpoint      TEXT NOT NULL UNIQUE,
@@ -695,16 +695,16 @@ const migrations: string[] = [
     PRIMARY KEY (device_id, key)
   );
   `,
-  // Notes on Sprig's own events, and the flyer photo an event was read from (Snap a flyer). Flyers are
-  // kept with the photos but stay out of the album and screen saver.
-  `
+	// Notes on Sprig's own events, and the flyer photo an event was read from (Snap a flyer). Flyers are
+	// kept with the photos but stay out of the album and screen saver.
+	`
   ALTER TABLE events ADD COLUMN notes TEXT;
   ALTER TABLE events ADD COLUMN photo_id TEXT REFERENCES photos(id) ON DELETE SET NULL;
   ALTER TABLE photos ADD COLUMN flyer INTEGER NOT NULL DEFAULT 0;
   `,
-  // Learning (learn.ts): on or off and leveling up per kid (a guardian's choice), each kid's level per
-  // skill, and the activities they've finished (the day's first earns its star).
-  `
+	// Learning (learn.ts): on or off and leveling up per kid (a guardian's choice), each kid's level per
+	// skill, and the activities they've finished (the day's first earns its star).
+	`
   CREATE TABLE learn_kids (
     member_id  TEXT PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
     enabled    INTEGER NOT NULL DEFAULT 0,
@@ -730,14 +730,14 @@ const migrations: string[] = [
   -- At most one star a day.
   CREATE UNIQUE INDEX learn_star_a_day ON learn_sessions(member_id, day) WHERE stars > 0;
   `,
-  // Learning's games (learn.ts): the last play (learn_sessions rowid) when each level was set or moved
-  // up to, so only plays after count toward moving up again. (learn_levels.skill and
-  // learn_sessions.skill now hold the game.)
-  `
+	// Learning's games (learn.ts): the last play (learn_sessions rowid) when each level was set or moved
+	// up to, so only plays after count toward moving up again. (learn_levels.skill and
+	// learn_sessions.skill now hold the game.)
+	`
   ALTER TABLE learn_levels ADD COLUMN since_play INTEGER NOT NULL DEFAULT 0;
   `,
-  // Learning's animal noises, recorded by a grown-up (learn.ts): played instead of the built-in ones.
-  `
+	// Learning's animal noises, recorded by a grown-up (learn.ts): played instead of the built-in ones.
+	`
   CREATE TABLE learn_sounds (
     animal     TEXT PRIMARY KEY,
     mime       TEXT NOT NULL,
@@ -745,9 +745,9 @@ const migrations: string[] = [
     updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
   `,
-  // Special days a grown-up adds (specialDays.ts), for kid mode's month card: for one kid or all of
-  // them, once or every year.
-  `
+	// Special days a grown-up adds (specialDays.ts), for kid mode's month card: for one kid or all of
+	// them, once or every year.
+	`
   CREATE TABLE special_days (
     id         TEXT PRIMARY KEY,
     day        TEXT NOT NULL,
@@ -758,9 +758,9 @@ const migrations: string[] = [
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
   `,
-  // Special days are events now: one marked special (every repeat of it) counts down on kid mode's
-  // Today, for the kids it's for. The grown-ups' own list above goes (it was never used).
-  `
+	// Special days are events now: one marked special (every repeat of it) counts down on kid mode's
+	// Today, for the kids it's for. The grown-ups' own list above goes (it was never used).
+	`
   DROP TABLE special_days;
   CREATE TABLE event_special (
     calendar_id TEXT NOT NULL REFERENCES calendars(id) ON DELETE CASCADE,
@@ -769,15 +769,15 @@ const migrations: string[] = [
     PRIMARY KEY (calendar_id, series_key)
   );
   `,
-  // The little ones' games don't move up by themselves: once one would, it's ready, and waits for a
-  // grown-up to move it up (learn.ts).
-  `
+	// The little ones' games don't move up by themselves: once one would, it's ready, and waits for a
+	// grown-up to move it up (learn.ts).
+	`
   ALTER TABLE learn_levels ADD COLUMN ready INTEGER NOT NULL DEFAULT 0;
   `,
-  // The flyer an iCloud event was read from (Snap a flyer). Sprig's own events keep theirs in
-  // events.photo_id; a synced event's row is replaced on every sync, so its flyer is kept here, by
-  // its series (every repeat), like event_special. Its notes go to iCloud itself.
-  `
+	// The flyer an iCloud event was read from (Snap a flyer). Sprig's own events keep theirs in
+	// events.photo_id; a synced event's row is replaced on every sync, so its flyer is kept here, by
+	// its series (every repeat), like event_special. Its notes go to iCloud itself.
+	`
   CREATE TABLE event_flyers (
     calendar_id TEXT NOT NULL REFERENCES calendars(id) ON DELETE CASCADE,
     series_key  TEXT NOT NULL,
@@ -785,10 +785,10 @@ const migrations: string[] = [
     PRIMARY KEY (calendar_id, series_key)
   );
   `,
-  // Learn's daily limit (learnDay.ts): games a day (2 unless a guardian sets it) and an optional time
-  // limit per kid; each day, extra games or minutes a grown-up gave, whether a grown-up unlocked or
-  // locked it (it opens by itself once the kid's Daily tasks are done), and the time played.
-  `
+	// Learn's daily limit (learnDay.ts): games a day (2 unless a guardian sets it) and an optional time
+	// limit per kid; each day, extra games or minutes a grown-up gave, whether a grown-up unlocked or
+	// locked it (it opens by itself once the kid's Daily tasks are done), and the time played.
+	`
   ALTER TABLE learn_kids ADD COLUMN games_a_day INTEGER NOT NULL DEFAULT 2;
   ALTER TABLE learn_kids ADD COLUMN minutes_a_day INTEGER;
   CREATE TABLE learn_days (
@@ -802,9 +802,9 @@ const migrations: string[] = [
     PRIMARY KEY (member_id, day)
   );
   `,
-  // What to bring (checklists.ts): an event's checklist, kept by its series (every repeat) like
-  // event_special; ticks are kept for one time it happens (its start), so each week starts fresh.
-  `
+	// What to bring (checklists.ts): an event's checklist, kept by its series (every repeat) like
+	// event_special; ticks are kept for one time it happens (its start), so each week starts fresh.
+	`
   CREATE TABLE event_checklist (
     id          TEXT PRIMARY KEY,
     calendar_id TEXT NOT NULL REFERENCES calendars(id) ON DELETE CASCADE,
@@ -820,8 +820,8 @@ const migrations: string[] = [
     PRIMARY KEY (item_id, occurrence)
   );
   `,
-  // A new color asked for someone, waiting for the account holder: one at a time per person.
-  `
+	// A new color asked for someone, waiting for the account holder: one at a time per person.
+	`
   CREATE TABLE color_requests (
     member_id  TEXT PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
     color      TEXT NOT NULL,
@@ -833,26 +833,28 @@ const migrations: string[] = [
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */
 export function openDb(file: string, upTo = migrations.length): DB {
-  if (file !== ':memory:') mkdirSync(dirname(file), { recursive: true });
-  const db = new Database(file);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
-  migrate(db, upTo);
-  return db;
+	if (file !== ':memory:') mkdirSync(dirname(file), { recursive: true });
+	const db = new Database(file);
+	db.pragma('journal_mode = WAL');
+	db.pragma('foreign_keys = ON');
+	migrate(db, upTo);
+	return db;
 }
 
 function migrate(db: DB, upTo: number) {
-  const current = db.pragma('user_version', { simple: true }) as number;
-  // Upgraded by newer code (another branch, say): this code's upgrades past `upTo` would be skipped
-  // without a word, so say so.
-  if (current > migrations.length) {
-    console.warn(`This database is at version ${current}, but this code only knows ${migrations.length} upgrades. ` +
-      'It was probably upgraded by another branch; anything this branch adds since then is missing until that\'s sorted out.');
-  }
-  for (let v = current; v < upTo; v++) {
-    db.transaction(() => {
-      db.exec(migrations[v]);
-      db.pragma(`user_version = ${v + 1}`);
-    })();
-  }
+	const current = db.pragma('user_version', { simple: true }) as number;
+	// Upgraded by newer code (another branch, say): this code's upgrades past `upTo` would be skipped
+	// without a word, so say so.
+	if (current > migrations.length) {
+		console.warn(
+			`This database is at version ${current}, but this code only knows ${migrations.length} upgrades. ` +
+				"It was probably upgraded by another branch; anything this branch adds since then is missing until that's sorted out.",
+		);
+	}
+	for (let v = current; v < upTo; v++) {
+		db.transaction(() => {
+			db.exec(migrations[v]);
+			db.pragma(`user_version = ${v + 1}`);
+		})();
+	}
 }

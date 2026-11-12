@@ -62,7 +62,7 @@
 	font: inherit;
 }
 .foldTitle::after {
-	content: "";
+	content: '';
 	width: 0.5rem;
 	height: 0.5rem;
 	margin-left: 0.2rem;
@@ -71,7 +71,7 @@
 	rotate: 45deg;
 	transition: rotate 0.2s;
 }
-.foldTitle[aria-expanded="false"]::after {
+.foldTitle[aria-expanded='false']::after {
 	rotate: -45deg;
 }
 .logo {
@@ -271,7 +271,7 @@
 	font-size: 2rem;
 	font-weight: 800;
 }
-.choice[aria-pressed="true"] {
+.choice[aria-pressed='true'] {
 	border-color: var(--c, var(--accent));
 	background: color-mix(in srgb, var(--c, var(--accent)) 25%, var(--surface));
 }

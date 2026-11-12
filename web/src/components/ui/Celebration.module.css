@@ -9,7 +9,9 @@
 	animation: fadeIn 0.3s ease-out;
 }
 @keyframes fadeIn {
-	from { opacity: 0; }
+	from {
+		opacity: 0;
+	}
 }
 .confetti {
 	position: absolute;
@@ -33,7 +35,10 @@
 	animation: pop 0.6s cubic-bezier(0.2, 1.6, 0.4, 1);
 }
 @keyframes pop {
-	from { transform: scale(0.3); opacity: 0; }
+	from {
+		transform: scale(0.3);
+		opacity: 0;
+	}
 }
 .emoji {
 	font-size: 5rem;
@@ -41,8 +46,12 @@
 	animation: wiggle 1s ease-in-out 0.5s 2;
 }
 @keyframes wiggle {
-	25% { transform: rotate(-12deg) scale(1.1); }
-	75% { transform: rotate(12deg) scale(1.1); }
+	25% {
+		transform: rotate(-12deg) scale(1.1);
+	}
+	75% {
+		transform: rotate(12deg) scale(1.1);
+	}
 }
 .hooray {
 	font-size: 3rem;

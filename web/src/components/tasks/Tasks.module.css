@@ -47,11 +47,7 @@
 	font-weight: 650;
 	font-size: 1.15rem;
 	border: 1.5px solid color-mix(in srgb, var(--c) 55%, var(--line));
-	background: linear-gradient(
-		to right,
-		color-mix(in srgb, var(--c) 40%, transparent) var(--p),
-		transparent var(--p)
-	);
+	background: linear-gradient(to right, color-mix(in srgb, var(--c) 40%, transparent) var(--p), transparent var(--p));
 	transition: background 0.4s ease;
 }
 /* Half-strength color: lighter than the person's own, so dark text stays readable. */
@@ -197,7 +193,7 @@
 	background: var(--surface);
 	font-weight: 600;
 }
-.editToggle[aria-pressed="true"] {
+.editToggle[aria-pressed='true'] {
 	background: var(--today);
 	border-color: var(--warn-line);
 }
@@ -312,7 +308,7 @@
 	min-width: 0;
 	min-height: 0;
 }
-.iconPreview[aria-expanded="true"] {
+.iconPreview[aria-expanded='true'] {
 	box-shadow: 0 0 0 2px var(--accent);
 }
 
@@ -476,7 +472,7 @@
 .historyRow {
 	display: grid;
 	grid-template-columns: 1fr auto;
-	grid-template-areas: "name count" "cells cells";
+	grid-template-areas: 'name count' 'cells cells';
 	align-items: center;
 	row-gap: 0.5rem;
 	padding: 0.4rem 0.75rem 0.75rem;
@@ -485,7 +481,7 @@
 }
 /* The line under the name and count, unbroken from one to the other. */
 .historyRow::before {
-	content: "";
+	content: '';
 	grid-area: 1 / 1 / 2 / 3;
 	align-self: end;
 	border-bottom: 1px solid var(--line);

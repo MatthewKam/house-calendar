@@ -4,13 +4,13 @@
 
 let pending: string | null = null;
 {
-  const url = new URL(window.location.href);
-  const code = url.searchParams.get('join');
-  if (code) {
-    pending = code;
-    url.searchParams.delete('join');
-    history.replaceState(null, '', url.pathname + url.search + url.hash);
-  }
+	const url = new URL(window.location.href);
+	const code = url.searchParams.get('join');
+	if (code) {
+		pending = code;
+		url.searchParams.delete('join');
+		history.replaceState(null, '', url.pathname + url.search + url.hash);
+	}
 }
 
 export const pendingJoin = () => pending;

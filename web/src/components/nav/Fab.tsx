@@ -1,4 +1,4 @@
-import s from "./Fab.module.css";
+import s from './Fab.module.css';
 
 /** A round + fixed at the bottom right of a page (Calendar, Tasks, Rewards) for adding something. */
 export default function Fab({ label, onClick }: { label: string; onClick: () => void }) {

@@ -1,8 +1,8 @@
 // Special days for kid mode's Today: holidays and fun days (the ones that move worked out each year),
 // family birthdays, and events marked special, with a countdown in sleeps.
 
-import { dayKey, fromDayKey } from "./dates";
-import { firstName } from "./people";
+import { dayKey, fromDayKey } from './dates';
+import { firstName } from './people';
 
 export interface SpecialDay {
 	/** YYYY-MM-DD. */
@@ -44,28 +44,28 @@ function easter(year: number) {
 export function holidays(year: number): SpecialDay[] {
 	const on = (month: number, day: number) => new Date(year, month, day);
 	const list: [Date, string, string][] = [
-		[on(0, 1), "New Year's Day", "🎆"],
-		[nth(year, 0, 1, 3), "Martin Luther King Jr. Day", "🕊️"],
-		[on(1, 14), "Valentine's Day", "💝"],
-		[nth(year, 1, 1, 3), "Presidents' Day", "🇺🇸"],
-		[on(2, 17), "St. Patrick's Day", "☘️"],
-		[on(2, 20), "First day of spring", "🌷"],
-		[easter(year), "Easter", "🐣"],
-		[on(3, 22), "Earth Day", "🌍"],
-		[nth(year, 4, 0, 2), "Mother's Day", "💐"],
-		[nth(year, 4, 1, -1), "Memorial Day", "🇺🇸"],
-		[nth(year, 5, 0, 3), "Father's Day", "👔"],
-		[on(5, 21), "First day of summer", "☀️"],
-		[on(6, 4), "Fourth of July", "🎆"],
-		[nth(year, 8, 1, 1), "Labor Day", "🛠️"],
-		[on(8, 22), "First day of fall", "🍂"],
-		[on(9, 31), "Halloween", "🎃"],
-		[on(10, 11), "Veterans Day", "🎖️"],
-		[nth(year, 10, 4, 4), "Thanksgiving", "🦃"],
-		[on(11, 21), "First day of winter", "⛄"],
-		[on(11, 24), "Christmas Eve", "🎄"],
-		[on(11, 25), "Christmas", "🎁"],
-		[on(11, 31), "New Year's Eve", "🎉"],
+		[on(0, 1), "New Year's Day", '🎆'],
+		[nth(year, 0, 1, 3), 'Martin Luther King Jr. Day', '🕊️'],
+		[on(1, 14), "Valentine's Day", '💝'],
+		[nth(year, 1, 1, 3), "Presidents' Day", '🇺🇸'],
+		[on(2, 17), "St. Patrick's Day", '☘️'],
+		[on(2, 20), 'First day of spring', '🌷'],
+		[easter(year), 'Easter', '🐣'],
+		[on(3, 22), 'Earth Day', '🌍'],
+		[nth(year, 4, 0, 2), "Mother's Day", '💐'],
+		[nth(year, 4, 1, -1), 'Memorial Day', '🇺🇸'],
+		[nth(year, 5, 0, 3), "Father's Day", '👔'],
+		[on(5, 21), 'First day of summer', '☀️'],
+		[on(6, 4), 'Fourth of July', '🎆'],
+		[nth(year, 8, 1, 1), 'Labor Day', '🛠️'],
+		[on(8, 22), 'First day of fall', '🍂'],
+		[on(9, 31), 'Halloween', '🎃'],
+		[on(10, 11), 'Veterans Day', '🎖️'],
+		[nth(year, 10, 4, 4), 'Thanksgiving', '🦃'],
+		[on(11, 21), 'First day of winter', '⛄'],
+		[on(11, 24), 'Christmas Eve', '🎄'],
+		[on(11, 25), 'Christmas', '🎁'],
+		[on(11, 31), "New Year's Eve", '🎉'],
 	];
 	return list.map(([date, name, picture]) => ({ day: dayKey(date), name, picture }));
 }
@@ -74,11 +74,11 @@ export function holidays(year: number): SpecialDay[] {
 export function birthdays(people: { name: string; birthdate: string | null }[], year: number): SpecialDay[] {
 	return people.flatMap((p) => {
 		if (!p.birthdate) return [];
-		const [, m, d] = p.birthdate.split("-").map(Number);
+		const [, m, d] = p.birthdate.split('-').map(Number);
 		// Born on 29 February: the 28th in other years.
 		const date = new Date(year, m - 1, d);
 		if (date.getMonth() !== m - 1) date.setDate(0);
-		return [{ day: dayKey(date), name: `${firstName(p.name)}'s birthday`, picture: "🎂" }];
+		return [{ day: dayKey(date), name: `${firstName(p.name)}'s birthday`, picture: '🎂' }];
 	});
 }
 

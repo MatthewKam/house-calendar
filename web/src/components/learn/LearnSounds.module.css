@@ -49,7 +49,9 @@
 .tileRight {
 	border-color: #2f9e44;
 	background: #ebf7ee;
-	box-shadow: 0 0 0 0.2rem #2f9e44, var(--shadow-md);
+	box-shadow:
+		0 0 0 0.2rem #2f9e44,
+		var(--shadow-md);
 }
 @keyframes pop {
 	from {

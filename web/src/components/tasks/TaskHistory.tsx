@@ -1,13 +1,13 @@
-import { useMemo, useState, type CSSProperties } from "react";
-import { addDays, dayKey, fromDayKey, startOfWeek, longDate } from "../../lib/dates";
-import { useSetTaskDone, useTasksDone } from "../../lib/queries";
-import { didTask, dueOn } from "../../lib/tasks";
-import type { Member, Task, TaskDone } from "../../lib/types";
-import { TaskName, TaskTick } from "./TaskBits";
-import { StarIcon } from "../ui/icons";
-import s from "./Tasks.module.css";
+import { useMemo, useState, type CSSProperties } from 'react';
+import { addDays, dayKey, fromDayKey, startOfWeek, longDate } from '../../lib/dates';
+import { useSetTaskDone, useTasksDone } from '../../lib/queries';
+import { didTask, dueOn } from '../../lib/tasks';
+import type { Member, Task, TaskDone } from '../../lib/types';
+import { TaskName, TaskTick } from './TaskBits';
+import { StarIcon } from '../ui/icons';
+import s from './Tasks.module.css';
 
-type Period = "week" | "month";
+type Period = 'week' | 'month';
 
 interface Props {
 	kid: Member;
@@ -18,14 +18,14 @@ interface Props {
 	onEdit?: (task: Task) => void;
 }
 
-const short = (d: Date) => d.toLocaleDateString([], { month: "short", day: "numeric" });
+const short = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'numeric' });
 
 /**
  * A kid's history in place of today's list: a week (a row per task, a dot per day) or a month (a
  * calendar), paging back from now. Missed days can still be ticked.
  */
 export default function TaskHistory({ kid, tasks, today, onEdit }: Props) {
-	const [period, setPeriod] = useState<Period>("week");
+	const [period, setPeriod] = useState<Period>('week');
 	// How many weeks or months back.
 	const [back, setBack] = useState(0);
 	// Day picked in the month calendar, to see and fix that day's ticks.
@@ -33,32 +33,33 @@ export default function TaskHistory({ kid, tasks, today, onEdit }: Props) {
 
 	const range = useMemo(() => {
 		const day = fromDayKey(today);
-		if (period === "week") return { from: addDays(startOfWeek(day), -7 * back), days: 7 };
+		if (period === 'week') return { from: addDays(startOfWeek(day), -7 * back), days: 7 };
 		const from = new Date(day.getFullYear(), day.getMonth() - back, 1);
 		return { from, days: new Date(from.getFullYear(), from.getMonth() + 1, 0).getDate() };
 	}, [period, back, today]);
 	const rangeDays = useMemo(() => Array.from({ length: range.days }, (_, i) => addDays(range.from, i)), [range]);
 	const done = useTasksDone(range.from, range.days).data ?? [];
 	const setDone = useSetTaskDone(range.from, range.days);
-	const toggle = (c: Task, day: string, ticked: boolean) => setDone.mutate({ taskId: c.id, memberId: kid.id, day, done: !ticked });
+	const toggle = (c: Task, day: string, ticked: boolean) =>
+		setDone.mutate({ taskId: c.id, memberId: kid.id, day, done: !ticked });
 
 	const label =
-		period === "week"
+		period === 'week'
 			? back === 0
-				? "This week"
+				? 'This week'
 				: back === 1
-					? "Last week"
+					? 'Last week'
 					: `${short(rangeDays[0])} – ${short(rangeDays[6])}`
-			: range.from.toLocaleDateString([], { month: "long", year: "numeric" });
+			: range.from.toLocaleDateString([], { month: 'long', year: 'numeric' });
 
 	return (
 		<>
 			<div className={s.historyTools}>
 				<div className={s.periods} role="group" aria-label="History period">
-					{(["week", "month"] as const).map((p) => (
+					{(['week', 'month'] as const).map((p) => (
 						<button
 							key={p}
-							className={period === p ? s.periodOn : ""}
+							className={period === p ? s.periodOn : ''}
 							aria-pressed={period === p}
 							onClick={() => {
 								setPeriod(p);
@@ -66,7 +67,7 @@ export default function TaskHistory({ kid, tasks, today, onEdit }: Props) {
 								setPickedDay(null);
 							}}
 						>
-							{p === "week" ? "Week" : "Month"}
+							{p === 'week' ? 'Week' : 'Month'}
 						</button>
 					))}
 				</div>
@@ -95,8 +96,16 @@ export default function TaskHistory({ kid, tasks, today, onEdit }: Props) {
 					</button>
 				</div>
 			</div>
-			{period === "week" ? (
-				<WeekTable kid={kid} tasks={tasks} today={today} days={rangeDays} done={done} onToggle={toggle} onEdit={onEdit} />
+			{period === 'week' ? (
+				<WeekTable
+					kid={kid}
+					tasks={tasks}
+					today={today}
+					days={rangeDays}
+					done={done}
+					onToggle={toggle}
+					onEdit={onEdit}
+				/>
 			) : (
 				<MonthCalendar
 					kid={kid}
@@ -111,14 +120,24 @@ export default function TaskHistory({ kid, tasks, today, onEdit }: Props) {
 				/>
 			)}
 			<p className={s.tip}>
-				{period === "week" ? "Forgot one? Tap a dashed day to mark it done." : "Tap a day to see its tasks and fix any that were missed."}
+				{period === 'week'
+					? 'Forgot one? Tap a dashed day to mark it done.'
+					: 'Tap a day to see its tasks and fix any that were missed.'}
 			</p>
 		</>
 	);
 }
 
 /** Week: one row per task with a dot for each day, and how many due days were done. */
-function WeekTable({ kid, tasks, today, days, done, onToggle, onEdit }: {
+function WeekTable({
+	kid,
+	tasks,
+	today,
+	days,
+	done,
+	onToggle,
+	onEdit,
+}: {
 	kid: Member;
 	tasks: Task[];
 	today: string;
@@ -127,14 +146,14 @@ function WeekTable({ kid, tasks, today, days, done, onToggle, onEdit }: {
 	onToggle: (c: Task, day: string, ticked: boolean) => void;
 	onEdit?: (task: Task) => void;
 }) {
-	const cols = { "--cols": days.length } as CSSProperties;
+	const cols = { '--cols': days.length } as CSSProperties;
 	return (
 		<div className={s.history}>
 			<div className={`${s.historyRow} ${s.historyHead}`}>
 				<span />
 				<span className={s.cells} style={cols}>
 					{days.map((d) => (
-						<span key={dayKey(d)}>{d.toLocaleDateString([], { weekday: "narrow" })}</span>
+						<span key={dayKey(d)}>{d.toLocaleDateString([], { weekday: 'narrow' })}</span>
 					))}
 				</span>
 				<span className={s.count}>Done</span>
@@ -144,13 +163,22 @@ function WeekTable({ kid, tasks, today, days, done, onToggle, onEdit }: {
 				const doneCount = due.filter((d) => didTask(done, c, kid.id, dayKey(d))).length;
 				return (
 					<div key={c.id} className={s.historyRow}>
-						<button className={s.taskName} onClick={() => onEdit?.(c)} disabled={!onEdit} title={onEdit ? "Change this task" : undefined}>
+						<button
+							className={s.taskName}
+							onClick={() => onEdit?.(c)}
+							disabled={!onEdit}
+							title={onEdit ? 'Change this task' : undefined}
+						>
 							<TaskName task={c} />
 							{/* Today's list groups by part of the day; here a sun or moon tells morning and evening apart. */}
 							{c.time && (
-								<span className={s.partOfDay} title={c.time === "morning" ? "Morning" : "Evening"} role="img"
-									aria-label={c.time === "morning" ? "morning" : "evening"}>
-									{c.time === "morning" ? "☀️" : "🌙"}
+								<span
+									className={s.partOfDay}
+									title={c.time === 'morning' ? 'Morning' : 'Evening'}
+									role="img"
+									aria-label={c.time === 'morning' ? 'morning' : 'evening'}
+								>
+									{c.time === 'morning' ? '☀️' : '🌙'}
 								</span>
 							)}
 						</button>
@@ -172,15 +200,15 @@ function WeekTable({ kid, tasks, today, days, done, onToggle, onEdit }: {
 										key={key}
 										className={`${s.cell} ${state}`}
 										disabled={future}
-										aria-label={`${c.title}, ${d.toLocaleDateString([], { weekday: "long" })}: ${ticked ? "done" : future ? "coming up" : "not done"}`}
+										aria-label={`${c.title}, ${d.toLocaleDateString([], { weekday: 'long' })}: ${ticked ? 'done' : future ? 'coming up' : 'not done'}`}
 										onClick={() => onToggle(c, key, ticked)}
 									>
-										{ticked ? "✓" : ""}
+										{ticked ? '✓' : ''}
 									</button>
 								);
 							})}
 						</span>
-						<span className={s.count}>{due.length ? `${doneCount}/${due.length}` : "–"}</span>
+						<span className={s.count}>{due.length ? `${doneCount}/${due.length}` : '–'}</span>
 					</div>
 				);
 			})}
@@ -192,7 +220,17 @@ function WeekTable({ kid, tasks, today, days, done, onToggle, onEdit }: {
  * Month: a calendar. Each day fills with the kid's color as far as its required tasks were done,
  * shows a ✓ when all were, and the stars earned. Tap a day to see (and fix) its tasks.
  */
-function MonthCalendar({ kid, tasks, today, from, days, done, picked, onPick, onToggle }: {
+function MonthCalendar({
+	kid,
+	tasks,
+	today,
+	from,
+	days,
+	done,
+	picked,
+	onPick,
+	onToggle,
+}: {
 	kid: Member;
 	tasks: Task[];
 	today: string;
@@ -203,7 +241,9 @@ function MonthCalendar({ kid, tasks, today, from, days, done, picked, onPick, on
 	onPick: (day: string | null) => void;
 	onToggle: (c: Task, day: string, ticked: boolean) => void;
 }) {
-	const weekdays = Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(from), i).toLocaleDateString([], { weekday: "narrow" }));
+	const weekdays = Array.from({ length: 7 }, (_, i) =>
+		addDays(startOfWeek(from), i).toLocaleDateString([], { weekday: 'narrow' }),
+	);
 	const pickedDate = picked ? fromDayKey(picked) : null;
 	const pickedTasks = pickedDate ? tasks.filter((c) => dueOn(c, pickedDate, kid.id)) : [];
 	return (
@@ -221,17 +261,19 @@ function MonthCalendar({ kid, tasks, today, from, days, done, picked, onPick, on
 					const key = dayKey(d);
 					const required = tasks.filter((c) => c.required && dueOn(c, d, kid.id));
 					const doneReq = required.filter((c) => didTask(done, c, kid.id, key)).length;
-					const earned = done.filter((x) => x.memberId === kid.id && x.day === key).reduce((sum, x) => sum + (x.points ?? 0), 0);
+					const earned = done
+						.filter((x) => x.memberId === kid.id && x.day === key)
+						.reduce((sum, x) => sum + (x.points ?? 0), 0);
 					const future = key > today;
 					const pct = required.length ? Math.round((doneReq / required.length) * 100) : 0;
 					const complete = required.length > 0 && doneReq === required.length;
 					return (
 						<button
 							key={key}
-							className={`${s.monthDay} ${future ? s.monthFuture : ""} ${key === today ? s.monthToday : ""} ${picked === key ? s.monthPicked : ""} ${complete ? s.monthComplete : ""}`}
-							style={{ "--fill": `${pct}%` } as CSSProperties}
+							className={`${s.monthDay} ${future ? s.monthFuture : ''} ${key === today ? s.monthToday : ''} ${picked === key ? s.monthPicked : ''} ${complete ? s.monthComplete : ''}`}
+							style={{ '--fill': `${pct}%` } as CSSProperties}
 							disabled={future}
-							aria-label={`${d.toLocaleDateString([], { month: "long", day: "numeric" })}: ${required.length ? `${doneReq} of ${required.length} required done` : "nothing required"}${earned ? `, ${earned} stars` : ""}`}
+							aria-label={`${d.toLocaleDateString([], { month: 'long', day: 'numeric' })}: ${required.length ? `${doneReq} of ${required.length} required done` : 'nothing required'}${earned ? `, ${earned} stars` : ''}`}
 							onClick={() => onPick(picked === key ? null : key)}
 						>
 							<span className={s.monthNum}>{d.getDate()}</span>

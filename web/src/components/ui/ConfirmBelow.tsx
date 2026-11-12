@@ -1,7 +1,13 @@
-import s from "../tasks/Goals.module.css";
+import s from '../tasks/Goals.module.css';
 
 /** A confirmation that opens right below the item it's about, in place of a browser pop-up. */
-export default function ConfirmBelow({ text, confirmLabel = "Remove", busy, onCancel, onConfirm }: {
+export default function ConfirmBelow({
+	text,
+	confirmLabel = 'Remove',
+	busy,
+	onCancel,
+	onConfirm,
+}: {
 	text: string;
 	confirmLabel?: string;
 	busy?: boolean;

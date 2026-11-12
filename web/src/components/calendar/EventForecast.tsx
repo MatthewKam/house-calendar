@@ -1,15 +1,15 @@
-import { fromDayKey } from "../../lib/dates";
-import { useEventWeather } from "../../lib/queries";
-import { sky } from "../../lib/weather";
-import type { CalEvent, EventWeather, Wear } from "../../lib/types";
-import s from "./EventForecast.module.css";
+import { fromDayKey } from '../../lib/dates';
+import { useEventWeather } from '../../lib/queries';
+import { sky } from '../../lib/weather';
+import type { CalEvent, EventWeather, Wear } from '../../lib/types';
+import s from './EventForecast.module.css';
 
 /** What to pack for the weather there (the same rules as What to wear). */
 export function packFor(wear: Wear) {
 	return [
-		wear.rain ? "☂️ Umbrella" : null,
-		wear.jacket ? "🧥 Jacket" : null,
-		wear.pants ? "👖 Long pants" : "🩳 Shorts",
+		wear.rain ? '☂️ Umbrella' : null,
+		wear.jacket ? '🧥 Jacket' : null,
+		wear.pants ? '👖 Long pants' : '🩳 Shorts',
 	].filter((x): x is string => !!x);
 }
 
@@ -27,7 +27,7 @@ export function forecastBadge(w: EventWeather) {
 export default function EventForecast({ event }: { event: CalEvent }) {
 	const w = useEventWeather(event.location ? [event.id] : []).data?.[event.id];
 	if (!w) return null;
-	const weekday = (date: string) => fromDayKey(date).toLocaleDateString([], { weekday: "short" });
+	const weekday = (date: string) => fromDayKey(date).toLocaleDateString([], { weekday: 'short' });
 	return (
 		<section className={s.box} aria-label="Weather there">
 			<div className={s.head}>
@@ -40,7 +40,9 @@ export default function EventForecast({ event }: { event: CalEvent }) {
 				<>
 					{w.at && (
 						<div className={s.day}>
-							<span className={s.icon} aria-hidden="true">{sky(w.at.code, true).icon}</span>
+							<span className={s.icon} aria-hidden="true">
+								{sky(w.at.code, true).icon}
+							</span>
 							<span>
 								<b>{w.at.temp}° when it starts</b> · feels {w.at.feels}° · 💧 {w.at.rain}%
 							</span>
@@ -50,7 +52,9 @@ export default function EventForecast({ event }: { event: CalEvent }) {
 						const look = sky(d.code, true);
 						return (
 							<div key={d.date} className={s.day}>
-								<span className={s.icon} aria-hidden="true">{look.icon}</span>
+								<span className={s.icon} aria-hidden="true">
+									{look.icon}
+								</span>
 								<span>
 									{w.days.length > 1 && <b>{weekday(d.date)} </b>}
 									{look.label} · High {d.high}° · Low {d.low}° · 💧 {d.rain}%
@@ -58,7 +62,7 @@ export default function EventForecast({ event }: { event: CalEvent }) {
 							</div>
 						);
 					})}
-					{w.wear && <div className={s.pack}>Pack: {packFor(w.wear).join(" · ")}</div>}
+					{w.wear && <div className={s.pack}>Pack: {packFor(w.wear).join(' · ')}</div>}
 				</>
 			)}
 		</section>

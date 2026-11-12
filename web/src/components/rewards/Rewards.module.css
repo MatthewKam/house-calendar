@@ -90,10 +90,10 @@
 	opacity: 0.4;
 }
 .cancel {
-	composes: quiet from "../ui/Buttons.module.css";
+	composes: quiet from '../ui/Buttons.module.css';
 }
 .quiet {
-	composes: quiet from "../ui/Buttons.module.css";
+	composes: quiet from '../ui/Buttons.module.css';
 }
 .stageHint {
 	margin: 0;
@@ -233,7 +233,7 @@
 	gap: 0.4rem;
 }
 .takeBack {
-	composes: quiet from "../ui/Buttons.module.css";
+	composes: quiet from '../ui/Buttons.module.css';
 	font-size: 0.85rem;
 }
 .problem {
@@ -405,13 +405,13 @@
 	font-weight: 650;
 }
 .undo {
-	composes: quiet from "../ui/Buttons.module.css";
+	composes: quiet from '../ui/Buttons.module.css';
 	padding: 0.15rem 0.3rem;
 	font-size: 0.85rem;
 	font-weight: 400;
 }
 .more {
-	composes: textButton from "../ui/Buttons.module.css";
+	composes: textButton from '../ui/Buttons.module.css';
 	align-self: flex-start;
 	padding: 0.15rem 0.3rem;
 	font-size: 0.85rem;

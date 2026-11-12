@@ -1,35 +1,30 @@
-import { useNow } from "../../lib/useNow";
-import { useAuthStatus, useLists, useMembers, useOutbox, useReminders, useRewardHistory } from "../../lib/queries";
-import ColorAsked from "../account/ColorAsked";
-import { dueLabel, isDue, isLate } from "../../lib/lists";
-import type { Page } from "../nav/NavBar";
-import s from "./Today.module.css";
+import { useNow } from '../../lib/useNow';
+import { useAuthStatus, useLists, useMembers, useOutbox, useReminders, useRewardHistory } from '../../lib/queries';
+import ColorAsked from '../account/ColorAsked';
+import { dueLabel, isDue, isLate } from '../../lib/lists';
+import type { Page } from '../nav/NavBar';
+import s from './Today.module.css';
 
 /**
  * Today's "Needs you": only what's waiting (calendar clashes, rewards to hand over, reminders due,
  * lists with things left, and for the account holder, new colors to OK), each going to its page or
  * answered here. Not shown when nothing is.
  */
-export default function NeedsYou({ me, onPage }: {
+export default function NeedsYou({
+	me,
+	onPage,
+}: {
 	/** The person this device is signed in as; null on the wall (reminders for anyone). */
 	me: string | null;
 	onPage: (page: Page) => void;
 }) {
 	const now = useNow();
 	const outbox = useOutbox().data;
-	const toHandOver = (useRewardHistory().data ?? []).filter(
-		(w) => !w.givenAt && !w.missedOn,
-	);
+	const toHandOver = (useRewardHistory().data ?? []).filter((w) => !w.givenAt && !w.missedOn);
 	const own = useLists().data ?? [];
 	// Reminders due now (or late) on Sprig's lists, for me or for anyone.
 	const due = own.flatMap((l) =>
-		l.items.filter(
-			(i) =>
-				!i.done &&
-				i.due &&
-				isDue(i.due, now) &&
-				(!me || !i.memberId || i.memberId === me),
-		),
+		l.items.filter((i) => !i.done && i.due && isDue(i.due, now) && (!me || !i.memberId || i.memberId === me)),
 	);
 	const lists = [...own, ...(useReminders().data?.lists ?? [])]
 		.map((l) => ({
@@ -50,25 +45,17 @@ export default function NeedsYou({ me, onPage }: {
 			<ul className={s.needs}>
 				{clashes > 0 && (
 					<li>
-						<button
-							type="button"
-							className={s.need}
-							onClick={() => onPage("calendar")}
-						>
+						<button type="button" className={s.need} onClick={() => onPage('calendar')}>
 							<span aria-hidden="true">⚠️</span>
 							{clashes === 1
-								? "A calendar change clashes with one made elsewhere"
+								? 'A calendar change clashes with one made elsewhere'
 								: `${clashes} calendar changes clash with ones made elsewhere`}
 						</button>
 					</li>
 				)}
 				{toHandOver.map((w) => (
 					<li key={w.id}>
-						<button
-							type="button"
-							className={s.need}
-							onClick={() => onPage("rewards")}
-						>
+						<button type="button" className={s.need} onClick={() => onPage('rewards')}>
 							<span aria-hidden="true">🎁</span>
 							{w.title} is earned: hand it over
 						</button>
@@ -76,19 +63,11 @@ export default function NeedsYou({ me, onPage }: {
 				))}
 				{due.map((i) => (
 					<li key={i.id}>
-						<button
-							type="button"
-							className={s.need}
-							onClick={() => onPage("lists")}
-						>
+						<button type="button" className={s.need} onClick={() => onPage('lists')}>
 							<span aria-hidden="true">⏰</span>
 							<span className={s.needText}>
 								{i.title}
-								<span
-									className={isLate(i.due!, now) ? s.late : s.dueWhen}
-								>
-									{dueLabel(i.due!, now)}
-								</span>
+								<span className={isLate(i.due!, now) ? s.late : s.dueWhen}>{dueLabel(i.due!, now)}</span>
 							</span>
 						</button>
 					</li>
@@ -100,13 +79,9 @@ export default function NeedsYou({ me, onPage }: {
 				))}
 				{lists.map((l) => (
 					<li key={l.title}>
-						<button
-							type="button"
-							className={s.need}
-							onClick={() => onPage("lists")}
-						>
+						<button type="button" className={s.need} onClick={() => onPage('lists')}>
 							<span aria-hidden="true">📝</span>
-							{l.title}: {l.open} {l.open === 1 ? "item" : "items"}
+							{l.title}: {l.open} {l.open === 1 ? 'item' : 'items'}
 						</button>
 					</li>
 				))}

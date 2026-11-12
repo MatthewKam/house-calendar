@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { useRef, useState, type PointerEvent, type ReactNode } from 'react';
 
 /** Props for the drag handle of one row. */
 export interface HandleProps {
@@ -6,8 +6,8 @@ export interface HandleProps {
 	onPointerMove: (e: PointerEvent<HTMLElement>) => void;
 	onPointerUp: () => void;
 	onPointerCancel: () => void;
-	style: { touchAction: "none"; cursor: "grab" };
-	"aria-label": string;
+	style: { touchAction: 'none'; cursor: 'grab' };
+	'aria-label': string;
 }
 
 interface Props<T> {
@@ -30,7 +30,7 @@ interface Drag {
 	shift: number;
 }
 
-const SLIDE = "transform 160ms ease";
+const SLIDE = 'transform 160ms ease';
 
 /**
  * A list whose rows can be dragged into a new order by their handle. The dragged row follows the
@@ -54,8 +54,10 @@ export default function SortableList<T>({ items, getId, onReorder, className, dr
 		});
 		const from = ids.indexOf(id);
 		const next = rows[from + 1] ?? rows[from - 1];
-		const gap = next ? Math.abs(next.top - rows[from].top) - (next === rows[from + 1] ? rows[from].height : next.height) : 0;
-		rows.forEach((r, i) => (r.el.style.transition = i === from ? "none" : SLIDE));
+		const gap = next
+			? Math.abs(next.top - rows[from].top) - (next === rows[from + 1] ? rows[from].height : next.height)
+			: 0;
+		rows.forEach((r, i) => (r.el.style.transition = i === from ? 'none' : SLIDE));
 		drag.current = { id, startY: e.clientY, from, to: from, rows, shift: rows[from].height + Math.max(0, gap) };
 		setDragId(id);
 	}
@@ -78,7 +80,7 @@ export default function SortableList<T>({ items, getId, onReorder, className, dr
 		d.rows.forEach((r, i) => {
 			if (i === d.from) return;
 			const y = d.from < to && i > d.from && i <= to ? -d.shift : d.from > to && i >= to && i < d.from ? d.shift : 0;
-			r.el.style.transform = y ? `translateY(${y}px)` : "";
+			r.el.style.transform = y ? `translateY(${y}px)` : '';
 		});
 	}
 
@@ -88,10 +90,10 @@ export default function SortableList<T>({ items, getId, onReorder, className, dr
 		drag.current = null;
 		// Snap everything back without animating; the list re-renders in its new order at the same time.
 		d.rows.forEach((r) => {
-			r.el.style.transition = "none";
-			r.el.style.transform = "";
+			r.el.style.transition = 'none';
+			r.el.style.transform = '';
 		});
-		requestAnimationFrame(() => d.rows.forEach((r) => (r.el.style.transition = "")));
+		requestAnimationFrame(() => d.rows.forEach((r) => (r.el.style.transition = '')));
 		setDragId(null);
 		if (commit && d.to !== d.from) {
 			const order = ids.filter((x) => x !== d.id);
@@ -111,8 +113,8 @@ export default function SortableList<T>({ items, getId, onReorder, className, dr
 							onPointerMove: move,
 							onPointerUp: () => end(true),
 							onPointerCancel: () => end(false),
-							style: { touchAction: "none", cursor: "grab" },
-							"aria-label": "Drag to reorder",
+							style: { touchAction: 'none', cursor: 'grab' },
+							'aria-label': 'Drag to reorder',
 						})}
 					</li>
 				);

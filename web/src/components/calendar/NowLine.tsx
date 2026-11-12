@@ -1,8 +1,8 @@
-import { useWeather } from "../../lib/queries";
-import { sky } from "../../lib/weather";
-import { timeLabel } from "../../lib/dates";
-import { useNow } from "../../lib/useNow";
-import s from "../../App.module.css";
+import { useWeather } from '../../lib/queries';
+import { sky } from '../../lib/weather';
+import { timeLabel } from '../../lib/dates';
+import { useNow } from '../../lib/useNow';
+import s from '../../App.module.css';
 
 /** Under the month: the time, then the weather at home (now, with today's high and low muted). */
 export default function NowLine() {

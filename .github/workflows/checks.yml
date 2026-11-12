@@ -1,4 +1,4 @@
-# Every push and pull request: the tests, the type check and the linter.
+# Every push and pull request: the tests, the type check, the linter and the formatting.
 name: Checks
 
 on:
@@ -18,3 +18,4 @@ jobs:
       - run: npm test
       - run: npm run check
       - run: npm run lint
+      - run: npm run format:check

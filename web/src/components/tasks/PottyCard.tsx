@@ -1,15 +1,15 @@
-import { useEffect, useState, type CSSProperties } from "react";
-import { usePottyActions } from "../../lib/queries";
-import { peePoo, POTTY_STEPS, ROW_PUNCHES } from "../../lib/potty";
-import type { Member, PottyChart, PottyKind, PottyStep } from "../../lib/types";
-import type { Cheer } from "../../lib/useCheer";
-import { textOn } from "../../lib/color";
-import Celebration from "../ui/Celebration";
-import ConfirmDialog from "../ui/ConfirmDialog";
-import { StarIcon } from "../ui/icons";
-import sheet from "../ui/Sheet.module.css";
-import s from "./Potty.module.css";
-import Sheet from "../ui/Sheet";
+import { useEffect, useState, type CSSProperties } from 'react';
+import { usePottyActions } from '../../lib/queries';
+import { peePoo, POTTY_STEPS, ROW_PUNCHES } from '../../lib/potty';
+import type { Member, PottyChart, PottyKind, PottyStep } from '../../lib/types';
+import type { Cheer } from '../../lib/useCheer';
+import { textOn } from '../../lib/color';
+import Celebration from '../ui/Celebration';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import { StarIcon } from '../ui/icons';
+import sheet from '../ui/Sheet.module.css';
+import s from './Potty.module.css';
+import Sheet from '../ui/Sheet';
 
 type Kind = PottyKind | null;
 
@@ -52,7 +52,7 @@ function setFolded(kidId: string, folded: boolean) {
 /** "took 6 days", from a card's start to when it filled. */
 function took(c: { startedAt: string; finishedAt: string }) {
 	const days = Math.max(1, Math.round((Date.parse(c.finishedAt) - Date.parse(c.startedAt)) / 86_400_000));
-	return `took ${days} ${days === 1 ? "day" : "days"}`;
+	return `took ${days} ${days === 1 ? 'day' : 'days'}`;
 }
 
 const none = (): Record<PottyStep, Kind[]> => ({ ask: [], sit: [], go: [], wipe: [], wash: [] });
@@ -118,12 +118,11 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact, atta
 		}
 		// Only the spot right after the last sticker adds one, and one per row until Save.
 		if (i !== saved) return;
-		if (step === "go") {
+		if (step === 'go') {
 			setPee(false);
 			setPoo(false);
 			setChoosing(true);
-		}
-		else add(step, null);
+		} else add(step, null);
 	}
 
 	function cancel() {
@@ -153,28 +152,50 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact, atta
 		} finally {
 			setSaving(false);
 		}
-		if (card) setCheer({ names: [kid.name], emoji: "🏆", message: "The whole potty card is full! Here's a new one." });
-		else if (star) setCheer({ names: [kid.name], emoji: "⭐", message: "A full row: that's a star!" });
+		if (card) setCheer({ names: [kid.name], emoji: '🏆', message: "The whole potty card is full! Here's a new one." });
+		else if (star) setCheer({ names: [kid.name], emoji: '⭐', message: "A full row: that's a star!" });
 	}
 
 	return (
-		<section className={`${s.card} ${compact ? s.compact : ""} ${attached ? s.attached : ""} ${editing ? s.editing : ""}`} style={{ "--c": kid.color, "--on": textOn(kid.color) } as CSSProperties}
-			aria-label={`${kid.name}'s potty chart`}>
+		<section
+			className={`${s.card} ${compact ? s.compact : ''} ${attached ? s.attached : ''} ${editing ? s.editing : ''}`}
+			style={{ '--c': kid.color, '--on': textOn(kid.color) } as CSSProperties}
+			aria-label={`${kid.name}'s potty chart`}
+		>
 			{!attached && (
 				<div className={s.head}>
 					<h3 className={s.title}>
 						{foldable ? (
 							// Tap to fold away (and back); a chevron shows which.
-							<button type="button" className={s.foldTitle} aria-expanded={!folded}
-								onClick={() => { setFolded(kid.id, !folded); fold(!folded); }}>
-								Potty chart <span className={s.logo} aria-hidden="true">🚽</span>
+							<button
+								type="button"
+								className={s.foldTitle}
+								aria-expanded={!folded}
+								onClick={() => {
+									setFolded(kid.id, !folded);
+									fold(!folded);
+								}}
+							>
+								Potty chart{' '}
+								<span className={s.logo} aria-hidden="true">
+									🚽
+								</span>
 							</button>
 						) : (
-							<>Potty chart <span className={s.logo} aria-hidden="true">🚽</span></>
+							<>
+								Potty chart{' '}
+								<span className={s.logo} aria-hidden="true">
+									🚽
+								</span>
+							</>
 						)}
 					</h3>
 					{canEdit && !editing && !changed && !folded && (
-						<button type="button" className={s.edit} onClick={() => (askFirst ? askFirst(() => setEditing(true)) : setEditing(true))}>
+						<button
+							type="button"
+							className={s.edit}
+							onClick={() => (askFirst ? askFirst(() => setEditing(true)) : setEditing(true))}
+						>
 							Edit
 						</button>
 					)}
@@ -182,108 +203,151 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact, atta
 			)}
 			{/* Folded away (the Tasks page): just the title. */}
 			{!folded && (
-			<>
-			{editing && <p className={s.hint}>Tap a row's last sticker to take it off, then Save.</p>}
-
-			{POTTY_STEPS.map(({ step, emoji, label }) => {
-				const saved = chart.card.rows[step];
-				const kept = saved.length - removing[step];
-				const spots: { kind: Kind; state: "saved" | "off" | "new" }[] = [
-					...saved.map((kind, i) => ({ kind, state: i < kept ? ("saved" as const) : ("off" as const) })),
-					...adding[step].map((kind) => ({ kind, state: "new" as const })),
-				];
-				// One new sticker per row each Save.
-				const next = editing || adding[step].length > 0 ? -1 : spots.length;
-				const full = kept + adding[step].length >= ROW_PUNCHES;
-				return (
-					<div key={step} className={s.row}>
-						<div className={s.rowLabel}>
-							<span className={s.rowEmoji} aria-hidden="true">{emoji}</span>
-							{label}
-						</div>
-						<div className={s.spots}>
-							{Array.from({ length: ROW_PUNCHES }, (_, i) => {
-								const spot = spots[i];
-								const sticker = spot ? (spot.kind ? peePoo(spot.kind).emoji : emoji) : "";
-								const tappable = editing ? i === kept - 1 || (i === kept && removing[step] > 0) : i === next || spot?.state === "new";
-								return (
-									<button key={i} type="button"
-										className={`${s.spot} ${spot ? s[spot.state] : ""} ${spot?.kind === "both" ? s.both : ""} ${i === next ? s.next : ""}`}
-										aria-label={spot ? `${label}: sticker ${i + 1}${spot.state === "off" ? ", coming off" : spot.state === "new" ? ", tap to take it off" : ""}` : i === next ? `Add a sticker: ${label}` : `Spot ${i + 1}`}
-										tabIndex={tappable ? 0 : -1}
-										onClick={() => tapSpot(step, i)}>
-										{sticker || (i === next ? "+" : "")}
-									</button>
-								);
-							})}
-							<span className={`${s.star} ${full ? s.starOn : ""}`} aria-label={full ? "Star earned" : "No star yet"}>
-								<StarIcon />
-							</span>
-						</div>
-					</div>
-				);
-			})}
-
-			{problem && <p className={s.problem}>{problem}</p>}
-			{(changed || editing) && (
-				<div className={s.actions}>
-					{editing && (
-						<button type="button" className={s.stop} onClick={() => setStopping(true)}>Stop chart</button>
-					)}
-					<span className={s.spacer} />
-					<button type="button" className={s.cancel} onClick={cancel} disabled={saving}>Cancel</button>
-					<button type="button" className={s.save} onClick={() => void save()} disabled={!changed || saving}>Save ✓</button>
-				</div>
-			)}
-			{last && <div className={s.foot}>Cards filled: {chart.filled.length} (the last {took(last)})</div>}
-
-			{choosing && (
 				<>
-					<Sheet label="Pee or poop?" onClose={() => setChoosing(false)} className={s.chooser}>
-						<div className={sheet.head}>
-							<h2 className={s.chooseHeading}>Pee or poop?</h2>
-							<button type="button" className={sheet.close} onClick={() => setChoosing(false)} aria-label="Close">×</button>
-						</div>
-						{/* Each one toggles; both on is both. */}
-						<div className={s.choices}>
-							{([[peePoo("pee"), pee, setPee], [peePoo("poo"), poo, setPoo]] as const).map(([k, on, set]) => (
-								<button key={k.kind} type="button" className={s.choice} aria-pressed={on} onClick={() => set(!on)}>
-									<span className={s.choiceEmoji} aria-hidden="true">{k.emoji}</span>
-									{k.label}
-									{on && <span className={s.choiceCheck} aria-hidden="true">✓</span>}
+					{editing && <p className={s.hint}>Tap a row's last sticker to take it off, then Save.</p>}
+
+					{POTTY_STEPS.map(({ step, emoji, label }) => {
+						const saved = chart.card.rows[step];
+						const kept = saved.length - removing[step];
+						const spots: { kind: Kind; state: 'saved' | 'off' | 'new' }[] = [
+							...saved.map((kind, i) => ({ kind, state: i < kept ? ('saved' as const) : ('off' as const) })),
+							...adding[step].map((kind) => ({ kind, state: 'new' as const })),
+						];
+						// One new sticker per row each Save.
+						const next = editing || adding[step].length > 0 ? -1 : spots.length;
+						const full = kept + adding[step].length >= ROW_PUNCHES;
+						return (
+							<div key={step} className={s.row}>
+								<div className={s.rowLabel}>
+									<span className={s.rowEmoji} aria-hidden="true">
+										{emoji}
+									</span>
+									{label}
+								</div>
+								<div className={s.spots}>
+									{Array.from({ length: ROW_PUNCHES }, (_, i) => {
+										const spot = spots[i];
+										const sticker = spot ? (spot.kind ? peePoo(spot.kind).emoji : emoji) : '';
+										const tappable = editing
+											? i === kept - 1 || (i === kept && removing[step] > 0)
+											: i === next || spot?.state === 'new';
+										return (
+											<button
+												key={i}
+												type="button"
+												className={`${s.spot} ${spot ? s[spot.state] : ''} ${spot?.kind === 'both' ? s.both : ''} ${i === next ? s.next : ''}`}
+												aria-label={
+													spot
+														? `${label}: sticker ${i + 1}${spot.state === 'off' ? ', coming off' : spot.state === 'new' ? ', tap to take it off' : ''}`
+														: i === next
+															? `Add a sticker: ${label}`
+															: `Spot ${i + 1}`
+												}
+												tabIndex={tappable ? 0 : -1}
+												onClick={() => tapSpot(step, i)}
+											>
+												{sticker || (i === next ? '+' : '')}
+											</button>
+										);
+									})}
+									<span
+										className={`${s.star} ${full ? s.starOn : ''}`}
+										aria-label={full ? 'Star earned' : 'No star yet'}
+									>
+										<StarIcon />
+									</span>
+								</div>
+							</div>
+						);
+					})}
+
+					{problem && <p className={s.problem}>{problem}</p>}
+					{(changed || editing) && (
+						<div className={s.actions}>
+							{editing && (
+								<button type="button" className={s.stop} onClick={() => setStopping(true)}>
+									Stop chart
 								</button>
-							))}
-						</div>
-						<div className={sheet.actions}>
-							<span className={sheet.spacer} />
-							<button type="button" className={s.save} disabled={!pee && !poo}
-								onClick={() => {
-									add("go", pee && poo ? "both" : pee ? "pee" : "poo");
-									setChoosing(false);
-								}}>
-								OK ✓
+							)}
+							<span className={s.spacer} />
+							<button type="button" className={s.cancel} onClick={cancel} disabled={saving}>
+								Cancel
+							</button>
+							<button type="button" className={s.save} onClick={() => void save()} disabled={!changed || saving}>
+								Save ✓
 							</button>
 						</div>
-					</Sheet>
+					)}
+					{last && (
+						<div className={s.foot}>
+							Cards filled: {chart.filled.length} (the last {took(last)})
+						</div>
+					)}
+
+					{choosing && (
+						<>
+							<Sheet label="Pee or poop?" onClose={() => setChoosing(false)} className={s.chooser}>
+								<div className={sheet.head}>
+									<h2 className={s.chooseHeading}>Pee or poop?</h2>
+									<button type="button" className={sheet.close} onClick={() => setChoosing(false)} aria-label="Close">
+										×
+									</button>
+								</div>
+								{/* Each one toggles; both on is both. */}
+								<div className={s.choices}>
+									{(
+										[
+											[peePoo('pee'), pee, setPee],
+											[peePoo('poo'), poo, setPoo],
+										] as const
+									).map(([k, on, set]) => (
+										<button key={k.kind} type="button" className={s.choice} aria-pressed={on} onClick={() => set(!on)}>
+											<span className={s.choiceEmoji} aria-hidden="true">
+												{k.emoji}
+											</span>
+											{k.label}
+											{on && (
+												<span className={s.choiceCheck} aria-hidden="true">
+													✓
+												</span>
+											)}
+										</button>
+									))}
+								</div>
+								<div className={sheet.actions}>
+									<span className={sheet.spacer} />
+									<button
+										type="button"
+										className={s.save}
+										disabled={!pee && !poo}
+										onClick={() => {
+											add('go', pee && poo ? 'both' : pee ? 'pee' : 'poo');
+											setChoosing(false);
+										}}
+									>
+										OK ✓
+									</button>
+								</div>
+							</Sheet>
+						</>
+					)}
+					{cheer && <Celebration cheer={cheer} onDone={() => setCheer(null)} />}
+					{stopping && (
+						<ConfirmDialog
+							safe
+							title={`Stop ${kid.name}'s potty chart?`}
+							confirmLabel="Stop"
+							onCancel={() => setStopping(false)}
+							onConfirm={() => {
+								setOn.mutate({ memberId: kid.id, on: false });
+								setStopping(false);
+								cancel();
+							}}
+						>
+							Their card and stars are kept. Start it again any time to pick up where they left off.
+						</ConfirmDialog>
+					)}
 				</>
-			)}
-			{cheer && <Celebration cheer={cheer} onDone={() => setCheer(null)} />}
-			{stopping && (
-				<ConfirmDialog
-					safe
-					title={`Stop ${kid.name}'s potty chart?`}
-					confirmLabel="Stop"
-					onCancel={() => setStopping(false)}
-					onConfirm={() => {
-						setOn.mutate({ memberId: kid.id, on: false });
-						setStopping(false);
-						cancel();
-					}}
-				>
-					Their card and stars are kept. Start it again any time to pick up where they left off.
-				</ConfirmDialog>
-			)}
-			</>
 			)}
 		</section>
 	);

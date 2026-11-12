@@ -10,32 +10,32 @@ export type TempUnit = 'F' | 'C';
 const KEY = 'sprig:temp-unit';
 
 function load(): TempUnit {
-  try {
-    return localStorage.getItem(KEY) === 'C' ? 'C' : 'F';
-  } catch {
-    return 'F';
-  }
+	try {
+		return localStorage.getItem(KEY) === 'C' ? 'C' : 'F';
+	} catch {
+		return 'F';
+	}
 }
 
 /** This device's pick, and changing it. */
 export function useTempUnit() {
-  const [unit, setUnit] = useState(load);
-  useEffect(() => {
-    const update = () => setUnit(load());
-    window.addEventListener(KEY, update);
-    return () => window.removeEventListener(KEY, update);
-  }, []);
-  const set = (next: TempUnit) => {
-    try {
-      if (next === 'F') localStorage.removeItem(KEY);
-      else localStorage.setItem(KEY, next);
-    } catch {
-      // Private browsing or storage blocked: just this visit.
-    }
-    setUnit(next);
-    window.dispatchEvent(new Event(KEY));
-  };
-  return [unit, set] as const;
+	const [unit, setUnit] = useState(load);
+	useEffect(() => {
+		const update = () => setUnit(load());
+		window.addEventListener(KEY, update);
+		return () => window.removeEventListener(KEY, update);
+	}, []);
+	const set = (next: TempUnit) => {
+		try {
+			if (next === 'F') localStorage.removeItem(KEY);
+			else localStorage.setItem(KEY, next);
+		} catch {
+			// Private browsing or storage blocked: just this visit.
+		}
+		setUnit(next);
+		window.dispatchEvent(new Event(KEY));
+	};
+	return [unit, set] as const;
 }
 
 /** Wind's unit, for the words beside it. */
@@ -46,20 +46,43 @@ const kmh = (mph: number) => Math.round(mph * 1.609);
 
 /** Today's weather in this device's unit. */
 export function weatherIn(w: Weather, unit: TempUnit): Weather {
-  if (unit === 'F') return w;
-  return {
-    ...w, temp: c(w.temp), feels: c(w.feels), high: c(w.high), low: c(w.low), wind: kmh(w.wind),
-    days: w.days.map((d) => ({ ...d, high: c(d.high), low: c(d.low), feelsHigh: c(d.feelsHigh), feelsLow: c(d.feelsLow), wind: kmh(d.wind) })),
-    hours: w.hours.map((h) => ({ ...h, temp: c(h.temp), feels: c(h.feels) })),
-  };
+	if (unit === 'F') return w;
+	return {
+		...w,
+		temp: c(w.temp),
+		feels: c(w.feels),
+		high: c(w.high),
+		low: c(w.low),
+		wind: kmh(w.wind),
+		days: w.days.map((d) => ({
+			...d,
+			high: c(d.high),
+			low: c(d.low),
+			feelsHigh: c(d.feelsHigh),
+			feelsLow: c(d.feelsLow),
+			wind: kmh(d.wind),
+		})),
+		hours: w.hours.map((h) => ({ ...h, temp: c(h.temp), feels: c(h.feels) })),
+	};
 }
 
 /** Far-away events' forecasts in this device's unit. */
 export function eventWeatherIn(all: Record<string, EventWeather>, unit: TempUnit): Record<string, EventWeather> {
-  if (unit === 'F') return all;
-  return Object.fromEntries(Object.entries(all).map(([id, e]) => [id, {
-    ...e,
-    days: e.days.map((d) => ({ ...d, high: c(d.high), low: c(d.low), feelsHigh: c(d.feelsHigh), feelsLow: c(d.feelsLow) })),
-    ...(e.at ? { at: { ...e.at, temp: c(e.at.temp), feels: c(e.at.feels) } } : {}),
-  }]));
+	if (unit === 'F') return all;
+	return Object.fromEntries(
+		Object.entries(all).map(([id, e]) => [
+			id,
+			{
+				...e,
+				days: e.days.map((d) => ({
+					...d,
+					high: c(d.high),
+					low: c(d.low),
+					feelsHigh: c(d.feelsHigh),
+					feelsLow: c(d.feelsLow),
+				})),
+				...(e.at ? { at: { ...e.at, temp: c(e.at.temp), feels: c(e.at.feels) } } : {}),
+			},
+		]),
+	);
 }

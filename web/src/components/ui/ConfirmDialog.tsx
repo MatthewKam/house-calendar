@@ -1,6 +1,6 @@
-import { type ReactNode } from "react";
-import sheet from "./Sheet.module.css";
-import Sheet from "./Sheet";
+import { type ReactNode } from 'react';
+import sheet from './Sheet.module.css';
+import Sheet from './Sheet';
 
 interface Props {
 	title: string;

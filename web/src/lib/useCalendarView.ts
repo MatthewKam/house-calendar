@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
-import { addDays, addMonths, dayKey, fromDayKey, monthGridDays, startOfWeek } from "./dates";
-import { useSetSetting, useSettings } from "./queries";
+import { useMemo, useState } from 'react';
+import { addDays, addMonths, dayKey, fromDayKey, monthGridDays, startOfWeek } from './dates';
+import { useSetSetting, useSettings } from './queries';
 
-export type View = "month" | "week";
+export type View = 'month' | 'week';
 
 /**
  * The calendar on screen: Month or Week (saved with the display's settings, so a refresh reopens it),
@@ -12,13 +12,14 @@ export type View = "month" | "week";
 export function useCalendarView(today: string) {
 	const settings = useSettings();
 	const setSetting = useSetSetting();
-	const view: View = settings.data?.view === "month" ? "month" : "week";
+	const view: View = settings.data?.view === 'month' ? 'month' : 'week';
 	// Any day inside the month or week on screen.
 	const [cursor, setCursor] = useState(() => new Date());
 	// The day shown in the side panel; null when it's closed.
 	const [selected, setSelected] = useState<string | null>(null);
 	const days = useMemo(
-		() => (view === "month" ? monthGridDays(cursor) : Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(cursor), i))),
+		() =>
+			view === 'month' ? monthGridDays(cursor) : Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(cursor), i)),
 		[view, cursor],
 	);
 
@@ -31,9 +32,14 @@ export function useCalendarView(today: string) {
 	}
 
 	return {
-		view, cursor, setCursor, selected, setSelected, days,
+		view,
+		cursor,
+		setCursor,
+		selected,
+		setSelected,
+		days,
 		/** A month or week forward (1) or back (-1). */
-		step: (n: number) => setCursor(view === "month" ? addMonths(cursor, n) : addDays(cursor, 7 * n)),
+		step: (n: number) => setCursor(view === 'month' ? addMonths(cursor, n) : addDays(cursor, 7 * n)),
 		goToday: () => {
 			setCursor(new Date());
 			if (selected) setSelected(today);
@@ -41,7 +47,7 @@ export function useCalendarView(today: string) {
 		changeView: (next: View) => {
 			// Keep the selected day in view when switching between month and week.
 			if (selected) setCursor(fromDayKey(selected));
-			setSetting.mutate({ key: "view", value: next });
+			setSetting.mutate({ key: 'view', value: next });
 		},
 		/**
 		 * The day a new event starts on: the day open in the panel, else today if it's on screen, else
@@ -49,7 +55,7 @@ export function useCalendarView(today: string) {
 		 */
 		newEventDay: () => {
 			if (selected) return selected;
-			const shownDays = view === "month" ? days.filter((d) => d.getMonth() === cursor.getMonth()) : days;
+			const shownDays = view === 'month' ? days.filter((d) => d.getMonth() === cursor.getMonth()) : days;
 			return shownDays.some((d) => dayKey(d) === today) ? today : dayKey(shownDays[0]);
 		},
 	};

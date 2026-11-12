@@ -1,16 +1,15 @@
-import { useMemo } from "react";
-import { addDays, dayKey, fromDayKey } from "../../lib/dates";
-import { useMembers, useRangeEvents } from "../../lib/queries";
-import { birthdays, sleepsUntil, specialDaysBetween, type SpecialDay } from "../../lib/specialDays";
-import s from "./Today.module.css";
+import { useMemo } from 'react';
+import { addDays, dayKey, fromDayKey } from '../../lib/dates';
+import { useMembers, useRangeEvents } from '../../lib/queries';
+import { birthdays, sleepsUntil, specialDaysBetween, type SpecialDay } from '../../lib/specialDays';
+import s from './Today.module.css';
 
 /** Special days this far ahead, and at most this many of them. */
 const SPECIAL_DAYS_AHEAD = 60;
 const SPECIAL_DAYS_SHOWN = 6;
 
 /** "Today", "Tomorrow", or "In 12 days". */
-const countdown = (days: number) =>
-	days === 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`;
+const countdown = (days: number) => (days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days} days`);
 
 /**
  * Special days coming up (the next few, in the next two months): holidays, the family's birthdays, and
@@ -27,12 +26,9 @@ export default function SpecialDays({ today, onAdd }: { today: string; onAdd?: (
 		.map((e) => ({
 			day: e.allDay ? e.start : dayKey(new Date(e.start)),
 			name: e.title,
-			picture: "⭐",
+			picture: '⭐',
 		}))
-		.filter(
-			(d, i, all) =>
-				all.findIndex((x) => x.day === d.day && x.name === d.name) === i,
-		);
+		.filter((d, i, all) => all.findIndex((x) => x.day === d.day && x.name === d.name) === i);
 	const days = specialDaysBetween(today, to, (year) => [
 		...birthdays(people, year),
 		...special.filter((d) => d.day.startsWith(`${year}-`)),
@@ -54,10 +50,7 @@ export default function SpecialDays({ today, onAdd }: { today: string; onAdd?: (
 					{days.map((d) => {
 						const until = sleepsUntil(today, d.day);
 						return (
-							<li
-								key={`${d.day}-${d.name}`}
-								className={`${s.specialRow} ${until === 0 ? s.specialToday : ""}`}
-							>
+							<li key={`${d.day}-${d.name}`} className={`${s.specialRow} ${until === 0 ? s.specialToday : ''}`}>
 								<span className={s.specialPicture} aria-hidden="true">
 									{d.picture}
 								</span>
@@ -65,9 +58,9 @@ export default function SpecialDays({ today, onAdd }: { today: string; onAdd?: (
 									<span className={s.title}>{d.name}</span>
 									<span className={s.where}>
 										{fromDayKey(d.day).toLocaleDateString([], {
-											weekday: "short",
-											month: "short",
-											day: "numeric",
+											weekday: 'short',
+											month: 'short',
+											day: 'numeric',
 										})}
 									</span>
 								</span>

@@ -1,22 +1,21 @@
-import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from "react";
-import { api } from "../../lib/api";
-import { fromDayKey, longDate } from "../../lib/dates";
-import { sky } from "../../lib/weather";
-import { useTempUnit, windUnit } from "../../lib/units";
-import type { Weather } from "../../lib/types";
-import { canFindHere, findHere, setHere, useWeatherHere } from "../../lib/useWeatherHere";
-import AddressInput from "../calendar/AddressInput";
-import s from "./Today.module.css";
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from 'react';
+import { api } from '../../lib/api';
+import { fromDayKey, longDate } from '../../lib/dates';
+import { sky } from '../../lib/weather';
+import { useTempUnit, windUnit } from '../../lib/units';
+import type { Weather } from '../../lib/types';
+import { canFindHere, findHere, setHere, useWeatherHere } from '../../lib/useWeatherHere';
+import AddressInput from '../calendar/AddressInput';
+import s from './Today.module.css';
 
-type Hour = Weather["hours"][number];
+type Hour = Weather['hours'][number];
 
 /** "5 PM" (the tooltip). */
-const hourLabel = (iso: string) =>
-	new Date(iso).toLocaleTimeString([], { hour: "numeric" });
+const hourLabel = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: 'numeric' });
 /** The hour and AM or PM, apart, so the AM or PM can be set smaller on the hour's bottom line. */
 const hourParts = (iso: string) => {
 	const h = new Date(iso).getHours();
-	return [h % 12 || 12, h < 12 ? "AM" : "PM"] as const;
+	return [h % 12 || 12, h < 12 ? 'AM' : 'PM'] as const;
 };
 /** Under the graph: the hour, then a small AM or PM, so they don't run together. */
 const graphHour = (iso: string) => {
@@ -72,14 +71,16 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 						High {w.high}° · Low {w.low}°
 					</span>
 					<span>
-						<span className={s.nowrap}>💧 {w.rainChance}% rain</span> ·{" "}
-						<span className={s.nowrap}>💨 {w.wind} {windUnit(unit)}</span>
+						<span className={s.nowrap}>💧 {w.rainChance}% rain</span> ·{' '}
+						<span className={s.nowrap}>
+							💨 {w.wind} {windUnit(unit)}
+						</span>
 					</span>
 				</span>
 			</div>
 			{w.hours.length > 1 && <HourGraph hours={w.hours} isDay={isDay} />}
 			<button type="button" className={s.weekToggle} aria-expanded={weekOpen} onClick={() => setWeekOpen(!weekOpen)}>
-				{weekOpen ? "Hide next 7 days" : "See next 7 days"}
+				{weekOpen ? 'Hide next 7 days' : 'See next 7 days'}
 			</button>
 			{weekOpen && <Week days={w.days.slice(1)} />}
 		</section>
@@ -95,18 +96,24 @@ function PlaceSwitch() {
 	const here = useWeatherHere();
 	const [finding, setFinding] = useState(false);
 	const [typing, setTyping] = useState(false);
-	const [typed, setTyped] = useState("");
+	const [typed, setTyped] = useState('');
 	const [problem, setProblem] = useState<string | null>(null);
 	const place = here?.name ? here : null;
 	function goHere() {
 		setFinding(true);
 		setProblem(null);
 		setTyping(false);
-		findHere().then(
-			(at) => setHere(at),
-			(err: GeolocationPositionError) =>
-				setProblem(err.code === err.PERMISSION_DENIED ? "Location is off for Sprig on this device" : "Couldn't find where you are"),
-		).finally(() => setFinding(false));
+		findHere()
+			.then(
+				(at) => setHere(at),
+				(err: GeolocationPositionError) =>
+					setProblem(
+						err.code === err.PERMISSION_DENIED
+							? 'Location is off for Sprig on this device'
+							: "Couldn't find where you are",
+					),
+			)
+			.finally(() => setFinding(false));
 	}
 	function goPlace(e: FormEvent) {
 		e.preventDefault();
@@ -114,11 +121,18 @@ function PlaceSwitch() {
 		if (!q) return;
 		setFinding(true);
 		setProblem(null);
-		api.weatherPlace(q).then(
-			// Named by its first part: "Honolulu, HI, USA" is Honolulu.
-			(at) => { setHere({ ...at, name: q.split(",")[0].trim() }); setTyping(false); setTyped(""); },
-			() => setProblem("Couldn't find that place"),
-		).finally(() => setFinding(false));
+		api
+			.weatherPlace(q)
+			.then(
+				// Named by its first part: "Honolulu, HI, USA" is Honolulu.
+				(at) => {
+					setHere({ ...at, name: q.split(',')[0].trim() });
+					setTyping(false);
+					setTyped('');
+				},
+				() => setProblem("Couldn't find that place"),
+			)
+			.finally(() => setFinding(false));
 	}
 	const option = (on: boolean, label: string, pick: () => void) => (
 		<button type="button" role="radio" aria-checked={on} className={s.placeOption} onClick={pick} disabled={finding}>
@@ -130,11 +144,18 @@ function PlaceSwitch() {
 		<>
 			<div className={s.place}>
 				<div className={s.placeSwitch} role="radiogroup" aria-label="Weather for">
-					{option(!here && !typing && !finding, "🏠 Home", () => { setProblem(null); setTyping(false); setHere(null); })}
+					{option(!here && !typing && !finding, '🏠 Home', () => {
+						setProblem(null);
+						setTyping(false);
+						setHere(null);
+					})}
 					{(canFindHere() || onHere) &&
-						option(onHere && !typing, finding && !typing ? "📍 Finding…" : "📍 Here", goHere)}
+						option(onHere && !typing, finding && !typing ? '📍 Finding…' : '📍 Here', goHere)}
 					{/* The place picked shows its name; tapped again, another can be typed in. */}
-					{option(!!place || typing, place ? `🔎 ${place.name}` : "🔎 Other", () => { setProblem(null); setTyping((t) => !t || !place); })}
+					{option(!!place || typing, place ? `🔎 ${place.name}` : '🔎 Other', () => {
+						setProblem(null);
+						setTyping((t) => !t || !place);
+					})}
 				</div>
 				{problem && <span className={s.placeProblem}>{problem}</span>}
 			</div>
@@ -142,7 +163,7 @@ function PlaceSwitch() {
 				<form className={s.placeForm} onSubmit={goPlace}>
 					<AddressInput value={typed} onChange={setTyped} placeholder="A town or address" label="Weather for a place" />
 					<button type="submit" className={s.placeGo} disabled={finding || !typed.trim()}>
-						{finding ? "Finding…" : "Show"}
+						{finding ? 'Finding…' : 'Show'}
 					</button>
 				</form>
 			)}
@@ -160,7 +181,7 @@ const WIND_SHOWN = { F: 15, C: 24 } as const;
  * worth knowing; under that, its low to its high as a bar on one scale for the week (a warmer day sits
  * further right).
  */
-function Week({ days }: { days: Weather["days"] }) {
+function Week({ days }: { days: Weather['days'] }) {
 	const [unit] = useTempUnit();
 	const top = Math.max(...days.map((d) => d.high));
 	const bottom = Math.min(...days.map((d) => d.low));
@@ -182,22 +203,32 @@ function Week({ days }: { days: Weather["days"] }) {
 					>
 						<span className={s.weekTop} aria-hidden="true">
 							<span className={s.weekName}>
-								{date.toLocaleDateString([], { weekday: "short" })} <span className={s.weekDate}>{date.getDate()}</span>
+								{date.toLocaleDateString([], { weekday: 'short' })} <span className={s.weekDate}>{date.getDate()}</span>
 							</span>
 							<span className={s.weekIcon}>{look.icon}</span>
 							<span className={s.weekExtra}>
-								<span>Feels {d.feelsLow}–{d.feelsHigh}°</span>
+								<span>
+									Feels {d.feelsLow}–{d.feelsHigh}°
+								</span>
 								{d.rain >= RAIN_SHOWN && (
 									<span className={d.rain >= RAIN_LIKELY ? s.weekWet : undefined}>💧 {d.rain}%</span>
 								)}
-								{d.wind >= WIND_SHOWN[unit] && <span>💨 {d.wind} {windUnit(unit)}</span>}
+								{d.wind >= WIND_SHOWN[unit] && (
+									<span>
+										💨 {d.wind} {windUnit(unit)}
+									</span>
+								)}
 							</span>
 						</span>
-						<span className={s.weekLow} aria-hidden="true">{d.low}°</span>
+						<span className={s.weekLow} aria-hidden="true">
+							{d.low}°
+						</span>
 						<span className={s.weekTrack} aria-hidden="true">
 							<span className={s.weekBar} style={bar(d.low, d.high)} />
 						</span>
-						<span className={s.weekHigh} aria-hidden="true">{d.high}°</span>
+						<span className={s.weekHigh} aria-hidden="true">
+							{d.high}°
+						</span>
 					</li>
 				);
 			})}
@@ -219,22 +250,14 @@ const TIP = 150;
  * hour named underneath, and the high and low labelled (above their points). Tap (or point at) the line for an hour: when, the
  * temperature, how warm it feels, the sky, and the chance of rain when there is one.
  */
-function HourGraph({
-	hours,
-	isDay,
-}: {
-	hours: Hour[];
-	isDay: (iso: string) => boolean;
-}) {
+function HourGraph({ hours, isDay }: { hours: Hour[]; isDay: (iso: string) => boolean }) {
 	const box = useRef<HTMLDivElement>(null);
 	const [width, setWidth] = useState(0);
 	const [picked, setPicked] = useState<number | null>(null);
 	useEffect(() => {
 		const el = box.current;
 		if (!el) return;
-		const watch = new ResizeObserver(([entry]) =>
-			setWidth(entry.contentRect.width),
-		);
+		const watch = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
 		watch.observe(el);
 		return () => watch.disconnect();
 	}, []);
@@ -247,8 +270,7 @@ function HourGraph({
 	const top = Math.max(hi, ...feels);
 	const span = Math.max(top - Math.min(lo, ...feels), 4);
 	const x = (i: number) => SIDE + (i * (width - 2 * SIDE)) / (hours.length - 1);
-	const y = (t: number) =>
-		TOP + 6 + ((top - t) / span) * (HEIGHT - TOP - BOTTOM - 10);
+	const y = (t: number) => TOP + 6 + ((top - t) / span) * (HEIGHT - TOP - BOTTOM - 10);
 	const points = hours.map((h, i) => [x(i), y(h.temp)] as const);
 	const feelsPoints = hours.map((h, i) => [x(i), y(h.feels)] as const);
 
@@ -261,9 +283,7 @@ function HourGraph({
 			? 0
 			: after < 0
 				? hours.length - 1
-				: after -
-					1 +
-					(nowMs - times[after - 1]) / (times[after] - times[after - 1]);
+				: after - 1 + (nowMs - times[after - 1]) / (times[after] - times[after - 1]);
 	const whole = Math.min(Math.floor(at), hours.length - 1);
 	const part = at - whole;
 	// A value at now, between its two hours.
@@ -277,21 +297,16 @@ function HourGraph({
 	const nowPoint = nowOf((h) => h.temp);
 	const nowFeels = nowOf((h) => h.feels);
 	const line = (ps: (readonly [number, number])[]) =>
-		ps
-			.map(([px, py], i) => `${i ? "L" : "M"}${px.toFixed(1)},${py.toFixed(1)}`)
-			.join(" ");
+		ps.map(([px, py], i) => `${i ? 'L' : 'M'}${px.toFixed(1)},${py.toFixed(1)}`).join(' ');
 	// Labels near an edge lean in, so they're not cut off.
-	const anchor = (px: number) =>
-		px < 20 ? "start" : px > width - 20 ? "end" : "middle";
+	const anchor = (px: number) => (px < 20 ? 'start' : px > width - 20 ? 'end' : 'middle');
 	const hiAt = temps.indexOf(hi);
 	const loAt = temps.lastIndexOf(lo);
 
 	// The hour nearest a touch.
 	const pick = (e: PointerEvent<SVGSVGElement>) => {
 		const left = e.currentTarget.getBoundingClientRect().left;
-		const i = Math.round(
-			((e.clientX - left - SIDE) / (width - 2 * SIDE)) * (hours.length - 1),
-		);
+		const i = Math.round(((e.clientX - left - SIDE) / (width - 2 * SIDE)) * (hours.length - 1));
 		return Math.max(0, Math.min(hours.length - 1, i));
 	};
 	const shown = picked === null ? null : hours[picked];
@@ -308,32 +323,17 @@ function HourGraph({
 					onPointerDown={(e) => {
 						const i = pick(e);
 						// The same hour tapped again: put it away.
-						setPicked((was) =>
-							was === i && e.pointerType !== "mouse" ? null : i,
-						);
+						setPicked((was) => (was === i && e.pointerType !== 'mouse' ? null : i));
 					}}
-					onPointerMove={(e) =>
-						(e.pointerType === "mouse" || e.buttons) && setPicked(pick(e))
-					}
-					onPointerLeave={(e) => e.pointerType === "mouse" && setPicked(null)}
+					onPointerMove={(e) => (e.pointerType === 'mouse' || e.buttons) && setPicked(pick(e))}
+					onPointerLeave={(e) => e.pointerType === 'mouse' && setPicked(null)}
 				>
 					{/* Every third hour, named along the bottom, with a faint line up. */}
 					{hours.map((h, i) =>
 						new Date(h.time).getHours() % 3 === 0 ? (
 							<g key={h.time}>
-								<line
-									className={s.graphTick}
-									x1={x(i)}
-									x2={x(i)}
-									y1={TOP}
-									y2={HEIGHT - BOTTOM}
-								/>
-								<text
-									className={s.graphHour}
-									x={x(i)}
-									y={HEIGHT - 6}
-									textAnchor={anchor(x(i))}
-								>
+								<line className={s.graphTick} x1={x(i)} x2={x(i)} y1={TOP} y2={HEIGHT - BOTTOM} />
+								<text className={s.graphHour} x={x(i)} y={HEIGHT - 6} textAnchor={anchor(x(i))}>
 									{graphHour(h.time)}
 								</text>
 							</g>
@@ -344,19 +344,10 @@ function HourGraph({
 						className={`${s.graphFeels} ${s.graphFeelsPast}`}
 						d={line([...feelsPoints.slice(0, whole + 1), nowFeels])}
 					/>
-					<path
-						className={s.graphFeels}
-						d={line([nowFeels, ...feelsPoints.slice(whole + 1)])}
-					/>
+					<path className={s.graphFeels} d={line([nowFeels, ...feelsPoints.slice(whole + 1)])} />
 					{/* Gone by, faint; ahead, solid. */}
-					<path
-						className={s.graphPast}
-						d={line([...points.slice(0, whole + 1), nowPoint])}
-					/>
-					<path
-						className={s.graphLine}
-						d={line([nowPoint, ...points.slice(whole + 1)])}
-					/>
+					<path className={s.graphPast} d={line([...points.slice(0, whole + 1), nowPoint])} />
+					<path className={s.graphLine} d={line([nowPoint, ...points.slice(whole + 1)])} />
 					{/* The high and the low. */}
 					<text
 						className={s.graphTemp}
@@ -386,27 +377,12 @@ function HourGraph({
 								y1={TOP - 4}
 								y2={HEIGHT - BOTTOM}
 							/>
-							<circle
-								className={s.graphPickFeels}
-								cx={feelsPoints[picked][0]}
-								cy={feelsPoints[picked][1]}
-								r={4}
-							/>
-							<circle
-								className={s.graphPick}
-								cx={points[picked][0]}
-								cy={points[picked][1]}
-								r={5}
-							/>
+							<circle className={s.graphPickFeels} cx={feelsPoints[picked][0]} cy={feelsPoints[picked][1]} r={4} />
+							<circle className={s.graphPick} cx={points[picked][0]} cy={points[picked][1]} r={5} />
 						</g>
 					)}
 					{/* Now. */}
-					<circle
-						className={s.graphNow}
-						cx={nowPoint[0]}
-						cy={nowPoint[1]}
-						r={6}
-					/>
+					<circle className={s.graphNow} cx={nowPoint[0]} cy={nowPoint[1]} r={6} />
 				</svg>
 			)}
 			{shown && look && (
@@ -415,8 +391,13 @@ function HourGraph({
 					className={s.graphTip}
 					role="status"
 					style={{
-						left: Math.max(0, Math.min(width - TIP,
-							points[picked!][0] < width / 2 ? points[picked!][0] + 12 : points[picked!][0] - 12 - TIP)),
+						left: Math.max(
+							0,
+							Math.min(
+								width - TIP,
+								points[picked!][0] < width / 2 ? points[picked!][0] + 12 : points[picked!][0] - 12 - TIP,
+							),
+						),
 					}}
 				>
 					<b>{tipHour(shown.time)}</b>
@@ -430,16 +411,17 @@ function HourGraph({
 				</div>
 			)}
 			{/* Hidden while an hour's showing, but keeping its room, so the week under it stays put. */}
-			<p
-				className={s.graphHint}
-				style={picked === null ? undefined : { visibility: "hidden" }}
-			>
+			<p className={s.graphHint} style={picked === null ? undefined : { visibility: 'hidden' }}>
 				<span className={s.graphKey}>
-					<svg width="18" height="6" aria-hidden="true"><line className={s.graphLine} x1="1" x2="17" y1="3" y2="3" /></svg>
+					<svg width="18" height="6" aria-hidden="true">
+						<line className={s.graphLine} x1="1" x2="17" y1="3" y2="3" />
+					</svg>
 					Temperature
 				</span>
 				<span className={s.graphKey}>
-					<svg width="18" height="6" aria-hidden="true"><line className={s.graphFeels} x1="1" x2="17" y1="3" y2="3" /></svg>
+					<svg width="18" height="6" aria-hidden="true">
+						<line className={s.graphFeels} x1="1" x2="17" y1="3" y2="3" />
+					</svg>
 					Feels like
 				</span>
 				<span>Tap for an hour</span>

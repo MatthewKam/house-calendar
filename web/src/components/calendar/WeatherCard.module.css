@@ -30,7 +30,7 @@
 }
 /* The sky: muted (less saturated, a little see-through) so it doesn't overpower the calendar. */
 .card::before {
-	content: "";
+	content: '';
 	position: absolute;
 	inset: 0;
 	z-index: -1;
@@ -42,7 +42,12 @@
 /* ---- Skies ---- */
 .sunny {
 	--sky:
-		radial-gradient(circle at 3.4rem 5.7rem, rgb(255 222 125 / 0.75) 0, rgb(255 210 90 / 0.25) 2.6rem, transparent 5rem),
+		radial-gradient(
+			circle at 3.4rem 5.7rem,
+			rgb(255 222 125 / 0.75) 0,
+			rgb(255 210 90 / 0.25) 2.6rem,
+			transparent 5rem
+		),
 		linear-gradient(160deg, #2b7cd3 0%, #4f9fe6 55%, #7cbcf2 100%);
 }
 .partly {

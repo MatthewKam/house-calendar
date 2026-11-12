@@ -44,7 +44,7 @@
 }
 /* A text button under the icons. */
 .more {
-	composes: textButton from "./Buttons.module.css";
+	composes: textButton from './Buttons.module.css';
 	align-self: flex-start;
 	padding: 0.2rem 0;
 	font-size: 0.9rem;

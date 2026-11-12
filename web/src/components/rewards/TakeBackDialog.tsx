@@ -1,10 +1,10 @@
-import { useState, type FormEvent } from "react";
-import { useRewardActions } from "../../lib/queries";
-import type { Member } from "../../lib/types";
-import { PickChip } from "../ui/NameChip";
-import sheet from "../ui/Sheet.module.css";
-import s from "./Rewards.module.css";
-import Sheet from "../ui/Sheet";
+import { useState, type FormEvent } from 'react';
+import { useRewardActions } from '../../lib/queries';
+import type { Member } from '../../lib/types';
+import { PickChip } from '../ui/NameChip';
+import sheet from '../ui/Sheet.module.css';
+import s from './Rewards.module.css';
+import Sheet from '../ui/Sheet';
 
 interface Props {
 	jar: { id: string; title: string };
@@ -45,9 +45,7 @@ export default function TakeBackDialog({ jar, kids, onClose }: Props) {
 						))}
 					</div>
 				)}
-				<div className={sheet.body}>
-					They go back to {kid.name}'s bucket.
-				</div>
+				<div className={sheet.body}>They go back to {kid.name}'s bucket.</div>
 				<div className={s.stager}>
 					<button type="button" className={s.step} disabled={n <= 1} aria-label="One fewer" onClick={() => setN(n - 1)}>
 						−
@@ -55,7 +53,13 @@ export default function TakeBackDialog({ jar, kids, onClose }: Props) {
 					<span className={s.staged}>
 						{n} of {max} ⭐
 					</span>
-					<button type="button" className={s.step} disabled={n >= max} aria-label="One more" onClick={() => setN(n + 1)}>
+					<button
+						type="button"
+						className={s.step}
+						disabled={n >= max}
+						aria-label="One more"
+						onClick={() => setN(n + 1)}
+					>
 						+
 					</button>
 				</div>

@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { ANIMALS } from "./things";
+import type { ReactNode } from 'react';
+import { ANIMALS } from './things';
 
 // The games' pictures, drawn flat and friendly (no emoji, so they look the same on every device). Each
 // fills a 120 × 120 box. The animals with a noise are pictures instead (DRAWN).
@@ -13,14 +13,22 @@ export function preloadAnimals() {
 	DRAWN.forEach((id) => (new Image().src = drawn(id)));
 }
 
-const EYE = "#3b2a20";
+const EYE = '#3b2a20';
 const eyes = (y = 50, gap = 15) => (
 	<>
 		<circle cx={60 - gap} cy={y} r="5" fill={EYE} />
 		<circle cx={60 + gap} cy={y} r="5" fill={EYE} />
 	</>
 );
-const smile = (y = 78, w = 8) => <path d={`M${60 - w} ${y} q${w} ${w * 0.8} ${w * 2} 0`} fill="none" stroke={EYE} strokeWidth="3" strokeLinecap="round" />;
+const smile = (y = 78, w = 8) => (
+	<path
+		d={`M${60 - w} ${y} q${w} ${w * 0.8} ${w * 2} 0`}
+		fill="none"
+		stroke={EYE}
+		strokeWidth="3"
+		strokeLinecap="round"
+	/>
+);
 
 const ART: Record<string, ReactNode> = {
 	// Animals not in the drawn set (see DRAWN): the maze's mouse.
@@ -72,7 +80,14 @@ const ART: Record<string, ReactNode> = {
 		<>
 			<rect x="18" y="18" width="84" height="84" rx="10" fill="#f4a020" />
 			<rect x="30" y="30" width="60" height="60" rx="6" fill="#ffd36e" />
-			<path d="M50 78 L60 44 L70 78 M54 66 H66" fill="none" stroke="#c46d00" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+			<path
+				d="M50 78 L60 44 L70 78 M54 66 H66"
+				fill="none"
+				stroke="#c46d00"
+				strokeWidth="7"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
 		</>
 	),
 	book: (
@@ -84,7 +99,10 @@ const ART: Record<string, ReactNode> = {
 	),
 	car: (
 		<>
-			<path d="M10 80 V64 Q12 56 22 54 L36 32 Q40 28 48 28 H76 Q84 28 88 34 L100 54 Q110 56 110 66 V80z" fill="#2f8fd8" />
+			<path
+				d="M10 80 V64 Q12 56 22 54 L36 32 Q40 28 48 28 H76 Q84 28 88 34 L100 54 Q110 56 110 66 V80z"
+				fill="#2f8fd8"
+			/>
 			<path d="M44 36 H58 V54 H34z M64 36 H78 L90 54 H64z" fill="#d6ecff" />
 			<circle cx="34" cy="82" r="13" fill="#2b2b2b" />
 			<circle cx="34" cy="82" r="5" fill="#bdbdc6" />
@@ -121,7 +139,10 @@ const ART: Record<string, ReactNode> = {
 		<>
 			<path d="M60 30 Q58 16 66 8" fill="none" stroke="#6b4126" strokeWidth="5" strokeLinecap="round" />
 			<path d="M64 22 Q80 8 92 18 Q80 30 64 22z" fill="#5cb85c" />
-			<path d="M60 34 C40 20 12 32 14 62 C16 92 40 112 60 102 C80 112 104 92 106 62 C108 32 80 20 60 34z" fill="#e03a2f" />
+			<path
+				d="M60 34 C40 20 12 32 14 62 C16 92 40 112 60 102 C80 112 104 92 106 62 C108 32 80 20 60 34z"
+				fill="#e03a2f"
+			/>
 			<ellipse cx="38" cy="54" rx="7" ry="12" fill="#fff" opacity=".35" />
 		</>
 	),
@@ -201,7 +222,13 @@ const ART: Record<string, ReactNode> = {
 			<ellipse cx="76" cy="30" rx="5" ry="20" fill="#f2b6c0" transform="rotate(12 76 30)" />
 			<circle cx="60" cy="76" r="36" fill="#f4f1ec" />
 			<ellipse cx="60" cy="86" rx="7" ry="5" fill="#e8707c" />
-			<path d="M60 91 v6 M60 97 q-6 5 -10 2 M60 97 q6 5 10 2" fill="none" stroke={EYE} strokeWidth="2.5" strokeLinecap="round" />
+			<path
+				d="M60 91 v6 M60 97 q-6 5 -10 2 M60 97 q6 5 10 2"
+				fill="none"
+				stroke={EYE}
+				strokeWidth="2.5"
+				strokeLinecap="round"
+			/>
 			{eyes(72, 14)}
 		</>
 	),
@@ -214,7 +241,13 @@ const ART: Record<string, ReactNode> = {
 			<circle cx="34" cy="42" r="9" fill="#fff" opacity=".7" />
 			<circle cx="86" cy="42" r="9" fill="#fff" opacity=".7" />
 			<rect x="54" y="30" width="12" height="68" rx="6" fill="#3b2a20" />
-			<path d="M58 32 Q50 14 42 12 M62 32 Q70 14 78 12" fill="none" stroke="#3b2a20" strokeWidth="3" strokeLinecap="round" />
+			<path
+				d="M58 32 Q50 14 42 12 M62 32 Q70 14 78 12"
+				fill="none"
+				stroke="#3b2a20"
+				strokeWidth="3"
+				strokeLinecap="round"
+			/>
 		</>
 	),
 	honey: (
@@ -271,7 +304,10 @@ const ART: Record<string, ReactNode> = {
 	),
 	carrot: (
 		<>
-			<path d="M54 26 Q44 6 36 10 Q46 18 50 30z M62 26 Q62 4 72 6 Q66 18 66 30z M58 28 Q80 10 88 18 Q74 24 64 32z" fill="#5cb85c" />
+			<path
+				d="M54 26 Q44 6 36 10 Q46 18 50 30z M62 26 Q62 4 72 6 Q66 18 66 30z M58 28 Q80 10 88 18 Q74 24 64 32z"
+				fill="#5cb85c"
+			/>
 			<path d="M42 34 Q60 22 78 34 L62 112 Q60 116 58 112z" fill="#f4892a" />
 			<path d="M50 52 h10 M56 70 h10 M54 88 h8" stroke="#c96a12" strokeWidth="3" strokeLinecap="round" />
 		</>
@@ -316,7 +352,13 @@ const ART: Record<string, ReactNode> = {
 			<path d="M62 16 L98 70 H62z" fill="#e03a2f" />
 			<path d="M54 26 L24 70 H54z" fill="#fbf7ee" />
 			<path d="M12 78 H108 L94 102 H26z" fill="#3d7bd9" />
-			<path d="M4 108 q10 -6 20 0 t20 0 t20 0 t20 0 t20 0 t20 0" fill="none" stroke="#7cc0f0" strokeWidth="5" strokeLinecap="round" />
+			<path
+				d="M4 108 q10 -6 20 0 t20 0 t20 0 t20 0 t20 0 t20 0"
+				fill="none"
+				stroke="#7cc0f0"
+				strokeWidth="5"
+				strokeLinecap="round"
+			/>
 		</>
 	),
 	kite: (
@@ -349,8 +391,18 @@ const ART: Record<string, ReactNode> = {
 			{smile(68, 9)}
 		</>
 	),
-	moon: <path d="M78 12 C40 14 18 44 22 74 C26 100 54 114 82 106 C56 98 42 76 46 54 C50 32 62 18 78 12z" fill="#f6d86a" />,
-	star: <path d="M60 8 L74 42 L110 44 L82 68 L92 104 L60 84 L28 104 L38 68 L10 44 L46 42z" fill="#f6cf3c" stroke="#f4a020" strokeWidth="4" strokeLinejoin="round" />,
+	moon: (
+		<path d="M78 12 C40 14 18 44 22 74 C26 100 54 114 82 106 C56 98 42 76 46 54 C50 32 62 18 78 12z" fill="#f6d86a" />
+	),
+	star: (
+		<path
+			d="M60 8 L74 42 L110 44 L82 68 L92 104 L60 84 L28 104 L38 68 L10 44 L46 42z"
+			fill="#f6cf3c"
+			stroke="#f4a020"
+			strokeWidth="4"
+			strokeLinejoin="round"
+		/>
+	),
 	tree: (
 		<>
 			<rect x="52" y="74" width="16" height="40" rx="4" fill="#8a5a3b" />
@@ -370,7 +422,12 @@ const ART: Record<string, ReactNode> = {
 	),
 	egg: (
 		<>
-			<path d="M60 10 C32 10 18 58 22 80 C26 104 44 112 60 112 C76 112 94 104 98 80 C102 58 88 10 60 10z" fill="#fbf2dc" stroke="#e6d6b0" strokeWidth="3" />
+			<path
+				d="M60 10 C32 10 18 58 22 80 C26 104 44 112 60 112 C76 112 94 104 98 80 C102 58 88 10 60 10z"
+				fill="#fbf2dc"
+				stroke="#e6d6b0"
+				strokeWidth="3"
+			/>
 			<ellipse cx="44" cy="50" rx="6" ry="12" fill="#fff" />
 		</>
 	),
@@ -385,8 +442,17 @@ const ART: Record<string, ReactNode> = {
 	),
 	umbrella: (
 		<>
-			<path d="M60 56 V100 Q60 112 48 112 Q40 112 40 104" fill="none" stroke="#6b4126" strokeWidth="6" strokeLinecap="round" />
-			<path d="M8 60 C10 26 34 10 60 10 C86 10 110 26 112 60 Q99 50 86 60 Q73 50 60 60 Q47 50 34 60 Q21 50 8 60z" fill="#e03a2f" />
+			<path
+				d="M60 56 V100 Q60 112 48 112 Q40 112 40 104"
+				fill="none"
+				stroke="#6b4126"
+				strokeWidth="6"
+				strokeLinecap="round"
+			/>
+			<path
+				d="M8 60 C10 26 34 10 60 10 C86 10 110 26 112 60 Q99 50 86 60 Q73 50 60 60 Q47 50 34 60 Q21 50 8 60z"
+				fill="#e03a2f"
+			/>
 			<path d="M60 10 C48 26 46 44 47 56 M60 10 C72 26 74 44 73 56" fill="none" stroke="#b02a22" strokeWidth="3" />
 		</>
 	),
@@ -401,7 +467,12 @@ const ART: Record<string, ReactNode> = {
 	),
 	gate: (
 		<>
-			<path d="M16 24 V108 M104 24 V108 M16 40 H104 M16 88 H104 M38 40 V88 M60 40 V88 M82 40 V88" stroke="#8a5a3b" strokeWidth="10" strokeLinecap="round" />
+			<path
+				d="M16 24 V108 M104 24 V108 M16 40 H104 M16 88 H104 M38 40 V88 M60 40 V88 M82 40 V88"
+				stroke="#8a5a3b"
+				strokeWidth="10"
+				strokeLinecap="round"
+			/>
 			<rect x="48" y="54" width="24" height="22" rx="5" fill="#e0a800" />
 		</>
 	),
@@ -425,7 +496,14 @@ const ART: Record<string, ReactNode> = {
 	maze: (
 		<>
 			<rect x="8" y="8" width="104" height="104" rx="16" fill="#4a90c8" />
-			<path d="M24 24 H96 V44 H44 V64 H96 V96 H24 V76 H76" fill="none" stroke="#cfc6b4" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round" />
+			<path
+				d="M24 24 H96 V44 H44 V64 H96 V96 H24 V76 H76"
+				fill="none"
+				stroke="#cfc6b4"
+				strokeWidth="13"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
 			<circle cx="24" cy="24" r="9" fill="#b47a4c" />
 			<path d="M64 76 L76 66 L88 76 V88 H64z" fill="#d0473b" />
 		</>
@@ -436,9 +514,15 @@ const ART: Record<string, ReactNode> = {
 			<rect x="40" y="16" width="40" height="40" rx="8" fill="#3d7bd9" />
 			<rect x="74" y="44" width="40" height="40" rx="8" fill="#5cb85c" />
 			<g fill="#fff" fontFamily="Georgia, serif" fontWeight="800" fontSize="30" textAnchor="middle">
-				<text x="26" y="71">A</text>
-				<text x="60" y="47">B</text>
-				<text x="94" y="75">C</text>
+				<text x="26" y="71">
+					A
+				</text>
+				<text x="60" y="47">
+					B
+				</text>
+				<text x="94" y="75">
+					C
+				</text>
 			</g>
 		</>
 	),
@@ -484,7 +568,13 @@ const ART: Record<string, ReactNode> = {
 /** A picture by name (see ART), filling its box; `label` names it for screen readers, or it's hidden. */
 export function Pic({ id, label, className }: { id: string; label?: string; className?: string }) {
 	return (
-		<svg viewBox="0 0 120 120" className={className} role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
+		<svg
+			viewBox="0 0 120 120"
+			className={className}
+			role={label ? 'img' : undefined}
+			aria-label={label}
+			aria-hidden={label ? undefined : true}
+		>
 			{DRAWN.has(id) ? <image href={drawn(id)} width="120" height="120" /> : ART[id]}
 		</svg>
 	);

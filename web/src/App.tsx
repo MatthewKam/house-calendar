@@ -1,7 +1,7 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
-import { dayKey, fromDayKey, startOfWeek } from "./lib/dates";
-import { useCalendarView, type View } from "./lib/useCalendarView";
-import type { CalEvent, Task, TaskInput, EventInput, Scope } from "./lib/types";
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { dayKey, fromDayKey, startOfWeek } from './lib/dates';
+import { useCalendarView, type View } from './lib/useCalendarView';
+import type { CalEvent, Task, TaskInput, EventInput, Scope } from './lib/types';
 import {
 	useTasks,
 	useTasksDone,
@@ -15,57 +15,57 @@ import {
 	useSyncStatus,
 	useRangeEvents,
 	useAuthStatus,
-} from "./lib/queries";
-import WeekView from "./components/calendar/WeekView";
-import MonthView from "./components/calendar/MonthView";
-import DayPanel from "./components/calendar/DayPanel";
-import EventDialog from "./components/calendar/EventDialog";
-import TasksPage from "./components/tasks/TasksPage";
-import TodayPage from "./components/today/TodayPage";
-import NavBar from "./components/nav/NavBar";
-import LeaveAlerts from "./components/calendar/LeaveAlerts";
-import NowLine from "./components/calendar/NowLine";
-import WeatherCard from "./components/calendar/WeatherCard";
-import DailyCards from "./components/calendar/DailyCards";
-import PhotoCard from "./components/photos/PhotoCard";
-import OutboxNotices from "./components/calendar/OutboxNotices";
-import Fab from "./components/nav/Fab";
-import { FilterChip } from "./components/ui/NameChip";
-import { usePage } from "./lib/usePage";
-import ListView, { AddToListSheet } from "./components/lists/ListView";
-import QuickAdd, { type QuickAction } from "./components/nav/QuickAdd";
-import MomentDialog from "./components/tasks/MomentDialog";
-import CaptureSheet from "./components/capture/CaptureSheet";
-import RewardsPage from "./components/rewards/RewardsPage";
-import { useScreenSaver } from "./lib/useScreenSaver";
-import { useWakeLock } from "./lib/useWakeLock";
-import { useAutoLock, useParent } from "./lib/useParent";
-import ParentUnlock from "./components/account/ParentUnlock";
-import KidModeStart from "./components/kid/KidModeStart";
-import GrownUpPin from "./components/account/GrownUpPin";
-import { useKidMode } from "./lib/useKidMode";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "./lib/api";
-import { useCheer } from "./lib/useCheer";
-import TaskDialog from "./components/tasks/TaskDialog";
-import { taskProgress, percent, tasksFor } from "./lib/tasks";
-import Celebration from "./components/ui/Celebration";
-import Toast, { type ToastMessage } from "./components/ui/Toast";
-import { UNASSIGNED } from "./lib/color";
-import { PHONE, PHONE_SIDEWAYS, useMediaQuery, NARROW } from "./lib/useMediaQuery";
-import { useFlyerDrop } from "./lib/useFlyerDrop";
-import s from "./App.module.css";
+} from './lib/queries';
+import WeekView from './components/calendar/WeekView';
+import MonthView from './components/calendar/MonthView';
+import DayPanel from './components/calendar/DayPanel';
+import EventDialog from './components/calendar/EventDialog';
+import TasksPage from './components/tasks/TasksPage';
+import TodayPage from './components/today/TodayPage';
+import NavBar from './components/nav/NavBar';
+import LeaveAlerts from './components/calendar/LeaveAlerts';
+import NowLine from './components/calendar/NowLine';
+import WeatherCard from './components/calendar/WeatherCard';
+import DailyCards from './components/calendar/DailyCards';
+import PhotoCard from './components/photos/PhotoCard';
+import OutboxNotices from './components/calendar/OutboxNotices';
+import Fab from './components/nav/Fab';
+import { FilterChip } from './components/ui/NameChip';
+import { usePage } from './lib/usePage';
+import ListView, { AddToListSheet } from './components/lists/ListView';
+import QuickAdd, { type QuickAction } from './components/nav/QuickAdd';
+import MomentDialog from './components/tasks/MomentDialog';
+import CaptureSheet from './components/capture/CaptureSheet';
+import RewardsPage from './components/rewards/RewardsPage';
+import { useScreenSaver } from './lib/useScreenSaver';
+import { useWakeLock } from './lib/useWakeLock';
+import { useAutoLock, useParent } from './lib/useParent';
+import ParentUnlock from './components/account/ParentUnlock';
+import KidModeStart from './components/kid/KidModeStart';
+import GrownUpPin from './components/account/GrownUpPin';
+import { useKidMode } from './lib/useKidMode';
+import { useQuery } from '@tanstack/react-query';
+import { api } from './lib/api';
+import { useCheer } from './lib/useCheer';
+import TaskDialog from './components/tasks/TaskDialog';
+import { taskProgress, percent, tasksFor } from './lib/tasks';
+import Celebration from './components/ui/Celebration';
+import Toast, { type ToastMessage } from './components/ui/Toast';
+import { UNASSIGNED } from './lib/color';
+import { PHONE, PHONE_SIDEWAYS, useMediaQuery, NARROW } from './lib/useMediaQuery';
+import { useFlyerDrop } from './lib/useFlyerDrop';
+import s from './App.module.css';
 
 // Loaded when first opened, so a phone opening the calendar doesn't download them: kid mode (with
 // Learn's games), Photos, the screen saver and Settings. Each is shown inside <Suspense fallback={null}>.
-const KidMode = lazy(() => import("./components/kid/KidMode"));
-const PhotosPage = lazy(() => import("./components/photos/PhotosPage"));
-const ScreenSaver = lazy(() => import("./components/photos/ScreenSaver"));
-const Settings = lazy(() => import("./components/settings/Settings"));
-import { isKid } from "./lib/people";
-import { useTheme } from "./lib/useTheme";
-import { useAccent } from "./lib/accent";
-import { useUiScale } from "./lib/useUiScale";
+const KidMode = lazy(() => import('./components/kid/KidMode'));
+const PhotosPage = lazy(() => import('./components/photos/PhotosPage'));
+const ScreenSaver = lazy(() => import('./components/photos/ScreenSaver'));
+const Settings = lazy(() => import('./components/settings/Settings'));
+import { isKid } from './lib/people';
+import { useTheme } from './lib/useTheme';
+import { useAccent } from './lib/accent';
+import { useUiScale } from './lib/useUiScale';
 
 /** Today's date key, updated when the clock passes midnight. */
 function useToday() {
@@ -78,29 +78,29 @@ function useToday() {
 }
 
 const VIEWS: [View, string][] = [
-	["month", "Month"],
-	["week", "Week"],
+	['month', 'Month'],
+	['week', 'Week'],
 ];
 
 /** Header filter value for events that aren't for anyone in particular. */
-const EVERYONE = "everyone";
+const EVERYONE = 'everyone';
 
 /** The one sheet or dialog open over the app (one at a time: opening another closes it). */
 type Open =
 	/** An event: a new one on `day`, or `event`. special: a new special day, from Today. */
-	| { kind: "event"; day: string; event?: CalEvent; special?: boolean }
+	| { kind: 'event'; day: string; event?: CalEvent; special?: boolean }
 	/** A task: one to edit, or a kid to start a new one for (as a goal). blank: from the round +, no one picked yet. */
-	| { kind: "task"; blank?: boolean; task?: Task; memberId?: string; goal?: boolean }
+	| { kind: 'task'; blank?: boolean; task?: Task; memberId?: string; goal?: boolean }
 	/** A guardian's PIN, then `then` (e.g. opening Settings). */
-	| { kind: "unlock"; then?: () => void }
-	| { kind: "settings" }
-	| { kind: "kidModeStart" }
-	| { kind: "kidModeLeave" }
+	| { kind: 'unlock'; then?: () => void }
+	| { kind: 'settings' }
+	| { kind: 'kidModeStart' }
+	| { kind: 'kidModeLeave' }
 	/** The phone's +: Add to a list, Caught being good. */
-	| { kind: "list" }
-	| { kind: "good" }
+	| { kind: 'list' }
+	| { kind: 'good' }
 	/** Say it, or Snap a flyer (with its photo). */
-	| { kind: "capture"; photo?: File };
+	| { kind: 'capture'; photo?: File };
 
 export default function App() {
 	const today = useToday();
@@ -108,8 +108,8 @@ export default function App() {
 	const [focus, setFocus] = useState<string[]>([]);
 	const [open, setOpen] = useState<Open | null>(null);
 	const close = () => setOpen(null);
-	const dialog = open?.kind === "event" ? open : null;
-	const taskDialog = open?.kind === "task" ? open : null;
+	const dialog = open?.kind === 'event' ? open : null;
+	const taskDialog = open?.kind === 'task' ? open : null;
 	// The pop-up of names that aren't shown in the header (people without tasks, and Everyone).
 	const [moreOpen, setMoreOpen] = useState(false);
 	// Which page fills the main area. Kept in the address (#tasks), so a refresh stays on it.
@@ -149,15 +149,11 @@ export default function App() {
 	const phoneBar = useMediaQuery(PHONE_SIDEWAYS) || phone;
 	// Below 960px the week is one scrolling list of days, and the weather scrolls at its end.
 	const narrow = useMediaQuery(NARROW);
-	const listDays =
-		view === "month" && phone
-			? days.filter((d) => d.getMonth() === cursor.getMonth())
-			: days;
+	const listDays = view === 'month' && phone ? days.filter((d) => d.getMonth() === cursor.getMonth()) : days;
 	// Header filters (any number; none shows everything). A person shows every event they're part of;
 	// Everyone shows events for no one in particular. An event shows if it matches any pick.
 	const shown = (ev: CalEvent) =>
-		focus.length === 0 ||
-		focus.some((f) => (f === EVERYONE ? ev.memberIds.length === 0 : ev.memberIds.includes(f)));
+		focus.length === 0 || focus.some((f) => (f === EVERYONE ? ev.memberIds.length === 0 : ev.memberIds.includes(f)));
 	const events = (eventsQuery.data ?? []).filter(shown);
 	// A removed person can't stay picked.
 	const stale = members.length > 0 ? focus.filter((f) => f !== EVERYONE && !members.some((m) => m.id === f)) : [];
@@ -178,29 +174,29 @@ export default function App() {
 	// Photos the phone's + picked, on their way to the Photos page.
 	const [pickedPhotos, setPickedPhotos] = useState<File[] | null>(null);
 	// Say it, or Snap a flyer: on when the server has Claude.
-	const captureOn = useQuery({ queryKey: ["capture"], queryFn: api.captureOn, staleTime: Infinity }).data?.on ?? false;
-	const kidDevice = signedIn?.kind === "device" && signedIn.role === "kid" && !parentLock.parent ? signedIn.memberId : null;
+	const captureOn = useQuery({ queryKey: ['capture'], queryFn: api.captureOn, staleTime: Infinity }).data?.on ?? false;
+	const kidDevice =
+		signedIn?.kind === 'device' && signedIn.role === 'kid' && !parentLock.parent ? signedIn.memberId : null;
 	// A flyer's photo dragged onto the page is read like Snap a flyer (on Photos, a drop adds to the album).
-	const takeFlyer = useCallback((photo: File) => setOpen({ kind: "capture", photo }), []);
-	const notAPhoto = useCallback(() => setToast({ text: "Drop a photo of the flyer (a JPEG, PNG or HEIC)" }), []);
-	const draggingFlyer = useFlyerDrop(parentLock.parent && captureOn && !kidModeFor && !kidDevice && page !== "photos" && open?.kind !== "capture",
-		takeFlyer, notAPhoto);
+	const takeFlyer = useCallback((photo: File) => setOpen({ kind: 'capture', photo }), []);
+	const notAPhoto = useCallback(() => setToast({ text: 'Drop a photo of the flyer (a JPEG, PNG or HEIC)' }), []);
+	const draggingFlyer = useFlyerDrop(
+		parentLock.parent && captureOn && !kidModeFor && !kidDevice && page !== 'photos' && open?.kind !== 'capture',
+		takeFlyer,
+		notAPhoto,
+	);
 	// Kid mode turned on here: every kid, to switch between, starting with the one picked. A kid's own
 	// device: just them.
-	const kidView = kidModeFor
-		? kids
-		: kidDevice
-			? members.filter((m) => m.id === kidDevice)
-			: null;
+	const kidView = kidModeFor ? kids : kidDevice ? members.filter((m) => m.id === kidDevice) : null;
 	// Light or dark, as picked in Settings (or the device's own); kid mode stays light.
 	useTheme(!!kidView);
 	// The wall wears the household's accent (the account holder's pick); everything else its own.
-	useAccent(signedIn?.role === "wall" && settings.data ? settings.data.accent ?? null : undefined);
+	useAccent(signedIn?.role === 'wall' && settings.data ? (settings.data.accent ?? null) : undefined);
 	// Leaving: a kid's own device unlocks for a parent (and comes back when it locks again); anywhere
 	// else a guardian's PIN turns it off, or just the tap when there's no PIN to ask for.
 	function leaveKidMode() {
-		if (!kidModeFor) setOpen({ kind: "unlock" });
-		else if (signedIn && signedIn.guardianPins > 0) setOpen({ kind: "kidModeLeave" });
+		if (!kidModeFor) setOpen({ kind: 'unlock' });
+		else if (signedIn && signedIn.guardianPins > 0) setOpen({ kind: 'kidModeLeave' });
 		else setKidMode(null);
 	}
 	// With the screen saver on, the screen stays on (it takes over instead of the device sleeping),
@@ -222,18 +218,23 @@ export default function App() {
 	// Back from connecting Google Calendar (…/?calendar=connected, or what went wrong).
 	useEffect(() => {
 		const url = new URL(window.location.href);
-		const result = url.searchParams.get("calendar");
+		const result = url.searchParams.get('calendar');
 		if (!result) return;
-		url.searchParams.delete("calendar");
-		history.replaceState(null, "", url.pathname + url.search + url.hash);
-		setToast({ text: result === "connected" ? "Google Calendar connected. Its events will show in a moment." : `Google Calendar: ${result}` });
+		url.searchParams.delete('calendar');
+		history.replaceState(null, '', url.pathname + url.search + url.hash);
+		setToast({
+			text:
+				result === 'connected'
+					? 'Google Calendar connected. Its events will show in a moment.'
+					: `Google Calendar: ${result}`,
+		});
 	}, []);
 
 	// Any edit that couldn't be saved (it was shown straight away, and has been put back).
 	useEffect(() => {
 		const failed = (e: Event) => setToast({ text: `Couldn't save: ${(e as CustomEvent<string>).detail}` });
-		window.addEventListener("household:save-failed", failed);
-		return () => window.removeEventListener("household:save-failed", failed);
+		window.addEventListener('household:save-failed', failed);
+		return () => window.removeEventListener('household:save-failed', failed);
 	}, []);
 
 	useEffect(() => {
@@ -242,7 +243,7 @@ export default function App() {
 
 	/** Opens an event, unless it's someone else's Busy time (nothing to show). */
 	function openEvent(event: CalEvent, day: string) {
-		if (!event.busy) setOpen({ kind: "event", day, event });
+		if (!event.busy) setOpen({ kind: 'event', day, event });
 	}
 
 	function save(input: EventInput) {
@@ -262,38 +263,43 @@ export default function App() {
 		deleteTask.mutate(task.id);
 	}
 
-	function remove(ev: CalEvent, scope: Scope = "one") {
+	function remove(ev: CalEvent, scope: Scope = 'one') {
 		close();
-		const synced = ev.calendarId !== "local";
-		deleteEvent.mutate({ id: ev.id, scope }, {
-			onSuccess: () =>
-				setToast({
-					text: `Deleted “${ev.title}”${ev.repeats ? (scope === "all" ? " (every day)" : " (this day)") : ""}`,
-					// iCloud events wait before the delete is sent, so Undo just cancels it.
-					undo: () =>
-						synced ? restoreEvent.mutate(ev.id) : saveEvent.mutate({
-							input: {
-								title: ev.title,
-								memberIds: ev.memberIds,
-								location: ev.location,
-								allDay: ev.allDay,
-								start: ev.start,
-								end: ev.end,
-							},
-						}),
-				}),
-		});
+		const synced = ev.calendarId !== 'local';
+		deleteEvent.mutate(
+			{ id: ev.id, scope },
+			{
+				onSuccess: () =>
+					setToast({
+						text: `Deleted “${ev.title}”${ev.repeats ? (scope === 'all' ? ' (every day)' : ' (this day)') : ''}`,
+						// iCloud events wait before the delete is sent, so Undo just cancels it.
+						undo: () =>
+							synced
+								? restoreEvent.mutate(ev.id)
+								: saveEvent.mutate({
+										input: {
+											title: ev.title,
+											memberIds: ev.memberIds,
+											location: ev.location,
+											allDay: ev.allDay,
+											start: ev.start,
+											end: ev.end,
+										},
+									}),
+					}),
+			},
+		);
 	}
 
 	const fmt = (d: Date, withYear = false) =>
 		d.toLocaleDateString([], {
-			month: "short",
-			day: "numeric",
-			...(withYear ? { year: "numeric" } : {}),
+			month: 'short',
+			day: 'numeric',
+			...(withYear ? { year: 'numeric' } : {}),
 		});
 
 	// Header names: people with tasks show; the rest are behind the filter button.
-	const everyone = { id: EVERYONE, name: "Everyone", color: UNASSIGNED };
+	const everyone = { id: EVERYONE, name: 'Everyone', color: UNASSIGNED };
 	const withTasks = members.filter((m) => tasksFor(tasks, m.id).length > 0);
 	// Until anyone has tasks, show everybody.
 	const shownPeople = withTasks.length ? withTasks : [...members, everyone];
@@ -313,7 +319,7 @@ export default function App() {
 				pct={pct}
 				on={focus.includes(m.id)}
 				dimmed={focus.length > 0 && !focus.includes(m.id)}
-				title={`${focus.includes(m.id) ? `Stop filtering by ${m.name}` : `Show ${m.name}'s events`}${p ? ` · tasks today: ${p.done} of ${p.due}` : ""}`}
+				title={`${focus.includes(m.id) ? `Stop filtering by ${m.name}` : `Show ${m.name}'s events`}${p ? ` · tasks today: ${p.done} of ${p.due}` : ''}`}
 				// Tap to add or remove a filter; the pop-up stays open so several can be picked.
 				onClick={() => setFocus(focus.includes(m.id) ? focus.filter((f) => f !== m.id) : [...focus, m.id])}
 			/>
@@ -334,7 +340,7 @@ export default function App() {
 			{morePeople.length > 0 && (
 				<div className={s.moreWrap}>
 					<button
-						className={`${s.moreButton} ${hiddenPicked.length ? s.moreOn : ""}`}
+						className={`${s.moreButton} ${hiddenPicked.length ? s.moreOn : ''}`}
 						aria-expanded={moreOpen}
 						aria-label="More people"
 						title="More people"
@@ -347,9 +353,7 @@ export default function App() {
 					{moreOpen && (
 						<>
 							<div className={s.moreScrim} onClick={() => setMoreOpen(false)} role="presentation" />
-							<div className={s.morePanel}>
-								{morePeople.map((m) => whoButton(m))}
-							</div>
+							<div className={s.morePanel}>{morePeople.map((m) => whoButton(m))}</div>
 						</>
 					)}
 				</div>
@@ -358,12 +362,12 @@ export default function App() {
 	);
 
 	// The month on screen, or both months when the week crosses into a new one.
-	const monthName = (d: Date) => d.toLocaleDateString([], { month: "long" });
+	const monthName = (d: Date) => d.toLocaleDateString([], { month: 'long' });
 	const month =
-		view === "month" || days[0].getMonth() === days[6].getMonth()
-			? monthName(view === "month" ? cursor : days[0])
+		view === 'month' || days[0].getMonth() === days[6].getMonth()
+			? monthName(view === 'month' ? cursor : days[0])
 			: `${monthName(days[0])} – ${monthName(days[6])}`;
-	const unit = view === "month" ? "month" : "week";
+	const unit = view === 'month' ? 'month' : 'week';
 
 	if (kidView) {
 		return (
@@ -371,12 +375,18 @@ export default function App() {
 				{/* Wait for the family, so it doesn't flash "No kids yet". */}
 				{members.length > 0 && (
 					<Suspense fallback={null}>
-						<KidMode today={today} kids={kidView} members={members} onLeave={leaveKidMode}
+						<KidMode
+							today={today}
+							kids={kidView}
+							members={members}
+							onLeave={leaveKidMode}
 							startWith={kidModeFor ?? undefined}
-							askPin={!!signedIn && signedIn.guardianPins > 0} ownDevice={!!kidDevice} />
+							askPin={!!signedIn && signedIn.guardianPins > 0}
+							ownDevice={!!kidDevice}
+						/>
 					</Suspense>
 				)}
-				{open?.kind === "kidModeLeave" && (
+				{open?.kind === 'kidModeLeave' && (
 					<GrownUpPin
 						title="Leave kid mode"
 						body="Type a guardian's PIN to go back to the whole app."
@@ -388,10 +398,15 @@ export default function App() {
 						}}
 					/>
 				)}
-				{open?.kind === "unlock" && <ParentUnlock onClose={close} onDone={open.then} />}
+				{open?.kind === 'unlock' && <ParentUnlock onClose={close} onDone={open.then} />}
 				{saver.on && (
 					<Suspense fallback={null}>
-						<ScreenSaver photos={saver.photos} settings={saver.settings} onClose={saver.hide} onOpenEvent={saver.hide} />
+						<ScreenSaver
+							photos={saver.photos}
+							settings={saver.settings}
+							onClose={saver.hide}
+							onOpenEvent={saver.hide}
+						/>
 					</Suspense>
 				)}
 				{cheer.cheer && <Celebration cheer={cheer.cheer} onDone={cheer.done} />}
@@ -403,19 +418,31 @@ export default function App() {
 	// The phone's +, top of the stack first. Adding events, tasks and moments needs a parent; anyone
 	// adds to a list or a photo.
 	const quickActions: QuickAction[] = [
-		...(parentLock.parent ? [{ kind: "event" as const, onPick: () => setOpen({ kind: "event", day: page === "calendar" ? newEventDay() : today }) }] : []),
-		{ kind: "list", onPick: () => setOpen({ kind: "list" }) },
-		...(parentLock.parent && kids.length ? [{ kind: "good" as const, onPick: () => setOpen({ kind: "good" }) }] : []),
-		...(parentLock.parent ? [{ kind: "task" as const, onPick: () => setOpen({ kind: "task", blank: true }) }] : []),
-		{ kind: "photo", files: (files) => {
-			setPickedPhotos(files);
-			setPage("photos");
-		} },
+		...(parentLock.parent
+			? [
+					{
+						kind: 'event' as const,
+						onPick: () => setOpen({ kind: 'event', day: page === 'calendar' ? newEventDay() : today }),
+					},
+				]
+			: []),
+		{ kind: 'list', onPick: () => setOpen({ kind: 'list' }) },
+		...(parentLock.parent && kids.length ? [{ kind: 'good' as const, onPick: () => setOpen({ kind: 'good' }) }] : []),
+		...(parentLock.parent ? [{ kind: 'task' as const, onPick: () => setOpen({ kind: 'task', blank: true }) }] : []),
+		{
+			kind: 'photo',
+			files: (files) => {
+				setPickedPhotos(files);
+				setPage('photos');
+			},
+		},
 		// Nearest the thumb.
-		...(parentLock.parent && captureOn ? [
-			{ kind: "snap" as const, files: (files: File[]) => setOpen({ kind: "capture", photo: files[0] }) },
-			{ kind: "say" as const, onPick: () => setOpen({ kind: "capture" }) },
-		] : []),
+		...(parentLock.parent && captureOn
+			? [
+					{ kind: 'snap' as const, files: (files: File[]) => setOpen({ kind: 'capture', photo: files[0] }) },
+					{ kind: 'say' as const, onPick: () => setOpen({ kind: 'capture' }) },
+				]
+			: []),
 	];
 
 	return (
@@ -424,20 +451,32 @@ export default function App() {
 				<NavBar
 					phone={phoneBar}
 					center={<QuickAdd actions={quickActions} />}
-					capture={parentLock.parent && captureOn ? { onSay: () => setOpen({ kind: "capture" }), onSnap: (photo) => setOpen({ kind: "capture", photo }) } : undefined}
+					capture={
+						parentLock.parent && captureOn
+							? { onSay: () => setOpen({ kind: 'capture' }), onSnap: (photo) => setOpen({ kind: 'capture', photo }) }
+							: undefined
+					}
 					page={page}
-					settingsOpen={open?.kind === "settings"}
+					settingsOpen={open?.kind === 'settings'}
 					onPage={setPage}
 					// Settings is for parents: unlock first if locked.
-					onSettings={() => setOpen(parentLock.parent ? { kind: "settings" } : { kind: "unlock", then: () => setOpen({ kind: "settings" }) })}
-					lock={parentLock.lockable ? {
-						parent: parentLock.parent,
-						by: signedIn?.unlockedBy ?? null,
-						onTap: () => (parentLock.parent ? parentLock.lock.mutate() : setOpen({ kind: "unlock" })),
-					} : undefined}
+					onSettings={() =>
+						setOpen(
+							parentLock.parent ? { kind: 'settings' } : { kind: 'unlock', then: () => setOpen({ kind: 'settings' }) },
+						)
+					}
+					lock={
+						parentLock.lockable
+							? {
+									parent: parentLock.parent,
+									by: signedIn?.unlockedBy ?? null,
+									onTap: () => (parentLock.parent ? parentLock.lock.mutate() : setOpen({ kind: 'unlock' })),
+								}
+							: undefined
+					}
 				/>
 				<div className={s.shell}>
-					{page === "today" ? (
+					{page === 'today' ? (
 						<TodayPage
 							today={today}
 							members={members}
@@ -445,142 +484,126 @@ export default function App() {
 							parent={parentLock.parent}
 							onPage={setPage}
 							onOpenEvent={(event) => openEvent(event, event.allDay ? event.start : dayKey(new Date(event.start)))}
-							onAddSpecial={parentLock.parent ? () => setOpen({ kind: "event", day: today, special: true }) : undefined}
+							onAddSpecial={parentLock.parent ? () => setOpen({ kind: 'event', day: today, special: true }) : undefined}
 							onPlaySlideshow={saver.show}
 						/>
-					) : page === "tasks" ? (
+					) : page === 'tasks' ? (
 						<TasksPage
 							today={today}
 							members={members}
 							focus={focus.length === 1 ? focus[0] : null}
 							locked={!parentLock.parent}
-							onAdd={(memberId, goal) => setOpen({ kind: "task", memberId, goal })}
-							onEdit={(task) => setOpen({ kind: "task", task })}
+							onAdd={(memberId, goal) => setOpen({ kind: 'task', memberId, goal })}
+							onEdit={(task) => setOpen({ kind: 'task', task })}
 						/>
-					) : page === "lists" ? (
+					) : page === 'lists' ? (
 						<ListView />
-					) : page === "rewards" ? (
+					) : page === 'rewards' ? (
 						<RewardsPage today={today} members={members} />
-					) : page === "photos" ? (
+					) : page === 'photos' ? (
 						<Suspense fallback={null}>
 							<PhotosPage onPreview={saver.show} incoming={pickedPhotos} onTaken={() => setPickedPhotos(null)} />
 						</Suspense>
-					) : (<>
-					<div className={s.monthHeaderTitle}>
-						<div>
-							<h1 className={s.monthTitle}>
-								<strong>{month}</strong>
-							</h1>
-							<NowLine />
-						</div>
-						{people}
-					</div>
-					<header className={s.header}>
-						<div className={s.group}>
-							<div className={s.segmented} role="group" aria-label="View">
-								{VIEWS.map(([v, label]) => (
-									<button
-										key={v}
-										className={view === v ? s.on : ""}
-										aria-pressed={view === v}
-										onClick={() => changeView(v)}
-									>
-										{label}
-									</button>
-								))}
+					) : (
+						<>
+							<div className={s.monthHeaderTitle}>
+								<div>
+									<h1 className={s.monthTitle}>
+										<strong>{month}</strong>
+									</h1>
+									<NowLine />
+								</div>
+								{people}
 							</div>
-							{/* ‹ Today › and the dates move to the next line together when there's no room. */}
-							<div className={s.stepper}>
-								<button
-									className={s.pill}
-									onClick={() => step(-1)}
-									aria-label={`Previous ${unit}`}
-								>
-									‹
-								</button>
-								<button className={s.pill} onClick={goToday}>
-									Today
-								</button>
-								<button
-									className={s.pill}
-									onClick={() => step(1)}
-									aria-label={`Next ${unit}`}
-								>
-									›
-								</button>
-								<h1 className={s.title}>
-									{view === "month"
-										? cursor.getFullYear()
-										: `${fmt(days[0])} – ${fmt(days[6])}`}
-								</h1>
-								
+							<header className={s.header}>
+								<div className={s.group}>
+									<div className={s.segmented} role="group" aria-label="View">
+										{VIEWS.map(([v, label]) => (
+											<button
+												key={v}
+												className={view === v ? s.on : ''}
+												aria-pressed={view === v}
+												onClick={() => changeView(v)}
+											>
+												{label}
+											</button>
+										))}
+									</div>
+									{/* ‹ Today › and the dates move to the next line together when there's no room. */}
+									<div className={s.stepper}>
+										<button className={s.pill} onClick={() => step(-1)} aria-label={`Previous ${unit}`}>
+											‹
+										</button>
+										<button className={s.pill} onClick={goToday}>
+											Today
+										</button>
+										<button className={s.pill} onClick={() => step(1)} aria-label={`Next ${unit}`}>
+											›
+										</button>
+										<h1 className={s.title}>
+											{view === 'month' ? cursor.getFullYear() : `${fmt(days[0])} – ${fmt(days[6])}`}
+										</h1>
+									</div>
+								</div>
+							</header>
+
+							{eventsQuery.isError && (
+								<div className={s.banner}>Can't reach the calendar service ({eventsQuery.error.message})</div>
+							)}
+							{sync?.lastError && (
+								<div className={s.banner}>Calendar sync failed: {sync.lastError}. Showing what was last synced.</div>
+							)}
+							<OutboxNotices />
+							{sync?.peopleError && (
+								<div className={s.banner}>Couldn't sort new events by person: {sync.peopleError}</div>
+							)}
+
+							<div className={s.body}>
+								{/* Wait for the saved view so the page doesn't flash Week before Month. */}
+								{settings.isPending ? null : view === 'month' && !phone ? (
+									<MonthView
+										days={days}
+										month={cursor.getMonth()}
+										today={today}
+										selected={selected}
+										events={events}
+										members={members}
+										onSelect={setSelected}
+										onOpen={openEvent}
+									/>
+								) : (
+									<WeekView
+										days={listDays}
+										today={today}
+										selected={selected}
+										events={events}
+										members={members}
+										onSelect={setSelected}
+										onOpen={openEvent}
+										footer={view === 'week' && narrow ? cards : undefined}
+									/>
+								)}
+								{selected && (
+									<DayPanel
+										shown={shown}
+										day={selected}
+										today={today}
+										members={members}
+										onAdd={parentLock.parent ? (day) => setOpen({ kind: 'event', day }) : undefined}
+										onOpen={openEvent}
+										onClose={() => setSelected(null)}
+									/>
+								)}
 							</div>
-						</div>
-					</header>
-
-					{eventsQuery.isError && (
-						<div className={s.banner}>
-							Can't reach the calendar service ({eventsQuery.error.message})
-						</div>
+							{view === 'week' && !narrow && !settings.isPending && cards}
+						</>
 					)}
-					{sync?.lastError && (
-						<div className={s.banner}>
-							Calendar sync failed: {sync.lastError}. Showing what was last
-							synced.
-						</div>
-					)}
-					<OutboxNotices />
-					{sync?.peopleError && (
-						<div className={s.banner}>
-							Couldn't sort new events by person: {sync.peopleError}
-						</div>
-					)}
-
-					<div className={s.body}>
-						{/* Wait for the saved view so the page doesn't flash Week before Month. */}
-						{settings.isPending ? null : view === "month" && !phone ? (
-							<MonthView
-								days={days}
-								month={cursor.getMonth()}
-								today={today}
-								selected={selected}
-								events={events}
-								members={members}
-								onSelect={setSelected}
-								onOpen={openEvent}
-							/>
-						) : (
-							<WeekView
-								days={listDays}
-								today={today}
-								selected={selected}
-								events={events}
-								members={members}
-								onSelect={setSelected}
-								onOpen={openEvent}
-								footer={view === "week" && narrow ? cards : undefined}
-							/>
-						)}
-						{selected && (
-							<DayPanel
-								shown={shown}
-								day={selected}
-								today={today}
-								members={members}
-								onAdd={parentLock.parent ? (day) => setOpen({ kind: "event", day }) : undefined}
-								onOpen={openEvent}
-								onClose={() => setSelected(null)}
-							/>
-						)}
-					</div>
-					{view === "week" && !narrow && !settings.isPending && cards}
-					</>)}
 				</div>
 			</div>
 
 			{dialog && (
 				<EventDialog
-					key={dialog.event?.id ?? `${dialog.day}${dialog.special ? "-special" : ""}`}
+					key={dialog.event?.id ?? `${dialog.day}${dialog.special ? '-special' : ''}`}
 					day={dialog.day}
 					event={dialog.event}
 					special={dialog.special}
@@ -595,7 +618,7 @@ export default function App() {
 
 			{taskDialog && (
 				<TaskDialog
-					key={taskDialog.task?.id ?? taskDialog.memberId ?? "new"}
+					key={taskDialog.task?.id ?? taskDialog.memberId ?? 'new'}
 					task={taskDialog.task}
 					memberId={
 						taskDialog.memberId ??
@@ -611,8 +634,8 @@ export default function App() {
 				/>
 			)}
 
-			{open?.kind === "unlock" && <ParentUnlock onClose={close} onDone={open.then} />}
-			{open?.kind === "kidModeStart" && (
+			{open?.kind === 'unlock' && <ParentUnlock onClose={close} onDone={open.then} />}
+			{open?.kind === 'kidModeStart' && (
 				<KidModeStart
 					kids={kids}
 					needsPin={!!signedIn && signedIn.guardianPins === 0}
@@ -623,31 +646,45 @@ export default function App() {
 					onClose={close}
 				/>
 			)}
-			{open?.kind === "settings" && (
+			{open?.kind === 'settings' && (
 				<Suspense fallback={null}>
 					<Settings
 						members={members}
 						// Kid mode starts from Settings (Screen); a kid's own device is in it already.
-						onKidMode={kids.length && signedIn?.role !== "kid" ? () => setOpen({ kind: "kidModeStart" }) : undefined}
+						onKidMode={kids.length && signedIn?.role !== 'kid' ? () => setOpen({ kind: 'kidModeStart' }) : undefined}
 						onClose={close}
 					/>
 				</Suspense>
 			)}
 
-			{open?.kind === "list" && <AddToListSheet onClose={close} onNewList={() => { close(); setPage("lists"); }} />}
-			{open?.kind === "good" && <MomentDialog kids={kids} today={today} onClose={close} />}
+			{open?.kind === 'list' && (
+				<AddToListSheet
+					onClose={close}
+					onNewList={() => {
+						close();
+						setPage('lists');
+					}}
+				/>
+			)}
+			{open?.kind === 'good' && <MomentDialog kids={kids} today={today} onClose={close} />}
 			{draggingFlyer && (
 				<div className={s.flyerDrop} aria-live="polite">
 					<span className={s.flyerDropBox}>Drop the flyer to read it</span>
 				</div>
 			)}
-			{open?.kind === "capture" && <CaptureSheet photo={open.photo} members={members} onClose={close} onAdded={(text) => setToast({ text })} />}
+			{open?.kind === 'capture' && (
+				<CaptureSheet photo={open.photo} members={members} onClose={close} onAdded={(text) => setToast({ text })} />
+			)}
 
 			{/* The round + at the bottom right: add an event or a task (phones have the bar's + instead). */}
 			{/* Adding needs a parent (the lock in the left bar). */}
-			{!phoneBar && page === "calendar" && parentLock.parent && <Fab label="Add event" onClick={() => setOpen({ kind: "event", day: newEventDay() })} />}
+			{!phoneBar && page === 'calendar' && parentLock.parent && (
+				<Fab label="Add event" onClick={() => setOpen({ kind: 'event', day: newEventDay() })} />
+			)}
 			{/* Add a task, for no one in particular yet (each kid's card has its own Add a task). */}
-			{!phoneBar && page === "tasks" && parentLock.parent && <Fab label="Add a task or goal" onClick={() => setOpen({ kind: "task", blank: true })} />}
+			{!phoneBar && page === 'tasks' && parentLock.parent && (
+				<Fab label="Add a task or goal" onClick={() => setOpen({ kind: 'task', blank: true })} />
+			)}
 			{saver.on && (
 				<Suspense fallback={null}>
 					<ScreenSaver
@@ -656,7 +693,7 @@ export default function App() {
 						onClose={saver.hide}
 						onOpenEvent={(event, day) => {
 							saver.hide();
-							setPage("calendar");
+							setPage('calendar');
 							openEvent(event, day);
 						}}
 					/>

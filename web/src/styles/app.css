@@ -1,15 +1,15 @@
 /* Aleo (Google Fonts, SIL Open Font License; see fonts/Aleo/OFL.txt), bundled so the wall needs no
    internet for it. The variable files cover every weight from 100 to 900; WOFF2, half the size of the TTFs. */
 @font-face {
-	font-family: "Aleo";
-	src: url("../fonts/Aleo/Aleo-VariableFont_wght.woff2") format("woff2");
+	font-family: 'Aleo';
+	src: url('../fonts/Aleo/Aleo-VariableFont_wght.woff2') format('woff2');
 	font-weight: 100 900;
 	font-style: normal;
 	font-display: swap;
 }
 @font-face {
-	font-family: "Aleo";
-	src: url("../fonts/Aleo/Aleo-Italic-VariableFont_wght.woff2") format("woff2");
+	font-family: 'Aleo';
+	src: url('../fonts/Aleo/Aleo-Italic-VariableFont_wght.woff2') format('woff2');
 	font-weight: 100 900;
 	font-style: italic;
 	font-display: swap;
@@ -62,10 +62,10 @@
 	--shadow-lg: 0 0.6rem 1.6rem rgb(0 0 0 / 0.18); /* floating over the page: menus, the + button, a dragged card */
 	--shadow-xl: 0 1rem 3rem rgb(0 0 0 / 0.25); /* dialogs, alerts and cheers, over everything */
 	font-family:
-		"Aleo",
+		'Aleo',
 		system-ui,
 		-apple-system,
-		"Segoe UI",
+		'Segoe UI',
 		Roboto,
 		sans-serif;
 	color: var(--text);
@@ -105,7 +105,7 @@ video {
 input,
 textarea,
 select,
-[contenteditable="true"] {
+[contenteditable='true'] {
 	-webkit-user-select: text;
 	user-select: text;
 	-webkit-touch-callout: default;
@@ -128,10 +128,10 @@ input {
 }
 
 /* Landscape with the notch on the left: no notch room on the right (and the other way round). */
-:root[data-notch="left"] {
+:root[data-notch='left'] {
 	--inset-right: 0px;
 }
-:root[data-notch="right"] {
+:root[data-notch='right'] {
 	--inset-left: 0px;
 }
 
@@ -141,7 +141,7 @@ input {
  * its pictures and games are made bright.
  */
 :root,
-[data-theme="light"] {
+[data-theme='light'] {
 	color-scheme: light;
 	--bg: #f6f5f2;
 	--surface: #ffffff;
@@ -176,7 +176,7 @@ input {
 	/* How much of a picked pastel (a list's color) shows: all of it on light, a hint of it on dark. */
 	--pastel: 100%;
 }
-[data-theme="dark"] {
+[data-theme='dark'] {
 	color-scheme: dark;
 	--bg: #141518;
 	--surface: #1e2024;
@@ -209,5 +209,9 @@ input {
 	opacity: 0.6;
 	font-style: italic;
 	cursor: default;
-	background-image: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--text) 6%, transparent) 6px 12px);
+	background-image: repeating-linear-gradient(
+		135deg,
+		transparent 0 6px,
+		color-mix(in srgb, var(--text) 6%, transparent) 6px 12px
+	);
 }

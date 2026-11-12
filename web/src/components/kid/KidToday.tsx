@@ -1,67 +1,66 @@
-import { useTempUnit, windUnit } from "../../lib/units";
-import { useMemo, useState } from "react";
-import { addDays, dayKey, fromDayKey, timeLabel } from "../../lib/dates";
-import { factFor, type KidFact } from "../../lib/kidFacts";
-import { kindWordsFor } from "../../lib/kindWords";
-import { useLists, useMembers, useRangeEvents, useWeather } from "../../lib/queries";
-import { birthdays, sleepsUntil, specialDaysFor, specialWindow, type SpecialDay } from "../../lib/specialDays";
-import type { CalEvent, Member, SprigItem, Weather } from "../../lib/types";
-import { sky } from "../../lib/weather";
-import { DayCalendar } from "../ui/DayCarousel";
-import TodayAnimal from "./TodayAnimal";
-import { bringPicture } from "../calendar/EventChecklist";
-import s from "./KidMode.module.css";
-import g from "./KidToday.module.css";
-import { isKid } from "../../lib/people";
+import { useTempUnit, windUnit } from '../../lib/units';
+import { useMemo, useState } from 'react';
+import { addDays, dayKey, fromDayKey, timeLabel } from '../../lib/dates';
+import { factFor, type KidFact } from '../../lib/kidFacts';
+import { kindWordsFor } from '../../lib/kindWords';
+import { useLists, useMembers, useRangeEvents, useWeather } from '../../lib/queries';
+import { birthdays, sleepsUntil, specialDaysFor, specialWindow, type SpecialDay } from '../../lib/specialDays';
+import type { CalEvent, Member, SprigItem, Weather } from '../../lib/types';
+import { sky } from '../../lib/weather';
+import { DayCalendar } from '../ui/DayCarousel';
+import TodayAnimal from './TodayAnimal';
+import { bringPicture } from '../calendar/EventChecklist';
+import s from './KidMode.module.css';
+import g from './KidToday.module.css';
+import { isKid } from '../../lib/people';
 
 /** How many days ahead a kid sees: today, tomorrow, and later this week. */
 const DAYS = 7;
 
 /** A picture for an event, from words in its title (a calendar for kids who can't read yet). */
 const PICTURES: [RegExp, string][] = [
-	[/birthday|bday/i, "🎂"],
-	[/swim|pool/i, "🏊"],
-	[/soccer|football/i, "⚽"],
-	[/basketball/i, "🏀"],
-	[/baseball|t-?ball|softball/i, "⚾"],
-	[/gym|tumbl|gymnast/i, "🤸"],
-	[/jiu|jitsu|karate|judo|taekwondo|martial/i, "🥋"],
-	[/dance|ballet/i, "💃"],
-	[/music|piano|violin|guitar|sing/i, "🎵"],
-	[/art|paint|craft/i, "🎨"],
-	[/dentist|teeth/i, "🦷"],
-	[/doctor|check-?up|clinic|shot/i, "🩺"],
-	[/hair ?cut|barber/i, "💇"],
-	[/library|book|story/i, "📚"],
-	[/school|class|preschool|daycare|teacher/i, "🏫"],
-	[/park|playground/i, "🛝"],
-	[/zoo/i, "🦁"],
-	[/beach/i, "🏖️"],
-	[/camp/i, "🏕️"],
-	[/church|mass|temple|mosque/i, "⛪"],
-	[/party|celebrat/i, "🎉"],
-	[/play ?date|friend/i, "🧸"],
-	[/grandma|grandpa|nana|papa|grandparent/i, "👵"],
-	[/trip|flight|fly|vacation|holiday/i, "✈️"],
-	[/dinner|lunch|breakfast|brunch|pizza|restaurant/i, "🍽️"],
-	[/movie|film|cinema/i, "🎬"],
-	[/sleep ?over/i, "🛏️"],
-	[/no school|day off/i, "🌈"],
+	[/birthday|bday/i, '🎂'],
+	[/swim|pool/i, '🏊'],
+	[/soccer|football/i, '⚽'],
+	[/basketball/i, '🏀'],
+	[/baseball|t-?ball|softball/i, '⚾'],
+	[/gym|tumbl|gymnast/i, '🤸'],
+	[/jiu|jitsu|karate|judo|taekwondo|martial/i, '🥋'],
+	[/dance|ballet/i, '💃'],
+	[/music|piano|violin|guitar|sing/i, '🎵'],
+	[/art|paint|craft/i, '🎨'],
+	[/dentist|teeth/i, '🦷'],
+	[/doctor|check-?up|clinic|shot/i, '🩺'],
+	[/hair ?cut|barber/i, '💇'],
+	[/library|book|story/i, '📚'],
+	[/school|class|preschool|daycare|teacher/i, '🏫'],
+	[/park|playground/i, '🛝'],
+	[/zoo/i, '🦁'],
+	[/beach/i, '🏖️'],
+	[/camp/i, '🏕️'],
+	[/church|mass|temple|mosque/i, '⛪'],
+	[/party|celebrat/i, '🎉'],
+	[/play ?date|friend/i, '🧸'],
+	[/grandma|grandpa|nana|papa|grandparent/i, '👵'],
+	[/trip|flight|fly|vacation|holiday/i, '✈️'],
+	[/dinner|lunch|breakfast|brunch|pizza|restaurant/i, '🍽️'],
+	[/movie|film|cinema/i, '🎬'],
+	[/sleep ?over/i, '🛏️'],
+	[/no school|day off/i, '🌈'],
 	// Things to remember.
-	[/show.?and.?tell/i, "🧸"],
-	[/water bottle|bottle/i, "🥤"],
-	[/permission|form|slip|money|check/i, "📝"],
-	[/pajama|pj|costume|hair|wear|shirt|dress up/i, "👕"],
-	[/backpack|bag/i, "🎒"],
-	[/snack/i, "🍎"],
+	[/show.?and.?tell/i, '🧸'],
+	[/water bottle|bottle/i, '🥤'],
+	[/permission|form|slip|money|check/i, '📝'],
+	[/pajama|pj|costume|hair|wear|shirt|dress up/i, '👕'],
+	[/backpack|bag/i, '🎒'],
+	[/snack/i, '🍎'],
 ];
-const picture = (title: string, otherwise = "📅") =>
-	PICTURES.find(([re]) => re.test(title))?.[1] ?? otherwise;
+const picture = (title: string, otherwise = '📅') => PICTURES.find(([re]) => re.test(title))?.[1] ?? otherwise;
 
 /** Morning, afternoon or evening, as a picture. */
 const partOfDay = (iso: string) => {
 	const h = new Date(iso).getHours();
-	return h < 12 ? "🌅" : h < 17 ? "☀️" : "🌙";
+	return h < 12 ? '🌅' : h < 17 ? '☀️' : '🌙';
 };
 
 /**
@@ -70,22 +69,14 @@ const partOfDay = (iso: string) => {
  * to remember; then what to wear, the day's kind words and fun fact. On its side: the cards in rows of two
  * (a phone) or three (a tablet), the calendar's days side by side.
  */
-export default function KidToday({
-	today,
-	kid,
-}: {
-	today: string;
-	kid: Member;
-}) {
-	const little = (kid.stage ?? "little") === "little";
+export default function KidToday({ today, kid }: { today: string; kid: Member }) {
+	const little = (kid.stage ?? 'little') === 'little';
 	const weather = useWeather().data;
 	const lists = useLists().data ?? [];
 	// Anything on a list for them, due today and not done yet.
 	const remember = lists
 		.flatMap((l) => l.items)
-		.filter(
-			(i) => !i.done && i.memberId === kid.id && i.due && dueOn(i, today),
-		);
+		.filter((i) => !i.done && i.memberId === kid.id && i.due && dueOn(i, today));
 	const from = useMemo(() => fromDayKey(today), [today]);
 	const events = useRangeEvents(from, DAYS).data ?? [];
 	const now = Date.now();
@@ -97,24 +88,15 @@ export default function KidToday({
 
 	const onDay = (key: string) =>
 		mine
-			.filter((e) =>
-				e.allDay
-					? e.start <= key && e.end > key
-					: dayKey(new Date(e.start)) === key,
-			)
-			.sort(
-				(a, b) =>
-					Number(b.allDay) - Number(a.allDay) || a.start.localeCompare(b.start),
-			);
+			.filter((e) => (e.allDay ? e.start <= key && e.end > key : dayKey(new Date(e.start)) === key))
+			.sort((a, b) => Number(b.allDay) - Number(a.allDay) || a.start.localeCompare(b.start));
 
 	// Later this week: each event with its day.
-	const later = Array.from({ length: DAYS - 2 }, (_, i) =>
-		dayKey(addDays(from, i + 2)),
-	)
+	const later = Array.from({ length: DAYS - 2 }, (_, i) => dayKey(addDays(from, i + 2)))
 		.flatMap((key) =>
 			onDay(key).map((e) => ({
 				e,
-				day: fromDayKey(key).toLocaleDateString([], { weekday: "short" }),
+				day: fromDayKey(key).toLocaleDateString([], { weekday: 'short' }),
 			})),
 		)
 		// An all-day event over several days: once, on its first.
@@ -124,7 +106,7 @@ export default function KidToday({
 	// What to bring shows for today and tomorrow (packing the night before), not later on.
 	const event = (e: CalEvent, day?: string) => (
 		<KidEvent
-			key={`${e.id}-${day ?? ""}`}
+			key={`${e.id}-${day ?? ''}`}
 			event={e}
 			day={day}
 			bring={!day}
@@ -140,7 +122,7 @@ export default function KidToday({
 				styles={s}
 				days={[
 					{
-						label: "Today",
+						label: 'Today',
 						body:
 							todays.length === 0 ? (
 								// Nothing on today: an animal to tap instead.
@@ -153,7 +135,7 @@ export default function KidToday({
 							),
 					},
 					{
-						label: "Tomorrow",
+						label: 'Tomorrow',
 						body:
 							tomorrows.length === 0 ? (
 								<p className={s.none}>Nothing on tomorrow.</p>
@@ -162,14 +144,12 @@ export default function KidToday({
 							),
 					},
 					{
-						label: "Later this week",
+						label: 'Later this week',
 						body:
 							later.length === 0 ? (
 								<p className={s.none}>Nothing later this week.</p>
 							) : (
-								<ul className={g.events}>
-									{later.map(({ e, day }) => event(e, day))}
-								</ul>
+								<ul className={g.events}>{later.map(({ e, day }) => event(e, day))}</ul>
 							),
 					},
 				]}
@@ -186,9 +166,7 @@ export default function KidToday({
 
 /** Whether a list item's due today (YYYY-MM-DD): a day, or an instant on that day. */
 const dueOn = (item: SprigItem, day: string) =>
-	item.due!.length === 10
-		? item.due === day
-		: dayKey(new Date(item.due!)) === day;
+	item.due!.length === 10 ? item.due === day : dayKey(new Date(item.due!)) === day;
 
 /** What to wear: the clothes as big pictures, then the day's weather in small print for a grown-up. */
 function WhatToWear({ weather: w }: { weather: Weather }) {
@@ -196,17 +174,15 @@ function WhatToWear({ weather: w }: { weather: Weather }) {
 	const { pants, jacket, rain } = w.wear;
 	const clothes = [
 		rain
-			? { picture: RAIN_JACKET, name: "Rain jacket" }
+			? { picture: RAIN_JACKET, name: 'Rain jacket' }
 			: jacket
-				? { picture: JACKET, name: "Jacket" }
-				: { picture: "👕", name: "T-shirt" },
-		pants
-			? { picture: "👖", name: "Pants" }
-			: { picture: "🩳", name: "Shorts" },
+				? { picture: JACKET, name: 'Jacket' }
+				: { picture: '👕', name: 'T-shirt' },
+		pants ? { picture: '👖', name: 'Pants' } : { picture: '🩳', name: 'Shorts' },
 		...(rain
 			? [
-					{ picture: "🥾", name: "Rain boots" },
-					{ picture: "☔", name: "Umbrella" },
+					{ picture: '🥾', name: 'Rain boots' },
+					{ picture: '☔', name: 'Umbrella' },
 				]
 			: []),
 	];
@@ -240,7 +216,9 @@ function WhatToWear({ weather: w }: { weather: Weather }) {
 							</span>
 
 							<span>💧 {w.rainChance}%</span>
-							<span>💨 {w.wind} {windUnit(unit)}</span>
+							<span>
+								💨 {w.wind} {windUnit(unit)}
+							</span>
 						</span>
 					</span>
 				</span>
@@ -253,44 +231,19 @@ function WhatToWear({ weather: w }: { weather: Weather }) {
  * A kid's jacket, drawn (the coat emoji is a grown-up's trench coat): hood up behind, sleeves out, a
  * zip (a rain jacket: buttons, and a bigger hood).
  */
-function jacket({
-	cloth,
-	trim,
-	rain,
-}: {
-	cloth: string;
-	trim: string;
-	rain?: boolean;
-}) {
+function jacket({ cloth, trim, rain }: { cloth: string; trim: string; rain?: boolean }) {
 	return (
 		<svg viewBox="0 0 120 120" className={g.clothingDrawn}>
 			{/* The hood, behind. */}
+			<path d={rain ? 'M32 34 Q60 -10 88 34 Q60 42 32 34z' : 'M38 32 Q60 2 82 32 Q60 38 38 32z'} fill={trim} />
 			<path
-				d={
-					rain
-						? "M32 34 Q60 -10 88 34 Q60 42 32 34z"
-						: "M38 32 Q60 2 82 32 Q60 38 38 32z"
-				}
-				fill={trim}
-			/>
-			<path
-				d={
-					rain
-						? "M44 28 Q60 6 76 28 Q60 32 44 28z"
-						: "M46 28 Q60 12 74 28 Q60 31 46 28z"
-				}
+				d={rain ? 'M44 28 Q60 6 76 28 Q60 32 44 28z' : 'M46 28 Q60 12 74 28 Q60 31 46 28z'}
 				fill={cloth}
 				opacity="0.55"
 			/>
 			{/* Sleeves, with cuffs. */}
-			<path
-				d="M36 30 L18 42 L10 92 L26 95 L34 58z M84 30 L102 42 L110 92 L94 95 L86 58z"
-				fill={cloth}
-			/>
-			<path
-				d="M10 88 L26 91 L26 97 L9 94z M110 88 L94 91 L94 97 L111 94z"
-				fill={trim}
-			/>
+			<path d="M36 30 L18 42 L10 92 L26 95 L34 58z M84 30 L102 42 L110 92 L94 95 L86 58z" fill={cloth} />
+			<path d="M10 88 L26 91 L26 97 L9 94z M110 88 L94 91 L94 97 L111 94z" fill={trim} />
 			{/* The body, with a band at the bottom. */}
 			<path d="M34 28 Q60 20 86 28 L89 104 Q60 109 31 104z" fill={cloth} />
 			<path d="M31 98 Q60 103 89 98 L89 106 Q60 111 31 106z" fill={trim} />
@@ -305,19 +258,14 @@ function jacket({
 					<path d="M60 30 V102" stroke="#e8eef8" strokeWidth="3" />
 					<rect x="57" y="34" width="6" height="9" rx="2" fill="#e8eef8" />
 					{/* Pockets. */}
-					<path
-						d="M40 74 h12 M68 74 h12"
-						stroke={trim}
-						strokeWidth="4"
-						strokeLinecap="round"
-					/>
+					<path d="M40 74 h12 M68 74 h12" stroke={trim} strokeWidth="4" strokeLinecap="round" />
 				</>
 			)}
 		</svg>
 	);
 }
-const JACKET = jacket({ cloth: "#3d7bd9", trim: "#2a5aa8" });
-const RAIN_JACKET = jacket({ cloth: "#f6c624", trim: "#d99a10", rain: true });
+const JACKET = jacket({ cloth: '#3d7bd9', trim: '#2a5aa8' });
+const RAIN_JACKET = jacket({ cloth: '#f6c624', trim: '#d99a10', rain: true });
 
 /** Things to remember today, from the family's lists, each with a picture. */
 function Remember({ items }: { items: SprigItem[] }) {
@@ -328,7 +276,7 @@ function Remember({ items }: { items: SprigItem[] }) {
 				{items.map((i) => (
 					<li key={i.id} className={g.rememberItem}>
 						<span className={g.eventPicture} aria-hidden="true">
-							{picture(i.title, "📌")}
+							{picture(i.title, '📌')}
 						</span>
 						<span className={g.eventTitle}>{i.title}</span>
 					</li>
@@ -372,10 +320,17 @@ function SpecialDays({ today, kidId }: { today: string; kidId: string }) {
 			const on = e.memberIds.filter((id) => kids.has(id));
 			return on.length === 0 || on.includes(kidId);
 		})
-		.map((e) => ({ day: e.allDay ? e.start : dayKey(new Date(e.start)), name: e.title, picture: picture(e.title, "⭐") }))
+		.map((e) => ({
+			day: e.allDay ? e.start : dayKey(new Date(e.start)),
+			name: e.title,
+			picture: picture(e.title, '⭐'),
+		}))
 		.filter((d, i, all) => all.findIndex((x) => x.day === d.day && x.name === d.name) === i);
-	const days = specialDaysFor(today, (year) => [...birthdays(people, year), ...special.filter((d) => d.day.startsWith(`${year}-`))]);
-	const month = fromDayKey(today).toLocaleDateString([], { month: "long" });
+	const days = specialDaysFor(today, (year) => [
+		...birthdays(people, year),
+		...special.filter((d) => d.day.startsWith(`${year}-`)),
+	]);
+	const month = fromDayKey(today).toLocaleDateString([], { month: 'long' });
 	return (
 		<section className={g.special} aria-label={`${month}'s special days`}>
 			<span className={g.nextLabel}>{month}'s special days</span>
@@ -386,15 +341,28 @@ function SpecialDays({ today, kidId }: { today: string; kidId: string }) {
 					{days.map((d) => {
 						const sleeps = sleepsUntil(today, d.day);
 						return (
-							<li key={`${d.day}-${d.name}`} className={`${g.specialDay} ${sleeps < 0 ? g.specialPast : sleeps === 0 ? g.specialToday : ""}`}>
-								<span className={g.specialPicture} aria-hidden="true">{d.picture}</span>
+							<li
+								key={`${d.day}-${d.name}`}
+								className={`${g.specialDay} ${sleeps < 0 ? g.specialPast : sleeps === 0 ? g.specialToday : ''}`}
+							>
+								<span className={g.specialPicture} aria-hidden="true">
+									{d.picture}
+								</span>
 								<span className={g.specialText}>
 									<span className={g.specialName}>{d.name}</span>
-									<span className={g.specialDate}>{fromDayKey(d.day).toLocaleDateString([], { month: "short", day: "numeric" })}</span>
+									<span className={g.specialDate}>
+										{fromDayKey(d.day).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+									</span>
 								</span>
 								{sleeps >= 0 && (
 									<span className={g.sleeps}>
-										{sleeps === 0 ? "Today!" : <>{sleeps} <span className={g.sleepsWord}>{sleeps === 1 ? "sleep" : "sleeps"}</span></>}
+										{sleeps === 0 ? (
+											'Today!'
+										) : (
+											<>
+												{sleeps} <span className={g.sleepsWord}>{sleeps === 1 ? 'sleep' : 'sleeps'}</span>
+											</>
+										)}
 									</span>
 								)}
 							</li>
@@ -421,9 +389,7 @@ function KidEvent({
 	bring: boolean;
 }) {
 	return (
-		<li
-			className={`${g.event} ${next ? g.eventNext : ""} ${over ? g.eventOver : ""}`}
-		>
+		<li className={`${g.event} ${next ? g.eventNext : ''} ${over ? g.eventOver : ''}`}>
 			<span className={g.eventPicture} aria-hidden="true">
 				{picture(e.title)}
 			</span>
@@ -440,8 +406,7 @@ function KidEvent({
 				) : (
 					<>
 						{day && <span className={g.eventDay}>{day}</span>}
-						<span aria-hidden="true">{partOfDay(e.start)}</span>{" "}
-						{timeLabel(e.start)}
+						<span aria-hidden="true">{partOfDay(e.start)}</span> {timeLabel(e.start)}
 					</>
 				)}
 			</span>
@@ -461,9 +426,17 @@ function Bring({ event }: { event: CalEvent }) {
 		<ul className={g.bring} aria-label={`Bring to ${event.title}`}>
 			{event.checklist.map((x) => (
 				<li key={x.id}>
-					<button type="button" className={g.bringThing} aria-label={x.title}
-						onClick={() => setTaps({ ...taps, [x.id]: (taps[x.id] ?? 0) + 1 })}>
-						<span key={taps[x.id] ?? 0} className={`${g.bringPicture} ${taps[x.id] ? g.bounce : ""}`} aria-hidden="true">
+					<button
+						type="button"
+						className={g.bringThing}
+						aria-label={x.title}
+						onClick={() => setTaps({ ...taps, [x.id]: (taps[x.id] ?? 0) + 1 })}
+					>
+						<span
+							key={taps[x.id] ?? 0}
+							className={`${g.bringPicture} ${taps[x.id] ? g.bounce : ''}`}
+							aria-hidden="true"
+						>
 							{bringPicture(x)}
 						</span>
 						<span className={g.bringName}>{x.title}</span>

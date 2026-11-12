@@ -1,9 +1,9 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { api, type AuthStatus, type JoinPreview } from "../../lib/api";
-import { clearJoin, pendingJoin } from "../../lib/joinCode";
-import s from "./Account.module.css";
+import { useEffect, useState, type FormEvent } from 'react';
+import { api, type AuthStatus, type JoinPreview } from '../../lib/api';
+import { clearJoin, pendingJoin } from '../../lib/joinCode';
+import s from './Account.module.css';
 
-const KIND = { guardian: "as a guardian", kid: "as a kid", wall: "as the family wall" };
+const KIND = { guardian: 'as a guardian', kid: 'as a kid', wall: 'as the family wall' };
 
 /**
  * Joins a household with an invite code: shows what it's for first ("Join The Kims as Sam"), and,
@@ -11,13 +11,13 @@ const KIND = { guardian: "as a guardian", kid: "as a kid", wall: "as the family 
  * guardian codes need one.
  */
 export default function JoinForm({ signedIn, onJoined }: { signedIn: boolean; onJoined: (s: AuthStatus) => void }) {
-	const [code, setCode] = useState(pendingJoin() ?? "");
+	const [code, setCode] = useState(pendingJoin() ?? '');
 	const [preview, setPreview] = useState<JoinPreview | null>(null);
-	const [pick, setPick] = useState<string | "new" | null>(null);
-	const [name, setName] = useState("");
+	const [pick, setPick] = useState<string | 'new' | null>(null);
+	const [name, setName] = useState('');
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
-	const ready = code.replace(/[^a-z0-9]/gi, "").length === 8;
+	const ready = code.replace(/[^a-z0-9]/gi, '').length === 8;
 
 	// Look the code up as soon as it's complete.
 	useEffect(() => {
@@ -40,7 +40,7 @@ export default function JoinForm({ signedIn, onJoined }: { signedIn: boolean; on
 		setBusy(true);
 		setError(null);
 		try {
-			const choose = preview.choose ? (pick === "new" ? { name: name.trim() } : pick ? { memberId: pick } : {}) : {};
+			const choose = preview.choose ? (pick === 'new' ? { name: name.trim() } : pick ? { memberId: pick } : {}) : {};
 			const status = await api.join({ code, ...choose });
 			clearJoin();
 			onJoined(status);
@@ -51,8 +51,8 @@ export default function JoinForm({ signedIn, onJoined }: { signedIn: boolean; on
 		}
 	}
 
-	const needsAccount = preview?.kind === "guardian" && !signedIn;
-	const picked = !preview?.choose || (pick === "new" ? !!name.trim() : !!pick);
+	const needsAccount = preview?.kind === 'guardian' && !signedIn;
+	const picked = !preview?.choose || (pick === 'new' ? !!name.trim() : !!pick);
 
 	return (
 		<form className={s.card} onSubmit={submit}>
@@ -71,7 +71,7 @@ export default function JoinForm({ signedIn, onJoined }: { signedIn: boolean; on
 			{preview && (
 				<p className={s.hint}>
 					<strong>{preview.household}</strong> {KIND[preview.kind]}
-					{preview.for ? `: ${preview.for}` : ""}
+					{preview.for ? `: ${preview.for}` : ''}
 				</p>
 			)}
 			{preview?.choose && !needsAccount && (
@@ -79,16 +79,29 @@ export default function JoinForm({ signedIn, onJoined }: { signedIn: boolean; on
 					<p className={s.hint}>Which one is you?</p>
 					<div className={s.choices}>
 						{preview.choose.map((m) => (
-							<button key={m.id} type="button" className={s.choice} aria-pressed={pick === m.id} onClick={() => setPick(m.id)}>
+							<button
+								key={m.id}
+								type="button"
+								className={s.choice}
+								aria-pressed={pick === m.id}
+								onClick={() => setPick(m.id)}
+							>
 								{m.name}
 							</button>
 						))}
-						<button type="button" className={s.choice} aria-pressed={pick === "new"} onClick={() => setPick("new")}>
+						<button type="button" className={s.choice} aria-pressed={pick === 'new'} onClick={() => setPick('new')}>
 							Someone new
 						</button>
 					</div>
-					{pick === "new" && (
-						<input className={s.input} value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" aria-label="Your name" maxLength={40} />
+					{pick === 'new' && (
+						<input
+							className={s.input}
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+							placeholder="Your name"
+							aria-label="Your name"
+							maxLength={40}
+						/>
 					)}
 				</>
 			)}
@@ -96,7 +109,7 @@ export default function JoinForm({ signedIn, onJoined }: { signedIn: boolean; on
 			{error && <p className={s.error}>{error}</p>}
 			{!needsAccount && (
 				<button className={s.primary} disabled={!preview || !picked || busy}>
-					{preview ? `Join ${preview.household}` : "Join"}
+					{preview ? `Join ${preview.household}` : 'Join'}
 				</button>
 			)}
 		</form>

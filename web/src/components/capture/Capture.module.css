@@ -32,7 +32,9 @@
 	animation: pulse 1.4s ease-in-out infinite;
 }
 @keyframes pulse {
-	50% { box-shadow: 0 0 0 0.9rem rgb(194 65 45 / 0.18); }
+	50% {
+		box-shadow: 0 0 0 0.9rem rgb(194 65 45 / 0.18);
+	}
 }
 .hint {
 	margin: 0;
@@ -173,8 +175,18 @@
 }
 
 /* Which calendar the events go to (CalendarPick), over the buttons. */
-.calendarPick { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; color: var(--muted); }
+.calendarPick {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.85rem;
+	color: var(--muted);
+}
 .calendarPick select {
-	font-size: 1.05rem; padding: 0.55rem 0.6rem; border: 1px solid var(--line); border-radius: var(--radius-sm);
-	color: var(--text); background: var(--surface);
+	font-size: 1.05rem;
+	padding: 0.55rem 0.6rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	color: var(--text);
+	background: var(--surface);
 }

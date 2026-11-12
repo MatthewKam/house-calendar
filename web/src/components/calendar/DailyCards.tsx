@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useDaily } from "../../lib/queries";
-import s from "./DailyCards.module.css";
+import { useState } from 'react';
+import { useDaily } from '../../lib/queries';
+import s from './DailyCards.module.css';
 
 /**
  * Two small cards beside the weather: a dad joke (tap for the answer) and a quote. Each comes once a
@@ -23,9 +23,13 @@ export default function DailyCards({ today }: { today: string }) {
 						<span aria-hidden="true">😄</span> Dad joke of the day
 					</h3>
 					{split ? (
-						<button className={s.jokeBody} onClick={() => setRevealed(showAnswer ? null : joke.text)} aria-expanded={showAnswer}>
+						<button
+							className={s.jokeBody}
+							onClick={() => setRevealed(showAnswer ? null : joke.text)}
+							aria-expanded={showAnswer}
+						>
 							<span className={s.setup}>{split[1]}</span>
-							<span className={showAnswer ? s.answer : s.tapHint}>{showAnswer ? split[2] : "Tap for the answer"}</span>
+							<span className={showAnswer ? s.answer : s.tapHint}>{showAnswer ? split[2] : 'Tap for the answer'}</span>
 						</button>
 					) : (
 						<p className={s.setup}>{joke.text}</p>

@@ -15,7 +15,9 @@
 	box-shadow: 0 0.4rem 1rem color-mix(in srgb, var(--accent) 35%, transparent);
 	position: relative;
 	z-index: calc(var(--layer-menu) + 1);
-	transition: transform 0.2s, background 0.2s;
+	transition:
+		transform 0.2s,
+		background 0.2s;
 }
 .plus svg {
 	width: 1.7rem;
@@ -79,7 +81,7 @@
 	background: var(--tint);
 	color: var(--ink);
 }
-:global([data-theme="dark"]) .icon:not(.solid) {
+:global([data-theme='dark']) .icon:not(.solid) {
 	background: color-mix(in srgb, var(--ink) 30%, var(--surface));
 	color: color-mix(in srgb, var(--ink), white 55%);
 }
@@ -93,10 +95,15 @@
 	stroke-linejoin: round;
 }
 @keyframes pop {
-	from { opacity: 0; transform: translateY(1rem) scale(0.96); }
+	from {
+		opacity: 0;
+		transform: translateY(1rem) scale(0.96);
+	}
 }
 @keyframes fade {
-	from { opacity: 0; }
+	from {
+		opacity: 0;
+	}
 }
 
 /* A phone on its side: the + sits in the bar on the left, and the actions open beside it in two

@@ -1,26 +1,20 @@
-import { useState } from "react";
-import {
-	useBuckets,
-	useRewardActions,
-	useRewardHistory,
-	useRewards,
-} from "../../lib/queries";
-import type { Member, Reward, RewardWin } from "../../lib/types";
-import RewardDialog from "./RewardDialog";
-import KidJars from "./KidJars";
-import TakeBackDialog from "./TakeBackDialog";
-import { Who, dayAndTime, shortDay, toDate } from "./JarBits";
-import Fab from "../nav/Fab";
-import { useParent } from "../../lib/useParent";
-import s from "./Rewards.module.css";
+import { useState } from 'react';
+import { useBuckets, useRewardActions, useRewardHistory, useRewards } from '../../lib/queries';
+import type { Member, Reward, RewardWin } from '../../lib/types';
+import RewardDialog from './RewardDialog';
+import KidJars from './KidJars';
+import TakeBackDialog from './TakeBackDialog';
+import { Who, dayAndTime, shortDay, toDate } from './JarBits';
+import Fab from '../nav/Fab';
+import { useParent } from '../../lib/useParent';
+import s from './Rewards.module.css';
 
 interface Props {
 	today: string;
 	members: Member[];
 }
 
-const monthOf = (d: string) =>
-	toDate(d).toLocaleDateString([], { month: "long", year: "numeric" });
+const monthOf = (d: string) => toDate(d).toLocaleDateString([], { month: 'long', year: 'numeric' });
 
 /** Rewards: each kid's stars and jars, full jars waiting to be redeemed, then everything redeemed (or missed) so far. */
 export default function RewardsPage({ today, members }: Props) {
@@ -35,8 +29,7 @@ export default function RewardsPage({ today, members }: Props) {
 	const { parent } = useParent();
 	const [showAll, setShowAll] = useState(false);
 
-	const starsOf = (id: string) =>
-		buckets.find((b) => b.memberId === id)?.stars ?? 0;
+	const starsOf = (id: string) => buckets.find((b) => b.memberId === id)?.stars ?? 0;
 	const waiting = history.filter((w) => !w.givenAt && !w.missedOn);
 	// Kids with stars, jars, or rewards from before.
 	const kids = members.filter(
@@ -47,16 +40,13 @@ export default function RewardsPage({ today, members }: Props) {
 	);
 	const done = history.filter((w) => w.givenAt || w.missedOn);
 	const shown = showAll ? done : done.slice(0, 12);
-	const byMonth = shown.reduce<{ month: string; wins: RewardWin[] }[]>(
-		(groups, w) => {
-			const month = monthOf(w.givenAt ?? w.missedOn!);
-			const last = groups.at(-1);
-			if (last?.month === month) last.wins.push(w);
-			else groups.push({ month, wins: [w] });
-			return groups;
-		},
-		[],
-	);
+	const byMonth = shown.reduce<{ month: string; wins: RewardWin[] }[]>((groups, w) => {
+		const month = monthOf(w.givenAt ?? w.missedOn!);
+		const last = groups.at(-1);
+		if (last?.month === month) last.wins.push(w);
+		else groups.push({ month, wins: [w] });
+		return groups;
+	}, []);
 
 	return (
 		<section className={s.page} aria-label="Rewards">
@@ -69,8 +59,7 @@ export default function RewardsPage({ today, members }: Props) {
 			<div className={s.scroll}>
 				{kids.length === 0 ? (
 					<p className={s.none}>
-						No reward jars yet. Tap + to make one; kids fill them with the stars
-						they earn from extras.
+						No reward jars yet. Tap + to make one; kids fill them with the stars they earn from extras.
 					</p>
 				) : (
 					<div className={s.kids}>
@@ -81,9 +70,7 @@ export default function RewardsPage({ today, members }: Props) {
 								members={members}
 								today={today}
 								bucket={starsOf(kid.id)}
-								jars={jars.filter(
-									(j) => j.status !== "earned" && j.memberIds.includes(kid.id),
-								)}
+								jars={jars.filter((j) => j.status !== 'earned' && j.memberIds.includes(kid.id))}
 								onEdit={parent ? (reward) => setSheet({ reward }) : undefined}
 							/>
 						))}
@@ -125,15 +112,15 @@ export default function RewardsPage({ today, members }: Props) {
 								<h3 className={s.monthName}>{g.month}</h3>
 								<ul className={s.givenList}>
 									{g.wins.map((w) => (
-										<li key={w.id} className={w.missedOn ? s.missedRow : ""}>
+										<li key={w.id} className={w.missedOn ? s.missedRow : ''}>
 											<span className={s.givenTitle}>
-												{w.missedOn ? "⏰" : "🎁"} {w.title}
+												{w.missedOn ? '⏰' : '🎁'} {w.title}
 											</span>
 											<Who ids={w.memberIds} members={members} />
 											{w.givenAt ? (
 												<>
 													<span className={s.givenDates}>
-														<b className={s.redeemedAt}>Redeemed {dayAndTime(w.givenAt)}</b> · filled{" "}
+														<b className={s.redeemedAt}>Redeemed {dayAndTime(w.givenAt)}</b> · filled{' '}
 														{shortDay(w.earnedDay)}
 													</span>
 													<button
@@ -145,9 +132,7 @@ export default function RewardsPage({ today, members }: Props) {
 													</button>
 												</>
 											) : (
-												<span className={s.givenDates}>
-													missed its deadline, {shortDay(w.missedOn!)}
-												</span>
+												<span className={s.givenDates}>missed its deadline, {shortDay(w.missedOn!)}</span>
 											)}
 										</li>
 									))}
@@ -156,7 +141,7 @@ export default function RewardsPage({ today, members }: Props) {
 						))}
 						{done.length > 12 && (
 							<button className={s.more} onClick={() => setShowAll(!showAll)}>
-								{showAll ? "Show fewer" : `Show all ${done.length}`}
+								{showAll ? 'Show fewer' : `Show all ${done.length}`}
 							</button>
 						)}
 					</>
@@ -176,7 +161,7 @@ export default function RewardsPage({ today, members }: Props) {
 			)}
 			{sheet && (
 				<RewardDialog
-					key={sheet.reward?.id ?? "new"}
+					key={sheet.reward?.id ?? 'new'}
 					reward={sheet.reward}
 					today={today}
 					onClose={() => setSheet(null)}

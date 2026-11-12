@@ -56,7 +56,10 @@
 	animation: pop 0.3s ease-out;
 }
 @keyframes pop {
-	from { opacity: 0; transform: translateY(0.3rem); }
+	from {
+		opacity: 0;
+		transform: translateY(0.3rem);
+	}
 }
 
 .quoteText {

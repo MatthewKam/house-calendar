@@ -93,12 +93,12 @@
 }
 .or::before,
 .or::after {
-	content: "";
+	content: '';
 	flex: 1;
 	border-top: 1px solid var(--line);
 }
 .link {
-	composes: textButton from "../ui/Buttons.module.css";
+	composes: textButton from '../ui/Buttons.module.css';
 	align-self: center;
 	padding: 0.4rem;
 }
@@ -126,7 +126,7 @@
 	background: var(--surface);
 	font-weight: 600;
 }
-.choice[aria-pressed="true"] {
+.choice[aria-pressed='true'] {
 	background: var(--accent);
 	color: var(--on-accent);
 	border-color: var(--accent);

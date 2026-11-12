@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { ALL_EMOJI, searchEmoji } from "../../lib/emoji";
-import s from "./IconPicker.module.css";
+import { useState } from 'react';
+import { ALL_EMOJI, searchEmoji } from '../../lib/emoji';
+import s from './IconPicker.module.css';
 
 interface Props {
 	value: string | null;
@@ -15,7 +15,7 @@ interface Props {
  * None clears it.
  */
 export default function IconPicker({ value, onChange, featured, autoFocus }: Props) {
-	const [query, setQuery] = useState("");
+	const [query, setQuery] = useState('');
 	const [more, setMore] = useState(false);
 	const found = query.trim() ? searchEmoji(query).map((x) => x.e) : null;
 	// The current pick stays visible even when it's not in the short set.
@@ -23,11 +23,11 @@ export default function IconPicker({ value, onChange, featured, autoFocus }: Pro
 	const shown = found ?? base;
 	const choice = (icon: string | null, label?: string) => (
 		<button
-			key={icon ?? "none"}
+			key={icon ?? 'none'}
 			type="button"
 			role="radio"
 			aria-checked={value === icon}
-			className={`${s.choice} ${value === icon ? s.on : ""}`}
+			className={`${s.choice} ${value === icon ? s.on : ''}`}
 			onClick={() => onChange(icon)}
 			title={label}
 		>
@@ -46,13 +46,13 @@ export default function IconPicker({ value, onChange, featured, autoFocus }: Pro
 				aria-label="Search icons"
 			/>
 			<div className={s.grid} role="radiogroup" aria-label="Icon">
-				{choice(null, "No icon")}
-				{shown.map((e) => choice(e, ALL_EMOJI.find((x) => x.e === e)?.k.split(" ")[0]))}
+				{choice(null, 'No icon')}
+				{shown.map((e) => choice(e, ALL_EMOJI.find((x) => x.e === e)?.k.split(' ')[0]))}
 			</div>
 			{found && found.length === 0 && <div className={s.empty}>No icons match “{query.trim()}”.</div>}
 			{!found && (
 				<button type="button" className={s.more} onClick={() => setMore(!more)}>
-					{more ? "Show fewer" : `Show more (${ALL_EMOJI.length})`}
+					{more ? 'Show fewer' : `Show more (${ALL_EMOJI.length})`}
 				</button>
 			)}
 		</div>

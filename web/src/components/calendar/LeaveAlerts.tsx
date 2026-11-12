@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { useAlertActions, useAlerts } from "../../lib/queries";
-import { timeLabel } from "../../lib/dates";
-import s from "./LeaveAlerts.module.css";
-
+import { useEffect, useRef, useState } from 'react';
+import { useAlertActions, useAlerts } from '../../lib/queries';
+import { timeLabel } from '../../lib/dates';
+import s from './LeaveAlerts.module.css';
 
 /** A soft two-note chime. Browsers may block sound until someone has touched the page; that's fine. */
 function chime() {
@@ -51,34 +50,38 @@ export default function LeaveAlerts() {
 	if (due.length === 0) return null;
 	return (
 		<>
-		{/* Outside the stack: its transform would pin a fixed child to the stack instead of the screen. */}
-		<div className={s.zoom} aria-hidden="true">
-			<span aria-hidden="true">🚗</span>
-			<span className={s.dust}>💨</span>
-		</div>
-		<div className={s.stack} role="alert">
-			{due.map((a) => {
-				const leaveNow = Date.parse(a.leaveAt) <= now;
-				return (
-					<div key={a.id} className={s.alert}>
-						<div className={s.icon} aria-hidden="true">
-							🚗
-						</div>
-						<div className={s.body}>
-							<div className={s.title}>
-								{leaveNow ? "Time to leave" : `Leave in ${Math.max(1, Math.round((Date.parse(a.leaveAt) - now) / 60_000))} min`} for {a.title}
+			{/* Outside the stack: its transform would pin a fixed child to the stack instead of the screen. */}
+			<div className={s.zoom} aria-hidden="true">
+				<span aria-hidden="true">🚗</span>
+				<span className={s.dust}>💨</span>
+			</div>
+			<div className={s.stack} role="alert">
+				{due.map((a) => {
+					const leaveNow = Date.parse(a.leaveAt) <= now;
+					return (
+						<div key={a.id} className={s.alert}>
+							<div className={s.icon} aria-hidden="true">
+								🚗
 							</div>
-							<div className={s.detail}>
-								{a.driveMinutes} min drive, there 10 min before {timeLabel(a.arriveBy)} · leave by {timeLabel(a.leaveAt)}
+							<div className={s.body}>
+								<div className={s.title}>
+									{leaveNow
+										? 'Time to leave'
+										: `Leave in ${Math.max(1, Math.round((Date.parse(a.leaveAt) - now) / 60_000))} min`}{' '}
+									for {a.title}
+								</div>
+								<div className={s.detail}>
+									{a.driveMinutes} min drive, there 10 min before {timeLabel(a.arriveBy)} · leave by{' '}
+									{timeLabel(a.leaveAt)}
+								</div>
 							</div>
+							<button className={s.ok} onClick={() => dismiss.mutate(a.id)}>
+								Got it
+							</button>
 						</div>
-						<button className={s.ok} onClick={() => dismiss.mutate(a.id)}>
-							Got it
-						</button>
-					</div>
-				);
-			})}
-		</div>
+					);
+				})}
+			</div>
 		</>
 	);
 }

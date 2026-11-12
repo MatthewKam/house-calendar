@@ -31,7 +31,7 @@
 }
 
 .textButton {
-	composes: textButton from "../ui/Buttons.module.css";
+	composes: textButton from '../ui/Buttons.module.css';
 	padding: 0.2rem 0.4rem;
 }
 .secondary {
@@ -264,11 +264,15 @@
 	font-size: 1.1rem;
 	font-weight: 800;
 	box-shadow: 0 1px 5px rgb(0 0 0 / 0.4); /* own: stands out on any photo */
-	transition: background 0.15s, transform 0.15s;
+	transition:
+		background 0.15s,
+		transform 0.15s;
 }
 .selectable img {
 	opacity: 0.6;
-	transition: opacity 0.15s, transform 0.15s;
+	transition:
+		opacity 0.15s,
+		transform 0.15s;
 }
 .selectable:hover img {
 	transform: none;
@@ -349,7 +353,10 @@
 	animation: appear 0.25s ease-out;
 }
 @keyframes appear {
-	from { opacity: 0; transform: scale(0.98); }
+	from {
+		opacity: 0;
+		transform: scale(0.98);
+	}
 }
 .nav {
 	position: absolute;
@@ -430,7 +437,9 @@
 	border: 2.5px dashed var(--line);
 	border-radius: var(--radius);
 	text-align: center;
-	transition: background 0.15s, border-color 0.15s;
+	transition:
+		background 0.15s,
+		border-color 0.15s;
 }
 .dropHot {
 	border-color: var(--accent);
