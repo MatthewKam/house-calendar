@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query';
 import { api } from './api';
+import { useWeatherHere } from './useWeatherHere';
 import { addDays, dayKey, fromDayKey } from './dates';
 import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, RewardInput, CalEvent, Reward, RewardWin, Bucket, StarPlacing,
   ReminderList, Photo, LeaveAlert, ChecklistItem, OutboxStatus, PottyChart, Visibility, SprigList, SprigItem, Game, LearnDayChange } from './types';
@@ -398,8 +399,18 @@ export function useListActions() {
 }
 
 /** Weather at home; the server asks for fresh numbers every 10 minutes. */
+/** Today's weather at home, or where this device is when it's on Here (useWeatherHere). */
 export function useWeather() {
-  return useQuery({ queryKey: ['weather'], queryFn: api.weather, refetchInterval: 10 * 60_000, retry: false });
+  const here = useWeatherHere();
+  return useQuery({ queryKey: ['weather', here ? `${here.lat},${here.lon}` : 'home'], queryFn: () => api.weather(here),
+    refetchInterval: 10 * 60_000, retry: false, placeholderData: keepPreviousData });
+}
+
+/** Forecasts for far-away events (by id); nearby ones and ones with no address aren't in it. */
+export function useEventWeather(ids: string[]) {
+  const sorted = [...new Set(ids)].sort();
+  return useQuery({ queryKey: ['weather', 'events', sorted.join(',')], queryFn: () => api.eventWeather(sorted),
+    enabled: sorted.length > 0, staleTime: 30 * 60_000, retry: false });
 }
 
 /** "Time to leave" alerts; checked often so the wall shows one on time. */

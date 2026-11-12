@@ -6,6 +6,7 @@ import type { CalEvent, EventInput, Member, Scope, Visibility } from '../lib/typ
 import { PencilIcon } from './icons';
 import TravelInfo from './TravelInfo';
 import EventChecklist from './EventChecklist';
+import EventForecast from './EventForecast';
 import AddressInput from './AddressInput';
 import { PickChip } from './NameChip';
 import sheet from '../styles/Sheet.module.css';
@@ -117,6 +118,7 @@ function SyncedEvent({ event, members, onClose, onEdit, locked }: {
         </header>
         <div>{when}</div>
         <TravelInfo event={event} locked={locked} />
+        <EventForecast event={event} />
         <EventChecklist event={event} locked={locked} />
         {draft ? (
           <>
@@ -283,6 +285,7 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
         <AddressInput value={location} onChange={setLocation} />
         {/* Travel time for the saved address (the field above already shows it). */}
         {event?.location && event.location === location.trim() && <TravelInfo event={event} showAddress={false} />}
+        {event?.location && event.location === location.trim() && <EventForecast event={event} />}
 
         <textarea className={s.notes} placeholder="Notes" aria-label="Notes" value={notes} maxLength={4000}
           rows={Math.min(8, Math.max(2, notes.split('\n').length))} onChange={(e) => setNotes(e.target.value)} />

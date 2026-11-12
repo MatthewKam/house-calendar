@@ -8,7 +8,8 @@ type Place = Awaited<ReturnType<typeof api.places>>[number];
  * The event's address, with places suggested as you type (near home first). Tap one to fill it in;
  * or keep typing, it's still just text. With no Google key on the server, there are no suggestions.
  */
-export default function AddressInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export default function AddressInput({ value, onChange, placeholder = 'Address (optional), for travel time', label = 'Address' }:
+  { value: string; onChange: (v: string) => void; placeholder?: string; label?: string }) {
   const [places, setPlaces] = useState<Place[]>([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -44,8 +45,8 @@ export default function AddressInput({ value, onChange }: { value: string; onCha
 
   return (
     <div className={s.addressField}>
-      <input className={s.locationInput} placeholder="Address (optional), for travel time" value={value}
-        maxLength={300} aria-label="Address" autoComplete="off" role="combobox" aria-expanded={showing}
+      <input className={s.locationInput} placeholder={placeholder} value={value}
+        maxLength={300} aria-label={label} autoComplete="off" role="combobox" aria-expanded={showing}
         aria-controls="address-suggestions"
         onChange={(e) => {
           onChange(e.target.value);

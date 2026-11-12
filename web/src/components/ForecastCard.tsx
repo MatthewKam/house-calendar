@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from "react";
+import { api } from "../lib/api";
 import { fromDayKey, longDate } from "../lib/dates";
 import { sky } from "../lib/weather";
 import type { Weather } from "../lib/types";
+import { canFindHere, findHere, setHere, useWeatherHere } from "../lib/useWeatherHere";
+import AddressInput from "./AddressInput";
 import s from "../styles/Today.module.css";
 
 type Hour = Weather["hours"][number];
@@ -26,7 +29,10 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 	};
 	return (
 		<section className={s.card} aria-label="Weather">
-			<h2 className={s.cardHead}>Weather</h2>
+			<div className={s.weatherHead}>
+				<h2 className={s.cardHead}>Weather</h2>
+				<PlaceSwitch />
+			</div>
 			<div className={s.weatherNow}>
 				<span className={s.weatherIcon} aria-hidden="true">
 					{now.icon}
@@ -50,25 +56,89 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 	);
 }
 
-/** The range bars' height: the week's warmest (or warmest-feeling) at the top, its coolest at the bottom. */
-const BAR_HEIGHT = 84;
-/** Room inside each bar's box above the warmest high and below the coolest low. */
-const BAR_PAD = 8;
-
 /**
- * The next seven days side by side, a column each: the day, its date, its sky; then two bars, its high to
- * its low (green) and how warm it feels at most to least (grey), all on one scale so a warmer day sits
- * higher, each with its high over it and its low under it; then its wind and chance of rain. A key under
- * the columns says which bar is which.
+ * Home, Here or another place: the forecast at home, where this device is (it asks permission the first
+ * time), or a town or address typed in (a trip being planned, family far away). Kept on this device;
+ * everything here that shows the weather follows it.
  */
-function Week({ days }: { days: Weather["days"] }) {
-	const top = Math.max(...days.flatMap((d) => [d.high, d.feelsHigh]));
-	const bottom = Math.min(...days.flatMap((d) => [d.low, d.feelsLow]));
-	const span = Math.max(top - bottom, 1);
-	const at = (t: number) => BAR_PAD + ((top - t) / span) * BAR_HEIGHT;
-	const bar = (high: number, low: number) => ({ top: at(high) + 16, height: Math.max(at(low) - at(high), 6) });
+function PlaceSwitch() {
+	const here = useWeatherHere();
+	const [finding, setFinding] = useState(false);
+	const [typing, setTyping] = useState(false);
+	const [typed, setTyped] = useState("");
+	const [problem, setProblem] = useState<string | null>(null);
+	const place = here?.name ? here : null;
+	function goHere() {
+		setFinding(true);
+		setProblem(null);
+		setTyping(false);
+		findHere().then(
+			(at) => setHere(at),
+			(err: GeolocationPositionError) =>
+				setProblem(err.code === err.PERMISSION_DENIED ? "Location is off for Sprig on this device" : "Couldn't find where you are"),
+		).finally(() => setFinding(false));
+	}
+	function goPlace(e: FormEvent) {
+		e.preventDefault();
+		const q = typed.trim();
+		if (!q) return;
+		setFinding(true);
+		setProblem(null);
+		api.weatherPlace(q).then(
+			// Named by its first part: "Honolulu, HI, USA" is Honolulu.
+			(at) => { setHere({ ...at, name: q.split(",")[0].trim() }); setTyping(false); setTyped(""); },
+			() => setProblem("Couldn't find that place"),
+		).finally(() => setFinding(false));
+	}
+	const option = (on: boolean, label: string, pick: () => void) => (
+		<button type="button" role="radio" aria-checked={on} className={s.placeOption} onClick={pick} disabled={finding}>
+			{label}
+		</button>
+	);
+	const onHere = !!here && !place;
 	return (
 		<>
+			<div className={s.place}>
+				<div className={s.placeSwitch} role="radiogroup" aria-label="Weather for">
+					{option(!here && !typing && !finding, "🏠 Home", () => { setProblem(null); setTyping(false); setHere(null); })}
+					{(canFindHere() || onHere) &&
+						option(onHere && !typing, finding && !typing ? "📍 Finding…" : "📍 Here", goHere)}
+					{/* The place picked shows its name; tapped again, another can be typed in. */}
+					{option(!!place || typing, place ? `🔎 ${place.name}` : "🔎 Other", () => { setProblem(null); setTyping((t) => !t || !place); })}
+				</div>
+				{problem && <span className={s.placeProblem}>{problem}</span>}
+			</div>
+			{typing && (
+				<form className={s.placeForm} onSubmit={goPlace}>
+					<AddressInput value={typed} onChange={setTyped} placeholder="A town or address" label="Weather for a place" />
+					<button type="submit" className={s.placeGo} disabled={finding || !typed.trim()}>
+						{finding ? "Finding…" : "Show"}
+					</button>
+				</form>
+			)}
+		</>
+	);
+}
+
+/** Rain worth a mention (%), likely rain (picked out), and wind worth a mention (mph). */
+const RAIN_SHOWN = 30;
+const RAIN_LIKELY = 50;
+const WIND_SHOWN = 15;
+
+/**
+ * The next seven days, a row each: the day, its sky, how warm it feels, and rain and wind when they're
+ * worth knowing; under that, its low to its high as a bar on one scale for the week (a warmer day sits
+ * further right).
+ */
+function Week({ days }: { days: Weather["days"] }) {
+	const top = Math.max(...days.map((d) => d.high));
+	const bottom = Math.min(...days.map((d) => d.low));
+	const span = Math.max(top - bottom, 1);
+	const bar = (low: number, high: number) => ({
+		left: `${((low - bottom) / span) * 100}%`,
+		width: `max(${((high - low) / span) * 100}%, 0.5rem)`,
+	});
+	return (
 		<ul className={s.week} aria-label="The next seven days">
 			{days.map((d) => {
 				const look = sky(d.code, true);
@@ -79,48 +149,28 @@ function Week({ days }: { days: Weather["days"] }) {
 						className={s.weekDay}
 						aria-label={`${longDate(date)}: ${look.label}, ${d.rain}% rain, high ${d.high}°, low ${d.low}°, wind ${d.wind} mph, feels like ${d.feelsHigh}° to ${d.feelsLow}°`}
 					>
-						<span className={s.weekName} aria-hidden="true">
-							{date.toLocaleDateString([], { weekday: "short" })}
+						<span className={s.weekTop} aria-hidden="true">
+							<span className={s.weekName}>
+								{date.toLocaleDateString([], { weekday: "short" })} <span className={s.weekDate}>{date.getDate()}</span>
+							</span>
+							<span className={s.weekIcon}>{look.icon}</span>
+							<span className={s.weekExtra}>
+								<span>Feels {d.feelsLow}–{d.feelsHigh}°</span>
+								{d.rain >= RAIN_SHOWN && (
+									<span className={d.rain >= RAIN_LIKELY ? s.weekWet : undefined}>💧 {d.rain}%</span>
+								)}
+								{d.wind >= WIND_SHOWN && <span>💨 {d.wind} mph</span>}
+							</span>
 						</span>
-						<span className={s.weekDate} aria-hidden="true">
-							{date.getDate()}
+						<span className={s.weekLow} aria-hidden="true">{d.low}°</span>
+						<span className={s.weekTrack} aria-hidden="true">
+							<span className={s.weekBar} style={bar(d.low, d.high)} />
 						</span>
-						<span className={s.weekIcon} aria-hidden="true">
-							{look.icon}
-						</span>
-
-						<span
-							className={s.weekRange}
-							aria-hidden="true"
-							style={{ height: BAR_HEIGHT + 40 + 2 * BAR_PAD }}
-						>
-							{/* Each bar with its own high over it and low under it. */}
-							{[
-								{ high: d.high, low: d.low, feels: false },
-								{ high: d.feelsHigh, low: d.feelsLow, feels: true },
-							].map(({ high, low, feels }) => (
-								<span key={String(feels)} className={`${s.weekPair} ${feels ? s.weekPairFeels : ""}`}>
-									<span className={s.weekHigh} style={{ top: at(high) }}>{high}°</span>
-									<span className={s.weekBar} style={bar(high, low)} />
-									<span className={s.weekLow} style={{ top: at(low) + 20 }}>{low}°</span>
-								</span>
-							))}
-						</span>
-						<span className={s.weekWind} aria-hidden="true">
-							💨 {d.wind}
-						</span>
-						<span className={s.weekRain} aria-hidden="true">
-							💧{d.rain}%
-						</span>
+						<span className={s.weekHigh} aria-hidden="true">{d.high}°</span>
 					</li>
 				);
 			})}
 		</ul>
-		<p className={s.weekKey} aria-hidden="true">
-			<span><span className={s.weekSwatch} /> Temperature</span>
-			<span><span className={`${s.weekSwatch} ${s.weekSwatchFeels}`} /> Feels like</span>
-		</p>
-		</>
 	);
 }
 
@@ -129,9 +179,12 @@ const HEIGHT = 130;
 const TOP = 22;
 const BOTTOM = 24;
 const SIDE = 14;
+/** The picked hour's details, this wide. */
+const TIP = 150;
 
 /**
- * The hours around now as a line of temperatures: the hours gone by faint, a dot where now is, every third
+ * The hours around now as a line of temperatures, and how warm they feel as a dashed line on the same
+ * scale: the hours gone by faint, a dot where now is, every third
  * hour named underneath, and the high and low labelled (above their points). Tap (or point at) the line for an hour: when, the
  * temperature, how warm it feels, the sky, and the chance of rain when there is one.
  */
@@ -158,11 +211,15 @@ function HourGraph({
 	const temps = hours.map((h) => h.temp);
 	const hi = Math.max(...temps);
 	const lo = Math.min(...temps);
-	const span = Math.max(hi - lo, 4);
+	// One scale for both lines, so the feels line sits above or below the temperature where it should.
+	const feels = hours.map((h) => h.feels);
+	const top = Math.max(hi, ...feels);
+	const span = Math.max(top - Math.min(lo, ...feels), 4);
 	const x = (i: number) => SIDE + (i * (width - 2 * SIDE)) / (hours.length - 1);
 	const y = (t: number) =>
-		TOP + 6 + ((hi - t) / span) * (HEIGHT - TOP - BOTTOM - 10);
+		TOP + 6 + ((top - t) / span) * (HEIGHT - TOP - BOTTOM - 10);
 	const points = hours.map((h, i) => [x(i), y(h.temp)] as const);
+	const feelsPoints = hours.map((h, i) => [x(i), y(h.feels)] as const);
 
 	// Now, between two hours on the line.
 	const times = hours.map((h) => Date.parse(h.time));
@@ -178,15 +235,16 @@ function HourGraph({
 					(nowMs - times[after - 1]) / (times[after] - times[after - 1]);
 	const whole = Math.min(Math.floor(at), hours.length - 1);
 	const part = at - whole;
-	const nowPoint = [
-		x(at),
-		whole + 1 < hours.length
-			? y(
-					hours[whole].temp +
-						(hours[whole + 1].temp - hours[whole].temp) * part,
-				)
-			: y(hours[whole].temp),
-	] as const;
+	// A value at now, between its two hours.
+	const nowOf = (v: (h: Hour) => number) =>
+		[
+			x(at),
+			whole + 1 < hours.length
+				? y(v(hours[whole]) + (v(hours[whole + 1]) - v(hours[whole])) * part)
+				: y(v(hours[whole])),
+		] as const;
+	const nowPoint = nowOf((h) => h.temp);
+	const nowFeels = nowOf((h) => h.feels);
 	const line = (ps: (readonly [number, number])[]) =>
 		ps
 			.map(([px, py], i) => `${i ? "L" : "M"}${px.toFixed(1)},${py.toFixed(1)}`)
@@ -250,6 +308,15 @@ function HourGraph({
 							</g>
 						) : null,
 					)}
+					{/* How warm it feels, dashed, under the temperature line: gone by, fainter. */}
+					<path
+						className={`${s.graphFeels} ${s.graphFeelsPast}`}
+						d={line([...feelsPoints.slice(0, whole + 1), nowFeels])}
+					/>
+					<path
+						className={s.graphFeels}
+						d={line([nowFeels, ...feelsPoints.slice(whole + 1)])}
+					/>
 					{/* Gone by, faint; ahead, solid. */}
 					<path
 						className={s.graphPast}
@@ -278,7 +345,7 @@ function HourGraph({
 							{lo}°
 						</text>
 					)}
-					{/* An hour picked: a line down through it, and its point. */}
+					{/* An hour picked: a line down through it, and its point on each line. */}
 					{picked !== null && (
 						<g>
 							<line
@@ -287,6 +354,12 @@ function HourGraph({
 								x2={points[picked][0]}
 								y1={TOP - 4}
 								y2={HEIGHT - BOTTOM}
+							/>
+							<circle
+								className={s.graphPickFeels}
+								cx={feelsPoints[picked][0]}
+								cy={feelsPoints[picked][1]}
+								r={4}
 							/>
 							<circle
 								className={s.graphPick}
@@ -306,12 +379,13 @@ function HourGraph({
 				</svg>
 			)}
 			{shown && look && (
-				// Over the hour, kept inside the card.
+				// Beside the hour (its dots stay in sight): to the right in the first half, else the left.
 				<div
 					className={s.graphTip}
 					role="status"
 					style={{
-						left: Math.max(0, Math.min(width - 150, points[picked!][0] - 75)),
+						left: Math.max(0, Math.min(width - TIP,
+							points[picked!][0] < width / 2 ? points[picked!][0] + 12 : points[picked!][0] - 12 - TIP)),
 					}}
 				>
 					<b>{hourLabel(shown.time)}</b>
@@ -329,7 +403,15 @@ function HourGraph({
 				className={s.graphHint}
 				style={picked === null ? undefined : { visibility: "hidden" }}
 			>
-				Tap the line for an hour's weather
+				<span className={s.graphKey}>
+					<svg width="18" height="6" aria-hidden="true"><line className={s.graphLine} x1="1" x2="17" y1="3" y2="3" /></svg>
+					Temperature
+				</span>
+				<span className={s.graphKey}>
+					<svg width="18" height="6" aria-hidden="true"><line className={s.graphFeels} x1="1" x2="17" y1="3" y2="3" /></svg>
+					Feels like
+				</span>
+				<span>Tap for an hour</span>
 			</p>
 		</div>
 	);

@@ -298,7 +298,7 @@ export type EventInput = Pick<CalEvent, 'title' | 'memberIds' | 'allDay' | 'star
 export type Scope = 'one' | 'all';
 
 /** Today's weather at home (the server's own shape, shared). */
-export type { Weather } from '../../../shared/weather.ts';
+export type { EventWeather, Wear, Weather } from '../../../shared/weather.ts';
 
 /** A photo in the album. */
 export interface Photo {

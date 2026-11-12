@@ -1,4 +1,4 @@
-import type { CalEvent, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, LearnState, LearnSound, Game, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility, SprigList, SprigItem, Proposal, LearnDayChange } from './types';
+import type { CalEvent, EventWeather, LeaveAlert, MemberPatch, Reward, Task, Trip, TaskDone, TaskInput, EventInput, Member, ReminderList, SyncedCalendar, SyncStatus, Weather, OutboxStatus, RewardInput, RewardWin, Bucket, StarPlacing, Photo, Daily, Moment, MomentKind, LearnState, LearnSound, Game, GoalTemplate, PottyChart, PottyKind, PottyStep, Visibility, SprigList, SprigItem, Proposal, LearnDayChange } from './types';
 
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, {
@@ -124,7 +124,13 @@ export const api = {
     call<{ text: string; main: string; secondary: string }[]>('GET', `/api/places?${new URLSearchParams({ q, session })}`, undefined, signal),
   travelTimes: () => call<Record<string, number>>('GET', '/api/travel/times'),
   travel: (id: string, signal?: AbortSignal) => call<Trip>('GET', `/api/events/${id}/travel`, undefined, signal),
-  weather: () => call<Weather>('GET', '/api/weather'),
+  /** At home, or (here) where this device is. */
+  weather: (here?: { lat: number; lon: number } | null) =>
+    call<Weather>('GET', here ? `/api/weather?lat=${here.lat}&lon=${here.lon}` : '/api/weather'),
+  /** Where a place typed in is, for its weather. */
+  weatherPlace: (q: string) => call<{ lat: number; lon: number }>('GET', `/api/weather/place?${new URLSearchParams({ q })}`),
+  /** Forecasts for the far-away ones of these events, by id. */
+  eventWeather: (ids: string[]) => call<Record<string, EventWeather>>('GET', `/api/weather/events?ids=${ids.join(',')}`),
   daily: (day: string) => call<Daily>('GET', `/api/daily?${new URLSearchParams({ day })}`),
   alerts: () => call<LeaveAlert[]>('GET', '/api/alerts'),
   addAlert: (eventId: string, minutesBefore: number) => call<LeaveAlert>('POST', '/api/alerts', { eventId, minutesBefore }),

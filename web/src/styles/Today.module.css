@@ -136,6 +136,70 @@
 	gap: 0.5rem;
 	flex-wrap: wrap;
 }
+/* The weather card's head: its name, and Home or Here. */
+.weatherHead {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+.place {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 0.2rem;
+}
+.placeSwitch {
+	display: flex;
+	padding: 0.15rem;
+	border-radius: 999px;
+	background: var(--bg);
+}
+.placeOption {
+	min-height: 2.2rem;
+	padding: 0 0.75rem;
+	border-radius: 999px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--muted);
+}
+/* A long place name: cut short. */
+.placeOption {
+	max-width: 9rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.placeOption[aria-checked="true"] {
+	background: var(--surface);
+	color: var(--text);
+	box-shadow: 0 0.05rem 0.25rem rgb(0 0 0 / 0.12);
+}
+/* Typing a place in: its own line under the switch. */
+.placeForm {
+	flex-basis: 100%;
+	display: flex;
+	gap: 0.5rem;
+}
+.placeForm > :first-child {
+	flex: 1;
+}
+.placeGo {
+	min-height: 2.6rem;
+	padding: 0 1rem;
+	border-radius: 0.6rem;
+	background: var(--accent);
+	color: #fff;
+	font-weight: 700;
+}
+.placeGo:disabled {
+	opacity: 0.5;
+}
+.placeProblem {
+	font-size: 0.8rem;
+	color: var(--danger);
+}
 .cardHead {
 	margin: 0;
 	font-size: 0.8rem;
@@ -517,6 +581,16 @@ details > summary.cardHead {
 	stroke: var(--muted);
 	stroke-opacity: 0.45;
 }
+.graphFeels {
+	fill: none;
+	stroke: var(--muted);
+	stroke-width: 1.75px;
+	stroke-dasharray: 4 4;
+	stroke-linecap: round;
+}
+.graphFeelsPast {
+	stroke-opacity: 0.35;
+}
 .graphTick {
 	stroke: var(--line);
 	stroke-width: 1px;
@@ -545,6 +619,12 @@ details > summary.cardHead {
 	stroke: var(--accent);
 	stroke-width: 2px;
 }
+/* The picked hour on the feels line. */
+.graphPickFeels {
+	fill: var(--surface);
+	stroke: var(--muted);
+	stroke-width: 2px;
+}
 .graphTip {
 	position: absolute;
 	top: -0.2rem;
@@ -562,144 +642,104 @@ details > summary.cardHead {
 }
 .graphHint {
 	margin: 0.1rem 0 0;
-	text-align: center;
-	font-size: 0.75rem;
-	color: var(--muted);
-}
-
-/* The next seven days side by side (Week), a column each with a line between: the day, its date, sky and
-   rain, a bar from its high down to its low (all on one scale), then wind and how warm it feels. */
-.week {
-	list-style: none;
-	margin: 0.3rem 0 0;
-	padding: 0;
-	display: grid;
-	grid-template-columns: repeat(7, minmax(0, 1fr));
-	background: var(--bg);
-	border-radius: 5px;
-	padding: 15px 0;
-}
-.weekDay {
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 0.25rem;
-	padding: 0.2rem 0;
-	text-align: center;
-	font-variant-numeric: tabular-nums;
-}
-.weekDay + .weekDay {
-	border-left: 1px solid var(--line);
-}
-.weekName {
-	font-size: 0.75rem;
-	font-weight: 650;
-	color: var(--muted);
-}
-.weekDate {
-	font-weight: 750;
-	font-size: 0.95rem;
-	line-height: 1;
-}
-.weekIcon {
-	margin-top: 0.2rem;
-	font-size: 1.5rem;
-	line-height: 1.1;
-}
-.weekRain,
-.weekWind {
-	font-size: 0.7rem;
-	color: var(--muted);
-	white-space: nowrap;
-}
-/* The high over its bar, the low under it. */
-.weekRange {
-	position: relative;
-	width: 100%;
-	margin-top: 0.3rem;
-}
-.weekHigh,
-.weekLow {
-	position: absolute;
-	left: 0;
-	right: 0;
-	line-height: 1;
-}
-.weekHigh {
-	font-weight: 750;
-	font-size: 0.95rem;
-}
-.weekLow {
-	color: var(--muted);
-	font-size: 0.85rem;
-}
-/* Two bars side by side, each with its numbers: the temperature (green) and how warm it feels (grey). */
-.weekRange {
-	display: flex;
-	justify-content: space-around;
-	gap: 0;
-	padding: 0 0.3rem;
-}
-.weekPair {
-	position: relative;
-	flex: 1;
-	max-width: 2rem;
-	min-width: 0;
-	background: var(--surface);
-	border-radius: 5px;
-}
-.weekPairFeels {
-	background: none;
-}
-.weekPair .weekHigh,
-.weekPair .weekLow {
-	font-size: 0.72rem;
-}
-.weekPairFeels .weekHigh,
-.weekPairFeels .weekLow {
-	color: var(--muted);
-	font-weight: 500;
-}
-.weekBar {
-	position: absolute;
-	left: 50%;
-	width: 0.45rem;
-	translate: -50% 0;
-	border-radius: 999px;
-	background: linear-gradient(
-		var(--accent),
-		color-mix(in srgb, var(--accent) 30%, var(--surface))
-	);
-}
-.weekPairFeels .weekBar {
-	background: linear-gradient(
-		#8a8f98,
-		color-mix(in srgb, #8a8f98 30%, var(--surface))
-	);
-}
-/* Which bar is which. */
-.weekKey {
-	margin: 0.2rem 0 0;
 	display: flex;
 	justify-content: center;
-	gap: 1rem;
+	flex-wrap: wrap;
+	column-gap: 0.9rem;
 	font-size: 0.75rem;
 	color: var(--muted);
 }
-.weekKey > span {
+.graphKey {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.3rem;
 }
-.weekSwatch {
-	width: 0.7rem;
-	height: 0.7rem;
-	border-radius: 0.2rem;
-	background: var(--accent);
+
+/* The next seven days (Week), a row each: the day, its sky, how warm it feels, and rain and wind when
+   worth knowing; under that its low, a bar to its high on one scale for the week, and its high. */
+.week {
+	list-style: none;
+	margin: 0.3rem 0 0;
+	padding: 0.3rem 0.7rem;
+	background: var(--bg);
+	border-radius: 0.6rem;
 }
-.weekSwatchFeels {
-	background: #8a8f98;
+.weekDay {
+	display: grid;
+	grid-template-columns: 2.2rem minmax(0, 1fr) 2.2rem;
+	align-items: center;
+	column-gap: 0.4rem;
+	row-gap: 0.3rem;
+	padding: 0.4rem 0;
+	font-variant-numeric: tabular-nums;
+}
+.weekDay + .weekDay {
+	border-top: 1px solid var(--line);
+}
+.weekTop {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+.weekName {
+	font-weight: 650;
+	white-space: nowrap;
+}
+.weekDate {
+	color: var(--muted);
+	font-weight: 500;
+}
+.weekIcon {
+	font-size: 1.3rem;
+	line-height: 1;
+	text-align: center;
+}
+.weekExtra {
+	display: flex;
+	flex-wrap: wrap;
+	column-gap: 0.5rem;
+	font-size: 0.75rem;
+	line-height: 1.2;
+	color: var(--muted);
+}
+.weekExtra > span {
+	white-space: nowrap;
+}
+/* Rain's likely: picked out. */
+.weekWet {
+	color: var(--text);
+	font-weight: 700;
+}
+.weekLow,
+.weekHigh {
+	text-align: right;
+	line-height: 1;
+}
+.weekLow {
+	color: var(--muted);
+}
+.weekHigh {
+	font-weight: 750;
+}
+/* The week's coolest at the left end, its warmest at the right: the day's bar sits where it falls. */
+.weekTrack {
+	position: relative;
+	height: 0.95rem;
+	margin: 0 0.25rem;
+	border-radius: 999px;
+	background: var(--surface);
+}
+.weekBar {
+	position: absolute;
+	border-radius: 999px;
+	top: 0.2rem;
+	height: 0.55rem;
+	background: linear-gradient(
+		to right,
+		color-mix(in srgb, var(--accent) 40%, var(--surface)),
+		var(--accent)
+	);
 }
 /* Special days: a picture, the name and date, and how long until it. */
 .specials {
