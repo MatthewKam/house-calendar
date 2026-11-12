@@ -21,10 +21,12 @@ import LearnSettings, { learnNote } from './LearnSettings';
 import { usePush } from '../lib/usePush';
 import { useThemeSetting, type Theme } from '../lib/useTheme';
 import { ACCENTS, accentOf, useAccentSetting } from '../lib/accent';
+import { useUiScale } from '../lib/useUiScale';
+import { SignedInAs, SignOut } from './SettingsAccount';
 import Sheet from './Sheet';
 import ConfirmDialog from './ConfirmDialog';
 
-interface Props { members: Member[]; uiScale: number; onClose: () => void }
+interface Props { members: Member[]; onClose: () => void }
 
 const THEMES: [Theme, string][] = [['auto', 'Same as this device'], ['light', 'Light'], ['dark', 'Dark']];
 
@@ -114,10 +116,11 @@ function HomeAddress() {
   );
 }
 
-export default function MembersPanel({ members, uiScale, onClose }: Props) {
+export default function MembersPanel({ members, onClose }: Props) {
   // Light or dark, for this device (Same as this device: its own setting).
   const [theme, setTheme] = useThemeSetting();
   const [accent, setAccent] = useAccentSetting();
+  const [uiScale, setUiScale] = useUiScale(useSettings().data?.uiScale);
   const [newName, setNewName] = useState('');
   const today = dayKey(new Date());
   const learn = useLearn(today).data ?? [];
@@ -158,7 +161,6 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
   const setSetting = useSetSetting();
   // For the folded sections' summaries.
   const settings = useSettings().data;
-  const homeAddress = ((settings?.homeAddress as string | undefined) ?? '').trim();
   const saver = screenSaverSettings(settings?.screensaver);
   // Alerts are a grown-up's own phone's (not the wall's or a kid's device).
   const auth = useAuthStatus().data;
@@ -167,6 +169,7 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
   // Signed out there's no holder. A grown-up's color is only theirs to change.
   const holder = !auth?.signedIn || auth.holder;
   const wall = auth?.signedIn && auth.role === 'wall' ? auth : null;
+  const wallModeOn = !!auth?.signedIn && auth.wallMode;
   // Wall mode: everything on screen was this person's, so it all loads again as the wall's (or back).
   const qc = useQueryClient();
   const [wallModeAsk, setWallModeAsk] = useState(false);
@@ -202,6 +205,8 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
           <h2 className={sheet.heading}>Settings</h2>
           <button className={sheet.close} onClick={onClose} aria-label="Close Settings">×</button>
         </header>
+        {auth?.signedIn && <SignedInAs status={auth} onClose={onClose} />}
+        <h3 className={s.group}>Family</h3>
         <Section title="Family" note={members.map((m) => m.name).join(", ")}>
         <p className={s.hint}>
           Tap the pencil to change a name, color or birthday. A birthday sets each kid's stage, which decides how they earn stars.
@@ -304,6 +309,12 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
           )}
         </form>
         )}
+        <h3 className={s.section}>Home address</h3>
+        <HomeAddress />
+        </Section>
+
+        <Section title="People and sign-in">
+          <HouseholdAccess />
         </Section>
 
         <Section title="Learning" note={learnNote(learn, members)}>
@@ -316,39 +327,11 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
           {hasCalendars && <CalendarList members={members} />}
         </Section>
 
-        {grownUp && (
-          <Section title="Alerts" note={ALERTS_NOTE[push.state]}>
-            <AlertsSetting push={push} />
-          </Section>
-        )}
-
-        <Section title="Home address" note={homeAddress || "Not set"}>
-          <HomeAddress />
-        </Section>
-
         <Section title="Screen saver" note={saver.enabled ? `On · after ${idleLabel(saver.idleMinutes)}` : "Off"}>
           <ScreenSaverSettings bare />
         </Section>
 
-        <Section title="People and sign-in">
-          <HouseholdAccess />
-        </Section>
-
-        {/* Like kid mode, for the wall: a guardian's own device becomes the wall until a PIN turns it back. */}
-        {(grownUp || auth?.signedIn && auth.wallMode) && (
-          <Section title="Wall mode" note={auth?.signedIn && auth.wallMode ? 'On' : 'Off'}>
-            <p className={s.themeNote}>
-              {auth?.signedIn && auth.wallMode
-                ? 'This device is the family wall. Leaving wall mode puts it back to your own account.'
-                : "Make this device the family wall: everyone's shared calendar, your private events hidden, and changes and Settings behind a guardian's PIN. A guardian's PIN turns it off."}
-            </p>
-            <button type="button" className={sheet.secondary} style={{ alignSelf: 'flex-start' }}
-              onClick={() => (auth?.signedIn && auth.wallMode ? switchWallMode(false) : setWallModeAsk(true))}>
-              {auth?.signedIn && auth.wallMode ? 'Leave wall mode' : 'Turn on wall mode'}
-            </button>
-          </Section>
-        )}
-
+        <h3 className={s.group}>Appearance</h3>
         <Section title="Light or dark" note={THEMES.find(([v]) => v === theme)![1]}>
           <div className={s.theme} role="radiogroup" aria-label="Light or dark">
             {THEMES.map(([v, label]) => (
@@ -389,13 +372,37 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
 
         <Section title="Text size" note={`${Math.round(uiScale * 100)}%`}>
           <label className={s.scale}>
-            <input type="range" min={0.8} max={1.6} step={0.05} defaultValue={uiScale} aria-label="Text size"
-              onChange={(e) => setSetting.mutate({ key: 'uiScale', value: Number(e.target.value) })} />
+            <input type="range" min={0.8} max={1.6} step={0.05} value={uiScale} aria-label="Text size"
+              onChange={(e) => setUiScale(Number(e.target.value))} />
             <span>{Math.round(uiScale * 100)}%</span>
           </label>
         </Section>
 
+        {(grownUp || wallModeOn) && <h3 className={s.group}>This device</h3>}
+        {grownUp && (
+          <Section title="Notifications" note={ALERTS_NOTE[push.state]}>
+            <AlertsSetting push={push} />
+          </Section>
+        )}
+
+        {/* Like kid mode, for the wall: a guardian's own device becomes the wall until a PIN turns it back. */}
+        {(grownUp || wallModeOn) && (
+          <Section title="Wall mode" note={auth?.signedIn && auth.wallMode ? 'On' : 'Off'}>
+            <p className={s.themeNote}>
+              {auth?.signedIn && auth.wallMode
+                ? 'This device is the family wall. Leaving wall mode puts it back to your own account.'
+                : "Make this device the family wall: everyone's shared calendar, your private events hidden, and changes and Settings behind a guardian's PIN. A guardian's PIN turns it off."}
+            </p>
+            <button type="button" className={sheet.secondary} style={{ alignSelf: 'flex-start' }}
+              onClick={() => (auth?.signedIn && auth.wallMode ? switchWallMode(false) : setWallModeAsk(true))}>
+              {auth?.signedIn && auth.wallMode ? 'Leave wall mode' : 'Turn on wall mode'}
+            </button>
+          </Section>
+        )}
+
+        {/* Signing out (or locking the wall) last, away from everything else. */}
         <div className={sheet.actions}>
+          {auth?.signedIn && <SignOut status={auth} onClose={onClose} />}
           <span className={sheet.spacer} />
           <button className={sheet.secondary} onClick={onClose}>Done</button>
         </div>

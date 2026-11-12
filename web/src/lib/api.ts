@@ -31,6 +31,8 @@ export type AuthStatus = { signedIn: false } | {
   me: { name: string; color: string } | null;
   /** The guardian whose PIN unlocked this wall or kid's device. */
   unlockedBy: string | null;
+  /** When this device signed in (or joined, for a kid's device or the wall). */
+  signedInAt: string;
   /** A guardian's own device acting as the wall (Settings turns it on; a guardian's PIN turns it off). */
   wallMode: boolean;
   /** The wall: a guardian's PIN has been typed. */

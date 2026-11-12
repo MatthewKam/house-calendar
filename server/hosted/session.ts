@@ -206,6 +206,8 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
       me: person ? { name: person.name, color: person.color } : null,
       /** The guardian whose PIN unlocked this wall or kid's device. */
       unlockedBy: people.find((m) => m.id === unlocker?.member_id)?.name ?? null,
+      /** When this device signed in (or joined, for a kid's device or the wall). */
+      signedInAt: s.created_at,
       /** A guardian's own device acting as the wall (turned on in Settings; a PIN turns it off). */
       wallMode: s.kind === 'user' && c.role === 'wall',
       /** The wall: a guardian's PIN has been typed. */

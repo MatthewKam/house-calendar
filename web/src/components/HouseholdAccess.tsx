@@ -159,24 +159,6 @@ export default function HouseholdAccess() {
 				))}
 			</ul>
 
-			<div className={s.row}>
-				{me.kind === "wall" ? (
-					<button type="button" className={panel.textLink} onClick={() => void api.lockWall().then((st) => qc.setQueryData(["auth"], st))}>
-						Lock the wall
-					</button>
-				) : (
-					<button type="button" className={panel.textLink}
-						onClick={() => void api.signOut().then(() => { qc.clear(); qc.setQueryData(["auth"], { signedIn: false }); })}>
-						Sign out of this device
-					</button>
-				)}
-				{me.households.length > 1 && (
-					<select className={s.input} value={me.household?.id} aria-label="Household" style={{ flex: "none" }}
-						onChange={(e) => void api.useHousehold(e.target.value).then((st) => { qc.clear(); qc.setQueryData(["auth"], st); })}>
-						{me.households.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
-					</select>
-				)}
-			</div>
 			{removing && (
 				<ConfirmDialog title={`Sign ${removing.name} out of this household?`} confirmLabel="Remove sign-in"
 					onCancel={() => setRemoving(null)}

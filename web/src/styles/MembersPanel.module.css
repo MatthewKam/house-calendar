@@ -18,7 +18,7 @@
 /* Rainbow until a custom color is chosen, then that color. */
 .custom { background: var(--c, conic-gradient(#e0457b, #f08a24, #b08900, #2fa66a, #13a3b5, #2f7de1, #8e5bd8, #e0457b)); }
 .custom input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
-.name { flex: 1; font-size: 1.1rem; padding: 0.55rem 0.8rem; border: 1px solid var(--line); border-radius: 0.6rem; }
+.name { flex: 1; min-width: 0; font-size: 1.1rem; padding: 0.55rem 0.8rem; border: 1px solid var(--line); border-radius: 0.6rem; }
 /* A name shows as text; the pencil opens it for editing. */
 .nameText { flex: 1; font-size: 1.1rem; padding: 0.55rem 0.8rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 /* The person's stage (Little, Early...), beside their name. */
@@ -48,6 +48,8 @@
   background: linear-gradient(135deg, var(--light) 50%, var(--dark) 50%); box-shadow: 0 0 0 1px var(--line); }
 .accentDot.picked { box-shadow: 0 0 0 3px var(--accent); }
 .kidColorsHead { margin: 0.4rem 0 0; font-size: 1rem; }
+/* Settings' groups: Family, Appearance, This device. */
+.group { margin: 0.9rem 0 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
 .themeNote { margin: 0; color: var(--muted); font-size: 0.9rem; }
 .home { display: flex; flex-direction: column; gap: 0.4rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
 /* Screen saver settings. */
