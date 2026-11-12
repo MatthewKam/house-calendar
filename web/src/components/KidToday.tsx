@@ -1,3 +1,4 @@
+import { useTempUnit, windUnit } from "../lib/units";
 import { useMemo, useState } from "react";
 import { addDays, dayKey, fromDayKey, timeLabel } from "../lib/dates";
 import { factFor, type KidFact } from "../lib/kidFacts";
@@ -191,6 +192,7 @@ const dueOn = (item: SprigItem, day: string) =>
 
 /** What to wear: the clothes as big pictures, then the day's weather in small print for a grown-up. */
 function WhatToWear({ weather: w }: { weather: Weather }) {
+	const [unit] = useTempUnit();
 	const { pants, jacket, rain } = w.wear;
 	const clothes = [
 		rain
@@ -226,7 +228,7 @@ function WhatToWear({ weather: w }: { weather: Weather }) {
 				<span className={g.weatherStats}>
 					<span className={g.currentWeather}>
 						{w.temp}
-						<span>°F</span>
+						<span>°{unit}</span>
 					</span>
 					<span className={g.weatherBlock}>
 						<span>
@@ -238,7 +240,7 @@ function WhatToWear({ weather: w }: { weather: Weather }) {
 							</span>
 
 							<span>💧 {w.rainChance}%</span>
-							<span>💨 {w.wind} mph</span>
+							<span>💨 {w.wind} {windUnit(unit)}</span>
 						</span>
 					</span>
 				</span>

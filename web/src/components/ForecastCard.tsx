@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from "
 import { api } from "../lib/api";
 import { fromDayKey, longDate } from "../lib/dates";
 import { sky } from "../lib/weather";
+import { useTempUnit, windUnit } from "../lib/units";
 import type { Weather } from "../lib/types";
 import { canFindHere, findHere, setHere, useWeatherHere } from "../lib/useWeatherHere";
 import AddressInput from "./AddressInput";
@@ -43,6 +44,7 @@ const tipHour = (iso: string) => {
  * seven days (Week), folded away behind See next 7 days.
  */
 export default function ForecastCard({ weather: w }: { weather: Weather }) {
+	const [unit] = useTempUnit();
 	const now = sky(w.code, w.isDay);
 	const [weekOpen, setWeekOpen] = useState(false);
 	// Day or night for an hour: between today's sunrise and sunset, by the clock.
@@ -71,7 +73,7 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 					</span>
 					<span>
 						<span className={s.nowrap}>💧 {w.rainChance}% rain</span> ·{" "}
-						<span className={s.nowrap}>💨 {w.wind} mph</span>
+						<span className={s.nowrap}>💨 {w.wind} {windUnit(unit)}</span>
 					</span>
 				</span>
 			</div>
@@ -148,10 +150,10 @@ function PlaceSwitch() {
 	);
 }
 
-/** Rain worth a mention (%), likely rain (picked out), and wind worth a mention (mph). */
+/** Rain worth a mention (%), likely rain (picked out), and wind worth a mention (mph, or km/h with °C). */
 const RAIN_SHOWN = 30;
 const RAIN_LIKELY = 50;
-const WIND_SHOWN = 15;
+const WIND_SHOWN = { F: 15, C: 24 } as const;
 
 /**
  * The next seven days, a row each: the day, its sky, how warm it feels, and rain and wind when they're
@@ -159,6 +161,7 @@ const WIND_SHOWN = 15;
  * further right).
  */
 function Week({ days }: { days: Weather["days"] }) {
+	const [unit] = useTempUnit();
 	const top = Math.max(...days.map((d) => d.high));
 	const bottom = Math.min(...days.map((d) => d.low));
 	const span = Math.max(top - bottom, 1);
@@ -175,7 +178,7 @@ function Week({ days }: { days: Weather["days"] }) {
 					<li
 						key={d.date}
 						className={s.weekDay}
-						aria-label={`${longDate(date)}: ${look.label}, ${d.rain}% rain, high ${d.high}°, low ${d.low}°, wind ${d.wind} mph, feels like ${d.feelsHigh}° to ${d.feelsLow}°`}
+						aria-label={`${longDate(date)}: ${look.label}, ${d.rain}% rain, high ${d.high}°, low ${d.low}°, wind ${d.wind} ${windUnit(unit)}, feels like ${d.feelsHigh}° to ${d.feelsLow}°`}
 					>
 						<span className={s.weekTop} aria-hidden="true">
 							<span className={s.weekName}>
@@ -187,7 +190,7 @@ function Week({ days }: { days: Weather["days"] }) {
 								{d.rain >= RAIN_SHOWN && (
 									<span className={d.rain >= RAIN_LIKELY ? s.weekWet : undefined}>💧 {d.rain}%</span>
 								)}
-								{d.wind >= WIND_SHOWN && <span>💨 {d.wind} mph</span>}
+								{d.wind >= WIND_SHOWN[unit] && <span>💨 {d.wind} {windUnit(unit)}</span>}
 							</span>
 						</span>
 						<span className={s.weekLow} aria-hidden="true">{d.low}°</span>
