@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { addDays, dayKey, fromDayKey, timeLabel } from "../lib/dates";
 import { factFor, type KidFact } from "../lib/kidFacts";
 import { kindWordsFor } from "../lib/kindWords";
@@ -8,6 +8,7 @@ import type { CalEvent, Member, SprigItem, Weather } from "../lib/types";
 import { sky } from "../lib/weather";
 import { DayCalendar } from "./DayCarousel";
 import TodayAnimal from "./TodayAnimal";
+import { bringPicture } from "./EventChecklist";
 import s from "../styles/KidMode.module.css";
 import g from "../styles/KidToday.module.css";
 import { isKid } from "../lib/people";
@@ -23,6 +24,7 @@ const PICTURES: [RegExp, string][] = [
 	[/basketball/i, "🏀"],
 	[/baseball|t-?ball|softball/i, "⚾"],
 	[/gym|tumbl|gymnast/i, "🤸"],
+	[/jiu|jitsu|karate|judo|taekwondo|martial/i, "🥋"],
 	[/dance|ballet/i, "💃"],
 	[/music|piano|violin|guitar|sing/i, "🎵"],
 	[/art|paint|craft/i, "🎨"],
@@ -118,11 +120,13 @@ export default function KidToday({
 		.filter(({ e }, i, all) => all.findIndex((x) => x.e.id === e.id) === i);
 	const todays = onDay(today);
 	const tomorrows = onDay(dayKey(addDays(from, 1)));
+	// What to bring shows for today and tomorrow (packing the night before), not later on.
 	const event = (e: CalEvent, day?: string) => (
 		<KidEvent
 			key={`${e.id}-${day ?? ""}`}
 			event={e}
 			day={day}
+			bring={!day}
 			next={e === next}
 			over={!e.allDay && Date.parse(e.end) <= now}
 		/>
@@ -400,17 +404,19 @@ function SpecialDays({ today, kidId }: { today: string; kidId: string }) {
 	);
 }
 
-/** One event: its picture and title, and when (later this week: which day, too). */
+/** One event: its picture and title, and when (later this week: which day, too), then what to bring. */
 function KidEvent({
 	event: e,
 	day,
 	next,
 	over,
+	bring,
 }: {
 	event: CalEvent;
 	day?: string;
 	next: boolean;
 	over: boolean;
+	bring: boolean;
 }) {
 	return (
 		<li
@@ -437,6 +443,31 @@ function KidEvent({
 					</>
 				)}
 			</span>
+			{bring && !over && e.checklist.length > 0 && <Bring event={e} />}
 		</li>
+	);
+}
+
+/**
+ * What to bring, as big pictures to point at and learn what goes with what (the belt goes with jiu
+ * jitsu). A tap just makes it bounce: packing is the grown-ups' job, so nothing to tick and nothing missed.
+ */
+function Bring({ event }: { event: CalEvent }) {
+	// Each tap bounces it again (a new key restarts the bounce).
+	const [taps, setTaps] = useState<Record<string, number>>({});
+	return (
+		<ul className={g.bring} aria-label={`Bring to ${event.title}`}>
+			{event.checklist.map((x) => (
+				<li key={x.id}>
+					<button type="button" className={g.bringThing} aria-label={x.title}
+						onClick={() => setTaps({ ...taps, [x.id]: (taps[x.id] ?? 0) + 1 })}>
+						<span key={taps[x.id] ?? 0} className={`${g.bringPicture} ${taps[x.id] ? g.bounce : ""}`} aria-hidden="true">
+							{bringPicture(x)}
+						</span>
+						<span className={g.bringName}>{x.title}</span>
+					</button>
+				</li>
+			))}
+		</ul>
 	);
 }

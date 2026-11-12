@@ -138,6 +138,10 @@ export const api = {
   setPeople: (id: string, memberIds: string[]) => call<CalEvent>('PUT', `/api/events/${id}/people`, { memberIds }),
   setVisibility: (id: string, visibility: Visibility | null) => call<CalEvent>('PUT', `/api/events/${id}/visibility`, { visibility }),
   setSpecial: (id: string, special: boolean) => call<CalEvent>('PUT', `/api/events/${id}/special`, { special }),
+  /** What to bring, in order (every repeat of it); items with an id keep their ticks. */
+  setChecklist: (id: string, items: { id?: string; title: string; picture: string | null }[]) =>
+    call<CalEvent>('PUT', `/api/events/${id}/checklist`, { items }),
+  tickChecklist: (id: string, itemId: string, done: boolean) => call<CalEvent>('PUT', `/api/events/${id}/checklist/${itemId}`, { done }),
 
   sync: () => call<SyncStatus | null>('GET', '/api/sync'),
   calendars: () => call<SyncedCalendar[]>('GET', '/api/calendars'),

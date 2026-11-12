@@ -5,6 +5,7 @@ import { useCalendars, useSetPeople, useSetSpecial, useSetVisibility } from '../
 import type { CalEvent, EventInput, Member, Scope, Visibility } from '../lib/types';
 import { PencilIcon } from './icons';
 import TravelInfo from './TravelInfo';
+import EventChecklist from './EventChecklist';
 import AddressInput from './AddressInput';
 import { PickChip } from './NameChip';
 import sheet from '../styles/Sheet.module.css';
@@ -116,6 +117,7 @@ function SyncedEvent({ event, members, onClose, onEdit, locked }: {
         </header>
         <div>{when}</div>
         <TravelInfo event={event} locked={locked} />
+        <EventChecklist event={event} locked={locked} />
         {draft ? (
           <>
             <WhoPicker members={members} value={draft} onChange={setDraft} />
@@ -263,6 +265,8 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
         )}
 
         <WhoPicker members={members} value={memberIds} onChange={setMemberIds} />
+        {/* What to bring: saved as it's changed, apart from Save (a new event gets one once it's added). */}
+        {event && <EventChecklist event={event} />}
         <label className={s.toggle}>
           <input type="checkbox" checked={special} onChange={(e) => setSpecialDay(e.target.checked)} />
           <span>

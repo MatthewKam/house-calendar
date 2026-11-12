@@ -14,6 +14,7 @@ import PhotoCard from "./PhotoCard";
 import KidsToday from "./KidsToday";
 import NeedsYou from "./NeedsYou";
 import SpecialDays from "./SpecialDays";
+import { packed } from "./EventChecklist";
 import s from "../styles/Today.module.css";
 
 interface Props {
@@ -126,6 +127,12 @@ export default function TodayPage({
 						{people.length > 0 && (
 							<span className={s.where}>
 								{people.map((p) => p.name).join(", ")}
+							</span>
+						)}
+						{/* What to bring: how much is packed (opening the event shows the list). */}
+						{e.checklist.length > 0 && (
+							<span className={`${s.leave} ${e.checklist.every((x) => x.done) ? s.packed : ""}`}>
+								🎒 {packed(e.checklist)}
 							</span>
 						)}
 						{/* Under the event, so the title keeps the row's width on a phone. */}

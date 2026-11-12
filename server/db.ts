@@ -802,6 +802,24 @@ const migrations: string[] = [
     PRIMARY KEY (member_id, day)
   );
   `,
+  // What to bring (checklists.ts): an event's checklist, kept by its series (every repeat) like
+  // event_special; ticks are kept for one time it happens (its start), so each week starts fresh.
+  `
+  CREATE TABLE event_checklist (
+    id          TEXT PRIMARY KEY,
+    calendar_id TEXT NOT NULL REFERENCES calendars(id) ON DELETE CASCADE,
+    series_key  TEXT NOT NULL,
+    title       TEXT NOT NULL,
+    picture     TEXT,
+    sort_order  INTEGER NOT NULL
+  );
+  CREATE INDEX event_checklist_series ON event_checklist(calendar_id, series_key);
+  CREATE TABLE event_checklist_ticks (
+    item_id    TEXT NOT NULL REFERENCES event_checklist(id) ON DELETE CASCADE,
+    occurrence TEXT NOT NULL,
+    PRIMARY KEY (item_id, occurrence)
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

@@ -5,6 +5,7 @@ import { DAY_VALUE, isDay, allMembersExist } from './schemas.ts';
 import { assignManually } from './people.ts';
 import { cancelDelete, diff, outboxStatus, queueCreate, queueEdit, queueSeries, resolveConflict } from './outbox.ts';
 import type { Viewer } from './auth.ts';
+import { CHECKLIST_SQL, dropChecklist, registerChecklists, toChecklist } from './checklists.ts';
 import { accessFor, eventAccess, kidIds, setVisibility, VISIBILITIES, VISIBILITY_SQL, type Access, type Visibility } from './privacy.ts';
 
 // Events on the wall: its own, and synced ones (iCloud), whose edits go through the outbox
@@ -23,6 +24,8 @@ interface EventRow {
   special: number;
   /** Its flyer: photo_id, or a synced event's from event_flyers. */
   flyer_id: string | null;
+  /** What to bring (checklists.ts): a JSON array. */
+  checklist: string;
 }
 
 /** Keeps a synced event's flyer (every repeat of it), or lets it go (null). */
@@ -36,7 +39,7 @@ function setFlyer(db: DB, eventId: string, photoId: string | null) {
 }
 
 // Event columns plus who it's for, from event_members, who sees it, whether it's special, and its
-// flyer (a synced event's is kept in event_flyers).
+// flyer (a synced event's is kept in event_flyers), and what to bring.
 const SERIES_OF = 's.calendar_id = e.calendar_id AND s.series_key = COALESCE(e.series_id, e.id)';
 const EVENT_SELECT = `
   SELECT e.*, COALESCE(e.photo_id, (SELECT s.photo_id FROM event_flyers s WHERE ${SERIES_OF})) AS flyer_id,
@@ -44,7 +47,8 @@ const EVENT_SELECT = `
     SELECT em.member_id FROM event_members em JOIN members m ON m.id = em.member_id
     WHERE em.event_id = e.id ORDER BY m.sort_order, m.created_at)) AS member_ids,
     ${VISIBILITY_SQL} AS visibility,
-    EXISTS (SELECT 1 FROM event_special s WHERE ${SERIES_OF}) AS special
+    EXISTS (SELECT 1 FROM event_special s WHERE ${SERIES_OF}) AS special,
+    ${CHECKLIST_SQL} AS checklist
   FROM events e`;
 
 /** An event's calendar and series (every repeat of it), which its special mark and flyer are kept by. */
@@ -71,9 +75,11 @@ const toEvent = (r: EventRow) => ({
   // Its notes (an iCloud event's are its own, synced both ways), and the flyer it was read from.
   notes: r.notes,
   photoUrl: r.flyer_id && `/api/photos/${r.flyer_id}/full`,
+  // What to bring, ticked for this time it happens.
+  checklist: toChecklist(r.checklist),
 });
 /** A Busy event someone else is on: just the time and who, never its title or place. */
-const asBusy = (r: EventRow) => ({ ...toEvent(r), title: 'Busy', location: null, notes: null, photoUrl: null, busy: true });
+const asBusy = (r: EventRow) => ({ ...toEvent(r), title: 'Busy', location: null, notes: null, photoUrl: null, checklist: [], busy: true });
 
 /** A title as copies are matched by: ignoring case and spacing. */
 const titleKey = (t: string) => t.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -324,6 +330,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     }
     db.transaction(() => {
       setVisibility(db, req.params.id, null);
+      dropChecklist(db, req.params.id);
       db.prepare('DELETE FROM events WHERE id = ?').run(req.params.id);
     })();
     return reply.code(204).send();
@@ -376,6 +383,9 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
     if (!setSpecial(db, req.params.id, req.body.special)) return reply.code(404).send({ error: 'Event not found' });
     return getEvent(req.params.id);
   });
+
+  // What to bring: the list (every repeat) and its ticks (this time only).
+  registerChecklists(app, db, getEvent);
 
   // Who a synced event is for (none = everyone). Applies to every repeat of it and survives future syncs.
   app.put<{ Params: { id: string }; Body: { memberIds: string[] } }>('/api/events/:id/people', {

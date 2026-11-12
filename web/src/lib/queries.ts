@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClie
 import { api } from './api';
 import { addDays, dayKey, fromDayKey } from './dates';
 import type { TaskDone, TaskInput, EventInput, Member, SyncedCalendar, MemberPatch, Task, RewardInput, CalEvent, Reward, RewardWin, Bucket, StarPlacing,
-  ReminderList, Photo, LeaveAlert, OutboxStatus, PottyChart, Visibility, SprigList, SprigItem, Game, LearnDayChange } from './types';
+  ReminderList, Photo, LeaveAlert, ChecklistItem, OutboxStatus, PottyChart, Visibility, SprigList, SprigItem, Game, LearnDayChange } from './types';
 
 // ---- Edits show straight away ---------------------------------------------------------------
 // Every edit changes what's on screen first (the cached data), then saves in the background. If
@@ -519,6 +519,30 @@ export function useSetSpecial() {
   return useMutation({
     mutationFn: ({ id, special }: { id: string; special: boolean }) => api.setSpecial(id, special),
     onMutate: ({ id, special }) => showNow(qc, [{ key: keys.events, apply: (list: CalEvent[]) => list.map((e) => (e.id === id ? { ...e, special } : e)) }]),
+    onError: putBack(qc),
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.events }),
+  });
+}
+
+/** What to bring on an event (every repeat of it): the whole list, in order. */
+export function useSetChecklist() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, items }: { id: string; items: ChecklistItem[] }) =>
+      api.setChecklist(id, items.map((x) => ({ id: x.id, title: x.title, picture: x.picture }))),
+    onMutate: ({ id, items }) => showNow(qc, [{ key: keys.events, apply: (list: CalEvent[]) => list.map((e) => (e.id === id ? { ...e, checklist: items } : e)) }]),
+    onError: putBack(qc),
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.events }),
+  });
+}
+
+/** Ticking a thing to bring, for this time the event happens. */
+export function useTickChecklist() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, itemId, done }: { id: string; itemId: string; done: boolean }) => api.tickChecklist(id, itemId, done),
+    onMutate: ({ id, itemId, done }) => showNow(qc, [{ key: keys.events, apply: (list: CalEvent[]) => list.map((e) => (e.id === id
+      ? { ...e, checklist: e.checklist.map((x) => (x.id === itemId ? { ...x, done } : x)) } : e)) }]),
     onError: putBack(qc),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.events }),
   });
