@@ -1,12 +1,14 @@
 import { useNow } from "../lib/useNow";
-import { useLists, useOutbox, useReminders, useRewardHistory } from "../lib/queries";
+import { useAuthStatus, useLists, useMembers, useOutbox, useReminders, useRewardHistory } from "../lib/queries";
+import ColorAsked from "./ColorAsked";
 import { dueLabel, isDue, isLate } from "../lib/lists";
 import type { Page } from "./NavBar";
 import s from "../styles/Today.module.css";
 
 /**
  * Today's "Needs you": only what's waiting (calendar clashes, rewards to hand over, reminders due,
- * lists with things left), each going to its page. Not shown when nothing is.
+ * lists with things left, and for the account holder, new colors to OK), each going to its page or
+ * answered here. Not shown when nothing is.
  */
 export default function NeedsYou({ me, onPage }: {
 	/** The person this device is signed in as; null on the wall (reminders for anyone). */
@@ -36,7 +38,11 @@ export default function NeedsYou({ me, onPage }: {
 		}))
 		.filter((l) => l.open > 0);
 	const clashes = outbox?.conflicts.length ?? 0;
-	const needs = clashes + toHandOver.length + due.length + lists.length;
+	// New colors for the account holder to OK (signed in: there's no holder otherwise).
+	const auth = useAuthStatus().data;
+	const members = useMembers().data ?? [];
+	const colors = auth?.signedIn && auth.holder ? members.filter((m) => m.colorAsked) : [];
+	const needs = clashes + toHandOver.length + due.length + lists.length + colors.length;
 	if (needs === 0) return null;
 	return (
 		<section className={s.card}>
@@ -85,6 +91,11 @@ export default function NeedsYou({ me, onPage }: {
 								</span>
 							</span>
 						</button>
+					</li>
+				))}
+				{colors.map((m) => (
+					<li key={m.id}>
+						<ColorAsked member={m} />
 					</li>
 				))}
 				{lists.map((l) => (

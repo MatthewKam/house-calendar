@@ -62,7 +62,7 @@
 }
 .segmented .on {
 	background: var(--accent);
-	color: #fff;
+	color: var(--on-accent);
 }
 .body {
 	flex: 1;

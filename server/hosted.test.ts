@@ -340,3 +340,73 @@ describe('privacy', () => {
     expect(place).toMatchObject({ status: 403, body: { locked: true } });
   });
 });
+
+describe("the account holder and people's colors", () => {
+  async function family() {
+    const alex = await guardian();
+    await alex.put('/api/account/pin', { pin: '1357' });
+    const jordan = device();
+    await jordan.signIn('jordan@example.com');
+    await jordan.post('/api/account/join', { code: (await alex.post('/api/account/invites', { kind: 'guardian', name: 'Jordan' })).body.code });
+    await jordan.put('/api/account/pin', { pin: '2468' });
+    const ipad = device();
+    await ipad.post('/api/account/join', { code: (await alex.post('/api/account/invites', { kind: 'kid', name: 'Sam' })).body.code });
+    const people = (await alex.get('/api/members')).body as { id: string; name: string }[];
+    const id = (name: string) => people.find((p) => p.name === name)!.id;
+    return { alex, jordan, ipad, id };
+  }
+  const colorOf = async (who: ReturnType<typeof device>, memberId: string) =>
+    ((await who.get('/api/members')).body as { id: string; color: string; colorAsked: unknown }[]).find((m) => m.id === memberId)!;
+
+  it('makes whoever made the household its holder, who can hand it over', async () => {
+    const { alex, jordan } = await family();
+    expect((await alex.get('/api/auth/status')).body).toMatchObject({ holder: true, holderName: 'Alex' });
+    expect((await jordan.get('/api/auth/status')).body).toMatchObject({ holder: false, holderName: 'Alex' });
+    const people = (await alex.get('/api/account/household')).body.people as { name: string; membershipId: string; holder: boolean }[];
+    expect(people.map((p) => [p.name, p.holder])).toEqual([['Alex', true], ['Jordan', false], ['Sam', false]]);
+    const to = (name: string) => people.find((p) => p.name === name)!.membershipId;
+    // Only the holder hands it over, and only to a guardian.
+    expect((await jordan.post('/api/account/holder', { membershipId: to('Jordan') })).status).toBe(403);
+    expect((await alex.post('/api/account/holder', { membershipId: to('Sam') })).status).toBe(400);
+    expect((await alex.post('/api/account/holder', { membershipId: to('Jordan') })).body).toMatchObject({ holder: false, holderName: 'Jordan' });
+    expect((await jordan.get('/api/auth/status')).body.holder).toBe(true);
+    // Jordan taken out: the longest-standing guardian holds it again.
+    await jordan.del(`/api/account/memberships/${to('Jordan')}`);
+    expect((await alex.get('/api/auth/status')).body.holder).toBe(true);
+  });
+
+  it("waits for the holder to approve anyone else's change to a color", async () => {
+    const { alex, jordan, ipad, id } = await family();
+    // The holder's own change, and to a kid's: at once.
+    expect((await alex.put(`/api/members/${id('Alex')}/color`, { color: '#1F5FBF' })).body).toMatchObject({ asked: false, member: { color: '#1f5fbf' } });
+    expect((await alex.put(`/api/members/${id('Sam')}/color`, { color: '#b3245e' })).body.asked).toBe(false);
+    // Jordan's own: asked, not made; and never someone else's grown-up color.
+    expect((await jordan.put(`/api/members/${id('Jordan')}/color`, { color: '#6a3fb5' })).body).toMatchObject({ asked: true, member: { color: expect.not.stringMatching('#6a3fb5') } });
+    expect((await jordan.put(`/api/members/${id('Alex')}/color`, { color: '#6a3fb5' })).status).toBe(403);
+    expect((await alex.put(`/api/members/${id('Jordan')}/color`, { color: '#6a3fb5' })).status).toBe(403);
+    expect(await colorOf(alex, id('Jordan'))).toMatchObject({ colorAsked: { color: '#6a3fb5', by: 'Jordan' } });
+    // Not through the side door either.
+    expect((await jordan.patch(`/api/members/${id('Jordan')}`, { color: '#6a3fb5' })).status).toBe(400);
+    // Only the holder answers.
+    expect((await jordan.post(`/api/members/${id('Jordan')}/color/answer`, { approve: true })).status).toBe(403);
+    expect((await alex.post(`/api/members/${id('Jordan')}/color/answer`, { approve: true })).body).toMatchObject({ color: '#6a3fb5', colorAsked: null });
+
+    // A kid's, by another parent: waits too; declined, it stays as it was.
+    await jordan.put(`/api/members/${id('Sam')}/color`, { color: '#13a3b5' });
+    await alex.post(`/api/members/${id('Sam')}/color/answer`, { approve: false });
+    expect(await colorOf(alex, id('Sam'))).toMatchObject({ color: '#b3245e', colorAsked: null });
+
+    // A young kid can't ask for their own; at 7 they can, from their own device.
+    expect((await ipad.put(`/api/members/${id('Sam')}/color`, { color: '#13a3b5' })).status).toBe(403);
+    await alex.patch(`/api/members/${id('Sam')}`, { birthdate: `${new Date().getFullYear() - 8}-01-01` });
+    expect((await ipad.put(`/api/members/${id('Sam')}/color`, { color: '#13a3b5' })).body.asked).toBe(true);
+    expect((await ipad.put(`/api/members/${id('Alex')}/color`, { color: '#13a3b5' })).status).toBe(403);
+  });
+
+  it("keeps the household's accent (the wall's) to the holder", async () => {
+    const { alex, jordan } = await family();
+    expect((await jordan.put('/api/settings/accent', { value: 'blue' })).status).toBe(403);
+    expect((await alex.put('/api/settings/accent', { value: 'blue' })).status).toBe(200);
+    expect((await jordan.get('/api/settings')).body.accent).toBe('blue');
+  });
+});

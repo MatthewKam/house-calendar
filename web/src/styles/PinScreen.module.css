@@ -78,7 +78,7 @@
 	min-width: 12rem;
 	padding: 0 1.5rem;
 	background: var(--accent);
-	color: #fff;
+	color: var(--on-accent);
 	font-weight: 700;
 	font-size: 1.1rem;
 }

@@ -62,6 +62,7 @@ import { useFlyerDrop } from "./lib/useFlyerDrop";
 import s from "./styles/App.module.css";
 import { isKid } from "./lib/people";
 import { useTheme } from "./lib/useTheme";
+import { useAccent } from "./lib/accent";
 
 /** Today's date key, updated when the clock passes midnight. */
 function useToday() {
@@ -190,6 +191,8 @@ export default function App() {
 			: null;
 	// Light or dark, as picked in Settings (or the device's own); kid mode stays light.
 	useTheme(!!kidView);
+	// The wall wears the household's accent (the account holder's pick); everything else its own.
+	useAccent(signedIn?.role === "wall" && settings.data ? settings.data.accent ?? null : undefined);
 	// Leaving: a kid's own device unlocks for a parent (and comes back when it locks again); anywhere
 	// else a guardian's PIN turns it off, or just the tap when there's no PIN to ask for.
 	function leaveKidMode() {
@@ -365,7 +368,7 @@ export default function App() {
 				{/* Wait for the family, so it doesn't flash "No kids yet". */}
 				{members.length > 0 && <KidMode today={today} kids={kidView} members={members} onLeave={leaveKidMode}
 					startWith={kidModeFor ?? undefined}
-					askPin={!!signedIn && signedIn.guardianPins > 0} />}
+					askPin={!!signedIn && signedIn.guardianPins > 0} ownDevice={!!kidDevice} />}
 				{open?.kind === "kidModeLeave" && (
 					<GrownUpPin
 						title="Leave kid mode"

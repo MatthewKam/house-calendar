@@ -1,3 +1,5 @@
+import KidColors from "./KidColors";
+import { isOlderKid } from "../lib/people";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { fromDayKey, startOfWeek, timeLabel, longDate } from "../lib/dates";
 import { useMediaQuery } from "../lib/useMediaQuery";
@@ -35,6 +37,8 @@ interface Props {
 	members: Member[];
 	/** The corner button was held: a grown-up wants out. */
 	onLeave: () => void;
+	/** The kid's own device (not kid mode on a grown-up's): an older kid picks their colors here. */
+	ownDevice?: boolean;
 	/** Putting stars in jars needs a guardian's PIN first (false: there's no PIN to ask for). */
 	askPin: boolean;
 }
@@ -67,7 +71,7 @@ const TABS: { id: KidTab; Icon: () => ReactNode; label: string }[] = [
  * Learn (when it's on): the day's activity. Rewards: their stars and jars. No settings or anyone else's things. Tapping a done task again
  * unticks it, so nothing can go wrong. A grown-up taps the corner button (and types a PIN) to leave.
  */
-export default function KidMode({ today, kids, members, onLeave, askPin, startWith }: Props) {
+export default function KidMode({ today, kids, members, onLeave, askPin, startWith, ownDevice }: Props) {
 	const [pickedId, setPickedId] = useState(kids.find((k) => k.id === startWith)?.id ?? kids[0]?.id ?? null);
 	const kid = kids.find((k) => k.id === pickedId) ?? kids[0];
 	const [picked, setTab] = useState<KidTab>("today");
@@ -97,6 +101,8 @@ export default function KidMode({ today, kids, members, onLeave, askPin, startWi
 	const pottyRef = useRef<HTMLElement>(null);
 	// The potty chart header's pencil: a count, bumped each tap.
 	const [pottyEdit, setPottyEdit] = useState(0);
+	// An older kid's colors, open.
+	const [colorsOpen, setColorsOpen] = useState(false);
 	// Opening it scrolls down to it.
 	useEffect(() => {
 		if (pottyOpen) pottyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -177,8 +183,19 @@ export default function KidMode({ today, kids, members, onLeave, askPin, startWi
 						{t.label}
 					</button>
 				))}
+				{ownDevice && isOlderKid(kid, today) && (
+					<button type="button" className={s.kidTab} onClick={() => setColorsOpen(true)}>
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							{/* A painter's palette with its thumb hole and three dabs. */}
+							<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.3-1-1.7-1-2.8 0-1 .8-1.6 1.8-1.6H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z" />
+							<circle cx="7.5" cy="11" r="1.2" /><circle cx="10" cy="7" r="1.2" /><circle cx="15" cy="7" r="1.2" />
+						</svg>
+						Colors
+					</button>
+				)}
 				<LeaveButton onLeave={onLeave} inNav />
 			</nav>
+			{colorsOpen && <KidColors kid={kid} onClose={() => setColorsOpen(false)} />}
 			<main className={s.page}>
 				{/* The time and date on the left; on the right, the stars they have to put in jars, and whose it
 				    is: their name, which opens the other kids (and on Learn, Both) to switch to. */}

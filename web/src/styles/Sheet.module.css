@@ -19,7 +19,7 @@
 .close { font-size: 1.6rem; color: var(--muted); margin: -0.5rem -0.6rem 0 0; }
 .actions { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
 .spacer { flex: 1; }
-.primary { background: var(--accent); color: #fff; padding: 0 1.6rem; font-weight: 650; }
+.primary { background: var(--accent); color: var(--on-accent); padding: 0 1.6rem; font-weight: 650; }
 .primary:disabled { opacity: 0.4; }
 .secondary { background: var(--bg); padding: 0 1.2rem; }
 /* Confirmation pop-ups: narrower, with a filled red button for the action. */

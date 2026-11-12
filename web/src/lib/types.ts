@@ -42,6 +42,10 @@ export interface Member {
   stage: Stage | null;
   /** The stage a guardian chose; null when it comes from the birthdate. */
   stageChosen: Stage | null;
+  /** A guardian (known only when signed in): only they change their own color. */
+  guardian: boolean;
+  /** A new color waiting for the account holder to approve, and who asked (server/members.ts). */
+  colorAsked: { color: string; by: string | null } | null;
 }
 
 export type MemberPatch = Partial<Pick<Member, 'name' | 'color' | 'birthdate'>> & { stage?: Stage | null };

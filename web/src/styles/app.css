@@ -135,6 +135,8 @@ input {
 	--line: #e3e1dc;
 	--today: #fff6dc;
 	--accent: #146c43;
+	/* Text and icons on the accent (lib/accent.ts swaps both for this device's pick). */
+	--on-accent: #fff;
 	/* Something wrong: text, a box's background and its border, and darker text in that box. */
 	--danger: #b42318;
 	--danger-bg: #fef3f2;
@@ -168,6 +170,7 @@ input {
 	--line: #34373d;
 	--today: #3a3220;
 	--accent: #258f5c;
+	--on-accent: #fff;
 	--danger: #ff8b7e;
 	--danger-bg: #3a1c1a;
 	--danger-line: #6e2c26;

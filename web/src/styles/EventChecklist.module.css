@@ -64,7 +64,7 @@
 .done .tick {
 	background: var(--accent);
 	border-color: var(--accent);
-	color: #fff;
+	color: var(--on-accent);
 }
 .done .title {
 	color: var(--muted);
@@ -154,6 +154,6 @@
 	padding: 0 1.2rem;
 	border-radius: 0.6rem;
 	background: var(--accent);
-	color: #fff;
+	color: var(--on-accent);
 	font-weight: 650;
 }

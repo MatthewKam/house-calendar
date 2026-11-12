@@ -17,7 +17,7 @@
 		<meta name="theme-color" content="#ffffff" />
 		<title>Sprig</title>
 		<!-- Dark before the first paint, when picked or the device is dark (lib/useTheme.ts takes over;
-		     kid mode turns it light again). -->
+		     kid mode turns it light again), and the device's accent. -->
 		<script>
 			try {
 				var t = localStorage.getItem("sprig:theme");
@@ -25,6 +25,14 @@
 				if (!kid && (t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches))) {
 					document.documentElement.dataset.theme = "dark";
 					document.querySelector('meta[name="theme-color"]').setAttribute("content", "#1e2024");
+				}
+				// This device's accent (lib/accent.ts), so the page doesn't flash Sprig green first.
+				var accent = localStorage.getItem("sprig:accent-css");
+				if (accent) {
+					var style = document.createElement("style");
+					style.id = "sprig-accent";
+					style.textContent = accent;
+					document.head.appendChild(style);
 				}
 			} catch (e) {}
 		</script>

@@ -36,7 +36,7 @@ const LOOK: Record<QuickKind, { label: string; icon: ReactNode; tint: string; in
 	task: {
 		label: "Add a task",
 		icon: line("M6.5 3h11A2.5 2.5 0 0 1 20 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 18.5v-13A2.5 2.5 0 0 1 6.5 3zM8 8.5l1.5 1.5L12 7.5M8 14.5l1.5 1.5 2.5-2.5M14.5 9h2M14.5 15h2"),
-		tint: "#eaf6ef", ink: "#146c43",
+		tint: "color-mix(in srgb, var(--accent) 10%, #fff)", ink: "var(--accent)",
 	},
 	photo: {
 		label: "Add a photo",
@@ -51,7 +51,7 @@ const LOOK: Record<QuickKind, { label: string; icon: ReactNode; tint: string; in
 	say: {
 		label: "Say it",
 		icon: line("M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"),
-		tint: "#146c43", ink: "#ffffff",
+		tint: "var(--accent)", ink: "var(--on-accent)",
 	},
 };
 
@@ -106,7 +106,7 @@ export default function QuickAdd({ actions }: { actions: QuickAction[] }) {
 								<button key={a.kind} role="menuitem" className={s.action} onClick={() => pick(a)}
 									// From the bottom up, nearest the + first.
 									style={{ animationDelay: `${(actions.length - 1 - i) * 25}ms` }}>
-									<span className={`${s.icon} ${look.ink === "#ffffff" ? s.solid : ""}`} style={{ "--tint": look.tint, "--ink": look.ink } as CSSProperties}>{look.icon}</span>
+									<span className={`${s.icon} ${look.ink === "var(--on-accent)" ? s.solid : ""}`} style={{ "--tint": look.tint, "--ink": look.ink } as CSSProperties}>{look.icon}</span>
 									{look.label}
 								</button>
 							);

@@ -11,8 +11,8 @@
 	display: grid;
 	place-items: center;
 	background: var(--accent);
-	color: #fff;
-	box-shadow: 0 0.4rem 1rem rgb(20 108 67 / 0.35);
+	color: var(--on-accent);
+	box-shadow: 0 0.4rem 1rem color-mix(in srgb, var(--accent) 35%, transparent);
 	position: relative;
 	z-index: calc(var(--layer-menu) + 1);
 	transition: transform 0.2s, background 0.2s;
