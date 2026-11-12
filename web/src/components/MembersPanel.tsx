@@ -168,7 +168,10 @@ export default function MembersPanel({ members, onClose }: Props) {
   const settings = useSettings().data;
   const homeAddress = ((settings?.homeAddress as string | undefined) ?? '').trim();
   const [saver] = useScreenSaverSettings();
-  const phone = useMediaQuery(PHONE) || useMediaQuery(PHONE_SIDEWAYS);
+  // Both asked every time (hooks can't be skipped).
+  const upright = useMediaQuery(PHONE);
+  const sideways = useMediaQuery(PHONE_SIDEWAYS);
+  const phone = upright || sideways;
   // Alerts are a grown-up's own phone's (not the wall's or a kid's device).
   const auth = useAuthStatus().data;
   const grownUp = !!auth?.signedIn && auth.role === 'guardian' && auth.kind === 'user';

@@ -257,7 +257,8 @@ export default function TodayPage({
 	const encouragementCard = (
 		<section className={s.card} aria-label="Encouragement">
 			<h2 className={s.cardHead}>
-				Encouragement <span>(from parent to parent</span>
+				Encouragement{" "}
+				<span className={s.cardHeadSubtext}>(from parent to parent</span>
 			</h2>
 			<p className={s.kindWords}>
 				<span className={s.kindPicture} aria-hidden="true">

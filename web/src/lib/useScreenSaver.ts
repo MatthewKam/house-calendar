@@ -11,7 +11,10 @@ import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from './useMediaQuery';
  */
 export function useScreenSaver() {
   const [settings] = useScreenSaverSettings();
-  const phone = useMediaQuery(PHONE) || useMediaQuery(PHONE_SIDEWAYS);
+  // Both asked every time (hooks can't be skipped).
+  const upright = useMediaQuery(PHONE);
+  const sideways = useMediaQuery(PHONE_SIDEWAYS);
+  const phone = upright || sideways;
   // The photos and videos picked for it (on the Photos page), once ready.
   const photos = (usePhotos().data ?? []).filter((p) => p.inSlideshow && p.ready);
   const [on, setOn] = useState(false);
