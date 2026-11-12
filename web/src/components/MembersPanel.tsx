@@ -389,10 +389,13 @@ export default function MembersPanel({ members, onClose, onKidMode }: Props) {
           {hasCalendars && <CalendarList members={members} />}
         </Section>
 
-        <Section title="Users">
-          <HouseholdAccess />
-        </Section>
+        </Group>
 
+        {/* Who signs in and how (invites, PINs, devices): its own group. */}
+        <Group title="Users">
+          <div className={s.foldBody}>
+            <HouseholdAccess />
+          </div>
         </Group>
 
         {/* A big one: its own group, not folded inside Family. */}
