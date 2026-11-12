@@ -69,7 +69,7 @@ function ColorSet({ value, label, onPick }: { value: string; label: string; onPi
 const SettingsView = createContext<{ view: string | null; open: (title: string) => void }>({ view: null, open: () => {} });
 
 /**
- * A group of Settings (Family, Learning, Appearance, This device): in the list, a row (with a word on
+ * A group of Settings (Family, Users, Learning, Appearance, Screen, Notifications): in the list, a row (with a word on
  * how it's set, for one that's a single thing); tapped, the sheet shows just it (a back arrow to the list).
  */
 function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
@@ -456,7 +456,7 @@ export default function MembersPanel({ members, onClose, onKidMode }: Props) {
 
         {/* Empty on a phone that isn't a grown-up's own, with no kids: no group at all then. */}
         {(grownUp || wallModeOn || !phone || !!onKidMode) && (
-        <Group title="This device">
+        <Group title="Screen">
           {(grownUp || wallModeOn) && (
             <SwitchRow title="Wall mode" on={wallModeOn} onChange={(on) => (on ? setWallModeAsk(true) : switchWallMode(false))}
               hint={wallModeOn

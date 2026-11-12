@@ -613,7 +613,7 @@ export default function App() {
 			{open?.kind === "settings" && (
 				<MembersPanel
 					members={members}
-					// Kid mode starts from Settings (This device); a kid's own device is in it already.
+					// Kid mode starts from Settings (Screen); a kid's own device is in it already.
 					onKidMode={kids.length && signedIn?.role !== "kid" ? () => setOpen({ kind: "kidModeStart" }) : undefined}
 					onClose={close}
 				/>

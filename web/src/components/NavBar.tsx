@@ -92,7 +92,7 @@ const SettingsIcon = () => (
 
 /**
  * Bar down the left edge: the Today, Calendar, Tasks, Lists, Rewards and Photos pages, Say it and Snap
- * (grown-ups), and the parent lock and Settings at the bottom (kid mode starts from Settings, This device).
+ * (grown-ups), and the parent lock and Settings at the bottom (kid mode starts from Settings, Screen).
  */
 export default function NavBar({
 	page,

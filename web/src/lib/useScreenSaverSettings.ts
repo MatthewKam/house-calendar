@@ -4,7 +4,7 @@ import { screenSaverSettings } from './screensaver';
 import type { ScreenSaverSettings } from './types';
 
 /**
- * The screen saver's settings for this device (Settings, This device): kept on the device, so the kitchen
+ * The screen saver's settings for this device (Settings, Screen): kept on the device, so the kitchen
  * tablet and a computer each have their own. Until they're changed here, the household's old shared ones
  * (from before they were per device). Which photos it shows is still the family's (the Photos page).
  */

@@ -69,7 +69,7 @@
 .pinForm input { font-size: 1.05rem; padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: 0.6rem; }
 .pinError { margin: 0; color: var(--danger); font-size: 0.9rem; }
 
-/* Settings: a row for each group (Family, Appearance, This device); tapped, just that group. */
+/* Settings: a row for each group (Family, Users, Learning, Appearance, Screen, Notifications); tapped, just that group. */
 .groupRow {
   width: 100%; display: flex; align-items: center; gap: 0.8rem; min-height: 3.2rem; padding: 0.4rem 0;
   border-top: 1px solid var(--line); border-radius: 0; background: none; color: var(--text); text-align: left;
