@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { PALETTE } from '../lib/color';
@@ -26,8 +26,14 @@ import { useUiScale } from '../lib/useUiScale';
 import { SignedInAs, SignOut } from './SettingsAccount';
 import Sheet from './Sheet';
 import ConfirmDialog from './ConfirmDialog';
+import Switch from './Switch';
 
-interface Props { members: Member[]; onClose: () => void }
+interface Props {
+  members: Member[];
+  onClose: () => void;
+  /** Starts kid mode on this device (when there are kids, and it isn't a kid's own). */
+  onKidMode?: () => void;
+}
 
 const THEMES: [Theme, string][] = [['auto', 'Same as this device'], ['light', 'Light'], ['dark', 'Dark']];
 
@@ -59,9 +65,29 @@ function ColorSet({ value, label, onPick }: { value: string; label: string; onPi
   );
 }
 
+/** Which group of Settings is showing (its title), or null for the list of them. */
+const SettingsView = createContext<{ view: string | null; open: (title: string) => void }>({ view: null, open: () => {} });
+
 /**
- * One part of Settings, folded to its heading (and a word on how it's set) until tapped. Opening
- * one closes the others, so the sheet stays short.
+ * A group of Settings (Family, Users, Learning, Appearance, Screen, Notifications): in the list, a row (with a word on
+ * how it's set, for one that's a single thing); tapped, the sheet shows just it (a back arrow to the list).
+ */
+function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+  const { view, open } = useContext(SettingsView);
+  if (view === null) {
+    return (
+      <button type="button" className={s.groupRow} onClick={() => open(title)}>
+        <span>{title}</span>
+        {note && <span className={s.foldNote}>{note}</span>}
+      </button>
+    );
+  }
+  return view === title ? <>{children}</> : null;
+}
+
+/**
+ * One part of a group, folded to its heading (and a word on how it's set) until tapped. Opening one
+ * closes the others, so the view stays short.
  */
 function Section({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   return (
@@ -72,6 +98,27 @@ function Section({ title, note, children }: { title: string; note?: string; chil
       </summary>
       <div className={s.foldBody}>{children}</div>
     </details>
+  );
+}
+
+/**
+ * One part of a group that's on or off: its title (with an ⓘ that shows what it does) and a switch,
+ * and (on) its settings under it.
+ */
+function SwitchRow({ title, on, onChange, hint, children }: { title: string; on: boolean; onChange: (on: boolean) => void; hint: string; children?: ReactNode }) {
+  const [info, setInfo] = useState(false);
+  return (
+    <div className={s.fold}>
+      <div className={s.switchHead}>
+        <span className={s.switchTitle}>
+          {title}
+          <button type="button" className={s.info} aria-label={`About ${title}`} aria-expanded={info} onClick={() => setInfo(!info)}>i</button>
+        </span>
+        <Switch on={on} onChange={onChange} label={title} />
+      </div>
+      {info && <p className={s.switchHint}>{hint}</p>}
+      {on && children && <div className={s.foldBody}>{children}</div>}
+    </div>
   );
 }
 
@@ -117,7 +164,7 @@ function HomeAddress() {
   );
 }
 
-export default function MembersPanel({ members, onClose }: Props) {
+export default function MembersPanel({ members, onClose, onKidMode }: Props) {
   // Light or dark, for this device (Same as this device: its own setting).
   const [theme, setTheme] = useThemeSetting();
   const [accent, setAccent] = useAccentSetting();
@@ -163,8 +210,11 @@ export default function MembersPanel({ members, onClose }: Props) {
   // For the folded sections' summaries.
   const settings = useSettings().data;
   const homeAddress = ((settings?.homeAddress as string | undefined) ?? '').trim();
-  const [saver] = useScreenSaverSettings();
-  const phone = useMediaQuery(PHONE) || useMediaQuery(PHONE_SIDEWAYS);
+  const [saver, saveSaver] = useScreenSaverSettings();
+  // Both asked every time (hooks can't be skipped).
+  const upright = useMediaQuery(PHONE);
+  const sideways = useMediaQuery(PHONE_SIDEWAYS);
+  const phone = upright || sideways;
   // Alerts are a grown-up's own phone's (not the wall's or a kid's device).
   const auth = useAuthStatus().data;
   const grownUp = !!auth?.signedIn && auth.role === 'guardian' && auth.kind === 'user';
@@ -173,6 +223,13 @@ export default function MembersPanel({ members, onClose }: Props) {
   const holder = !auth?.signedIn || auth.holder;
   const wall = auth?.signedIn && auth.role === 'wall' ? auth : null;
   const wallModeOn = !!auth?.signedIn && auth.wallMode;
+  // The part showing (null: the list), back at the top each time it changes.
+  const [view, setView] = useState<string | null>(null);
+  const top = useRef<HTMLElement>(null);
+  // In braces: scrollIntoView returns a Promise in newer Chrome, and an effect may only return a clean-up.
+  useEffect(() => {
+    top.current?.scrollIntoView({ block: 'start' });
+  }, [view]);
   // Wall mode: everything on screen was this person's, so it all loads again as the wall's (or back).
   const qc = useQueryClient();
   const [wallModeAsk, setWallModeAsk] = useState(false);
@@ -204,12 +261,20 @@ export default function MembersPanel({ members, onClose }: Props) {
   return (
     <>
       <Sheet label="Settings" onClose={onClose}>
-        <header className={sheet.head}>
-          <h2 className={sheet.heading}>Settings</h2>
+        <header className={sheet.head} ref={top}>
+          {view === null ? (
+            <h2 className={sheet.heading}>Settings</h2>
+          ) : (
+            <h2 className={`${sheet.heading} ${s.viewTitle}`}>
+              <button type="button" className={s.back} onClick={() => setView(null)} aria-label="Back to Settings">‹</button>
+              {view}
+            </h2>
+          )}
           <button className={sheet.close} onClick={onClose} aria-label="Close Settings">×</button>
         </header>
-        {auth?.signedIn && <SignedInAs status={auth} onClose={onClose} />}
-        <h3 className={s.group}>Family</h3>
+        <SettingsView.Provider value={{ view, open: setView }}>
+        {view === null && auth?.signedIn && <SignedInAs status={auth} onClose={onClose} />}
+        <Group title="Family">
         <Section title="Family" note={members.map((m) => m.name).join(", ")}>
         <p className={s.hint}>
           Tap the pencil to change a name, color or birthday. A birthday sets each kid's stage, which decides how they earn stars.
@@ -318,21 +383,29 @@ export default function MembersPanel({ members, onClose }: Props) {
           <HomeAddress />
         </Section>
 
-        <Section title="Learning" note={learnNote(learn, members)}>
-          <LearnSettings members={members} today={today} />
-        </Section>
-
         <Section title="Calendars">
           <ICloudCalendars members={members} />
           <GoogleCalendars members={members} />
           {hasCalendars && <CalendarList members={members} />}
         </Section>
 
-        <Section title="Users">
-          <HouseholdAccess />
-        </Section>
+        </Group>
 
-        <h3 className={s.group}>Appearance</h3>
+        {/* Who signs in and how (invites, PINs, devices): its own group. */}
+        <Group title="Users">
+          <div className={s.foldBody}>
+            <HouseholdAccess />
+          </div>
+        </Group>
+
+        {/* A big one: its own group, not folded inside Family. */}
+        <Group title="Learning" note={learnNote(learn, members)}>
+          <div className={s.foldBody}>
+            <LearnSettings members={members} today={today} />
+          </div>
+        </Group>
+
+        <Group title="Appearance">
         {/* Each a circle, half its light shade and half its dark: one pick, a shade for each. The wall
             wears the account holder's, and their pick becomes the household's. */}
         {wall ? (
@@ -379,38 +452,44 @@ export default function MembersPanel({ members, onClose }: Props) {
           </label>
         </Section>
 
-        {(grownUp || wallModeOn || !phone) && <h3 className={s.group}>This device</h3>}
-        {/* Like kid mode, for the wall: a guardian's own device becomes the wall until a PIN turns it back. */}
-        {(grownUp || wallModeOn) && (
-          <Section title="Wall mode" note={auth?.signedIn && auth.wallMode ? 'On' : 'Off'}>
-            <p className={s.themeNote}>
-              {auth?.signedIn && auth.wallMode
-                ? 'This device is the family wall. Leaving wall mode puts it back to your own account.'
-                : "Make this device the family wall: everyone's shared calendar, your private events hidden, and changes and Settings behind a guardian's PIN. A guardian's PIN turns it off."}
-            </p>
-            <button type="button" className={sheet.secondary} style={{ alignSelf: 'flex-start' }}
-              onClick={() => (auth?.signedIn && auth.wallMode ? switchWallMode(false) : setWallModeAsk(true))}>
-              {auth?.signedIn && auth.wallMode ? 'Leave wall mode' : 'Turn on wall mode'}
-            </button>
-          </Section>
+        </Group>
+
+        {/* Empty on a phone that isn't a grown-up's own, with no kids: no group at all then. */}
+        {(grownUp || wallModeOn || !phone || !!onKidMode) && (
+        <Group title="Screen">
+          {(grownUp || wallModeOn) && (
+            <SwitchRow title="Wall mode" on={wallModeOn} onChange={(on) => (on ? setWallModeAsk(true) : switchWallMode(false))}
+              hint={wallModeOn
+                ? 'This device is the family wall. Turning it off puts it back to your own account.'
+                : "Make this device the family wall: everyone's shared calendar, your private events hidden, and changes and Settings behind a guardian's PIN. A guardian's PIN turns it off."} />
+          )}
+          {/* Tablets and computers only: never on a phone. */}
+          {!phone && (
+            <SwitchRow title="Screen saver" on={saver.enabled} onChange={(on) => saveSaver({ enabled: on })}
+              hint={saver.enabled ? `Photos after ${idleLabel(saver.idleMinutes)} without a touch.` : 'Show photos when this screen is idle.'}>
+              <ScreenSaverSettings bare switched />
+            </SwitchRow>
+          )}
+          {onKidMode && (
+            <SwitchRow title="Kid mode" on={false} onChange={(on) => on && onKidMode()}
+              hint="Hand this device to a kid: their day, tasks, stars and games, and nothing else. A guardian's PIN turns it off." />
+          )}
+        </Group>
         )}
 
-        {/* Tablets and computers only: never on a phone. */}
-        {!phone && (
-        <Section title="Screen saver" note={saver.enabled ? `On · after ${idleLabel(saver.idleMinutes)}` : "Off"}>
-          <ScreenSaverSettings bare />
-        </Section>
-        )}
-
+        {/* Its own group: what this phone tells you, and more to come. A grown-up's own phone's only. */}
         {grownUp && (
-          <Section title="Notifications" note={ALERTS_NOTE[push.state]}>
-            <AlertsSetting push={push} />
-          </Section>
+          <Group title="Notifications" note={ALERTS_NOTE[push.state]}>
+            <div className={s.foldBody}>
+              <AlertsSetting push={push} />
+            </div>
+          </Group>
         )}
+        </SettingsView.Provider>
 
         {/* Signing out (or locking the wall) last, away from everything else. */}
         <div className={sheet.actions}>
-          {auth?.signedIn && <SignOut status={auth} onClose={onClose} />}
+          {view === null && auth?.signedIn && <SignOut status={auth} onClose={onClose} />}
           <span className={sheet.spacer} />
           <button className={sheet.secondary} onClick={onClose}>Done</button>
         </div>

@@ -1,6 +1,11 @@
 import { type CSSProperties, type ReactNode } from "react";
 import { addDays, dayKey, fromDayKey, timeLabel, longDate } from "../lib/dates";
-import { useEventWeather, useRangeEvents, useTravelTimes, useWeather } from "../lib/queries";
+import {
+	useEventWeather,
+	useRangeEvents,
+	useTravelTimes,
+	useWeather,
+} from "../lib/queries";
 import { grownUpKindWordsFor, quoteFor } from "../lib/grownUpWords";
 import { sky } from "../lib/weather";
 import { useNow } from "../lib/useNow";
@@ -68,7 +73,10 @@ export default function TodayPage({
 	// The week ahead: today, tomorrow and the five days after.
 	const events = useRangeEvents(day, WEEK).data ?? [];
 	// The weather at the ones far from home (the server leaves out nearby ones).
-	const away = useEventWeather(events.filter((e) => e.location && !e.busy).map((e) => e.id)).data ?? {};
+	const away =
+		useEventWeather(
+			events.filter((e) => e.location && !e.busy).map((e) => e.id),
+		).data ?? {};
 	const ended = (e: CalEvent) =>
 		e.allDay ? e.end <= today : Date.parse(e.end) <= now.getTime();
 	const onDay = (e: CalEvent, d: string) =>
@@ -92,8 +100,6 @@ export default function TodayPage({
 		})
 		.filter((d) => d.events.length > 0);
 	const drives = useTravelTimes(upNext.map((e) => e.id)).data ?? {};
-
-
 
 	const who = (e: CalEvent) =>
 		e.memberIds.length === 0
@@ -138,7 +144,9 @@ export default function TodayPage({
 						)}
 						{/* What to bring: how much is packed (opening the event shows the list). */}
 						{e.checklist.length > 0 && (
-							<span className={`${s.leave} ${e.checklist.every((x) => x.done) ? s.packed : ""}`}>
+							<span
+								className={`${s.leave} ${e.checklist.every((x) => x.done) ? s.packed : ""}`}
+							>
 								🎒 {packed(e.checklist)}
 							</span>
 						)}
@@ -228,7 +236,14 @@ export default function TodayPage({
 	);
 	const weatherCard = weather && <ForecastCard weather={weather} />;
 	const specialCard = <SpecialDays today={today} onAdd={onAddSpecial} />;
-	const kidsCard = <KidsToday today={today} members={members} parent={parent} onPage={onPage} />;
+	const kidsCard = (
+		<KidsToday
+			today={today}
+			members={members}
+			parent={parent}
+			onPage={onPage}
+		/>
+	);
 	const needsCard = <NeedsYou me={me} onPage={onPage} />;
 	const quoteCard = (
 		<section className={s.card} aria-label="Quote of the day">
@@ -241,7 +256,10 @@ export default function TodayPage({
 	);
 	const encouragementCard = (
 		<section className={s.card} aria-label="Encouragement">
-			<h2 className={s.cardHead}>Encouragement</h2>
+			<h2 className={s.cardHead}>
+				Encouragement{" "}
+				<span className={s.cardHeadSubtext}>(from parent to parent</span>
+			</h2>
 			<p className={s.kindWords}>
 				<span className={s.kindPicture} aria-hidden="true">
 					{kind.picture}
@@ -251,7 +269,12 @@ export default function TodayPage({
 		</section>
 	);
 	// The family's slideshow (the screen saver's photos), as on the calendar.
-	const photosCard = <PhotoCard onPlay={onPlaySlideshow} className={`${s.wide} ${s.slideshow}`} />;
+	const photosCard = (
+		<PhotoCard
+			onPlay={onPlaySlideshow}
+			className={`${s.wide} ${s.slideshow}`}
+		/>
+	);
 
 	return (
 		<section className={s.page} aria-label="Today">
@@ -262,8 +285,7 @@ export default function TodayPage({
 						{meMember ? `, ${firstName(meMember.name)}` : ""}
 					</h1>
 					<div className={s.date}>
-						{longDate(now)}{" "}
-						· <span className={s.nowrap}>{timeLabel(now)}</span>
+						{longDate(now)} · <span className={s.nowrap}>{timeLabel(now)}</span>
 					</div>
 				</div>
 				{weather && look && (
@@ -309,7 +331,6 @@ export default function TodayPage({
 					</div>
 				)}
 			</div>
-
 		</section>
 	);
 }

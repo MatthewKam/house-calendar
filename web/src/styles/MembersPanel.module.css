@@ -1,178 +1,618 @@
-.section { margin: 0; font-size: 1.05rem; }
-.hint { margin: 0; color: var(--muted); font-size: 0.9rem; }
-.error { margin: 0; color: var(--danger); font-size: 0.9rem; }
-.list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-.row { display: flex; gap: 0.6rem; align-items: center; }
-.member { display: flex; flex-direction: column; gap: 0.5rem; }
+.section {
+	margin: 0;
+	font-size: 1.05rem;
+}
+.hint {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.error {
+	margin: 0;
+	color: var(--danger);
+	font-size: 0.9rem;
+}
+.list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.row {
+	display: flex;
+	gap: 0.6rem;
+	align-items: center;
+}
+.member {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
 /* Tap to show the color set below the row. */
-.swatch { width: 2.75rem; height: 2.75rem; min-width: 0; border-radius: 50%; flex: none; padding: 0; }
-.swatch[aria-expanded='true'] { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--accent); }
-.add { display: flex; flex-direction: column; gap: 0.5rem; }
+.swatch {
+	width: 2.75rem;
+	height: 2.75rem;
+	min-width: 0;
+	border-radius: 50%;
+	flex: none;
+	padding: 0;
+}
+.swatch[aria-expanded="true"] {
+	box-shadow:
+		0 0 0 3px var(--surface),
+		0 0 0 5px var(--accent);
+}
+.add {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
 /* Indented to line up with the name field, under the preview swatch. */
-.palette { display: flex; flex-wrap: wrap; gap: 0.4rem; padding-left: 3.35rem; }
+.palette {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	padding-left: 3.35rem;
+}
 .dot {
-  width: 2.75rem; height: 2.75rem; min-width: 0; border-radius: 50%; background: var(--c);
-  border: 3px solid var(--surface); box-shadow: 0 0 0 1px var(--line); position: relative; cursor: pointer;
+	width: 2.75rem;
+	height: 2.75rem;
+	min-width: 0;
+	border-radius: 50%;
+	background: var(--c);
+	border: 3px solid var(--surface);
+	box-shadow: 0 0 0 1px var(--line);
+	position: relative;
+	cursor: pointer;
 }
-.picked { box-shadow: 0 0 0 3px var(--accent); }
+.picked {
+	box-shadow: 0 0 0 3px var(--accent);
+}
 /* Rainbow until a custom color is chosen, then that color. */
-.custom { background: var(--c, conic-gradient(#e0457b, #f08a24, #b08900, #2fa66a, #13a3b5, #2f7de1, #8e5bd8, #e0457b)); }
-.custom input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
-.name { flex: 1; min-width: 0; font-size: 1.1rem; padding: 0.55rem 0.8rem; border: 1px solid var(--line); border-radius: 0.6rem; }
-/* A name shows as text; the pencil opens it for editing. */
-.nameText { flex: 1; font-size: 1.1rem; padding: 0.55rem 0.8rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-/* The person's stage (Little, Early...), beside their name. */
-.stageTag { font-size: 0.75rem; font-weight: 600; color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); border-radius: 999px; padding: 0.15rem 0.55rem; }
-/* Birthday and stage, while editing a person: under the name, lined up with it. */
-.details { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; padding-left: 3.35rem; }
-.detail { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; color: var(--muted); }
-.dateInput { font: inherit; font-size: 1rem; color: var(--text); padding: 0.5rem 0.7rem; border: 1px solid var(--line); border-radius: 0.6rem; background: var(--surface); min-height: 2.75rem; }
-.editButton { color: var(--muted); }
-/* While editing, the color circle is a button with a ring to show it can be tapped. */
-.swatchEditable { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--line); }
-.editButton:hover { color: var(--text); background: var(--bg); }
-.editButton svg { width: 1.3rem; height: 1.3rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.editName { flex: 1; display: flex; gap: 0.4rem; min-width: 0; }
-.editName .name { min-width: 0; }
-.scale { display: flex; align-items: center; gap: 0.8rem; color: var(--muted); }
-.scale input { flex: 1; }
-/* Light or dark: three choices side by side, the picked one filled. */
-.theme { display: flex; flex-wrap: wrap; gap: 0.2rem; padding: 0.2rem; border: 1px solid var(--line); border-radius: var(--radius); }
-.theme button { flex: 1 1 auto; padding: 0 0.9rem; border-radius: calc(var(--radius) - 0.2rem); }
-.theme .themeOn { background: var(--accent); color: var(--on-accent); font-weight: 650; }
-/* Accent colors: a circle (light shade over dark, split on the diagonal) and its name under it. */
-.accents { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-.accent { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; min-width: 4.2rem; padding: 0.3rem 0.2rem; font-size: 0.8rem; color: var(--muted); }
-.accent[aria-checked='true'] { color: var(--text); font-weight: 650; }
-.accentDot { width: 2.75rem; height: 2.75rem; border-radius: 50%; border: 3px solid var(--surface);
-  background: linear-gradient(135deg, var(--light) 50%, var(--dark) 50%); box-shadow: 0 0 0 1px var(--line); }
-.accentDot.picked { box-shadow: 0 0 0 3px var(--accent); }
-.kidColorsHead { margin: 0.4rem 0 0; font-size: 1rem; }
-/* Settings' groups: Family, Appearance, This device. */
-.group { margin: 0.9rem 0 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
-.themeNote { margin: 0; color: var(--muted); font-size: 0.9rem; }
-.home { display: flex; flex-direction: column; gap: 0.4rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
-/* Screen saver settings. */
-.saverRow { display: flex; align-items: center; gap: 0.5rem; }
-.saverRow input { width: 1.2rem; height: 1.2rem; }
-.saverGrid { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; }
-.saverGrid label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.85rem; color: var(--muted); }
-.saverGrid select,
-.saverGrid input { font-size: 1rem; padding: 0.4rem 0.5rem; border: 1px solid var(--line); border-radius: 0.6rem; background: var(--surface); color: var(--text); }
-.saverPreview { composes: textButton from "./Buttons.module.css"; align-self: flex-start; padding: 0.2rem 0; }
-.bare { display: flex; flex-direction: column; gap: 0.5rem; }
-/* Family PIN: the devices signed in, and the form to set or change it. */
-.devices { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
-.devices li { display: flex; align-items: center; gap: 0.6rem; }
-.devices li > span:first-child { flex: 1; }
-.deviceSeen { color: var(--muted); font-size: 0.85rem; }
-.textLink { composes: textButton from "./Buttons.module.css"; padding: 0.2rem; }
-.pinForm { display: flex; flex-direction: column; gap: 0.5rem; }
-.pinForm input { font-size: 1.05rem; padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: 0.6rem; }
-.pinError { margin: 0; color: var(--danger); font-size: 0.9rem; }
-
-/* Settings: each part folded to its heading (and how it's set) until tapped. */
-.fold { border-top: 1px solid var(--line); }
-.foldHead {
-  list-style: none; display: flex; align-items: center; gap: 0.8rem; min-height: 3rem; padding: 0.4rem 0;
-  font-size: 1.05rem; font-weight: 650; cursor: pointer;
+.custom {
+	background: var(
+		--c,
+		conic-gradient(
+			#e0457b,
+			#f08a24,
+			#b08900,
+			#2fa66a,
+			#13a3b5,
+			#2f7de1,
+			#8e5bd8,
+			#e0457b
+		)
+	);
 }
-.foldHead::-webkit-details-marker { display: none; }
+.custom input {
+	position: absolute;
+	inset: 0;
+	opacity: 0;
+	width: 100%;
+	height: 100%;
+	cursor: pointer;
+}
+.name {
+	flex: 1;
+	min-width: 0;
+	font-size: 1.1rem;
+	padding: 0.55rem 0.8rem;
+	border: 1px solid var(--line);
+	border-radius: 0.6rem;
+}
+/* A name shows as text; the pencil opens it for editing. */
+.nameText {
+	flex: 1;
+	font-size: 1.1rem;
+	padding: 0.55rem 0.8rem;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+/* The person's stage (Little, Early...), beside their name. */
+.stageTag {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var(--accent);
+	background: color-mix(in srgb, var(--accent) 10%, transparent);
+	border-radius: 999px;
+	padding: 0.15rem 0.55rem;
+}
+/* Birthday and stage, while editing a person: under the name, lined up with it. */
+.details {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem 1rem;
+	padding-left: 3.35rem;
+}
+.detail {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+.dateInput {
+	font: inherit;
+	font-size: 1rem;
+	color: var(--text);
+	padding: 0.5rem 0.7rem;
+	border: 1px solid var(--line);
+	border-radius: 0.6rem;
+	background: var(--surface);
+	min-height: 2.75rem;
+}
+.editButton {
+	color: var(--muted);
+}
+/* While editing, the color circle is a button with a ring to show it can be tapped. */
+.swatchEditable {
+	box-shadow:
+		0 0 0 2px var(--surface),
+		0 0 0 3.5px var(--line);
+}
+.editButton:hover {
+	color: var(--text);
+	background: var(--bg);
+}
+.editButton svg {
+	width: 1.3rem;
+	height: 1.3rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.editName {
+	flex: 1;
+	display: flex;
+	gap: 0.4rem;
+	min-width: 0;
+}
+.editName .name {
+	min-width: 0;
+}
+.scale {
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	color: var(--muted);
+}
+.scale input {
+	flex: 1;
+}
+/* Light or dark: three choices side by side, the picked one filled. */
+.theme {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.2rem;
+	padding: 0.2rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+}
+.theme button {
+	flex: 1 1 auto;
+	padding: 0 0.9rem;
+	border-radius: calc(var(--radius) - 0.2rem);
+}
+.theme .themeOn {
+	background: var(--accent);
+	color: var(--on-accent);
+	font-weight: 650;
+}
+/* Accent colors: a circle (light shade over dark, split on the diagonal) and its name under it. */
+.accents {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+}
+.accent {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.3rem;
+	min-width: 4.2rem;
+	padding: 0.3rem 0.2rem;
+	font-size: 0.8rem;
+	color: var(--muted);
+}
+.accent[aria-checked="true"] {
+	color: var(--text);
+	font-weight: 650;
+}
+.accentDot {
+	width: 2.75rem;
+	height: 2.75rem;
+	border-radius: 50%;
+	border: 3px solid var(--surface);
+	background: linear-gradient(135deg, var(--light) 50%, var(--dark) 50%);
+	box-shadow: 0 0 0 1px var(--line);
+}
+.accentDot.picked {
+	box-shadow: 0 0 0 3px var(--accent);
+}
+.kidColorsHead {
+	margin: 0.4rem 0 0;
+	font-size: 1rem;
+}
+.themeNote {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.home {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	border-top: 1px solid var(--line);
+	padding-top: 0.8rem;
+}
+/* Screen saver settings. */
+.saverRow {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.saverRow input {
+	width: 1.2rem;
+	height: 1.2rem;
+}
+.saverGrid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem 1rem;
+}
+.saverGrid label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+.saverGrid select,
+.saverGrid input {
+	font-size: 1rem;
+	padding: 0.4rem 0.5rem;
+	border: 1px solid var(--line);
+	border-radius: 0.6rem;
+	background: var(--surface);
+	color: var(--text);
+}
+.saverPreview {
+	composes: textButton from "./Buttons.module.css";
+	align-self: flex-start;
+	padding: 0.2rem 0;
+}
+.bare {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+/* Family PIN: the devices signed in, and the form to set or change it. */
+.devices {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+.devices li {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+}
+.devices li > span:first-child {
+	flex: 1;
+}
+.deviceSeen {
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+.textLink {
+	composes: textButton from "./Buttons.module.css";
+	padding: 0.2rem;
+}
+.pinForm {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.pinForm input {
+	font-size: 1.05rem;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--line);
+	border-radius: 0.6rem;
+}
+.pinError {
+	margin: 0;
+	color: var(--danger);
+	font-size: 0.9rem;
+}
+
+/* Settings: a row for each group (Family, Users, Learning, Appearance, Screen, Notifications); tapped, just that group. */
+.groupRow {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	min-height: 3.2rem;
+	padding: 0.4rem 0;
+	border-top: 1px solid var(--line);
+	border-radius: 0;
+	background: none;
+	color: var(--text);
+	text-align: left;
+	font-size: 1.1rem;
+	font-weight: 650;
+	cursor: pointer;
+}
+/* A chevron: tap to go in. */
+.groupRow::after {
+	content: "";
+	flex: none;
+	width: 0.55rem;
+	height: 0.55rem;
+	margin: 0 0.3rem 0 auto;
+	border-right: 2px solid var(--muted);
+	border-bottom: 2px solid var(--muted);
+	rotate: -45deg;
+}
+/* A group's parts, each folded to its heading (and how it's set) until tapped. */
+.fold {
+	border-top: 1px solid var(--line);
+}
+.foldHead {
+	list-style: none;
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	min-height: 3rem;
+	padding: 0.4rem 0;
+	font-size: 1.05rem;
+	font-weight: 650;
+	cursor: pointer;
+}
+.foldHead::-webkit-details-marker {
+	display: none;
+}
 .foldNote {
-  flex: 1; min-width: 0; text-align: right; color: var(--muted); font-size: 0.9rem; font-weight: 400;
-  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+	flex: 1;
+	min-width: 0;
+	text-align: right;
+	color: var(--muted);
+	font-size: 0.9rem;
+	font-weight: 400;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 /* A chevron that turns down when open. */
 .foldHead::after {
-  content: ''; flex: none; width: 0.55rem; height: 0.55rem; margin: 0 0.3rem 0 auto;
-  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); rotate: -45deg; transition: rotate 0.2s;
+	content: "";
+	flex: none;
+	width: 0.55rem;
+	height: 0.55rem;
+	margin: 0 0.3rem 0 auto;
+	border-right: 2px solid var(--muted);
+	border-bottom: 2px solid var(--muted);
+	rotate: -45deg;
+	transition: rotate 0.2s;
 }
-.fold[open] > .foldHead::after { rotate: 45deg; }
-.foldBody { display: flex; flex-direction: column; gap: 0.6rem; padding-bottom: 1rem; }
+.fold[open] > .foldHead::after {
+	rotate: 45deg;
+}
+/* A part that's on or off: its title and switch, then a line on what it does. */
+.switchHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.8rem;
+	min-height: 3rem;
+	padding: 0.4rem 0;
+	font-size: 1.05rem;
+	font-weight: 650;
+}
+.switchTitle {
+	display: flex;
+	align-items: center;
+	gap: 0.2rem;
+}
+/* ⓘ beside a title: what it does, shown when tapped. A small circle, with room around it to tap. */
+.info {
+	display: grid;
+	place-items: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	min-width: 0;
+	min-height: 0;
+	padding: 0;
+	margin: 0 -0.2rem;
+	background: none;
+	color: var(--muted);
+	font:
+		italic 700 0.85rem/1 Georgia,
+		serif;
+}
+.info::before {
+	content: "";
+	position: absolute;
+	width: 1rem;
+	height: 1rem;
+	border: 1.5px solid currentColor;
+	border-radius: 50%;
+}
+.info {
+	position: relative;
+}
+.info[aria-expanded="true"] {
+	color: var(--accent);
+}
+.switchHint {
+	margin: 0 0 0.7rem;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.foldBody {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	padding-bottom: 1rem;
+}
+/* A part's title, with the way back to the list before it. */
+.viewTitle {
+	display: flex;
+	align-items: center;
+}
+.back {
+	min-width: 2.75rem;
+	min-height: 2.75rem;
+	margin: -0.5rem 0.1rem -0.5rem -0.7rem;
+	font-size: 2rem;
+	line-height: 1;
+	color: var(--accent);
+}
 
 /* Learning: each kid's switches, one block each. */
 .learnKid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  padding: 0.6rem 0;
-  border-top: 1px solid var(--line);
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	padding: 0.6rem 0;
+	border-top: 1px solid var(--line);
 }
 /* Learn's day for a kid: games a day, time a day, and today (with unlock, lock and more). */
 .learnDay {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.5rem 0.7rem;
-  border-radius: 0.7rem;
-  background: var(--bg);
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	padding: 0.5rem 0.7rem;
+	border-radius: 0.7rem;
+	background: var(--bg);
 }
-.learnTime { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.learnTime select { padding: 0.4rem 0.5rem; border: 1px solid var(--line); border-radius: 0.5rem; background: var(--surface); color: var(--text); }
-.learnToday { margin: 0; font-size: 0.9rem; color: var(--muted); }
-.learnTodayButtons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.learnTime {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+.learnTime select {
+	padding: 0.4rem 0.5rem;
+	border: 1px solid var(--line);
+	border-radius: 0.5rem;
+	background: var(--surface);
+	color: var(--text);
+}
+.learnToday {
+	margin: 0;
+	font-size: 0.9rem;
+	color: var(--muted);
+}
+.learnTodayButtons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
 .learnChip {
-  min-height: 2.4rem;
-  padding: 0 0.9rem;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  font-weight: 650;
-  font-size: 0.9rem;
+	min-height: 2.4rem;
+	padding: 0 0.9rem;
+	border-radius: 999px;
+	border: 1px solid var(--line);
+	background: var(--surface);
+	font-weight: 650;
+	font-size: 0.9rem;
 }
-.learnChip:disabled { opacity: 0.5; }
+.learnChip:disabled {
+	opacity: 0.5;
+}
 /* A game's level, with a step down and up. */
 .learnGame {
-  display: grid;
-  grid-template-columns: 1fr auto auto auto;
-  align-items: center;
-  gap: 0.4rem;
+	display: grid;
+	grid-template-columns: 1fr auto auto auto;
+	align-items: center;
+	gap: 0.4rem;
 }
 .learnStep {
-  width: 2.4rem;
-  height: 2.4rem;
-  border-radius: 50%;
-  background: var(--bg);
-  font-size: 1.3rem;
-  font-weight: 700;
+	width: 2.4rem;
+	height: 2.4rem;
+	border-radius: 50%;
+	background: var(--bg);
+	font-size: 1.3rem;
+	font-weight: 700;
 }
-.learnStep:disabled { opacity: 0.35; }
-.learnLevel { min-width: 6.5rem; text-align: center; color: var(--muted); font-size: 0.9rem; }
+.learnStep:disabled {
+	opacity: 0.35;
+}
+.learnLevel {
+	min-width: 6.5rem;
+	text-align: center;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
 /* Learning's animal sounds: each animal, its sound to hear, and recording your own. */
-.soundsHead { margin: 0.6rem 0 0; font-size: 1rem; }
-.soundList { display: flex; flex-direction: column; }
+.soundsHead {
+	margin: 0.6rem 0 0;
+	font-size: 1rem;
+}
+.soundList {
+	display: flex;
+	flex-direction: column;
+}
 .soundRow {
-  display: grid;
-  grid-template-columns: 2.4rem 1fr auto auto;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0;
-  border-top: 1px solid var(--line);
+	display: grid;
+	grid-template-columns: 2.4rem 1fr auto auto;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.3rem 0;
+	border-top: 1px solid var(--line);
 }
-.soundRow > :nth-child(5) { grid-column: 2 / -1; justify-self: start; }
-.soundPic { width: 2.4rem; height: 2.4rem; }
-.soundName { display: flex; flex-direction: column; font-weight: 600; }
-.soundName small { color: var(--muted); font-weight: 400; }
-.recording { background: #b42318; color: #fff; }
-.recordDot { color: var(--danger); }
+.soundRow > :nth-child(5) {
+	grid-column: 2 / -1;
+	justify-self: start;
+}
+.soundPic {
+	width: 2.4rem;
+	height: 2.4rem;
+}
+.soundName {
+	display: flex;
+	flex-direction: column;
+	font-weight: 600;
+}
+.soundName small {
+	color: var(--muted);
+	font-weight: 400;
+}
+.recording {
+	background: #b42318;
+	color: #fff;
+}
+.recordDot {
+	color: var(--danger);
+}
 .learnReady {
-  display: inline-block;
-  margin: 0.2rem 0 0 0.5rem;
-  padding: 0.2rem 0.65rem;
-  border-radius: 999px;
-  background: var(--good-bg);
-  color: var(--good);
-  font-size: 0.8rem;
-  font-weight: 700;
+	display: inline-block;
+	margin: 0.2rem 0 0 0.5rem;
+	padding: 0.2rem 0.65rem;
+	border-radius: 999px;
+	background: var(--good-bg);
+	color: var(--good);
+	font-size: 0.8rem;
+	font-weight: 700;
 }
-.learnReady:disabled { opacity: 0.5; }
+.learnReady:disabled {
+	opacity: 0.5;
+}
 .learnTop {
-  margin-left: 0.5rem;
-  padding: 0.05rem 0.5rem;
-  border-radius: 999px;
-  background: var(--warn-bg);
-  color: var(--warn);
-  font-size: 0.8rem;
-  font-weight: 700;
+	margin-left: 0.5rem;
+	padding: 0.05rem 0.5rem;
+	border-radius: 999px;
+	background: var(--warn-bg);
+	color: var(--warn);
+	font-size: 0.8rem;
+	font-weight: 700;
 }
-

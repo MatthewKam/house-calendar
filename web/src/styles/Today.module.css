@@ -207,6 +207,9 @@
 	letter-spacing: 0.05em;
 	color: var(--muted);
 }
+.cardHeadSubtext {
+	font-size: 0.5rem;
+}
 details > summary.cardHead {
 	cursor: pointer;
 	min-height: 2rem;

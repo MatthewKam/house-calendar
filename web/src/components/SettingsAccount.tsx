@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, type AuthStatus, type SignedIn } from "../lib/api";
 import Avatar from "./Avatar";
+import ConfirmDialog from "./ConfirmDialog";
 import s from "../styles/Account.module.css";
 import sheet from "../styles/Sheet.module.css";
 
@@ -44,12 +46,28 @@ export function SignedInAs({ status, onClose }: { status: SignedIn; onClose: () 
 	);
 }
 
-/** The bottom of Settings: sign this device out (the wall added with a code: lock it, back to the PIN screen). */
+/**
+ * The bottom of Settings: sign this device out, asked first (getting back in takes a sign-in, or a new
+ * code for a kid's device). The wall added with a code just locks, back to the PIN screen.
+ */
 export function SignOut({ status, onClose }: { status: SignedIn; onClose: () => void }) {
 	const restart = useRestart(onClose);
-	return status.kind === "wall" ? (
-		<button type="button" className={sheet.secondary} onClick={() => void api.lockWall().then(restart)}>Lock the wall</button>
-	) : (
-		<button type="button" className={sheet.danger} onClick={() => void api.signOut().then(() => restart({ signedIn: false }))}>Sign out</button>
+	const [asking, setAsking] = useState(false);
+	if (status.kind === "wall") {
+		return <button type="button" className={sheet.secondary} onClick={() => void api.lockWall().then(restart)}>Lock the wall</button>;
+	}
+	return (
+		<>
+			<button type="button" className={sheet.danger} onClick={() => setAsking(true)}>Sign out</button>
+			{asking && (
+				<ConfirmDialog title="Sign out of this device?" confirmLabel="Sign out"
+					onCancel={() => setAsking(false)}
+					onConfirm={() => { setAsking(false); void api.signOut().then(() => restart({ signedIn: false })); }}>
+					{status.kind === "device"
+						? "Getting it back takes a new kid's code from a guardian's Settings."
+						: `Getting back in takes signing in again${status.wallMode ? ", and wall mode ends" : ""}.`}
+				</ConfirmDialog>
+			)}
+		</>
 	);
 }

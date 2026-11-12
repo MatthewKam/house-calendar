@@ -24,16 +24,24 @@ const SECONDS: [number, string][] = [[10, '10 seconds'], [20, '20 seconds'], [30
  * Settings for the photo screen saver (in Settings, and on the Photos page). Which photos it shows is
  * picked on the Photos page.
  */
-export default function ScreenSaverSettings({ onPreview, bare }: { onPreview?: () => void; /** In its own pop-up: no heading or divider. */ bare?: boolean }) {
+export default function ScreenSaverSettings({ onPreview, bare, switched }: {
+  onPreview?: () => void;
+  /** In its own pop-up: no heading or divider. */
+  bare?: boolean;
+  /** Turned on and off by a switch beside it (Settings): no checkbox of its own. */
+  switched?: boolean;
+}) {
   const [saver, save] = useScreenSaverSettings();
   const wake = useWakeStatus();
   return (
     <section className={bare ? s.bare : s.home}>
       {!bare && <h3 className={s.section}>Screen saver</h3>}
-      <label className={s.saverRow}>
-        <input type="checkbox" checked={saver.enabled} onChange={(e) => save({ enabled: e.target.checked })} />
-        Show photos when this screen is idle
-      </label>
+      {!switched && (
+        <label className={s.saverRow}>
+          <input type="checkbox" checked={saver.enabled} onChange={(e) => save({ enabled: e.target.checked })} />
+          Show photos when this screen is idle
+        </label>
+      )}
       {saver.enabled && (
         <>
           <div className={s.saverGrid}>
