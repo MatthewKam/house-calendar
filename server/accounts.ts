@@ -113,6 +113,16 @@ const migrations: string[] = [
   `
   ALTER TABLE sessions ADD COLUMN wall_mode INTEGER NOT NULL DEFAULT 0;
   `,
+  // A forgotten PIN: a code emailed to the guardian, to set a new one without the old.
+  `
+  CREATE TABLE pin_resets (
+    membership_id TEXT PRIMARY KEY REFERENCES memberships(id) ON DELETE CASCADE,
+    code_hash     TEXT NOT NULL,
+    sent_at       TEXT NOT NULL,
+    expires_at    TEXT NOT NULL,
+    tries         INTEGER NOT NULL DEFAULT 0
+  );
+  `,
 ];
 
 export function openAccounts(file: string): AccountsDB {

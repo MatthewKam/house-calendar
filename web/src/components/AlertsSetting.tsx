@@ -1,7 +1,7 @@
 import type { PushState, usePush } from '../lib/usePush';
 import s from '../styles/MembersPanel.module.css';
 
-/** The word beside Alerts in Settings while it's folded. */
+/** The word beside Notifications in Settings while it's folded. */
 export const ALERTS_NOTE: Record<PushState, string> = {
   loading: '', on: 'On', off: 'Off', 'home-screen': 'Off', blocked: 'Blocked', unsupported: 'Not here',
 };

@@ -47,17 +47,6 @@
 	/* Raised a little off the bar. */
 	box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 2px 6px rgb(0 0 0 / 0.08);
 }
-/* Pushed to the bottom of the bar, with Settings under it: who's signed in (or the logo). */
-.me {
-	margin-top: auto;
-	color: var(--text);
-}
-.me .label {
-	max-width: 100%;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
 .logo {
 	margin-top: auto;
 	width: 2.6rem;
@@ -169,15 +158,6 @@
 .moreOn {
 	color: var(--accent);
 	background: var(--bg);
-}
-.moreAvatar {
-	display: flex;
-	width: 1.6rem;
-	height: 1.6rem;
-}
-.moreAvatar > * {
-	width: 1.6rem !important;
-	height: 1.6rem !important;
 }
 .moreRule {
 	width: 100%;

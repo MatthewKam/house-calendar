@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { createPortal } from "react-dom";
-import { usePhotos, useSettings } from "../lib/queries";
-import { screenSaverSettings } from "../lib/screensaver";
+import { usePhotos } from "../lib/queries";
+import { useScreenSaverSettings } from "../lib/useScreenSaverSettings";
 import { preload, slideSeconds } from "../lib/photos";
 import type { Photo } from "../lib/types";
 import s from "../styles/PhotoCard.module.css";
@@ -33,7 +33,7 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 	const all = usePhotos().data;
 	const photos = useMemo(() => (all ?? []).filter((p) => p.inSlideshow && p.ready), [all]);
 	const order = useMemo(() => shuffle(photos), [photos]);
-	const seconds = Math.max(8, screenSaverSettings(useSettings().data?.screensaver).seconds);
+	const seconds = Math.max(8, useScreenSaverSettings()[0].seconds);
 	const [at, setAt] = useState(0);
 	// The photo before, fading out beneath the current one.
 	const [under, setUnder] = useState<Photo | null>(null);

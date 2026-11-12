@@ -43,7 +43,6 @@ import { useScreenSaver } from "./lib/useScreenSaver";
 import { useWakeLock } from "./lib/useWakeLock";
 import { useAutoLock, useParent } from "./lib/useParent";
 import ParentUnlock from "./components/ParentUnlock";
-import AccountSheet from "./components/AccountSheet";
 import KidMode from "./components/KidMode";
 import KidModeStart from "./components/KidModeStart";
 import GrownUpPin from "./components/GrownUpPin";
@@ -63,6 +62,7 @@ import s from "./styles/App.module.css";
 import { isKid } from "./lib/people";
 import { useTheme } from "./lib/useTheme";
 import { useAccent } from "./lib/accent";
+import { useUiScale } from "./lib/useUiScale";
 
 /** Today's date key, updated when the clock passes midnight. */
 function useToday() {
@@ -91,7 +91,6 @@ type Open =
 	/** A guardian's PIN, then `then` (e.g. opening Settings). */
 	| { kind: "unlock"; then?: () => void }
 	| { kind: "settings" }
-	| { kind: "account" }
 	| { kind: "kidModeStart" }
 	| { kind: "kidModeLeave" }
 	/** The phone's +: Add to a list, Caught being good. */
@@ -118,7 +117,8 @@ export default function App() {
 
 	const members = useMembers().data ?? [];
 	const settings = useSettings();
-	const uiScale = (settings.data?.uiScale as number | undefined) ?? 1;
+	// This device's text size (Settings, Appearance).
+	const [uiScale] = useUiScale(settings.data?.uiScale);
 	const saveEvent = useSaveEvent();
 	const saveTask = useSaveTask();
 	const deleteTask = useDeleteTask();
@@ -420,7 +420,6 @@ export default function App() {
 					onPage={setPage}
 					// Settings is for parents: unlock first if locked.
 					onSettings={() => setOpen(parentLock.parent ? { kind: "settings" } : { kind: "unlock", then: () => setOpen({ kind: "settings" }) })}
-					me={signedIn ? { status: signedIn, onTap: () => setOpen({ kind: "account" }) } : undefined}
 					lock={parentLock.lockable ? {
 						parent: parentLock.parent,
 						by: signedIn?.unlockedBy ?? null,
@@ -601,13 +600,6 @@ export default function App() {
 			)}
 
 			{open?.kind === "unlock" && <ParentUnlock onClose={close} onDone={open.then} />}
-			{open?.kind === "account" && signedIn && (
-				<AccountSheet
-					status={signedIn}
-					onClose={close}
-					onKidMode={() => setOpen({ kind: "kidModeStart" })}
-				/>
-			)}
 			{open?.kind === "kidModeStart" && (
 				<KidModeStart
 					kids={kids}
@@ -622,7 +614,6 @@ export default function App() {
 			{open?.kind === "settings" && (
 				<MembersPanel
 					members={members}
-					uiScale={uiScale}
 					onClose={close}
 				/>
 			)}

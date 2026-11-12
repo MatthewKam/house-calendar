@@ -1,8 +1,5 @@
 import { useRef, useState, type ReactNode } from "react";
-import type { SignedIn } from "../lib/api";
-import { Avatar } from "./AccountSheet";
 import s from "../styles/NavBar.module.css";
-import { firstName } from "../lib/people";
 
 export type Page = "calendar" | "today" | "tasks" | "rewards" | "lists" | "photos";
 
@@ -14,7 +11,6 @@ interface Props {
 	/** The parent lock, on the wall and kids' devices; tapping it unlocks (a guardian's PIN) or locks again. `by`: whose PIN. */
 	lock?: { parent: boolean; by: string | null; onTap: () => void };
 	/** Who's signed in here: their initial in their color (or the wall), opening who and Sign out. */
-	me?: { status: SignedIn; onTap: () => void };
 	/** Phones: a bar along the bottom (Today, Calendar, this in the middle, Tasks, More). */
 	phone?: boolean;
 	/** The quick-add button in the middle of the phone bar. */
@@ -114,14 +110,13 @@ export default function NavBar({
 	onPage,
 	onSettings,
 	lock,
-	me,
 	phone,
 	center,
 	onKidMode,
 	capture,
 }: Props) {
 	const snap = useRef<HTMLInputElement>(null);
-	if (phone) return <BottomBar {...{ page, settingsOpen, onPage, onSettings, lock, me, center, onKidMode }} />;
+	if (phone) return <BottomBar {...{ page, settingsOpen, onPage, onSettings, lock, center, onKidMode }} />;
 	const item = (p: Page, label: string, icon: ReactNode) => (
 		<button
 			className={`${s.item} ${page === p ? s.on : ""}`}
@@ -165,16 +160,8 @@ export default function NavBar({
 					<span className={s.label}>Kid mode</span>
 				</button>
 			)}
-			{/* Pinned to the bottom of the bar: who's signed in, the parent lock, then Settings. */}
-			{me ? (
-				<button className={`${s.item} ${s.me}`} onClick={me.onTap}
-					aria-label={`Signed in as ${me.status.me?.name ?? "the wall"}`}>
-					<Avatar status={me.status} />
-					<span className={s.label}>{(me.status.me ? firstName(me.status.me.name) : "Wall")}</span>
-				</button>
-			) : (
-				<img className={s.logo} src="/favicon.svg" alt="" />
-			)}
+			{/* Pinned to the bottom of the bar: the logo, the parent lock, then Settings (who's signed in is at its top). */}
+			<img className={s.logo} src="/favicon.svg" alt="" />
 			{lock && (
 				<button
 					className={`${s.item} ${lock.parent ? s.unlocked : ""}`}
@@ -209,7 +196,7 @@ const MORE: [Page, string, () => ReactNode][] = [
  * Phones: Today, Calendar ("Cal"), the quick-add button, Tasks and More along the bottom, in thumb's reach.
  * More holds the other pages, who's signed in, the parent lock and Settings.
  */
-function BottomBar({ page, settingsOpen, onPage, onSettings, lock, me, center, onKidMode }: Omit<Props, "phone">) {
+function BottomBar({ page, settingsOpen, onPage, onSettings, lock, center, onKidMode }: Omit<Props, "phone">) {
 	const [more, setMore] = useState(false);
 	const inMore = MORE.some(([p]) => p === page);
 	// `short`: a shorter name to show (the full one still read out).
@@ -255,12 +242,6 @@ function BottomBar({ page, settingsOpen, onPage, onSettings, lock, me, center, o
 							</button>
 						)}
 						<hr className={s.moreRule} />
-						{me && (
-							<button className={s.moreItem} onClick={then(me.onTap)}>
-								<span className={s.moreAvatar}><Avatar status={me.status} /></span>
-								{me.status.me?.name ?? "The wall"}
-							</button>
-						)}
 						{lock && (
 							<button className={`${s.moreItem} ${lock.parent ? s.unlocked : ""}`} onClick={then(lock.onTap)}>
 								<LockIcon open={lock.parent} />

@@ -78,6 +78,12 @@ export function limiter() {
 
 /** Sessions and who they are, over the accounts database. */
 export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
+  /** Wrong PINs, by device (a session): five lock it for 15 minutes. */
+  const pinTries = limiter();
+  /** A PIN reset: every device in the household can try again at once. */
+  const unlockAll = (householdId: string) => {
+    for (const r of accounts.prepare('SELECT token_hash FROM sessions WHERE household_id = ?').all(householdId) as { token_hash: string }[]) pinTries.clear(r.token_hash);
+  };
   /** Sessions started during a request, which its reply then reports on (its cookie is still the old one). */
   const started = new WeakMap<IncomingMessage, string>();
   const sessionOf = (req: IncomingMessage | FastifyRequest) => {
@@ -206,6 +212,8 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
       me: person ? { name: person.name, color: person.color } : null,
       /** The guardian whose PIN unlocked this wall or kid's device. */
       unlockedBy: people.find((m) => m.id === unlocker?.member_id)?.name ?? null,
+      /** When this device signed in (or joined, for a kid's device or the wall). */
+      signedInAt: s.created_at,
       /** A guardian's own device acting as the wall (turned on in Settings; a PIN turns it off). */
       wallMode: s.kind === 'user' && c.role === 'wall',
       /** The wall: a guardian's PIN has been typed. */
@@ -245,7 +253,7 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
     return c as Ctx & { household: HouseholdRow };
   };
 
-  return { started, sessionOf, householdById, contextOf, ownParent, isParent, holderOf, isHolder, guardiansOf, actorOf, setParentUntil, startSession, addMember,
+  return { pinTries, unlockAll, started, sessionOf, householdById, contextOf, ownParent, isParent, holderOf, isHolder, guardiansOf, actorOf, setParentUntil, startSession, addMember,
     membersOf, status, needUser, needParent };
 }
 export type Sessions = ReturnType<typeof sessions>;

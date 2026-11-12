@@ -31,6 +31,8 @@ export type AuthStatus = { signedIn: false } | {
   me: { name: string; color: string } | null;
   /** The guardian whose PIN unlocked this wall or kid's device. */
   unlockedBy: string | null;
+  /** When this device signed in (or joined, for a kid's device or the wall). */
+  signedInAt: string;
   /** A guardian's own device acting as the wall (Settings turns it on; a guardian's PIN turns it off). */
   wallMode: boolean;
   /** The wall: a guardian's PIN has been typed. */
@@ -55,7 +57,7 @@ export interface HouseholdAccess {
   name: string;
   people: { memberId: string; name: string; color: string; membershipId: string | null; role: 'guardian' | 'kid' | null; holder: boolean; email: string | null; account: boolean; hasPin: boolean }[];
   invites: { id: string; kind: 'guardian' | 'kid' | 'wall'; for: string | null; expiresAt: string }[];
-  devices: { id: string; label: string; kind: 'user' | 'device' | 'wall'; who: string | null; signedInAt: string; lastSeen: string; thisDevice: boolean }[];
+  devices: { id: string; label: string; kind: 'user' | 'device' | 'wall'; who: string | null; signedInAt: string; lastSeen: string; thisDevice: boolean; locked: boolean }[];
 }
 
 export const api = {
@@ -75,7 +77,15 @@ export const api = {
     call<{ code: string; expiresAt: string }>('POST', '/api/account/invites', b),
   cancelInvite: (id: string) => call<void>('DELETE', `/api/account/invites/${id}`),
   removeSignIn: (membershipId: string) => call<void>('DELETE', `/api/account/memberships/${membershipId}`),
-  setMyPin: (pin: string) => call<AuthStatus>('PUT', '/api/account/pin', { pin }),
+  /** Sets this guardian's PIN; changing one takes the current PIN. */
+  setMyPin: (pin: string, current?: string) => call<AuthStatus>('PUT', '/api/account/pin', current ? { pin, current } : { pin }),
+  /** Forgot it: a code to this guardian's email (or the server's log). */
+  forgotPin: () => call<{ sentTo: string }>('POST', '/api/account/pin/forgot'),
+  resetPin: (code: string, pin: string) => call<AuthStatus>('POST', '/api/account/pin/reset', { code, pin }),
+  /** The account holder clears another guardian's PIN. */
+  /** Lets a device locked by wrong PINs try again now. */
+  unlockDevice: (id: string) => call<void>('POST', `/api/account/devices/${id}/unlock`),
+  clearPin: (membershipId: string) => call<void>('DELETE', `/api/account/memberships/${membershipId}/pin`),
   enterWall: (pin: string) => call<AuthStatus>('POST', '/api/auth/enter', { pin }),
   lockWall: () => call<AuthStatus>('POST', '/api/auth/lock-wall'),
   /** Wall mode on this guardian's device, or off again (unlocked with a guardian's PIN first). */

@@ -2,14 +2,14 @@ import type { FastifyInstance } from 'fastify';
 import { randomInt, randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import type { AccountsDB, InviteRow, MembershipRow, SessionRow } from '../accounts.ts';
-import { hashPin, sha } from '../auth.ts';
-import { ALPHABET, INVITE_MS, NAME, PIN, later, limiter, normalizeCode, now, showCode, type Sessions } from './session.ts';
+import { sha } from '../auth.ts';
+import { ALPHABET, INVITE_MS, NAME, later, limiter, normalizeCode, now, showCode, type Sessions } from './session.ts';
 
 // A household: starting one, switching between yours, inviting people (and walls) with a code and
 // joining with one, who's in it for Settings, taking someone out, and a guardian's PIN.
 
 export function householdRoutes(app: FastifyInstance, accounts: AccountsDB, x: Sessions) {
-  const { sessionOf, householdById, contextOf, startSession, addMember, membersOf, status, needUser, needParent, holderOf, isHolder } = x;
+  const { sessionOf, householdById, contextOf, startSession, addMember, membersOf, status, needUser, needParent, holderOf, isHolder, pinTries } = x;
 
   app.post<{ Body: { name: string; yourName: string; color?: string } }>('/api/account/households', {
     schema: { body: { type: 'object', required: ['name', 'yourName'], additionalProperties: false,
@@ -191,6 +191,8 @@ export function householdRoutes(app: FastifyInstance, accounts: AccountsDB, x: S
       devices: sessions.map((d) => ({
         id: d.token_hash.slice(0, 16), label: d.label, kind: d.kind, who: d.kind === 'wall' ? 'Wall' : nameOf(d.member_id),
         signedInAt: d.created_at, lastSeen: d.last_seen, thisDevice: d.token_hash === c.s.token_hash,
+        // Too many wrong PINs on it: waiting, unless a guardian unlocks it from here.
+        locked: !!pinTries.blocked(d.token_hash),
       })),
     };
   });
@@ -220,18 +222,6 @@ export function householdRoutes(app: FastifyInstance, accounts: AccountsDB, x: S
     const to = accounts.prepare(`SELECT id FROM memberships WHERE id = ? AND household_id = ? AND role = 'guardian'`).get(req.body.membershipId, c.household.id);
     if (!to) return reply.code(400).send({ error: 'Only a guardian can hold the account' });
     accounts.prepare('UPDATE households SET holder_id = ? WHERE id = ?').run(req.body.membershipId, c.household.id);
-    return status(req);
-  });
-
-  // A guardian's PIN, for entering the wall and unlocking it (or a kid's device) for changes.
-  app.put<{ Body: { pin: string } }>('/api/account/pin', {
-    schema: { body: { type: 'object', required: ['pin'], additionalProperties: false, properties: { pin: PIN } } },
-  }, async (req, reply) => {
-    const s = needUser(req, reply);
-    if (!s) return;
-    const c = contextOf(s);
-    if (c.role !== 'guardian' || !c.membership) return reply.code(403).send({ error: 'Only guardians have a PIN' });
-    accounts.prepare('UPDATE memberships SET pin_hash = ?, pin_length = ? WHERE id = ?').run(hashPin(req.body.pin), req.body.pin.length, c.membership.id);
     return status(req);
   });
 }
