@@ -131,6 +131,15 @@ describe('weather away from home', () => {
     expect((await app.inject({ url: '/api/weather?lat=200&lon=0' })).statusCode).toBe(400);
   });
 
+  it('finds a place typed in, for its weather', async () => {
+    const { app, calls } = setup();
+    const res = await app.inject({ url: '/api/weather/place?q=' + encodeURIComponent('Honolulu, HI, USA') });
+    expect(res.json()).toEqual({ lat: 21.31, lon: -157.86 });
+    expect((await app.inject({ url: '/api/weather/place?q=Nowhere' })).statusCode).toBe(404);
+    // Not found as an address: the town, but never "HI" or "USA" on their own.
+    expect(calls.filter((u) => u.includes('geocoding-api')).map((u) => decodeURIComponent(u.split('name=')[1]))).toEqual(['Nowhere']);
+  });
+
   it('forecasts far-away events on their days, and leaves nearby ones be', async () => {
     const { app, add } = setup();
     const trip = await add('Hawaii trip', 'Waikiki, Honolulu, HI', true, '2026-10-08', '2026-10-10');

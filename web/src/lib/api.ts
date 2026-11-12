@@ -127,6 +127,8 @@ export const api = {
   /** At home, or (here) where this device is. */
   weather: (here?: { lat: number; lon: number } | null) =>
     call<Weather>('GET', here ? `/api/weather?lat=${here.lat}&lon=${here.lon}` : '/api/weather'),
+  /** Where a place typed in is, for its weather. */
+  weatherPlace: (q: string) => call<{ lat: number; lon: number }>('GET', `/api/weather/place?${new URLSearchParams({ q })}`),
   /** Forecasts for the far-away ones of these events, by id. */
   eventWeather: (ids: string[]) => call<Record<string, EventWeather>>('GET', `/api/weather/events?ids=${ids.join(',')}`),
   daily: (day: string) => call<Daily>('GET', `/api/daily?${new URLSearchParams({ day })}`),

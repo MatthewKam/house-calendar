@@ -60,8 +60,9 @@ export async function geocode(address: string, fetchImpl: typeof fetch = fetch):
     + encodeURIComponent(address)).then((r) => (r.ok ? r.json() : null), () => null);
   const match = census?.result?.addressMatches?.[0]?.coordinates;
   if (match) return { lat: match.y, lon: match.x };
-  // "1 Main St, Irvine, CA 92618" → try "Irvine", then the other parts.
-  const parts = address.split(',').map((p) => p.trim().replace(/\s+\d{5}(-\d{4})?$/, '')).filter(Boolean);
+  // "1 Main St, Irvine, CA 92618" → try "Irvine", then the other parts (not a state or country code:
+  // "HI" or "USA" would find some other place by that name).
+  const parts = address.split(',').map((p) => p.trim().replace(/\s+\d{5}(-\d{4})?$/, '')).filter((p, i) => p && (i === 0 || p.length > 3));
   for (const name of [...parts.slice(1), parts[0]]) {
     const found = await fetchImpl(`https://geocoding-api.open-meteo.com/v1/search?count=1&name=${encodeURIComponent(name)}`)
       .then((r) => (r.ok ? r.json() : null), () => null);
@@ -262,6 +263,15 @@ export function registerWeather(app: FastifyInstance, db: DB, fetchImpl: typeof 
     } catch {
       return reply.code(502).send({ error: "Couldn't get the weather" });
     }
+  });
+
+  // A place typed in (Today's third choice, after Home and Here): where it is, rounded like Here.
+  app.get<{ Querystring: { q: string } }>('/api/weather/place', {
+    schema: { querystring: { type: 'object', required: ['q'], properties: { q: { type: 'string', minLength: 2, maxLength: 300 } } } },
+  }, async (req, reply) => {
+    const at = await find(req.query.q.trim()).catch(() => null);
+    if (!at) return reply.code(404).send({ error: "Couldn't find that place" });
+    return near(at);
   });
 
   app.get<{ Querystring: { ids: string } }>('/api/weather/events', {

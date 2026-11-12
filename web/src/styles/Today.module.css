@@ -139,6 +139,7 @@
 /* The weather card's head: its name, and Home or Here. */
 .weatherHead {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
 	gap: 0.5rem;
@@ -163,10 +164,37 @@
 	font-weight: 600;
 	color: var(--muted);
 }
+/* A long place name: cut short. */
+.placeOption {
+	max-width: 9rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
 .placeOption[aria-checked="true"] {
 	background: var(--surface);
 	color: var(--text);
 	box-shadow: 0 0.05rem 0.25rem rgb(0 0 0 / 0.12);
+}
+/* Typing a place in: its own line under the switch. */
+.placeForm {
+	flex-basis: 100%;
+	display: flex;
+	gap: 0.5rem;
+}
+.placeForm > :first-child {
+	flex: 1;
+}
+.placeGo {
+	min-height: 2.6rem;
+	padding: 0 1rem;
+	border-radius: 0.6rem;
+	background: var(--accent);
+	color: #fff;
+	font-weight: 700;
+}
+.placeGo:disabled {
+	opacity: 0.5;
 }
 .placeProblem {
 	font-size: 0.8rem;
@@ -591,6 +619,12 @@ details > summary.cardHead {
 	stroke: var(--accent);
 	stroke-width: 2px;
 }
+/* The picked hour on the feels line. */
+.graphPickFeels {
+	fill: var(--surface);
+	stroke: var(--muted);
+	stroke-width: 2px;
+}
 .graphTip {
 	position: absolute;
 	top: -0.2rem;
@@ -621,8 +655,8 @@ details > summary.cardHead {
 	gap: 0.3rem;
 }
 
-/* The next seven days (Week), a row each: the day, its sky, its low, a bar to its high on one scale for
-   the week, and its high; under the bar, how warm it feels, and rain and wind when worth knowing. */
+/* The next seven days (Week), a row each: the day, its sky, how warm it feels, and rain and wind when
+   worth knowing; under that its low, a bar to its high on one scale for the week, and its high. */
 .week {
 	list-style: none;
 	margin: 0.3rem 0 0;
@@ -632,15 +666,21 @@ details > summary.cardHead {
 }
 .weekDay {
 	display: grid;
-	grid-template-columns: 3.3rem 1.9rem 2rem minmax(0, 1fr) 2.2rem;
+	grid-template-columns: 2.2rem minmax(0, 1fr) 2.2rem;
 	align-items: center;
 	column-gap: 0.4rem;
-	row-gap: 0.15rem;
+	row-gap: 0.3rem;
 	padding: 0.4rem 0;
 	font-variant-numeric: tabular-nums;
 }
 .weekDay + .weekDay {
 	border-top: 1px solid var(--line);
+}
+.weekTop {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
 }
 .weekName {
 	font-weight: 650;
@@ -651,12 +691,11 @@ details > summary.cardHead {
 	font-weight: 500;
 }
 .weekIcon {
-	font-size: 1.45rem;
+	font-size: 1.3rem;
 	line-height: 1;
 	text-align: center;
 }
 .weekExtra {
-	grid-column: 3 / 6;
 	display: flex;
 	flex-wrap: wrap;
 	column-gap: 0.5rem;

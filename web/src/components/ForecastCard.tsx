@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from "react";
+import { api } from "../lib/api";
 import { fromDayKey, longDate } from "../lib/dates";
 import { sky } from "../lib/weather";
 import type { Weather } from "../lib/types";
 import { canFindHere, findHere, setHere, useWeatherHere } from "../lib/useWeatherHere";
+import AddressInput from "./AddressInput";
 import s from "../styles/Today.module.css";
 
 type Hour = Weather["hours"][number];
@@ -55,21 +57,37 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 }
 
 /**
- * Home or Here: the forecast at home, or where this device is (it asks permission the first time). Kept
- * on this device; everything here that shows the weather follows it.
+ * Home, Here or another place: the forecast at home, where this device is (it asks permission the first
+ * time), or a town or address typed in (a trip being planned, family far away). Kept on this device;
+ * everything here that shows the weather follows it.
  */
 function PlaceSwitch() {
 	const here = useWeatherHere();
 	const [finding, setFinding] = useState(false);
+	const [typing, setTyping] = useState(false);
+	const [typed, setTyped] = useState("");
 	const [problem, setProblem] = useState<string | null>(null);
-	if (!canFindHere() && !here) return null;
+	const place = here?.name ? here : null;
 	function goHere() {
 		setFinding(true);
 		setProblem(null);
+		setTyping(false);
 		findHere().then(
 			(at) => setHere(at),
 			(err: GeolocationPositionError) =>
 				setProblem(err.code === err.PERMISSION_DENIED ? "Location is off for Sprig on this device" : "Couldn't find where you are"),
+		).finally(() => setFinding(false));
+	}
+	function goPlace(e: FormEvent) {
+		e.preventDefault();
+		const q = typed.trim();
+		if (!q) return;
+		setFinding(true);
+		setProblem(null);
+		api.weatherPlace(q).then(
+			// Named by its first part: "Honolulu, HI, USA" is Honolulu.
+			(at) => { setHere({ ...at, name: q.split(",")[0].trim() }); setTyping(false); setTyped(""); },
+			() => setProblem("Couldn't find that place"),
 		).finally(() => setFinding(false));
 	}
 	const option = (on: boolean, label: string, pick: () => void) => (
@@ -77,14 +95,28 @@ function PlaceSwitch() {
 			{label}
 		</button>
 	);
+	const onHere = !!here && !place;
 	return (
-		<div className={s.place}>
-			<div className={s.placeSwitch} role="radiogroup" aria-label="Weather for">
-				{option(!here && !finding, "🏠 Home", () => { setProblem(null); setHere(null); })}
-				{option(!!here || finding, finding ? "📍 Finding…" : "📍 Here", goHere)}
+		<>
+			<div className={s.place}>
+				<div className={s.placeSwitch} role="radiogroup" aria-label="Weather for">
+					{option(!here && !typing && !finding, "🏠 Home", () => { setProblem(null); setTyping(false); setHere(null); })}
+					{(canFindHere() || onHere) &&
+						option(onHere && !typing, finding && !typing ? "📍 Finding…" : "📍 Here", goHere)}
+					{/* The place picked shows its name; tapped again, another can be typed in. */}
+					{option(!!place || typing, place ? `🔎 ${place.name}` : "🔎 Other", () => { setProblem(null); setTyping((t) => !t || !place); })}
+				</div>
+				{problem && <span className={s.placeProblem}>{problem}</span>}
 			</div>
-			{problem && <span className={s.placeProblem}>{problem}</span>}
-		</div>
+			{typing && (
+				<form className={s.placeForm} onSubmit={goPlace}>
+					<AddressInput value={typed} onChange={setTyped} placeholder="A town or address" label="Weather for a place" />
+					<button type="submit" className={s.placeGo} disabled={finding || !typed.trim()}>
+						{finding ? "Finding…" : "Show"}
+					</button>
+				</form>
+			)}
+		</>
 	);
 }
 
@@ -94,9 +126,9 @@ const RAIN_LIKELY = 50;
 const WIND_SHOWN = 15;
 
 /**
- * The next seven days, a row each: the day, its sky, then its low to its high as a bar on one scale for
- * the week (a warmer day sits further right); under the bar, how warm it feels, and rain and wind when
- * they're worth knowing.
+ * The next seven days, a row each: the day, its sky, how warm it feels, and rain and wind when they're
+ * worth knowing; under that, its low to its high as a bar on one scale for the week (a warmer day sits
+ * further right).
  */
 function Week({ days }: { days: Weather["days"] }) {
 	const top = Math.max(...days.map((d) => d.high));
@@ -117,25 +149,24 @@ function Week({ days }: { days: Weather["days"] }) {
 						className={s.weekDay}
 						aria-label={`${longDate(date)}: ${look.label}, ${d.rain}% rain, high ${d.high}°, low ${d.low}°, wind ${d.wind} mph, feels like ${d.feelsHigh}° to ${d.feelsLow}°`}
 					>
-						<span className={s.weekName} aria-hidden="true">
-							{date.toLocaleDateString([], { weekday: "short" })} <span className={s.weekDate}>{date.getDate()}</span>
-						</span>
-						<span className={s.weekIcon} aria-hidden="true">
-							{look.icon}
+						<span className={s.weekTop} aria-hidden="true">
+							<span className={s.weekName}>
+								{date.toLocaleDateString([], { weekday: "short" })} <span className={s.weekDate}>{date.getDate()}</span>
+							</span>
+							<span className={s.weekIcon}>{look.icon}</span>
+							<span className={s.weekExtra}>
+								<span>Feels {d.feelsLow}–{d.feelsHigh}°</span>
+								{d.rain >= RAIN_SHOWN && (
+									<span className={d.rain >= RAIN_LIKELY ? s.weekWet : undefined}>💧 {d.rain}%</span>
+								)}
+								{d.wind >= WIND_SHOWN && <span>💨 {d.wind} mph</span>}
+							</span>
 						</span>
 						<span className={s.weekLow} aria-hidden="true">{d.low}°</span>
 						<span className={s.weekTrack} aria-hidden="true">
 							<span className={s.weekBar} style={bar(d.low, d.high)} />
 						</span>
 						<span className={s.weekHigh} aria-hidden="true">{d.high}°</span>
-						{/* Under the bar, so the bar keeps the row's width. */}
-						<span className={s.weekExtra} aria-hidden="true">
-							<span>Feels {d.feelsLow}–{d.feelsHigh}°</span>
-							{d.rain >= RAIN_SHOWN && (
-								<span className={d.rain >= RAIN_LIKELY ? s.weekWet : undefined}>💧 {d.rain}%</span>
-							)}
-							{d.wind >= WIND_SHOWN && <span>💨 {d.wind} mph</span>}
-						</span>
 					</li>
 				);
 			})}
@@ -148,6 +179,8 @@ const HEIGHT = 130;
 const TOP = 22;
 const BOTTOM = 24;
 const SIDE = 14;
+/** The picked hour's details, this wide. */
+const TIP = 150;
 
 /**
  * The hours around now as a line of temperatures, and how warm they feel as a dashed line on the same
@@ -312,7 +345,7 @@ function HourGraph({
 							{lo}°
 						</text>
 					)}
-					{/* An hour picked: a line down through it, and its point. */}
+					{/* An hour picked: a line down through it, and its point on each line. */}
 					{picked !== null && (
 						<g>
 							<line
@@ -321,6 +354,12 @@ function HourGraph({
 								x2={points[picked][0]}
 								y1={TOP - 4}
 								y2={HEIGHT - BOTTOM}
+							/>
+							<circle
+								className={s.graphPickFeels}
+								cx={feelsPoints[picked][0]}
+								cy={feelsPoints[picked][1]}
+								r={4}
 							/>
 							<circle
 								className={s.graphPick}
@@ -340,12 +379,13 @@ function HourGraph({
 				</svg>
 			)}
 			{shown && look && (
-				// Over the hour, kept inside the card.
+				// Beside the hour (its dots stay in sight): to the right in the first half, else the left.
 				<div
 					className={s.graphTip}
 					role="status"
 					style={{
-						left: Math.max(0, Math.min(width - 150, points[picked!][0] - 75)),
+						left: Math.max(0, Math.min(width - TIP,
+							points[picked!][0] < width / 2 ? points[picked!][0] + 12 : points[picked!][0] - 12 - TIP)),
 					}}
 				>
 					<b>{hourLabel(shown.time)}</b>
