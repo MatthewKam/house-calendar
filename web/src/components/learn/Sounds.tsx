@@ -4,8 +4,8 @@ import { Board, fit, Hear, SLIDE_MS } from "./parts";
 import { animalsUpTo, type Animal } from "./things";
 import { at, fresh, pick, shuffle, useRounds, type GameProps } from "./rounds";
 import { noise } from "./sound";
-import s from "../../styles/Learn.module.css";
-import g from "../../styles/LearnSounds.module.css";
+import s from "./Learn.module.css";
+import g from "./LearnSounds.module.css";
 
 /** Animals to choose from, by level. */
 const CHOICES = [2, 3, 3, 4, 4, 6];

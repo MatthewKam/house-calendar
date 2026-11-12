@@ -6,12 +6,13 @@ import { describe, expect, it } from 'vitest';
 // own is fine when it says why, in a comment on the line or the line before: /* own: over a photo */.
 
 // Type-checked with the server's settings (tsconfig.json), as it reads files.
-const dir = import.meta.dirname;
-/** Every stylesheet but app.css (where the scale is set): its file name and text. */
-const sheets = readdirSync(dir).filter((f) => f.endsWith('.css') && f !== 'app.css')
-  .map((f) => [f, readFileSync(join(dir, f), 'utf8')] as const);
+const src = join(import.meta.dirname, '..');
+/** Every stylesheet in web/src but app.css (where the scale is set): its path and text. */
+const sheets = (readdirSync(src, { recursive: true }) as string[])
+  .filter((f) => f.endsWith('.css') && f !== join('styles', 'app.css'))
+  .map((f) => [f, readFileSync(join(src, f), 'utf8')] as const);
 
-/** Each declaration of `property` (by regex) that isn't marked as its own: "File.module.css:12  value". */
+/** Each declaration of `property` (by regex) that isn't marked as its own: "components/tasks/Tasks.module.css:12  value". */
 function unscaled(property: RegExp, raw: (value: string) => boolean) {
   const found: string[] = [];
   for (const [file, text] of sheets) {

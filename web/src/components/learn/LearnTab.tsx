@@ -18,8 +18,8 @@ import Chomp, { ChompPic, pickAnimal } from "./Chomp";
 import { HowTo, Over } from "./parts";
 import type { GameProps } from "./rounds";
 import { hush, setRecorded } from "./sound";
-import GrownUpPin from "../GrownUpPin";
-import s from "../../styles/Learn.module.css";
+import GrownUpPin from "../account/GrownUpPin";
+import s from "./Learn.module.css";
 
 /** How to play Chomp! (a game for two), for a grown-up to explain. */
 const CHOMP_HOW = {

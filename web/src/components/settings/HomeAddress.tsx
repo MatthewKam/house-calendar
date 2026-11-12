@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useSetSetting, useSettings } from '../../lib/queries';
-import sheet from '../../styles/Sheet.module.css';
-import s from '../../styles/Settings.module.css';
+import sheet from '../ui/Sheet.module.css';
+import s from './Settings.module.css';
 
 /** Where travel times start from. Saved with Save, so a half-typed address isn't used. */
 export default function HomeAddress() {

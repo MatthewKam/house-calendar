@@ -46,9 +46,9 @@ Learn's games are for learning, not passing time: a few games a day (a guardian 
 | Database | `server/db.ts` (a household's) and `server/accounts.ts`. Both are an ordered list of migrations: only ever add to the end. The tables as they stand are in `server/schema/`. After adding a migration, run `npx vitest run server/schema.test.ts -u` to rewrite them |
 | Calendar sync | `server/sync.ts`, `googleSync.ts`, `icloudSync.ts`, `outbox.ts` (changes on their way to iCloud or Google), and `server/providers/` |
 | Shared | `shared/`: shapes and lists the server and web app both import |
-| Web app | `web/src/`. React 19 and Vite. `App.tsx` is the shell; screens are in `components/` (Learn's games in `components/learn/`, Settings in `components/settings/`) |
-| Server data in the web app | `web/src/lib/queries.ts` (TanStack Query hooks), `api.ts` (the calls), `types.ts`. An edit shows on screen straight away and is put back if the save fails |
-| Styles | `web/src/styles/`: a CSS module per component, plus the shared names in `app.css`. See `web/src/styles/README.md` |
+| Web app | `web/src/`. React 19 and Vite. `App.tsx` is the shell. Components are in a folder per feature under `components/`, each with its stylesheets beside it: `calendar/`, `today/`, `tasks/`, `rewards/`, `kid/` (kid mode), `learn/` (its games), `lists/`, `photos/`, `capture/` (Snap a flyer, Say it), `account/` (signing in, PINs), `nav/`, `settings/`, and `ui/` for the building blocks every feature uses (`Sheet`, `Toast`, `Switch`...) |
+| Server data in the web app | `web/src/lib/queries/`: TanStack Query hooks, a file per feature, all imported from `lib/queries`. `api.ts` has the calls and `types.ts` the shapes. An edit shows on screen straight away and is put back if the save fails (`queries/shared.ts`) |
+| Styles | A CSS module beside each component, and the shared names in `web/src/styles/app.css`. See `web/src/styles/README.md` |
 | Tests | `server/*.test.ts` (routes, through the app; `server/testing.ts` has `household()` to set one up) and `web/src/**/*.test.ts` (logic, not rendering) |
 
 ## Conventions

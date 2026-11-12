@@ -4,7 +4,7 @@ import { dayKey } from '../../lib/dates';
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
 import { usePush } from '../../lib/usePush';
 import type { Member } from '../../lib/types';
-import Sheet from '../Sheet';
+import Sheet from '../ui/Sheet';
 import { SignedInAs, SignOut } from './Account';
 import AlertsSetting, { ALERTS_NOTE } from './AlertsSetting';
 import AppearanceSettings from './AppearanceSettings';
@@ -17,8 +17,8 @@ import ICloudCalendars from './ICloudCalendars';
 import LearnSettings, { LearnAbout, learnNote } from './LearnSettings';
 import ScreenSettings from './ScreenSettings';
 import { Group, InfoButton, Section, SettingsView } from './parts';
-import sheet from '../../styles/Sheet.module.css';
-import s from '../../styles/Settings.module.css';
+import sheet from '../ui/Sheet.module.css';
+import s from './Settings.module.css';
 
 interface Props {
   members: Member[];

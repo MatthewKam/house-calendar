@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import s from "../../styles/Learn.module.css";
-import sheet from "../../styles/Sheet.module.css";
-import Sheet from "../Sheet";
+import s from "./Learn.module.css";
+import sheet from "../ui/Sheet.module.css";
+import Sheet from "../ui/Sheet";
 
 /** The game being played, for its How to play: its name, and how to play it, for a grown-up to explain. */
 export const HowTo = createContext<{ title: string; how: string[] } | null>(null);

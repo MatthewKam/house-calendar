@@ -3,7 +3,7 @@ import { Pic } from "./art";
 import { Board } from "./parts";
 import { ANIMALS, type Animal } from "./things";
 import { any, at, CHEER_MS, fresh, type GameProps, useLater } from "./rounds";
-import g from "../../styles/LearnPop.module.css";
+import g from "./LearnPop.module.css";
 
 /**
  * Each level: what counts (any bubble; one with an animal in; the animal on the sign; the colour on the

@@ -3,8 +3,8 @@ import { Pic } from "./art";
 import { Board, SLIDE_MS, type Box } from "./parts";
 import { makeMap } from "./mazeMap";
 import { at, fresh, type GameProps, useLater } from "./rounds";
-import s from "../../styles/Learn.module.css";
-import g from "../../styles/LearnMaze.module.css";
+import s from "./Learn.module.css";
+import g from "./LearnMaze.module.css";
 
 /** The map's size in stops (rows, columns) and its keys and gates, by level. Level 1 is already a real maze. */
 const SIZES: [number, number, number][] = [[4, 5, 0], [4, 6, 0], [5, 6, 1], [5, 7, 1], [6, 7, 2], [6, 8, 2]];

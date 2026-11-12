@@ -2,7 +2,7 @@ import { TRANSITIONS } from '../../lib/screensaver';
 import { useScreenSaverSettings } from '../../lib/useScreenSaverSettings';
 import type { ScreenSaverSettings as Settings } from '../../lib/types';
 import { useWakeStatus, type WakeStatus } from '../../lib/useWakeLock';
-import s from '../../styles/Settings.module.css';
+import s from './Settings.module.css';
 
 /** Minutes without a touch before it starts. */
 /** Whether this device's screen is being kept on, in words. */

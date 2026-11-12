@@ -3,8 +3,8 @@ import { Pic } from "./art";
 import { Board, fit } from "./parts";
 import { TOYS } from "./things";
 import { at, between, CHEER_MS, fresh, shuffle, type GameProps, useLater } from "./rounds";
-import s from "../../styles/Learn.module.css";
-import g from "../../styles/LearnFindIt.module.css";
+import s from "./Learn.module.css";
+import g from "./LearnFindIt.module.css";
 
 /** Kinds of thing in the room, the most of each, how many hide under others, and rooms a play, by level. */
 const KINDS = [2, 2, 3, 3, 4, 4];

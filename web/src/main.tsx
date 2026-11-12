@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
-import AuthGate from './components/AuthGate';
+import AuthGate from './components/account/AuthGate';
 import './styles/app.css';
 import { guardTouch } from './lib/touchGuard';
 import { keys } from './lib/queries';

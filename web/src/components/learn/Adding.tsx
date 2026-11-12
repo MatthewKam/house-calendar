@@ -3,8 +3,8 @@ import { Pic } from "./art";
 import { Board, SLIDE_MS } from "./parts";
 import { FRUIT } from "./things";
 import { at, between, fresh, shuffle, useRounds, type GameProps } from "./rounds";
-import s from "../../styles/Learn.module.css";
-import g from "../../styles/LearnAdding.module.css";
+import s from "./Learn.module.css";
+import g from "./LearnAdding.module.css";
 
 /** Each side's smallest and biggest number, by level. */
 const SIDES: [number, number][] = [[1, 3], [1, 4], [2, 5], [2, 5], [3, 7], [4, 10]];

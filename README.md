@@ -432,7 +432,7 @@ alert opens Sprig on Lists (or Today). Kids' devices and the wall don't get aler
 | People        | `server/people.ts`                    | Who each synced event series is for: manual picks, then Claude (`claude-opus-5-5`, structured output) for the rest.                                            |
 | Sync          | `server/sync.ts`, `server/providers/` | Pulls each calendar's events in a date window and replaces the stored copy. iCloud over CalDAV (`caldav.ts`); `ical.ts` expands repeating events with ical.js. |
 | UI            | `web/src/`                            | React 19 + Vite, CSS modules. `App.tsx` is the shell; screens live in `components/`. Colours, corners, shadows, layers and screen sizes: `web/src/styles/README.md`. |
-| Server data   | `web/src/lib/queries.ts`              | TanStack Query hooks: fetching, 60 s refresh, and cache updates after edits. No Redux; add it only if client-only state grows.                                 |
+| Server data   | `web/src/lib/queries/`                | TanStack Query hooks: fetching, 60 s refresh, and cache updates after edits. No Redux; add it only if client-only state grows.                                 |
 | Tests         | `server/*.test.ts`, `web/src/**/*.test.ts` | `npm test`                                                                                                                                                |
 
 Checks: `npm test` and `npm run check` (TypeScript for server and UI).

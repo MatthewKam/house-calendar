@@ -3,8 +3,8 @@ import { Pic } from "./art";
 import { Board } from "./parts";
 import { LOOK_ALIKE, WORDS } from "./things";
 import { at, fresh, shuffle, useRounds, type GameProps } from "./rounds";
-import s from "../../styles/Learn.module.css";
-import g from "../../styles/LearnLetters.module.css";
+import s from "./Learn.module.css";
+import g from "./LearnLetters.module.css";
 
 /** Letters to choose from, whether look-alike letters are offered, and capitals, by level. */
 const CHOICES = [2, 3, 3, 3, 4, 4];

@@ -3,8 +3,8 @@ import { Pic } from "./art";
 import { Board, fit } from "./parts";
 import { ANIMALS, FRUIT, TOYS } from "./things";
 import { at, fresh, shuffle, type GameProps, useLater } from "./rounds";
-import s from "../../styles/Learn.module.css";
-import g from "../../styles/LearnMemory.module.css";
+import s from "./Learn.module.css";
+import g from "./LearnMemory.module.css";
 
 /** Pairs on the table, by level. */
 const PAIRS = [3, 4, 6, 8, 10, 12];

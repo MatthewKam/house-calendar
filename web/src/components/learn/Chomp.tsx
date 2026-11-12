@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import { Board } from "./parts";
 import { fresh, useLater } from "./rounds";
-import s from "../../styles/Learn.module.css";
-import g from "../../styles/LearnChomp.module.css";
+import s from "./Learn.module.css";
+import g from "./LearnChomp.module.css";
 
 /** The two players, taking turns. */
 const PLAYERS = [

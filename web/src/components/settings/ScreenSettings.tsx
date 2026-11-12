@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { useScreenSaverSettings } from '../../lib/useScreenSaverSettings';
-import ConfirmDialog from '../ConfirmDialog';
+import ConfirmDialog from '../ui/ConfirmDialog';
 import ScreenSaverSettings from './ScreenSaverSettings';
 import { SwitchRow } from './parts';
 

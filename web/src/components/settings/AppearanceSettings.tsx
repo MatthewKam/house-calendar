@@ -5,7 +5,7 @@ import { useTempUnit } from '../../lib/units';
 import { useThemeSetting, type Theme } from '../../lib/useTheme';
 import { useUiScale } from '../../lib/useUiScale';
 import { Section } from './parts';
-import s from '../../styles/Settings.module.css';
+import s from './Settings.module.css';
 
 const THEMES: [Theme, string][] = [['auto', 'Same as this device'], ['light', 'Light'], ['dark', 'Dark']];
 
