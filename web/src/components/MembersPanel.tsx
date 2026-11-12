@@ -183,7 +183,10 @@ export default function MembersPanel({ members, onClose }: Props) {
   // The part showing (null: the list), back at the top each time it changes.
   const [view, setView] = useState<string | null>(null);
   const top = useRef<HTMLElement>(null);
-  useEffect(() => top.current?.scrollIntoView({ block: 'start' }), [view]);
+  // In braces: scrollIntoView returns a Promise in newer Chrome, and an effect may only return a clean-up.
+  useEffect(() => {
+    top.current?.scrollIntoView({ block: 'start' });
+  }, [view]);
   // Wall mode: everything on screen was this person's, so it all loads again as the wall's (or back).
   const qc = useQueryClient();
   const [wallModeAsk, setWallModeAsk] = useState(false);

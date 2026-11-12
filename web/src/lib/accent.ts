@@ -96,7 +96,10 @@ function keep(a: Accent) {
 export function useAccent(household?: unknown) {
   const wall = household !== undefined;
   useEffect(() => {
-    if (!wall) return apply(load());
+    if (!wall) {
+      apply(load());
+      return;
+    }
     const a = accentOf(household);
     keep(a);
     apply(a);
