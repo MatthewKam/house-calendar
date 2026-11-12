@@ -190,7 +190,7 @@
 	padding: 0 1rem;
 	border-radius: 0.6rem;
 	background: var(--accent);
-	color: #fff;
+	color: var(--on-accent);
 	font-weight: 700;
 }
 .placeGo:disabled {

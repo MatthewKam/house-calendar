@@ -83,7 +83,7 @@
 .use {
 	padding: 0 1.1rem;
 	background: var(--accent);
-	color: #fff;
+	color: var(--on-accent);
 	font-weight: 700;
 }
 .use:disabled {
@@ -204,7 +204,7 @@
 .redeem {
 	padding: 0 1.1rem;
 	background: var(--accent);
-	color: #fff;
+	color: var(--on-accent);
 	font-weight: 700;
 }
 /* In a jar's edit pop-up: each kid's stars in it, with Take back. */

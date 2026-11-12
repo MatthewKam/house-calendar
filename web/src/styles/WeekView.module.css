@@ -25,9 +25,9 @@
 .day:nth-child(7) {
 	border-radius: 0 var(--radius) var(--radius) 0;
 }
-/* Today: a light green tint. */
+/* Today: a light tint of the accent. */
 .today {
-	background-color: #38766a14;
+	background-color: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .today.day .num {
@@ -37,9 +37,9 @@
 	height: 2rem;
 	padding: 0 0.3rem;
 	border-radius: 999px;
-	background: #22a06b;
-	color: #fff;
-	box-shadow: 0 0.2rem 0.5rem rgb(34 160 107 / 0.45);
+	background: var(--accent);
+	color: var(--on-accent);
+	box-shadow: 0 0.2rem 0.5rem color-mix(in srgb, var(--accent) 45%, transparent);
 	letter-spacing: -1px;
 	font-size: 1.3rem;
 }

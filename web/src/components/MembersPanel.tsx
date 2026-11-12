@@ -17,6 +17,7 @@ import AlertsSetting, { ALERTS_NOTE } from './AlertsSetting';
 import LearnSettings, { learnNote } from './LearnSettings';
 import { usePush } from '../lib/usePush';
 import { useThemeSetting, type Theme } from '../lib/useTheme';
+import { ACCENTS, useAccentSetting } from '../lib/accent';
 import Sheet from './Sheet';
 import ConfirmDialog from './ConfirmDialog';
 
@@ -113,6 +114,7 @@ function HomeAddress() {
 export default function MembersPanel({ members, uiScale, onClose }: Props) {
   // Light or dark, for this device (Same as this device: its own setting).
   const [theme, setTheme] = useThemeSetting();
+  const [accent, setAccent] = useAccentSetting();
   const [newName, setNewName] = useState('');
   const today = dayKey(new Date());
   const learn = useLearn(today).data ?? [];
@@ -320,6 +322,20 @@ export default function MembersPanel({ members, uiScale, onClose }: Props) {
             ))}
           </div>
           <p className={s.themeNote}>Kid mode stays light.</p>
+        </Section>
+
+        {/* Each a circle, half its light shade and half its dark: one pick, a shade for each. */}
+        <Section title="Accent color" note={accent.name}>
+          <div className={s.accents} role="radiogroup" aria-label="Accent color">
+            {ACCENTS.map((a) => (
+              <button key={a.id} type="button" role="radio" aria-checked={accent === a} className={s.accent} onClick={() => setAccent(a)}>
+                <span className={`${s.accentDot} ${accent === a ? s.picked : ''}`} aria-hidden="true"
+                  style={{ '--light': a.light.accent, '--dark': a.dark.accent } as CSSProperties} />
+                {a.name}
+              </button>
+            ))}
+          </div>
+          <p className={s.themeNote}>Buttons and highlights on this device. Each has a shade for light and one for dark.</p>
         </Section>
 
         <Section title="Text size" note={`${Math.round(uiScale * 100)}%`}>

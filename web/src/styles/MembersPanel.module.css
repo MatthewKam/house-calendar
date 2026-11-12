@@ -39,7 +39,14 @@
 /* Light or dark: three choices side by side, the picked one filled. */
 .theme { display: flex; flex-wrap: wrap; gap: 0.2rem; padding: 0.2rem; border: 1px solid var(--line); border-radius: var(--radius); }
 .theme button { flex: 1 1 auto; padding: 0 0.9rem; border-radius: calc(var(--radius) - 0.2rem); }
-.theme .themeOn { background: var(--accent); color: #fff; font-weight: 650; }
+.theme .themeOn { background: var(--accent); color: var(--on-accent); font-weight: 650; }
+/* Accent colors: a circle (light shade over dark, split on the diagonal) and its name under it. */
+.accents { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.accent { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; min-width: 4.2rem; padding: 0.3rem 0.2rem; font-size: 0.8rem; color: var(--muted); }
+.accent[aria-checked='true'] { color: var(--text); font-weight: 650; }
+.accentDot { width: 2.75rem; height: 2.75rem; border-radius: 50%; border: 3px solid var(--surface);
+  background: linear-gradient(135deg, var(--light) 50%, var(--dark) 50%); box-shadow: 0 0 0 1px var(--line); }
+.accentDot.picked { box-shadow: 0 0 0 3px var(--accent); }
 .themeNote { margin: 0; color: var(--muted); font-size: 0.9rem; }
 .home { display: flex; flex-direction: column; gap: 0.4rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
 /* Screen saver settings. */

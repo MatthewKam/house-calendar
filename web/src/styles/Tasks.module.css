@@ -335,7 +335,7 @@
 }
 .chipOn {
 	background: var(--accent);
-	color: #fff;
+	color: var(--on-accent);
 }
 /* A one-time task's due date, beside its quick picks. */
 .dueDate {
@@ -358,7 +358,7 @@
 }
 .dayOn {
 	background: var(--accent);
-	color: #fff;
+	color: var(--on-accent);
 	border-color: var(--accent);
 }
 
@@ -458,7 +458,7 @@
 }
 .periodOn {
 	background: var(--accent);
-	color: #fff;
+	color: var(--on-accent);
 }
 
 /* ---- History: a row of day dots per task (week or month) ---- */

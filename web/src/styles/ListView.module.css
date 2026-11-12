@@ -27,7 +27,7 @@
 .choose[aria-pressed="true"] {
 	background: var(--accent);
 	border-color: var(--accent);
-	color: #fff;
+	color: var(--on-accent);
 }
 /* Which lists show: a check per list, tapped on or off. */
 .picker {
@@ -50,7 +50,7 @@
 .pick[aria-pressed="true"] .box {
 	background: var(--accent);
 	border-color: var(--accent);
-	color: #fff;
+	color: var(--on-accent);
 }
 .board {
 	flex: 1;
@@ -230,7 +230,7 @@
 .done .box {
 	background: var(--accent);
 	border-color: var(--accent);
-	color: #fff;
+	color: var(--on-accent);
 }
 .done .text {
 	color: var(--muted);
@@ -424,7 +424,7 @@
 .listPicked {
 	background: var(--accent);
 	border-color: var(--accent);
-	color: #fff;
+	color: var(--on-accent);
 }
 .added {
 	margin: 0;
