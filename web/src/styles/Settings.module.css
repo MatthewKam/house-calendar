@@ -44,11 +44,6 @@
 		0 0 0 3px var(--surface),
 		0 0 0 5px var(--accent);
 }
-.add {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
 /* Indented to line up with the name field, under the preview swatch. */
 .palette {
 	display: flex;

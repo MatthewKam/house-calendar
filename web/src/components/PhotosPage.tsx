@@ -6,7 +6,7 @@ import { useMediaQuery } from "../lib/useMediaQuery";
 import { useParent } from "../lib/useParent";
 import ConfirmDialog from "./ConfirmDialog";
 import Fab from "./Fab";
-import ScreenSaverSettings from "./ScreenSaverSettings";
+import ScreenSaverSettings from "./settings/ScreenSaverSettings";
 import sheet from "../styles/Sheet.module.css";
 import s from "../styles/Photos.module.css";
 import Sheet from "./Sheet";

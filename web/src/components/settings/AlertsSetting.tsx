@@ -1,5 +1,5 @@
-import type { PushState, usePush } from '../lib/usePush';
-import s from '../styles/MembersPanel.module.css';
+import type { PushState, usePush } from '../../lib/usePush';
+import s from '../../styles/Settings.module.css';
 
 /** The word beside Notifications in Settings while it's folded. */
 export const ALERTS_NOTE: Record<PushState, string> = {

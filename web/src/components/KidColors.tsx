@@ -5,7 +5,7 @@ import { useAuthStatus, useSetMemberColor } from "../lib/queries";
 import type { Member } from "../lib/types";
 import Sheet from "./Sheet";
 import sheet from "../styles/Sheet.module.css";
-import s from "../styles/MembersPanel.module.css";
+import s from "../styles/Settings.module.css";
 
 /**
  * An older kid's colors, on their own device: the buttons' color here (theirs to pick), and asking for

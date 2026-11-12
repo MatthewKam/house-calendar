@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "../lib/api";
-import { useAuthStatus } from "../lib/queries";
-import { ago } from "../lib/dates";
-import type { Member } from "../lib/types";
-import s from "../styles/Account.module.css";
-import panel from "../styles/MembersPanel.module.css";
-import ConfirmDialog from "./ConfirmDialog";
+import { api } from "../../lib/api";
+import { useAuthStatus } from "../../lib/queries";
+import { ago } from "../../lib/dates";
+import type { Member } from "../../lib/types";
+import s from "../../styles/Account.module.css";
+import panel from "../../styles/Settings.module.css";
+import ConfirmDialog from "../ConfirmDialog";
 
 /**
  * Settings → Calendars: each person's iCloud Calendar, connected with their Apple ID and an
