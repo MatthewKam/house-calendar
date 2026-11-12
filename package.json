@@ -15,7 +15,9 @@
     "start": "NODE_ENV=production tsx server/index.ts",
     "test": "vitest run",
     "check": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
@@ -46,6 +48,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.14.0",
     "light-my-request": "^6.8.0",
+    "prettier": "^3.10.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.2",
     "vite": "^8.3.3",

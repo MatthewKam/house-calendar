@@ -1,0 +1,8 @@
+# Written by hand or by a tool: left as they are.
+*.md
+package-lock.json
+data/
+web/dist/
+web/public/
+server/schema/
+docs/
