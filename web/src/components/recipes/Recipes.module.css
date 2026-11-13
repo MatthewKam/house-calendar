@@ -747,3 +747,24 @@
 	opacity: 1;
 	cursor: default;
 }
+
+/* Sent to Groceries: done, and the way to the list. */
+.sent {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem 0.8rem;
+	margin: 0;
+	padding: 0.6rem 0.8rem;
+	border-radius: var(--radius-sm);
+	background: var(--good-bg);
+	border: 1px solid var(--good-line);
+	color: var(--good);
+	font-weight: 650;
+}
+.sentLink {
+	color: var(--accent);
+	font-weight: 700;
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}

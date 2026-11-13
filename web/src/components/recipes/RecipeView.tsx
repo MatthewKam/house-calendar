@@ -91,6 +91,8 @@ export default function RecipeView({
 	const [deleting, setDeleting] = useState(false);
 	const [big, setBig] = useState<string | null>(null);
 	const [said, setSaid] = useState<string | null>(null);
+	// Sent to Groceries: how many went on (shown with a link to the list) until the ticks change.
+	const [sent, setSent] = useState<number | null>(null);
 	// Both asked every time (hooks can't be skipped).
 	const upright = useMediaQuery(PHONE);
 	const sideways = useMediaQuery(PHONE_SIDEWAYS);
@@ -164,7 +166,14 @@ export default function RecipeView({
 							i.group !== g ? null : (
 								<li key={n}>
 									<label className={s.check}>
-										<input type="checkbox" checked={ticked.includes(n)} onChange={() => setTicked(toggle(ticked, n))} />
+										<input
+											type="checkbox"
+											checked={ticked.includes(n)}
+											onChange={() => {
+												setTicked(toggle(ticked, n));
+												setSent(null);
+											}}
+										/>
 										<span>{ingredientLine(i, scale)}</span>
 									</label>
 								</li>
@@ -173,22 +182,36 @@ export default function RecipeView({
 					</ul>
 				</div>
 			))}
-			{!cooking && missing.length > 0 && (
-				<button
-					type="button"
-					className={s.cookButton}
-					disabled={groceries.isPending}
-					onClick={() =>
-						groceries.mutate(
-							missing.map(({ i }) => `${ingredientLine(i, scale)} · for ${r.title}`),
-							{
-								onSuccess: (n) => setSaid(n ? `Added ${n} to Groceries.` : 'They’re already on Groceries.'),
-							},
-						)
-					}
-				>
-					🛒 Add {missing.length} missing to Groceries
-				</button>
+			{/* Sending what's missing: the button says it's going, then that it's there, with the way to the list. */}
+			{!cooking && sent !== null ? (
+				<p className={s.sent} role="status">
+					✓ {sent ? `Sent ${sent} to Groceries` : 'Already on Groceries'}
+					<a href="#lists" className={s.sentLink}>
+						Open the list
+					</a>
+				</p>
+			) : (
+				!cooking &&
+				missing.length > 0 && (
+					<button
+						type="button"
+						className={s.cookButton}
+						disabled={groceries.isPending}
+						onClick={() =>
+							groceries.mutate(
+								missing.map(({ i }) => `${ingredientLine(i, scale)} · for ${r.title}`),
+								{
+									onSuccess: (n) => {
+										setSent(n);
+										setSaid(n ? `Added ${n} to Groceries.` : 'They’re already on Groceries.');
+									},
+								},
+							)
+						}
+					>
+						{groceries.isPending ? 'Sending to Groceries…' : `🛒 Add ${missing.length} missing to Groceries`}
+					</button>
+				)
 			)}
 		</section>
 	);
