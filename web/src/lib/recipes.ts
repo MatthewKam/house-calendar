@@ -23,9 +23,9 @@ export function amountText(n: number) {
 	return String(Math.round(n * 10) / 10);
 }
 
-/** One ingredient as a line, its amount scaled ("1 ½ cup soy sauce"). */
+/** One ingredient as a line, its amount scaled ("1 ½ cup soy sauce"); without an amount, just the words ("salt"). */
 export function ingredientLine(i: Ingredient, scale = 1) {
-	return [i.amount === null ? null : amountText(i.amount * scale), i.unit, i.item].filter(Boolean).join(' ');
+	return [i.amount ? amountText(i.amount * scale) : null, i.unit, i.item].filter(Boolean).join(' ');
 }
 
 const UNITS =
@@ -44,7 +44,8 @@ function parseAmount(words: string[]): [number | null, number] {
 		else break;
 		used++;
 	}
-	return used ? [total, used] : [null, 0];
+	// "0" is no amount, as is none.
+	return used ? [total || null, used] : [null, 0];
 }
 
 /**

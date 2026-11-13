@@ -113,9 +113,202 @@
 	font-size: 0.85rem;
 }
 
-/* ---- A recipe to cook from: bigger type for across the kitchen ---- */
+/* ---- A recipe to cook from: bigger type for across the kitchen, and wider on big screens ---- */
 .view {
 	font-size: 1.1rem;
+	width: min(64rem, 96vw);
+}
+/* The top: the photo beside what to know (big screens), or above it. */
+.top {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0.9rem;
+}
+@media (min-width: 701px) {
+	.top {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		align-items: start;
+	}
+	.topNoPhoto {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+.about {
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+}
+/* Ingredients and steps side by side (not on phones: they get tabs). */
+.columns {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+	gap: 1.5rem;
+	align-items: start;
+}
+.part {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.tabs {
+	display: flex;
+	padding: 0.15rem;
+	border-radius: var(--radius-round);
+	background: var(--bg);
+}
+.tabs button {
+	flex: 1;
+	border-radius: var(--radius-round);
+	font-weight: 700;
+	color: var(--muted);
+}
+.tabs button[aria-selected='true'] {
+	background: var(--surface);
+	color: var(--text);
+	box-shadow: var(--shadow-sm);
+}
+/* The ingredients: a row each with its box, the whole row to tap. */
+.checklist {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+.check {
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+	min-height: 2.75rem;
+	padding: 0.2rem 0;
+	border-bottom: 1px solid var(--line);
+	cursor: pointer;
+}
+.check input {
+	flex: none;
+	width: 1.4rem;
+	height: 1.4rem;
+	accent-color: var(--accent);
+}
+.check input:checked + span {
+	color: var(--muted);
+	text-decoration: line-through;
+}
+.iconButton {
+	display: grid;
+	place-items: center;
+	width: 2.75rem;
+	height: 2.75rem;
+	min-height: 0;
+	padding: 0;
+	background: none;
+	color: var(--muted);
+}
+.iconButton svg {
+	width: 1.4rem;
+	height: 1.4rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.startCooking {
+	align-self: flex-start;
+	min-height: 3rem;
+	padding: 0 1.6rem;
+	border-radius: var(--radius-round);
+	background: var(--accent);
+	color: var(--on-accent);
+	font-weight: 700;
+	font-size: 1.1rem;
+}
+.cookButton {
+	align-self: flex-start;
+	padding: 0 1rem;
+	border-radius: var(--radius-round);
+	border: 1px solid var(--line);
+	background: var(--surface);
+	color: var(--text);
+	font-weight: 650;
+}
+.said {
+	margin: 0;
+	color: var(--good);
+	font-weight: 600;
+}
+/* Cooking: the time since starting, timers, and Done cooking. */
+.cooking {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	padding: 0.8rem;
+	border-radius: var(--radius-sm);
+	background: var(--good-bg);
+	border: 1px solid var(--good-line);
+}
+.cookingRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.6rem;
+}
+.elapsed {
+	margin-right: auto;
+	font-size: 1.6rem;
+	font-weight: 750;
+	font-variant-numeric: tabular-nums;
+}
+.doneCooking {
+	composes: cookButton;
+}
+.timerPick {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: center;
+}
+.timerInput {
+	width: 4.5rem;
+	min-height: 2.75rem;
+	padding: 0 0.6rem;
+	font: inherit;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	color: var(--text);
+}
+.timers {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.timer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 0.3rem 0.3rem 0.3rem 0.8rem;
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	font-variant-numeric: tabular-nums;
+}
+/* Done: it stands out until it's put away. */
+.timerRang {
+	background: var(--warn-bg);
+	border: 1px solid var(--warn-line);
+	font-weight: 700;
+}
+.timerClose {
+	width: 2.75rem;
+	min-height: 2.75rem;
+	padding: 0;
+	background: none;
+	color: var(--muted);
+	font-size: 1.4rem;
 }
 .cover {
 	width: 100%;
@@ -186,13 +379,6 @@
 	margin: 0.4rem 0 0.2rem;
 	font-size: 0.95rem;
 	color: var(--muted);
-}
-.ingredients {
-	margin: 0;
-	padding-left: 1.2rem;
-	display: flex;
-	flex-direction: column;
-	gap: 0.3rem;
 }
 .steps {
 	list-style: none;

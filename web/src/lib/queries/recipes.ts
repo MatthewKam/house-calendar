@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type RecipeImage } from '../api';
-import type { Recipe, RecipeFields } from '../types';
+import type { Recipe, RecipeFields, SprigList } from '../types';
 import { putBack, showNow } from './shared';
 
 /** The recipe book, newest first. */
@@ -35,4 +35,28 @@ export function useRecipeActions() {
 			onSettled: refresh,
 		}),
 	};
+}
+
+/**
+ * What's missing for a recipe, onto the Groceries list (made if there isn't one): each a line, skipping
+ * any already on it and not ticked off. Answers how many went on.
+ */
+export function useAddToGroceries() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async (lines: string[]) => {
+			let lists = await api.lists();
+			let groceries = lists.find((l) => /^grocer(y|ies)$/i.test(l.title.trim()));
+			if (!groceries) {
+				lists = await api.addList('Groceries');
+				groceries = lists.find((l) => l.title === 'Groceries')!;
+			}
+			const already = new Set(groceries.items.filter((i) => !i.done).map((i) => i.title.toLowerCase()));
+			const adding = lines.filter((l) => !already.has(l.toLowerCase()));
+			let latest: SprigList[] = lists;
+			for (const title of adding) latest = await api.addListItem(groceries.id, { title });
+			qc.setQueryData(['lists'], latest);
+			return adding.length;
+		},
+	});
 }
