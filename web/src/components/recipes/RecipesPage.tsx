@@ -9,13 +9,16 @@ import AddRecipe from './AddRecipe';
 import RecipeView from './RecipeView';
 import s from './Recipes.module.css';
 
-/** The time chips: "fits in" this many minutes (2+ hrs: anything). */
-const TIMES: [string, number][] = [
-	['15 min', 15],
-	['30 min', 30],
-	['45 min', 45],
-	['1 hr', 60],
-	['2+ hrs', Infinity],
+/**
+ * The time there is, and which recipes fit it: up to so many minutes, or the long ones (over an hour). A
+ * recipe with no time given fits only "Any time".
+ */
+const TIMES: { label: string; fits: (minutes: number) => boolean }[] = [
+	{ label: 'Up to 15 min', fits: (m) => m <= 15 },
+	{ label: 'Up to 30 min', fits: (m) => m <= 30 },
+	{ label: 'Up to 45 min', fits: (m) => m <= 45 },
+	{ label: 'Up to 1 hr', fits: (m) => m <= 60 },
+	{ label: 'Over 1 hr', fits: (m) => m > 60 },
 ];
 
 /**
@@ -36,13 +39,14 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 	const dragging = useImageDrop(parent, takeDrop, notAPicture);
 	const [open, setOpen] = useState<string | null>(null);
 	// Filters: one chip from each row at most.
+	// Which of TIMES (its place), or null for any time.
 	const [time, setTime] = useState<number | null>(null);
 	const [tag, setTag] = useState<string | null>(null);
 	// The chips worth showing: the meals, proteins and types the book has.
 	const tags = [...new Set(recipes.flatMap((r) => [r.meal, ...r.proteins, ...r.types]))].sort();
 	const shown = recipes.filter(
 		(r) =>
-			(time === null || time === Infinity || (r.totalMinutes || Infinity) <= time) &&
+			(time === null || (!!r.totalMinutes && TIMES[time].fits(r.totalMinutes))) &&
 			(tag === null || r.meal === tag || r.proteins.includes(tag) || r.types.includes(tag)),
 	);
 	const opened = recipes.find((r) => r.id === open) ?? null;
@@ -68,9 +72,9 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 							onChange={(e) => setTime(e.target.value ? Number(e.target.value) : null)}
 						>
 							<option value="">Any time</option>
-							{TIMES.map(([label, minutes]) => (
-								<option key={label} value={String(minutes)}>
-									{label === '2+ hrs' ? 'Any length' : `Up to ${label}`}
+							{TIMES.map(({ label }, i) => (
+								<option key={label} value={String(i)}>
+									{label}
 								</option>
 							))}
 						</select>
