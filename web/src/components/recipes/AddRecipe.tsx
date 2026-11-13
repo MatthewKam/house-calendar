@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, problemText, type RecipeImage } from '../../lib/api';
 import { useRecipeActions, useRecipeReading } from '../../lib/queries';
 import { fromBase64, toJpeg } from '../../lib/recipes';
@@ -38,7 +38,16 @@ type Step =
  * Then it's checked and fixed before it's kept: nothing is saved until Save recipe. Without Claude on the
  * server, it's typed in (with the pictures kept).
  */
-export default function AddRecipe({ onClose, onAdded }: { onClose: () => void; onAdded: (r: Recipe) => void }) {
+export default function AddRecipe({
+	dropped,
+	onClose,
+	onAdded,
+}: {
+	/** Pictures dropped onto the page: read straight away. */
+	dropped?: File[] | null;
+	onClose: () => void;
+	onAdded: (r: Recipe) => void;
+}) {
 	const reading = useRecipeReading().data;
 	const { add } = useRecipeActions();
 	const [step, setStep] = useState<Step>({ kind: 'source' });
@@ -60,6 +69,15 @@ export default function AddRecipe({ onClose, onAdded }: { onClose: () => void; o
 			setStep({ kind: 'source' });
 		}
 	}
+
+	// Dropped pictures: read them once it's known whether Claude can (each drop once).
+	const handled = useRef<File[] | null>(null);
+	useEffect(() => {
+		if (!dropped?.length || !reading || handled.current === dropped) return;
+		handled.current = dropped;
+		void readPictures(dropped);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [dropped, reading]);
 
 	async function readLink() {
 		setProblem(null);

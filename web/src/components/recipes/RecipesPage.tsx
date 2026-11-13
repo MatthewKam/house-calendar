@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useImageDrop } from '../../lib/useFlyerDrop';
 import { useRecipes } from '../../lib/queries';
 import { minutesText } from '../../lib/recipes';
 import type { Recipe } from '../../lib/types';
@@ -25,6 +26,14 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 	const recipesQuery = useRecipes();
 	const recipes = recipesQuery.data ?? [];
 	const [adding, setAdding] = useState(false);
+	// Pictures dropped onto the page (a computer, or a tablet beside Photos): straight into reading.
+	const [dropped, setDropped] = useState<File[] | null>(null);
+	const takeDrop = useCallback((images: File[]) => {
+		setDropped(images.slice(0, 6));
+		setAdding(true);
+	}, []);
+	const notAPicture = useCallback(() => setDropped(null), []);
+	const dragging = useImageDrop(parent, takeDrop, notAPicture);
 	const [open, setOpen] = useState<string | null>(null);
 	// Filters: one chip from each row at most.
 	const [time, setTime] = useState<number | null>(null);
@@ -115,7 +124,21 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 				)}
 			</div>
 
-			{adding && <AddRecipe onClose={() => setAdding(false)} onAdded={(r) => setOpen(r.id)} />}
+			{adding && (
+				<AddRecipe
+					dropped={dropped}
+					onClose={() => {
+						setAdding(false);
+						setDropped(null);
+					}}
+					onAdded={(r) => setOpen(r.id)}
+				/>
+			)}
+			{dragging && (
+				<div className={s.drop} aria-live="polite">
+					<span className={s.dropBox}>Drop the recipe's pictures</span>
+				</div>
+			)}
 			{opened && <RecipeView recipe={opened} parent={parent} onClose={() => setOpen(null)} />}
 		</section>
 	);

@@ -196,7 +196,14 @@ export default function App() {
 	const takeFlyer = useCallback((photo: File) => setOpen({ kind: 'capture', photo }), []);
 	const notAPhoto = useCallback(() => setToast({ text: 'Drop a photo of the flyer (a JPEG, PNG or HEIC)' }), []);
 	const draggingFlyer = useFlyerDrop(
-		parentLock.parent && captureOn && !kidModeFor && !kidDevice && page !== 'photos' && open?.kind !== 'capture',
+		// Not on Photos or Recipes: they take dropped pictures themselves.
+		parentLock.parent &&
+			captureOn &&
+			!kidModeFor &&
+			!kidDevice &&
+			page !== 'photos' &&
+			page !== 'recipes' &&
+			open?.kind !== 'capture',
 		takeFlyer,
 		notAPhoto,
 	);
