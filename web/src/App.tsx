@@ -54,6 +54,7 @@ import Toast, { type ToastMessage } from './components/ui/Toast';
 import { UNASSIGNED } from './lib/color';
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery, NARROW } from './lib/useMediaQuery';
 import { useFlyerDrop } from './lib/useFlyerDrop';
+import { Loading, Skeleton } from './components/ui/Skeleton';
 import s from './App.module.css';
 
 // Loaded when first opened, so a phone opening the calendar doesn't download them: kid mode (with
@@ -559,8 +560,18 @@ export default function App() {
 							)}
 
 							<div className={s.body}>
-								{/* Wait for the saved view so the page doesn't flash Week before Month. */}
-								{settings.isPending ? null : view === 'month' && !phone ? (
+								{/* Wait for the saved view so the page doesn't flash Week before Month; until then, and
+								    while the events come in, a grid of grey days. */}
+								{settings.isPending || eventsQuery.isPending ? (
+									<Loading
+										label="Loading the calendar"
+										className={phone || view === 'week' ? s.calendarLoading : s.calendarLoadingMonth}
+									>
+										{Array.from({ length: phone || view === 'week' ? 7 : 35 }, (_, i) => (
+											<Skeleton key={i} height={phone || view === 'week' ? '4rem' : '5.5rem'} />
+										))}
+									</Loading>
+								) : view === 'month' && !phone ? (
 									<MonthView
 										days={days}
 										month={cursor.getMonth()}

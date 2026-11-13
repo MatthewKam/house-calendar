@@ -179,49 +179,8 @@ export interface Trip {
 	destination: string;
 }
 
-export interface Task {
-	id: string;
-	title: string;
-	/** Who does it; null means everyone, each ticking off their own. */
-	memberId: string | null;
-	/** Weekdays it's due: 0 = Sunday ... 6 = Saturday. */
-	days: number[];
-	sortOrder: number;
-	/** When it was added (UTC instant); days before that aren't counted as missed. */
-	createdAt: string;
-	/** Part of the day it's for; null means any time. */
-	time: TaskTime | null;
-	category: TaskCategory;
-	/** Counts toward the day's bar. Otherwise it's an extra worth `points`. */
-	required: boolean;
-	points: number;
-	/** An emoji shown before the title, or null. */
-	icon: string | null;
-	/** One-time: on the list until it's done or this day ends. Null: it repeats on `days`. */
-	dueBy: string | null;
-	/** One-time: the day each person did it (it's off their list after that day). */
-	doneOn: Record<string, string>;
-}
-
-export type TaskTime = 'morning' | 'evening';
-/**
- * Tasks are required: Daily ("non_negotiable", its stored name) or Chores. A goal ("bonus", its stored
- * name) is optional, ticked any day it's done for its points.
- */
-export type TaskCategory = 'non_negotiable' | 'chores' | 'bonus';
-
-export type TaskInput = Pick<
-	Task,
-	'title' | 'memberId' | 'days' | 'time' | 'category' | 'required' | 'points' | 'icon' | 'dueBy'
->;
-
-/** One check-off: this person did the task on this local day. */
-export interface TaskDone {
-	taskId: string;
-	memberId: string;
-	day: string;
-	/** Stars this tick earned (extras only). */ points?: number;
-}
+// Tasks, goals and check-offs: written once in shared/tasks.ts, for the server and here.
+export type { Task, TaskCategory, TaskDone, TaskInput, TaskPatch, TaskTime } from '../../../shared/tasks.ts';
 
 /** A synced (iCloud) calendar and how it shows on the wall. */
 export interface SyncedCalendar {

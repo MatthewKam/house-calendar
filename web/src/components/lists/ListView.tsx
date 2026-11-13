@@ -19,6 +19,7 @@ import SortableList, { type HandleProps } from '../ui/SortableList';
 import { GripIcon } from '../ui/icons';
 import sheet from '../ui/Sheet.module.css';
 import { ago } from '../../lib/dates';
+import { Loading, Skeleton } from '../ui/Skeleton';
 import s from './ListView.module.css';
 import { useParent } from '../../lib/useParent';
 import { textOn } from '../../lib/color';
@@ -335,7 +336,8 @@ export default function ListView() {
 	// Lists hidden from the wall, by name (lowercase, so a renamed capital doesn't bring one back).
 	const hidden = (useSettings().data?.hiddenLists as string[] | undefined) ?? [];
 	const setSetting = useSetSetting();
-	const lists = [...(useLists().data ?? []), ...(useReminders().data?.lists ?? [])];
+	const ownQuery = useLists();
+	const lists = [...(ownQuery.data ?? []), ...(useReminders().data?.lists ?? [])];
 	const [choosing, setChoosing] = useState(false);
 	const [adding, setAdding] = useState(false);
 	const isHidden = (title: string) => hidden.includes(title.toLowerCase());
@@ -375,7 +377,15 @@ export default function ListView() {
 					))}
 				</div>
 			)}
-			<Lists hidden={isHidden} onNew={parent ? () => setAdding(true) : undefined} />
+			{/* Loading: list-shaped blocks, not "no lists yet". */}
+			{ownQuery.isPending ? (
+				<Loading label="Loading lists" className={s.loading}>
+					<Skeleton height="14rem" />
+					<Skeleton height="14rem" />
+				</Loading>
+			) : (
+				<Lists hidden={isHidden} onNew={parent ? () => setAdding(true) : undefined} />
+			)}
 			{adding && <NewListSheet onClose={() => setAdding(false)} />}
 		</section>
 	);

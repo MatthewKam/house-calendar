@@ -1,24 +1,22 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
-import { DAY, DAY_VALUE, memberExists, noneOrMember } from './schemas.ts';
+import { memberExists, noneOrMember, schemaOf } from './schemas.ts';
 import { bucket, coverShortfall } from './rewards.ts';
 import { localDay } from './stages.ts';
+import {
+	TaskDoneParams,
+	TaskDoneRange,
+	TaskInput,
+	TaskOrder,
+	TaskPatch,
+	type Task,
+	type TaskCategory,
+	type TaskDone,
+	type TaskTime,
+} from '../shared/tasks.ts';
+import type { z } from 'zod';
 
-const WEEKDAYS = {
-	type: 'array',
-	minItems: 1,
-	maxItems: 7,
-	items: { type: 'integer', minimum: 0, maximum: 6 },
-} as const;
-const TITLE = { type: 'string', minLength: 1, maxLength: 80 } as const;
-
-type Time = 'morning' | 'evening';
-/**
- * Tasks are required for the day: Daily ("non_negotiable", its stored name) or Chores. Goals
- * ("bonus", their stored name) are optional, ticked any day they're done for their points.
- */
-type Category = 'non_negotiable' | 'chores' | 'bonus';
 /** Goals on a kid's list at once, counting ones for everyone. */
 export const MAX_GOALS = 5;
 interface TaskRow {
@@ -28,52 +26,21 @@ interface TaskRow {
 	days: string;
 	sort_order: number;
 	created_at: string;
-	time: Time | null;
-	category: Category;
+	time: TaskTime | null;
+	category: TaskCategory;
 	required: number;
 	points: number;
 	icon: string | null;
 	due_by: string | null;
 }
-/**
- * memberId null: everyone in the family does it, each ticking off their own.
- * required: counts toward the day's bar; otherwise it's an extra worth `points`.
- */
-interface TaskInput {
-	title: string;
-	memberId: string | null;
-	days: number[];
-	time: Time | null;
-	category: Category;
-	required: boolean;
-	points: number;
-	/** An emoji shown before the title, or null. */
-	icon: string | null;
-	/** One-time: the last day it can be done. Null: it repeats on its weekdays. */
-	dueBy: string | null;
-}
-const WHO = { type: ['string', 'null'] } as const;
-const TASK_PROPS = {
-	title: TITLE,
-	memberId: WHO,
-	days: WEEKDAYS,
-	time: { enum: ['morning', 'evening', null] },
-	category: { enum: ['non_negotiable', 'chores', 'bonus'] },
-	required: { type: 'boolean' },
-	points: { type: 'integer', minimum: 0, maximum: 1000 },
-	// One emoji, possibly several code points long (skin tones, ZWJ sequences).
-	icon: { type: ['string', 'null'], maxLength: 16 },
-	dueBy: { type: ['string', 'null'], pattern: DAY },
-} as const;
-
 /** Tasks are always required; goals never are, and only goals carry points. */
-function rules(category: Category, points: number) {
+function rules(category: TaskCategory, points: number) {
 	const req = category !== 'bonus';
 	return { required: req, points: req ? 0 : points };
 }
 
 /** `doneOn`: for a one-time task, the day each person did it (it's off their list after that day). */
-const toTask = (r: TaskRow, doneOn: Record<string, string> = {}) => ({
+const toTask = (r: TaskRow, doneOn: Record<string, string> = {}): Task => ({
 	id: r.id,
 	title: r.title,
 	memberId: r.member_id,
@@ -137,22 +104,14 @@ export function registerTasks(app: FastifyInstance, db: DB) {
 	app.post<{ Body: TaskInput }>(
 		'/api/tasks',
 		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['title', 'memberId', 'days'],
-					additionalProperties: false,
-					properties: TASK_PROPS,
-				},
-			},
+			schema: { body: schemaOf(TaskInput) },
 		},
 		async (req, reply) => {
 			if (!noneOrMember(db, req.body.memberId)) return reply.code(400).send({ error: 'Unknown member' });
 			const id = randomUUID();
 			const next = (db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 AS n FROM tasks').get() as { n: number }).n;
-			const category = req.body.category ?? 'non_negotiable';
-			const r = rules(category, req.body.points ?? 0);
-			const dueBy = req.body.dueBy ?? null;
+			const { category, dueBy } = req.body;
+			const r = rules(category, req.body.points);
 			if (!r.required && tooManyGoals(req.body.memberId)) return reply.code(409).send({ error: GOALS_FULL });
 			db.prepare(
 				`INSERT INTO tasks (id, title, member_id, days, sort_order, time, category, required, points, icon, due_by)
@@ -163,7 +122,7 @@ export function registerTasks(app: FastifyInstance, db: DB) {
 				req.body.memberId,
 				dueBy ? ALL_DAYS : daysText(req.body.days),
 				next,
-				req.body.time ?? null,
+				req.body.time,
 				category,
 				r.required ? 1 : 0,
 				r.points,
@@ -175,10 +134,10 @@ export function registerTasks(app: FastifyInstance, db: DB) {
 		},
 	);
 
-	app.patch<{ Params: { id: string }; Body: Partial<TaskInput> }>(
+	app.patch<{ Params: { id: string }; Body: TaskPatch }>(
 		'/api/tasks/:id',
 		{
-			schema: { body: { type: 'object', additionalProperties: false, minProperties: 1, properties: TASK_PROPS } },
+			schema: { body: schemaOf(TaskPatch, { minProperties: 1 }) },
 		},
 		async (req, reply) => {
 			const row = get(req.params.id);
@@ -221,14 +180,10 @@ export function registerTasks(app: FastifyInstance, db: DB) {
 	});
 
 	// Check-offs between two local days, end exclusive.
-	app.get<{ Querystring: { from: string; to: string } }>(
+	app.get<{ Querystring: z.infer<typeof TaskDoneRange> }>(
 		'/api/tasks/done',
-		{
-			schema: {
-				querystring: { type: 'object', required: ['from', 'to'], properties: { from: DAY_VALUE, to: DAY_VALUE } },
-			},
-		},
-		async (req) =>
+		{ schema: { querystring: schemaOf(TaskDoneRange) } },
+		async (req): Promise<TaskDone[]> =>
 			(
 				db
 					.prepare('SELECT task_id, member_id, day, points FROM task_done WHERE day >= ? AND day < ? ORDER BY day')
@@ -237,18 +192,9 @@ export function registerTasks(app: FastifyInstance, db: DB) {
 	);
 
 	// New order for tasks: ids in the order they should be listed. Others keep their place after them.
-	app.put<{ Body: { ids: string[] } }>(
+	app.put<{ Body: z.infer<typeof TaskOrder> }>(
 		'/api/tasks/order',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['ids'],
-					additionalProperties: false,
-					properties: { ids: { type: 'array', maxItems: 1000, items: { type: 'string' } } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(TaskOrder) } },
 		async (req) => {
 			const rest = (db.prepare('SELECT id FROM tasks ORDER BY sort_order, created_at').all() as { id: string }[])
 				.map((r) => r.id)
@@ -260,11 +206,8 @@ export function registerTasks(app: FastifyInstance, db: DB) {
 	);
 
 	// Check off (PUT) or un-check (DELETE) a task for one person on one day. Both are safe to repeat.
-	type DoneParams = { id: string; memberId: string; day: string };
-	const doneParams = {
-		type: 'object',
-		properties: { id: { type: 'string' }, memberId: { type: 'string' }, day: DAY_VALUE },
-	} as const;
+	type DoneParams = z.infer<typeof TaskDoneParams>;
+	const doneParams = schemaOf(TaskDoneParams);
 	app.put<{ Params: DoneParams }>(
 		'/api/tasks/:id/done/:memberId/:day',
 		{ schema: { params: doneParams } },

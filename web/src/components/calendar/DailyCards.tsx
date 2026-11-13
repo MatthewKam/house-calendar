@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useDaily } from '../../lib/queries';
+import { Loading, SkeletonLines } from '../ui/Skeleton';
 import s from './DailyCards.module.css';
 
 /**
@@ -7,8 +8,21 @@ import s from './DailyCards.module.css';
  * day; a card that couldn't be fetched just isn't shown.
  */
 export default function DailyCards({ today }: { today: string }) {
-	const daily = useDaily(today).data;
+	const dailyQuery = useDaily(today);
+	const daily = dailyQuery.data;
 	const [revealed, setRevealed] = useState<string | null>(null);
+	if (dailyQuery.isPending) {
+		return (
+			<>
+				<Loading label="Loading the dad joke" className={s.card}>
+					<SkeletonLines count={2} />
+				</Loading>
+				<Loading label="Loading the quote" className={s.card}>
+					<SkeletonLines count={3} />
+				</Loading>
+			</>
+		);
+	}
 	if (!daily) return null;
 	const { joke, quote } = daily;
 	// "Question? Answer": the answer waits for a tap.

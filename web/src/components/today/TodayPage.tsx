@@ -9,13 +9,14 @@ import { firstName } from '../../lib/people';
 import type { CalEvent, Member } from '../../lib/types';
 import type { Page } from '../nav/NavBar';
 import { DayCalendar } from '../ui/DayCarousel';
-import ForecastCard from './ForecastCard';
+import ForecastCard, { ForecastLoading } from './ForecastCard';
 import PhotoCard from '../photos/PhotoCard';
 import KidsToday from './KidsToday';
 import NeedsYou from './NeedsYou';
 import SpecialDays from './SpecialDays';
 import { packed } from '../calendar/EventChecklist';
 import { forecastBadge } from '../calendar/EventForecast';
+import { Loading, Skeleton } from '../ui/Skeleton';
 import s from './Today.module.css';
 
 interface Props {
@@ -63,10 +64,12 @@ export default function TodayPage({
 	const now = useNow();
 	const day = fromDayKey(today);
 	const meMember = members.find((m) => m.id === me) ?? null;
-	const weather = useWeather().data;
+	const weatherQuery = useWeather();
+	const weather = weatherQuery.data;
 
 	// The week ahead: today, tomorrow and the five days after.
-	const events = useRangeEvents(day, WEEK).data ?? [];
+	const eventsQuery = useRangeEvents(day, WEEK);
+	const events = eventsQuery.data ?? [];
 	// The weather at the ones far from home (the server leaves out nearby ones).
 	const away = useEventWeather(events.filter((e) => e.location && !e.busy).map((e) => e.id)).data ?? {};
 	const ended = (e: CalEvent) => (e.allDay ? e.end <= today : Date.parse(e.end) <= now.getTime());
@@ -195,10 +198,24 @@ export default function TodayPage({
 	// left. Otherwise one list.
 	const calendarCard = (
 		<section className={`${s.card} ${s.wide}`} aria-label="Calendar">
-			<DayCalendar days={calendar} styles={s} stacked={twoColumns} />
+			{/* Loading: a few event-shaped rows, so the calendar isn't "nothing today" before it knows. */}
+			{eventsQuery.isPending ? (
+				<Loading label="Loading the calendar">
+					<Skeleton width="60%" height="2.4rem" round />
+					<Skeleton height="3.6rem" />
+					<Skeleton height="3.6rem" />
+					<Skeleton height="3.6rem" />
+				</Loading>
+			) : (
+				<DayCalendar days={calendar} styles={s} stacked={twoColumns} />
+			)}
 		</section>
 	);
-	const weatherCard = weather && <ForecastCard weather={weather} />;
+	const weatherCard = weather ? (
+		<ForecastCard weather={weather} />
+	) : weatherQuery.isPending ? (
+		<ForecastLoading />
+	) : null;
 	const specialCard = <SpecialDays today={today} onAdd={onAddSpecial} />;
 	const kidsCard = <KidsToday today={today} members={members} parent={parent} onPage={onPage} />;
 	const needsCard = <NeedsYou me={me} onPage={onPage} />;
@@ -239,6 +256,11 @@ export default function TodayPage({
 						{longDate(now)} · <span className={s.nowrap}>{timeLabel(now)}</span>
 					</div>
 				</div>
+				{weatherQuery.isPending && (
+					<Loading label="Loading the weather" className={s.headWeather}>
+						<Skeleton width="4.5rem" height="2.2rem" />
+					</Loading>
+				)}
 				{weather && look && (
 					<div className={s.headWeather} aria-label={`${weather.temp}°, feels like ${weather.feels}°, ${look.label}`}>
 						<span className={s.headIcon} aria-hidden="true">

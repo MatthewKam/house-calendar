@@ -5,6 +5,7 @@ import { keys, useAuthStatus } from '../../lib/queries';
 import PinScreen from './PinScreen';
 import SignIn from './SignIn';
 import Welcome from './Welcome';
+import a from './Account.module.css';
 
 /**
  * Shows the app once this device is in a household; before that, signing in, then starting or
@@ -26,7 +27,14 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 		qc.setQueryData(['auth'], s);
 	};
 
-	if (status.isPending) return null;
+	// Checking who this is: Sprig's name, gently pulsing, so the first moment isn't a blank page.
+	if (status.isPending) {
+		return (
+			<div className={a.screen} role="status" aria-label="Opening Sprig">
+				<img src="/wordmark.svg" alt="" className={`${a.wordmark} ${a.opening}`} />
+			</div>
+		);
+	}
 	const s = status.data;
 	// Can't reach the server: show what the app last had (it opens offline).
 	if (!s) return <>{children}</>;

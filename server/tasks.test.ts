@@ -22,11 +22,29 @@ describe('tasks', () => {
 		});
 		expect(created.statusCode).toBe(201);
 		const task = json(created);
-		expect(task).toMatchObject({ title: 'Feed the dog', memberId: riley, days: [0, 3, 6] });
+		// What it didn't say is filled in (shared/tasks.ts): a Daily task, any time, no points or icon.
+		expect(task).toMatchObject({
+			title: 'Feed the dog',
+			memberId: riley,
+			days: [0, 3, 6],
+			time: null,
+			category: 'non_negotiable',
+			required: true,
+			points: 0,
+			icon: null,
+			dueBy: null,
+		});
 		expect(Date.parse(task.createdAt)).not.toBeNaN();
 
 		const edited = json(await app.inject({ method: 'PATCH', url: `/api/tasks/${task.id}`, payload: { days: [1, 4] } }));
-		expect(edited.days).toEqual([1, 4]);
+		// An edit changes only what it sends; nothing's filled in.
+		expect(edited).toMatchObject({ days: [1, 4], title: 'Feed the dog', category: 'non_negotiable' });
+		const evening = { method: 'PATCH', url: `/api/tasks/${task.id}`, payload: { time: 'evening' } } as const;
+		expect(json(await app.inject(evening))).toMatchObject({ time: 'evening', days: [1, 4] });
+		expect((await app.inject({ method: 'PATCH', url: `/api/tasks/${task.id}`, payload: {} })).statusCode).toBe(400);
+		expect(
+			(await app.inject({ method: 'PATCH', url: `/api/tasks/${task.id}`, payload: { time: 'noon' } })).statusCode,
+		).toBe(400);
 		expect((await app.inject({ method: 'DELETE', url: `/api/tasks/${task.id}` })).statusCode).toBe(204);
 		expect(json(await app.inject({ url: '/api/tasks' }))).toEqual([]);
 	});

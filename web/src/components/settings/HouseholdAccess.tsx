@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type AuthStatus } from '../../lib/api';
 import { useAuthStatus } from '../../lib/queries';
 import { ago } from '../../lib/dates';
+import { Loading, Skeleton, SkeletonLines } from '../ui/Skeleton';
 import s from '../account/Account.module.css';
 import panel from './Settings.module.css';
 import ConfirmDialog from '../ui/ConfirmDialog';
@@ -57,7 +58,17 @@ export default function HouseholdAccess() {
 		setNewName('');
 	}
 
-	if (!data || !me) return null;
+	if (!me) return null;
+	// Loading who's in the household: rows in their shape.
+	if (!data) {
+		return (
+			<Loading label="Loading users">
+				<SkeletonLines count={2} />
+				<Skeleton height="2.6rem" />
+				<Skeleton height="2.6rem" />
+			</Loading>
+		);
+	}
 	return (
 		<section className={panel.bare}>
 			{me.role === 'guardian' && me.kind === 'user' && (

@@ -345,3 +345,16 @@
 	font-weight: 700;
 	color: var(--accent);
 }
+
+/* The calendar loading: grey days, a week's rows (one a day) or a month's grid (seven across). */
+.calendarLoading {
+	flex: 1;
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.4rem;
+	padding: 0.5rem 0;
+}
+.calendarLoadingMonth {
+	composes: calendarLoading;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+}

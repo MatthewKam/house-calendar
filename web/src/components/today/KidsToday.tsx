@@ -8,6 +8,7 @@ import type { Member } from '../../lib/types';
 import type { Page } from '../nav/NavBar';
 import MomentDialog from '../tasks/MomentDialog';
 import { StarIcon } from '../ui/icons';
+import { Loading, Skeleton } from '../ui/Skeleton';
 import s from './Today.module.css';
 
 /**
@@ -29,7 +30,8 @@ export default function KidsToday({
 	const day = fromDayKey(today);
 	// The kids: today's tasks, stickers and stars.
 	const kids = members.filter(isKid);
-	const tasks = useTasks().data ?? [];
+	const tasksQuery = useTasks();
+	const tasks = tasksQuery.data ?? [];
 	const thisWeek = useMemo(() => startOfWeek(day), [today]); // eslint-disable-line react-hooks/exhaustive-deps
 	const done = useTasksDone(thisWeek).data ?? [];
 	const progress = taskProgress(
@@ -53,41 +55,54 @@ export default function KidsToday({
 						</button>
 					)}
 				</div>
-				<ul className={s.kids}>
-					{kids.map((k) => {
-						const p = progress.get(k.id);
-						const pct = percent(p);
-						const stickers = moments.filter((mo) => mo.memberId === k.id);
-						const stars = buckets.find((b) => b.memberId === k.id)?.stars ?? 0;
-						const hasTasks = tasksFor(tasks, k.id).length > 0;
-						return (
-							<li key={k.id}>
-								<button
-									type="button"
-									className={s.kid}
-									onClick={() => onPage('tasks')}
-									style={{ '--c': k.color, '--p': `${pct}%` } as CSSProperties}
-								>
-									<span className={s.kidName}>{k.name}</span>
-									<span className={s.kidBar} aria-hidden="true">
-										<span />
-									</span>
-									<span className={s.kidMeta}>
-										{!hasTasks || !p ? 'No tasks today' : pct === 100 ? 'All done! 🎉' : `${p.done} of ${p.due} tasks`}
-										{stickers.length > 0 && (
-											<span className={s.stickers} aria-label={`${stickers.length} caught being good`}>
-												{stickers.map((mo) => momentKind(mo.kind).emoji).join('')}
-											</span>
-										)}
-										<span className={s.stars}>
-											<StarIcon className={s.star} /> {stars}
+				{/* Loading: a bar for each kid, so "No tasks today" doesn't flash first. */}
+				{tasksQuery.isPending ? (
+					<Loading label="Loading the kids' day">
+						{kids.map((k) => (
+							<Skeleton key={k.id} height="3.4rem" />
+						))}
+					</Loading>
+				) : (
+					<ul className={s.kids}>
+						{kids.map((k) => {
+							const p = progress.get(k.id);
+							const pct = percent(p);
+							const stickers = moments.filter((mo) => mo.memberId === k.id);
+							const stars = buckets.find((b) => b.memberId === k.id)?.stars ?? 0;
+							const hasTasks = tasksFor(tasks, k.id).length > 0;
+							return (
+								<li key={k.id}>
+									<button
+										type="button"
+										className={s.kid}
+										onClick={() => onPage('tasks')}
+										style={{ '--c': k.color, '--p': `${pct}%` } as CSSProperties}
+									>
+										<span className={s.kidName}>{k.name}</span>
+										<span className={s.kidBar} aria-hidden="true">
+											<span />
 										</span>
-									</span>
-								</button>
-							</li>
-						);
-					})}
-				</ul>
+										<span className={s.kidMeta}>
+											{!hasTasks || !p
+												? 'No tasks today'
+												: pct === 100
+													? 'All done! 🎉'
+													: `${p.done} of ${p.due} tasks`}
+											{stickers.length > 0 && (
+												<span className={s.stickers} aria-label={`${stickers.length} caught being good`}>
+													{stickers.map((mo) => momentKind(mo.kind).emoji).join('')}
+												</span>
+											)}
+											<span className={s.stars}>
+												<StarIcon className={s.star} /> {stars}
+											</span>
+										</span>
+									</button>
+								</li>
+							);
+						})}
+					</ul>
+				)}
 			</section>
 			{catching && <MomentDialog kids={kids} today={today} onClose={() => setCatching(false)} />}
 		</>

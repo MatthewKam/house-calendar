@@ -4,6 +4,7 @@ import { usePhotos } from '../../lib/queries';
 import { useScreenSaverSettings } from '../../lib/useScreenSaverSettings';
 import { preload, slideSeconds } from '../../lib/photos';
 import type { Photo } from '../../lib/types';
+import { Loading, Skeleton } from '../ui/Skeleton';
 import s from './PhotoCard.module.css';
 import { shuffle } from '../../lib/random';
 
@@ -139,6 +140,14 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 			setBig(true);
 	}
 
+	// Loading: the card's own shape, grey, until the album comes in.
+	if (!all) {
+		return (
+			<Loading label="Loading photos" className={`${s.card} ${className ?? ''}`}>
+				<Skeleton height="12rem" />
+			</Loading>
+		);
+	}
 	if (!current) return null;
 	return (
 		<div

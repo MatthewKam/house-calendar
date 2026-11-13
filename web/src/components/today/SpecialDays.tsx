@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { addDays, dayKey, fromDayKey } from '../../lib/dates';
 import { useMembers, useRangeEvents } from '../../lib/queries';
 import { birthdays, sleepsUntil, specialDaysBetween, type SpecialDay } from '../../lib/specialDays';
+import { Loading, Skeleton } from '../ui/Skeleton';
 import s from './Today.module.css';
 
 /** Special days this far ahead, and at most this many of them. */
@@ -19,7 +20,8 @@ export default function SpecialDays({ today, onAdd }: { today: string; onAdd?: (
 	const people = useMembers().data ?? [];
 	const start = useMemo(() => fromDayKey(today), [today]);
 	const to = dayKey(addDays(start, SPECIAL_DAYS_AHEAD));
-	const events = useRangeEvents(start, SPECIAL_DAYS_AHEAD + 1).data ?? [];
+	const eventsQuery = useRangeEvents(start, SPECIAL_DAYS_AHEAD + 1);
+	const events = eventsQuery.data ?? [];
 	// Each special one once, on its first day.
 	const special: SpecialDay[] = events
 		.filter((e) => e.special && !e.busy)
@@ -43,7 +45,13 @@ export default function SpecialDays({ today, onAdd }: { today: string; onAdd?: (
 					</button>
 				)}
 			</div>
-			{days.length === 0 ? (
+			{eventsQuery.isPending ? (
+				<Loading label="Loading special days">
+					<Skeleton height="3rem" />
+					<Skeleton height="3rem" />
+					<Skeleton height="3rem" />
+				</Loading>
+			) : days.length === 0 ? (
 				<p className={s.none}>Nothing special in the next two months yet.</p>
 			) : (
 				<ul className={s.specials}>

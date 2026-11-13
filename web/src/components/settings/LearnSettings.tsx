@@ -4,6 +4,7 @@ import LearnSounds from './LearnSounds';
 import Switch from '../ui/Switch';
 import { useChangeLearnDay, useLearn, useSetLearn } from '../../lib/queries';
 import type { LearnState, LearnToday, Member } from '../../lib/types';
+import { Loading, Skeleton } from '../ui/Skeleton';
 import s from './Settings.module.css';
 
 /** The word beside Learning in Settings while it's folded: who has it on. */
@@ -57,9 +58,18 @@ function todayLine(d: LearnToday) {
  * to move it up); here a grown-up can move it up or down.
  */
 export default function LearnSettings({ members, today }: { members: Member[]; today: string }) {
-	const kids = useLearn(today).data ?? [];
+	const learnQuery = useLearn(today);
+	const kids = learnQuery.data ?? [];
 	const set = useSetLearn(today);
 	const change = useChangeLearnDay(today);
+	if (learnQuery.isPending) {
+		return (
+			<Loading label="Loading Learning">
+				<Skeleton height="3rem" />
+				<Skeleton height="3rem" />
+			</Loading>
+		);
+	}
 	if (kids.length === 0) return <p className={s.hint}>Add a kid with a birthday first.</p>;
 	return (
 		<section className={s.bare}>

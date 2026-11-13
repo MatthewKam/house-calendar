@@ -10,6 +10,7 @@ import { sky } from '../../lib/weather';
 import { DayCalendar } from '../ui/DayCarousel';
 import TodayAnimal from './TodayAnimal';
 import { bringPicture } from '../calendar/EventChecklist';
+import { Loading, Skeleton } from '../ui/Skeleton';
 import s from './KidMode.module.css';
 import g from './KidToday.module.css';
 import { isKid } from '../../lib/people';
@@ -71,14 +72,23 @@ const partOfDay = (iso: string) => {
  */
 export default function KidToday({ today, kid }: { today: string; kid: Member }) {
 	const little = (kid.stage ?? 'little') === 'little';
-	const weather = useWeather().data;
+	const weatherQuery = useWeather();
+	const weather = weatherQuery.data;
 	const lists = useLists().data ?? [];
 	// Anything on a list for them, due today and not done yet.
 	const remember = lists
 		.flatMap((l) => l.items)
 		.filter((i) => !i.done && i.memberId === kid.id && i.due && dueOn(i, today));
 	const from = useMemo(() => fromDayKey(today), [today]);
-	const events = useRangeEvents(from, DAYS).data ?? [];
+	const eventsQuery = useRangeEvents(from, DAYS);
+	const events = eventsQuery.data ?? [];
+	// Loading: big grey shapes, not "Nothing on the calendar" before it knows.
+	const loadingDay = (
+		<Loading label="Loading the calendar">
+			<Skeleton height="5rem" />
+			<Skeleton height="5rem" />
+		</Loading>
+	);
 	const now = Date.now();
 	// Only the ones they're on (not ones for everyone or no one in particular).
 	const mine = events.filter((e) => !e.busy && e.memberIds.includes(kid.id));
@@ -123,39 +133,47 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 				days={[
 					{
 						label: 'Today',
-						body:
-							todays.length === 0 ? (
-								// Nothing on today: an animal to tap instead.
-								<>
-									<TodayAnimal />
-									<p className={s.none}>Nothing on the calendar today.</p>
-								</>
-							) : (
-								<ul className={g.events}>{todays.map((e) => event(e))}</ul>
-							),
+						body: eventsQuery.isPending ? (
+							loadingDay
+						) : todays.length === 0 ? (
+							// Nothing on today: an animal to tap instead.
+							<>
+								<TodayAnimal />
+								<p className={s.none}>Nothing on the calendar today.</p>
+							</>
+						) : (
+							<ul className={g.events}>{todays.map((e) => event(e))}</ul>
+						),
 					},
 					{
 						label: 'Tomorrow',
-						body:
-							tomorrows.length === 0 ? (
-								<p className={s.none}>Nothing on tomorrow.</p>
-							) : (
-								<ul className={g.events}>{tomorrows.map((e) => event(e))}</ul>
-							),
+						body: eventsQuery.isPending ? (
+							loadingDay
+						) : tomorrows.length === 0 ? (
+							<p className={s.none}>Nothing on tomorrow.</p>
+						) : (
+							<ul className={g.events}>{tomorrows.map((e) => event(e))}</ul>
+						),
 					},
 					{
 						label: 'Later this week',
-						body:
-							later.length === 0 ? (
-								<p className={s.none}>Nothing later this week.</p>
-							) : (
-								<ul className={g.events}>{later.map(({ e, day }) => event(e, day))}</ul>
-							),
+						body: eventsQuery.isPending ? (
+							loadingDay
+						) : later.length === 0 ? (
+							<p className={s.none}>Nothing later this week.</p>
+						) : (
+							<ul className={g.events}>{later.map(({ e, day }) => event(e, day))}</ul>
+						),
 					},
 				]}
 			/>
 			{remember.length > 0 && <Remember items={remember} />}
 			{weather && <WhatToWear weather={weather} />}
+			{weatherQuery.isPending && (
+				<Loading label="Loading the weather">
+					<Skeleton height="9rem" />
+				</Loading>
+			)}
 			<SpecialDays today={today} kidId={kid.id} />
 			{/* Last, each across the whole width. */}
 			<Card label="Kind words" item={kindWordsFor(today)} />

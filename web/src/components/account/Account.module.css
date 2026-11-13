@@ -199,3 +199,18 @@
 	margin: 0.4rem 0 0;
 	font-size: 0.95rem;
 }
+
+/* Opening the app (AuthGate, while it checks who this is): the name, gently pulsing. */
+.opening {
+	animation: opening 1.6s ease-in-out infinite;
+}
+@keyframes opening {
+	50% {
+		opacity: 0.45;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.opening {
+		animation: none;
+	}
+}
