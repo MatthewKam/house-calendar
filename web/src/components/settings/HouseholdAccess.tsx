@@ -4,6 +4,7 @@ import { api, type AuthStatus } from '../../lib/api';
 import { useAuthStatus } from '../../lib/queries';
 import { ago } from '../../lib/dates';
 import { Loading, Skeleton, SkeletonLines } from '../ui/Skeleton';
+import Problem, { loadProblem } from '../ui/Problem';
 import s from '../account/Account.module.css';
 import panel from './Settings.module.css';
 import ConfirmDialog from '../ui/ConfirmDialog';
@@ -25,7 +26,8 @@ export default function HouseholdAccess() {
 	const [handing, setHanding] = useState<{ id: string; name: string } | null>(null);
 	// The account holder clearing another guardian's forgotten PIN, while that's asked.
 	const [clearing, setClearing] = useState<{ id: string; name: string } | null>(null);
-	const data = useQuery({ queryKey: ['account', 'household'], queryFn: api.household }).data;
+	const householdQuery = useQuery({ queryKey: ['account', 'household'], queryFn: api.household });
+	const data = householdQuery.data;
 	const refresh = () => qc.invalidateQueries({ queryKey: ['account'] });
 	const [issued, setIssued] = useState<{ code: string; expiresAt: string; what: string } | null>(null);
 	const invite = useMutation({
@@ -59,6 +61,11 @@ export default function HouseholdAccess() {
 	}
 
 	if (!me) return null;
+	if (householdQuery.isError) {
+		return (
+			<Problem message={loadProblem('users', householdQuery.error)} onRetry={() => void householdQuery.refetch()} />
+		);
+	}
 	// Loading who's in the household: rows in their shape.
 	if (!data) {
 		return (

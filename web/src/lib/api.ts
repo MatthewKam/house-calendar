@@ -38,22 +38,44 @@ import type {
 	LearnDayChange,
 } from './types';
 
+/**
+ * A problem worth showing as it is: the server's own reason, or one of the plain ones below. Anything
+ * else that goes wrong (a bug) is shown as "Something went wrong" instead of its technical message.
+ */
+export class SprigError extends Error {}
+
+/** The words for a problem: its own if it's one to show (SprigError), else the fallback. */
+export const problemText = (err: unknown, fallback = 'Something went wrong.') =>
+	err instanceof SprigError ? err.message : fallback;
+
+/** What the app says when it can't get through, or the server falls over without saying why. */
+export const OFFLINE = "Couldn't reach Sprig. Check the connection and try again.";
+const SERVER_PROBLEM = "Something went wrong on Sprig's side. Try again in a moment.";
+
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
-	const res = await fetch(url, {
-		method,
-		signal,
-		headers: body === undefined ? {} : { 'content-type': 'application/json' },
-		body: body === undefined ? undefined : JSON.stringify(body),
-	});
+	let res: Response;
+	try {
+		res = await fetch(url, {
+			method,
+			signal,
+			headers: body === undefined ? {} : { 'content-type': 'application/json' },
+			body: body === undefined ? undefined : JSON.stringify(body),
+		});
+	} catch (err) {
+		// Stopped on purpose (a newer lookup took over): passed on as it is.
+		if ((err as Error).name === 'AbortError') throw err;
+		throw new SprigError(OFFLINE);
+	}
 	if (!res.ok) {
 		// Signed out (or taken out of the household): the app shows the sign-in screen.
 		if (res.status === 401 && !/^\/api\/(auth|account)\//.test(url))
 			window.dispatchEvent(new Event('household:signed-out'));
+		// The server's own reason when it gave one; otherwise a plain one, not a status code.
 		const msg = await res.json().then(
 			(j) => j.error ?? j.message,
-			() => res.statusText,
+			() => null,
 		);
-		throw new Error(msg);
+		throw new SprigError(msg || (res.status >= 500 ? SERVER_PROBLEM : `Something went wrong (${res.status}).`));
 	}
 	return res.status === 204 ? (undefined as T) : res.json();
 }
@@ -211,7 +233,7 @@ export const api = {
 			body: audio,
 		});
 		if (!res.ok)
-			throw new Error(
+			throw new SprigError(
 				await res.json().then(
 					(j) => j.error ?? j.message,
 					() => res.statusText,

@@ -8,6 +8,7 @@ import { Who, dayAndTime, shortDay, toDate } from './JarBits';
 import Fab from '../nav/Fab';
 import { useParent } from '../../lib/useParent';
 import { Loading, Skeleton } from '../ui/Skeleton';
+import Problem, { loadProblem } from '../ui/Problem';
 import s from './Rewards.module.css';
 
 interface Props {
@@ -59,7 +60,13 @@ export default function RewardsPage({ today, members }: Props) {
 			</header>
 
 			<div className={s.scroll}>
-				{jarsQuery.isPending ? (
+				{jarsQuery.isError ? (
+					<Problem
+						kind="page"
+						message={loadProblem('reward jars', jarsQuery.error)}
+						onRetry={() => void jarsQuery.refetch()}
+					/>
+				) : jarsQuery.isPending ? (
 					<Loading label="Loading reward jars" className={s.kids}>
 						<Skeleton height="12rem" />
 						<Skeleton height="12rem" />

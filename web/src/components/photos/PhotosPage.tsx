@@ -9,6 +9,7 @@ import Fab from '../nav/Fab';
 import ScreenSaverSettings from '../settings/ScreenSaverSettings';
 import sheet from '../ui/Sheet.module.css';
 import { Loading, Skeleton } from '../ui/Skeleton';
+import Problem, { loadProblem } from '../ui/Problem';
 import s from './Photos.module.css';
 import Sheet from '../ui/Sheet';
 
@@ -337,7 +338,13 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 				</ul>
 			)}
 
-			{photosQuery.isPending ? (
+			{photosQuery.isError ? (
+				<Problem
+					kind="page"
+					message={loadProblem('photos', photosQuery.error)}
+					onRetry={() => void photosQuery.refetch()}
+				/>
+			) : photosQuery.isPending ? (
 				<Loading label="Loading photos" className={s.grid}>
 					{Array.from({ length: 8 }, (_, i) => (
 						<Skeleton key={i} height="9rem" />

@@ -3,9 +3,11 @@ import { createRoot } from 'react-dom/client';
 import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import AuthGate from './components/account/AuthGate';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 import './styles/app.css';
 import { guardTouch } from './lib/touchGuard';
 import { keys } from './lib/queries';
+import { problemText } from './lib/api';
 
 const queryClient = new QueryClient({
 	// Edits show straight away and save in the background; if a save fails, the screen goes back and
@@ -16,7 +18,7 @@ const queryClient = new QueryClient({
 			if (/Sign in/.test(err.message) || mutation.meta?.inline) return;
 			// Refused because this device is locked (it timed out, say): show it as locked again.
 			if (/^Locked/.test(err.message)) void queryClient.invalidateQueries({ queryKey: keys.auth });
-			window.dispatchEvent(new CustomEvent('household:save-failed', { detail: err.message }));
+			window.dispatchEvent(new CustomEvent('household:save-failed', { detail: problemText(err) }));
 		},
 	}),
 	// Refresh when the app comes back into view: a phone pauses it (and its refresh timers) in the
@@ -49,9 +51,12 @@ guardTouch();
 createRoot(document.getElementById('app')!).render(
 	<StrictMode>
 		<QueryClientProvider client={queryClient}>
-			<AuthGate>
-				<App />
-			</AuthGate>
+			{/* The last resort: anything that breaks and isn't caught nearer shows a message with Reload. */}
+			<ErrorBoundary what="Sprig" kind="app">
+				<AuthGate>
+					<App />
+				</AuthGate>
+			</ErrorBoundary>
 		</QueryClientProvider>
 	</StrictMode>,
 );

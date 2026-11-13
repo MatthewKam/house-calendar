@@ -358,3 +358,14 @@
 	composes: calendarLoading;
 	grid-template-columns: repeat(7, minmax(0, 1fr));
 }
+
+/* A pop-up that broke: its message floats over the page, with Close. */
+.popupProblem {
+	position: fixed;
+	left: 50%;
+	bottom: calc(5rem + env(safe-area-inset-bottom));
+	translate: -50% 0;
+	z-index: var(--layer-toast);
+	width: min(26rem, calc(100% - 2rem));
+	box-shadow: var(--shadow-lg);
+}

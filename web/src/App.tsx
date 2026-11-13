@@ -22,7 +22,7 @@ import DayPanel from './components/calendar/DayPanel';
 import EventDialog from './components/calendar/EventDialog';
 import TasksPage from './components/tasks/TasksPage';
 import TodayPage from './components/today/TodayPage';
-import NavBar from './components/nav/NavBar';
+import NavBar, { type Page } from './components/nav/NavBar';
 import LeaveAlerts from './components/calendar/LeaveAlerts';
 import NowLine from './components/calendar/NowLine';
 import WeatherCard from './components/calendar/WeatherCard';
@@ -55,6 +55,8 @@ import { UNASSIGNED } from './lib/color';
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery, NARROW } from './lib/useMediaQuery';
 import { useFlyerDrop } from './lib/useFlyerDrop';
 import { Loading, Skeleton } from './components/ui/Skeleton';
+import ErrorBoundary from './components/ui/ErrorBoundary';
+import Problem, { loadProblem } from './components/ui/Problem';
 import s from './App.module.css';
 
 // Loaded when first opened, so a phone opening the calendar doesn't download them: kid mode (with
@@ -102,6 +104,16 @@ type Open =
 	| { kind: 'good' }
 	/** Say it, or Snap a flyer (with its photo). */
 	| { kind: 'capture'; photo?: File };
+
+/** Each page, as a message names it ("Something went wrong with Tasks"). */
+const PAGE_NAMES: Record<Page, string> = {
+	today: 'Today',
+	calendar: 'the calendar',
+	tasks: 'Tasks',
+	lists: 'Lists',
+	rewards: 'Rewards',
+	photos: 'Photos',
+};
 
 export default function App() {
 	const today = useToday();
@@ -375,17 +387,19 @@ export default function App() {
 			<>
 				{/* Wait for the family, so it doesn't flash "No kids yet". */}
 				{members.length > 0 && (
-					<Suspense fallback={null}>
-						<KidMode
-							today={today}
-							kids={kidView}
-							members={members}
-							onLeave={leaveKidMode}
-							startWith={kidModeFor ?? undefined}
-							askPin={!!signedIn && signedIn.guardianPins > 0}
-							ownDevice={!!kidDevice}
-						/>
-					</Suspense>
+					<ErrorBoundary what="kid mode" kind="kid" onLeave={leaveKidMode}>
+						<Suspense fallback={null}>
+							<KidMode
+								today={today}
+								kids={kidView}
+								members={members}
+								onLeave={leaveKidMode}
+								startWith={kidModeFor ?? undefined}
+								askPin={!!signedIn && signedIn.guardianPins > 0}
+								ownDevice={!!kidDevice}
+							/>
+						</Suspense>
+					</ErrorBoundary>
 				)}
 				{open?.kind === 'kidModeLeave' && (
 					<GrownUpPin
@@ -477,215 +491,234 @@ export default function App() {
 					}
 				/>
 				<div className={s.shell}>
-					{page === 'today' ? (
-						<TodayPage
-							today={today}
-							members={members}
-							me={signedIn?.memberId ?? null}
-							parent={parentLock.parent}
-							onPage={setPage}
-							onOpenEvent={(event) => openEvent(event, event.allDay ? event.start : dayKey(new Date(event.start)))}
-							onAddSpecial={parentLock.parent ? () => setOpen({ kind: 'event', day: today, special: true }) : undefined}
-							onPlaySlideshow={saver.show}
-						/>
-					) : page === 'tasks' ? (
-						<TasksPage
-							today={today}
-							members={members}
-							focus={focus.length === 1 ? focus[0] : null}
-							locked={!parentLock.parent}
-							onAdd={(memberId, goal) => setOpen({ kind: 'task', memberId, goal })}
-							onEdit={(task) => setOpen({ kind: 'task', task })}
-						/>
-					) : page === 'lists' ? (
-						<ListView />
-					) : page === 'rewards' ? (
-						<RewardsPage today={today} members={members} />
-					) : page === 'photos' ? (
-						<Suspense fallback={null}>
-							<PhotosPage onPreview={saver.show} incoming={pickedPhotos} onTaken={() => setPickedPhotos(null)} />
-						</Suspense>
-					) : (
-						<>
-							<div className={s.monthHeaderTitle}>
-								<div>
-									<h1 className={s.monthTitle}>
-										<strong>{month}</strong>
-									</h1>
-									<NowLine />
-								</div>
-								{people}
-							</div>
-							<header className={s.header}>
-								<div className={s.group}>
-									<div className={s.segmented} role="group" aria-label="View">
-										{VIEWS.map(([v, label]) => (
-											<button
-												key={v}
-												className={view === v ? s.on : ''}
-												aria-pressed={view === v}
-												onClick={() => changeView(v)}
-											>
-												{label}
-											</button>
-										))}
-									</div>
-									{/* ‹ Today › and the dates move to the next line together when there's no room. */}
-									<div className={s.stepper}>
-										<button className={s.pill} onClick={() => step(-1)} aria-label={`Previous ${unit}`}>
-											‹
-										</button>
-										<button className={s.pill} onClick={goToday}>
-											Today
-										</button>
-										<button className={s.pill} onClick={() => step(1)} aria-label={`Next ${unit}`}>
-											›
-										</button>
-										<h1 className={s.title}>
-											{view === 'month' ? cursor.getFullYear() : `${fmt(days[0])} – ${fmt(days[6])}`}
+					<ErrorBoundary what={PAGE_NAMES[page]} kind="page" resetKey={page}>
+						{page === 'today' ? (
+							<TodayPage
+								today={today}
+								members={members}
+								me={signedIn?.memberId ?? null}
+								parent={parentLock.parent}
+								onPage={setPage}
+								onOpenEvent={(event) => openEvent(event, event.allDay ? event.start : dayKey(new Date(event.start)))}
+								onAddSpecial={
+									parentLock.parent ? () => setOpen({ kind: 'event', day: today, special: true }) : undefined
+								}
+								onPlaySlideshow={saver.show}
+							/>
+						) : page === 'tasks' ? (
+							<TasksPage
+								today={today}
+								members={members}
+								focus={focus.length === 1 ? focus[0] : null}
+								locked={!parentLock.parent}
+								onAdd={(memberId, goal) => setOpen({ kind: 'task', memberId, goal })}
+								onEdit={(task) => setOpen({ kind: 'task', task })}
+							/>
+						) : page === 'lists' ? (
+							<ListView />
+						) : page === 'rewards' ? (
+							<RewardsPage today={today} members={members} />
+						) : page === 'photos' ? (
+							<Suspense fallback={null}>
+								<PhotosPage onPreview={saver.show} incoming={pickedPhotos} onTaken={() => setPickedPhotos(null)} />
+							</Suspense>
+						) : (
+							<>
+								<div className={s.monthHeaderTitle}>
+									<div>
+										<h1 className={s.monthTitle}>
+											<strong>{month}</strong>
 										</h1>
+										<NowLine />
 									</div>
+									{people}
 								</div>
-							</header>
+								<header className={s.header}>
+									<div className={s.group}>
+										<div className={s.segmented} role="group" aria-label="View">
+											{VIEWS.map(([v, label]) => (
+												<button
+													key={v}
+													className={view === v ? s.on : ''}
+													aria-pressed={view === v}
+													onClick={() => changeView(v)}
+												>
+													{label}
+												</button>
+											))}
+										</div>
+										{/* ‹ Today › and the dates move to the next line together when there's no room. */}
+										<div className={s.stepper}>
+											<button className={s.pill} onClick={() => step(-1)} aria-label={`Previous ${unit}`}>
+												‹
+											</button>
+											<button className={s.pill} onClick={goToday}>
+												Today
+											</button>
+											<button className={s.pill} onClick={() => step(1)} aria-label={`Next ${unit}`}>
+												›
+											</button>
+											<h1 className={s.title}>
+												{view === 'month' ? cursor.getFullYear() : `${fmt(days[0])} – ${fmt(days[6])}`}
+											</h1>
+										</div>
+									</div>
+								</header>
 
-							{eventsQuery.isError && (
-								<div className={s.banner}>Can't reach the calendar service ({eventsQuery.error.message})</div>
-							)}
-							{sync?.lastError && (
-								<div className={s.banner}>Calendar sync failed: {sync.lastError}. Showing what was last synced.</div>
-							)}
-							<OutboxNotices />
-							{sync?.peopleError && (
-								<div className={s.banner}>Couldn't sort new events by person: {sync.peopleError}</div>
-							)}
+								{eventsQuery.isError && (
+									<div className={s.banner}>Can't reach the calendar service ({eventsQuery.error.message})</div>
+								)}
+								{sync?.lastError && (
+									<div className={s.banner}>Calendar sync failed: {sync.lastError}. Showing what was last synced.</div>
+								)}
+								<OutboxNotices />
+								{sync?.peopleError && (
+									<div className={s.banner}>Couldn't sort new events by person: {sync.peopleError}</div>
+								)}
 
-							<div className={s.body}>
-								{/* Wait for the saved view so the page doesn't flash Week before Month; until then, and
+								<div className={s.body}>
+									{/* Wait for the saved view so the page doesn't flash Week before Month; until then, and
 								    while the events come in, a grid of grey days. */}
-								{settings.isPending || eventsQuery.isPending ? (
-									<Loading
-										label="Loading the calendar"
-										className={phone || view === 'week' ? s.calendarLoading : s.calendarLoadingMonth}
-									>
-										{Array.from({ length: phone || view === 'week' ? 7 : 35 }, (_, i) => (
-											<Skeleton key={i} height={phone || view === 'week' ? '4rem' : '5.5rem'} />
-										))}
-									</Loading>
-								) : view === 'month' && !phone ? (
-									<MonthView
-										days={days}
-										month={cursor.getMonth()}
-										today={today}
-										selected={selected}
-										events={events}
-										members={members}
-										onSelect={setSelected}
-										onOpen={openEvent}
-									/>
-								) : (
-									<WeekView
-										days={listDays}
-										today={today}
-										selected={selected}
-										events={events}
-										members={members}
-										onSelect={setSelected}
-										onOpen={openEvent}
-										footer={view === 'week' && narrow ? cards : undefined}
-									/>
-								)}
-								{selected && (
-									<DayPanel
-										shown={shown}
-										day={selected}
-										today={today}
-										members={members}
-										onAdd={parentLock.parent ? (day) => setOpen({ kind: 'event', day }) : undefined}
-										onOpen={openEvent}
-										onClose={() => setSelected(null)}
-									/>
-								)}
-							</div>
-							{view === 'week' && !narrow && !settings.isPending && cards}
-						</>
-					)}
+									{eventsQuery.isError ? (
+										<Problem
+											kind="page"
+											message={loadProblem('the calendar', eventsQuery.error)}
+											onRetry={() => void eventsQuery.refetch()}
+										/>
+									) : settings.isPending || eventsQuery.isPending ? (
+										<Loading
+											label="Loading the calendar"
+											className={phone || view === 'week' ? s.calendarLoading : s.calendarLoadingMonth}
+										>
+											{Array.from({ length: phone || view === 'week' ? 7 : 35 }, (_, i) => (
+												<Skeleton key={i} height={phone || view === 'week' ? '4rem' : '5.5rem'} />
+											))}
+										</Loading>
+									) : view === 'month' && !phone ? (
+										<MonthView
+											days={days}
+											month={cursor.getMonth()}
+											today={today}
+											selected={selected}
+											events={events}
+											members={members}
+											onSelect={setSelected}
+											onOpen={openEvent}
+										/>
+									) : (
+										<WeekView
+											days={listDays}
+											today={today}
+											selected={selected}
+											events={events}
+											members={members}
+											onSelect={setSelected}
+											onOpen={openEvent}
+											footer={view === 'week' && narrow ? cards : undefined}
+										/>
+									)}
+									{selected && (
+										<DayPanel
+											shown={shown}
+											day={selected}
+											today={today}
+											members={members}
+											onAdd={parentLock.parent ? (day) => setOpen({ kind: 'event', day }) : undefined}
+											onOpen={openEvent}
+											onClose={() => setSelected(null)}
+										/>
+									)}
+								</div>
+								{view === 'week' && !narrow && !settings.isPending && cards}
+							</>
+						)}
+					</ErrorBoundary>
 				</div>
 			</div>
 
-			{dialog && (
-				<EventDialog
-					key={dialog.event?.id ?? `${dialog.day}${dialog.special ? '-special' : ''}`}
-					day={dialog.day}
-					event={dialog.event}
-					special={dialog.special}
-					members={members}
-					onSave={save}
-					onDelete={remove}
-					onClose={close}
-					canEditSynced={!!sync?.canWrite}
-					locked={!parentLock.parent}
-				/>
-			)}
-
-			{taskDialog && (
-				<TaskDialog
-					key={taskDialog.task?.id ?? taskDialog.memberId ?? 'new'}
-					task={taskDialog.task}
-					memberId={
-						taskDialog.memberId ??
-						// One person picked: new tasks start out as theirs.
-						(focus.length === 1 ? (focus[0] === EVERYONE ? null : focus[0]) : undefined)
-					}
-					blank={taskDialog.blank}
-					goal={taskDialog.goal}
-					members={members}
-					onSave={saveTaskInput}
-					onDelete={removeTask}
-					onClose={close}
-				/>
-			)}
-
-			{open?.kind === 'unlock' && <ParentUnlock onClose={close} onDone={open.then} />}
-			{open?.kind === 'kidModeStart' && (
-				<KidModeStart
-					kids={kids}
-					needsPin={!!signedIn && signedIn.guardianPins === 0}
-					onPick={(id) => {
-						close();
-						setKidMode(id);
-					}}
-					onClose={close}
-				/>
-			)}
-			{open?.kind === 'settings' && (
-				<Suspense fallback={null}>
-					<Settings
+			{/* Pop-ups: one that breaks says so, with Close, and the page under it carries on. */}
+			<ErrorBoundary
+				what="this window"
+				className={s.popupProblem}
+				resetKey={open ?? dialog ?? taskDialog}
+				retryLabel="Close"
+				onRetry={close}
+			>
+				{dialog && (
+					<EventDialog
+						key={dialog.event?.id ?? `${dialog.day}${dialog.special ? '-special' : ''}`}
+						day={dialog.day}
+						event={dialog.event}
+						special={dialog.special}
 						members={members}
-						// Kid mode starts from Settings (Screen); a kid's own device is in it already.
-						onKidMode={kids.length && signedIn?.role !== 'kid' ? () => setOpen({ kind: 'kidModeStart' }) : undefined}
+						onSave={save}
+						onDelete={remove}
+						onClose={close}
+						canEditSynced={!!sync?.canWrite}
+						locked={!parentLock.parent}
+					/>
+				)}
+
+				{taskDialog && (
+					<TaskDialog
+						key={taskDialog.task?.id ?? taskDialog.memberId ?? 'new'}
+						task={taskDialog.task}
+						memberId={
+							taskDialog.memberId ??
+							// One person picked: new tasks start out as theirs.
+							(focus.length === 1 ? (focus[0] === EVERYONE ? null : focus[0]) : undefined)
+						}
+						blank={taskDialog.blank}
+						goal={taskDialog.goal}
+						members={members}
+						onSave={saveTaskInput}
+						onDelete={removeTask}
 						onClose={close}
 					/>
-				</Suspense>
-			)}
+				)}
 
-			{open?.kind === 'list' && (
-				<AddToListSheet
-					onClose={close}
-					onNewList={() => {
-						close();
-						setPage('lists');
-					}}
-				/>
-			)}
-			{open?.kind === 'good' && <MomentDialog kids={kids} today={today} onClose={close} />}
-			{draggingFlyer && (
-				<div className={s.flyerDrop} aria-live="polite">
-					<span className={s.flyerDropBox}>Drop the flyer to read it</span>
-				</div>
-			)}
-			{open?.kind === 'capture' && (
-				<CaptureSheet photo={open.photo} members={members} onClose={close} onAdded={(text) => setToast({ text })} />
-			)}
+				{open?.kind === 'unlock' && <ParentUnlock onClose={close} onDone={open.then} />}
+				{open?.kind === 'kidModeStart' && (
+					<KidModeStart
+						kids={kids}
+						needsPin={!!signedIn && signedIn.guardianPins === 0}
+						onPick={(id) => {
+							close();
+							setKidMode(id);
+						}}
+						onClose={close}
+					/>
+				)}
+				{open?.kind === 'settings' && (
+					<Suspense fallback={null}>
+						<Settings
+							members={members}
+							// Kid mode starts from Settings (Screen); a kid's own device is in it already.
+							onKidMode={kids.length && signedIn?.role !== 'kid' ? () => setOpen({ kind: 'kidModeStart' }) : undefined}
+							onClose={close}
+						/>
+					</Suspense>
+				)}
+
+				{open?.kind === 'list' && (
+					<AddToListSheet
+						onClose={close}
+						onNewList={() => {
+							close();
+							setPage('lists');
+						}}
+					/>
+				)}
+				{open?.kind === 'good' && <MomentDialog kids={kids} today={today} onClose={close} />}
+				{draggingFlyer && (
+					<div className={s.flyerDrop} aria-live="polite">
+						<span className={s.flyerDropBox}>Drop the flyer to read it</span>
+					</div>
+				)}
+				{open?.kind === 'capture' && (
+					<CaptureSheet photo={open.photo} members={members} onClose={close} onAdded={(text) => setToast({ text })} />
+				)}
+			</ErrorBoundary>
 
 			{/* The round + at the bottom right: add an event or a task (phones have the bar's + instead). */}
 			{/* Adding needs a parent (the lock in the left bar). */}
