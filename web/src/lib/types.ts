@@ -54,9 +54,13 @@ export interface Member {
 	guardian: boolean;
 	/** A new color waiting for the account holder to approve, and who asked (server/members.ts). */
 	colorAsked: { color: string; by: string | null } | null;
+	/** What they're allergic to: "peanuts", "milk", or their own words (recipes flag it; lib/allergies.ts). */
+	allergies: string[];
 }
 
-export type MemberPatch = Partial<Pick<Member, 'name' | 'color' | 'birthdate'>> & { stage?: Stage | null };
+export type MemberPatch = Partial<Pick<Member, 'name' | 'color' | 'birthdate' | 'allergies'>> & {
+	stage?: Stage | null;
+};
 
 /**
  * A reward jar. Kids put stars from their bucket in it (they can't take them back out); once it's full

@@ -768,3 +768,29 @@
 	text-decoration: underline;
 	text-underline-offset: 0.2em;
 }
+
+/* Someone's allergy: the banner up top (who and what), a mark on the ingredient, and on the book's card. */
+.allergyBanner {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	padding: 0.7rem 0.9rem;
+	border-radius: var(--radius-sm);
+	background: var(--danger-bg);
+	border: 1px solid var(--danger-line);
+	color: var(--danger-strong);
+}
+.allergyBanner span {
+	font-size: 0.85rem;
+	color: var(--danger);
+}
+.allergyMark {
+	margin-left: auto;
+	color: var(--danger);
+	font-weight: 700;
+}
+.cardWarn {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--danger);
+}

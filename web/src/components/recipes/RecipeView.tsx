@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useAddToGroceries, useAuthStatus, useMembers, useRecipeActions } from '../../lib/queries';
 import { coverOf, ingredientLine, mealPicture, minutesText, toJpeg } from '../../lib/recipes';
+import { flags } from '../../lib/allergies';
 import type { Member, Recipe } from '../../lib/types';
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
 import { useWakeLock } from '../../lib/useWakeLock';
@@ -60,6 +61,9 @@ export default function RecipeView({
 	};
 	// Ratings: everyone in the family. Each changes their own; a parent a kid's; the account holder anyone's.
 	const people = useMembers().data ?? [];
+	// Anyone's allergies in it: who and what, and which ingredient rows.
+	const allergyFlags = flags(r.ingredients, people);
+	const flaggedRows = new Set(allergyFlags.flatMap((f) => f.allergies.flatMap((a) => a.rows)));
 	const auth = useAuthStatus().data;
 	const canRate = (m: Member) =>
 		!auth?.signedIn || auth.holder || auth.memberId === m.id || (auth.parent && !m.guardian);
@@ -175,6 +179,11 @@ export default function RecipeView({
 											}}
 										/>
 										<span>{ingredientLine(i, scale)}</span>
+										{flaggedRows.has(n) && (
+											<span className={s.allergyMark} title="Someone's allergy">
+												⚠
+											</span>
+										)}
 									</label>
 								</li>
 							),
@@ -286,6 +295,16 @@ export default function RecipeView({
 						</span>
 					)}
 					<div className={s.about}>
+						{allergyFlags.length > 0 && (
+							<div className={s.allergyBanner} role="note">
+								{allergyFlags.map((f) => (
+									<b key={f.person.id}>
+										⚠ {f.person.name}: {f.allergies.map((a) => a.name).join(', ')}
+									</b>
+								))}
+								<span>Going by the ingredients' words: a help, not a guarantee. Check labels too.</span>
+							</div>
+						)}
 						{(!!r.totalMinutes || !!r.activeMinutes || r.servings !== null) && (
 							<div className={s.meta}>
 								{!!r.totalMinutes && <span>⏱ {minutesText(r.totalMinutes)}</span>}

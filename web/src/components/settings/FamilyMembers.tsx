@@ -5,6 +5,7 @@ import { useAuthStatus, useSetMemberColor, useUpdateMember } from '../../lib/que
 import { STAGE_AGES, STAGE_LIST, STAGE_NAMES } from '../../lib/stages';
 import type { Member, MemberPatch, Stage } from '../../lib/types';
 import ColorAsked from '../account/ColorAsked';
+import { COMMON_ALLERGIES, allergyEmoji } from '../../lib/allergies';
 import DateInput from '../ui/DateInput';
 import sheet from '../ui/Sheet.module.css';
 import s from './Settings.module.css';
@@ -61,19 +62,30 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 	// Signed out there's no holder. A grown-up's color is only theirs to change.
 	const holder = !auth?.signedIn || auth.holder;
 	const canColor = (m: Member) => !auth?.signedIn || !m.guardian || m.id === auth.memberId;
-	// Person being edited (opened with the pencil), one at a time. Name, color, birthday and stage are
-	// saved together with Save, and Cancel drops them all.
+	// Person being edited (opened with the pencil), one at a time. Name, color, birthday, stage and
+	// allergies are saved together with Save, and Cancel drops them all.
 	const [editing, setEditing] = useState<{
 		id: string;
 		name: string;
 		color: string;
 		birthdate: string;
 		stage: Stage | null;
+		allergies: string[];
 	} | null>(null);
+	// An allergy of their own being typed (one that isn't in the common ones).
+	const [ownAllergy, setOwnAllergy] = useState('');
 	// Whose color set is showing (a member id), or null.
 	const [openSet, setOpenSet] = useState<string | null>(null);
 	function startEdit(m: Member) {
-		setEditing({ id: m.id, name: m.name, color: m.color, birthdate: m.birthdate ?? '', stage: m.stageChosen });
+		setEditing({
+			id: m.id,
+			name: m.name,
+			color: m.color,
+			birthdate: m.birthdate ?? '',
+			stage: m.stageChosen,
+			allergies: m.allergies,
+		});
+		setOwnAllergy('');
 		setOpenSet(null);
 	}
 	function stopEdit() {
@@ -88,6 +100,7 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 		if (name && name !== m.name) patch.name = name;
 		if ((editing.birthdate || null) !== m.birthdate) patch.birthdate = editing.birthdate || null;
 		if (editing.stage !== m.stageChosen) patch.stage = editing.stage;
+		if (editing.allergies.join() !== m.allergies.join()) patch.allergies = editing.allergies;
 		if (Object.keys(patch).length) updateMember.mutate({ id: m.id, patch });
 		if (editing.color !== m.color) setColor.mutate({ id: m.id, color: editing.color, holder });
 		stopEdit();
@@ -150,6 +163,7 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 										<span className={s.nameText}>
 											{m.name}
 											{m.stage && <span className={s.stageTag}>{STAGE_NAMES[m.stage]}</span>}
+											{m.allergies.length > 0 && <span className={s.allergyTag}>⚠ {m.allergies.join(', ')}</span>}
 										</span>
 										<button
 											type="button"
@@ -192,6 +206,70 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 											))}
 										</select>
 									</label>
+								</div>
+							)}
+							{/* Allergies: the common ones to tap, and their own; recipes flag them. */}
+							{isEditing && (
+								<div className={s.allergies} role="group" aria-label={`${m.name}'s allergies`}>
+									<span className={s.allergiesLabel}>Allergies</span>
+									<div className={s.allergyChips}>
+										{[
+											...COMMON_ALLERGIES.map((a) => a.name),
+											...editing.allergies.filter((a) => !COMMON_ALLERGIES.some((c) => c.name === a)),
+										].map((name) => {
+											const on = editing.allergies.includes(name);
+											return (
+												<button
+													key={name}
+													type="button"
+													className={s.allergyChip}
+													aria-pressed={on}
+													onClick={() =>
+														setEditing({
+															...editing,
+															allergies: on
+																? editing.allergies.filter((a) => a !== name)
+																: [...editing.allergies, name],
+														})
+													}
+												>
+													{allergyEmoji(name)} {name}
+												</button>
+											);
+										})}
+									</div>
+									<div className={s.row}>
+										<input
+											className={s.name}
+											placeholder="Another one (strawberries)"
+											aria-label="Another allergy"
+											value={ownAllergy}
+											maxLength={40}
+											onChange={(e) => setOwnAllergy(e.target.value)}
+											onKeyDown={(e) => {
+												if (e.key !== 'Enter') return;
+												e.preventDefault();
+												const a = ownAllergy.trim().toLowerCase();
+												if (a && !editing.allergies.includes(a))
+													setEditing({ ...editing, allergies: [...editing.allergies, a] });
+												setOwnAllergy('');
+											}}
+										/>
+										<button
+											type="button"
+											className={sheet.secondary}
+											disabled={!ownAllergy.trim()}
+											onClick={() => {
+												const a = ownAllergy.trim().toLowerCase();
+												if (a && !editing.allergies.includes(a))
+													setEditing({ ...editing, allergies: [...editing.allergies, a] });
+												setOwnAllergy('');
+											}}
+										>
+											Add
+										</button>
+									</div>
+									<p className={s.hint}>Recipes flag them. A help, not a guarantee: check labels too.</p>
 								</div>
 							)}
 							{!isEditing && m.colorAsked && <ColorAsked member={m} />}

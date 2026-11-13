@@ -868,6 +868,10 @@ const migrations: string[] = [
     PRIMARY KEY (recipe_id, member_id)
   );
   `,
+	// Each person's allergies (JSON: names like "peanuts", "milk", or their own), so recipes can flag them.
+	`
+  ALTER TABLE members ADD COLUMN allergies TEXT NOT NULL DEFAULT '[]';
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

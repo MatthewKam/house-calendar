@@ -1,4 +1,4 @@
--- A household's database (server/db.ts), at version 54. Written by server/schema.test.ts; don't edit by hand.
+-- A household's database (server/db.ts), at version 55. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
@@ -257,7 +257,7 @@ CREATE TABLE members (
     color       TEXT NOT NULL,
     sort_order  INTEGER NOT NULL DEFAULT 0,
     created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-  , birthdate TEXT, stage TEXT CHECK (stage IN ('little','early','middle','tween','teen','adult')));
+  , birthdate TEXT, stage TEXT CHECK (stage IN ('little','early','middle','tween','teen','adult')), allergies TEXT NOT NULL DEFAULT '[]');
 
 CREATE TABLE "moments" (
     id          TEXT PRIMARY KEY,

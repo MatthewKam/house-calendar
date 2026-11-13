@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useImageDrop } from '../../lib/useFlyerDrop';
-import { useRecipes } from '../../lib/queries';
+import { useMembers, useRecipes } from '../../lib/queries';
+import { flags } from '../../lib/allergies';
 import { coverOf, mealPicture, minutesText } from '../../lib/recipes';
 import type { Recipe } from '../../lib/types';
 import { Loading, Skeleton } from '../ui/Skeleton';
@@ -152,6 +153,9 @@ const capital = (w: string | null) => (w ? w[0].toUpperCase() + w.slice(1) : nul
 
 /** A recipe in the book: its picture, name, time and kind. */
 function RecipeCard({ recipe: r, onOpen }: { recipe: Recipe; onOpen: () => void }) {
+	// Someone's allergy in it: a ⚠ on the card, with who.
+	const people = useMembers().data ?? [];
+	const warn = flags(r.ingredients, people).map((f) => f.person.name);
 	const cover = coverOf(r);
 	return (
 		<button type="button" className={s.card} onClick={onOpen}>
@@ -165,6 +169,7 @@ function RecipeCard({ recipe: r, onOpen }: { recipe: Recipe; onOpen: () => void 
 			)}
 			<span className={s.cardText}>
 				<span className={s.cardTitle}>{r.title}</span>
+				{warn.length > 0 && <span className={s.cardWarn}>⚠ Allergy: {warn.join(', ')}</span>}
 				<span className={s.cardMeta}>
 					{[
 						r.rating !== null ? `★ ${r.rating}` : null,

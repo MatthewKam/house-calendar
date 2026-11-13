@@ -18,6 +18,7 @@ interface MemberRow {
 	sort_order: number;
 	birthdate: string | null;
 	stage: string | null;
+	allergies: string;
 	asked_color?: string | null;
 	asked_by?: string | null;
 }
@@ -30,6 +31,8 @@ const toMember = (r: MemberRow, guardians?: string[]) => ({
 	// The stage in effect, and the one a guardian chose (null: from the birthdate).
 	stage: stageOf(r, localDay()),
 	stageChosen: r.stage,
+	// What they're allergic to (recipes flag it).
+	allergies: JSON.parse(r.allergies || '[]') as string[],
 	// A guardian (known when signed in); a new color waiting for the account holder, and who asked.
 	guardian: !!guardians?.includes(r.id),
 	colorAsked: r.asked_color ? { color: r.asked_color, by: r.asked_by ?? null } : null,
@@ -95,7 +98,14 @@ export function registerMembers(
 
 	app.patch<{
 		Params: { id: string };
-		Body: { name?: string; color?: string; sortOrder?: number; birthdate?: string | null; stage?: string | null };
+		Body: {
+			name?: string;
+			color?: string;
+			sortOrder?: number;
+			birthdate?: string | null;
+			stage?: string | null;
+			allergies?: string[];
+		};
 	}>(
 		'/api/members/:id',
 		{
@@ -110,6 +120,7 @@ export function registerMembers(
 						sortOrder: { type: 'integer' },
 						birthdate: { anyOf: [DAY_VALUE, { type: 'null' }] },
 						stage: { anyOf: [{ enum: STAGES }, { type: 'null' }] },
+						allergies: { type: 'array', maxItems: 20, items: { type: 'string', minLength: 1, maxLength: 40 } },
 					},
 				},
 			},
@@ -128,18 +139,17 @@ export function registerMembers(
 				birthdate = row.birthdate,
 				stage = row.stage,
 			} = req.body;
+			// Each once, trimmed, lowercase ("Peanuts " and "peanuts" are one).
+			const allergies = req.body.allergies
+				? JSON.stringify([...new Set(req.body.allergies.map((a) => a.trim().toLowerCase()).filter(Boolean))])
+				: row.allergies;
 			// A real day, and not in the future.
 			if (birthdate && (!realDay(birthdate) || birthdate > localDay())) {
 				return reply.code(400).send({ error: 'That birthday is not a real past date' });
 			}
-			db.prepare('UPDATE members SET name = ?, color = ?, sort_order = ?, birthdate = ?, stage = ? WHERE id = ?').run(
-				name.trim(),
-				color.toLowerCase(),
-				sortOrder,
-				birthdate,
-				stage,
-				row.id,
-			);
+			db.prepare(
+				'UPDATE members SET name = ?, color = ?, sort_order = ?, birthdate = ?, stage = ?, allergies = ? WHERE id = ?',
+			).run(name.trim(), color.toLowerCase(), sortOrder, birthdate, stage, allergies, row.id);
 			if (name.trim() !== row.name) opts.onAssignmentsChanged?.();
 			return toMember(get(row.id)!, req.raw.viewer?.guardians);
 		},
