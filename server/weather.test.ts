@@ -118,13 +118,47 @@ describe('weather', () => {
 			[16, 20],
 			[21, 23],
 		]);
-		// The hours around now: the ones gone by (up to six) and the ones ahead.
+		// The hours graph, here with only a few hours in the forecast: all of them.
 		expect((await forecast({ lat: 33.7, lon: -117.8 }, at('2026-10-07T10:20'))).hours.map((h) => h.feels)).toEqual([
 			50, 55, 68, 80, 40,
 		]);
 		expect((await forecast({ lat: 33.7, lon: -117.8 }, at('2026-10-07T06:00'))).hours.map((h) => h.feels)).toEqual([
 			50, 55, 68, 80, 40,
 		]);
+	});
+
+	it('graphs a whole day, from a 3-hour mark before the last one at or before now', async () => {
+		// Every hour from 7 PM the day before (6 hours before 1 AM, as asked for) to the day after.
+		const times = Array.from({ length: 60 }, (_, i) => {
+			const d = new Date(Date.UTC(2026, 9, 6, 19 + i));
+			return d.toISOString().slice(0, 13) + ':00';
+		});
+		const hourly = {
+			time: times,
+			temperature_2m: times.map(() => 60),
+			apparent_temperature: times.map(() => 60),
+			precipitation_probability: times.map(() => 0),
+			weather_code: times.map(() => 0),
+		};
+		const calls: string[] = [];
+		const at = (time: string) =>
+			(async (url: string) => {
+				calls.push(url);
+				return json({ ...FORECAST, hourly, current: { ...FORECAST.current, time } });
+			}) as unknown as typeof fetch;
+		// Home's clock, as hours of the day (the fake's offset is UTC-7).
+		const graph = async (time: string) =>
+			(await forecast({ lat: 33.7, lon: -117.8 }, at(time))).hours.map((h) =>
+				new Date(Date.parse(h.time) - 7 * 3_600_000).toISOString().slice(5, 13),
+			);
+		// 7:40: the last mark is 6 AM, so 3 AM to 3 AM tomorrow (both ends).
+		const morning = await graph('2026-10-07T07:40');
+		expect([morning[0], morning.at(-1), morning.length]).toEqual(['10-07T03', '10-08T03', 25]);
+		// 9:00 on the mark: 6 AM to 6 AM.
+		expect((await graph('2026-10-07T09:00'))[0]).toBe('10-07T06');
+		// 1:20 AM: 9 PM the day before (hours from before midnight, asked for).
+		expect((await graph('2026-10-07T01:20'))[0]).toBe('10-06T21');
+		expect(calls[0]).toContain('past_hours=6');
 	});
 
 	it('asks for a home address first', async () => {
