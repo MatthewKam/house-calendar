@@ -1,4 +1,4 @@
--- A household's database (server/db.ts), at version 51. Written by server/schema.test.ts; don't edit by hand.
+-- A household's database (server/db.ts), at version 52. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
@@ -341,6 +341,21 @@ CREATE TABLE push_sent (
     key        TEXT NOT NULL,
     sent_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     PRIMARY KEY (device_id, key)
+  );
+
+CREATE TABLE recipe_images (
+    id          TEXT PRIMARY KEY,
+    recipe_id   TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    sort_order  INTEGER NOT NULL
+  );
+
+CREATE INDEX recipe_images_recipe ON recipe_images(recipe_id, sort_order);
+
+CREATE TABLE recipes (
+    id          TEXT PRIMARY KEY,
+    data        TEXT NOT NULL,
+    cover_id    TEXT,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
 
 CREATE TABLE reminder_devices (

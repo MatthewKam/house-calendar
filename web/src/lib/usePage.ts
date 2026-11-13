@@ -3,7 +3,7 @@ import type { Page } from '../components/nav/NavBar';
 import { PHONE } from './useMediaQuery';
 
 /** Pages that live in the address after "#"; the calendar is the plain address. */
-const PAGES: Page[] = ['calendar', 'today', 'tasks', 'rewards', 'lists', 'photos'];
+const PAGES: Page[] = ['calendar', 'today', 'tasks', 'rewards', 'lists', 'photos', 'recipes'];
 const read = (): Page => {
 	const hash = window.location.hash.slice(1) as Page;
 	return PAGES.includes(hash) ? hash : 'calendar';

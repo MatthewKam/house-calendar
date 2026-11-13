@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
 import { existsSync } from 'node:fs';
@@ -20,6 +21,7 @@ import { registerReminders } from './reminders.ts';
 import { registerLists } from './lists.ts';
 import { registerPush, type Pusher } from './push.ts';
 import { registerCapture, type Understand } from './capture.ts';
+import { registerRecipes, type ReadRecipeFn } from './recipes.ts';
 import { registerLearn } from './learn.ts';
 import { registerEvents } from './events.ts';
 
@@ -54,6 +56,11 @@ export function buildApp(
 		push?: Pusher;
 		/** Reads what's said or a flyer's photo into things to add (Claude); without it, Say it and Snap are off. */
 		understand?: Understand;
+		/** Reads a recipe from pictures or a link (Claude); without it, recipes are typed in. */
+		readRecipe?: ReadRecipeFn;
+		/** How recipe links are fetched and their sites found (replaced in tests). */
+		recipeFetch?: typeof fetch;
+		recipeResolve?: (host: string) => Promise<{ address: string }[]>;
 	} = {},
 ) {
 	// trustProxy: behind Tailscale's HTTPS (tailscale serve), so the device's address and https are seen.
@@ -87,6 +94,13 @@ export function buildApp(
 	registerLists(app, db);
 	registerPush(app, db, opts.push);
 	registerCapture(app, db, opts.understand);
+	// Recipe pictures sit beside the album's.
+	registerRecipes(app, db, {
+		dir: opts.photosDir && join(opts.photosDir, 'recipes'),
+		read: opts.readRecipe,
+		fetchImpl: opts.recipeFetch,
+		resolve: opts.recipeResolve,
+	});
 	registerLearn(app, db, opts.push);
 
 	// ---- Display settings (key/value, for things like UI scale) -------------

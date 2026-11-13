@@ -829,6 +829,22 @@ const migrations: string[] = [
     asked_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
   `,
+	// Recipes (docs/recipes.md): each one's fields as JSON (shared/recipes.ts RecipeFields), and its
+	// pictures, kept as files beside the album's (recipes/<image id>.jpg).
+	`
+  CREATE TABLE recipes (
+    id          TEXT PRIMARY KEY,
+    data        TEXT NOT NULL,
+    cover_id    TEXT,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE TABLE recipe_images (
+    id          TEXT PRIMARY KEY,
+    recipe_id   TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    sort_order  INTEGER NOT NULL
+  );
+  CREATE INDEX recipe_images_recipe ON recipe_images(recipe_id, sort_order);
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

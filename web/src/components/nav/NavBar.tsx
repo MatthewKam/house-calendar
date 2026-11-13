@@ -1,7 +1,7 @@
 import { useRef, useState, type ReactNode } from 'react';
 import s from './NavBar.module.css';
 
-export type Page = 'calendar' | 'today' | 'tasks' | 'rewards' | 'lists' | 'photos';
+export type Page = 'calendar' | 'today' | 'tasks' | 'rewards' | 'lists' | 'photos' | 'recipes';
 
 interface Props {
 	page: Page;
@@ -57,6 +57,13 @@ const PhotosIcon = () => (
 		<rect x="3.5" y="5" width="17" height="14" rx="2.5" />
 		<circle cx="9" cy="10" r="1.6" />
 		<path d="M4 17l5-4.5 3.5 3 3-2.5 4.5 4" />
+	</svg>
+);
+const RecipesIcon = () => (
+	<svg viewBox="0 0 24 24" aria-hidden="true">
+		{/* A pot with a lid, and steam. */}
+		<path d="M4 11h16v5.5a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5V11zM2.5 11h19M10 8.5h4" />
+		<path d="M9 5.5c0-1 1-1 1-2M14 5.5c0-1 1-1 1-2" />
 	</svg>
 );
 const MicIcon = () => (
@@ -116,6 +123,7 @@ export default function NavBar({ page, settingsOpen, onPage, onSettings, lock, p
 			{item('lists', 'Lists', <ListsIcon />)}
 			{item('rewards', 'Rewards', <RewardsIcon />)}
 			{item('photos', 'Photos', <PhotosIcon />)}
+			{item('recipes', 'Recipes', <RecipesIcon />)}
 			{capture && (
 				<>
 					<button className={s.item} onClick={capture.onSay} aria-label="Say it">
@@ -170,6 +178,7 @@ const MORE: [Page, string, () => ReactNode][] = [
 	['lists', 'Lists', ListsIcon],
 	['rewards', 'Rewards', RewardsIcon],
 	['photos', 'Photos', PhotosIcon],
+	['recipes', 'Recipes', RecipesIcon],
 ];
 
 /**

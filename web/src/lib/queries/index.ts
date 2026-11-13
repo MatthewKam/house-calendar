@@ -9,3 +9,4 @@ export * from './lists';
 export * from './weather';
 export * from './learn';
 export * from './photos';
+export * from './recipes';

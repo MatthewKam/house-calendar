@@ -36,6 +36,9 @@ import type {
 	SprigItem,
 	Proposal,
 	LearnDayChange,
+	Recipe,
+	RecipeDraft,
+	RecipeFields,
 } from './types';
 
 /**
@@ -51,6 +54,9 @@ export const problemText = (err: unknown, fallback = 'Something went wrong.') =>
 /** What the app says when it can't get through, or the server falls over without saying why. */
 export const OFFLINE = "Couldn't reach Sprig. Check the connection and try again.";
 const SERVER_PROBLEM = "Something went wrong on Sprig's side. Try again in a moment.";
+
+/** A recipe's picture as sent: shrunk to JPEG, as base64. */
+export type RecipeImage = { mediaType: 'image/jpeg'; data: string };
 
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
 	let res: Response;
@@ -242,6 +248,15 @@ export const api = {
 		return (await res.json()) as LearnSound;
 	},
 	deleteLearnSound: (animal: string) => call<void>('DELETE', `/api/learn/sounds/${animal}`),
+	/** Recipes (server/recipes.ts): whether reading works here, the book, reading a draft, keeping one. */
+	recipeReading: () => call<{ on: boolean; pictures: boolean }>('GET', '/api/recipes/reading'),
+	recipes: () => call<Recipe[]>('GET', '/api/recipes'),
+	readRecipe: (from: { images: RecipeImage[] } | { url: string }) =>
+		call<RecipeDraft>('POST', '/api/recipes/read', from),
+	addRecipe: (recipe: RecipeFields, images: RecipeImage[], cover: number | null) =>
+		call<Recipe>('POST', '/api/recipes', { recipe, images, cover }),
+	updateRecipe: (id: string, recipe: RecipeFields) => call<Recipe>('PUT', `/api/recipes/${id}`, recipe),
+	deleteRecipe: (id: string) => call<void>('DELETE', `/api/recipes/${id}`),
 	photos: () => call<Photo[]>('GET', '/api/photos'),
 	updatePhoto: (id: string, p: { inSlideshow?: boolean; memberId?: string | null }) =>
 		call<Photo>('PATCH', `/api/photos/${id}`, p),

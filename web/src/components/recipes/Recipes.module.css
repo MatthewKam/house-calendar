@@ -1,0 +1,376 @@
+/* Recipes (RecipesPage, RecipeView, RecipeForm, AddRecipe): the book, a recipe to cook from, and adding one. */
+
+/* ---- The book ---- */
+.page {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+}
+.pageHead {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.6rem;
+	flex-wrap: wrap;
+}
+.pageTitle {
+	margin: 0;
+	font-size: 2rem;
+}
+.add {
+	padding: 0 1.1rem;
+	border-radius: var(--radius-round);
+	background: var(--accent);
+	color: var(--on-accent);
+	font-weight: 700;
+}
+.filters {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+/* A row of chips, scrolling sideways on a phone. */
+.chips {
+	display: flex;
+	gap: 0.4rem;
+	overflow-x: auto;
+	padding-bottom: 0.2rem;
+}
+.chip {
+	flex: none;
+	min-height: 2.75rem;
+	padding: 0 0.9rem;
+	border-radius: var(--radius-round);
+	border: 1px solid var(--line);
+	background: var(--surface);
+	color: var(--text);
+	font-weight: 600;
+}
+/* A kind (korean, beef): written with a capital. */
+.kind {
+	text-transform: capitalize;
+}
+.chip[aria-pressed='true'] {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--on-accent);
+}
+.scroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+.grid {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
+	gap: 0.9rem;
+}
+.none {
+	margin: 0;
+	color: var(--muted);
+}
+.card {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	overflow: hidden;
+	border-radius: var(--radius);
+	background: var(--surface);
+	border: 1px solid var(--line);
+	box-shadow: var(--shadow-sm);
+	text-align: left;
+	color: var(--text);
+}
+.cardImage {
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	object-fit: cover;
+	display: grid;
+	place-items: center;
+	font-size: 3rem;
+	background: var(--bg);
+}
+.cardText {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	padding: 0.6rem 0.8rem 0.8rem;
+}
+.cardTitle {
+	font-weight: 700;
+	font-size: 1.05rem;
+}
+.cardMeta {
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+
+/* ---- A recipe to cook from: bigger type for across the kitchen ---- */
+.view {
+	font-size: 1.1rem;
+}
+.cover {
+	width: 100%;
+	max-height: 18rem;
+	object-fit: cover;
+	border-radius: var(--radius-sm);
+	cursor: zoom-in;
+}
+.meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem 1rem;
+	color: var(--muted);
+}
+.tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+}
+.tag {
+	padding: 0.15rem 0.6rem;
+	border-radius: var(--radius-round);
+	background: var(--bg);
+	font-size: 0.85rem;
+	text-transform: capitalize;
+}
+/* Things to start before the day: a heads-up. */
+.ahead {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	padding: 0.7rem 0.9rem;
+	border-radius: var(--radius-sm);
+	background: var(--warn-bg);
+	border: 1px solid var(--warn-line);
+}
+.sectionHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.6rem;
+	margin: 0.6rem 0 0;
+	font-size: 1.15rem;
+}
+.sectionHead h3 {
+	margin: 0;
+	font-size: inherit;
+}
+/* ×½ ×1 ×2. */
+.scale {
+	display: flex;
+	padding: 0.15rem;
+	border-radius: var(--radius-round);
+	background: var(--bg);
+}
+.scale button {
+	min-width: 3rem;
+	border-radius: var(--radius-round);
+	font-weight: 700;
+	color: var(--muted);
+}
+.scale button[aria-checked='true'] {
+	background: var(--surface);
+	color: var(--text);
+	box-shadow: var(--shadow-sm);
+}
+.group h4 {
+	margin: 0.4rem 0 0.2rem;
+	font-size: 0.95rem;
+	color: var(--muted);
+}
+.ingredients {
+	margin: 0;
+	padding-left: 1.2rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+.steps {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+/* A step: tap when it's done, and it greys out. */
+.step {
+	width: 100%;
+	display: flex;
+	gap: 0.7rem;
+	align-items: flex-start;
+	padding: 0.6rem 0.7rem;
+	border-radius: var(--radius-sm);
+	background: var(--bg);
+	color: var(--text);
+	text-align: left;
+	font: inherit;
+	line-height: 1.45;
+}
+.step[aria-pressed='true'] {
+	opacity: 0.45;
+	text-decoration: line-through;
+}
+.stepNumber {
+	flex: none;
+	display: grid;
+	place-items: center;
+	width: 1.8rem;
+	height: 1.8rem;
+	border-radius: 50%;
+	background: var(--accent);
+	color: var(--on-accent);
+	font-weight: 700;
+	font-size: 0.9rem;
+}
+.notes {
+	margin: 0;
+	white-space: pre-wrap;
+}
+.pictures {
+	display: flex;
+	gap: 0.5rem;
+	overflow-x: auto;
+}
+.pictures img,
+.pictures button {
+	flex: none;
+	height: 6rem;
+	min-height: 0;
+	padding: 0;
+	border-radius: var(--radius-sm);
+}
+.pictures img {
+	max-width: 10rem;
+	object-fit: cover;
+}
+/* The cut-out cover, among the draft's pictures. */
+.coverPick {
+	box-shadow: 0 0 0 2px var(--accent);
+}
+.sourceLink {
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+/* A picture, big, over everything; a tap closes it. */
+.big {
+	position: fixed;
+	inset: 0;
+	z-index: var(--layer-photo);
+	display: grid;
+	place-items: center;
+	background: rgb(0 0 0 / 0.85); /* own: a dark backdrop for any photo, light or dark mode */
+	cursor: zoom-out;
+}
+.big img {
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+}
+
+/* ---- Adding and editing ---- */
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+}
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	font-size: 0.9rem;
+	color: var(--muted);
+}
+.field input,
+.field select,
+.field textarea {
+	font: inherit;
+	font-size: 1rem;
+	color: var(--text);
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	min-width: 0;
+}
+.field textarea {
+	resize: vertical;
+	line-height: 1.4;
+}
+/* Meal, serves and minutes: side by side, two or more to a row. */
+.fieldRow {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+	gap: 0.6rem;
+}
+.aheadRow {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+.aheadRow input:first-child {
+	flex: 1;
+}
+.hours {
+	width: 3.5rem;
+}
+.hoursLabel {
+	white-space: nowrap;
+}
+.textLink {
+	composes: textButton from '../ui/Buttons.module.css';
+	align-self: flex-start;
+}
+.hint {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.sources {
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+}
+/* From pictures: a big button. */
+.source {
+	display: flex;
+	align-items: center;
+	gap: 0.9rem;
+	padding: 1rem;
+	border-radius: var(--radius);
+	border: 1px dashed var(--line);
+	background: var(--bg);
+	color: var(--text);
+	text-align: left;
+}
+.source > span:first-child {
+	font-size: 2rem;
+}
+.source > span:last-child {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+}
+.linkRow {
+	display: flex;
+	gap: 0.5rem;
+}
+.linkRow input {
+	flex: 1;
+	min-width: 0;
+	font: inherit;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	color: var(--text);
+}

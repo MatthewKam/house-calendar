@@ -18,6 +18,7 @@ import { icloudCalendars } from './icloudSync.ts';
 import { loadKey, sealer } from './secrets.ts';
 import { loadVapid, webPusher } from './push.ts';
 import { claudeUnderstand } from './capture.ts';
+import { claudeReadRecipe } from './recipes.ts';
 import { combineStatus } from './sync.ts';
 
 const root = resolve(import.meta.dirname, '..');
@@ -43,6 +44,7 @@ const list = (s?: string) =>
 const classify = env.ANTHROPIC_API_KEY ? claudeClassifier() : null;
 // With it too, Say it and Snap a flyer read what's said or photographed (sent to the Anthropic API).
 const understand = env.ANTHROPIC_API_KEY ? claudeUnderstand() : undefined;
+const readRecipe = env.ANTHROPIC_API_KEY ? claudeReadRecipe() : undefined;
 // Drive times and address suggestions are the service's own key, for every household.
 const travel = env.GOOGLE_MAPS_API_KEY ? googleRoutes(env.GOOGLE_MAPS_API_KEY) : undefined;
 const places = env.GOOGLE_MAPS_API_KEY ? googlePlaces(env.GOOGLE_MAPS_API_KEY) : undefined;
@@ -109,6 +111,7 @@ const households = householdRegistry((h) => {
 		places,
 		push,
 		understand,
+		readRecipe,
 	});
 	sync?.start(app.log);
 	if (oauth) {
