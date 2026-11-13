@@ -33,6 +33,7 @@ import KidToday from './KidToday';
 import { RewardsIcon, TasksIcon, TodayIcon } from '../nav/NavBar';
 import PottyCard from '../tasks/PottyCard';
 import { StarIcon } from '../ui/icons';
+import ErrorBoundary from '../ui/ErrorBoundary';
 import s from './KidMode.module.css';
 import { firstName } from '../../lib/people';
 import GrownUpPin from '../account/GrownUpPin';
@@ -258,7 +259,13 @@ export default function KidMode({ today, kids, members, onLeave, askPin, startWi
 					</div>
 				</div>
 
-				{tab === 'today' && <KidToday today={today} kid={kid} />}
+				{/* Today and Learn each to themselves (the kids' look: a sprout and Let's try again), so a broken
+				    game or card leaves the rest of kid mode working. Another kid or tab starts fresh. */}
+				{tab === 'today' && (
+					<ErrorBoundary what="today" kind="kid" resetKey={kid.id}>
+						<KidToday today={today} kid={kid} />
+					</ErrorBoundary>
+				)}
 
 				{tab === 'tasks' && daily}
 				{tab === 'tasks' && dueToday.length > 0 && (
@@ -334,9 +341,11 @@ export default function KidMode({ today, kids, members, onLeave, askPin, startWi
 				)}
 
 				{tab === 'learn' && learning && (
-					<Suspense fallback={null}>
-						<LearnTab key={kid.id} kid={kid} today={today} learn={learning} together={bothOn} askPin={askPin} />
-					</Suspense>
+					<ErrorBoundary what="the games" kind="kid" resetKey={kid.id}>
+						<Suspense fallback={null}>
+							<LearnTab key={kid.id} kid={kid} today={today} learn={learning} together={bothOn} askPin={askPin} />
+						</Suspense>
+					</ErrorBoundary>
 				)}
 
 				{tab === 'rewards' && (

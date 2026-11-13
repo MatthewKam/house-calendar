@@ -1,3 +1,4 @@
+import { SprigError } from './api';
 import type { Photo } from './types';
 
 // Getting photos ready in the browser: shrunk to wall size (and a thumbnail) before uploading, so
@@ -28,7 +29,7 @@ async function shrink(image: ImageBitmap, max: number, quality: number) {
 	ctx.imageSmoothingQuality = 'high';
 	ctx.drawImage(image, 0, 0, width, height);
 	const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
-	if (!blob) throw new Error("Couldn't make a JPEG of this photo");
+	if (!blob) throw new SprigError("Couldn't make a JPEG of this photo");
 	return { blob, width, height };
 }
 
@@ -51,7 +52,7 @@ export async function preparePhoto(file: File): Promise<Prepared> {
 		// Turns it the right way up (phones store sideways photos with a "rotate me" note).
 		image = await createImageBitmap(file, { imageOrientation: 'from-image' });
 	} catch {
-		throw new Error(`Can't read ${file.name} (try a JPEG or PNG)`);
+		throw new SprigError(`Can't read ${file.name} (try a JPEG or PNG)`);
 	}
 	try {
 		const full = await shrink(image, FULL, 0.86);
@@ -117,7 +118,7 @@ function send(url: string, type: string, body: Blob, onProgress: (f: number) => 
 		xhr.open('POST', url);
 		xhr.setRequestHeader('content-type', type);
 		xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total);
-		xhr.onerror = () => reject(new Error('Upload failed (no connection)'));
+		xhr.onerror = () => reject(new SprigError('Upload failed (no connection)'));
 		xhr.onload = () => {
 			if (xhr.status !== 201) {
 				let msg = xhr.statusText;
@@ -126,7 +127,7 @@ function send(url: string, type: string, body: Blob, onProgress: (f: number) => 
 				} catch {
 					// Not JSON.
 				}
-				return reject(new Error(msg));
+				return reject(new SprigError(msg));
 			}
 			resolve(JSON.parse(xhr.responseText) as Photo);
 		};
@@ -169,7 +170,7 @@ export async function flyerImage(file: File): Promise<{ mediaType: 'image/jpeg';
 	try {
 		image = await createImageBitmap(file, { imageOrientation: 'from-image' });
 	} catch {
-		throw new Error("Can't read that photo (try a JPEG or PNG)");
+		throw new SprigError("Can't read that photo (try a JPEG or PNG)");
 	}
 	try {
 		const { blob } = await shrink(image, 1600, 0.85);

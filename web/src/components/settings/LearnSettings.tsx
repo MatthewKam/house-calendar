@@ -5,6 +5,7 @@ import Switch from '../ui/Switch';
 import { useChangeLearnDay, useLearn, useSetLearn } from '../../lib/queries';
 import type { LearnState, LearnToday, Member } from '../../lib/types';
 import { Loading, Skeleton } from '../ui/Skeleton';
+import Problem, { loadProblem } from '../ui/Problem';
 import s from './Settings.module.css';
 
 /** The word beside Learning in Settings while it's folded: who has it on. */
@@ -62,6 +63,8 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
 	const kids = learnQuery.data ?? [];
 	const set = useSetLearn(today);
 	const change = useChangeLearnDay(today);
+	if (learnQuery.isError)
+		return <Problem message={loadProblem('Learning', learnQuery.error)} onRetry={() => void learnQuery.refetch()} />;
 	if (learnQuery.isPending) {
 		return (
 			<Loading label="Loading Learning">

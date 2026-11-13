@@ -20,6 +20,7 @@ import { GripIcon } from '../ui/icons';
 import sheet from '../ui/Sheet.module.css';
 import { ago } from '../../lib/dates';
 import { Loading, Skeleton } from '../ui/Skeleton';
+import Problem, { loadProblem } from '../ui/Problem';
 import s from './ListView.module.css';
 import { useParent } from '../../lib/useParent';
 import { textOn } from '../../lib/color';
@@ -378,7 +379,9 @@ export default function ListView() {
 				</div>
 			)}
 			{/* Loading: list-shaped blocks, not "no lists yet". */}
-			{ownQuery.isPending ? (
+			{ownQuery.isError ? (
+				<Problem kind="page" message={loadProblem('lists', ownQuery.error)} onRetry={() => void ownQuery.refetch()} />
+			) : ownQuery.isPending ? (
 				<Loading label="Loading lists" className={s.loading}>
 					<Skeleton height="14rem" />
 					<Skeleton height="14rem" />

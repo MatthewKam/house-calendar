@@ -17,6 +17,9 @@ import SpecialDays from './SpecialDays';
 import { packed } from '../calendar/EventChecklist';
 import { forecastBadge } from '../calendar/EventForecast';
 import { Loading, Skeleton } from '../ui/Skeleton';
+import ErrorBoundary from '../ui/ErrorBoundary';
+import { problemText } from '../../lib/api';
+import Problem, { loadProblem } from '../ui/Problem';
 import s from './Today.module.css';
 
 interface Props {
@@ -199,7 +202,9 @@ export default function TodayPage({
 	const calendarCard = (
 		<section className={`${s.card} ${s.wide}`} aria-label="Calendar">
 			{/* Loading: a few event-shaped rows, so the calendar isn't "nothing today" before it knows. */}
-			{eventsQuery.isPending ? (
+			{eventsQuery.isError ? (
+				<Problem message={loadProblem('the calendar', eventsQuery.error)} onRetry={() => void eventsQuery.refetch()} />
+			) : eventsQuery.isPending ? (
 				<Loading label="Loading the calendar">
 					<Skeleton width="60%" height="2.4rem" round />
 					<Skeleton height="3.6rem" />
@@ -211,7 +216,15 @@ export default function TodayPage({
 			)}
 		</section>
 	);
-	const weatherCard = weather ? (
+	const weatherCard = weatherQuery.isError ? (
+		<section className={s.card} aria-label="Weather">
+			<h2 className={s.cardHead}>Weather</h2>
+			<Problem
+				message={problemText(weatherQuery.error, "Couldn't load the weather.")}
+				onRetry={() => void weatherQuery.refetch()}
+			/>
+		</section>
+	) : weather ? (
 		<ForecastCard weather={weather} />
 	) : weatherQuery.isPending ? (
 		<ForecastLoading />
@@ -243,6 +256,9 @@ export default function TodayPage({
 	);
 	// The family's slideshow (the screen saver's photos), as on the calendar.
 	const photosCard = <PhotoCard onPlay={onPlaySlideshow} className={`${s.wide} ${s.slideshow}`} />;
+
+	// Each card to itself: one that breaks says so, and the rest of Today carries on.
+	const guard = (what: string, card: ReactNode) => <ErrorBoundary what={what}>{card}</ErrorBoundary>;
 
 	return (
 		<section className={s.page} aria-label="Today">
@@ -276,28 +292,28 @@ export default function TodayPage({
 				{twoColumns ? (
 					<div className={s.columns}>
 						<div className={s.column}>
-							{quoteCard}
-							{encouragementCard}
-							{weatherCard}
-							{kidsCard}
-							{needsCard}
-							{photosCard}
+							{guard('the quote', quoteCard)}
+							{guard('the encouragement', encouragementCard)}
+							{guard('the weather', weatherCard)}
+							{guard("the kids' day", kidsCard)}
+							{guard('Needs you', needsCard)}
+							{guard('the photos', photosCard)}
 						</div>
 						<div className={s.column}>
-							{calendarCard}
-							{specialCard}
+							{guard('the calendar', calendarCard)}
+							{guard('special days', specialCard)}
 						</div>
 					</div>
 				) : (
 					<div className={s.cards}>
-						{calendarCard}
-						{weatherCard}
-						{specialCard}
-						{kidsCard}
-						{needsCard}
-						{quoteCard}
-						{encouragementCard}
-						{photosCard}
+						{guard('the calendar', calendarCard)}
+						{guard('the weather', weatherCard)}
+						{guard('special days', specialCard)}
+						{guard("the kids' day", kidsCard)}
+						{guard('Needs you', needsCard)}
+						{guard('the quote', quoteCard)}
+						{guard('the encouragement', encouragementCard)}
+						{guard('the photos', photosCard)}
 					</div>
 				)}
 			</div>

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import Switch from '../ui/Switch';
+import ErrorBoundary from '../ui/ErrorBoundary';
 import s from './Settings.module.css';
 
 // The pieces Settings is built from: its groups (each a view of its own), the parts folded inside them,
@@ -34,7 +35,8 @@ export function Group({ title, note, children }: { title: string; note?: string;
 			</button>
 		);
 	}
-	return view === title ? <>{children}</> : null;
+	// Each group to itself: one that breaks says so, and Settings carries on.
+	return view === title ? <ErrorBoundary what={title}>{children}</ErrorBoundary> : null;
 }
 
 /**

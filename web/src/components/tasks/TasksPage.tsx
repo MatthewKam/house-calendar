@@ -23,6 +23,7 @@ import MomentDialog from './MomentDialog';
 import PottyCard from './PottyCard';
 import panel from '../calendar/DayPanel.module.css';
 import { Loading, Skeleton } from '../ui/Skeleton';
+import Problem, { loadProblem } from '../ui/Problem';
 import s from './Tasks.module.css';
 import { isKid } from '../../lib/people';
 
@@ -104,7 +105,13 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 
 			<div className={s.scroll}>
 				{/* Loading: a card's shape for each kid, not "No tasks yet". */}
-				{tasksQuery.isPending ? (
+				{tasksQuery.isError ? (
+					<Problem
+						kind="page"
+						message={loadProblem('tasks', tasksQuery.error)}
+						onRetry={() => void tasksQuery.refetch()}
+					/>
+				) : tasksQuery.isPending ? (
 					<Loading label="Loading tasks" className={s.board}>
 						{/* One for each kid, or two while the family is still loading. */}
 						{Array.from({ length: kids.length || 2 }, (_, i) => (

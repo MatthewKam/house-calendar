@@ -1,0 +1,74 @@
+/* Something went wrong (Problem.tsx): a heads-up box with the reason and Try again. */
+.card {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 0.8rem;
+	padding: 0.7rem 0.9rem;
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--warn-line);
+	background: var(--warn-bg);
+}
+/* A whole page's: centered in the space, with room around it. */
+.page {
+	composes: card;
+	flex-direction: column;
+	justify-content: center;
+	text-align: center;
+	margin: 2rem auto;
+	max-width: 28rem;
+	padding: 1.4rem;
+	/* Its own size, wherever the page would stretch it. */
+	flex: none;
+	align-self: center;
+	height: auto;
+}
+.message {
+	flex: 1 1 12rem;
+	margin: 0;
+	color: var(--text);
+}
+/* In a column (a page's), its own height. */
+.page .message {
+	flex: none;
+}
+.retry {
+	composes: textButton from './Buttons.module.css';
+}
+/* Kid mode's: a sprout and one big button, nothing that looks like failing. */
+.kid {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1rem;
+	padding: 2rem 1rem;
+}
+.kidPicture {
+	font-size: 4rem;
+	line-height: 1;
+}
+.kidButton {
+	min-height: 4rem;
+	padding: 0 2rem;
+	border-radius: var(--radius-round);
+	background: var(--accent);
+	color: var(--on-accent);
+	font-size: 1.3rem;
+	font-weight: 700;
+}
+
+/* The last resort (ErrorBoundary around everything): the page, Sprig's name, and the message, centered. */
+.appScreen {
+	min-height: 100dvh;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+	padding: var(--top-room) 1rem 2rem;
+	box-sizing: border-box;
+	background: var(--bg);
+}
+.wordmark {
+	height: 3rem;
+}

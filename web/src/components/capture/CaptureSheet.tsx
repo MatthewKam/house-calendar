@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { api } from '../../lib/api';
+import { api, SprigError } from '../../lib/api';
 import { textOn } from '../../lib/color';
 import { addDays, dayKey, fromDayKey, hhmm, toInstant } from '../../lib/dates';
 import { isDay } from '../../lib/lists';
@@ -96,7 +96,7 @@ async function addCard(
 			list = (await api.addList(c.list.trim() || 'To do')).find(
 				(l) => l.title.toLowerCase() === (c.list.trim() || 'To do').toLowerCase(),
 			);
-		if (!list) throw new Error(`Couldn't make the list ${c.list}`);
+		if (!list) throw new SprigError(`Couldn't make the list ${c.list}`);
 		await api.addListItem(list.id, {
 			title,
 			due: c.day ? (c.time ? toInstant(c.day, c.time) : c.day) : null,
