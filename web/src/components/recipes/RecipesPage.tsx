@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useImageDrop } from '../../lib/useFlyerDrop';
-import { useMembers, useRecipes } from '../../lib/queries';
+import { useMembers, useRecipeReading, useRecipes } from '../../lib/queries';
+import DishIdeas from './DishIdeas';
 import { flags } from '../../lib/allergies';
 import { coverOf, mealPicture, minutesText } from '../../lib/recipes';
 import type { Recipe } from '../../lib/types';
@@ -30,6 +31,8 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 	const recipesQuery = useRecipes();
 	const recipes = recipesQuery.data ?? [];
 	const [adding, setAdding] = useState(false);
+	const [ideasOpen, setIdeasOpen] = useState(false);
+	const reading = useRecipeReading().data;
 	// Pictures dropped onto the page (a computer, or a tablet beside Photos): straight into reading.
 	const [dropped, setDropped] = useState<File[] | null>(null);
 	const takeDrop = useCallback((images: File[]) => {
@@ -57,9 +60,17 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 			<header className={s.pageHead}>
 				<h1 className={s.pageTitle}>Recipes</h1>
 				{parent && (
-					<button type="button" className={s.add} onClick={() => setAdding(true)}>
-						＋ Recipe
-					</button>
+					<span className={s.headButtons}>
+						{/* Out of ideas: dishes to try (with Claude on the server). */}
+						{reading?.on && (
+							<button type="button" className={s.ideasButton} onClick={() => setIdeasOpen(true)}>
+								✨ Dish ideas
+							</button>
+						)}
+						<button type="button" className={s.add} onClick={() => setAdding(true)}>
+							＋ Recipe
+						</button>
+					</span>
 				)}
 			</header>
 
@@ -138,6 +149,7 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 					onAdded={(r) => setOpen(r.id)}
 				/>
 			)}
+			{ideasOpen && <DishIdeas kinds={tags} onClose={() => setIdeasOpen(false)} />}
 			{dragging && (
 				<div className={s.drop} aria-live="polite">
 					<span className={s.dropBox}>Drop the recipe's pictures</span>
