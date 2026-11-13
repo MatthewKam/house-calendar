@@ -9,7 +9,7 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node
 import { join } from 'node:path';
 import type { DB } from './db.ts';
 import { schemaOf } from './schemas.ts';
-import { NewRecipe, ReadRecipe, RecipeFields, type Recipe, type RecipeDraft } from '../shared/recipes.ts';
+import { AddImages, NewRecipe, ReadRecipe, RecipeFields, type Recipe, type RecipeDraft } from '../shared/recipes.ts';
 
 // Recipes (docs/recipes.md): a recipe read from pictures (screenshots, a cookbook page) or a link by
 // Claude, checked by a grown-up, then kept with its pictures. Reading saves nothing: the app shows the
@@ -195,10 +195,11 @@ export function registerRecipes(
 	const file = (id: string) => join(dir!, `${id}.jpg`);
 	const images = (recipeId: string) =>
 		(
-			db.prepare('SELECT id FROM recipe_images WHERE recipe_id = ? ORDER BY sort_order').all(recipeId) as {
+			db.prepare('SELECT id, step FROM recipe_images WHERE recipe_id = ? ORDER BY sort_order').all(recipeId) as {
 				id: string;
+				step: number | null;
 			}[]
-		).map(({ id }) => ({ id, url: `/api/recipes/images/${id}`, thumbUrl: `/api/recipes/images/${id}` }));
+		).map(({ id, step }) => ({ id, url: `/api/recipes/images/${id}`, thumbUrl: `/api/recipes/images/${id}`, step }));
 	const toRecipe = (r: Row): Recipe => ({
 		...(JSON.parse(r.data) as z.infer<typeof RecipeFields>),
 		id: r.id,
@@ -293,6 +294,68 @@ export function registerRecipes(
 		db.prepare('DELETE FROM recipes WHERE id = ?').run(req.params.id);
 		if (dir) for (const p of pictures) rmSync(file(p.id), { force: true });
 		return reply.code(204).send();
+	});
+
+	// More photos: of the dish (step null), or of a step, how it should look by then.
+	app.post<{ Params: { id: string }; Body: z.infer<typeof AddImages> }>(
+		'/api/recipes/:id/images',
+		{ bodyLimit: 60 * 1024 * 1024, schema: { body: schemaOf(AddImages) } },
+		async (req, reply) => {
+			if (!get(req.params.id)) return reply.code(404).send({ error: 'Recipe not found' });
+			if (!dir) return reply.code(503).send({ error: 'Pictures need a photos folder on the server' });
+			mkdirSync(dir, { recursive: true });
+			const next = (
+				db
+					.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 AS n FROM recipe_images WHERE recipe_id = ?')
+					.get(req.params.id) as {
+					n: number;
+				}
+			).n;
+			const add = db.prepare('INSERT INTO recipe_images (id, recipe_id, sort_order, step) VALUES (?, ?, ?, ?)');
+			req.body.images.forEach((p, i) => {
+				const imageId = randomUUID();
+				writeFileSync(file(imageId), Buffer.from(p.data, 'base64'));
+				add.run(imageId, req.params.id, next + i, req.body.step);
+			});
+			return toRecipe(get(req.params.id)!);
+		},
+	);
+
+	// The main photo: one of its own (not a step's).
+	app.put<{ Params: { id: string }; Body: { imageId: string } }>(
+		'/api/recipes/:id/cover',
+		{
+			schema: {
+				body: {
+					type: 'object',
+					required: ['imageId'],
+					additionalProperties: false,
+					properties: { imageId: { type: 'string' } },
+				},
+			},
+		},
+		async (req, reply) => {
+			const ok = db
+				.prepare('SELECT 1 FROM recipe_images WHERE id = ? AND recipe_id = ? AND step IS NULL')
+				.get(req.body.imageId, req.params.id);
+			if (!ok) return reply.code(404).send({ error: 'Picture not found' });
+			db.prepare('UPDATE recipes SET cover_id = ? WHERE id = ?').run(req.body.imageId, req.params.id);
+			return toRecipe(get(req.params.id)!);
+		},
+	);
+
+	// A photo out (the main one: then none is picked, and the first shows).
+	app.delete<{ Params: { id: string; imageId: string } }>('/api/recipes/:id/images/:imageId', async (req, reply) => {
+		const res = db
+			.prepare('DELETE FROM recipe_images WHERE id = ? AND recipe_id = ?')
+			.run(req.params.imageId, req.params.id);
+		if (!res.changes) return reply.code(404).send({ error: 'Picture not found' });
+		db.prepare('UPDATE recipes SET cover_id = NULL WHERE id = ? AND cover_id = ?').run(
+			req.params.id,
+			req.params.imageId,
+		);
+		if (dir) rmSync(file(req.params.imageId), { force: true });
+		return toRecipe(get(req.params.id)!);
 	});
 
 	app.get<{ Params: { id: string } }>('/api/recipes/images/:id', async (req, reply) => {

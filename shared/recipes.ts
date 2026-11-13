@@ -70,11 +70,17 @@ export const NewRecipe = z.strictObject({
 	cover: z.int().min(0).nullable(),
 });
 
+/** Photos added to a recipe later (POST /api/recipes/:id/images): of the dish, or of a step (its place, from 0). */
+export const AddImages = z.strictObject({
+	images: z.array(ImageUpload).min(1).max(6),
+	step: z.int().min(0).max(59).nullable(),
+});
+
 /** A recipe as the app gets it. */
 export interface Recipe extends RecipeFields {
 	id: string;
-	/** Its pictures (originals, and the cut-out cover if there is one), in order. */
-	images: { id: string; url: string; thumbUrl: string }[];
+	/** Its pictures, in order: the recipe's own (step null), and photos of its steps (the step's place). */
+	images: { id: string; url: string; thumbUrl: string; step: number | null }[];
 	coverId: string | null;
 	createdAt: string;
 }

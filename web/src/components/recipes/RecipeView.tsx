@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useAddToGroceries, useRecipeActions } from '../../lib/queries';
-import { ingredientLine, minutesText } from '../../lib/recipes';
+import { ingredientLine, minutesText, toJpeg } from '../../lib/recipes';
 import type { Recipe } from '../../lib/types';
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
 import { useWakeLock } from '../../lib/useWakeLock';
@@ -11,11 +11,8 @@ import RecipeForm from './RecipeForm';
 import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
 
-const SCALES: [string, number][] = [
-	['×½', 0.5],
-	['×1', 1],
-	['×2', 2],
-];
+/** How many times the recipe: for a smaller meal, or a crowd. */
+const SCALES = [0.5, 1, 2, 4, 6, 8];
 
 /** "the night before" for 12 hours or more, else "4 hours before". */
 const ahead = (h: number) => (h >= 12 ? 'the night before' : `${h} ${h === 1 ? 'hour' : 'hours'} before`);
@@ -23,8 +20,7 @@ const ahead = (h: number) => (h >= 12 ? 'the night before' : `${h} ${h === 1 ? '
 /** The recipe as text to send (the phone's own share sheet): name, time, ingredients, steps, notes. */
 function asText(r: Recipe) {
 	const lines = [r.title];
-	if (r.totalMinutes !== null)
-		lines.push(`${minutesText(r.totalMinutes)}${r.servings ? ` · serves ${r.servings}` : ''}`);
+	if (r.totalMinutes) lines.push(`${minutesText(r.totalMinutes)}${r.servings ? ` · serves ${r.servings}` : ''}`);
 	lines.push('', 'Ingredients');
 	let group: string | null = null;
 	for (const i of r.ingredients) {
@@ -54,7 +50,23 @@ export default function RecipeView({
 	parent: boolean;
 	onClose: () => void;
 }) {
-	const { update, remove } = useRecipeActions();
+	const { update, remove, addImages, setCover, removeImage } = useRecipeActions();
+	// Adding photos: which step they're of (null: of the dish), then the picker.
+	const picker = useRef<HTMLInputElement>(null);
+	const photosFor = useRef<number | null>(null);
+	const choosePhotos = (step: number | null) => {
+		photosFor.current = step;
+		picker.current?.click();
+	};
+	async function addPhotos(files: File[]) {
+		try {
+			const images = await Promise.all(files.map((f) => toJpeg(f)));
+			addImages.mutate({ id: r.id, images, step: photosFor.current });
+		} catch {
+			setSaid("Couldn't read that photo (try a JPEG or PNG).");
+		}
+	}
+	const [removing, setRemoving] = useState<string | null>(null);
 	const groceries = useAddToGroceries();
 	const [scale, setScale] = useState(1);
 	// Ingredients ticked: what's in the house (planning), or what's prepped (cooking), by index.
@@ -77,9 +89,10 @@ export default function RecipeView({
 	const cooking = cookingSince !== null;
 	const ticked = cooking ? prepped : have;
 	const setTicked = cooking ? setPrepped : setHave;
-	const cover = r.images.find((i) => i.id === r.coverId) ?? r.images[0];
-	// The pictures beyond the cover (the recipe's own screenshots).
-	const others = r.images.filter((i) => i.id !== cover?.id);
+	const cover = r.images.find((i) => i.id === r.coverId) ?? r.images.find((i) => i.step === null);
+	// The dish's own photos (not a step's), the main one among them.
+	const own = r.images.filter((i) => i.step === null);
+	const stepPhotos = (n: number) => r.images.filter((i) => i.step === n);
 	const groups = [...new Set(r.ingredients.map((i) => i.group))];
 	const tags = [r.meal, ...r.proteins, ...r.types];
 	const missing = r.ingredients.map((i, n) => ({ i, n })).filter(({ n }) => !have.includes(n));
@@ -116,13 +129,18 @@ export default function RecipeView({
 		<section className={s.part} aria-label="Ingredients">
 			<div className={s.sectionHead}>
 				<h3>{cooking ? 'Prep and gather' : 'Ingredients'}</h3>
-				<div className={s.scale} role="radiogroup" aria-label="Amounts">
-					{SCALES.map(([label, x]) => (
-						<button key={label} type="button" role="radio" aria-checked={scale === x} onClick={() => setScale(x)}>
-							{label}
-						</button>
+				<select
+					className={s.scale}
+					aria-label="How many times the recipe"
+					value={scale}
+					onChange={(e) => setScale(Number(e.target.value))}
+				>
+					{SCALES.map((x) => (
+						<option key={x} value={x}>
+							{x === 0.5 ? '×½' : `×${x}`}
+						</option>
 					))}
-				</div>
+				</select>
 			</div>
 			<p className={s.hint}>{cooking ? 'Tick each one once it’s prepped or out.' : 'Tick what you have.'}</p>
 			{groups.map((g) => (
@@ -178,6 +196,26 @@ export default function RecipeView({
 							<span className={s.stepNumber}>{n + 1}</span>
 							{step}
 						</button>
+						{/* Its photos: how it should look by then. */}
+						{(stepPhotos(n).length > 0 || parent) && (
+							<div className={s.stepPhotos}>
+								{stepPhotos(n).map((i) => (
+									<button
+										key={i.id}
+										type="button"
+										onClick={() => setBig(i.url)}
+										aria-label={`Open step ${n + 1}'s photo`}
+									>
+										<img src={i.thumbUrl} alt="" loading="lazy" />
+									</button>
+								))}
+								{parent && (
+									<button type="button" className={s.addPhoto} onClick={() => choosePhotos(n)}>
+										＋ Photo
+									</button>
+								)}
+							</div>
+						)}
 					</li>
 				))}
 			</ol>
@@ -205,10 +243,10 @@ export default function RecipeView({
 				<div className={`${s.top} ${cover ? '' : s.topNoPhoto}`}>
 					{cover && <img className={s.cover} src={cover.url} alt="" onClick={() => setBig(cover.url)} />}
 					<div className={s.about}>
-						{(r.totalMinutes !== null || r.activeMinutes !== null || r.servings !== null) && (
+						{(!!r.totalMinutes || !!r.activeMinutes || r.servings !== null) && (
 							<div className={s.meta}>
-								{r.totalMinutes !== null && <span>⏱ {minutesText(r.totalMinutes)}</span>}
-								{r.activeMinutes !== null && r.activeMinutes !== r.totalMinutes && (
+								{!!r.totalMinutes && <span>⏱ {minutesText(r.totalMinutes)}</span>}
+								{!!r.activeMinutes && r.activeMinutes !== r.totalMinutes && (
 									<span>{minutesText(r.activeMinutes)} hands-on</span>
 								)}
 								{r.servings !== null && <span>Serves {Math.round(r.servings * scale * 10) / 10}</span>}
@@ -284,18 +322,61 @@ export default function RecipeView({
 						<p className={s.notes}>{r.notes}</p>
 					</section>
 				)}
-				{others.length > 0 && (
-					<section className={s.part} aria-label="Pictures">
-						<h3 className={s.sectionHead}>Pictures</h3>
-						<div className={s.pictures}>
-							{others.map((i) => (
-								<button key={i.id} type="button" onClick={() => setBig(i.url)} aria-label="Open picture">
-									<img src={i.thumbUrl} alt="" loading="lazy" />
-								</button>
+				{/* Its photos: the main one (on the card and up top) picked from them; grown-ups add more. */}
+				{(own.length > 0 || parent) && (
+					<section className={s.part} aria-label="Photos">
+						<h3 className={s.sectionHead}>Photos</h3>
+						<div className={s.photoGrid}>
+							{own.map((i) => (
+								<div key={i.id} className={`${s.photo} ${i.id === cover?.id ? s.photoMain : ''}`}>
+									<button type="button" onClick={() => setBig(i.url)} aria-label="Open photo">
+										<img src={i.thumbUrl} alt="" loading="lazy" />
+									</button>
+									{i.id === cover?.id ? (
+										<span className={s.mainBadge}>★ Main photo</span>
+									) : (
+										parent && (
+											<button
+												type="button"
+												className={s.photoAction}
+												onClick={() => setCover.mutate({ id: r.id, imageId: i.id })}
+											>
+												Make main photo
+											</button>
+										)
+									)}
+									{parent && (
+										<button
+											type="button"
+											className={s.photoRemove}
+											aria-label="Remove photo"
+											onClick={() => setRemoving(i.id)}
+										>
+											×
+										</button>
+									)}
+								</div>
 							))}
+							{parent && (
+								<button type="button" className={s.addPhotos} onClick={() => choosePhotos(null)}>
+									＋ Add photos
+								</button>
+							)}
 						</div>
 					</section>
 				)}
+				<input
+					ref={picker}
+					type="file"
+					accept="image/*"
+					multiple
+					hidden
+					onChange={(e) => {
+						const files = [...(e.target.files ?? [])].slice(0, 6);
+						e.target.value = '';
+						if (files.length) void addPhotos(files);
+					}}
+				/>
 				{r.sourceUrl && (
 					<a className={s.sourceLink} href={r.sourceUrl} target="_blank" rel="noreferrer">
 						From {new URL(r.sourceUrl).hostname.replace(/^www\./, '')}
@@ -323,6 +404,19 @@ export default function RecipeView({
 				<div className={s.big} role="dialog" aria-label="Picture" onClick={() => setBig(null)}>
 					<img src={big} alt="" />
 				</div>
+			)}
+			{removing && (
+				<ConfirmDialog
+					title="Remove this photo?"
+					confirmLabel="Remove"
+					onCancel={() => setRemoving(null)}
+					onConfirm={() => {
+						removeImage.mutate({ id: r.id, imageId: removing });
+						setRemoving(null);
+					}}
+				>
+					It's taken out of the recipe for good.
+				</ConfirmDialog>
 			)}
 			{deleting && (
 				<ConfirmDialog

@@ -136,6 +136,9 @@ const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean]
 	['POST', '/api/recipes'],
 	['PUT', '/api/recipes/:id'],
 	['DELETE', '/api/recipes/:id'],
+	['POST', '/api/recipes/:id/images'],
+	['PUT', '/api/recipes/:id/cover'],
+	['DELETE', '/api/recipes/:id/images/:imageId'],
 ];
 const needsParent = (req: Req) =>
 	PARENT_ONLY.some(

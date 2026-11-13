@@ -118,6 +118,38 @@ describe('recipes', () => {
 		expect((await call('POST', '/api/recipes/read', { url: 'not a link' })).status).toBe(400);
 	});
 
+	it('adds photos of the dish and of a step, picks the main one, and takes one out', async () => {
+		const { call } = setup();
+		const saved = (await call('POST', '/api/recipes', { recipe: BULGOGI, images: [PICTURE], cover: null })).body;
+		// A photo of step 2 (how the beef should look by then), and two more of the dish.
+		const withStep = await call('POST', `/api/recipes/${saved.id}/images`, { images: [PICTURE], step: 2 });
+		expect(withStep.body.images.map((i: { step: number | null }) => i.step)).toEqual([null, 2]);
+		const more = (await call('POST', `/api/recipes/${saved.id}/images`, { images: [PICTURE, PICTURE], step: null }))
+			.body;
+		expect(more.images.map((i: { step: number | null }) => i.step)).toEqual([null, 2, null, null]);
+
+		// The main photo: one of the dish's, never a step's.
+		const dish = more.images[3].id;
+		expect((await call('PUT', `/api/recipes/${saved.id}/cover`, { imageId: more.images[1].id })).status).toBe(404);
+		expect((await call('PUT', `/api/recipes/${saved.id}/cover`, { imageId: dish })).body.coverId).toBe(dish);
+
+		// Taken out: the main one goes back to none picked.
+		const gone = (await call('DELETE', `/api/recipes/${saved.id}/images/${dish}`)).body;
+		expect([gone.coverId, gone.images.length]).toEqual([null, 3]);
+		expect(existsSync(join(dir, 'recipes', `${dish}.jpg`))).toBe(false);
+	});
+
+	it('keeps what was left empty as empty (not 0 or "")', async () => {
+		const { call } = setup();
+		const salt = { group: null, amount: null, unit: null, item: 'salt' };
+		const saved = await call('POST', '/api/recipes', {
+			recipe: { ...BULGOGI, servings: null, totalMinutes: null, notes: null, ingredients: [salt] },
+			images: [],
+			cover: null,
+		});
+		expect(saved.body).toMatchObject({ servings: null, totalMinutes: null, notes: null, ingredients: [salt] });
+	});
+
 	it('says so when reading is off, and checks what it keeps', async () => {
 		dir = mkdtempSync(join(tmpdir(), 'recipes-'));
 		const { call } = household([], { photosDir: dir });

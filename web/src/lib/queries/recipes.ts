@@ -28,6 +28,36 @@ export function useRecipeActions() {
 			onError: putBack(qc),
 			onSettled: refresh,
 		}),
+		/** Photos: added (of the dish, or a step), the main one picked, one taken out. Each answers the recipe. */
+		addImages: useMutation({
+			mutationFn: ({ id, images, step }: { id: string; images: RecipeImage[]; step: number | null }) =>
+				api.addRecipeImages(id, images, step),
+			onSuccess: (r: Recipe) => book((list) => list.map((x) => (x.id === r.id ? r : x))),
+			onSettled: refresh,
+		}),
+		setCover: useMutation({
+			mutationFn: ({ id, imageId }: { id: string; imageId: string }) => api.setRecipeCover(id, imageId),
+			onMutate: ({ id, imageId }) => book((list) => list.map((r) => (r.id === id ? { ...r, coverId: imageId } : r))),
+			onError: putBack(qc),
+			onSettled: refresh,
+		}),
+		removeImage: useMutation({
+			mutationFn: ({ id, imageId }: { id: string; imageId: string }) => api.deleteRecipeImage(id, imageId),
+			onMutate: ({ id, imageId }) =>
+				book((list) =>
+					list.map((r) =>
+						r.id === id
+							? {
+									...r,
+									images: r.images.filter((i) => i.id !== imageId),
+									coverId: r.coverId === imageId ? null : r.coverId,
+								}
+							: r,
+					),
+				),
+			onError: putBack(qc),
+			onSettled: refresh,
+		}),
 		remove: useMutation({
 			mutationFn: (id: string) => api.deleteRecipe(id),
 			onMutate: (id) => book((list) => list.filter((r) => r.id !== id)),

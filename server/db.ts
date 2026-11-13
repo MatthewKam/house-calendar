@@ -845,6 +845,11 @@ const migrations: string[] = [
   );
   CREATE INDEX recipe_images_recipe ON recipe_images(recipe_id, sort_order);
   `,
+	// A recipe's photos of a step (how it should look by then): the step's place, from 0; null for the
+	// recipe's own pictures.
+	`
+  ALTER TABLE recipe_images ADD COLUMN step INTEGER;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

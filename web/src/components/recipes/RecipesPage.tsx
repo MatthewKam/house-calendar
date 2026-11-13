@@ -42,7 +42,7 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 	const tags = [...new Set(recipes.flatMap((r) => [r.meal, ...r.proteins, ...r.types]))].sort();
 	const shown = recipes.filter(
 		(r) =>
-			(time === null || time === Infinity || (r.totalMinutes ?? Infinity) <= time) &&
+			(time === null || time === Infinity || (r.totalMinutes || Infinity) <= time) &&
 			(tag === null || r.meal === tag || r.proteins.includes(tag) || r.types.includes(tag)),
 	);
 	const opened = recipes.find((r) => r.id === open) ?? null;
@@ -149,7 +149,8 @@ const capital = (w: string | null) => (w ? w[0].toUpperCase() + w.slice(1) : nul
 
 /** A recipe in the book: its picture, name, time and kind. */
 function RecipeCard({ recipe: r, onOpen }: { recipe: Recipe; onOpen: () => void }) {
-	const cover = r.images.find((i) => i.id === r.coverId) ?? r.images[0];
+	// Its main photo, else the first of its own (never a step's).
+	const cover = r.images.find((i) => i.id === r.coverId) ?? r.images.find((i) => i.step === null);
 	return (
 		<button type="button" className={s.card} onClick={onOpen}>
 			{cover ? (
@@ -162,7 +163,7 @@ function RecipeCard({ recipe: r, onOpen }: { recipe: Recipe; onOpen: () => void 
 			<span className={s.cardText}>
 				<span className={s.cardTitle}>{r.title}</span>
 				<span className={s.cardMeta}>
-					{[r.totalMinutes !== null ? minutesText(r.totalMinutes) : null, capital(r.types[0] ?? r.proteins[0] ?? null)]
+					{[r.totalMinutes ? minutesText(r.totalMinutes) : null, capital(r.types[0] ?? r.proteins[0] ?? null)]
 						.filter(Boolean)
 						.join(' · ')}
 				</span>

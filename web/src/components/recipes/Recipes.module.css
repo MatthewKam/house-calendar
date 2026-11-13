@@ -357,23 +357,16 @@
 	margin: 0;
 	font-size: inherit;
 }
-/* ×½ ×1 ×2. */
+/* How many times the recipe: ×½ to ×8. */
 .scale {
-	display: flex;
-	padding: 0.15rem;
-	border-radius: var(--radius-round);
-	background: var(--bg);
-}
-.scale button {
-	min-width: 3rem;
-	border-radius: var(--radius-round);
+	min-height: 2.75rem;
+	padding: 0 0.7rem;
+	font: inherit;
 	font-weight: 700;
-	color: var(--muted);
-}
-.scale button[aria-checked='true'] {
+	border: 1px solid var(--line);
+	border-radius: var(--radius-round);
 	background: var(--surface);
 	color: var(--text);
-	box-shadow: var(--shadow-sm);
 }
 .group h4 {
 	margin: 0.4rem 0 0.2rem;
@@ -579,4 +572,93 @@
 	font-size: 1.4rem;
 	font-weight: 700;
 	color: var(--accent);
+}
+
+/* A step's photos, under it; grown-ups add one. */
+.stepPhotos {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	padding: 0.4rem 0 0 2.5rem;
+}
+.stepPhotos > button:not(.addPhoto) {
+	width: 4.5rem;
+	height: 4.5rem;
+	min-height: 0;
+	padding: 0;
+	border-radius: var(--radius-sm);
+	overflow: hidden;
+}
+.stepPhotos img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.addPhoto {
+	min-height: 2.75rem;
+	padding: 0 0.8rem;
+	border-radius: var(--radius-sm);
+	border: 1px dashed var(--line);
+	background: none;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+/* The recipe's photos: the main one marked; grown-ups pick another, take one out, or add more. */
+.photoGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+	gap: 0.6rem;
+}
+.photo {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+.photo > button:first-child {
+	padding: 0;
+	min-height: 0;
+	border-radius: var(--radius-sm);
+	overflow: hidden;
+	aspect-ratio: 4 / 3;
+}
+.photo img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.photoMain > button:first-child {
+	box-shadow: 0 0 0 2px var(--accent);
+}
+.mainBadge {
+	font-size: 0.85rem;
+	font-weight: 700;
+	color: var(--accent);
+}
+.photoAction {
+	composes: textButton from '../ui/Buttons.module.css';
+	align-self: flex-start;
+	font-size: 0.85rem;
+}
+.photoRemove {
+	position: absolute;
+	top: 0.3rem;
+	right: 0.3rem;
+	width: 2rem;
+	height: 2rem;
+	min-height: 0;
+	padding: 0;
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--surface) 85%, transparent);
+	color: var(--text);
+	font-size: 1.2rem;
+	line-height: 1;
+}
+.addPhotos {
+	aspect-ratio: 4 / 3;
+	border-radius: var(--radius-sm);
+	border: 1px dashed var(--line);
+	background: var(--bg);
+	color: var(--muted);
+	font-weight: 600;
 }

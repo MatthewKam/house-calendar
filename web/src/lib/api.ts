@@ -257,6 +257,11 @@ export const api = {
 		call<Recipe>('POST', '/api/recipes', { recipe, images, cover }),
 	updateRecipe: (id: string, recipe: RecipeFields) => call<Recipe>('PUT', `/api/recipes/${id}`, recipe),
 	deleteRecipe: (id: string) => call<void>('DELETE', `/api/recipes/${id}`),
+	/** More photos: of the dish (step null), or of a step (its place, from 0). */
+	addRecipeImages: (id: string, images: RecipeImage[], step: number | null) =>
+		call<Recipe>('POST', `/api/recipes/${id}/images`, { images, step }),
+	setRecipeCover: (id: string, imageId: string) => call<Recipe>('PUT', `/api/recipes/${id}/cover`, { imageId }),
+	deleteRecipeImage: (id: string, imageId: string) => call<Recipe>('DELETE', `/api/recipes/${id}/images/${imageId}`),
 	photos: () => call<Photo[]>('GET', '/api/photos'),
 	updatePhoto: (id: string, p: { inSlideshow?: boolean; memberId?: string | null }) =>
 		call<Photo>('PATCH', `/api/photos/${id}`, p),
