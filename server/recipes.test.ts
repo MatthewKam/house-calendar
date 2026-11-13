@@ -160,6 +160,67 @@ describe('recipes', () => {
 		expect(saved.body).toMatchObject({ servings: null, totalMinutes: null, notes: null, ingredients: [salt] });
 	});
 
+	it("keeps the times it's been cooked, and everyone's rating with the family's average", async () => {
+		dir = mkdtempSync(join(tmpdir(), 'recipes-'));
+		const { app, call } = household(
+			[
+				{ id: 'mom', name: 'Mom' },
+				{ id: 'dad', name: 'Dad' },
+				{ id: 'kid', name: 'Kid' },
+			],
+			{ photosDir: dir },
+		);
+		// Who's asking, as the front server would say (none: the household app on its own).
+		let viewer: object | undefined;
+		app.addHook('onRequest', async (req) => {
+			req.raw.viewer = viewer as never;
+		});
+		const id = (await call('POST', '/api/recipes', { recipe: BULGOGI, images: [], cover: null })).body.id;
+		expect((await call('GET', '/api/recipes')).body[0]).toMatchObject({
+			cooked: { times: 0, averageMinutes: null, lastAt: null },
+			ratings: [],
+			rating: null,
+		});
+
+		// Cooked twice: 40 and 50 minutes.
+		await call('POST', `/api/recipes/${id}/cooks`, { minutes: 40 });
+		const twice = (await call('POST', `/api/recipes/${id}/cooks`, { minutes: 50 })).body;
+		expect(twice.cooked).toMatchObject({ times: 2, averageMinutes: 45 });
+
+		// Mom 5, Kid 4, Dad 3: 4 on average.
+		for (const [who, stars] of [
+			['mom', 5],
+			['kid', 4],
+			['dad', 3],
+		] as const)
+			await call('PUT', `/api/recipes/${id}/ratings/${who}`, { stars });
+		const rated = (await call('GET', '/api/recipes')).body[0];
+		expect([rated.rating, rated.ratings.length]).toEqual([4, 3]);
+
+		// Signed in: Dad (a parent, not the holder) changes his own and the kid's, not Mom's.
+		const dad = {
+			role: 'guardian',
+			memberId: 'dad',
+			parent: true,
+			holder: false,
+			guardians: ['mom', 'dad'],
+			actor: 'dad',
+			stillParent() {},
+		};
+		viewer = dad;
+		expect((await call('PUT', `/api/recipes/${id}/ratings/dad`, { stars: 4 })).status).toBe(200);
+		expect((await call('PUT', `/api/recipes/${id}/ratings/kid`, { stars: 5 })).status).toBe(200);
+		expect((await call('PUT', `/api/recipes/${id}/ratings/mom`, { stars: 1 })).status).toBe(403);
+		// The kid on their own device: theirs only. The holder: anyone's (and taking one back).
+		viewer = { ...dad, role: 'kid', memberId: 'kid', parent: false, actor: 'kid' };
+		expect((await call('PUT', `/api/recipes/${id}/ratings/kid`, { stars: 3 })).status).toBe(200);
+		expect((await call('PUT', `/api/recipes/${id}/ratings/dad`, { stars: 1 })).status).toBe(403);
+		viewer = { ...dad, memberId: 'mom', holder: true, actor: 'mom' };
+		const last = (await call('PUT', `/api/recipes/${id}/ratings/dad`, { stars: null })).body;
+		expect(last.ratings.map((r: { memberId: string }) => r.memberId).sort()).toEqual(['kid', 'mom']);
+		expect(last.rating).toBe(4);
+	});
+
 	it('says so when reading is off, and checks what it keeps', async () => {
 		dir = mkdtempSync(join(tmpdir(), 'recipes-'));
 		const { call } = household([], { photosDir: dir });

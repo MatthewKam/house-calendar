@@ -59,6 +59,30 @@ export function useRecipeActions() {
 			onError: putBack(qc),
 			onSettled: refresh,
 		}),
+		/** A time it was cooked; someone's rating (shown straight away, the average worked out again). */
+		logCook: useMutation({
+			mutationFn: ({ id, minutes }: { id: string; minutes: number }) => api.logRecipeCook(id, minutes),
+			onSuccess: (r: Recipe) => book((list) => list.map((x) => (x.id === r.id ? r : x))),
+			onSettled: refresh,
+		}),
+		rate: useMutation({
+			mutationFn: ({ id, memberId, stars }: { id: string; memberId: string; stars: number | null }) =>
+				api.rateRecipe(id, memberId, stars),
+			onMutate: ({ id, memberId, stars }) =>
+				book((list) =>
+					list.map((r) => {
+						if (r.id !== id) return r;
+						const others = r.ratings.filter((x) => x.memberId !== memberId);
+						const ratings = stars === null ? others : [...others, { memberId, stars }];
+						const rating = ratings.length
+							? Math.round((ratings.reduce((n, x) => n + x.stars, 0) / ratings.length) * 10) / 10
+							: null;
+						return { ...r, ratings, rating };
+					}),
+				),
+			onError: putBack(qc),
+			onSettled: refresh,
+		}),
 		remove: useMutation({
 			mutationFn: (id: string) => api.deleteRecipe(id),
 			onMutate: (id) => book((list) => list.filter((r) => r.id !== id)),

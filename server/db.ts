@@ -850,6 +850,24 @@ const migrations: string[] = [
 	`
   ALTER TABLE recipe_images ADD COLUMN step INTEGER;
   `,
+	// Each time a recipe was cooked (saved after Done cooking: how long it took), and each person's
+	// rating of it, out of 5 (the family's average shows).
+	`
+  CREATE TABLE recipe_cooks (
+    id         TEXT PRIMARY KEY,
+    recipe_id  TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    minutes    INTEGER NOT NULL,
+    cooked_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX recipe_cooks_recipe ON recipe_cooks(recipe_id, cooked_at);
+  CREATE TABLE recipe_ratings (
+    recipe_id  TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    member_id  TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    stars      INTEGER NOT NULL CHECK (stars BETWEEN 1 AND 5),
+    rated_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    PRIMARY KEY (recipe_id, member_id)
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

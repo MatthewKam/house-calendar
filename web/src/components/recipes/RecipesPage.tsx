@@ -166,7 +166,12 @@ function RecipeCard({ recipe: r, onOpen }: { recipe: Recipe; onOpen: () => void 
 			<span className={s.cardText}>
 				<span className={s.cardTitle}>{r.title}</span>
 				<span className={s.cardMeta}>
-					{[r.totalMinutes ? minutesText(r.totalMinutes) : null, capital(r.types[0] ?? r.proteins[0] ?? null)]
+					{[
+						r.rating !== null ? `★ ${r.rating}` : null,
+						r.totalMinutes ? minutesText(r.totalMinutes) : null,
+						capital(r.types[0] ?? r.proteins[0] ?? null),
+						r.cooked.times > 0 ? `made ${r.cooked.times}×` : null,
+					]
 						.filter(Boolean)
 						.join(' · ')}
 				</span>

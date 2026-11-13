@@ -85,6 +85,11 @@ export interface Recipe extends RecipeFields {
 	coverId: string | null;
 	/** Picked to have no main photo: a default picture shows instead. */
 	noCover: boolean;
+	/** Times it's been cooked (saved after Done cooking): how many, how long on average, and the last. */
+	cooked: { times: number; averageMinutes: number | null; lastAt: string | null };
+	/** Each person's rating, out of 5, and the family's average (null: none yet). */
+	ratings: { memberId: string; stars: number }[];
+	rating: number | null;
 	createdAt: string;
 }
 

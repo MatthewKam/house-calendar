@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
-import { useAddToGroceries, useRecipeActions } from '../../lib/queries';
+import { useAddToGroceries, useAuthStatus, useMembers, useRecipeActions } from '../../lib/queries';
 import { coverOf, ingredientLine, mealPicture, minutesText, toJpeg } from '../../lib/recipes';
-import type { Recipe } from '../../lib/types';
+import type { Member, Recipe } from '../../lib/types';
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
 import { useWakeLock } from '../../lib/useWakeLock';
 import Sheet from '../ui/Sheet';
@@ -50,7 +50,19 @@ export default function RecipeView({
 	parent: boolean;
 	onClose: () => void;
 }) {
-	const { update, remove, addImages, setCover, removeImage } = useRecipeActions();
+	const { update, remove, addImages, setCover, removeImage, logCook, rate } = useRecipeActions();
+	// Done cooking: how long it took, while it's asked whether to keep that.
+	const [finished, setFinished] = useState<number | null>(null);
+	const endCooking = (save: boolean) => {
+		if (save && finished) logCook.mutate({ id: r.id, minutes: finished });
+		setFinished(null);
+		setCookingSince(null);
+	};
+	// Ratings: everyone in the family. Each changes their own; a parent a kid's; the account holder anyone's.
+	const people = useMembers().data ?? [];
+	const auth = useAuthStatus().data;
+	const canRate = (m: Member) =>
+		!auth?.signedIn || auth.holder || auth.memberId === m.id || (auth.parent && !m.guardian);
 	// Adding photos: which step they're of (null: of the dish), then the picker.
 	const picker = useRef<HTMLInputElement>(null);
 	const photosFor = useRef<number | null>(null);
@@ -260,6 +272,19 @@ export default function RecipeView({
 								{r.servings !== null && <span>Serves {Math.round(r.servings * scale * 10) / 10}</span>}
 							</div>
 						)}
+						{(r.cooked.times > 0 || r.rating !== null) && (
+							<div className={s.meta}>
+								{r.rating !== null && <span className={s.ratingBadge}>★ {r.rating}</span>}
+								{r.cooked.times > 0 && (
+									<span>
+										Made {r.cooked.times === 1 ? 'once' : `${r.cooked.times} times`}
+										{r.cooked.averageMinutes ? ` · usually ${minutesText(r.cooked.averageMinutes)}` : ''}
+										{r.cooked.lastAt &&
+											` · last ${new Date(r.cooked.lastAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}`}
+									</span>
+								)}
+							</div>
+						)}
 						{tags.length > 0 && (
 							<div className={s.tags}>
 								{tags.map((t) => (
@@ -280,7 +305,10 @@ export default function RecipeView({
 							</div>
 						)}
 						{cooking ? (
-							<CookingBar startedAt={cookingSince} onDone={() => setCookingSince(null)} />
+							<CookingBar
+								startedAt={cookingSince}
+								onDone={() => setFinished(Math.max(1, Math.round((Date.now() - cookingSince) / 60_000)))}
+							/>
 						) : (
 							<button
 								type="button"
@@ -324,6 +352,46 @@ export default function RecipeView({
 					{(!phone || tab === 'steps' || !ingredients) && steps}
 				</div>
 
+				{/* Everyone's stars, and the family's average. */}
+				{people.length > 0 && (
+					<section className={s.part} aria-label="Ratings">
+						<h3 className={s.sectionHead}>
+							Ratings
+							{r.rating !== null && <span className={s.ratingBadge}>★ {r.rating} family average</span>}
+						</h3>
+						<ul className={s.ratings}>
+							{people.map((m) => {
+								const mine = r.ratings.find((x) => x.memberId === m.id)?.stars ?? 0;
+								const can = canRate(m);
+								return (
+									<li key={m.id} className={s.ratingRow}>
+										<span className={s.ratingName}>
+											<span className={s.ratingDot} style={{ background: m.color }} aria-hidden="true" />
+											{m.name}
+										</span>
+										<span className={s.stars} role="radiogroup" aria-label={`${m.name}'s rating`}>
+											{[1, 2, 3, 4, 5].map((n) => (
+												<button
+													key={n}
+													type="button"
+													role="radio"
+													aria-checked={mine === n}
+													aria-label={`${n} ${n === 1 ? 'star' : 'stars'}`}
+													className={n <= mine ? s.starOn : s.star}
+													disabled={!can}
+													// The same star again takes it back.
+													onClick={() => rate.mutate({ id: r.id, memberId: m.id, stars: mine === n ? null : n })}
+												>
+													★
+												</button>
+											))}
+										</span>
+									</li>
+								);
+							})}
+						</ul>
+					</section>
+				)}
 				{r.notes && (
 					<section className={s.part} aria-label="Notes">
 						<h3 className={s.sectionHead}>Notes</h3>
@@ -431,6 +499,19 @@ export default function RecipeView({
 				<div className={s.big} role="dialog" aria-label="Picture" onClick={() => setBig(null)}>
 					<img src={big} alt="" />
 				</div>
+			)}
+			{finished !== null && (
+				<ConfirmDialog
+					title="Save this time?"
+					confirmLabel="Save time"
+					cancelLabel="Don't save"
+					safe
+					onCancel={() => endCooking(false)}
+					onConfirm={() => endCooking(true)}
+				>
+					You cooked for {minutesText(finished)}. Saved, it goes in this recipe's history: how many times you've made
+					it, and how long it usually takes.
+				</ConfirmDialog>
 			)}
 			{removing && (
 				<ConfirmDialog

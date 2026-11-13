@@ -207,9 +207,29 @@ export function registerRecipes(
 		// '' is "no main photo" (picked), null "none picked yet" (the first of its own shows).
 		coverId: r.cover_id || null,
 		noCover: r.cover_id === '',
+		...history(r.id),
 		createdAt: r.created_at,
 	});
 	const get = (id: string) => db.prepare('SELECT * FROM recipes WHERE id = ?').get(id) as Row | undefined;
+	/** How often it's been cooked and how it's rated. */
+	const history = (recipeId: string) => {
+		const c = db
+			.prepare(
+				'SELECT COUNT(*) AS times, AVG(minutes) AS average, MAX(cooked_at) AS last FROM recipe_cooks WHERE recipe_id = ?',
+			)
+			.get(recipeId) as { times: number; average: number | null; last: string | null };
+		const ratings = (
+			db.prepare('SELECT member_id, stars FROM recipe_ratings WHERE recipe_id = ? ORDER BY rated_at').all(recipeId) as {
+				member_id: string;
+				stars: number;
+			}[]
+		).map((x) => ({ memberId: x.member_id, stars: x.stars }));
+		return {
+			cooked: { times: c.times, averageMinutes: c.average === null ? null : Math.round(c.average), lastAt: c.last },
+			ratings,
+			rating: ratings.length ? Math.round((ratings.reduce((n, x) => n + x.stars, 0) / ratings.length) * 10) / 10 : null,
+		};
+	};
 
 	// Whether reading works here (Claude needs a key), and where pictures go (without a folder, none).
 	app.get('/api/recipes/reading', async () => ({ on: !!read, pictures: !!dir }));
@@ -364,6 +384,65 @@ export function registerRecipes(
 		if (dir) rmSync(file(req.params.imageId), { force: true });
 		return toRecipe(get(req.params.id)!);
 	});
+
+	// A time it was cooked: saved after Done cooking, if they wanted (how long it took, in minutes).
+	app.post<{ Params: { id: string }; Body: { minutes: number } }>(
+		'/api/recipes/:id/cooks',
+		{
+			schema: {
+				body: {
+					type: 'object',
+					required: ['minutes'],
+					additionalProperties: false,
+					properties: { minutes: { type: 'integer', minimum: 1, maximum: 1440 } },
+				},
+			},
+		},
+		async (req, reply) => {
+			if (!get(req.params.id)) return reply.code(404).send({ error: 'Recipe not found' });
+			db.prepare('INSERT INTO recipe_cooks (id, recipe_id, minutes) VALUES (?, ?, ?)').run(
+				randomUUID(),
+				req.params.id,
+				req.body.minutes,
+			);
+			return toRecipe(get(req.params.id)!);
+		},
+	);
+
+	// Someone's rating, out of 5 (null takes it back). Their own, anyone's; a kid's, a parent's too (kids
+	// are fickle, people make mistakes); anyone's at all, the account holder's.
+	app.put<{ Params: { id: string; memberId: string }; Body: { stars: number | null } }>(
+		'/api/recipes/:id/ratings/:memberId',
+		{
+			schema: {
+				body: {
+					type: 'object',
+					required: ['stars'],
+					additionalProperties: false,
+					// None first (the checker would turn a null into 0 for a number).
+					properties: { stars: { anyOf: [{ type: 'null' }, { type: 'integer', minimum: 1, maximum: 5 }] } },
+				},
+			},
+		},
+		async (req, reply) => {
+			const { id, memberId } = req.params;
+			if (!get(id)) return reply.code(404).send({ error: 'Recipe not found' });
+			if (!db.prepare('SELECT 1 FROM members WHERE id = ?').get(memberId))
+				return reply.code(404).send({ error: 'Unknown person' });
+			const v = req.raw.viewer;
+			const may = !v || v.holder || v.memberId === memberId || (v.parent && !v.guardians.includes(memberId));
+			if (!may) return reply.code(403).send({ error: 'Only they (or the account holder) can change their rating' });
+			if (req.body.stars === null)
+				db.prepare('DELETE FROM recipe_ratings WHERE recipe_id = ? AND member_id = ?').run(id, memberId);
+			else
+				db.prepare(
+					`INSERT INTO recipe_ratings (recipe_id, member_id, stars) VALUES (?, ?, ?)
+					 ON CONFLICT (recipe_id, member_id) DO UPDATE SET stars = excluded.stars, rated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')`,
+				).run(id, memberId, req.body.stars);
+			if (v?.parent) v.stillParent();
+			return toRecipe(get(id)!);
+		},
+	);
 
 	app.get<{ Params: { id: string } }>('/api/recipes/images/:id', async (req, reply) => {
 		const row = db.prepare('SELECT id FROM recipe_images WHERE id = ?').get(req.params.id);

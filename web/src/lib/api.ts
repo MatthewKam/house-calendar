@@ -263,6 +263,10 @@ export const api = {
 	/** The main photo, or none (null: a default picture shows). */
 	setRecipeCover: (id: string, imageId: string | null) => call<Recipe>('PUT', `/api/recipes/${id}/cover`, { imageId }),
 	deleteRecipeImage: (id: string, imageId: string) => call<Recipe>('DELETE', `/api/recipes/${id}/images/${imageId}`),
+	/** A time it was cooked (minutes), and someone's rating out of 5 (null takes it back). */
+	logRecipeCook: (id: string, minutes: number) => call<Recipe>('POST', `/api/recipes/${id}/cooks`, { minutes }),
+	rateRecipe: (id: string, memberId: string, stars: number | null) =>
+		call<Recipe>('PUT', `/api/recipes/${id}/ratings/${memberId}`, { stars }),
 	photos: () => call<Photo[]>('GET', '/api/photos'),
 	updatePhoto: (id: string, p: { inSlideshow?: boolean; memberId?: string | null }) =>
 		call<Photo>('PATCH', `/api/photos/${id}`, p),
