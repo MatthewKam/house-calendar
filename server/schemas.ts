@@ -18,7 +18,24 @@ export const COLOR = { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' } as const;
  */
 export function schemaOf(shape: z.ZodType, extra: Record<string, unknown> = {}) {
 	const { $schema: _, ...schema } = z.toJSONSchema(shape, { target: 'draft-7', io: 'input' });
-	return { ...schema, ...extra };
+	return { ...nullFirst(schema), ...extra };
+}
+
+/**
+ * Fastify's checker turns a value into the type a rule expects, trying a choice's rules in order: with
+ * "a number, or nothing", a null sent became 0 (and an empty text ""). Nothing is tried first, so null
+ * stays null.
+ */
+function nullFirst(schema: unknown): Record<string, unknown> {
+	if (Array.isArray(schema)) return schema.map(nullFirst) as unknown as Record<string, unknown>;
+	if (!schema || typeof schema !== 'object') return schema as Record<string, unknown>;
+	const out: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(schema)) out[key] = nullFirst(value);
+	if (Array.isArray(out.anyOf)) {
+		const isNull = (s: unknown) => (s as { type?: unknown }).type === 'null';
+		out.anyOf = [...out.anyOf.filter(isNull), ...out.anyOf.filter((s) => !isNull(s))];
+	}
+	return out;
 }
 
 /** Whether someone's in the family (by member id). */

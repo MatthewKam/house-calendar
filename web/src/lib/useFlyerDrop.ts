@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const hasFiles = (e: DragEvent) => !!e.dataTransfer && [...e.dataTransfer.types].includes('Files');
 const isImage = (f: File) => f.type.startsWith('image/') || /\.(heic|heif|jpe?g|png|webp|gif)$/i.test(f.name);
 
 /**
- * Snap a flyer by dragging its photo onto the page (computers, and tablets side by side with Files or
- * Photos). While `enabled`, a file dragged over the window shows the drop area (`dragging`); a dropped
- * image goes to `onFlyer`, anything else to `onOther` (to say it wasn't a photo).
+ * Pictures dragged onto the page (computers, and tablets side by side with Files or Photos). While
+ * `enabled`, a file dragged over the window shows the drop area (`dragging`); dropped images (in the
+ * order dropped) go to `onImages`, anything else to `onOther` (to say it wasn't a picture). One page at a
+ * time takes them: Recipes for a recipe's pictures, otherwise Snap a flyer (useFlyerDrop).
  */
-export function useFlyerDrop(enabled: boolean, onFlyer: (photo: File) => void, onOther: () => void) {
+export function useImageDrop(enabled: boolean, onImages: (images: File[]) => void, onOther: () => void) {
 	const [dragging, setDragging] = useState(false);
 	useEffect(() => {
 		if (!enabled) {
@@ -38,8 +39,8 @@ export function useFlyerDrop(enabled: boolean, onFlyer: (photo: File) => void, o
 			e.preventDefault();
 			depth = 0;
 			setDragging(false);
-			const photo = [...e.dataTransfer!.files].find(isImage);
-			if (photo) onFlyer(photo);
+			const images = [...e.dataTransfer!.files].filter(isImage);
+			if (images.length) onImages(images);
 			else onOther();
 		};
 		window.addEventListener('dragenter', enter);
@@ -52,6 +53,12 @@ export function useFlyerDrop(enabled: boolean, onFlyer: (photo: File) => void, o
 			window.removeEventListener('dragleave', leave);
 			window.removeEventListener('drop', drop);
 		};
-	}, [enabled, onFlyer, onOther]);
+	}, [enabled, onImages, onOther]);
 	return dragging;
+}
+
+/** Snap a flyer by dropping its photo: the first picture dropped. */
+export function useFlyerDrop(enabled: boolean, onFlyer: (photo: File) => void, onOther: () => void) {
+	const onImages = useCallback((images: File[]) => onFlyer(images[0]), [onFlyer]);
+	return useImageDrop(enabled, onImages, onOther);
 }

@@ -1,4 +1,4 @@
--- A household's database (server/db.ts), at version 51. Written by server/schema.test.ts; don't edit by hand.
+-- A household's database (server/db.ts), at version 54. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
@@ -341,6 +341,38 @@ CREATE TABLE push_sent (
     key        TEXT NOT NULL,
     sent_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     PRIMARY KEY (device_id, key)
+  );
+
+CREATE TABLE recipe_cooks (
+    id         TEXT PRIMARY KEY,
+    recipe_id  TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    minutes    INTEGER NOT NULL,
+    cooked_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+
+CREATE INDEX recipe_cooks_recipe ON recipe_cooks(recipe_id, cooked_at);
+
+CREATE TABLE recipe_images (
+    id          TEXT PRIMARY KEY,
+    recipe_id   TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    sort_order  INTEGER NOT NULL
+  , step INTEGER);
+
+CREATE INDEX recipe_images_recipe ON recipe_images(recipe_id, sort_order);
+
+CREATE TABLE recipe_ratings (
+    recipe_id  TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    member_id  TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    stars      INTEGER NOT NULL CHECK (stars BETWEEN 1 AND 5),
+    rated_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    PRIMARY KEY (recipe_id, member_id)
+  );
+
+CREATE TABLE recipes (
+    id          TEXT PRIMARY KEY,
+    data        TEXT NOT NULL,
+    cover_id    TEXT,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
 
 CREATE TABLE reminder_devices (

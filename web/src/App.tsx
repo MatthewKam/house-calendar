@@ -63,6 +63,7 @@ import s from './App.module.css';
 // Learn's games), Photos, the screen saver and Settings. Each is shown inside <Suspense fallback={null}>.
 const KidMode = lazy(() => import('./components/kid/KidMode'));
 const PhotosPage = lazy(() => import('./components/photos/PhotosPage'));
+const RecipesPage = lazy(() => import('./components/recipes/RecipesPage'));
 const ScreenSaver = lazy(() => import('./components/photos/ScreenSaver'));
 const Settings = lazy(() => import('./components/settings/Settings'));
 import { isKid } from './lib/people';
@@ -113,6 +114,7 @@ const PAGE_NAMES: Record<Page, string> = {
 	lists: 'Lists',
 	rewards: 'Rewards',
 	photos: 'Photos',
+	recipes: 'Recipes',
 };
 
 export default function App() {
@@ -194,7 +196,14 @@ export default function App() {
 	const takeFlyer = useCallback((photo: File) => setOpen({ kind: 'capture', photo }), []);
 	const notAPhoto = useCallback(() => setToast({ text: 'Drop a photo of the flyer (a JPEG, PNG or HEIC)' }), []);
 	const draggingFlyer = useFlyerDrop(
-		parentLock.parent && captureOn && !kidModeFor && !kidDevice && page !== 'photos' && open?.kind !== 'capture',
+		// Not on Photos or Recipes: they take dropped pictures themselves.
+		parentLock.parent &&
+			captureOn &&
+			!kidModeFor &&
+			!kidDevice &&
+			page !== 'photos' &&
+			page !== 'recipes' &&
+			open?.kind !== 'capture',
 		takeFlyer,
 		notAPhoto,
 	);
@@ -518,6 +527,10 @@ export default function App() {
 							<ListView />
 						) : page === 'rewards' ? (
 							<RewardsPage today={today} members={members} />
+						) : page === 'recipes' ? (
+							<Suspense fallback={null}>
+								<RecipesPage parent={parentLock.parent} />
+							</Suspense>
 						) : page === 'photos' ? (
 							<Suspense fallback={null}>
 								<PhotosPage onPreview={saver.show} incoming={pickedPhotos} onTaken={() => setPickedPhotos(null)} />

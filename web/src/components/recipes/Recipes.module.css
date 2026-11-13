@@ -1,0 +1,749 @@
+/* Recipes (RecipesPage, RecipeView, RecipeForm, AddRecipe): the book, a recipe to cook from, and adding one. */
+
+/* ---- The book ---- */
+.page {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+}
+.pageHead {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.6rem;
+	flex-wrap: wrap;
+}
+.pageTitle {
+	margin: 0;
+	font-size: 2rem;
+}
+.add {
+	padding: 0 1.1rem;
+	border-radius: var(--radius-round);
+	background: var(--accent);
+	color: var(--on-accent);
+	font-weight: 700;
+}
+.filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+/* A row of chips, scrolling sideways on a phone. */
+.chips {
+	display: flex;
+	gap: 0.4rem;
+	overflow-x: auto;
+	padding-bottom: 0.2rem;
+}
+.chip {
+	flex: none;
+	min-height: 2.75rem;
+	padding: 0 0.9rem;
+	border-radius: var(--radius-round);
+	border: 1px solid var(--line);
+	background: var(--surface);
+	color: var(--text);
+	font-weight: 600;
+}
+/* A kind (korean, beef): written with a capital. */
+.kind {
+	text-transform: capitalize;
+}
+.chip[aria-pressed='true'] {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--on-accent);
+}
+.scroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+.grid {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
+	gap: 0.9rem;
+}
+.none {
+	margin: 0;
+	color: var(--muted);
+}
+.card {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	overflow: hidden;
+	border-radius: var(--radius);
+	background: var(--surface);
+	border: 1px solid var(--line);
+	box-shadow: var(--shadow-sm);
+	text-align: left;
+	color: var(--text);
+}
+.cardImage {
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	object-fit: cover;
+	display: grid;
+	place-items: center;
+	font-size: 3rem;
+	background: var(--bg);
+}
+.cardText {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	padding: 0.6rem 0.8rem 0.8rem;
+}
+.cardTitle {
+	font-weight: 700;
+	font-size: 1.05rem;
+}
+.cardMeta {
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+
+/* ---- A recipe to cook from: bigger type for across the kitchen, and wider on big screens ---- */
+.view {
+	font-size: 1.1rem;
+	width: min(64rem, 96vw);
+}
+/* The top: the photo beside what to know (big screens), or above it. */
+.top {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0.9rem;
+}
+@media (min-width: 701px) {
+	.top {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		align-items: start;
+	}
+}
+.about {
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+}
+/* Ingredients and steps side by side (not on phones: they get tabs). */
+.columns {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+	gap: 1.5rem;
+	align-items: start;
+}
+.part {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.tabs {
+	display: flex;
+	padding: 0.15rem;
+	border-radius: var(--radius-round);
+	background: var(--bg);
+}
+.tabs button {
+	flex: 1;
+	border-radius: var(--radius-round);
+	font-weight: 700;
+	color: var(--muted);
+}
+.tabs button[aria-selected='true'] {
+	background: var(--surface);
+	color: var(--text);
+	box-shadow: var(--shadow-sm);
+}
+/* The ingredients: a row each with its box, the whole row to tap. */
+.checklist {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+.check {
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+	min-height: 2.75rem;
+	padding: 0.2rem 0;
+	border-bottom: 1px solid var(--line);
+	cursor: pointer;
+}
+.check input {
+	flex: none;
+	width: 1.4rem;
+	height: 1.4rem;
+	accent-color: var(--accent);
+}
+.check input:checked + span {
+	color: var(--muted);
+	text-decoration: line-through;
+}
+.iconButton {
+	display: grid;
+	place-items: center;
+	width: 2.75rem;
+	height: 2.75rem;
+	min-height: 0;
+	padding: 0;
+	background: none;
+	color: var(--muted);
+}
+.iconButton svg {
+	width: 1.4rem;
+	height: 1.4rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.startCooking {
+	align-self: flex-start;
+	min-height: 3rem;
+	padding: 0 1.6rem;
+	border-radius: var(--radius-round);
+	background: var(--accent);
+	color: var(--on-accent);
+	font-weight: 700;
+	font-size: 1.1rem;
+}
+.cookButton {
+	align-self: flex-start;
+	padding: 0 1rem;
+	border-radius: var(--radius-round);
+	border: 1px solid var(--line);
+	background: var(--surface);
+	color: var(--text);
+	font-weight: 650;
+}
+.said {
+	margin: 0;
+	color: var(--good);
+	font-weight: 600;
+}
+/* Cooking: the time since starting, timers, and Done cooking. */
+.cooking {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	padding: 0.8rem;
+	border-radius: var(--radius-sm);
+	background: var(--good-bg);
+	border: 1px solid var(--good-line);
+}
+.cookingRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.6rem;
+}
+.elapsed {
+	margin-right: auto;
+	font-size: 1.6rem;
+	font-weight: 750;
+	font-variant-numeric: tabular-nums;
+}
+.doneCooking {
+	composes: cookButton;
+}
+.timerPick {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: center;
+}
+.timerInput {
+	width: 4.5rem;
+	min-height: 2.75rem;
+	padding: 0 0.6rem;
+	font: inherit;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	color: var(--text);
+}
+.timers {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.timer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 0.3rem 0.3rem 0.3rem 0.8rem;
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	font-variant-numeric: tabular-nums;
+}
+/* Done: it stands out until it's put away. */
+.timerRang {
+	background: var(--warn-bg);
+	border: 1px solid var(--warn-line);
+	font-weight: 700;
+}
+.timerClose {
+	width: 2.75rem;
+	min-height: 2.75rem;
+	padding: 0;
+	background: none;
+	color: var(--muted);
+	font-size: 1.4rem;
+}
+.cover {
+	width: 100%;
+	max-height: 18rem;
+	object-fit: cover;
+	border-radius: var(--radius-sm);
+	cursor: zoom-in;
+}
+.meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem 1rem;
+	color: var(--muted);
+}
+.tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+}
+.tag {
+	padding: 0.15rem 0.6rem;
+	border-radius: var(--radius-round);
+	background: var(--bg);
+	font-size: 0.85rem;
+	text-transform: capitalize;
+}
+/* Things to start before the day: a heads-up. */
+.ahead {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	padding: 0.7rem 0.9rem;
+	border-radius: var(--radius-sm);
+	background: var(--warn-bg);
+	border: 1px solid var(--warn-line);
+}
+.sectionHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.6rem;
+	margin: 0.6rem 0 0;
+	font-size: 1.15rem;
+}
+.sectionHead h3 {
+	margin: 0;
+	font-size: inherit;
+}
+/* A dropdown (the filters, how many times the recipe): the browser's own arrow hidden, a chevron drawn with room
+   from the edge, so it looks the same everywhere and in light and dark. */
+.select {
+	position: relative;
+	display: inline-flex;
+}
+.select select {
+	appearance: none;
+	-webkit-appearance: none;
+	min-height: 2.75rem;
+	padding: 0 2.6rem 0 1rem;
+	font: inherit;
+	font-weight: 650;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-round);
+	background: var(--surface);
+	color: var(--text);
+}
+.select::after {
+	content: '';
+	position: absolute;
+	right: 1.1rem;
+	top: 50%;
+	width: 0.45rem;
+	height: 0.45rem;
+	margin-top: -0.35rem;
+	border-right: 2px solid var(--muted);
+	border-bottom: 2px solid var(--muted);
+	rotate: 45deg;
+	pointer-events: none;
+}
+.group h4 {
+	margin: 0.4rem 0 0.2rem;
+	font-size: 0.95rem;
+	color: var(--muted);
+}
+.steps {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+/* A step: tap when it's done, and it greys out. */
+.step {
+	width: 100%;
+	display: flex;
+	gap: 0.7rem;
+	align-items: flex-start;
+	padding: 0.6rem 0.7rem;
+	border-radius: var(--radius-sm);
+	background: var(--bg);
+	color: var(--text);
+	text-align: left;
+	font: inherit;
+	line-height: 1.45;
+}
+.step[aria-pressed='true'] {
+	opacity: 0.45;
+	text-decoration: line-through;
+}
+.stepNumber {
+	flex: none;
+	display: grid;
+	place-items: center;
+	width: 1.8rem;
+	height: 1.8rem;
+	border-radius: 50%;
+	background: var(--accent);
+	color: var(--on-accent);
+	font-weight: 700;
+	font-size: 0.9rem;
+}
+.notes {
+	margin: 0;
+	white-space: pre-wrap;
+}
+.pictures {
+	display: flex;
+	gap: 0.5rem;
+	overflow-x: auto;
+}
+.pictures img,
+.pictures button {
+	flex: none;
+	height: 6rem;
+	min-height: 0;
+	padding: 0;
+	border-radius: var(--radius-sm);
+}
+.pictures img {
+	max-width: 10rem;
+	object-fit: cover;
+}
+/* The cut-out cover, among the draft's pictures. */
+.coverPick {
+	box-shadow: 0 0 0 2px var(--accent);
+}
+.sourceLink {
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+/* A picture, big, over everything; a tap closes it. */
+.big {
+	position: fixed;
+	inset: 0;
+	z-index: var(--layer-photo);
+	display: grid;
+	place-items: center;
+	background: rgb(0 0 0 / 0.85); /* own: a dark backdrop for any photo, light or dark mode */
+	cursor: zoom-out;
+}
+.big img {
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+}
+
+/* ---- Adding and editing ---- */
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+}
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	font-size: 0.9rem;
+	color: var(--muted);
+}
+.field input,
+.field select,
+.field textarea {
+	font: inherit;
+	font-size: 1rem;
+	color: var(--text);
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	min-width: 0;
+}
+.field textarea {
+	resize: vertical;
+	line-height: 1.4;
+}
+/* Meal, serves and minutes: side by side, two or more to a row. */
+.fieldRow {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+	gap: 0.6rem;
+}
+.aheadRow {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+.aheadRow input:first-child {
+	flex: 1;
+}
+.hours {
+	width: 3.5rem;
+}
+.hoursLabel {
+	white-space: nowrap;
+}
+.textLink {
+	composes: textButton from '../ui/Buttons.module.css';
+	align-self: flex-start;
+}
+.hint {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.sources {
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+}
+/* From pictures: a big button. */
+.source {
+	display: flex;
+	align-items: center;
+	gap: 0.9rem;
+	padding: 1rem;
+	border-radius: var(--radius);
+	border: 1px dashed var(--line);
+	background: var(--bg);
+	color: var(--text);
+	text-align: left;
+}
+.source > span:first-child {
+	font-size: 2rem;
+}
+.source > span:last-child {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+}
+.linkRow {
+	display: flex;
+	gap: 0.5rem;
+}
+.linkRow input {
+	flex: 1;
+	min-width: 0;
+	font: inherit;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	color: var(--text);
+}
+
+/* A recipe's pictures being dragged over the page. */
+.drop {
+	position: fixed;
+	inset: 0;
+	z-index: var(--layer-toast);
+	display: grid;
+	place-items: center;
+	background: color-mix(in srgb, var(--bg) 85%, transparent);
+	pointer-events: none;
+}
+.dropBox {
+	padding: 2.5rem 3.5rem;
+	border: 3px dashed var(--accent);
+	border-radius: var(--radius-xl);
+	background: var(--surface);
+	font-size: 1.4rem;
+	font-weight: 700;
+	color: var(--accent);
+}
+
+/* A step's photos, under it; grown-ups add one. */
+.stepPhotos {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	padding: 0.4rem 0 0 2.5rem;
+}
+.stepPhotos > button:not(.addPhoto) {
+	width: 4.5rem;
+	height: 4.5rem;
+	min-height: 0;
+	padding: 0;
+	border-radius: var(--radius-sm);
+	overflow: hidden;
+}
+.stepPhotos img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.addPhoto {
+	min-height: 2.75rem;
+	padding: 0 0.8rem;
+	border-radius: var(--radius-sm);
+	border: 1px dashed var(--line);
+	background: none;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+/* The recipe's photos: the main one marked; grown-ups pick another, take one out, or add more. */
+.photoGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+	gap: 0.6rem;
+}
+.photo {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+.photo > button:first-child {
+	padding: 0;
+	min-height: 0;
+	border-radius: var(--radius-sm);
+	overflow: hidden;
+	aspect-ratio: 4 / 3;
+}
+.photo img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.photoMain > button:first-child {
+	box-shadow: 0 0 0 2px var(--accent);
+}
+.mainBadge {
+	font-size: 0.85rem;
+	font-weight: 700;
+	color: var(--accent);
+}
+.photoAction {
+	composes: textButton from '../ui/Buttons.module.css';
+	align-self: flex-start;
+	font-size: 0.85rem;
+}
+.photoRemove {
+	position: absolute;
+	top: 0.3rem;
+	right: 0.3rem;
+	width: 2rem;
+	height: 2rem;
+	min-height: 0;
+	padding: 0;
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--surface) 85%, transparent);
+	color: var(--text);
+	font-size: 1.2rem;
+	line-height: 1;
+}
+.addPhotos {
+	aspect-ratio: 4 / 3;
+	border-radius: var(--radius-sm);
+	border: 1px dashed var(--line);
+	background: var(--bg);
+	color: var(--muted);
+	font-weight: 600;
+}
+
+/* No main photo: a picture of its meal on a soft tint of the accent. */
+.defaultPicture {
+	display: grid;
+	place-items: center;
+	aspect-ratio: 4 / 3;
+	width: 100%;
+	border-radius: var(--radius-sm);
+	background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+	font-size: 4rem;
+	line-height: 1;
+}
+/* Up top, bigger. */
+.cover.defaultPicture {
+	font-size: 7rem;
+}
+
+/* Ratings: the family's average, and each person's stars (theirs to change; a parent a kid's). */
+.ratingBadge {
+	font-weight: 700;
+	color: var(--warn);
+	font-size: 0.95rem;
+}
+.ratings {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+.ratingRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.6rem;
+	border-bottom: 1px solid var(--line);
+}
+.ratingName {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-weight: 600;
+}
+.ratingDot {
+	width: 0.8rem;
+	height: 0.8rem;
+	border-radius: 50%;
+}
+.stars {
+	display: flex;
+}
+.star,
+.starOn {
+	width: 2.75rem;
+	min-width: 0;
+	padding: 0;
+	background: none;
+	font-size: 1.5rem;
+	color: var(--line);
+}
+.starOn {
+	color: var(--warn);
+}
+.star:disabled,
+.starOn:disabled {
+	opacity: 1;
+	cursor: default;
+}

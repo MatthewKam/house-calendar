@@ -9,12 +9,22 @@ interface Props {
 	confirmLabel: string;
 	/** Nothing is lost (e.g. putting stars in jars): the confirm button isn't red. */
 	safe?: boolean;
+	/** The other choice's words (Cancel unless said, e.g. Don't save). */
+	cancelLabel?: string;
 	onConfirm: () => void;
 	onCancel: () => void;
 }
 
 /** Asks before something can't be undone (or, `safe`, checks it's what was meant). Cancel has focus, so a stray Enter doesn't confirm. */
-export default function ConfirmDialog({ title, children, confirmLabel, safe, onConfirm, onCancel }: Props) {
+export default function ConfirmDialog({
+	title,
+	children,
+	confirmLabel,
+	safe,
+	cancelLabel = 'Cancel',
+	onConfirm,
+	onCancel,
+}: Props) {
 	return (
 		<>
 			<Sheet label={title} onClose={onCancel} className={sheet.confirm} role="alertdialog">
@@ -23,7 +33,7 @@ export default function ConfirmDialog({ title, children, confirmLabel, safe, onC
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />
 					<button type="button" className={sheet.secondary} onClick={onCancel} autoFocus>
-						Cancel
+						{cancelLabel}
 					</button>
 					<button type="button" className={safe ? sheet.primary : sheet.destructive} onClick={onConfirm}>
 						{confirmLabel}

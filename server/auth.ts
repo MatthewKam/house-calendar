@@ -131,6 +131,14 @@ const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean]
 	['PUT', '/api/events/:id/checklist'],
 	// Learn's day: unlocking, locking, more games or minutes.
 	['POST', '/api/learn/:memberId/today'],
+	// Recipes: reading, adding, changing and deleting are a parent's (looking is anyone's).
+	['POST', '/api/recipes/read'],
+	['POST', '/api/recipes'],
+	['PUT', '/api/recipes/:id'],
+	['DELETE', '/api/recipes/:id'],
+	['POST', '/api/recipes/:id/images'],
+	['PUT', '/api/recipes/:id/cover'],
+	['DELETE', '/api/recipes/:id/images/:imageId'],
 ];
 const needsParent = (req: Req) =>
 	PARENT_ONLY.some(
