@@ -7,6 +7,7 @@ import TakeBackDialog from './TakeBackDialog';
 import { Who, dayAndTime, shortDay, toDate } from './JarBits';
 import Fab from '../nav/Fab';
 import { useParent } from '../../lib/useParent';
+import { Loading, Skeleton } from '../ui/Skeleton';
 import s from './Rewards.module.css';
 
 interface Props {
@@ -18,7 +19,8 @@ const monthOf = (d: string) => toDate(d).toLocaleDateString([], { month: 'long',
 
 /** Rewards: each kid's stars and jars, full jars waiting to be redeemed, then everything redeemed (or missed) so far. */
 export default function RewardsPage({ today, members }: Props) {
-	const jars = useRewards(today).data ?? [];
+	const jarsQuery = useRewards(today);
+	const jars = jarsQuery.data ?? [];
 	const history = useRewardHistory().data ?? [];
 	const buckets = useBuckets().data ?? [];
 	const { redeem, undoRedeem } = useRewardActions();
@@ -57,7 +59,12 @@ export default function RewardsPage({ today, members }: Props) {
 			</header>
 
 			<div className={s.scroll}>
-				{kids.length === 0 ? (
+				{jarsQuery.isPending ? (
+					<Loading label="Loading reward jars" className={s.kids}>
+						<Skeleton height="12rem" />
+						<Skeleton height="12rem" />
+					</Loading>
+				) : kids.length === 0 ? (
 					<p className={s.none}>
 						No reward jars yet. Tap + to make one; kids fill them with the stars they earn from extras.
 					</p>

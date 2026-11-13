@@ -22,6 +22,7 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 import MomentDialog from './MomentDialog';
 import PottyCard from './PottyCard';
 import panel from '../calendar/DayPanel.module.css';
+import { Loading, Skeleton } from '../ui/Skeleton';
 import s from './Tasks.module.css';
 import { isKid } from '../../lib/people';
 
@@ -43,7 +44,8 @@ interface Props {
  */
 export default function TasksPage({ today, members, onAdd, onEdit, locked }: Props) {
 	const thisWeek = useMemo(() => startOfWeek(fromDayKey(today)), [today]);
-	const tasks = useTasks().data ?? [];
+	const tasksQuery = useTasks();
+	const tasks = tasksQuery.data ?? [];
 	const done = useTasksDone(thisWeek).data ?? [];
 	const setDone = useSetTaskDone(thisWeek);
 	const deleteTask = useDeleteTask();
@@ -101,78 +103,90 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 			</header>
 
 			<div className={s.scroll}>
-				{tasks.length === 0 && (
-					<p className={s.none}>
-						No tasks yet. Add one for each kid and pick the days it's due; they tick it off here.
-					</p>
-				)}
-				<div className={s.board}>
-					{kids.map((kid) => {
-						const mine = tasksFor(tasks, kid.id);
-						const showHistory = historyKid === kid.id;
-						return (
-							<section
-								key={kid.id}
-								className={s.kid}
-								style={{ '--c': kid.color, '--p': `${percent(progress.get(kid.id))}%` } as CSSProperties}
-							>
-								<KidHeader
-									kid={kid}
-									progress={progress.get(kid.id)}
-									stars={buckets.find((b) => b.memberId === kid.id)?.stars ?? 0}
-									showHistory={showHistory}
-									onHistory={() => setHistoryKid(showHistory ? null : kid.id)}
-									moments={moments.filter((mo) => mo.memberId === kid.id)}
-									onMoment={locked ? undefined : (moment) => setUnsticking({ kid, moment })}
-								/>
-								{!showHistory && potty.some((c) => c.memberId === kid.id) && (
-									<PottyCard
-										kid={kid}
-										chart={potty.find((c) => c.memberId === kid.id)!}
-										canEdit={!locked}
-										compact
-										foldable
-									/>
-								)}
-								{showHistory ? (
-									<TaskHistory kid={kid} tasks={mine} today={today} onEdit={locked ? undefined : onEdit} />
-								) : (
-									<>
-										<TodayList
+				{/* Loading: a card's shape for each kid, not "No tasks yet". */}
+				{tasksQuery.isPending ? (
+					<Loading label="Loading tasks" className={s.board}>
+						{/* One for each kid, or two while the family is still loading. */}
+						{Array.from({ length: kids.length || 2 }, (_, i) => (
+							<Skeleton key={i} height="16rem" />
+						))}
+					</Loading>
+				) : (
+					<>
+						{tasks.length === 0 && (
+							<p className={s.none}>
+								No tasks yet. Add one for each kid and pick the days it's due; they tick it off here.
+							</p>
+						)}
+						<div className={s.board}>
+							{kids.map((kid) => {
+								const mine = tasksFor(tasks, kid.id);
+								const showHistory = historyKid === kid.id;
+								return (
+									<section
+										key={kid.id}
+										className={s.kid}
+										style={{ '--c': kid.color, '--p': `${percent(progress.get(kid.id))}%` } as CSSProperties}
+									>
+										<KidHeader
 											kid={kid}
-											tasks={mine}
-											done={done}
-											today={today}
-											editing={editing}
-											onTick={(c, ticked) =>
-												setDone.mutate({ taskId: c.id, memberId: kid.id, day: today, done: !ticked })
-											}
-											onEdit={onEdit}
-											onDelete={setToDelete}
-											onReorder={reorderGroup}
+											progress={progress.get(kid.id)}
+											stars={buckets.find((b) => b.memberId === kid.id)?.stars ?? 0}
+											showHistory={showHistory}
+											onHistory={() => setHistoryKid(showHistory ? null : kid.id)}
+											moments={moments.filter((mo) => mo.memberId === kid.id)}
+											onMoment={locked ? undefined : (moment) => setUnsticking({ kid, moment })}
 										/>
-										{!editing && !locked && (
-											<div className={s.addRow}>
-												<button className={s.addText} onClick={() => onAdd(kid.id)}>
-													+ Add task/goal
-												</button>
-												{isKid(kid) && !potty.some((c) => c.memberId === kid.id) && (
-													<button
-														className={s.addText}
-														disabled={pottyActions.setOn.isPending}
-														onClick={() => pottyActions.setOn.mutate({ memberId: kid.id, on: true })}
-													>
-														🚽 Start potty chart
-													</button>
-												)}
-											</div>
+										{!showHistory && potty.some((c) => c.memberId === kid.id) && (
+											<PottyCard
+												kid={kid}
+												chart={potty.find((c) => c.memberId === kid.id)!}
+												canEdit={!locked}
+												compact
+												foldable
+											/>
 										)}
-									</>
-								)}
-							</section>
-						);
-					})}
-				</div>
+										{showHistory ? (
+											<TaskHistory kid={kid} tasks={mine} today={today} onEdit={locked ? undefined : onEdit} />
+										) : (
+											<>
+												<TodayList
+													kid={kid}
+													tasks={mine}
+													done={done}
+													today={today}
+													editing={editing}
+													onTick={(c, ticked) =>
+														setDone.mutate({ taskId: c.id, memberId: kid.id, day: today, done: !ticked })
+													}
+													onEdit={onEdit}
+													onDelete={setToDelete}
+													onReorder={reorderGroup}
+												/>
+												{!editing && !locked && (
+													<div className={s.addRow}>
+														<button className={s.addText} onClick={() => onAdd(kid.id)}>
+															+ Add task/goal
+														</button>
+														{isKid(kid) && !potty.some((c) => c.memberId === kid.id) && (
+															<button
+																className={s.addText}
+																disabled={pottyActions.setOn.isPending}
+																onClick={() => pottyActions.setOn.mutate({ memberId: kid.id, on: true })}
+															>
+																🚽 Start potty chart
+															</button>
+														)}
+													</div>
+												)}
+											</>
+										)}
+									</section>
+								);
+							})}
+						</div>
+					</>
+				)}
 			</div>
 
 			{/* Bottom bar: switch on edit mode. */}

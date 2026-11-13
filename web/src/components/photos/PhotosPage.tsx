@@ -8,6 +8,7 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 import Fab from '../nav/Fab';
 import ScreenSaverSettings from '../settings/ScreenSaverSettings';
 import sheet from '../ui/Sheet.module.css';
+import { Loading, Skeleton } from '../ui/Skeleton';
 import s from './Photos.module.css';
 import Sheet from '../ui/Sheet';
 
@@ -86,7 +87,8 @@ function UploadStatus({ upload: u, video }: { upload: Upload; video?: Photo }) {
 }
 
 export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
-	const photos = usePhotos().data ?? [];
+	const photosQuery = usePhotos();
+	const photos = photosQuery.data ?? [];
 	const { refresh, update, remove, setSlideshow } = usePhotoActions();
 	const [show, setShow] = useState<Show>('all');
 	const [uploads, setUploads] = useState<Upload[]>([]);
@@ -335,7 +337,13 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 				</ul>
 			)}
 
-			{photos.length === 0 ? (
+			{photosQuery.isPending ? (
+				<Loading label="Loading photos" className={s.grid}>
+					{Array.from({ length: 8 }, (_, i) => (
+						<Skeleton key={i} height="9rem" />
+					))}
+				</Loading>
+			) : photos.length === 0 ? (
 				<div className={s.empty}>
 					<h2>No photos yet</h2>
 					<p>

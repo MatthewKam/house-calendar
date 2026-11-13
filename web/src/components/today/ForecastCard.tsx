@@ -6,6 +6,7 @@ import { useTempUnit, windUnit } from '../../lib/units';
 import type { Weather } from '../../lib/types';
 import { canFindHere, findHere, setHere, useWeatherHere } from '../../lib/useWeatherHere';
 import AddressInput from '../calendar/AddressInput';
+import { Loading, Skeleton, SkeletonLines } from '../ui/Skeleton';
 import s from './Today.module.css';
 
 type Hour = Weather['hours'][number];
@@ -83,6 +84,23 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 				{weekOpen ? 'Hide next 7 days' : 'See next 7 days'}
 			</button>
 			{weekOpen && <Week days={w.days.slice(1)} />}
+		</section>
+	);
+}
+
+/** The weather card while the forecast comes in: its heading, now, and the hours graph, in grey. */
+export function ForecastLoading() {
+	return (
+		<section className={s.card} aria-label="Weather">
+			<h2 className={s.cardHead}>Weather</h2>
+			<Loading label="Loading the weather">
+				<div className={s.weatherNow}>
+					<Skeleton width="3.2rem" height="3.2rem" round />
+					<Skeleton width="5rem" height="3.2rem" />
+					<SkeletonLines count={3} />
+				</div>
+				<Skeleton height="8rem" />
+			</Loading>
 		</section>
 	);
 }

@@ -431,3 +431,11 @@
 	color: var(--accent);
 	font-weight: 600;
 }
+
+/* Lists loading: two list-shaped blocks side by side where there's room. */
+.loading {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+	gap: 1rem;
+	padding: 0 1rem;
+}
