@@ -260,7 +260,8 @@ export const api = {
 	/** More photos: of the dish (step null), or of a step (its place, from 0). */
 	addRecipeImages: (id: string, images: RecipeImage[], step: number | null) =>
 		call<Recipe>('POST', `/api/recipes/${id}/images`, { images, step }),
-	setRecipeCover: (id: string, imageId: string) => call<Recipe>('PUT', `/api/recipes/${id}/cover`, { imageId }),
+	/** The main photo, or none (null: a default picture shows). */
+	setRecipeCover: (id: string, imageId: string | null) => call<Recipe>('PUT', `/api/recipes/${id}/cover`, { imageId }),
 	deleteRecipeImage: (id: string, imageId: string) => call<Recipe>('DELETE', `/api/recipes/${id}/images/${imageId}`),
 	photos: () => call<Photo[]>('GET', '/api/photos'),
 	updatePhoto: (id: string, p: { inSlideshow?: boolean; memberId?: string | null }) =>

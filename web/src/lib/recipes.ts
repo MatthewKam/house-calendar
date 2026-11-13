@@ -1,4 +1,4 @@
-import type { Ingredient } from './types';
+import type { Ingredient, Meal, Recipe } from './types';
 
 // Recipes: amounts as a cook writes them (1 ½ cups, scaled ×½ or ×2), ingredient lines typed back
 // into amounts, minutes in words, and pictures made ready to keep (JPEG, the dish cut out for the cover).
@@ -122,3 +122,11 @@ export async function toJpeg(
 /** Base64 (as sent and read back) as a picture again. */
 export const fromBase64 = (img: { mediaType: string; data: string }) =>
 	new Blob([Uint8Array.from(atob(img.data), (c) => c.charCodeAt(0))], { type: img.mediaType });
+
+/** A recipe's default picture, by its meal: shown when it has no main photo. */
+export const mealPicture = (meal: Meal) =>
+	({ dinner: '🍲', breakfast: '🥞', lunch: '🥗', side: '🥦', dessert: '🍰', snack: '🥨' })[meal] ?? '🍲';
+
+/** Its main photo: the one picked, else the first of its own (never a step's); none when it's picked to have none. */
+export const coverOf = (r: Recipe) =>
+	r.noCover ? undefined : (r.images.find((i) => i.id === r.coverId) ?? r.images.find((i) => i.step === null));

@@ -36,8 +36,9 @@ export function useRecipeActions() {
 			onSettled: refresh,
 		}),
 		setCover: useMutation({
-			mutationFn: ({ id, imageId }: { id: string; imageId: string }) => api.setRecipeCover(id, imageId),
-			onMutate: ({ id, imageId }) => book((list) => list.map((r) => (r.id === id ? { ...r, coverId: imageId } : r))),
+			mutationFn: ({ id, imageId }: { id: string; imageId: string | null }) => api.setRecipeCover(id, imageId),
+			onMutate: ({ id, imageId }) =>
+				book((list) => list.map((r) => (r.id === id ? { ...r, coverId: imageId, noCover: imageId === null } : r))),
 			onError: putBack(qc),
 			onSettled: refresh,
 		}),

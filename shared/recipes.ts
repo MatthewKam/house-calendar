@@ -81,7 +81,10 @@ export interface Recipe extends RecipeFields {
 	id: string;
 	/** Its pictures, in order: the recipe's own (step null), and photos of its steps (the step's place). */
 	images: { id: string; url: string; thumbUrl: string; step: number | null }[];
+	/** The main photo; null: none picked (the first of its own shows). */
 	coverId: string | null;
+	/** Picked to have no main photo: a default picture shows instead. */
+	noCover: boolean;
 	createdAt: string;
 }
 

@@ -204,7 +204,9 @@ export function registerRecipes(
 		...(JSON.parse(r.data) as z.infer<typeof RecipeFields>),
 		id: r.id,
 		images: images(r.id),
-		coverId: r.cover_id,
+		// '' is "no main photo" (picked), null "none picked yet" (the first of its own shows).
+		coverId: r.cover_id || null,
+		noCover: r.cover_id === '',
 		createdAt: r.created_at,
 	});
 	const get = (id: string) => db.prepare('SELECT * FROM recipes WHERE id = ?').get(id) as Row | undefined;
@@ -321,8 +323,8 @@ export function registerRecipes(
 		},
 	);
 
-	// The main photo: one of its own (not a step's).
-	app.put<{ Params: { id: string }; Body: { imageId: string } }>(
+	// The main photo: one of its own (not a step's), or none (null: a default picture shows).
+	app.put<{ Params: { id: string }; Body: { imageId: string | null } }>(
 		'/api/recipes/:id/cover',
 		{
 			schema: {
@@ -330,16 +332,21 @@ export function registerRecipes(
 					type: 'object',
 					required: ['imageId'],
 					additionalProperties: false,
-					properties: { imageId: { type: 'string' } },
+					// None first (the checker would turn a null into "" for a string).
+					properties: { imageId: { anyOf: [{ type: 'null' }, { type: 'string' }] } },
 				},
 			},
 		},
 		async (req, reply) => {
-			const ok = db
-				.prepare('SELECT 1 FROM recipe_images WHERE id = ? AND recipe_id = ? AND step IS NULL')
-				.get(req.body.imageId, req.params.id);
-			if (!ok) return reply.code(404).send({ error: 'Picture not found' });
-			db.prepare('UPDATE recipes SET cover_id = ? WHERE id = ?').run(req.body.imageId, req.params.id);
+			if (!get(req.params.id)) return reply.code(404).send({ error: 'Recipe not found' });
+			const { imageId } = req.body;
+			if (imageId !== null) {
+				const ok = db
+					.prepare('SELECT 1 FROM recipe_images WHERE id = ? AND recipe_id = ? AND step IS NULL')
+					.get(imageId, req.params.id);
+				if (!ok) return reply.code(404).send({ error: 'Picture not found' });
+			}
+			db.prepare('UPDATE recipes SET cover_id = ? WHERE id = ?').run(imageId ?? '', req.params.id);
 			return toRecipe(get(req.params.id)!);
 		},
 	);

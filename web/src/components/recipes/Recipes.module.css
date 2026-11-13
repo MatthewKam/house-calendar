@@ -28,8 +28,8 @@
 }
 .filters {
 	display: flex;
-	flex-direction: column;
-	gap: 0.4rem;
+	flex-wrap: wrap;
+	gap: 0.5rem;
 }
 /* A row of chips, scrolling sideways on a phone. */
 .chips {
@@ -128,9 +128,6 @@
 	.top {
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 		align-items: start;
-	}
-	.topNoPhoto {
-		grid-template-columns: minmax(0, 1fr);
 	}
 }
 .about {
@@ -357,16 +354,36 @@
 	margin: 0;
 	font-size: inherit;
 }
-/* How many times the recipe: ×½ to ×8. */
-.scale {
+/* A dropdown (the filters, how many times the recipe): the browser's own arrow hidden, a chevron drawn with room
+   from the edge, so it looks the same everywhere and in light and dark. */
+.select {
+	position: relative;
+	display: inline-flex;
+}
+.select select {
+	appearance: none;
+	-webkit-appearance: none;
 	min-height: 2.75rem;
-	padding: 0 0.7rem;
+	padding: 0 2.6rem 0 1rem;
 	font: inherit;
-	font-weight: 700;
+	font-weight: 650;
 	border: 1px solid var(--line);
 	border-radius: var(--radius-round);
 	background: var(--surface);
 	color: var(--text);
+}
+.select::after {
+	content: '';
+	position: absolute;
+	right: 1.1rem;
+	top: 50%;
+	width: 0.45rem;
+	height: 0.45rem;
+	margin-top: -0.35rem;
+	border-right: 2px solid var(--muted);
+	border-bottom: 2px solid var(--muted);
+	rotate: 45deg;
+	pointer-events: none;
 }
 .group h4 {
 	margin: 0.4rem 0 0.2rem;
@@ -661,4 +678,20 @@
 	background: var(--bg);
 	color: var(--muted);
 	font-weight: 600;
+}
+
+/* No main photo: a picture of its meal on a soft tint of the accent. */
+.defaultPicture {
+	display: grid;
+	place-items: center;
+	aspect-ratio: 4 / 3;
+	width: 100%;
+	border-radius: var(--radius-sm);
+	background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+	font-size: 4rem;
+	line-height: 1;
+}
+/* Up top, bigger. */
+.cover.defaultPicture {
+	font-size: 7rem;
 }

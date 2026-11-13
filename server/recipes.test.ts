@@ -133,6 +133,16 @@ describe('recipes', () => {
 		expect((await call('PUT', `/api/recipes/${saved.id}/cover`, { imageId: more.images[1].id })).status).toBe(404);
 		expect((await call('PUT', `/api/recipes/${saved.id}/cover`, { imageId: dish })).body.coverId).toBe(dish);
 
+		// No main photo (a default picture), then one again.
+		expect((await call('PUT', `/api/recipes/${saved.id}/cover`, { imageId: null })).body).toMatchObject({
+			coverId: null,
+			noCover: true,
+		});
+		expect((await call('PUT', `/api/recipes/${saved.id}/cover`, { imageId: dish })).body).toMatchObject({
+			coverId: dish,
+			noCover: false,
+		});
+
 		// Taken out: the main one goes back to none picked.
 		const gone = (await call('DELETE', `/api/recipes/${saved.id}/images/${dish}`)).body;
 		expect([gone.coverId, gone.images.length]).toEqual([null, 3]);

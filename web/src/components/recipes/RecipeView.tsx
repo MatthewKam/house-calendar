@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useAddToGroceries, useRecipeActions } from '../../lib/queries';
-import { ingredientLine, minutesText, toJpeg } from '../../lib/recipes';
+import { coverOf, ingredientLine, mealPicture, minutesText, toJpeg } from '../../lib/recipes';
 import type { Recipe } from '../../lib/types';
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
 import { useWakeLock } from '../../lib/useWakeLock';
@@ -89,7 +89,7 @@ export default function RecipeView({
 	const cooking = cookingSince !== null;
 	const ticked = cooking ? prepped : have;
 	const setTicked = cooking ? setPrepped : setHave;
-	const cover = r.images.find((i) => i.id === r.coverId) ?? r.images.find((i) => i.step === null);
+	const cover = coverOf(r);
 	// The dish's own photos (not a step's), the main one among them.
 	const own = r.images.filter((i) => i.step === null);
 	const stepPhotos = (n: number) => r.images.filter((i) => i.step === n);
@@ -129,18 +129,19 @@ export default function RecipeView({
 		<section className={s.part} aria-label="Ingredients">
 			<div className={s.sectionHead}>
 				<h3>{cooking ? 'Prep and gather' : 'Ingredients'}</h3>
-				<select
-					className={s.scale}
-					aria-label="How many times the recipe"
-					value={scale}
-					onChange={(e) => setScale(Number(e.target.value))}
-				>
-					{SCALES.map((x) => (
-						<option key={x} value={x}>
-							{x === 0.5 ? '×½' : `×${x}`}
-						</option>
-					))}
-				</select>
+				<span className={s.select}>
+					<select
+						aria-label="How many times the recipe"
+						value={scale}
+						onChange={(e) => setScale(Number(e.target.value))}
+					>
+						{SCALES.map((x) => (
+							<option key={x} value={x}>
+								{x === 0.5 ? '×½' : `×${x}`}
+							</option>
+						))}
+					</select>
+				</span>
 			</div>
 			<p className={s.hint}>{cooking ? 'Tick each one once it’s prepped or out.' : 'Tick what you have.'}</p>
 			{groups.map((g) => (
@@ -240,8 +241,15 @@ export default function RecipeView({
 				</header>
 
 				{/* The top: its photo, and what to know before starting. */}
-				<div className={`${s.top} ${cover ? '' : s.topNoPhoto}`}>
-					{cover && <img className={s.cover} src={cover.url} alt="" onClick={() => setBig(cover.url)} />}
+				<div className={s.top}>
+					{cover ? (
+						<img className={s.cover} src={cover.url} alt="" onClick={() => setBig(cover.url)} />
+					) : (
+						// No main photo: a picture of its meal.
+						<span className={`${s.cover} ${s.defaultPicture}`} aria-hidden="true">
+							{mealPicture(r.meal)}
+						</span>
+					)}
 					<div className={s.about}>
 						{(!!r.totalMinutes || !!r.activeMinutes || r.servings !== null) && (
 							<div className={s.meta}>
@@ -327,6 +335,25 @@ export default function RecipeView({
 					<section className={s.part} aria-label="Photos">
 						<h3 className={s.sectionHead}>Photos</h3>
 						<div className={s.photoGrid}>
+							{/* No main photo: its meal's picture instead. */}
+							{(r.noCover || parent) && own.length > 0 && (
+								<div className={`${s.photo} ${r.noCover ? s.photoMain : ''}`}>
+									<span className={s.defaultPicture} aria-hidden="true">
+										{mealPicture(r.meal)}
+									</span>
+									{r.noCover ? (
+										<span className={s.mainBadge}>★ No main photo</span>
+									) : (
+										<button
+											type="button"
+											className={s.photoAction}
+											onClick={() => setCover.mutate({ id: r.id, imageId: null })}
+										>
+											No main photo
+										</button>
+									)}
+								</div>
+							)}
 							{own.map((i) => (
 								<div key={i.id} className={`${s.photo} ${i.id === cover?.id ? s.photoMain : ''}`}>
 									<button type="button" onClick={() => setBig(i.url)} aria-label="Open photo">
