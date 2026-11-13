@@ -3,9 +3,13 @@ import type { DB } from './db.ts';
 import type { EventWeather, Wear, Weather } from '../shared/weather.ts';
 import { eventAccess } from './privacy.ts';
 
-/** The hours the forecast gives around now: this many gone by, and this many ahead. */
-const HOURS_BEFORE = 6;
-const HOURS_AFTER = 18;
+/**
+ * The hours graph: a whole day, starting a 3-hour mark before the last one at or before now (at 7:40, the
+ * last mark is 6 AM, so it starts at 3 AM and runs to 3 AM tomorrow), so it moves through the day and
+ * shows a little of what's gone by. Hours asked for from before now: enough for the earliest start.
+ */
+const GRAPH_HOURS = 24;
+const PAST_HOURS = 6;
 
 /**
  * The hours that count for dressing (home's clock): out the door to the end of the school day, or once
@@ -94,7 +98,7 @@ export async function forecast(place: Place, fetchImpl: typeof fetch = fetch): P
 		'&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day' +
 		'&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,weather_code,sunrise,sunset,precipitation_probability_max,cloud_cover_mean,wind_speed_10m_max' +
 		'&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code' +
-		'&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=8';
+		`&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=8&past_hours=${PAST_HOURS}`;
 	const res = await fetchImpl(url);
 	if (!res.ok) throw new Error(`Open-Meteo answered ${res.status}`);
 	const w = await res.json();
@@ -115,14 +119,16 @@ export async function forecast(place: Place, fetchImpl: typeof fetch = fetch): P
 			: [];
 	});
 	const wind = Math.round(w.daily.wind_speed_10m_max[0] ?? 0);
-	// The hours around now (home's clock): a few gone by, so now sits on the line, and most of the day ahead.
+	// The hours graph (home's clock): from a 3-hour mark before the last one at or before now, a whole day
+	// (both ends: 3 AM to 3 AM).
 	const thisHour = w.current.time ? (w.current.time as string).slice(0, 13) : '';
 	const at = Math.max(
 		0,
 		(w.hourly.time as string[]).findIndex((t) => t.slice(0, 13) >= thisHour),
 	);
-	const first = Math.max(0, at - HOURS_BEFORE);
-	const hours = (w.hourly.time as string[]).slice(first, at + HOURS_AFTER + 1).map((t, j) => {
+	const hourNow = thisHour ? Number(thisHour.slice(11, 13)) : 0;
+	const first = Math.max(0, at - (hourNow % 3) - 3);
+	const hours = (w.hourly.time as string[]).slice(first, first + GRAPH_HOURS + 1).map((t, j) => {
 		const i = first + j;
 		return {
 			time: instant(t),
