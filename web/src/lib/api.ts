@@ -30,8 +30,9 @@ import type {
 	Game,
 	GoalTemplate,
 	PottyChart,
-	PottyKind,
 	PottyStep,
+	Punch,
+	Punched,
 	Visibility,
 	SprigList,
 	ListItemPatch,
@@ -384,8 +385,8 @@ export const api = {
 	removeMoment: (id: string) => call<void>('DELETE', `/api/moments/${id}`),
 	potty: () => call<PottyChart[]>('GET', '/api/potty'),
 	setPotty: (memberId: string, on: boolean) => call<void>('PUT', `/api/potty/${memberId}`, { on }),
-	punch: ({ memberId, step, kind }: { memberId: string; step: PottyStep; kind?: PottyKind }) =>
-		call<{ rowFull: boolean; cardFull: boolean; chart: PottyChart }>('POST', `/api/potty/${memberId}`, {
+	punch: ({ memberId, step, kind }: { memberId: string } & Punch) =>
+		call<Punched>('POST', `/api/potty/${memberId}`, {
 			step,
 			...(kind ? { kind } : {}),
 		}),

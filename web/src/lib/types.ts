@@ -4,16 +4,8 @@ import type { Stage } from '../../../shared/stages.ts';
 export type { Stage } from '../../../shared/stages.ts';
 export type { Activity as MomentKind, GoalTemplate, Moment, NewMoment, OwnGoalInput } from '../../../shared/moments.ts';
 
-/** One step of a potty trip, each with its own row on the card (server/potty.ts). */
-export type PottyStep = 'ask' | 'sit' | 'go' | 'wipe' | 'wash';
-/** What the go row says it was. */
-export type PottyKind = 'pee' | 'poo' | 'both';
-/** A kid's potty chart: the card being filled (each row's punches; the go row says which), and cards filled before. */
-export interface PottyChart {
-	memberId: string;
-	card: { id: string; startedAt: string; rows: Record<PottyStep, (PottyKind | null)[]> };
-	filled: { startedAt: string; finishedAt: string }[];
-}
+// Potty charts: written once in shared/potty.ts, for the server and here.
+export type { PottyChart, PottyKind, PottyStep, Punch, Punched } from '../../../shared/potty.ts';
 
 export interface Member {
 	id: string;
