@@ -30,60 +30,16 @@ export type MemberPatch = Partial<Pick<Member, 'name' | 'color' | 'birthdate' | 
 	stage?: Stage | null;
 };
 
-/**
- * A reward jar. Kids put stars from their bucket in it (they can't take them back out); once it's full
- * it's earned, a RewardWin waiting to be redeemed. A jar with a deadline is missed if it isn't
- * redeemed by then, and the kids move their stars back out.
- */
-export interface Reward {
-	id: string;
-	/** Who can fill it: one kid, or several together. */
-	memberIds: string[];
-	title: string;
-	goal: number;
-	/** With several kids: their stars added together, or each kid putting in the full amount. */
-	teamMode: TeamMode;
-	/** Last day to redeem it; none means it empties after it's redeemed and fills again. */
-	deadline: string | null;
-	/** Stars in it now (everyone's together). */
-	stars: number;
-	/** Each kid's part of `stars`. */
-	memberStars: Record<string, number>;
-	/** earned: full, waiting to be redeemed (shown as its win). missed: its deadline passed. */
-	status: 'filling' | 'earned' | 'missed';
-}
-export type TeamMode = 'pooled' | 'each';
-export type RewardInput = Pick<Reward, 'memberIds' | 'title' | 'goal' | 'teamMode' | 'deadline'>;
-
-/** One time a jar was filled (then redeemed) or missed, kept even if the jar changes later. */
-export interface RewardWin {
-	id: string;
-	rewardId: string;
-	title: string;
-	memberIds: string[];
-	goal: number;
-	stars: number;
-	/** Who put in how many. */
-	memberStars: Record<string, number>;
-	earnedDay: string;
-	givenAt: string | null;
-	/** Missed: the deadline it didn't make. */
-	missedOn: string | null;
-}
-
-/** Stars a kid can still put in jars. */
-export interface Bucket {
-	memberId: string;
-	stars: number;
-}
-
-/** Stars a kid puts in jars at once; with `from`, taken out of that missed jar first. */
-export interface StarPlacing {
-	memberId: string;
-	today: string;
-	from?: string;
-	places: { rewardId: string; stars: number }[];
-}
+// Reward jars: written once in shared/rewards.ts, for the server and here.
+export type {
+	Bucket,
+	NewReward,
+	Reward,
+	RewardPatch,
+	RewardWin,
+	StarPlacing,
+	TeamMode,
+} from '../../../shared/rewards.ts';
 
 /** Who sees an event: everyone; busy (others see "Busy" at that time); private (others don't see it). */
 export type Visibility = 'everyone' | 'busy' | 'private';

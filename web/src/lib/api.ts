@@ -16,7 +16,8 @@ import type {
 	SyncStatus,
 	Weather,
 	OutboxStatus,
-	RewardInput,
+	NewReward,
+	RewardPatch,
 	RewardWin,
 	Bucket,
 	StarPlacing,
@@ -397,8 +398,8 @@ export const api = {
 		call<void>('PUT', `/api/goals/library/${encodeURIComponent(key)}`, { hidden }),
 	hideAllGoals: (hidden: boolean) => call<void>('PUT', '/api/goals/library', { hidden }),
 	saveOwnGoal: (g: OwnGoalInput) => call<GoalTemplate>('POST', '/api/goals/library', g),
-	addReward: (r: RewardInput, today: string) => call<Reward>('POST', '/api/rewards', { ...r, today }),
-	updateReward: (id: string, r: Partial<RewardInput>, today: string) =>
+	addReward: (r: NewReward, today: string) => call<Reward>('POST', '/api/rewards', { ...r, today }),
+	updateReward: (id: string, r: RewardPatch, today: string) =>
 		call<Reward>('PATCH', `/api/rewards/${id}?${new URLSearchParams({ today })}`, r),
 	placeStars: (p: StarPlacing) => call<void>('POST', '/api/rewards/place', p),
 	restoreReward: (id: string, deadline: string | null, today: string) =>

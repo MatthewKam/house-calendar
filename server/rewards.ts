@@ -1,9 +1,22 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
-import { DAY, DAY_VALUE, isDay, allMembersExist, memberExists } from './schemas.ts';
+import { isDay, allMembersExist, memberExists, schemaOf } from './schemas.ts';
 import { ROW_PUNCHES } from './potty.ts';
 import { localDay } from './stages.ts';
+import {
+	RewardInput,
+	RewardPatch,
+	RewardRestore,
+	RewardsQuery,
+	StarPlacing,
+	TakeBack,
+	type Bucket,
+	type Reward,
+	type RewardWin,
+	type TeamMode,
+} from '../shared/rewards.ts';
+import type { z } from 'zod';
 
 // Reward jars. Each kid has a bucket: every star earned from extras, minus what they've put in jars.
 // Parents make the jars; kids drop stars in and can't take them back out. A jar is
@@ -16,7 +29,6 @@ import { localDay } from './stages.ts';
 // Stars not yet redeemed go back to the kids when a jar is deleted, made smaller, or a kid is taken off it,
 // and a parent (with the master PIN) can take a kid's stars back out of a jar.
 
-type TeamMode = 'pooled' | 'each';
 interface RewardRow {
 	id: string;
 	title: string;
@@ -46,14 +58,6 @@ interface JarRow {
 /** A request that can't be done, with the reason to show. */
 class Refused extends Error {}
 
-const PROPS = {
-	title: { type: 'string', minLength: 1, maxLength: 80 },
-	goal: { type: 'integer', minimum: 1, maximum: 100000 },
-	teamMode: { enum: ['pooled', 'each'] },
-	memberIds: { type: 'array', minItems: 1, maxItems: 20, uniqueItems: true, items: { type: 'string' } },
-	deadline: { type: ['string', 'null'], pattern: DAY },
-} as const;
-const TODAY = DAY_VALUE;
 /** The day asked about, else today at home. */
 const dayOr = (d?: string) => (d && isDay(d) ? d : localDay());
 const sum = (stars: Record<string, number>) => Object.values(stars).reduce((a, n) => a + n, 0);
@@ -182,7 +186,7 @@ export function registerRewards(app: FastifyInstance, db: DB) {
 		})();
 	}
 
-	const toReward = (r: RewardRow) => {
+	const toReward = (r: RewardRow): Reward => {
 		const memberStars = held(r.id);
 		return {
 			id: r.id,
@@ -198,7 +202,7 @@ export function registerRewards(app: FastifyInstance, db: DB) {
 	};
 
 	const winStars = db.prepare('SELECT member_id, SUM(stars) AS n FROM jar_stars WHERE win_id = ? GROUP BY member_id');
-	const toWin = (w: WinRow) => ({
+	const toWin = (w: WinRow): RewardWin => ({
 		id: w.id,
 		rewardId: w.reward_id,
 		title: w.title,
@@ -226,11 +230,9 @@ export function registerRewards(app: FastifyInstance, db: DB) {
 			.all() as RewardRow[];
 
 	// Jars still going (filling, earned or missed), as of the display's `today`.
-	app.get<{ Querystring: { today: string } }>(
+	app.get<{ Querystring: z.infer<typeof RewardsQuery> }>(
 		'/api/rewards',
-		{
-			schema: { querystring: { type: 'object', required: ['today'], properties: { today: TODAY } } },
-		},
+		{ schema: { querystring: schemaOf(RewardsQuery) } },
 		async (req) => {
 			for (const r of open()) checkDeadline(r, req.query.today);
 			return open().map(toReward);
@@ -238,7 +240,7 @@ export function registerRewards(app: FastifyInstance, db: DB) {
 	);
 
 	// Each kid's bucket: stars earned from extras and not in a jar.
-	app.get('/api/rewards/buckets', async () =>
+	app.get('/api/rewards/buckets', async (): Promise<Bucket[]> =>
 		(db.prepare('SELECT id FROM members ORDER BY sort_order, created_at').all() as { id: string }[]).map((m) => ({
 			memberId: m.id,
 			stars: bucket(db, m.id),
@@ -257,53 +259,25 @@ export function registerRewards(app: FastifyInstance, db: DB) {
 		).map(toWin),
 	);
 
-	app.post<{
-		Body: {
-			memberIds: string[];
-			title: string;
-			goal: number;
-			teamMode?: TeamMode;
-			deadline?: string | null;
-			today: string;
-		};
-	}>(
-		'/api/rewards',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['memberIds', 'title', 'goal', 'today'],
-					additionalProperties: false,
-					properties: { ...PROPS, today: TODAY },
-				},
-			},
-		},
-		async (req, reply) => {
-			const { memberIds, today, deadline = null } = req.body;
-			if (!allMembersExist(db, memberIds)) return reply.code(400).send({ error: 'Unknown member' });
-			if (deadline && deadline < today) return reply.code(400).send({ error: 'That deadline has already passed' });
-			const id = randomUUID();
-			db.transaction(() => {
-				db.prepare(
-					`INSERT INTO rewards (id, member_id, title, goal, mode, team_mode, start_day, deadline)
+	app.post<{ Body: RewardInput }>('/api/rewards', { schema: { body: schemaOf(RewardInput) } }, async (req, reply) => {
+		const { memberIds, today, deadline } = req.body;
+		if (!allMembersExist(db, memberIds)) return reply.code(400).send({ error: 'Unknown member' });
+		if (deadline && deadline < today) return reply.code(400).send({ error: 'That deadline has already passed' });
+		const id = randomUUID();
+		db.transaction(() => {
+			db.prepare(
+				`INSERT INTO rewards (id, member_id, title, goal, mode, team_mode, start_day, deadline)
           VALUES (?, ?, ?, ?, 'until_reached', ?, ?, ?)`,
-				).run(id, memberIds[0], req.body.title.trim(), req.body.goal, req.body.teamMode ?? 'pooled', today, deadline);
-				setMembers(id, memberIds);
-			})();
-			reply.code(201);
-			return toReward(get(id)!);
-		},
-	);
+			).run(id, memberIds[0], req.body.title.trim(), req.body.goal, req.body.teamMode, today, deadline);
+			setMembers(id, memberIds);
+		})();
+		reply.code(201);
+		return toReward(get(id)!);
+	});
 
-	app.patch<{
-		Params: { id: string };
-		Querystring: { today?: string };
-		Body: { title?: string; goal?: number; teamMode?: TeamMode; memberIds?: string[]; deadline?: string | null };
-	}>(
+	app.patch<{ Params: { id: string }; Querystring: { today?: string }; Body: RewardPatch }>(
 		'/api/rewards/:id',
-		{
-			schema: { body: { type: 'object', additionalProperties: false, minProperties: 1, properties: PROPS } },
-		},
+		{ schema: { body: schemaOf(RewardPatch, { minProperties: 1 }) } },
 		async (req, reply) => {
 			const row = get(req.params.id);
 			if (!row) return reply.code(404).send({ error: 'Jar not found' });
@@ -332,32 +306,9 @@ export function registerRewards(app: FastifyInstance, db: DB) {
 
 	// A kid puts stars in jars, all at once: from their bucket, or (with `from`) taking their stars
 	// out of a missed jar first. With `from` and no places, the stars just go back to the bucket.
-	app.post<{ Body: { memberId: string; today: string; from?: string; places: { rewardId: string; stars: number }[] } }>(
+	app.post<{ Body: StarPlacing }>(
 		'/api/rewards/place',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['memberId', 'today', 'places'],
-					additionalProperties: false,
-					properties: {
-						memberId: { type: 'string' },
-						today: TODAY,
-						from: { type: 'string' },
-						places: {
-							type: 'array',
-							maxItems: 50,
-							items: {
-								type: 'object',
-								required: ['rewardId', 'stars'],
-								additionalProperties: false,
-								properties: { rewardId: { type: 'string' }, stars: { type: 'integer', minimum: 1, maximum: 100000 } },
-							},
-						},
-					},
-				},
-			},
-		},
+		{ schema: { body: schemaOf(StarPlacing) } },
 		async (req, reply) => {
 			const { memberId, today, from, places } = req.body;
 			if (!memberExists(db, memberId)) return reply.code(400).send({ error: 'Unknown member' });
@@ -396,18 +347,9 @@ export function registerRewards(app: FastifyInstance, db: DB) {
 	);
 
 	// A missed jar goes back on the list, with a new deadline or none.
-	app.post<{ Params: { id: string }; Body: { deadline: string | null; today: string } }>(
+	app.post<{ Params: { id: string }; Body: z.infer<typeof RewardRestore> }>(
 		'/api/rewards/:id/restore',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['deadline', 'today'],
-					additionalProperties: false,
-					properties: { deadline: PROPS.deadline, today: TODAY },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(RewardRestore) } },
 		async (req, reply) => {
 			const r = get(req.params.id);
 			if (!r?.missed_at) return reply.code(404).send({ error: 'Jar not found' });
@@ -423,21 +365,9 @@ export function registerRewards(app: FastifyInstance, db: DB) {
 
 	// A parent takes some of a kid's stars back out of a jar, into their bucket (newest first). A full
 	// jar not yet redeemed is then filling again. Parents only (auth.ts).
-	app.post<{ Params: { id: string }; Body: { memberId: string; stars: number } }>(
+	app.post<{ Params: { id: string }; Body: z.infer<typeof TakeBack> }>(
 		'/api/rewards/:id/take-back',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['memberId', 'stars'],
-					additionalProperties: false,
-					properties: {
-						memberId: { type: 'string' },
-						stars: { type: 'integer', minimum: 1, maximum: 100000 },
-					},
-				},
-			},
-		},
+		{ schema: { body: schemaOf(TakeBack) } },
 		async (req, reply) => {
 			const r = get(req.params.id);
 			if (!r) return reply.code(404).send({ error: 'Jar not found' });
