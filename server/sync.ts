@@ -4,24 +4,14 @@ import type { CalendarSource, CalendarWriter, RemoteEvent } from './providers/ty
 import { eventId, overlayOutbox, pushOutbox, SEND_AFTER_MS } from './outbox.ts';
 import { applyPeople, assignPending, type Classify } from './people.ts';
 import { CalDavAuthError } from './providers/caldav.ts';
+import type { SyncStatus } from '../shared/calendars.ts';
 
 /** How far around today synced events are kept. Further out shows only events added on the wall. */
 const MONTHS_BACK = 3;
 const MONTHS_AHEAD = 13;
 
-export interface SyncStatus {
-	provider: CalendarSource['id'];
-	/** True while a sync is running. */
-	running: boolean;
-	lastSuccess: string | null;
-	lastError: string | null;
-	calendars: number;
-	events: number;
-	/** Set when Claude couldn't sort events by person; the sync itself still succeeded. */
-	peopleError: string | null;
-	/** Whether events can be changed on the wall and sent back. */
-	canWrite: boolean;
-}
+/** How syncing is going (shared/calendars.ts). */
+export type { SyncStatus };
 
 function syncWindow(now = new Date()) {
 	return {

@@ -13,6 +13,8 @@ import type {
 	Member,
 	ReminderList,
 	SyncedCalendar,
+	CalendarPatch,
+	Connections,
 	SyncStatus,
 	Weather,
 	OutboxStatus,
@@ -134,15 +136,6 @@ export type AuthStatus =
 			pinLength: number | null;
 	  };
 export type SignedIn = Extract<AuthStatus, { signedIn: true }>;
-export interface GoogleConnection {
-	id: string;
-	account: string;
-	memberId: string | null;
-	connectedAt: string;
-	lastSuccess: string | null;
-	lastError: string | null;
-	calendars: number;
-}
 interface AccountConfig {
 	google: string | null;
 	apple: string | null;
@@ -216,8 +209,7 @@ export const api = {
 	checkPin: (pin: string) => call<void>('POST', '/api/auth/check-pin', { pin }),
 	signOutDevice: (id: string) => call<void>('POST', `/api/auth/devices/${id}/sign-out`),
 	/** People's calendar connections; google is null when the server hasn't set Google up. */
-	connections: () =>
-		call<{ google: GoogleConnection[] | null; icloud: GoogleConnection[] | null }>('GET', '/api/connections'),
+	connections: () => call<Connections>('GET', '/api/connections'),
 	connectICloud: (c: { appleId: string; password: string }) => call<void>('POST', '/api/connections/icloud', c),
 	removeConnection: (id: string) => call<void>('DELETE', `/api/connections/${id}`),
 	members: () => call<Member[]>('GET', '/api/members'),
@@ -369,8 +361,7 @@ export const api = {
 
 	sync: () => call<SyncStatus | null>('GET', '/api/sync'),
 	calendars: () => call<SyncedCalendar[]>('GET', '/api/calendars'),
-	updateCalendar: (id: string, patch: Partial<Pick<SyncedCalendar, 'memberId' | 'hidden' | 'visibility'>>) =>
-		call<SyncedCalendar>('PATCH', `/api/calendars/${id}`, patch),
+	updateCalendar: (id: string, patch: CalendarPatch) => call<SyncedCalendar>('PATCH', `/api/calendars/${id}`, patch),
 
 	tasks: () => call<Task[]>('GET', '/api/tasks'),
 	addTask: (c: TaskInput) => call<Task>('POST', '/api/tasks', c),

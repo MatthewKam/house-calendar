@@ -1,4 +1,5 @@
 import type { Stage } from '../../../shared/stages.ts';
+import type { Visibility } from '../../../shared/calendars.ts';
 
 // Stages, moments and the goal list: written once in shared/, for the server and here.
 export type { Stage } from '../../../shared/stages.ts';
@@ -42,9 +43,6 @@ export type {
 	StarPlacing,
 	TeamMode,
 } from '../../../shared/rewards.ts';
-
-/** Who sees an event: everyone; busy (others see "Busy" at that time); private (others don't see it). */
-export type Visibility = 'everyone' | 'busy' | 'private';
 
 /** One thing to bring to an event; `done`: ticked for this time it happens. */
 export interface ChecklistItem {
@@ -112,25 +110,15 @@ export interface Trip {
 // Tasks, goals and check-offs: written once in shared/tasks.ts, for the server and here.
 export type { Task, TaskCategory, TaskDone, TaskInput, TaskPatch, TaskTime } from '../../../shared/tasks.ts';
 
-/** A synced (iCloud) calendar and how it shows on the wall. */
-export interface SyncedCalendar {
-	id: string;
-	provider: 'icloud' | 'google';
-	name: string;
-	/** Its color in Apple Calendar, if any. */
-	color: string | null;
-	/** Everyone's events in it are this person's; null lets manual picks and Claude decide per event. */
-	memberId: string | null;
-	hidden: boolean;
-	/** Distinct events (a repeating event counts once). */
-	events: number;
-	/** New events can be added to it from the wall. */
-	writable: boolean;
-	/** Who sees its events, unless an event says otherwise. */
-	visibility: Visibility;
-	/** A few upcoming titles, to tell same-named calendars apart. */
-	sample: string[];
-}
+// Calendars, sync status and calendar accounts: written once in shared/calendars.ts, for the server and here.
+export type {
+	CalendarPatch,
+	Connection,
+	Connections,
+	SyncedCalendar,
+	SyncStatus,
+	Visibility,
+} from '../../../shared/calendars.ts';
 
 // Lists kept in Sprig itself: written once in shared/lists.ts, for the server and here.
 export type { ListItemPatch, NewListItem, SprigItem, SprigList } from '../../../shared/lists.ts';
@@ -151,18 +139,6 @@ interface ReminderItem {
 	due: string | null;
 	/** Changed on the wall and waiting for a phone to apply it in Reminders. */
 	pending: boolean;
-}
-
-export interface SyncStatus {
-	provider: 'icloud' | 'google';
-	running: boolean;
-	lastSuccess: string | null;
-	lastError: string | null;
-	calendars: number;
-	events: number;
-	peopleError: string | null;
-	/** Whether iCloud events can be changed on the wall. */
-	canWrite: boolean;
 }
 
 /** An iCloud event's details, as compared in a conflict. */
