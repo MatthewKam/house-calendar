@@ -214,6 +214,9 @@ export interface Photo {
 	progress: number | null;
 }
 
+// Display settings, a value for each key: written once in shared/settings.ts, for the server and here.
+export type { Settings } from '../../../shared/settings.ts';
+
 /** Screen saver settings (the "screensaver" setting). */
 export interface ScreenSaverSettings {
 	enabled: boolean;

@@ -26,6 +26,9 @@ import { registerMeals } from './meals.ts';
 import { registerDishIdeas, type IdeasFn, type SurpriseFn } from './dishIdeas.ts';
 import { registerLearn } from './learn.ts';
 import { registerEvents } from './events.ts';
+import { schemaOf } from './schemas.ts';
+import { SettingKey, SettingValue, type Settings } from '../shared/settings.ts';
+import type { z } from 'zod';
 
 export function buildApp(
 	db: DB,
@@ -114,19 +117,14 @@ export function buildApp(
 	registerLearn(app, db, opts.push);
 
 	// ---- Display settings (key/value, for things like UI scale) -------------
-	app.get('/api/settings', async () => {
+	app.get('/api/settings', async (): Promise<Settings> => {
 		const rows = db.prepare('SELECT key, value FROM settings').all() as { key: string; value: string }[];
 		return Object.fromEntries(rows.map((r) => [r.key, JSON.parse(r.value)]));
 	});
 
-	app.put<{ Params: { key: string }; Body: { value: unknown } }>(
+	app.put<{ Params: z.infer<typeof SettingKey>; Body: SettingValue }>(
 		'/api/settings/:key',
-		{
-			schema: {
-				params: { type: 'object', properties: { key: { type: 'string', pattern: '^[a-zA-Z][a-zA-Z0-9_.]{0,63}$' } } },
-				body: { type: 'object', required: ['value'], properties: { value: {} } },
-			},
-		},
+		{ schema: { params: schemaOf(SettingKey), body: schemaOf(SettingValue) } },
 		async (req, reply) => {
 			// The household's accent (the wall wears it) is the account holder's pick.
 			if (req.params.key === 'accent' && req.raw.viewer && !req.raw.viewer.holder) {
@@ -135,7 +133,8 @@ export function buildApp(
 			db.prepare(
 				'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
 			).run(req.params.key, JSON.stringify(req.body.value));
-			return { [req.params.key]: req.body.value };
+			const set: Settings = { [req.params.key]: req.body.value };
+			return set;
 		},
 	);
 

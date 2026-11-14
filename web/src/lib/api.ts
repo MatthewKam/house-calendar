@@ -36,6 +36,7 @@ import type {
 	Punch,
 	Punched,
 	Visibility,
+	Settings,
 	SprigList,
 	ListItemPatch,
 	NewListItem,
@@ -432,6 +433,6 @@ export const api = {
 		call<void>('POST', '/api/push', { subscription, timeZone }),
 	pushOff: (endpoint: string) => call<void>('DELETE', '/api/push', { endpoint }),
 
-	settings: () => call<Record<string, unknown>>('GET', '/api/settings'),
-	setSetting: (key: string, value: unknown) => call('PUT', `/api/settings/${key}`, { value }),
+	settings: () => call<Settings>('GET', '/api/settings'),
+	setSetting: (key: string, value: unknown) => call<Settings>('PUT', `/api/settings/${key}`, { value }),
 };

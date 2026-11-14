@@ -210,5 +210,13 @@ describe('settings', () => {
 	it('stores and returns JSON values', async () => {
 		await app.inject({ method: 'PUT', url: '/api/settings/uiScale', payload: { value: 1.25 } });
 		expect(json(await app.inject({ method: 'GET', url: '/api/settings' }))).toEqual({ uiScale: 1.25 });
+		// Kept as sent: false and an empty text aren't turned into anything else by the check.
+		await app.inject({ method: 'PUT', url: '/api/settings/clock24', payload: { value: false } });
+		await app.inject({ method: 'PUT', url: '/api/settings/homeAddress', payload: { value: '' } });
+		expect(json(await app.inject({ method: 'GET', url: '/api/settings' }))).toMatchObject({
+			clock24: false,
+			homeAddress: '',
+		});
+		expect((await app.inject({ method: 'PUT', url: '/api/settings/uiScale', payload: {} })).statusCode).toBe(400);
 	});
 });
