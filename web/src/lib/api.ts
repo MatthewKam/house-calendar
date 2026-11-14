@@ -28,7 +28,6 @@ import type {
 	OwnGoalInput,
 	LearnState,
 	LearnSound,
-	Game,
 	GoalTemplate,
 	PottyChart,
 	PottyStep,
@@ -46,6 +45,9 @@ import type {
 	PlanMeal,
 	Plans,
 	Reminder,
+	LearnDone,
+	LearnDoneReply,
+	LearnSettings,
 	Recipe,
 	RecipeDraft,
 	RecipeFields,
@@ -227,13 +229,9 @@ export const api = {
 	/** Hands the account holder's role to another guardian. */
 	setHolder: (membershipId: string) => call<AuthStatus>('POST', '/api/account/holder', { membershipId }),
 	learn: (today: string) => call<LearnState[]>('GET', `/api/learn?today=${today}`),
-	setLearn: (
-		memberId: string,
-		today: string,
-		p: { enabled?: boolean; gamesADay?: number; minutesADay?: number | null; levels?: Partial<Record<Game, number>> },
-	) => call<LearnState>('PUT', `/api/learn/${memberId}`, { ...p, today }),
-	learnDone: (memberId: string, p: { today: string; game: Game; level: number; rounds: number; firstTry: number }) =>
-		call<LearnState & { leveledUp: boolean }>('POST', `/api/learn/${memberId}/done`, p),
+	setLearn: (memberId: string, today: string, p: Omit<LearnSettings, 'today'>) =>
+		call<LearnState>('PUT', `/api/learn/${memberId}`, { ...p, today }),
+	learnDone: (memberId: string, p: LearnDone) => call<LearnDoneReply>('POST', `/api/learn/${memberId}/done`, p),
 	/** A grown-up unlocking or locking a kid's Learn today, or giving more games or minutes (parent-only). */
 	changeLearnDay: (memberId: string, today: string, change: LearnDayChange) =>
 		call<LearnState>('POST', `/api/learn/${memberId}/today`, { ...change, today }),

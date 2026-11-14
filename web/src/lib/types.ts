@@ -278,45 +278,16 @@ export type Proposal =
 import type { Game } from '../../../shared/learn.ts';
 export type { Game };
 
-/** An animal noise a grown-up recorded for the games (server/learn.ts), and when. */
-export interface LearnSound {
-	animal: string;
-	version: string;
-}
-
-/** A kid's learning: on or off, and their stage's games, each at the level they play it. */
-export interface LearnState {
-	memberId: string;
-	enabled: boolean;
-	/** `ready`: a little one's game that would have moved up, waiting for a grown-up to move it. */
-	games: { game: Game; level: number; maxLevel: number; ready: boolean }[];
-	/** Today's Learn (server/learnDay.ts). */
-	today: LearnToday;
-}
-
-/** A kid's Learn today: what they've used and have, and why they can't start a game (null: they can). */
-export interface LearnToday {
-	gamesADay: number;
-	/** Their time a day (null: no time limit). */
-	minutesADay: number | null;
-	played: number;
-	/** Games today: their games a day plus any more from a grown-up. */
-	games: number;
-	seconds: number;
-	/** Minutes today (null: no time limit). */
-	minutes: number | null;
-	/** A grown-up unlocked (true) or locked (false) it today; null: it opens once the Daily tasks are done. */
-	unlocked: boolean | null;
-	tasksDone: boolean;
-	why: 'tasks' | 'locked' | 'games' | 'time' | null;
-}
-
-/** A grown-up's change to a kid's Learn today. */
-export interface LearnDayChange {
-	open?: boolean | null;
-	moreGames?: true;
-	moreMinutes?: true;
-}
+// Learning's requests and replies: written once in shared/learnShapes.ts, for the server and here.
+export type {
+	LearnDayChange,
+	LearnDone,
+	LearnDoneReply,
+	LearnSettings,
+	LearnSound,
+	LearnState,
+	LearnToday,
+} from '../../../shared/learnShapes.ts';
 
 // Plan ahead: written once in shared/meals.ts.
 export type { MealPlan, MealTheme, MealThemeFields, PlanMeal, Plans, Reminder } from '../../../shared/meals.ts';
