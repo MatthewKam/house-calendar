@@ -14,6 +14,7 @@ import type {
 	ChecklistInput,
 	Member,
 	ReminderList,
+	Reminders,
 	SyncedCalendar,
 	CalendarPatch,
 	Connections,
@@ -408,7 +409,7 @@ export const api = {
 	setTaskDone: (id: string, memberId: string, day: string, done: boolean) =>
 		call<void>(done ? 'PUT' : 'DELETE', `/api/tasks/${id}/done/${memberId}/${day}`),
 
-	reminders: () => call<{ enabled: boolean; lists: ReminderList[] }>('GET', '/api/reminders'),
+	reminders: () => call<Reminders>('GET', '/api/reminders'),
 	addReminder: (list: string, title: string) =>
 		call<{ lists: ReminderList[] }>('POST', '/api/reminders', { list, title }),
 	setReminderDone: (id: string, done: boolean) =>

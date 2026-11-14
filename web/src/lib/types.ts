@@ -98,23 +98,8 @@ export type {
 // Lists kept in Sprig itself: written once in shared/lists.ts, for the server and here.
 export type { ListItemPatch, NewListItem, SprigItem, SprigList } from '../../../shared/lists.ts';
 
-/** A Reminders list as the wall shows it (synced from the family's iPhones by a Shortcut). */
-export interface ReminderList {
-	title: string;
-	items: ReminderItem[];
-	/** Phones that last sent this list, newest first. */
-	syncedBy: { device: string; at: string }[];
-}
-
-interface ReminderItem {
-	/** "p…" came from a phone, "w…" was added on the wall. */
-	id: string;
-	title: string;
-	done: boolean;
-	due: string | null;
-	/** Changed on the wall and waiting for a phone to apply it in Reminders. */
-	pending: boolean;
-}
+// Reminders from the family's iPhones: written once in shared/reminders.ts, for the server and here.
+export type { ReminderList, ReminderPatch, Reminders } from '../../../shared/reminders.ts';
 
 /** Today's weather at home (the server's own shape, shared). */
 export type { EventWeather, Wear, Weather } from '../../../shared/weather.ts';
