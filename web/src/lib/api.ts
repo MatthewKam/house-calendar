@@ -23,7 +23,8 @@ import type {
 	Photo,
 	Daily,
 	Moment,
-	MomentKind,
+	NewMoment,
+	OwnGoalInput,
 	LearnState,
 	LearnSound,
 	Game,
@@ -379,8 +380,7 @@ export const api = {
 	rewardHistory: () => call<RewardWin[]>('GET', '/api/rewards/history'),
 	buckets: () => call<Bucket[]>('GET', '/api/rewards/buckets'),
 	moments: (from: string, to: string) => call<Moment[]>('GET', `/api/moments?${new URLSearchParams({ from, to })}`),
-	addMoment: (m: { memberId: string; kind: MomentKind; note?: string; day: string; stars: number }) =>
-		call<Moment>('POST', '/api/moments', m),
+	addMoment: (m: NewMoment) => call<Moment>('POST', '/api/moments', m),
 	removeMoment: (id: string) => call<void>('DELETE', `/api/moments/${id}`),
 	potty: () => call<PottyChart[]>('GET', '/api/potty'),
 	setPotty: (memberId: string, on: boolean) => call<void>('PUT', `/api/potty/${memberId}`, { on }),
@@ -395,8 +395,7 @@ export const api = {
 	hideGoal: ({ key, hidden }: { key: string; hidden: boolean }) =>
 		call<void>('PUT', `/api/goals/library/${encodeURIComponent(key)}`, { hidden }),
 	hideAllGoals: (hidden: boolean) => call<void>('PUT', '/api/goals/library', { hidden }),
-	saveOwnGoal: (g: { title: string; emoji: string; kind: MomentKind }) =>
-		call<GoalTemplate>('POST', '/api/goals/library', g),
+	saveOwnGoal: (g: OwnGoalInput) => call<GoalTemplate>('POST', '/api/goals/library', g),
 	addReward: (r: RewardInput, today: string) => call<Reward>('POST', '/api/rewards', { ...r, today }),
 	updateReward: (id: string, r: Partial<RewardInput>, today: string) =>
 		call<Reward>('PATCH', `/api/rewards/${id}?${new URLSearchParams({ today })}`, r),

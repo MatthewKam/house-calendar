@@ -1,19 +1,8 @@
-export type Stage = 'little' | 'early' | 'middle' | 'tween' | 'teen' | 'adult';
+import type { Stage } from '../../../shared/stages.ts';
 
-/** The six activities moments and goals are grouped by (server/activities.ts). */
-export type MomentKind = 'helpful' | 'attitude' | 'bravery' | 'cleanliness' | 'problem_solving' | 'self_care';
-
-/** A starter goal from the library (server/goalLibrary.ts). */
-/** `stages`: the ages it suits, empty for any age; `own`: one the family wrote. */
-export interface GoalTemplate {
-	key: string;
-	title: string;
-	emoji: string;
-	kind: MomentKind;
-	stages: Stage[];
-	own: boolean;
-	hidden: boolean;
-}
+// Stages, moments and the goal list: written once in shared/, for the server and here.
+export type { Stage } from '../../../shared/stages.ts';
+export type { Activity as MomentKind, GoalTemplate, Moment, NewMoment, OwnGoalInput } from '../../../shared/moments.ts';
 
 /** One step of a potty trip, each with its own row on the card (server/potty.ts). */
 export type PottyStep = 'ask' | 'sit' | 'go' | 'wipe' | 'wash';
@@ -24,19 +13,6 @@ export interface PottyChart {
 	memberId: string;
 	card: { id: string; startedAt: string; rows: Record<PottyStep, (PottyKind | null)[]> };
 	filled: { startedAt: string; finishedAt: string }[];
-}
-
-/** Something good a parent caught a kid doing (server/moments.ts). */
-export interface Moment {
-	id: string;
-	memberId: string;
-	kind: MomentKind;
-	note: string | null;
-	/** What it earned, as the parent picked: 0 is just a sticker. */
-	stars: number;
-	/** Local day, YYYY-MM-DD. */
-	day: string;
-	createdAt: string;
 }
 
 export interface Member {

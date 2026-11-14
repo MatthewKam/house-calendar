@@ -1,9 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
-import { DAY, memberExists } from './schemas.ts';
+import { memberExists, schemaOf } from './schemas.ts';
 import { bucket } from './rewards.ts';
-import { ACTIVITIES } from './activities.ts';
+import { MomentInput, MomentRange, type Activity, type Moment } from '../shared/moments.ts';
+import type { z } from 'zod';
 
 // Moments: a parent catches a kid doing something good, unplanned, in a couple of taps
 // (docs/product-plan.md, "Three ways to earn"): which kid, which of the six activities, and how many
@@ -12,13 +13,13 @@ import { ACTIVITIES } from './activities.ts';
 interface MomentRow {
 	id: string;
 	member_id: string;
-	kind: string;
+	kind: Activity;
 	note: string | null;
 	stars: number;
 	day: string;
 	created_at: string;
 }
-const toMoment = (r: MomentRow) => ({
+const toMoment = (r: MomentRow): Moment => ({
 	id: r.id,
 	memberId: r.member_id,
 	kind: r.kind,
@@ -30,17 +31,9 @@ const toMoment = (r: MomentRow) => ({
 
 export function registerMoments(app: FastifyInstance, db: DB) {
 	// Moments between two local days, end exclusive, oldest first.
-	app.get<{ Querystring: { from: string; to: string } }>(
+	app.get<{ Querystring: z.infer<typeof MomentRange> }>(
 		'/api/moments',
-		{
-			schema: {
-				querystring: {
-					type: 'object',
-					required: ['from', 'to'],
-					properties: { from: { type: 'string', pattern: DAY }, to: { type: 'string', pattern: DAY } },
-				},
-			},
-		},
+		{ schema: { querystring: schemaOf(MomentRange) } },
 		async (req) =>
 			(
 				db
@@ -49,40 +42,21 @@ export function registerMoments(app: FastifyInstance, db: DB) {
 			).map(toMoment),
 	);
 
-	app.post<{ Body: { memberId: string; kind: string; note?: string; day: string; stars?: number } }>(
-		'/api/moments',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['memberId', 'kind', 'day'],
-					additionalProperties: false,
-					properties: {
-						memberId: { type: 'string' },
-						kind: { enum: ACTIVITIES },
-						note: { type: 'string', maxLength: 300 },
-						day: { type: 'string', pattern: DAY },
-						stars: { type: 'integer', minimum: 0, maximum: 20 },
-					},
-				},
-			},
-		},
-		async (req, reply) => {
-			if (!memberExists(db, req.body.memberId)) return reply.code(400).send({ error: 'Unknown member' });
-			const stars = req.body.stars ?? 1;
-			const id = randomUUID();
-			db.prepare('INSERT INTO moments (id, member_id, kind, note, stars, day) VALUES (?, ?, ?, ?, ?, ?)').run(
-				id,
-				req.body.memberId,
-				req.body.kind,
-				req.body.note?.trim() || null,
-				stars,
-				req.body.day,
-			);
-			reply.code(201);
-			return toMoment(db.prepare('SELECT * FROM moments WHERE id = ?').get(id) as MomentRow);
-		},
-	);
+	app.post<{ Body: MomentInput }>('/api/moments', { schema: { body: schemaOf(MomentInput) } }, async (req, reply) => {
+		if (!memberExists(db, req.body.memberId)) return reply.code(400).send({ error: 'Unknown member' });
+		const { stars } = req.body;
+		const id = randomUUID();
+		db.prepare('INSERT INTO moments (id, member_id, kind, note, stars, day) VALUES (?, ?, ?, ?, ?, ?)').run(
+			id,
+			req.body.memberId,
+			req.body.kind,
+			req.body.note?.trim() || null,
+			stars,
+			req.body.day,
+		);
+		reply.code(201);
+		return toMoment(db.prepare('SELECT * FROM moments WHERE id = ?').get(id) as MomentRow);
+	});
 
 	// Taking one back (tapped by mistake). Like unticking a task, not once its star is in a jar.
 	app.delete<{ Params: { id: string } }>('/api/moments/:id', async (req, reply) => {
