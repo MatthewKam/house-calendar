@@ -26,6 +26,7 @@ import type {
 	Bucket,
 	StarPlacing,
 	Photo,
+	PhotoPatch,
 	Daily,
 	Moment,
 	NewMoment,
@@ -299,8 +300,7 @@ export const api = {
 	editMealTheme: (id: string, theme: MealThemeFields) => call<Plans>('PUT', `/api/meal-themes/${id}`, theme),
 	deleteMealTheme: (id: string) => call<Plans>('DELETE', `/api/meal-themes/${id}`),
 	photos: () => call<Photo[]>('GET', '/api/photos'),
-	updatePhoto: (id: string, p: { inSlideshow?: boolean; memberId?: string | null }) =>
-		call<Photo>('PATCH', `/api/photos/${id}`, p),
+	updatePhoto: (id: string, p: PhotoPatch) => call<Photo>('PATCH', `/api/photos/${id}`, p),
 	deletePhoto: (id: string) => call<void>('DELETE', `/api/photos/${id}`),
 	setSlideshow: (ids: string[], inSlideshow: boolean) =>
 		call<{ changed: number }>('POST', '/api/photos/slideshow', { ids, inSlideshow }),

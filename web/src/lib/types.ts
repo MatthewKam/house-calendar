@@ -130,30 +130,8 @@ export type {
 	SurprisePick,
 } from '../../../shared/recipes.ts';
 
-/** A photo in the album. */
-export interface Photo {
-	id: string;
-	width: number;
-	height: number;
-	/** When it was taken (or the file's date). */
-	takenAt: string | null;
-	/** Who added it. */
-	memberId: string | null;
-	source: 'upload' | 'google';
-	/** Shown in the screen saver. */
-	inSlideshow: boolean;
-	createdAt: string;
-	url: string;
-	thumbUrl: string;
-	/** A video plays muted, its length at most 45 seconds. */
-	kind: 'photo' | 'video';
-	/** A video's length. */
-	seconds: number | null;
-	/** False while a new video is being converted on the server. */
-	ready: boolean;
-	/** While converting: how far along, 0 to 1 (0 while it waits its turn). */
-	progress: number | null;
-}
+// The photo album: written once in shared/photos.ts, for the server and here.
+export type { Photo, PhotoPatch } from '../../../shared/photos.ts';
 
 // Display settings, a value for each key: written once in shared/settings.ts, for the server and here.
 export type { Settings } from '../../../shared/settings.ts';
