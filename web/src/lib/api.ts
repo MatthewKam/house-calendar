@@ -33,7 +33,8 @@ import type {
 	PottyStep,
 	Visibility,
 	SprigList,
-	SprigItem,
+	ListItemPatch,
+	NewListItem,
 	Proposal,
 	LearnDayChange,
 	DishIdea,
@@ -426,10 +427,8 @@ export const api = {
 	renameList: (id: string, title: string) => call<SprigList[]>('PATCH', `/api/lists/${id}`, { title }),
 	deleteList: (id: string) => call<SprigList[]>('DELETE', `/api/lists/${id}`),
 	clearDone: (id: string) => call<SprigList[]>('DELETE', `/api/lists/${id}/done`),
-	addListItem: (listId: string, item: { title: string; due?: string | null; memberId?: string | null }) =>
-		call<SprigList[]>('POST', `/api/lists/${listId}/items`, item),
-	updateListItem: (id: string, patch: Partial<Pick<SprigItem, 'title' | 'done' | 'due' | 'memberId'>>) =>
-		call<SprigList[]>('PATCH', `/api/lists/items/${id}`, patch),
+	addListItem: (listId: string, item: NewListItem) => call<SprigList[]>('POST', `/api/lists/${listId}/items`, item),
+	updateListItem: (id: string, patch: ListItemPatch) => call<SprigList[]>('PATCH', `/api/lists/items/${id}`, patch),
 	deleteListItem: (id: string) => call<SprigList[]>('DELETE', `/api/lists/items/${id}`),
 
 	captureOn: () => call<{ on: boolean }>('GET', '/api/capture'),

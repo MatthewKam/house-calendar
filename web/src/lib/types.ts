@@ -206,25 +206,10 @@ export interface SyncedCalendar {
 	sample: string[];
 }
 
-/** A Reminders list as the wall shows it (synced from the family's iPhones by a Shortcut). */
-/** A list kept in Sprig itself (server/lists.ts). */
-export interface SprigList {
-	id: string;
-	title: string;
-	/** Open ones first (oldest first), then done ones (most recently done first). */
-	items: SprigItem[];
-}
-export interface SprigItem {
-	id: string;
-	title: string;
-	done: boolean;
-	/** When: YYYY-MM-DD (any time that day) or an instant; null: whenever. */
-	due: string | null;
-	/** Who it's for; null: anyone. */
-	memberId: string | null;
-	doneAt: string | null;
-}
+// Lists kept in Sprig itself: written once in shared/lists.ts, for the server and here.
+export type { ListItemPatch, NewListItem, SprigItem, SprigList } from '../../../shared/lists.ts';
 
+/** A Reminders list as the wall shows it (synced from the family's iPhones by a Shortcut). */
 export interface ReminderList {
 	title: string;
 	items: ReminderItem[];
