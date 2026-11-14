@@ -7,6 +7,8 @@ export type { Activity as MomentKind, GoalTemplate, Moment, NewMoment, OwnGoalIn
 // Potty charts: written once in shared/potty.ts, for the server and here.
 export type { PottyChart, PottyKind, PottyStep, Punch, Punched } from '../../../shared/potty.ts';
 
+// Kept here rather than taken from shared/members.ts on purpose (audit S5): the web app's edit is narrower
+// than what the server takes (no sortOrder; a colour goes through setMemberColor when signed in).
 export interface Member {
 	id: string;
 	name: string;

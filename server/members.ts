@@ -2,8 +2,10 @@ import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
 import { applyPeople, forgetMember } from './people.ts';
-import { COLOR, DAY_VALUE } from './schemas.ts';
-import { localDay, stageOf, STAGES } from './stages.ts';
+import { schemaOf } from './schemas.ts';
+import { localDay, stageOf, type Stage } from './stages.ts';
+import { ColorAnswer, MemberColor, MemberInput, MemberPatch, type Member } from '../shared/members.ts';
+import type { z } from 'zod';
 
 // The family: each person's name, colour, place in the order, birthday and stage.
 //
@@ -17,12 +19,12 @@ interface MemberRow {
 	color: string;
 	sort_order: number;
 	birthdate: string | null;
-	stage: string | null;
+	stage: Stage | null;
 	allergies: string;
 	asked_color?: string | null;
 	asked_by?: string | null;
 }
-const toMember = (r: MemberRow, guardians?: string[]) => ({
+const toMember = (r: MemberRow, guardians?: string[]): Member => ({
 	id: r.id,
 	name: r.name,
 	color: r.color,
@@ -41,7 +43,6 @@ const toMember = (r: MemberRow, guardians?: string[]) => ({
 export const OLDER_KID_AGE = 7;
 const ageOn = (birthdate: string, day: string) =>
 	Number(day.slice(0, 4)) - Number(birthdate.slice(0, 4)) - (day.slice(5) < birthdate.slice(5) ? 1 : 0);
-const NAME = { type: 'string', minLength: 1, maxLength: 40 } as const;
 
 /** A real day (not Feb 31). */
 const realDay = (d: string) => {
@@ -69,62 +70,23 @@ export function registerMembers(
 		),
 	);
 
-	app.post<{ Body: { name: string; color: string } }>(
-		'/api/members',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['name', 'color'],
-					additionalProperties: false,
-					properties: { name: NAME, color: COLOR },
-				},
-			},
-		},
-		async (req, reply) => {
-			const id = randomUUID();
-			const next = (db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 AS n FROM members').get() as { n: number }).n;
-			db.prepare('INSERT INTO members (id, name, color, sort_order) VALUES (?, ?, ?, ?)').run(
-				id,
-				req.body.name.trim(),
-				req.body.color.toLowerCase(),
-				next,
-			);
-			opts.onAssignmentsChanged?.();
-			reply.code(201);
-			return toMember(get(id)!, req.raw.viewer?.guardians);
-		},
-	);
+	app.post<{ Body: MemberInput }>('/api/members', { schema: { body: schemaOf(MemberInput) } }, async (req, reply) => {
+		const id = randomUUID();
+		const next = (db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 AS n FROM members').get() as { n: number }).n;
+		db.prepare('INSERT INTO members (id, name, color, sort_order) VALUES (?, ?, ?, ?)').run(
+			id,
+			req.body.name.trim(),
+			req.body.color.toLowerCase(),
+			next,
+		);
+		opts.onAssignmentsChanged?.();
+		reply.code(201);
+		return toMember(get(id)!, req.raw.viewer?.guardians);
+	});
 
-	app.patch<{
-		Params: { id: string };
-		Body: {
-			name?: string;
-			color?: string;
-			sortOrder?: number;
-			birthdate?: string | null;
-			stage?: string | null;
-			allergies?: string[];
-		};
-	}>(
+	app.patch<{ Params: { id: string }; Body: MemberPatch }>(
 		'/api/members/:id',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					additionalProperties: false,
-					minProperties: 1,
-					properties: {
-						name: NAME,
-						color: COLOR,
-						sortOrder: { type: 'integer' },
-						birthdate: { anyOf: [DAY_VALUE, { type: 'null' }] },
-						stage: { anyOf: [{ enum: STAGES }, { type: 'null' }] },
-						allergies: { type: 'array', maxItems: 20, items: { type: 'string', minLength: 1, maxLength: 40 } },
-					},
-				},
-			},
-		},
+		{ schema: { body: schemaOf(MemberPatch, { minProperties: 1 }) } },
 		async (req, reply) => {
 			const row = get(req.params.id);
 			if (!row) return reply.code(404).send({ error: 'Member not found' });
@@ -163,13 +125,9 @@ export function registerMembers(
 
 	// A new color for someone: the account holder's (or, signed out, anyone's) is made at once; anyone
 	// else's waits for the holder. asked: true when it's waiting.
-	app.put<{ Params: { id: string }; Body: { color: string } }>(
+	app.put<{ Params: { id: string }; Body: z.infer<typeof MemberColor> }>(
 		'/api/members/:id/color',
-		{
-			schema: {
-				body: { type: 'object', required: ['color'], additionalProperties: false, properties: { color: COLOR } },
-			},
-		},
+		{ schema: { body: schemaOf(MemberColor) } },
 		async (req, reply) => {
 			const row = get(req.params.id);
 			if (!row) return reply.code(404).send({ error: 'Member not found' });
@@ -204,18 +162,9 @@ export function registerMembers(
 	);
 
 	// The account holder's answer to a new color asked for.
-	app.post<{ Params: { id: string }; Body: { approve: boolean } }>(
+	app.post<{ Params: { id: string }; Body: z.infer<typeof ColorAnswer> }>(
 		'/api/members/:id/color/answer',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['approve'],
-					additionalProperties: false,
-					properties: { approve: { type: 'boolean' } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(ColorAnswer) } },
 		async (req, reply) => {
 			const v = req.raw.viewer;
 			if (v && !v.holder) return reply.code(403).send({ error: 'Only the account holder answers this' });
