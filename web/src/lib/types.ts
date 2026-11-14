@@ -1,5 +1,5 @@
 import type { Stage } from '../../../shared/stages.ts';
-import type { Visibility } from '../../../shared/calendars.ts';
+import type { EventPatch, NewEvent } from '../../../shared/events.ts';
 
 // Stages, moments and the goal list: written once in shared/, for the server and here.
 export type { Stage } from '../../../shared/stages.ts';
@@ -44,44 +44,19 @@ export type {
 	TeamMode,
 } from '../../../shared/rewards.ts';
 
-/** One thing to bring to an event; `done`: ticked for this time it happens. */
-export interface ChecklistItem {
-	id: string;
-	title: string;
-	/** An emoji, shown to the kids instead of the words. */
-	picture: string | null;
-	done: boolean;
-}
-
-export interface CalEvent {
-	id: string;
-	calendarId: string;
-	/** Who it's for, in family order; empty means everyone. */
-	memberIds: string[];
-	title: string;
-	allDay: boolean;
-	/** Timed: ISO UTC instant. All-day: YYYY-MM-DD. */
-	start: string;
-	/** Timed: ISO UTC instant. All-day: YYYY-MM-DD, exclusive. */
-	end: string;
-	/** synced, or pending_update / pending_delete while a wall edit waits to reach iCloud. */
-	syncState: string;
-	/** Where it is, on one line; null when there's no address. */
-	location: string | null;
-	/** One day of a repeating iCloud event: edits here change that day only. */
-	repeats: boolean;
-	/** Who sees it: its own setting, else its calendar's (server/privacy.ts). */
-	visibility: Visibility;
-	/** Marked special: a countdown on kid mode's Today, for the kids it's for (every repeat of it). */
-	special: boolean;
-	/** Sprig's own events: notes, and the flyer photo it was read from (Snap a flyer). */
-	notes: string | null;
-	photoUrl: string | null;
-	/** What to bring (every repeat of it), ticked for this time it happens. */
-	checklist: ChecklistItem[];
-	/** Someone else's Busy time: no title or place, and it can't be opened. */
-	busy?: boolean;
-}
+// Events, what to bring and wall edits waiting for iCloud: written once in shared/events.ts, for the
+// server and here.
+export type {
+	CalEvent,
+	ChecklistInput,
+	ChecklistItem,
+	EventDetails,
+	EventPatch,
+	OutboxStatus,
+	Scope,
+} from '../../../shared/events.ts';
+/** What the event form saves: a new event as sent (what's left out is filled in), or with `scope`, an edit. */
+export type EventInput = NewEvent & Pick<EventPatch, 'scope'>;
 
 /** A "time to leave" alert the wall shows at `remindAt`. */
 export interface LeaveAlert {
@@ -140,40 +115,6 @@ interface ReminderItem {
 	/** Changed on the wall and waiting for a phone to apply it in Reminders. */
 	pending: boolean;
 }
-
-/** An iCloud event's details, as compared in a conflict. */
-export interface EventDetails {
-	title: string;
-	allDay: boolean;
-	start: string;
-	end: string;
-	location: string | null;
-}
-
-/** Wall edits waiting for iCloud, and ones changed on another device too (waiting for a choice). */
-export interface OutboxStatus {
-	pending: number;
-	lastError: string | null;
-	/** theirs is null when the event was deleted on the other device. */
-	conflicts: { id: number; changed: (keyof EventDetails)[]; mine: EventDetails; theirs: EventDetails | null }[];
-}
-
-export type EventInput = Pick<CalEvent, 'title' | 'memberIds' | 'allDay' | 'start' | 'end'> & {
-	location?: string | null;
-	/** Kept on Sprig's own events only. */
-	notes?: string | null;
-	/** A flyer photo (uploadFlyer) to keep with it; null takes it off. */
-	photoId?: string | null;
-	/** New events only: the iCloud calendar to add it to; left out, it stays on the wall. */
-	calendarId?: string;
-	/** New events only: who sees it (existing ones change it with setVisibility). */
-	visibility?: Visibility;
-	/** New events only: a countdown on kid mode's Today (existing ones change it with setSpecial). */
-	special?: boolean;
-	/** Changing a repeating iCloud event: just the day opened, or every day. */
-	scope?: Scope;
-};
-export type Scope = 'one' | 'all';
 
 /** Today's weather at home (the server's own shape, shared). */
 export type { EventWeather, Wear, Weather } from '../../../shared/weather.ts';

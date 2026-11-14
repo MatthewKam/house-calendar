@@ -199,8 +199,13 @@ describe('events', () => {
 				},
 			}),
 		);
+		// What it didn't say is filled in (shared/events.ts): for everyone, no place, notes or flyer.
+		expect(ev).toMatchObject({ memberIds: [], location: null, notes: null, photoUrl: null, visibility: 'everyone' });
+		await app.inject({ method: 'PATCH', url: `/api/events/${ev.id}`, payload: { location: 'The diner' } });
 		await app.inject({ method: 'PATCH', url: `/api/events/${ev.id}`, payload: { title: 'Dinner out' } });
-		expect((await list())[0].title).toBe('Dinner out');
+		// An edit changes only what it sends, and has to send something.
+		expect((await list())[0]).toMatchObject({ title: 'Dinner out', location: 'The diner', start: '2026-10-08' });
+		expect((await app.inject({ method: 'PATCH', url: `/api/events/${ev.id}`, payload: {} })).statusCode).toBe(400);
 		await app.inject({ method: 'DELETE', url: `/api/events/${ev.id}` });
 		expect(await list()).toEqual([]);
 	});

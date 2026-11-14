@@ -10,6 +10,8 @@ import type {
 	TaskInput,
 	TaskPatch,
 	EventInput,
+	EventPatch,
+	ChecklistInput,
 	Member,
 	ReminderList,
 	SyncedCalendar,
@@ -315,7 +317,7 @@ export const api = {
 			})}`,
 		),
 	addEvent: (e: EventInput) => call<CalEvent>('POST', '/api/events', e),
-	updateEvent: (id: string, e: Partial<EventInput>) => call<CalEvent>('PATCH', `/api/events/${id}`, e),
+	updateEvent: (id: string, e: EventPatch) => call<CalEvent>('PATCH', `/api/events/${id}`, e),
 	/** Drive time from home and when to leave (Google Maps, on the server). */
 	/** Minutes from home to each of today's events still to come that has an address, by event id. */
 	/** Address suggestions for what's typed so far (Google Places, on the server); none without a key. */
@@ -355,7 +357,7 @@ export const api = {
 		call<CalEvent>('PUT', `/api/events/${id}/visibility`, { visibility }),
 	setSpecial: (id: string, special: boolean) => call<CalEvent>('PUT', `/api/events/${id}/special`, { special }),
 	/** What to bring, in order (every repeat of it); items with an id keep their ticks. */
-	setChecklist: (id: string, items: { id?: string; title: string; picture: string | null }[]) =>
+	setChecklist: (id: string, items: ChecklistInput['items']) =>
 		call<CalEvent>('PUT', `/api/events/${id}/checklist`, { items }),
 	tickChecklist: (id: string, itemId: string, done: boolean) =>
 		call<CalEvent>('PUT', `/api/events/${id}/checklist/${itemId}`, { done }),
