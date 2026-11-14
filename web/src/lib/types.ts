@@ -58,18 +58,8 @@ export type {
 /** What the event form saves: a new event as sent (what's left out is filled in), or with `scope`, an edit. */
 export type EventInput = NewEvent & Pick<EventPatch, 'scope'>;
 
-/** A "time to leave" alert the wall shows at `remindAt`. */
-export interface LeaveAlert {
-	id: string;
-	eventId: string;
-	title: string;
-	destination: string;
-	arriveBy: string;
-	minutesBefore: number;
-	driveMinutes: number;
-	leaveAt: string;
-	remindAt: string;
-}
+// "Time to leave" alerts: written once in shared/travel.ts, for the server and here.
+export type { LeaveAlert } from '../../../shared/travel.ts';
 
 /** Drive from home to an event, and when to leave to get there on time. */
 export interface Trip {
@@ -141,26 +131,10 @@ export interface ScreenSaverSettings {
 	showEvents: boolean;
 }
 
-/** The day's cards beside the weather (null when one couldn't be fetched). */
-export interface Daily {
-	joke: { text: string } | null;
-	quote: { text: string; author: string } | null;
-}
-
-/** Something Say it or Snap a flyer found, shown as a card to check (server/capture.ts). */
-export type Proposal =
-	| { kind: 'item'; title: string; list: string; due: string | null; memberId: string | null }
-	| {
-			kind: 'event';
-			title: string;
-			allDay: boolean;
-			start: string;
-			end: string;
-			memberIds: string[];
-			location: string | null;
-			notes: string | null;
-	  }
-	| { kind: 'task'; title: string; memberId: string; day: string };
+// The day's cards, and quick capture's cards to check: written once in shared/daily.ts and
+// shared/capture.ts, for the server and here.
+export type { Daily } from '../../../shared/daily.ts';
+export type { CaptureOn, Captured, Proposal } from '../../../shared/capture.ts';
 
 /** Learning's games (server/learn.ts): Little's four, then Early's. */
 import type { Game } from '../../../shared/learn.ts';

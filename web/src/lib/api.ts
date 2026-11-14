@@ -45,7 +45,8 @@ import type {
 	SprigList,
 	ListItemPatch,
 	NewListItem,
-	Proposal,
+	CaptureOn,
+	Captured,
 	LearnDayChange,
 	DishIdea,
 	SurprisePick,
@@ -426,9 +427,9 @@ export const api = {
 	updateListItem: (id: string, patch: ListItemPatch) => call<SprigList[]>('PATCH', `/api/lists/items/${id}`, patch),
 	deleteListItem: (id: string) => call<SprigList[]>('DELETE', `/api/lists/items/${id}`),
 
-	captureOn: () => call<{ on: boolean }>('GET', '/api/capture'),
+	captureOn: () => call<CaptureOn>('GET', '/api/capture'),
 	capture: (input: { text: string } | { image: { mediaType: string; data: string } }) =>
-		call<{ proposals: Proposal[] }>('POST', '/api/capture', {
+		call<Captured>('POST', '/api/capture', {
 			...input,
 			timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 		}),

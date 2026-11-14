@@ -3,7 +3,8 @@ import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import { z } from 'zod';
 import type { FastifyInstance } from 'fastify';
 import type { DB } from './db.ts';
-import { isDay } from './schemas.ts';
+import { isDay, schemaOf } from './schemas.ts';
+import { CaptureRequest, type CaptureOn, type Captured, type Proposal } from '../shared/capture.ts';
 import { kidIds } from './privacy.ts';
 import { atLocal } from './push.ts';
 
@@ -53,20 +54,8 @@ export type CaptureInput = { text: string } | { image: { mediaType: string; data
 /** Reads words or a photo into what it asks for (Claude; replaced in tests). */
 export type Understand = (input: CaptureInput, ctx: CaptureContext) => Promise<Found>;
 
-/** A card the app shows: what to add, with names already matched to people. */
-export type Proposal =
-	| { kind: 'item'; title: string; list: string; due: string | null; memberId: string | null }
-	| {
-			kind: 'event';
-			title: string;
-			allDay: boolean;
-			start: string;
-			end: string;
-			memberIds: string[];
-			location: string | null;
-			notes: string | null;
-	  }
-	| { kind: 'task'; title: string; memberId: string; day: string };
+/** A card the app shows (shared/capture.ts). */
+export type { Proposal };
 
 const SYSTEM = `You help a busy family add things to their family app from something a parent said, or a photo of
 a flyer, invitation, school notice or appointment card. Turn it into a list of things to add:
@@ -222,34 +211,12 @@ const realZone = (tz: string) => {
 };
 
 export function registerCapture(app: FastifyInstance, db: DB, understand?: Understand) {
-	app.get('/api/capture', async () => ({ on: !!understand }));
+	app.get('/api/capture', async (): Promise<CaptureOn> => ({ on: !!understand }));
 
 	// A grown-up's (auth.ts). A photo comes as base64, shrunk on the phone first.
-	app.post<{ Body: { text?: string; image?: { mediaType: string; data: string }; timeZone: string } }>(
+	app.post<{ Body: CaptureRequest }>(
 		'/api/capture',
-		{
-			bodyLimit: 8 * 1024 * 1024,
-			schema: {
-				body: {
-					type: 'object',
-					required: ['timeZone'],
-					additionalProperties: false,
-					properties: {
-						text: { type: 'string', minLength: 1, maxLength: 2000 },
-						image: {
-							type: 'object',
-							required: ['mediaType', 'data'],
-							additionalProperties: false,
-							properties: {
-								mediaType: { enum: ['image/jpeg', 'image/png', 'image/webp'] },
-								data: { type: 'string', maxLength: 8_000_000 },
-							},
-						},
-						timeZone: { type: 'string', maxLength: 64 },
-					},
-				},
-			},
-		},
+		{ bodyLimit: 8 * 1024 * 1024, schema: { body: schemaOf(CaptureRequest) } },
 		async (req, reply) => {
 			if (!understand) return reply.code(503).send({ error: 'Saying and snapping need ANTHROPIC_API_KEY in .env' });
 			const { text, image, timeZone } = req.body;
@@ -287,7 +254,8 @@ export function registerCapture(app: FastifyInstance, db: DB, understand?: Under
 				}
 				return reply.code(502).send({ error: "Sprig couldn't work that out just now. Try again in a moment." });
 			}
-			return { proposals: toProposals(found, members, timeZone, lists) };
+			const captured: Captured = { proposals: toProposals(found, members, timeZone, lists) };
+			return captured;
 		},
 	);
 }
