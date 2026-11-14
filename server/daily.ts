@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import type { DB } from './db.ts';
-import { DAY_VALUE } from './schemas.ts';
+import { schemaOf } from './schemas.ts';
+import { DailyQuery, type Daily } from '../shared/daily.ts';
+import type { z } from 'zod';
 
 // A dad joke and a quote, for cards on the calendar page. Each comes from a free service with no
 // key, once a day; the wall is a family screen, so grim jokes are skipped.
@@ -72,12 +74,10 @@ export function registerDaily(app: FastifyInstance, db: DB, fetchImpl: Fetch = f
 		}
 	}
 
-	app.get<{ Querystring: { day: string } }>(
+	app.get<{ Querystring: z.infer<typeof DailyQuery> }>(
 		'/api/daily',
-		{
-			schema: { querystring: { type: 'object', required: ['day'], properties: { day: DAY_VALUE } } },
-		},
-		async (req) => {
+		{ schema: { querystring: schemaOf(DailyQuery) } },
+		async (req): Promise<Daily> => {
 			const { day } = req.query;
 			const [joke, quote] = await Promise.all([
 				item(day, 'joke', () => fetchJoke(fetchImpl)),
