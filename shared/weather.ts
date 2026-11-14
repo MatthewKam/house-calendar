@@ -1,4 +1,17 @@
-// Shapes the server and the web app share, so the two can't drift apart (imported by both).
+// Shapes the server and the web app share, so the two can't drift apart (imported by both). The requests
+// are zod, as the server checks them; what comes back is plain types. The web app imports types only, so
+// zod stays out of its bundle.
+
+import { z } from 'zod';
+
+/** The weather at a place (GET /api/weather): where you are, else home. */
+export const WeatherQuery = z
+	.object({ lat: z.number().min(-90).max(90), lon: z.number().min(-180).max(180) })
+	.partial();
+/** Where a place typed in is, for its weather (GET /api/weather/place). */
+export const PlaceQuery = z.object({ q: z.string().min(2).max(300) });
+/** The forecast at events' places (GET /api/weather/events): their ids, comma-separated. */
+export const EventWeatherQuery = z.object({ ids: z.string().max(2000) });
 
 /** Today's weather at home, as the wall shows it under the month. */
 export interface Weather {
