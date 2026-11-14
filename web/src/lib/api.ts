@@ -15,6 +15,7 @@ import type {
 	Member,
 	ReminderList,
 	Reminders,
+	PushKey,
 	SyncedCalendar,
 	CalendarPatch,
 	Connections,
@@ -431,7 +432,8 @@ export const api = {
 			...input,
 			timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 		}),
-	pushKey: () => call<{ publicKey: string }>('GET', '/api/push/key'),
+	pushKey: () => call<PushKey>('GET', '/api/push/key'),
+	/** The browser's own subscription; the server keeps the part shared/push.ts describes. */
 	pushOn: (subscription: PushSubscriptionJSON, timeZone: string) =>
 		call<void>('POST', '/api/push', { subscription, timeZone }),
 	pushOff: (endpoint: string) => call<void>('DELETE', '/api/push', { endpoint }),
