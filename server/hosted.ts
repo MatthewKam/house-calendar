@@ -54,6 +54,11 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 	// ---- Passing calls to households ----------------------------------------
 
 	async function handle(req: IncomingMessage, res: ServerResponse) {
+		// www.sprig-family.com is the same app: send it to sprig-family.com, so sign-ins (cookies) live on one name.
+		if (req.headers.host === 'www.sprig-family.com') {
+			res.writeHead(301, { location: `https://sprig-family.com${req.url ?? '/'}` });
+			return res.end();
+		}
 		const path = (req.url ?? '/').split('?')[0];
 		// The phones' Reminders Shortcut has its own token, for the household from before accounts.
 		if (path.startsWith('/api/reminders/phone/')) {

@@ -103,6 +103,18 @@ async function guardian() {
 	return phone;
 }
 
+describe('the web address', () => {
+	it('sends www.sprig-family.com to sprig-family.com, API calls too', async () => {
+		for (const url of ['/', '/api/members?x=1']) {
+			const res = await inject(server.handle, { url, headers: { host: 'www.sprig-family.com' } });
+			expect(res.statusCode).toBe(301);
+			expect(res.headers.location).toBe(`https://sprig-family.com${url}`);
+		}
+		const res = await inject(server.handle, { url: '/health', headers: { host: 'sprig-family.com' } });
+		expect(res.statusCode).toBe(200);
+	});
+});
+
 describe('signing in', () => {
 	it('signs in by email code, creates a household, and reaches its data', async () => {
 		const phone = device();
