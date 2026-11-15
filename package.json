@@ -10,6 +10,7 @@
 	"scripts": {
 		"dev": "concurrently -k -n server,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
 		"dev:server": "tsx watch server/index.ts",
+		"dev:test": "DATA_DIR=data-test ICLOUD_APPLE_ID= ICLOUD_APP_PASSWORD= REMINDERS_MAC= REMINDERS_SHORTCUT= npm run dev",
 		"dev:web": "vite",
 		"build": "vite build",
 		"start": "NODE_ENV=production tsx server/index.ts",

@@ -2,6 +2,8 @@ node_modules/
 web/dist/
 # Calendar database and iCloud credentials stay on this machine.
 data/
+# npm run dev:test's own data, apart from the family's.
+data-test/
 .env
 .DS_Store
 *.db
