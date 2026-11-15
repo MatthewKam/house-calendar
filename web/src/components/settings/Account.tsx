@@ -4,6 +4,7 @@ import { api, type AuthStatus, type SignedIn } from '../../lib/api';
 import Avatar from './Avatar';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import s from '../account/Account.module.css';
+import panel from './Settings.module.css';
 import sheet from '../ui/Sheet.module.css';
 
 /** "Nov 12, 10:04 AM". */
@@ -96,3 +97,58 @@ export function SignOut({ status, onClose }: { status: SignedIn; onClose: () => 
 		</>
 	);
 }
+
+/**
+ * Settings, Users: deleting this account, asked first with what goes. A household they hold goes for everyone
+ * (unless they make someone else the account holder first); others they just leave.
+ */
+export function DeleteAccount({ onClose }: { onClose: () => void }) {
+	const restart = useRestart(onClose);
+	const [plan, setPlan] = useState<{ household: string; deleted: boolean }[] | null>(null);
+	const [error, setError] = useState<string | null>(null);
+	const ask = () => {
+		setError(null);
+		api.deletionPlan().then(setPlan, (e: Error) => setError(e.message));
+	};
+	const gone = plan?.filter((p) => p.deleted).map((p) => p.household) ?? [];
+	const left = plan?.filter((p) => !p.deleted).map((p) => p.household) ?? [];
+	return (
+		<>
+			<h3 className={s.subhead}>Your account</h3>
+			<button type="button" className={`${panel.textLink} ${s.deleteAccount}`} onClick={ask}>
+				Delete my account
+			</button>
+			{error && <p className={s.error}>{error}</p>}
+			{plan && (
+				<ConfirmDialog
+					title="Delete your account?"
+					confirmLabel={gone.length ? 'Delete account and household' : 'Delete account'}
+					onCancel={() => setPlan(null)}
+					onConfirm={() => {
+						setPlan(null);
+						api.deleteAccount().then(
+							() => restart({ signedIn: false }),
+							(e: Error) => setError(e.message),
+						);
+					}}
+				>
+					{gone.length > 0 && (
+						<p>
+							<strong>{list(gone)}</strong> will be deleted for everyone in it: its calendar, tasks, jars, recipes and
+							photos. To keep it for your family, make another guardian the account holder first.
+						</p>
+					)}
+					{left.length > 0 && <p>You'll leave {list(left)}. Your family keeps what's been added there.</p>}
+					<p>
+						Your sign-in and calendar connections go, and every device signed in as you is signed out. This can't be
+						undone.
+					</p>
+				</ConfirmDialog>
+			)}
+		</>
+	);
+}
+
+/** "A", "A and B", "A, B and C". */
+const list = (names: string[]) =>
+	names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;

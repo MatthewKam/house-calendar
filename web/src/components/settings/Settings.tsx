@@ -5,7 +5,7 @@ import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
 import { usePush } from '../../lib/usePush';
 import type { Member } from '../../lib/types';
 import Sheet from '../ui/Sheet';
-import { SignedInAs, SignOut } from './Account';
+import { DeleteAccount, SignedInAs, SignOut } from './Account';
 import AlertsSetting, { ALERTS_NOTE } from './AlertsSetting';
 import AppearanceSettings from './AppearanceSettings';
 import CalendarList from './CalendarList';
@@ -146,6 +146,8 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 				<Group title="Users">
 					<div className={s.foldBody}>
 						<HouseholdAccess />
+						{/* Someone's own account (not a kid's device, the wall, or wall mode). */}
+						{auth?.signedIn && auth.kind === 'user' && !auth.wallMode && <DeleteAccount onClose={onClose} />}
 					</div>
 				</Group>
 			</SettingsView.Provider>

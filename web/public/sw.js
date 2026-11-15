@@ -1,6 +1,8 @@
 // Lets the app open without a connection (showing the last thing it loaded) and start fast.
 // The app's files are kept; /api calls always go to the server, so data is never stale.
 const CACHE = 'sprig-v2';
+// The plain pages outside the app (served from pages/ by server/hosted.ts).
+const PAGES = ['/privacy', '/support'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['/', '/manifest.webmanifest?v=2', '/icon-192.png?v=2'])));
@@ -27,7 +29,8 @@ self.addEventListener('fetch', (e) => {
   // Pages: the newest from the server, or the kept copy when offline.
   if (e.request.mode === 'navigate') {
     e.respondWith(fetch(e.request).then((res) => {
-      if (res.ok) caches.open(CACHE).then((c) => c.put('/', res.clone()));
+      // The app's page only: not the plain pages (privacy, support), which would then open as the app offline.
+      if (res.ok && !PAGES.includes(url.pathname)) caches.open(CACHE).then((c) => c.put('/', res.clone()));
       return res;
     }).catch(() => caches.match('/')));
   }

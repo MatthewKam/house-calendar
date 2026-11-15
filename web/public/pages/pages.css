@@ -1,0 +1,83 @@
+/* The plain pages outside the app (privacy, support): Sprig's colors, readable on any screen. */
+:root {
+	--bg: #f6f5f2;
+	--surface: #ffffff;
+	--ink: #1f2328;
+	--muted: #6b7079;
+	--accent: #146c43;
+	--line: #e3e1dc;
+	color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #141518;
+		--surface: #1e2024;
+		--ink: #eceef1;
+		--muted: #9da2ab;
+		--accent: #46b37e;
+		--line: #2e3137;
+	}
+}
+* {
+	box-sizing: border-box;
+}
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--ink);
+	font: 17px/1.6 system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+main {
+	max-width: 42rem;
+	margin: 0 auto;
+	padding: 2rem 1rem 4rem;
+}
+header {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	margin-bottom: 1.5rem;
+}
+header img {
+	width: 2.4rem;
+	height: 2.4rem;
+}
+header a {
+	color: var(--ink);
+	font-weight: 700;
+	font-size: 1.3rem;
+	text-decoration: none;
+}
+h1 {
+	font-size: 2rem;
+	line-height: 1.2;
+	margin: 0 0 0.3rem;
+}
+h2 {
+	font-size: 1.25rem;
+	margin: 2rem 0 0.4rem;
+}
+.updated {
+	color: var(--muted);
+	margin: 0 0 1.5rem;
+}
+a {
+	color: var(--accent);
+}
+ul {
+	padding-left: 1.3rem;
+}
+li {
+	margin: 0.3rem 0;
+}
+.box {
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: 0.9rem;
+	padding: 1rem 1.2rem;
+}
+footer {
+	margin-top: 3rem;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
