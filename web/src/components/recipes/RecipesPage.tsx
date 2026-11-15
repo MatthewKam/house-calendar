@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type JSX } from 'react';
 import { useImageDrop } from '../../lib/useFlyerDrop';
 import { useMembers, useRecipeReading, useRecipes } from '../../lib/queries';
 import DishIdeas from './DishIdeas';
@@ -7,6 +7,7 @@ import { takeWanted } from '../../lib/meals';
 import { flags } from '../../lib/allergies';
 import { coverOf, longestPrep, mealPicture, minutesText, OVERNIGHT, prepBadge, tagEmoji } from '../../lib/recipes';
 import type { Recipe } from '../../lib/types';
+import { CardsIcon, ListIcon, RowsIcon } from '../ui/icons';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import AddRecipe from './AddRecipe';
@@ -27,6 +28,13 @@ const TIMES: { label: string; fits: (minutes: number) => boolean }[] = [
 
 type Prep = '' | 'tonight' | 'ahead';
 const TAB = 'sprig:recipes-tab';
+type View = 'cards' | 'list' | 'rows';
+const VIEW = 'sprig:recipes-view';
+const VIEWS: { view: View; label: string; Icon: () => JSX.Element }[] = [
+	{ view: 'cards', label: 'Cards', Icon: CardsIcon },
+	{ view: 'list', label: 'List', Icon: ListIcon },
+	{ view: 'rows', label: 'Pictures and words', Icon: RowsIcon },
+];
 
 /**
  * The family's recipes (docs/recipes.md), in two tabs. Recipes: each saved recipe as a card with its picture
@@ -66,6 +74,23 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 			return 'recipes';
 		}
 	});
+	// Cards, a list, or rows, remembered on this device.
+	const [view, setView] = useState<View>(() => {
+		try {
+			const kept = localStorage.getItem(VIEW);
+			return VIEWS.some((v) => v.view === kept) ? (kept as View) : 'cards';
+		} catch {
+			return 'cards';
+		}
+	});
+	const pickView = (next: View) => {
+		setView(next);
+		try {
+			localStorage.setItem(VIEW, next);
+		} catch {
+			// Not kept (a private window): cards next time.
+		}
+	};
 	const pickTab = (next: 'recipes' | 'plan') => {
 		setTab(next);
 		try {
@@ -143,6 +168,7 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 									))}
 								</select>
 							</span>
+
 							{tags.length > 1 && (
 								<span className={`${s.select} ${s.kind}`}>
 									<select aria-label="Kind" value={tag ?? ''} onChange={(e) => setTag(e.target.value || null)}>
@@ -180,6 +206,22 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 									</select>
 								</span>
 							)}
+							{/* How the recipes show: cards, a list, or a small picture beside the words. */}
+							<span className={s.views} role="group" aria-label="Show as">
+								{VIEWS.map((v) => (
+									<button
+										key={v.view}
+										type="button"
+										className={s.viewButton}
+										aria-label={v.label}
+										title={v.label}
+										aria-pressed={view === v.view}
+										onClick={() => pickView(v.view)}
+									>
+										<v.Icon />
+									</button>
+								))}
+							</span>
 						</div>
 					)}
 					{recipesQuery.isError ? (
@@ -204,10 +246,10 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 					) : shown.length === 0 ? (
 						<p className={s.none}>Nothing fits those. Pick Any time, Any kind, Any prep or Any tag to see more.</p>
 					) : (
-						<ul className={s.grid}>
+						<ul className={view === 'cards' ? s.grid : s.rows}>
 							{shown.map((r) => (
 								<li key={r.id}>
-									<RecipeCard recipe={r} onOpen={() => setOpen(r.id)} />
+									<RecipeCard recipe={r} view={view} onOpen={() => setOpen(r.id)} />
 								</li>
 							))}
 						</ul>
@@ -249,16 +291,24 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 /** "korean" → "Korean". */
 const capital = (w: string | null) => (w ? w[0].toUpperCase() + w.slice(1) : null);
 
-/** A recipe in the book: its picture, name, time and kind, and the family's tags. */
-function RecipeCard({ recipe: r, onOpen }: { recipe: Recipe; onOpen: () => void }) {
+/**
+ * A recipe among the others: its picture (big on a card, small beside the words in rows, none in a list),
+ * name, time and kind, prep ahead, and the family's tags.
+ */
+function RecipeCard({ recipe: r, view, onOpen }: { recipe: Recipe; view: View; onOpen: () => void }) {
 	// Someone's allergy in it: a ⚠ on the card, with who.
 	const people = useMembers().data ?? [];
 	const warn = flags(r.ingredients, people).map((f) => f.person.name);
 	const cover = coverOf(r);
 	const badge = prepBadge(r);
 	return (
-		<button type="button" className={s.card} onClick={onOpen}>
-			{cover ? (
+		<button
+			type="button"
+			className={`${s.card} ${view === 'list' ? s.cardList : view === 'rows' ? s.cardRow : ''}`}
+			onClick={onOpen}
+		>
+			{/* A list is words only. */}
+			{view === 'list' ? null : cover ? (
 				<img className={s.cardImage} src={cover.thumbUrl} alt="" loading="lazy" />
 			) : (
 				// No main photo: a picture of its meal.
