@@ -457,20 +457,63 @@
 	color: var(--muted);
 	font-size: 0.9rem;
 }
-/* A picture, big, over everything; a tap closes it. */
-.big {
+/* A photo opened big (PhotoViewer): its bar on top, and the photo, scrolled around when zoomed. */
+.viewer {
 	position: fixed;
 	inset: 0;
 	z-index: var(--layer-photo);
-	display: grid;
-	place-items: center;
-	background: rgb(0 0 0 / 0.85); /* own: a dark backdrop for any photo, light or dark mode */
-	cursor: zoom-out;
+	display: flex;
+	flex-direction: column;
+	background: rgb(0 0 0 / 0.92); /* own: a dark backdrop for any photo, light or dark mode */
 }
-.big img {
-	max-width: 100%;
-	max-height: 100%;
-	object-fit: contain;
+.viewerBar {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: calc(0.4rem + env(safe-area-inset-top)) 0.6rem 0.4rem;
+	color: #fff; /* own: on the dark backdrop */
+}
+.spacer {
+	flex: 1;
+}
+.viewerButton {
+	width: 2.75rem;
+	min-height: 2.75rem;
+	padding: 0;
+	border-radius: 50%;
+	background: rgb(255 255 255 / 0.15); /* own: on the dark backdrop */
+	color: #fff; /* own: on the dark backdrop */
+	font-size: 1.4rem;
+}
+.viewerButton:disabled {
+	opacity: 0.35;
+}
+.viewerZoom {
+	min-width: 3.2rem;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+.viewerDelete {
+	margin-left: 0.6rem;
+	padding: 0 1rem;
+	border-radius: var(--radius-round);
+	background: var(--danger);
+	color: #fff; /* own: on the danger colour */
+	font-weight: 700;
+}
+/* The photo: centred while it fits, scrolled around once it's bigger. */
+.viewerStage {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	display: flex;
+	touch-action: pan-x pan-y;
+}
+.viewerStage img {
+	margin: auto;
+	flex: none;
+	max-width: none;
+	user-select: none;
 }
 
 /* ---- Adding and editing ---- */
@@ -657,23 +700,6 @@
 	align-self: flex-start;
 	font-size: 0.85rem;
 }
-.photoRemove {
-	/* On the photo's top corner, half over its edge. */
-	position: absolute;
-	top: -0.6rem;
-	right: -0.6rem;
-	width: 2.2rem;
-	height: 2.2rem;
-	min-height: 0;
-	padding: 0;
-	border-radius: 50%;
-	border: 1px solid var(--line);
-	background: var(--surface);
-	color: var(--text);
-	box-shadow: var(--shadow-sm);
-	font-size: 1.2rem;
-	line-height: 1;
-}
 .addPhotos {
 	aspect-ratio: 4 / 3;
 	border-radius: var(--radius-sm);
@@ -812,14 +838,24 @@
 	color: var(--text);
 	font-weight: 700;
 }
+/* Dish ideas: narrower than a recipe; the two dropdowns share a row, then what's typed beside the button. */
+.ideasView {
+	width: min(40rem, 94vw);
+}
 .ideasAsk {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
 	gap: 0.5rem;
 	align-items: center;
 }
+.ideasPick select {
+	width: 100%;
+}
+.ideasPick + .ideasPick {
+	grid-column: span 2;
+}
 .ideasInput {
-	flex: 1 1 14rem;
+	grid-column: span 2;
 	min-width: 0;
 	min-height: 2.75rem;
 	padding: 0 0.9rem;
@@ -828,6 +864,18 @@
 	border-radius: var(--radius-round);
 	background: var(--surface);
 	color: var(--text);
+}
+/* A phone: what's typed gets the row, and the button goes under it. */
+@media (max-width: 700px) {
+	.ideasAsk {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	}
+	.ideasPick + .ideasPick {
+		grid-column: auto;
+	}
+	.ideasInput {
+		grid-column: 1 / -1;
+	}
 }
 .ideas {
 	list-style: none;
