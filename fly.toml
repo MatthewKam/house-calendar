@@ -1,6 +1,6 @@
 # Fly.io: one small always-on server with a disk (the volume) for the data. See README "Hosting".
 # `app` and `primary_region` are filled in by `fly launch`.
-app = "household"
+app = "sprig-family"
 primary_region = "sjc"
 
 [build]
