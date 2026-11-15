@@ -1,17 +1,23 @@
 import { useState } from 'react';
+import { pickOfTheDay, useDailyThemes, WALL } from '../../lib/dailyThemes';
 import { useDaily } from '../../lib/queries';
+import { QUOTE_THEMES } from '../../lib/quotes';
 import { Loading, SkeletonLines } from '../ui/Skeleton';
+import ThemedHead from '../ui/ThemedHead';
 import s from './DailyCards.module.css';
 
 /**
- * Two small cards beside the weather: a dad joke (tap for the answer) and a quote. Each comes once a
- * day; a card that couldn't be fetched just isn't shown.
+ * Two small cards beside the weather: a dad joke (tap for the answer) and a quote. The joke comes once a
+ * day from the server, and isn't shown when it couldn't be fetched; the quote is the day's from the
+ * family's themes for the wall (Settings, Daily cards).
  */
 export default function DailyCards({ today }: { today: string }) {
 	const dailyQuery = useDaily(today);
-	const daily = dailyQuery.data;
+	const joke = dailyQuery.data?.joke;
+	const themes = useDailyThemes(QUOTE_THEMES, 'quote', WALL);
+	const quote = pickOfTheDay(themes.on, today);
 	const [revealed, setRevealed] = useState<string | null>(null);
-	if (dailyQuery.isPending) {
+	if (dailyQuery.isPending || !themes.ready) {
 		return (
 			<>
 				<Loading label="Loading the dad joke" className={s.card}>
@@ -23,8 +29,6 @@ export default function DailyCards({ today }: { today: string }) {
 			</>
 		);
 	}
-	if (!daily) return null;
-	const { joke, quote } = daily;
 	// "Question? Answer": the answer waits for a tap.
 	const split = joke && /^(.*?\?)\s+(.+)$/s.exec(joke.text);
 	const showAnswer = revealed === joke?.text;
@@ -50,19 +54,15 @@ export default function DailyCards({ today }: { today: string }) {
 					)}
 				</section>
 			)}
-			{quote && (
-				<section className={`${s.card} ${s.quote}`} aria-label="Quote of the day">
+			<section className={`${s.card} ${s.quote}`} aria-label="Quote of the day">
+				<ThemedHead themes={themes.on} of={QUOTE_THEMES.length}>
 					<h3 className={s.label}>
 						<span aria-hidden="true">💬</span> Quote of the day
 					</h3>
-					<blockquote className={s.quoteText}>“{quote.text}”</blockquote>
-					<div className={s.author}>— {quote.author}</div>
-					{/* ZenQuotes asks for credit. */}
-					<a className={s.credit} href="https://zenquotes.io/" target="_blank" rel="noreferrer">
-						Quotes from ZenQuotes
-					</a>
-				</section>
-			)}
+				</ThemedHead>
+				<blockquote className={s.quoteText}>“{quote.item.text}”</blockquote>
+				<div className={s.author}>— {quote.item.by}</div>
+			</section>
 		</>
 	);
 }

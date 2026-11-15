@@ -4,8 +4,8 @@ import { schemaOf } from './schemas.ts';
 import { DailyQuery, type Daily } from '../shared/daily.ts';
 import type { z } from 'zod';
 
-// A dad joke and a quote, for cards on the calendar page. Each comes from a free service with no
-// key, once a day; the wall is a family screen, so grim jokes are skipped.
+// A dad joke, for a card on the calendar page. It comes from a free service with no key, once a day; the
+// wall is a family screen, so grim jokes are skipped. (The quote beside it is the app's own.)
 
 const UA = 'Sprig family app (family use)';
 
@@ -16,10 +16,6 @@ export const familyFriendly = (text: string) => !GRIM.test(text);
 
 interface Joke {
 	text: string;
-}
-export interface Quote {
-	text: string;
-	author: string;
 }
 
 type Fetch = typeof fetch;
@@ -37,16 +33,7 @@ async function fetchJoke(fetchImpl: Fetch): Promise<Joke> {
 	throw new Error('No family-friendly joke found');
 }
 
-/** ZenQuotes' quote of the day. */
-async function fetchQuote(fetchImpl: Fetch): Promise<Quote> {
-	const res = await fetchImpl('https://zenquotes.io/api/today', { headers: { 'user-agent': UA } });
-	if (!res.ok) throw new Error(`ZenQuotes answered ${res.status}`);
-	const [q] = (await res.json()) as { q: string; a: string }[];
-	if (!q?.q) throw new Error('ZenQuotes sent no quote');
-	return { text: q.q.trim(), author: q.a?.trim() || 'Unknown' };
-}
-
-/** GET /api/daily?day=: today's joke and quote (null for either that couldn't be fetched). */
+/** GET /api/daily?day=: today's joke (null when it couldn't be fetched). */
 export function registerDaily(app: FastifyInstance, db: DB, fetchImpl: Fetch = fetch) {
 	// A failed fetch isn't retried for a while, so a service being down doesn't slow every page load.
 	const failedAt = new Map<string, number>();
@@ -79,11 +66,7 @@ export function registerDaily(app: FastifyInstance, db: DB, fetchImpl: Fetch = f
 		{ schema: { querystring: schemaOf(DailyQuery) } },
 		async (req): Promise<Daily> => {
 			const { day } = req.query;
-			const [joke, quote] = await Promise.all([
-				item(day, 'joke', () => fetchJoke(fetchImpl)),
-				item(day, 'quote', () => fetchQuote(fetchImpl)),
-			]);
-			return { joke, quote };
+			return { joke: await item(day, 'joke', () => fetchJoke(fetchImpl)) };
 		},
 	);
 }

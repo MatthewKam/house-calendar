@@ -77,13 +77,6 @@
 	font-weight: 600;
 }
 
-.credit {
-	margin-top: auto;
-	font-size: 0.72rem;
-	color: var(--muted);
-	text-decoration: none;
-}
-
 /* Narrow screens: one under another, as wide as the week list. */
 @media (max-width: 959.98px) {
 	.card {

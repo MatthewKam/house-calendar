@@ -1,0 +1,42 @@
+/* The heading, with the ⓘ at the end of its row. */
+.head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+/* ⓘ: a small circle, with room around it to tap. */
+.info {
+	position: relative;
+	flex: none;
+	display: grid;
+	place-items: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	min-width: 0;
+	min-height: 0;
+	margin: -0.4rem -0.4rem -0.4rem 0;
+	padding: 0;
+	background: none;
+	color: var(--muted);
+	font:
+		italic 700 0.8rem/1 Georgia,
+		serif;
+}
+.info::before {
+	content: '';
+	position: absolute;
+	width: 0.95rem;
+	height: 0.95rem;
+	border: 1.5px solid currentColor;
+	border-radius: 50%;
+}
+.info[aria-expanded='true'] {
+	color: var(--accent);
+}
+.note {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.85rem;
+	line-height: 1.35;
+}

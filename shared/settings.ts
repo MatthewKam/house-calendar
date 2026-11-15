@@ -4,8 +4,9 @@
 
 import { z } from 'zod';
 
-/** Which setting (PUT /api/settings/:key): a name such as uiScale or screensaver. */
-export const SettingKey = z.object({ key: z.string().regex(/^[a-zA-Z][a-zA-Z0-9_.]{0,63}$/) });
+/** Which setting (PUT /api/settings/:key): a name such as uiScale or screensaver, or one of a person's own
+ * such as quoteThemesOff.<their id>. */
+export const SettingKey = z.object({ key: z.string().regex(/^[a-zA-Z][a-zA-Z0-9_.-]{0,79}$/) });
 /** Its new value, anything JSON can hold (unchecked: z.json() would let the checker turn false into null). */
 export const SettingValue = z.object({ value: z.unknown() });
 
