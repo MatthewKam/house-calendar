@@ -64,6 +64,10 @@ npm run dev
 
 Open http://localhost:5173. The API runs on port 3000; the page reloads as you edit code.
 
+`npm run dev` uses the real `data/` folder and syncs your real iCloud and Reminders, so changes made while testing
+reach your calendar. `npm run dev:test` is the same with its own `data-test/` folder (start over by deleting it) and
+iCloud and Reminders syncing off.
+
 To run it the way the wall display will (one process, built UI):
 
 ```sh
