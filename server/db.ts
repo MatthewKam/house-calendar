@@ -872,6 +872,19 @@ const migrations: string[] = [
 	`
   ALTER TABLE members ADD COLUMN allergies TEXT NOT NULL DEFAULT '[]';
   `,
+	// A recipe's own tags from the family (JSON: "Kid approved", "Freezes well", their own), and notes after
+	// cooking ("Used half the sugar"): who wrote each, and when.
+	`
+  ALTER TABLE recipes ADD COLUMN tags TEXT NOT NULL DEFAULT '[]';
+  CREATE TABLE recipe_notes (
+    id          TEXT PRIMARY KEY,
+    recipe_id   TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    member_id   TEXT REFERENCES members(id) ON DELETE SET NULL,
+    text        TEXT NOT NULL,
+    written_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX recipe_notes_recipe ON recipe_notes(recipe_id, written_at);
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

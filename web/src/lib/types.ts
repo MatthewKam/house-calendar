@@ -291,7 +291,15 @@ export type Scope = 'one' | 'all';
 /** Today's weather at home (the server's own shape, shared). */
 export type { EventWeather, Wear, Weather } from '../../../shared/weather.ts';
 // Recipes: written once in shared/recipes.ts, for the server and here.
-export type { DishIdea, Ingredient, Meal, Recipe, RecipeDraft, RecipeFields } from '../../../shared/recipes.ts';
+export type {
+	CookNote,
+	DishIdea,
+	Ingredient,
+	Meal,
+	Recipe,
+	RecipeDraft,
+	RecipeFields,
+} from '../../../shared/recipes.ts';
 
 /** A photo in the album. */
 export interface Photo {

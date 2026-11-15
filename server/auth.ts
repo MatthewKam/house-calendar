@@ -141,6 +141,12 @@ const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean]
 	['POST', '/api/recipes/:id/images'],
 	['PUT', '/api/recipes/:id/cover'],
 	['DELETE', '/api/recipes/:id/images/:imageId'],
+	// Tags and notes after cooking: a parent's (saving a time it was cooked is anyone's, without a note).
+	['PUT', '/api/recipes/:id/tags'],
+	['POST', '/api/recipes/:id/notes'],
+	['PUT', '/api/recipes/:id/notes/:noteId'],
+	['DELETE', '/api/recipes/:id/notes/:noteId'],
+	['POST', '/api/recipes/:id/cooks', (req) => typeof req.body?.note === 'string' && req.body.note.trim() !== ''],
 ];
 const needsParent = (req: Req) =>
 	PARENT_ONLY.some(

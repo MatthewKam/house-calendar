@@ -221,6 +221,64 @@ describe('recipes', () => {
 		expect(last.rating).toBe(4);
 	});
 
+	it("keeps the family's tags and notes after cooking (who wrote each), a parent's to change", async () => {
+		dir = mkdtempSync(join(tmpdir(), 'recipes-'));
+		const { app, call } = household(
+			[
+				{ id: 'mom', name: 'Mom' },
+				{ id: 'kid', name: 'Kid' },
+			],
+			{ photosDir: dir },
+		);
+		let viewer: object | undefined;
+		app.addHook('onRequest', async (req) => {
+			req.raw.viewer = viewer as never;
+		});
+		const id = (await call('POST', '/api/recipes', { recipe: BULGOGI, images: [], cover: null })).body.id;
+		expect((await call('GET', '/api/recipes')).body[0]).toMatchObject({ tags: [], cookNotes: [] });
+
+		// Tags: trimmed, each once.
+		const tagged = await call('PUT', `/api/recipes/${id}/tags`, {
+			tags: [' Kid approved ', 'kid approved', 'Freezes   well', 'Taco Tuesday'],
+		});
+		expect(tagged.body.tags).toEqual(['Kid approved', 'Freezes well', 'Taco Tuesday']);
+
+		// Mom, signed in, saves a time with a note, then writes another; newest first, with who.
+		const mom = {
+			role: 'guardian',
+			memberId: 'mom',
+			parent: true,
+			holder: true,
+			guardians: ['mom'],
+			actor: 'mom',
+			stillParent() {},
+		};
+		viewer = mom;
+		const cooked = (await call('POST', `/api/recipes/${id}/cooks`, { minutes: 35, note: '  Half the sugar  ' })).body;
+		expect(cooked.cooked.times).toBe(1);
+		expect(cooked.cookNotes).toMatchObject([{ text: 'Half the sugar', memberId: 'mom' }]);
+		const two = (await call('POST', `/api/recipes/${id}/notes`, { text: 'Kids loved it' })).body.cookNotes;
+		expect(two.map((n: { text: string }) => n.text)).toEqual(['Kids loved it', 'Half the sugar']);
+		// No note (or a blank one) is just the time.
+		expect((await call('POST', `/api/recipes/${id}/cooks`, { minutes: 30, note: ' ' })).body.cookNotes).toHaveLength(2);
+
+		// Changed and taken out.
+		const changed = (await call('PUT', `/api/recipes/${id}/notes/${two[0].id}`, { text: 'Kids loved it!' })).body;
+		expect(changed.cookNotes[0]).toMatchObject({ text: 'Kids loved it!', memberId: 'mom' });
+		const left = (await call('DELETE', `/api/recipes/${id}/notes/${two[1].id}`)).body.cookNotes;
+		expect(left.map((n: { text: string }) => n.text)).toEqual(['Kids loved it!']);
+		expect((await call('DELETE', `/api/recipes/${id}/notes/${two[1].id}`)).status).toBe(404);
+		expect((await call('POST', `/api/recipes/${id}/notes`, { text: '   ' })).status).toBe(400);
+
+		// A kid's device: a time without a note is fine; tags and notes aren't theirs.
+		viewer = { ...mom, role: 'kid', memberId: 'kid', parent: false, holder: false, actor: 'kid' };
+		expect((await call('POST', `/api/recipes/${id}/cooks`, { minutes: 20 })).status).toBe(200);
+		expect((await call('POST', `/api/recipes/${id}/cooks`, { minutes: 20, note: 'yum' })).status).toBe(403);
+		expect((await call('PUT', `/api/recipes/${id}/tags`, { tags: [] })).status).toBe(403);
+		expect((await call('POST', `/api/recipes/${id}/notes`, { text: 'yum' })).status).toBe(403);
+		expect((await call('DELETE', `/api/recipes/${id}/notes/${two[0].id}`)).status).toBe(403);
+	});
+
 	it('says so when reading is off, and checks what it keeps', async () => {
 		dir = mkdtempSync(join(tmpdir(), 'recipes-'));
 		const { call } = household([], { photosDir: dir });

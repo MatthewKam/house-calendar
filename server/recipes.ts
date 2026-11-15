@@ -9,7 +9,17 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node
 import { join } from 'node:path';
 import type { DB } from './db.ts';
 import { schemaOf } from './schemas.ts';
-import { AddImages, NewRecipe, ReadRecipe, RecipeFields, type Recipe, type RecipeDraft } from '../shared/recipes.ts';
+import {
+	AddImages,
+	CookNoteText,
+	NewCook,
+	NewRecipe,
+	ReadRecipe,
+	RecipeFields,
+	RecipeTags,
+	type Recipe,
+	type RecipeDraft,
+} from '../shared/recipes.ts';
 
 // Recipes (docs/recipes.md): a recipe read from pictures (screenshots, a cookbook page) or a link by
 // Claude, checked by a grown-up, then kept with its pictures. Reading saves nothing: the app shows the
@@ -176,6 +186,7 @@ interface Row {
 	id: string;
 	data: string;
 	cover_id: string | null;
+	tags: string;
 	created_at: string;
 }
 
@@ -208,8 +219,27 @@ export function registerRecipes(
 		coverId: r.cover_id || null,
 		noCover: r.cover_id === '',
 		...history(r.id),
+		tags: JSON.parse(r.tags) as string[],
+		cookNotes: notes(r.id),
 		createdAt: r.created_at,
 	});
+	const notes = (recipeId: string) =>
+		(
+			db
+				.prepare(
+					'SELECT id, text, member_id, written_at FROM recipe_notes WHERE recipe_id = ? ORDER BY written_at DESC, rowid DESC',
+				)
+				.all(recipeId) as { id: string; text: string; member_id: string | null; written_at: string }[]
+		).map((n) => ({ id: n.id, text: n.text, memberId: n.member_id, writtenAt: n.written_at }));
+	/** Who's writing a note: whoever is making the change (signed in, or whose PIN unlocked it), if known. */
+	const writer = (req: { raw: { viewer?: { actor: string | null; memberId: string | null } } }) => {
+		const id = req.raw.viewer?.actor ?? req.raw.viewer?.memberId ?? null;
+		return id && db.prepare('SELECT 1 FROM members WHERE id = ?').get(id) ? id : null;
+	};
+	const addNote = (recipeId: string, text: string, memberId: string | null) =>
+		db
+			.prepare('INSERT INTO recipe_notes (id, recipe_id, member_id, text) VALUES (?, ?, ?, ?)')
+			.run(randomUUID(), recipeId, memberId, text);
 	const get = (id: string) => db.prepare('SELECT * FROM recipes WHERE id = ?').get(id) as Row | undefined;
 	/** How often it's been cooked and how it's rated. */
 	const history = (recipeId: string) => {
@@ -385,29 +415,73 @@ export function registerRecipes(
 		return toRecipe(get(req.params.id)!);
 	});
 
-	// A time it was cooked: saved after Done cooking, if they wanted (how long it took, in minutes).
-	app.post<{ Params: { id: string }; Body: { minutes: number } }>(
+	// A time it was cooked: saved after Done cooking, if they wanted (how long it took, in minutes), with a
+	// note for next time if one was written.
+	app.post<{ Params: { id: string }; Body: z.infer<typeof NewCook> }>(
 		'/api/recipes/:id/cooks',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['minutes'],
-					additionalProperties: false,
-					properties: { minutes: { type: 'integer', minimum: 1, maximum: 1440 } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(NewCook) } },
 		async (req, reply) => {
 			if (!get(req.params.id)) return reply.code(404).send({ error: 'Recipe not found' });
-			db.prepare('INSERT INTO recipe_cooks (id, recipe_id, minutes) VALUES (?, ?, ?)').run(
-				randomUUID(),
-				req.params.id,
-				req.body.minutes,
-			);
+			const note = req.body.note?.trim();
+			db.transaction(() => {
+				db.prepare('INSERT INTO recipe_cooks (id, recipe_id, minutes) VALUES (?, ?, ?)').run(
+					randomUUID(),
+					req.params.id,
+					req.body.minutes,
+				);
+				if (note) addNote(req.params.id, note, writer(req));
+			})();
 			return toRecipe(get(req.params.id)!);
 		},
 	);
+
+	// The family's tags, all of them: trimmed, and each once (Kid approved and kid approved are one).
+	app.put<{ Params: { id: string }; Body: z.infer<typeof RecipeTags> }>(
+		'/api/recipes/:id/tags',
+		{ schema: { body: schemaOf(RecipeTags) } },
+		async (req, reply) => {
+			if (!get(req.params.id)) return reply.code(404).send({ error: 'Recipe not found' });
+			const tags: string[] = [];
+			for (const t of req.body.tags.map((x) => x.trim().replace(/\s+/g, ' ')))
+				if (t && !tags.some((x) => x.toLowerCase() === t.toLowerCase())) tags.push(t);
+			db.prepare('UPDATE recipes SET tags = ? WHERE id = ?').run(JSON.stringify(tags), req.params.id);
+			return toRecipe(get(req.params.id)!);
+		},
+	);
+
+	// Notes after cooking: written any time, changed (its words; who and when stay), or taken out.
+	app.post<{ Params: { id: string }; Body: z.infer<typeof CookNoteText> }>(
+		'/api/recipes/:id/notes',
+		{ schema: { body: schemaOf(CookNoteText) } },
+		async (req, reply) => {
+			if (!get(req.params.id)) return reply.code(404).send({ error: 'Recipe not found' });
+			const text = req.body.text.trim();
+			if (!text) return reply.code(400).send({ error: 'The note is empty' });
+			addNote(req.params.id, text, writer(req));
+			reply.code(201);
+			return toRecipe(get(req.params.id)!);
+		},
+	);
+	app.put<{ Params: { id: string; noteId: string }; Body: z.infer<typeof CookNoteText> }>(
+		'/api/recipes/:id/notes/:noteId',
+		{ schema: { body: schemaOf(CookNoteText) } },
+		async (req, reply) => {
+			const text = req.body.text.trim();
+			if (!text) return reply.code(400).send({ error: 'The note is empty' });
+			const res = db
+				.prepare('UPDATE recipe_notes SET text = ? WHERE id = ? AND recipe_id = ?')
+				.run(text, req.params.noteId, req.params.id);
+			if (!res.changes) return reply.code(404).send({ error: 'Note not found' });
+			return toRecipe(get(req.params.id)!);
+		},
+	);
+	app.delete<{ Params: { id: string; noteId: string } }>('/api/recipes/:id/notes/:noteId', async (req, reply) => {
+		const res = db
+			.prepare('DELETE FROM recipe_notes WHERE id = ? AND recipe_id = ?')
+			.run(req.params.noteId, req.params.id);
+		if (!res.changes) return reply.code(404).send({ error: 'Note not found' });
+		return toRecipe(get(req.params.id)!);
+	});
 
 	// Someone's rating, out of 5 (null takes it back). Their own, anyone's; a kid's, a parent's too (kids
 	// are fickle, people make mistakes); anyone's at all, the account holder's.

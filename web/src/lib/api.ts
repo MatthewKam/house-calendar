@@ -268,7 +268,14 @@ export const api = {
 	setRecipeCover: (id: string, imageId: string | null) => call<Recipe>('PUT', `/api/recipes/${id}/cover`, { imageId }),
 	deleteRecipeImage: (id: string, imageId: string) => call<Recipe>('DELETE', `/api/recipes/${id}/images/${imageId}`),
 	/** A time it was cooked (minutes), and someone's rating out of 5 (null takes it back). */
-	logRecipeCook: (id: string, minutes: number) => call<Recipe>('POST', `/api/recipes/${id}/cooks`, { minutes }),
+	logRecipeCook: (id: string, minutes: number, note: string | null) =>
+		call<Recipe>('POST', `/api/recipes/${id}/cooks`, { minutes, note }),
+	/** The family's tags; notes after cooking. */
+	setRecipeTags: (id: string, tags: string[]) => call<Recipe>('PUT', `/api/recipes/${id}/tags`, { tags }),
+	addRecipeNote: (id: string, text: string) => call<Recipe>('POST', `/api/recipes/${id}/notes`, { text }),
+	editRecipeNote: (id: string, noteId: string, text: string) =>
+		call<Recipe>('PUT', `/api/recipes/${id}/notes/${noteId}`, { text }),
+	deleteRecipeNote: (id: string, noteId: string) => call<Recipe>('DELETE', `/api/recipes/${id}/notes/${noteId}`),
 	rateRecipe: (id: string, memberId: string, stars: number | null) =>
 		call<Recipe>('PUT', `/api/recipes/${id}/ratings/${memberId}`, { stars }),
 	photos: () => call<Photo[]>('GET', '/api/photos'),
