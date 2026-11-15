@@ -59,7 +59,7 @@ export default function DishIdeas({ kinds, onClose }: { kinds: string[]; onClose
 	}
 
 	return (
-		<Sheet label="Dish ideas" onClose={onClose} className={s.view}>
+		<Sheet label="Dish ideas" onClose={onClose} className={s.ideasView}>
 			<header className={sheet.head}>
 				<h2 className={sheet.heading}>Dish ideas</h2>
 				<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
@@ -73,7 +73,7 @@ export default function DishIdeas({ kinds, onClose }: { kinds: string[]; onClose
 					void think(true);
 				}}
 			>
-				<span className={s.select}>
+				<span className={`${s.select} ${s.ideasPick}`}>
 					<select aria-label="Time you have" value={time} onChange={(e) => setTime(e.target.value)}>
 						<option value="">Any time</option>
 						{TIMES.map((t) => (
@@ -83,7 +83,7 @@ export default function DishIdeas({ kinds, onClose }: { kinds: string[]; onClose
 						))}
 					</select>
 				</span>
-				<span className={`${s.select} ${s.kind}`}>
+				<span className={`${s.select} ${s.kind} ${s.ideasPick}`}>
 					<select aria-label="Kind" value={kind} onChange={(e) => setKind(e.target.value)}>
 						<option value="">Any kind</option>
 						{choices.map((k) => (

@@ -8,6 +8,7 @@ import { useWakeLock } from '../../lib/useWakeLock';
 import Sheet from '../ui/Sheet';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import CookingBar from './CookingBar';
+import PhotoViewer from './PhotoViewer';
 import RecipeForm from './RecipeForm';
 import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
@@ -93,7 +94,8 @@ export default function RecipeView({
 	const [tab, setTab] = useState<'ingredients' | 'steps'>('ingredients');
 	const [editing, setEditing] = useState(false);
 	const [deleting, setDeleting] = useState(false);
-	const [big, setBig] = useState<string | null>(null);
+	// A photo opened big (its id, to delete it from there).
+	const [big, setBig] = useState<{ id: string; url: string } | null>(null);
 	const [said, setSaid] = useState<string | null>(null);
 	// Sent to Groceries: how many went on (shown with a link to the list) until the ticks change.
 	const [sent, setSent] = useState<number | null>(null);
@@ -245,12 +247,7 @@ export default function RecipeView({
 						{(stepPhotos(n).length > 0 || parent) && (
 							<div className={s.stepPhotos}>
 								{stepPhotos(n).map((i) => (
-									<button
-										key={i.id}
-										type="button"
-										onClick={() => setBig(i.url)}
-										aria-label={`Open step ${n + 1}'s photo`}
-									>
+									<button key={i.id} type="button" onClick={() => setBig(i)} aria-label={`Open step ${n + 1}'s photo`}>
 										<img src={i.thumbUrl} alt="" loading="lazy" />
 									</button>
 								))}
@@ -287,7 +284,7 @@ export default function RecipeView({
 				{/* The top: its photo, and what to know before starting. */}
 				<div className={s.top}>
 					{cover ? (
-						<img className={s.cover} src={cover.url} alt="" onClick={() => setBig(cover.url)} />
+						<img className={s.cover} src={cover.url} alt="" onClick={() => setBig(cover)} />
 					) : (
 						// No main photo: a picture of its meal.
 						<span className={`${s.cover} ${s.defaultPicture}`} aria-hidden="true">
@@ -466,7 +463,7 @@ export default function RecipeView({
 							)}
 							{own.map((i) => (
 								<div key={i.id} className={`${s.photo} ${i.id === cover?.id ? s.photoMain : ''}`}>
-									<button type="button" onClick={() => setBig(i.url)} aria-label="Open photo">
+									<button type="button" onClick={() => setBig(i)} aria-label="Open photo">
 										<img src={i.thumbUrl} alt="" loading="lazy" />
 									</button>
 									{i.id === cover?.id ? (
@@ -481,16 +478,6 @@ export default function RecipeView({
 												Make main photo
 											</button>
 										)
-									)}
-									{parent && (
-										<button
-											type="button"
-											className={s.photoRemove}
-											aria-label="Remove photo"
-											onClick={() => setRemoving(i.id)}
-										>
-											×
-										</button>
 									)}
 								</div>
 							))}
@@ -538,9 +525,19 @@ export default function RecipeView({
 				</div>
 			</Sheet>
 			{big && (
-				<div className={s.big} role="dialog" aria-label="Picture" onClick={() => setBig(null)}>
-					<img src={big} alt="" />
-				</div>
+				<PhotoViewer
+					url={big.url}
+					onClose={() => setBig(null)}
+					// Deleting asks first, over the recipe (the viewer closes).
+					onDelete={
+						parent
+							? () => {
+									setRemoving(big.id);
+									setBig(null);
+								}
+							: undefined
+					}
+				/>
 			)}
 			{finished !== null && (
 				<ConfirmDialog
