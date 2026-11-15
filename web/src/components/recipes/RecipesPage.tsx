@@ -1,4 +1,4 @@
-import { useCallback, useState, type JSX } from 'react';
+import { useCallback, useRef, useState, type JSX } from 'react';
 import { useImageDrop } from '../../lib/useFlyerDrop';
 import { useMembers, useRecipeReading, useRecipes } from '../../lib/queries';
 import DishIdeas from './DishIdeas';
@@ -11,6 +11,7 @@ import { CardsIcon, ListIcon, RowsIcon } from '../ui/icons';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import AddRecipe from './AddRecipe';
+import RecipePages, { PAGE_SIZE } from './RecipePages';
 import RecipeView from './RecipeView';
 import s from './Recipes.module.css';
 
@@ -59,6 +60,8 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 	const dragging = useImageDrop(parent, takeDrop, notAPicture);
 	// The recipe open; one asked for from elsewhere (the calendar, Today) opens first.
 	const [open, setOpen] = useState<string | null>(takeWanted);
+	// The recipes' scrolling area: reaching its end brings the next page.
+	const scroller = useRef<HTMLDivElement>(null);
 	// Filters: one chip from each row at most.
 	// Which of TIMES (its place), or null for any time.
 	const [time, setTime] = useState<number | null>(null);
@@ -150,7 +153,7 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 					/>
 				</div>
 			) : (
-				<div className={s.scroll}>
+				<div className={s.scroll} ref={scroller}>
 					{recipes.length > 0 && (
 						// Side by side: the time there is, a kind (a meal, a protein, a type), and the family's tags.
 						<div className={s.filters}>
@@ -246,13 +249,15 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 					) : shown.length === 0 ? (
 						<p className={s.none}>Nothing fits those. Pick Any time, Any kind, Any prep or Any tag to see more.</p>
 					) : (
-						<ul className={view === 'cards' ? s.grid : s.rows}>
-							{shown.map((r) => (
-								<li key={r.id}>
-									<RecipeCard recipe={r} view={view} onOpen={() => setOpen(r.id)} />
-								</li>
-							))}
-						</ul>
+						// A page at a time; back to page 1 when the filters or the view change.
+						<RecipePages
+							key={[view, time, tag, familyTag, prep].join('|')}
+							items={shown}
+							size={PAGE_SIZE[view]}
+							scroller={scroller}
+							listClass={view === 'cards' ? s.grid : s.rows}
+							render={(r) => <RecipeCard recipe={r} view={view} onOpen={() => setOpen(r.id)} />}
+						/>
 					)}
 				</div>
 			)}

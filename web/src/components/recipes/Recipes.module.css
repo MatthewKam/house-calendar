@@ -1587,3 +1587,57 @@ button.ideaSearch {
 	min-width: 0;
 	padding: 0.5rem 0.8rem;
 }
+
+/* The page menu: how many showing and ‹ 1 2 3 ›, staying at the top of the recipes while scrolling. */
+.pager {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.3rem 0.8rem;
+	margin: 0 0 0.6rem;
+	padding: 0.35rem 0;
+	background: var(--bg);
+}
+.pagerCount {
+	color: var(--muted);
+	font-size: 0.9rem;
+	font-weight: 600;
+}
+.pagerPages {
+	display: flex;
+	align-items: center;
+	gap: 0.2rem;
+}
+.pagerButton {
+	min-width: 2.5rem;
+	min-height: 2.5rem;
+	padding: 0 0.4rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-round);
+	background: var(--surface);
+	color: var(--text);
+	font: inherit;
+	font-weight: 650;
+}
+.pagerButton[aria-current='page'] {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--on-accent);
+}
+.pagerButton:disabled {
+	opacity: 0.35;
+}
+.pagerGap {
+	padding: 0 0.15rem;
+	color: var(--muted);
+}
+.pagerMore {
+	margin: 1rem 0 0;
+	color: var(--muted);
+	font-size: 0.9rem;
+	text-align: center;
+}
