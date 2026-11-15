@@ -915,3 +915,103 @@
 	text-decoration: underline;
 	text-underline-offset: 0.2em;
 }
+
+/* The family's tags (Kid approved, their own): on the card and the recipe, apart from its kinds. */
+.familyTag {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.15rem 0.6rem;
+	border-radius: var(--radius-round);
+	background: var(--good-bg);
+	border: 1px solid var(--good-line);
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+.cardTags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	margin: 0.15rem 0;
+}
+.tagButton {
+	padding: 0.15rem 0.7rem;
+	min-height: 2rem;
+	border-radius: var(--radius-round);
+	border: 1px dashed var(--line);
+	background: none;
+	color: var(--muted);
+	font: inherit;
+	font-size: 0.85rem;
+}
+.tagChoices {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+.tagNew {
+	display: flex;
+	gap: 0.5rem;
+}
+
+/* Notes from cooking: each with its day and who wrote it; written in a box like this. */
+.cookNotes {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+.cookNote {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	padding: 0.7rem 0.9rem;
+	border-radius: var(--radius);
+	background: var(--bg);
+}
+.cookNoteWho {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+.noteEditor {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.noteBox {
+	width: 100%;
+	box-sizing: border-box;
+	margin-top: 0.7rem;
+	padding: 0.6rem 0.8rem;
+	font: inherit;
+	font-size: 1rem;
+	line-height: 1.4;
+	color: var(--text);
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	resize: vertical;
+}
+.noteEditor .noteBox {
+	margin-top: 0;
+}
+.noteButtons {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+.noteAction {
+	min-height: 2.75rem;
+	padding: 0 0.6rem;
+	border: none;
+	background: none;
+	color: var(--muted);
+	font: inherit;
+	font-size: 0.9rem;
+	text-decoration: underline;
+}

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
-import { useAddToGroceries, useAuthStatus, useMembers, useRecipeActions } from '../../lib/queries';
-import { coverOf, ingredientLine, mealPicture, minutesText, toJpeg } from '../../lib/recipes';
+import { useAddToGroceries, useAuthStatus, useMembers, useRecipeActions, useRecipes } from '../../lib/queries';
+import { coverOf, ingredientLine, mealPicture, minutesText, tagEmoji, toJpeg } from '../../lib/recipes';
 import { flags } from '../../lib/allergies';
 import type { Member, Recipe } from '../../lib/types';
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
@@ -8,8 +8,10 @@ import { useWakeLock } from '../../lib/useWakeLock';
 import Sheet from '../ui/Sheet';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import CookingBar from './CookingBar';
+import CookNotes from './CookNotes';
 import PhotoViewer from './PhotoViewer';
 import RecipeForm from './RecipeForm';
+import TagPicker from './TagPicker';
 import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
 
@@ -52,14 +54,19 @@ export default function RecipeView({
 	parent: boolean;
 	onClose: () => void;
 }) {
-	const { update, remove, addImages, setCover, removeImage, logCook, rate } = useRecipeActions();
-	// Done cooking: how long it took, while it's asked whether to keep that.
+	const { update, remove, addImages, setCover, removeImage, logCook, rate, setTags } = useRecipeActions();
+	// Done cooking: how long it took, while it's asked whether to keep that (and a note for next time).
 	const [finished, setFinished] = useState<number | null>(null);
+	const [cookNote, setCookNote] = useState('');
 	const endCooking = (save: boolean) => {
-		if (save && finished) logCook.mutate({ id: r.id, minutes: finished });
+		if (save && finished) logCook.mutate({ id: r.id, minutes: finished, note: cookNote.trim() || null });
 		setFinished(null);
+		setCookNote('');
 		setCookingSince(null);
 	};
+	// The family's tags: picking them, from the ones used across the book.
+	const [tagging, setTagging] = useState(false);
+	const knownTags = [...new Set((useRecipes().data ?? []).flatMap((x) => x.tags))];
 	// Ratings: everyone in the family. Each changes their own; a parent a kid's; the account holder anyone's.
 	const people = useMembers().data ?? [];
 	// Anyone's allergies in it: who and what, and which ingredient rows.
@@ -324,6 +331,20 @@ export default function RecipeView({
 								)}
 							</div>
 						)}
+						{(r.tags.length > 0 || parent) && (
+							<div className={s.tags}>
+								{r.tags.map((t) => (
+									<span key={t} className={s.familyTag}>
+										<span aria-hidden="true">{tagEmoji(t)}</span> {t}
+									</span>
+								))}
+								{parent && (
+									<button type="button" className={s.tagButton} onClick={() => setTagging(true)}>
+										{r.tags.length ? 'Edit tags' : '🏷️ Add tags'}
+									</button>
+								)}
+							</div>
+						)}
 						{tags.length > 0 && (
 							<div className={s.tags}>
 								{tags.map((t) => (
@@ -437,6 +458,7 @@ export default function RecipeView({
 						<p className={s.notes}>{r.notes}</p>
 					</section>
 				)}
+				<CookNotes recipe={r} parent={parent} people={people} />
 				{/* Its photos: the main one (on the card and up top) picked from them; grown-ups add more. */}
 				{(own.length > 0 || parent) && (
 					<section className={s.part} aria-label="Photos">
@@ -550,7 +572,29 @@ export default function RecipeView({
 				>
 					You cooked for {minutesText(finished)}. Saved, it goes in this recipe's history: how many times you've made
 					it, and how long it usually takes.
+					{parent && (
+						<textarea
+							className={s.noteBox}
+							rows={3}
+							maxLength={1000}
+							aria-label="A note for next time"
+							placeholder="A note for next time, if any (used half the sugar, kids loved it)"
+							value={cookNote}
+							onChange={(e) => setCookNote(e.target.value)}
+						/>
+					)}
 				</ConfirmDialog>
+			)}
+			{tagging && (
+				<TagPicker
+					initial={r.tags}
+					known={knownTags}
+					onClose={() => setTagging(false)}
+					onSave={(t) => {
+						setTags.mutate({ id: r.id, tags: t });
+						setTagging(false);
+					}}
+				/>
 			)}
 			{removing && (
 				<ConfirmDialog

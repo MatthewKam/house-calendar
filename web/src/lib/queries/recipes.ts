@@ -64,8 +64,42 @@ export function useRecipeActions() {
 		}),
 		/** A time it was cooked; someone's rating (shown straight away, the average worked out again). */
 		logCook: useMutation({
-			mutationFn: ({ id, minutes }: { id: string; minutes: number }) => api.logRecipeCook(id, minutes),
+			mutationFn: ({ id, minutes, note }: { id: string; minutes: number; note: string | null }) =>
+				api.logRecipeCook(id, minutes, note),
 			onSuccess: (r: Recipe) => book((list) => list.map((x) => (x.id === r.id ? r : x))),
+			onSettled: refresh,
+		}),
+		/** The family's tags (shown straight away); notes after cooking (each answers the recipe). */
+		setTags: useMutation({
+			mutationFn: ({ id, tags }: { id: string; tags: string[] }) => api.setRecipeTags(id, tags),
+			onMutate: ({ id, tags }) => book((list) => list.map((r) => (r.id === id ? { ...r, tags } : r))),
+			onError: putBack(qc),
+			onSettled: refresh,
+		}),
+		addNote: useMutation({
+			mutationFn: ({ id, text }: { id: string; text: string }) => api.addRecipeNote(id, text),
+			onSuccess: (r: Recipe) => book((list) => list.map((x) => (x.id === r.id ? r : x))),
+			onSettled: refresh,
+		}),
+		editNote: useMutation({
+			mutationFn: ({ id, noteId, text }: { id: string; noteId: string; text: string }) =>
+				api.editRecipeNote(id, noteId, text),
+			onMutate: ({ id, noteId, text }) =>
+				book((list) =>
+					list.map((r) =>
+						r.id === id ? { ...r, cookNotes: r.cookNotes.map((n) => (n.id === noteId ? { ...n, text } : n)) } : r,
+					),
+				),
+			onError: putBack(qc),
+			onSettled: refresh,
+		}),
+		removeNote: useMutation({
+			mutationFn: ({ id, noteId }: { id: string; noteId: string }) => api.deleteRecipeNote(id, noteId),
+			onMutate: ({ id, noteId }) =>
+				book((list) =>
+					list.map((r) => (r.id === id ? { ...r, cookNotes: r.cookNotes.filter((n) => n.id !== noteId) } : r)),
+				),
+			onError: putBack(qc),
 			onSettled: refresh,
 		}),
 		rate: useMutation({

@@ -3,7 +3,7 @@ import { useImageDrop } from '../../lib/useFlyerDrop';
 import { useMembers, useRecipeReading, useRecipes } from '../../lib/queries';
 import DishIdeas from './DishIdeas';
 import { flags } from '../../lib/allergies';
-import { coverOf, mealPicture, minutesText } from '../../lib/recipes';
+import { coverOf, mealPicture, minutesText, tagEmoji } from '../../lib/recipes';
 import type { Recipe } from '../../lib/types';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
@@ -46,12 +46,15 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 	// Which of TIMES (its place), or null for any time.
 	const [time, setTime] = useState<number | null>(null);
 	const [tag, setTag] = useState<string | null>(null);
-	// The chips worth showing: the meals, proteins and types the book has.
+	const [familyTag, setFamilyTag] = useState<string | null>(null);
+	// The kinds worth showing: the meals, proteins and types the book has; and the family's own tags.
 	const tags = [...new Set(recipes.flatMap((r) => [r.meal, ...r.proteins, ...r.types]))].sort();
+	const familyTags = [...new Set(recipes.flatMap((r) => r.tags))].sort((a, b) => a.localeCompare(b));
 	const shown = recipes.filter(
 		(r) =>
 			(time === null || (!!r.totalMinutes && TIMES[time].fits(r.totalMinutes))) &&
-			(tag === null || r.meal === tag || r.proteins.includes(tag) || r.types.includes(tag)),
+			(tag === null || r.meal === tag || r.proteins.includes(tag) || r.types.includes(tag)) &&
+			(familyTag === null || r.tags.includes(familyTag)),
 	);
 	const opened = recipes.find((r) => r.id === open) ?? null;
 
@@ -75,7 +78,7 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 			</header>
 
 			{recipes.length > 0 && (
-				// Side by side: the time there is, and a kind (a meal, a protein, a type).
+				// Side by side: the time there is, a kind (a meal, a protein, a type), and the family's tags.
 				<div className={s.filters}>
 					<span className={s.select}>
 						<select
@@ -98,6 +101,18 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 								{tags.map((t) => (
 									<option key={t} value={t}>
 										{t[0].toUpperCase() + t.slice(1)}
+									</option>
+								))}
+							</select>
+						</span>
+					)}
+					{familyTags.length > 0 && (
+						<span className={s.select}>
+							<select aria-label="Tag" value={familyTag ?? ''} onChange={(e) => setFamilyTag(e.target.value || null)}>
+								<option value="">Any tag</option>
+								{familyTags.map((t) => (
+									<option key={t} value={t}>
+										{tagEmoji(t)} {t}
 									</option>
 								))}
 							</select>
@@ -127,7 +142,7 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 							: 'A grown-up adds them.'}
 					</p>
 				) : shown.length === 0 ? (
-					<p className={s.none}>Nothing fits those. Pick Any time or Any kind to see more.</p>
+					<p className={s.none}>Nothing fits those. Pick Any time, Any kind or Any tag to see more.</p>
 				) : (
 					<ul className={s.grid}>
 						{shown.map((r) => (
@@ -163,7 +178,7 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 /** "korean" → "Korean". */
 const capital = (w: string | null) => (w ? w[0].toUpperCase() + w.slice(1) : null);
 
-/** A recipe in the book: its picture, name, time and kind. */
+/** A recipe in the book: its picture, name, time and kind, and the family's tags. */
 function RecipeCard({ recipe: r, onOpen }: { recipe: Recipe; onOpen: () => void }) {
 	// Someone's allergy in it: a ⚠ on the card, with who.
 	const people = useMembers().data ?? [];
@@ -182,6 +197,15 @@ function RecipeCard({ recipe: r, onOpen }: { recipe: Recipe; onOpen: () => void 
 			<span className={s.cardText}>
 				<span className={s.cardTitle}>{r.title}</span>
 				{warn.length > 0 && <span className={s.cardWarn}>⚠ Allergy: {warn.join(', ')}</span>}
+				{r.tags.length > 0 && (
+					<span className={s.cardTags}>
+						{r.tags.map((t) => (
+							<span key={t} className={s.familyTag}>
+								<span aria-hidden="true">{tagEmoji(t)}</span> {t}
+							</span>
+						))}
+					</span>
+				)}
 				<span className={s.cardMeta}>
 					{[
 						r.rating !== null ? `★ ${r.rating}` : null,

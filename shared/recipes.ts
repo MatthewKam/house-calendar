@@ -90,8 +90,35 @@ export interface Recipe extends RecipeFields {
 	/** Each person's rating, out of 5, and the family's average (null: none yet). */
 	ratings: { memberId: string; stars: number }[];
 	rating: number | null;
+	/** The family's own tags ("Kid approved", "Freezes well", their own), as written. */
+	tags: string[];
+	/** Notes after cooking ("Used half the sugar"), newest first: who wrote each (null: not known), and when. */
+	cookNotes: CookNote[];
 	createdAt: string;
 }
+
+export interface CookNote {
+	id: string;
+	text: string;
+	memberId: string | null;
+	writtenAt: string;
+}
+
+/** The family's tags on a recipe (PUT /api/recipes/:id/tags), all of them. */
+export const RecipeTags = z.strictObject({
+	tags: z.array(z.string().min(1).max(30)).max(12),
+});
+
+/** A note after cooking, new or changed (POST /api/recipes/:id/notes, PUT .../notes/:noteId). */
+export const CookNoteText = z.strictObject({
+	text: z.string().min(1).max(1000),
+});
+
+/** A time it was cooked (POST /api/recipes/:id/cooks): how long it took, and a note for next time, if any. */
+export const NewCook = z.strictObject({
+	minutes: z.int().min(1).max(1440),
+	note: z.string().max(1000).nullable().optional(),
+});
 
 /** What reading gives back: the draft, and where in the pictures the dish's own photo is (to cut out as the cover). */
 export interface RecipeDraft {

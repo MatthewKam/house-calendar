@@ -130,3 +130,17 @@ export const mealPicture = (meal: Meal) =>
 /** Its main photo: the one picked, else the first of its own (never a step's); none when it's picked to have none. */
 export const coverOf = (r: Recipe) =>
 	r.noCover ? undefined : (r.images.find((i) => i.id === r.coverId) ?? r.images.find((i) => i.step === null));
+
+/** The family's tags to tap, each with a picture; their own get a label. */
+export const COMMON_TAGS: { name: string; emoji: string }[] = [
+	{ name: 'Kid approved', emoji: '🧒' },
+	{ name: 'Make again', emoji: '🔁' },
+	{ name: 'Weeknight', emoji: '🌙' },
+	{ name: 'Good for parties', emoji: '🎉' },
+	{ name: 'Freezes well', emoji: '🧊' },
+	{ name: 'Good leftovers', emoji: '🍱' },
+];
+
+/** A tag's picture: the common one's, else a label. */
+export const tagEmoji = (tag: string) =>
+	COMMON_TAGS.find((t) => t.name.toLowerCase() === tag.toLowerCase())?.emoji ?? '🏷️';
