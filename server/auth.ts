@@ -148,6 +148,13 @@ const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean]
 	['PUT', '/api/recipes/:id/notes/:noteId'],
 	['DELETE', '/api/recipes/:id/notes/:noteId'],
 	['POST', '/api/recipes/:id/cooks', (req) => typeof req.body?.note === 'string' && req.body.note.trim() !== ''],
+	// Plan ahead: planning meals and themed days is a parent's (seeing the plan is anyone's).
+	['POST', '/api/meals'],
+	['PUT', '/api/meals/:id'],
+	['DELETE', '/api/meals/:id'],
+	['POST', '/api/meal-themes'],
+	['PUT', '/api/meal-themes/:id'],
+	['DELETE', '/api/meal-themes/:id'],
 ];
 const needsParent = (req: Req) =>
 	PARENT_ONLY.some(

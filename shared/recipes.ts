@@ -50,6 +50,7 @@ export const RecipeFields = z.strictObject({
 export type RecipeFields = z.infer<typeof RecipeFields>;
 export type Ingredient = z.infer<typeof Ingredient>;
 export type Meal = z.infer<typeof Meal>;
+export type PrepAhead = z.infer<typeof PrepAhead>;
 
 /** A picture sent in, already shrunk by the app (2560px JPEG), as base64. */
 export const ImageUpload = z.strictObject({

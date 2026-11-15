@@ -38,6 +38,10 @@ import type {
 	LearnDayChange,
 	DishIdea,
 	SurprisePick,
+	MealThemeFields,
+	PlanMeal,
+	Plans,
+	Reminder,
 	Recipe,
 	RecipeDraft,
 	RecipeFields,
@@ -287,6 +291,16 @@ export const api = {
 	deleteRecipeNote: (id: string, noteId: string) => call<Recipe>('DELETE', `/api/recipes/${id}/notes/${noteId}`),
 	rateRecipe: (id: string, memberId: string, stars: number | null) =>
 		call<Recipe>('PUT', `/api/recipes/${id}/ratings/${memberId}`, { stars }),
+	/** Plan ahead (server/meals.ts): recipes on days (their prep reminders on To do), and themed days. */
+	meals: () => call<Plans>('GET', '/api/meals'),
+	planMeal: (plan: { day: string; meal: PlanMeal; recipeId: string; timeZone: string; reminders: Reminder[] }) =>
+		call<Plans>('POST', '/api/meals', plan),
+	moveMeal: (id: string, to: { day: string; meal: PlanMeal; timeZone: string; reminders: Reminder[] }) =>
+		call<Plans>('PUT', `/api/meals/${id}`, to),
+	unplanMeal: (id: string) => call<Plans>('DELETE', `/api/meals/${id}`),
+	addMealTheme: (theme: MealThemeFields) => call<Plans>('POST', '/api/meal-themes', theme),
+	editMealTheme: (id: string, theme: MealThemeFields) => call<Plans>('PUT', `/api/meal-themes/${id}`, theme),
+	deleteMealTheme: (id: string) => call<Plans>('DELETE', `/api/meal-themes/${id}`),
 	photos: () => call<Photo[]>('GET', '/api/photos'),
 	updatePhoto: (id: string, p: { inSlideshow?: boolean; memberId?: string | null }) =>
 		call<Photo>('PATCH', `/api/photos/${id}`, p),

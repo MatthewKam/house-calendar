@@ -31,3 +31,29 @@ export const GripIcon = () => (
 		))}
 	</svg>
 );
+
+/** Cards: big pictures, in a grid. */
+export const CardsIcon = () => (
+	<svg {...svg}>
+		<rect x="4" y="4" width="7" height="7" rx="1.5" />
+		<rect x="13" y="4" width="7" height="7" rx="1.5" />
+		<rect x="4" y="13" width="7" height="7" rx="1.5" />
+		<rect x="13" y="13" width="7" height="7" rx="1.5" />
+	</svg>
+);
+
+/** A list: words only, a line each. */
+export const ListIcon = () => (
+	<svg {...svg}>
+		<path d="M4 6h16M4 12h16M4 18h16" />
+	</svg>
+);
+
+/** Rows: a small picture on the left, words on the right. */
+export const RowsIcon = () => (
+	<svg {...svg}>
+		<rect x="4" y="4.5" width="6" height="6" rx="1.2" />
+		<rect x="4" y="13.5" width="6" height="6" rx="1.2" />
+		<path d="M13 6.5h7M13 9h4.5M13 15.5h7M13 18h4.5" />
+	</svg>
+);
