@@ -9,9 +9,12 @@ import PlanIt from './PlanIt';
 import ThemeForm from './ThemeForm';
 import s from './Recipes.module.css';
 
+const FOLDED = 'sprig:week-folded';
+
 /**
  * The week ahead on the Recipes page: what's planned each day (tap to open, move or take off), themed
- * days with their suggestion from the book (Use it, Another), and ＋ to plan an empty day.
+ * days with their suggestion from the book (Use it, Another), and ＋ to plan an empty day. The days wrap
+ * onto rows; the whole of it folds away (This week).
  */
 export default function ThisWeek({
 	recipes,
@@ -35,114 +38,139 @@ export default function ThisWeek({
 	const [theme, setTheme] = useState<MealTheme | 'new' | null>(null);
 	// Another: how far on each themed day's suggestion has stepped ("day|theme id").
 	const [another, setAnother] = useState<Record<string, number>>({});
+	// Open or folded away, remembered on this device.
+	const [open, setOpen] = useState(() => {
+		try {
+			return localStorage.getItem(FOLDED) !== '1';
+		} catch {
+			return true;
+		}
+	});
+	const fold = (next: boolean) => {
+		setOpen(next);
+		try {
+			if (next) localStorage.removeItem(FOLDED);
+			else localStorage.setItem(FOLDED, '1');
+		} catch {
+			// Not kept (a private window): open again next time.
+		}
+	};
+	const planned = nextDays(today).reduce((n, day) => n + plannedOn(plans, day).length, 0);
 
 	return (
 		<section className={s.week} aria-label="This week">
 			<div className={s.sectionHead}>
-				<h2 className={s.weekTitle}>This week</h2>
+				<h2 className={s.weekTitle}>
+					<button type="button" className={s.weekFold} aria-expanded={open} onClick={() => fold(!open)}>
+						This week
+						{!open && planned > 0 && <span className={s.weekCount}>{planned} planned</span>}
+					</button>
+				</h2>
 				{parent && (
 					<button type="button" className={s.addPhoto} onClick={() => setTheme('new')}>
 						＋ Themed day
 					</button>
 				)}
 			</div>
-			<ol className={s.weekDays}>
-				{nextDays(today).map((day) => {
-					const planned = plannedOn(plans, day);
-					const themes = themesOn(plans, day).filter((t) => !planned.some((m) => m.meal === t.meal));
-					return (
-						<li key={day} className={s.weekDay} aria-label={dayWord(day, today)}>
-							<span className={s.weekDayName}>{dayWord(day, today)}</span>
-							{planned.map((m) => {
-								const r = recipes.find((x) => x.id === m.recipeId);
-								if (!r) return null;
-								const cover = coverOf(r);
-								return (
-									<button
-										key={m.id}
-										type="button"
-										className={s.weekMeal}
-										onClick={() => (parent ? setPlanning({ day, plan: m }) : onOpen(r.id))}
-									>
-										{cover ? (
-											<img src={cover.thumbUrl} alt="" />
-										) : (
-											<span className={s.defaultPicture} aria-hidden="true">
-												{mealPicture(r.meal)}
+			{open && (
+				<ol className={s.weekDays}>
+					{nextDays(today).map((day) => {
+						const planned = plannedOn(plans, day);
+						const themes = themesOn(plans, day).filter((t) => !planned.some((m) => m.meal === t.meal));
+						return (
+							<li key={day} className={s.weekDay} aria-label={dayWord(day, today)}>
+								<span className={s.weekDayName}>{dayWord(day, today)}</span>
+								{planned.map((m) => {
+									const r = recipes.find((x) => x.id === m.recipeId);
+									if (!r) return null;
+									const cover = coverOf(r);
+									return (
+										<button
+											key={m.id}
+											type="button"
+											className={s.weekMeal}
+											onClick={() => (parent ? setPlanning({ day, plan: m }) : onOpen(r.id))}
+										>
+											{cover ? (
+												<img src={cover.thumbUrl} alt="" />
+											) : (
+												<span className={s.defaultPicture} aria-hidden="true">
+													{mealPicture(r.meal)}
+												</span>
+											)}
+											<span className={s.weekMealText}>
+												<span className={s.weekMealKind}>
+													{mealLabel(m.meal)}
+													{m.reminders.some((x) => !x.done) ? ' · ⏰' : ''}
+												</span>
+												{r.title}
 											</span>
-										)}
-										<span className={s.weekMealText}>
-											<span className={s.weekMealKind}>
-												{mealLabel(m.meal)}
-												{m.reminders.some((x) => !x.done) ? ' · ⏰' : ''}
-											</span>
-											{r.title}
-										</span>
-									</button>
-								);
-							})}
-							{themes.map((t) => {
-								const key = `${day}|${t.id}`;
-								const pick = suggestion(t, recipes, plans, day, another[key] ?? 0);
-								return (
-									<div key={t.id} className={s.weekTheme}>
-										<button type="button" className={s.weekThemeName} disabled={!parent} onClick={() => setTheme(t)}>
-											<span aria-hidden="true">{t.emoji}</span> {t.name}
 										</button>
-										{pick ? (
-											<>
-												<span className={s.weekSuggest}>{pick.title}?</span>
-												{parent && (
-													<span className={s.weekThemeButtons}>
-														<button
-															type="button"
-															className={s.noteAction}
-															onClick={() => plan.mutate({ day, meal: t.meal, recipeId: pick.id })}
-														>
-															Use it
-														</button>
-														<button
-															type="button"
-															className={s.noteAction}
-															onClick={() => setAnother({ ...another, [key]: (another[key] ?? 0) + 1 })}
-														>
-															Another
-														</button>
-													</span>
-												)}
-											</>
-										) : (
-											parent && (
-												<button type="button" className={s.noteAction} onClick={() => onIdeas(t.from)}>
-													✨ Ideas for {t.from}
-												</button>
-											)
-										)}
-									</div>
-								);
-							})}
-							{parent && (
-								<button
-									type="button"
-									className={s.weekAdd}
-									aria-label={`Plan a meal, ${dayWord(day, today)}`}
-									onClick={() =>
-										setPlanning({
-											day,
-											// Dinner, unless it's planned already.
-											meal: planned.some((m) => m.meal === 'dinner')
-												? MEALS.find((x) => !planned.some((m) => m.meal === x.meal))?.meal
-												: 'dinner',
-										})
-									}
-								>
-									＋
-								</button>
-							)}
-						</li>
-					);
-				})}
-			</ol>
+									);
+								})}
+								{themes.map((t) => {
+									const key = `${day}|${t.id}`;
+									const pick = suggestion(t, recipes, plans, day, another[key] ?? 0);
+									return (
+										<div key={t.id} className={s.weekTheme}>
+											<button type="button" className={s.weekThemeName} disabled={!parent} onClick={() => setTheme(t)}>
+												<span aria-hidden="true">{t.emoji}</span> {t.name}
+											</button>
+											{pick ? (
+												<>
+													<span className={s.weekSuggest}>{pick.title}?</span>
+													{parent && (
+														<span className={s.weekThemeButtons}>
+															<button
+																type="button"
+																className={s.noteAction}
+																onClick={() => plan.mutate({ day, meal: t.meal, recipeId: pick.id })}
+															>
+																Use it
+															</button>
+															<button
+																type="button"
+																className={s.noteAction}
+																onClick={() => setAnother({ ...another, [key]: (another[key] ?? 0) + 1 })}
+															>
+																Another
+															</button>
+														</span>
+													)}
+												</>
+											) : (
+												parent && (
+													<button type="button" className={s.noteAction} onClick={() => onIdeas(t.from)}>
+														✨ Ideas for {t.from}
+													</button>
+												)
+											)}
+										</div>
+									);
+								})}
+								{parent && (
+									<button
+										type="button"
+										className={s.weekAdd}
+										aria-label={`Plan a meal, ${dayWord(day, today)}`}
+										onClick={() =>
+											setPlanning({
+												day,
+												// Dinner, unless it's planned already.
+												meal: planned.some((m) => m.meal === 'dinner')
+													? MEALS.find((x) => !planned.some((m) => m.meal === x.meal))?.meal
+													: 'dinner',
+											})
+										}
+									>
+										＋
+									</button>
+								)}
+							</li>
+						);
+					})}
+				</ol>
+			)}
 			{planning && (
 				<PlanIt
 					day={planning.day}
