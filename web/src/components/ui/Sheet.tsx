@@ -43,7 +43,12 @@ export default function Sheet({ label, onClose, children, className, role = 'dia
 	const props = { className: `${sheet.sheet} ${className ?? ''}`, role, 'aria-modal': true, 'aria-label': label };
 	return (
 		<>
-			<div className={sheet.scrim} onClick={onClose} role="presentation" />
+			{/* A question (alertdialog) dims whatever's open under it too, not just the page. */}
+			<div
+				className={`${sheet.scrim} ${role === 'alertdialog' ? sheet.scrimOver : ''}`}
+				onClick={onClose}
+				role="presentation"
+			/>
 			{onSubmit ? (
 				<form {...props} onSubmit={onSubmit}>
 					{children}

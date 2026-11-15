@@ -658,16 +658,19 @@
 	font-size: 0.85rem;
 }
 .photoRemove {
+	/* On the photo's top corner, half over its edge. */
 	position: absolute;
-	top: 0.3rem;
-	right: 0.3rem;
-	width: 2rem;
-	height: 2rem;
+	top: -0.6rem;
+	right: -0.6rem;
+	width: 2.2rem;
+	height: 2.2rem;
 	min-height: 0;
 	padding: 0;
 	border-radius: 50%;
-	background: color-mix(in srgb, var(--surface) 85%, transparent);
+	border: 1px solid var(--line);
+	background: var(--surface);
 	color: var(--text);
+	box-shadow: var(--shadow-sm);
 	font-size: 1.2rem;
 	line-height: 1;
 }

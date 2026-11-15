@@ -8,9 +8,12 @@ import { putBack, showNow } from './shared';
 /** The recipe book, newest first. */
 export const useRecipes = () => useQuery({ queryKey: ['recipes'], queryFn: api.recipes });
 
-/** Whether recipes can be read from pictures or links here (Claude on the server). */
+/**
+ * Whether recipes can be read from pictures or links here (Claude on the server). Its own key, not under
+ * ['recipes']: changes to the book are shown straight away on every query under that key, and this isn't a list.
+ */
 export const useRecipeReading = () =>
-	useQuery({ queryKey: ['recipes', 'reading'], queryFn: api.recipeReading, staleTime: Infinity });
+	useQuery({ queryKey: ['recipe-reading'], queryFn: api.recipeReading, staleTime: Infinity });
 
 export function useRecipeActions() {
 	const qc = useQueryClient();
