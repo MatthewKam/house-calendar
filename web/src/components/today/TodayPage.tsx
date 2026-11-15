@@ -1,7 +1,9 @@
 import { type CSSProperties, type ReactNode } from 'react';
 import { addDays, dayKey, fromDayKey, timeLabel, longDate } from '../../lib/dates';
 import { useEventWeather, useRangeEvents, useTravelTimes, useWeather } from '../../lib/queries';
-import { grownUpKindWordsFor, quoteFor } from '../../lib/grownUpWords';
+import { pickOfTheDay, useDailyThemes } from '../../lib/dailyThemes';
+import { ENCOURAGEMENT_THEMES } from '../../lib/grownUpWords';
+import { QUOTE_THEMES } from '../../lib/quotes';
 import { sky } from '../../lib/weather';
 import { useNow } from '../../lib/useNow';
 import { LANDSCAPE_TABLET, useMediaQuery } from '../../lib/useMediaQuery';
@@ -20,6 +22,7 @@ import { Loading, Skeleton } from '../ui/Skeleton';
 import ErrorBoundary from '../ui/ErrorBoundary';
 import { problemText } from '../../lib/api';
 import Problem, { loadProblem } from '../ui/Problem';
+import ThemedHead from '../ui/ThemedHead';
 import s from './Today.module.css';
 
 interface Props {
@@ -69,6 +72,9 @@ export default function TodayPage({
 	const meMember = members.find((m) => m.id === me) ?? null;
 	const weatherQuery = useWeather();
 	const weather = weatherQuery.data;
+	// The day's quote and kind words, from the themes this person keeps on.
+	const quoteThemes = useDailyThemes(QUOTE_THEMES, 'quote', me).on;
+	const kindThemes = useDailyThemes(ENCOURAGEMENT_THEMES, 'encouragement', me).on;
 
 	// The week ahead: today, tomorrow and the five days after.
 	const eventsQuery = useRangeEvents(day, WEEK);
@@ -191,8 +197,8 @@ export default function TodayPage({
 		},
 	];
 	const look = weather && sky(weather.code, weather.isDay);
-	const quote = quoteFor(today);
-	const kind = grownUpKindWordsFor(today);
+	const quote = pickOfTheDay(quoteThemes, today);
+	const kind = pickOfTheDay(kindThemes, today);
 	// A tablet on its side, or anything bigger: the calendar in a column of its own on the right.
 	const twoColumns = useMediaQuery(LANDSCAPE_TABLET);
 
@@ -234,23 +240,29 @@ export default function TodayPage({
 	const needsCard = <NeedsYou me={me} onPage={onPage} />;
 	const quoteCard = (
 		<section className={s.card} aria-label="Quote of the day">
-			<h2 className={s.cardHead}>Quote of the day</h2>
+			<ThemedHead themes={quoteThemes} of={QUOTE_THEMES.length}>
+				<h2 className={s.cardHead}>
+					Quote of the day <span className={s.cardHeadSubtext}>({quote.theme.name})</span>
+				</h2>
+			</ThemedHead>
 			<blockquote className={s.quote}>
-				<p>“{quote.text}”</p>
-				<footer>{quote.by}</footer>
+				<p>“{quote.item.text}”</p>
+				<footer>{quote.item.by}</footer>
 			</blockquote>
 		</section>
 	);
 	const encouragementCard = (
 		<section className={s.card} aria-label="Encouragement">
-			<h2 className={s.cardHead}>
-				Encouragement <span className={s.cardHeadSubtext}>(from parent to parent)</span>
-			</h2>
+			<ThemedHead themes={kindThemes} of={ENCOURAGEMENT_THEMES.length}>
+				<h2 className={s.cardHead}>
+					Encouragement <span className={s.cardHeadSubtext}>({kind.theme.name})</span>
+				</h2>
+			</ThemedHead>
 			<p className={s.kindWords}>
 				<span className={s.kindPicture} aria-hidden="true">
-					{kind.picture}
+					{kind.item.picture}
 				</span>
-				{kind.text}
+				{kind.item.text}
 			</p>
 		</section>
 	);

@@ -9,6 +9,7 @@ import { SignedInAs, SignOut } from './Account';
 import AlertsSetting, { ALERTS_NOTE } from './AlertsSetting';
 import AppearanceSettings from './AppearanceSettings';
 import CalendarList from './CalendarList';
+import DailyCardSettings from './DailyCardSettings';
 import FamilyMembers from './FamilyMembers';
 import GoogleCalendars from './GoogleCalendars';
 import HomeAddress from './HomeAddress';
@@ -28,8 +29,8 @@ interface Props {
 }
 
 /**
- * Settings: who's signed in at the top, then a row for each group (Family, Learning, Appearance, Screen,
- * Notifications, Users), each opening as a view of its own with a back arrow; Sign out at the bottom.
+ * Settings: who's signed in at the top, then a row for each group (Family, Learning, Appearance, Daily cards,
+ * Screen, Notifications, Users), each opening as a view of its own with a back arrow; Sign out at the bottom.
  * Changes save as they're made. Each group's parts are in this folder; parts.tsx has the pieces they're
  * built from (Group, Section, SwitchRow, the ⓘ).
  */
@@ -49,6 +50,7 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 	const auth = useAuthStatus().data;
 	const grownUp = !!auth?.signedIn && auth.role === 'guardian' && auth.kind === 'user';
 	const wallModeOn = !!auth?.signedIn && auth.wallMode;
+	const isWall = wallModeOn || (!!auth?.signedIn && auth.kind === 'wall');
 	// The group showing (null: the list), back at the top each time it changes.
 	const [view, setView] = useState<string | null>(null);
 	// How Learning works, shown with the ⓘ by its title.
@@ -108,6 +110,14 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 				<Group title="Appearance">
 					<AppearanceSettings />
 				</Group>
+
+				{/* The themes the daily quote and encouragement come from: a grown-up's own, and the wall's (also
+				    on a home server, with no accounts). Not on a kid's device. */}
+				{(grownUp || isWall || !auth?.signedIn) && (
+					<Group title="Daily cards">
+						<DailyCardSettings me={grownUp && auth?.signedIn ? auth.memberId : null} />
+					</Group>
+				)}
 
 				{/* Empty on a phone that isn't a grown-up's own, with no kids: no group at all then. */}
 				{(grownUp || wallModeOn || !phone || !!onKidMode) && (

@@ -302,8 +302,11 @@ alert opens Sprig on Lists (or Today). Kids' devices and the wall don't get aler
   picked), and items added on the wall get theirs straight away. Renaming needs the Mac sync (`REMINDERS_MAC=1`); the
   phone Shortcut doesn't rename yet.
 - **Time and weather:** under the month: the clock, the sky, the temperature now, and today's high and low, for the home address in Settings. Weather comes from [Open-Meteo](https://open-meteo.com) (free, no key); the address is found on a map once, through the US Census geocoder.
-- **Daily cards:** in Week view, beside the weather: a **dad joke** (tap for the answer, from icanhazdadjoke.com) and
-  a **quote of the day** (ZenQuotes). They're fetched once a day and kept; grim jokes are skipped (it's a family wall).
+- **Daily cards:** in Week view, beside the weather: a **dad joke** (tap for the answer, from icanhazdadjoke.com,
+  fetched once a day and kept; grim jokes are skipped, it's a family wall) and a **quote of the day**. Grown-ups' Today
+  has a quote and some **encouragement** too. Quotes and encouragement come in themes (Kindness, Humor & Wit, Hard
+  days, ...), all on to begin with (the parenting ones only with kids at home); **Settings → Daily cards** switches
+  them off, each grown-up for their own Today and once for the calendar and wall. The ⓘ on a card lists its themes.
 - **Day:** tap any day to see it in a panel on the right. Close it with ×.
 - **Round + buttons:** Calendar, Tasks, Rewards and Photos each have one at the bottom right (add an event, a task, a
   reward jar, or upload photos). A task or jar started there has no one picked yet; each kid's task card has its own

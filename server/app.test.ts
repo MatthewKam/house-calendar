@@ -224,4 +224,15 @@ describe('settings', () => {
 		});
 		expect((await app.inject({ method: 'PUT', url: '/api/settings/uiScale', payload: {} })).statusCode).toBe(400);
 	});
+
+	it("keeps a person's own, named with their id", async () => {
+		const key = 'quoteThemesOff.0f8fad5b-d9cb-469f-a165-70867728950e';
+		expect(
+			(await app.inject({ method: 'PUT', url: `/api/settings/${key}`, payload: { value: ['joy'] } })).statusCode,
+		).toBe(200);
+		expect(json(await app.inject({ method: 'GET', url: '/api/settings' }))).toMatchObject({ [key]: ['joy'] });
+		expect((await app.inject({ method: 'PUT', url: '/api/settings/bad key', payload: { value: 1 } })).statusCode).toBe(
+			400,
+		);
+	});
 });
