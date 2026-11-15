@@ -70,8 +70,21 @@
 	padding: 0 1.2rem;
 }
 /* Confirmation pop-ups: narrower, with a filled red button for the action. */
+/* A question over another sheet: its backdrop and the box above that sheet. */
+.scrimOver {
+	z-index: calc(var(--layer-sheet) + 2);
+	background: rgb(0 0 0 / 0.45);
+}
 .confirm {
+	z-index: calc(var(--layer-sheet) + 3);
 	width: min(28rem, 92vw);
+	/* Often over another sheet (both white): an edge and a strong shadow keep it apart. */
+	border: 1px solid var(--line);
+	box-shadow: var(--shadow-xl);
+}
+/* Its question in full ink: what's being asked is the point. */
+.confirm .body {
+	color: var(--text);
 }
 .body {
 	color: var(--muted);

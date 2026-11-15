@@ -101,3 +101,26 @@ export interface RecipeDraft {
 	/** From a link: the page's own photo of the dish, to keep (the app shows it, then sends it back on save). */
 	image: { mediaType: 'image/jpeg' | 'image/png' | 'image/webp'; data: string } | null;
 }
+
+/** Asking for dish ideas (POST /api/recipes/ideas): the time there is, a kind, anything else, and what's been shown already. */
+export const IdeasRequest = z.strictObject({
+	time: z.string().max(40).nullable(),
+	kind: z.string().max(40).nullable(),
+	ask: z.string().max(200).nullable(),
+	/** Ideas already shown this time, so More ideas brings new ones. */
+	seen: z.array(z.string().max(120)).max(60),
+});
+
+/** A dish to try (no recipe: the family searches for one they like). */
+export const DishIdea = z.strictObject({
+	name: z.string().min(1).max(120),
+	/** A picture of its kind (🍜, 🌮, 🥘). */
+	emoji: z.string().max(16),
+	/** What it is, in a line. */
+	about: z.string().max(300),
+	/** A rough time, start to table. */
+	minutes: z.int().min(0).max(1440).nullable(),
+	/** Why it's suggested: "You rate Korean beef highly", "Something new: Thai". */
+	why: z.string().max(200),
+});
+export type DishIdea = z.infer<typeof DishIdea>;

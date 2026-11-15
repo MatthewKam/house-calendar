@@ -36,6 +36,7 @@ import type {
 	SprigItem,
 	Proposal,
 	LearnDayChange,
+	DishIdea,
 	Recipe,
 	RecipeDraft,
 	RecipeFields,
@@ -251,6 +252,9 @@ export const api = {
 	/** Recipes (server/recipes.ts): whether reading works here, the book, reading a draft, keeping one. */
 	recipeReading: () => call<{ on: boolean; pictures: boolean }>('GET', '/api/recipes/reading'),
 	recipes: () => call<Recipe[]>('GET', '/api/recipes'),
+	/** Dishes to try (Claude): for the time, a kind, anything else; never one already shown. */
+	dishIdeas: (ask: { time: string | null; kind: string | null; ask: string | null; seen: string[] }) =>
+		call<{ ideas: DishIdea[] }>('POST', '/api/recipes/ideas', ask),
 	readRecipe: (from: { images: RecipeImage[] } | { url: string }) =>
 		call<RecipeDraft>('POST', '/api/recipes/read', from),
 	addRecipe: (recipe: RecipeFields, images: RecipeImage[], cover: number | null) =>
