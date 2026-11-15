@@ -188,6 +188,9 @@ export const api = {
 	emailCode: (email: string) => call<{ sent: true }>('POST', '/api/account/email/start', { email }),
 	verifyEmail: (email: string, code: string) => call<AuthStatus>('POST', '/api/account/email/verify', { email, code }),
 	signOut: () => call<void>('POST', '/api/account/signout'),
+	/** What deleting this account does to each household: deleted for everyone (held), or only left. */
+	deletionPlan: () => call<{ household: string; deleted: boolean }[]>('GET', '/api/account/delete'),
+	deleteAccount: () => call<void>('DELETE', '/api/account/delete'),
 	createHousehold: (b: { name: string; yourName: string }) => call<AuthStatus>('POST', '/api/account/households', b),
 	useHousehold: (id: string) => call<AuthStatus>('POST', `/api/account/households/${id}/use`),
 	previewJoin: (code: string) => call<JoinPreview>('GET', `/api/account/join/${encodeURIComponent(code)}`),

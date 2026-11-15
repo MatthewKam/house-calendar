@@ -12,6 +12,7 @@ import { householdRoutes } from './hosted/household.ts';
 import { unlockRoutes } from './hosted/unlock.ts';
 import { pinRoutes } from './hosted/pin.ts';
 import { googleRoutes } from './hosted/google.ts';
+import { deleteAccountRoutes } from './hosted/deleteAccount.ts';
 
 // The front of the hosted app. It signs people in (Apple, Google, or a code by email), keeps track
 // of households, invites and devices (accounts.ts), and passes every other /api call to the
@@ -26,7 +27,7 @@ import { googleRoutes } from './hosted/google.ts';
 // (each change starts it over).
 //
 // Its routes are in hosted/: signing in, households and joining, the wall and the parent unlock, guardians'
-// PINs, and connecting Google Calendar; hosted/session.ts is who a request's session is, shared by them all.
+// PINs, connecting Google Calendar, and deleting an account; hosted/session.ts is who a request's session is, shared by them all.
 
 function sendJson(res: ServerResponse, code: number, body: unknown) {
 	res.writeHead(code, { 'content-type': 'application/json; charset=utf-8' });
@@ -96,6 +97,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 	unlockRoutes(app, accounts, x);
 	pinRoutes(app, accounts, x, opts);
 	googleRoutes(app, accounts, households, x, opts);
+	deleteAccountRoutes(app, accounts, households, x, opts);
 
 	// For the host's health check: up, and the accounts database answers.
 	app.get('/health', async () => {
@@ -104,7 +106,12 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 	});
 
 	// ---- Built UI (production) ---------------------------------------------
-	if (opts.webDist && existsSync(opts.webDist)) app.register(fastifyStatic, { root: opts.webDist });
+	if (opts.webDist && existsSync(opts.webDist)) {
+		app.register(fastifyStatic, { root: opts.webDist });
+		// The plain pages the App Store links to (web/public/pages/), at short addresses.
+		for (const page of ['privacy', 'support'])
+			app.get(`/${page}`, (_req, reply) => reply.sendFile(`pages/${page}.html`));
+	}
 
 	return {
 		app,

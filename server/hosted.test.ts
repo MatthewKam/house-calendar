@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import inject from 'light-my-request';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { openDb } from './db.ts';
@@ -112,6 +112,28 @@ describe('the web address', () => {
 		}
 		const res = await inject(server.handle, { url: '/health', headers: { host: 'sprig-family.com' } });
 		expect(res.statusCode).toBe(200);
+	});
+
+	it('serves the privacy and support pages at short addresses', async () => {
+		const web = buildServer(
+			accounts,
+			householdRegistry(() => ({}) as never),
+			{
+				dataDir: dir,
+				logger: false,
+				webDist: resolve(import.meta.dirname, '../web/public'),
+			},
+		);
+		await web.app.ready();
+		for (const [url, title] of [
+			['/privacy', 'Privacy · Sprig'],
+			['/support', 'Support · Sprig'],
+		]) {
+			const res = await inject(web.handle, { url });
+			expect(res.statusCode).toBe(200);
+			expect(res.body).toContain(`<title>${title}</title>`);
+		}
+		await web.close();
 	});
 });
 
@@ -697,5 +719,65 @@ describe('a forgotten PIN', () => {
 		expect((await jordan.get('/api/auth/status')).body.hasPin).toBe(false);
 		// With none, Jordan sets a new one without the old.
 		expect((await jordan.put('/api/account/pin', { pin: '8642' })).status).toBe(200);
+	});
+});
+
+describe('deleting an account', () => {
+	async function family() {
+		const alex = await guardian();
+		const jordan = device();
+		await jordan.signIn('jordan@example.com');
+		await jordan.post('/api/account/join', {
+			code: (await alex.post('/api/account/invites', { kind: 'guardian', name: 'Jordan' })).body.code,
+		});
+		const ipad = device();
+		await ipad.post('/api/account/join', {
+			code: (await alex.post('/api/account/invites', { kind: 'kid', name: 'Sam' })).body.code,
+		});
+		return { alex, jordan, ipad };
+	}
+
+	it('leaves a household someone else holds: the family keeps them in its list', async () => {
+		const { alex, jordan, ipad } = await family();
+		expect((await jordan.get('/api/account/delete')).body).toEqual([{ household: 'The Kims', deleted: false }]);
+		expect((await jordan.del('/api/account/delete')).status).toBe(204);
+		expect((await jordan.get('/api/auth/status')).body).toEqual({ signedIn: false });
+
+		const people = (await alex.get('/api/account/household')).body.people as { name: string; account: boolean }[];
+		expect(people.map((p) => [p.name, p.account])).toEqual([
+			['Alex', true],
+			['Jordan', false],
+			['Sam', false],
+		]);
+		expect((await ipad.get('/api/members')).status).toBe(200);
+		// Signing in again is a new account, in no household.
+		await jordan.signIn('jordan@example.com');
+		expect((await jordan.get('/api/auth/status')).body).toMatchObject({ household: null, households: [] });
+	});
+
+	it("deletes the holder's household for everyone, files and all", async () => {
+		const { alex, jordan, ipad } = await family();
+		const id = (await alex.get('/api/auth/status')).body.household.id;
+		expect(existsSync(join(dir, 'households', id, 'calendar.db'))).toBe(true);
+		expect((await alex.get('/api/account/delete')).body).toEqual([{ household: 'The Kims', deleted: true }]);
+
+		expect((await alex.del('/api/account/delete')).status).toBe(204);
+		expect(existsSync(join(dir, 'households', id))).toBe(false);
+		expect((await alex.get('/api/auth/status')).body).toEqual({ signedIn: false });
+		// Jordan is still signed in, with no household; the kid's device is signed out.
+		expect((await jordan.get('/api/auth/status')).body).toMatchObject({
+			signedIn: true,
+			household: null,
+			households: [],
+		});
+		expect((await ipad.get('/api/auth/status')).body).toEqual({ signedIn: false });
+	});
+
+	it('keeps the household when the holder hands it on first', async () => {
+		const { alex, jordan } = await family();
+		const people = (await alex.get('/api/account/household')).body.people as { name: string; membershipId: string }[];
+		await alex.post('/api/account/holder', { membershipId: people.find((p) => p.name === 'Jordan')!.membershipId });
+		expect((await alex.del('/api/account/delete')).status).toBe(204);
+		expect((await jordan.get('/api/members')).status).toBe(200);
 	});
 });

@@ -176,10 +176,12 @@ export default function App() {
 	// The wall wears the household's accent (the account holder's pick); everything else its own.
 	useAccent(signedIn?.role === 'wall' && settings.data ? (settings.data.accent ?? null) : undefined);
 	// Leaving: a kid's own device unlocks for a parent (and comes back when it locks again); anywhere
-	// else a guardian's PIN turns it off, or just the tap when there's no PIN to ask for.
+	// else a guardian's PIN turns it off. Never just a tap, even when every PIN has gone since it started
+	// (cleared, or its guardian's account deleted): then it waits for a guardian to set one. Only a home
+	// server without accounts has no PINs to ask for.
 	function leaveKidMode() {
 		if (!kidModeFor) setOpen({ kind: 'unlock' });
-		else if (signedIn && signedIn.guardianPins > 0) setOpen({ kind: 'kidModeLeave' });
+		else if (signedIn) setOpen({ kind: 'kidModeLeave' });
 		else setKidMode(null);
 	}
 	// With the screen saver on, the screen stays on (it takes over instead of the device sleeping),
@@ -283,7 +285,11 @@ export default function App() {
 				{open?.kind === 'kidModeLeave' && (
 					<GrownUpPin
 						title="Leave kid mode"
-						body="Type a guardian's PIN to go back to the whole app."
+						body={
+							signedIn && signedIn.guardianPins === 0
+								? 'No guardian has a PIN now. Set one on your own phone (Settings → Users), then type it here.'
+								: "Type a guardian's PIN to go back to the whole app."
+						}
 						okLabel="Leave"
 						onClose={close}
 						onOk={() => {

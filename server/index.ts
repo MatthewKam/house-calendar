@@ -142,6 +142,10 @@ const households = householdRegistry((h) => {
 		app,
 		db,
 		google: google ?? undefined,
+		async disconnect(memberId) {
+			for (const kind of [google, icloud])
+				for (const c of kind?.list() ?? []) if (c.memberId === memberId) await kind!.remove(c.id);
+		},
 		async close() {
 			sync?.stop();
 			google?.stop();

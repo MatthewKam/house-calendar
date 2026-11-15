@@ -214,3 +214,8 @@
 		animation: none;
 	}
 }
+/* Settings, Users: deleting your account. */
+.deleteAccount {
+	align-self: flex-start;
+	color: var(--danger);
+}
