@@ -169,6 +169,11 @@ set up), and the Fly dashboard shows memory, CPU and the bill.
 - **Moving over:** once the data is uploaded, use the hosted app, not `npm run dev` on the same data: both would
   sync iCloud and send the wall's edits. The Mac Reminders sync (`REMINDERS_MAC`) doesn't run on the server; the
   iPhone Shortcut does, now from anywhere, at `https://<app>.fly.dev`.
+- **Domain:** sprig-family.com (GoDaddy) points at the app: `fly certs add` for it and `www`, then GoDaddy's DNS
+  gets the A and AAAA records Fly lists. Run `PUBLIC_URL=https://sprig-family.com deploy/set-secrets.sh` so the
+  address stays the domain.
+- **Email:** sign-in codes go out through [Resend](https://resend.com), from `EMAIL_FROM` with `RESEND_API_KEY` (a
+  sending-only key) in `.env`; the domain's records are in GoDaddy's DNS.
 - **Google:** add `https://<app>.fly.dev` under Authorized JavaScript origins and
   `https://<app>.fly.dev/api/account/google/callback` under redirect URIs.
 - **Restoring a backup:** `fly ssh console`, then `litestream restore -config /app/deploy/litestream.yml <path>`

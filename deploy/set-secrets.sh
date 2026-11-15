@@ -1,6 +1,7 @@
 #!/bin/sh
 # Sends the settings from .env that the hosted app needs to Fly as secrets (encrypted there, never in
 # the code). Run from the project folder after `fly launch`: deploy/set-secrets.sh
+# With a domain: PUBLIC_URL=https://sprig-family.com deploy/set-secrets.sh
 set -e
 cd "$(dirname "$0")/.."
 APP=$(sed -n 's/^app = "\(.*\)"/\1/p' fly.toml)
@@ -12,7 +13,8 @@ KEYS="ICLOUD_APPLE_ID ICLOUD_APP_PASSWORD ANTHROPIC_API_KEY GOOGLE_MAPS_API_KEY 
     v=$(sed -n "s/^$k=//p" .env | tail -1)
     [ -n "$v" ] && echo "$k=$v"
   done
-  echo "PUBLIC_URL=https://$APP.fly.dev"
+  # The site's address: its own domain, or Fly's.
+  echo "PUBLIC_URL=${PUBLIC_URL:-https://$APP.fly.dev}"
   # Same key as here, so connected Google accounts keep working after the move.
   [ -f data/secret.key ] && echo "SECRET_KEY=$(cat data/secret.key)"
   # No email service yet: sign-in codes go to `fly logs`.
