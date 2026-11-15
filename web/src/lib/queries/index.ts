@@ -10,3 +10,4 @@ export * from './weather';
 export * from './learn';
 export * from './photos';
 export * from './recipes';
+export * from './meals';

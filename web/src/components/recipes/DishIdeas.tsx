@@ -40,15 +40,18 @@ function weatherWords(w: Weather, unit: 'F' | 'C') {
  */
 export default function DishIdeas({
 	kinds,
+	kind: firstKind = '',
 	onClose,
 	onOpenRecipe,
 }: {
 	kinds: string[];
+	/** A kind to start with (a themed day's). */
+	kind?: string;
 	onClose: () => void;
 	onOpenRecipe: (id: string) => void;
 }) {
 	const [time, setTime] = useState('');
-	const [kind, setKind] = useState('');
+	const [kind, setKind] = useState(firstKind);
 	const [ask, setAsk] = useState('');
 	const [ideas, setIdeas] = useState<DishIdea[]>([]);
 	const [seen, setSeen] = useState<string[]>([]);
@@ -57,7 +60,7 @@ export default function DishIdeas({
 	const [picked, setPicked] = useState<string[]>([]);
 	const [busy, setBusy] = useState<'ideas' | 'surprise' | null>(null);
 	const [problem, setProblem] = useState<{ text: string; retry: () => void } | null>(null);
-	const choices = [...new Set([...kinds, ...MORE_KINDS])].sort();
+	const choices = [...new Set([...kinds, ...MORE_KINDS, ...(firstKind ? [firstKind] : [])])].sort();
 	const weather = useWeather().data;
 	const [unit] = useTempUnit();
 

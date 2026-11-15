@@ -3,6 +3,7 @@ import { addDays, dayKey, rangeLabel, timeLabel } from '../../lib/dates';
 import { eventPaint, eventsOn, isOver } from '../../lib/events';
 import { useNow } from '../../lib/useNow';
 import type { CalEvent, Member } from '../../lib/types';
+import DayMeals from './DayMeals';
 import s from './WeekView.module.css';
 
 interface Props {
@@ -74,6 +75,7 @@ export default function WeekView({ days, today, selected, events, members, onSel
 							<span className={s.dow}>{day.toLocaleDateString([], { weekday: 'short' })}</span>
 							<span className={s.num}>{day.getDate()}</span>
 						</div>
+						<DayMeals day={key} />
 						<ul className={s.list}>
 							{list.map((ev) => {
 								const paint = eventPaint(ev, members);

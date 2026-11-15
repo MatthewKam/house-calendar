@@ -3,6 +3,7 @@ import { fromDayKey } from '../../lib/dates';
 import { eventsOn } from '../../lib/events';
 import { useRangeEvents } from '../../lib/queries';
 import type { CalEvent, Member } from '../../lib/types';
+import DayMeals from './DayMeals';
 import DayTimeline from './DayTimeline';
 import s from './DayPanel.module.css';
 
@@ -48,6 +49,7 @@ export default function DayPanel({ day, shown, today, members, onAdd, onOpen, on
 					</button>
 				</header>
 
+				<DayMeals day={day} />
 				{events.length === 0 && <p className={s.empty}>Nothing planned.</p>}
 				{/* All 24 hours, scrolled to the time now (or the first event). */}
 				<DayTimeline day={date} today={today} events={events} members={members} onOpen={(ev) => onOpen(ev, day)} />

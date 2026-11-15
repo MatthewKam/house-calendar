@@ -885,6 +885,29 @@ const migrations: string[] = [
   );
   CREATE INDEX recipe_notes_recipe ON recipe_notes(recipe_id, written_at);
   `,
+	// Plan ahead (meals.ts): a recipe on a day, and themed days. A planned recipe's prep reminders are
+	// ordinary To do items (so they show in Needs you and alert like any), tied to the plan: moved or
+	// gone with it.
+	`
+  CREATE TABLE meal_plans (
+    id          TEXT PRIMARY KEY,
+    day         TEXT NOT NULL,
+    meal        TEXT NOT NULL,
+    recipe_id   TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX meal_plans_day ON meal_plans(day);
+  CREATE TABLE meal_themes (
+    id          TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
+    emoji       TEXT NOT NULL,
+    weekday     INTEGER NOT NULL,
+    meal        TEXT NOT NULL,
+    pick_from   TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  ALTER TABLE list_items ADD COLUMN meal_plan_id TEXT REFERENCES meal_plans(id) ON DELETE CASCADE;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

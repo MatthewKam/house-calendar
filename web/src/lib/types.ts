@@ -408,3 +408,6 @@ export interface LearnDayChange {
 	moreGames?: true;
 	moreMinutes?: true;
 }
+
+// Plan ahead: written once in shared/meals.ts.
+export type { MealPlan, MealTheme, MealThemeFields, PlanMeal, Plans } from '../../../shared/meals.ts';

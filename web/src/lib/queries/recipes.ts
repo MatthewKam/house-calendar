@@ -124,7 +124,12 @@ export function useRecipeActions() {
 			mutationFn: (id: string) => api.deleteRecipe(id),
 			onMutate: (id) => book((list) => list.filter((r) => r.id !== id)),
 			onError: putBack(qc),
-			onSettled: refresh,
+			// Its plans (and their reminders) went with it.
+			onSettled: () => {
+				void refresh();
+				void qc.invalidateQueries({ queryKey: ['meals'] });
+				void qc.invalidateQueries({ queryKey: ['lists'] });
+			},
 		}),
 	};
 }

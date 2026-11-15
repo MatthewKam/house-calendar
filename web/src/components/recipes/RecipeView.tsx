@@ -1,8 +1,18 @@
 import { useRef, useState } from 'react';
-import { useAddToGroceries, useAuthStatus, useMembers, useRecipeActions, useRecipes } from '../../lib/queries';
-import { coverOf, ingredientLine, mealPicture, minutesText, tagEmoji, toJpeg } from '../../lib/recipes';
+import {
+	useAddToGroceries,
+	useAuthStatus,
+	useMeals,
+	useMembers,
+	useRecipeActions,
+	useRecipes,
+} from '../../lib/queries';
+import { aheadText, coverOf, ingredientLine, mealPicture, minutesText, tagEmoji, toJpeg } from '../../lib/recipes';
+import { dayWord, mealLabel } from '../../lib/meals';
+import { dayKey } from '../../lib/dates';
+import { useNow } from '../../lib/useNow';
 import { flags } from '../../lib/allergies';
-import type { Member, Recipe } from '../../lib/types';
+import type { MealPlan, Member, Recipe } from '../../lib/types';
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
 import { useWakeLock } from '../../lib/useWakeLock';
 import Sheet from '../ui/Sheet';
@@ -10,6 +20,7 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 import CookingBar from './CookingBar';
 import CookNotes from './CookNotes';
 import PhotoViewer from './PhotoViewer';
+import PlanIt from './PlanIt';
 import RecipeForm from './RecipeForm';
 import TagPicker from './TagPicker';
 import sheet from '../ui/Sheet.module.css';
@@ -17,9 +28,6 @@ import s from './Recipes.module.css';
 
 /** How many times the recipe: for a smaller meal, or a crowd. */
 const SCALES = [0.5, 1, 2, 4, 6, 8];
-
-/** "the night before" for 12 hours or more, else "4 hours before". */
-const ahead = (h: number) => (h >= 12 ? 'the night before' : `${h} ${h === 1 ? 'hour' : 'hours'} before`);
 
 /** The recipe as text to send (the phone's own share sheet): name, time, ingredients, steps, notes. */
 function asText(r: Recipe) {
@@ -66,6 +74,10 @@ export default function RecipeView({
 	};
 	// The family's tags: picking them, from the ones used across the book.
 	const [tagging, setTagging] = useState(false);
+	// Plan it: on a day (or a planned one, to move).
+	const [planning, setPlanning] = useState<MealPlan | 'new' | null>(null);
+	const today = dayKey(useNow());
+	const planned = (useMeals().data?.meals ?? []).filter((m) => m.recipeId === r.id && m.day >= today);
 	const knownTags = [...new Set((useRecipes().data ?? []).flatMap((x) => x.tags))];
 	// Ratings: everyone in the family. Each changes their own; a parent a kid's; the account holder anyone's.
 	const people = useMembers().data ?? [];
@@ -359,9 +371,29 @@ export default function RecipeView({
 								<b>Ahead of time</b>
 								{r.prepAhead.map((p) => (
 									<span key={p.what}>
-										{p.what}, {ahead(p.hoursBefore)}
+										{p.what}, {aheadText(p.hoursBefore)}
 									</span>
 								))}
+							</div>
+						)}
+						{(planned.length > 0 || parent) && (
+							<div className={s.tags}>
+								{planned.map((m) => (
+									<button
+										key={m.id}
+										type="button"
+										className={s.planned}
+										disabled={!parent}
+										onClick={() => setPlanning(m)}
+									>
+										📅 {mealLabel(m.meal)}, {dayWord(m.day, today)}
+									</button>
+								))}
+								{parent && (
+									<button type="button" className={s.tagButton} onClick={() => setPlanning('new')}>
+										📅 Plan it
+									</button>
+								)}
 							</div>
 						)}
 						{cooking ? (
@@ -595,6 +627,9 @@ export default function RecipeView({
 						setTagging(false);
 					}}
 				/>
+			)}
+			{planning && (
+				<PlanIt recipe={r} plan={planning === 'new' ? undefined : planning} onClose={() => setPlanning(null)} />
 			)}
 			{removing && (
 				<ConfirmDialog

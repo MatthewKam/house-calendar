@@ -1,4 +1,4 @@
--- A household's database (server/db.ts), at version 56. Written by server/schema.test.ts; don't edit by hand.
+-- A household's database (server/db.ts), at version 57. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
@@ -241,13 +241,33 @@ CREATE TABLE list_items (
     member_id   TEXT REFERENCES members(id) ON DELETE SET NULL,
     created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     done_at     TEXT
-  );
+  , meal_plan_id TEXT REFERENCES meal_plans(id) ON DELETE CASCADE);
 
 CREATE INDEX list_items_list ON list_items(list_id);
 
 CREATE TABLE lists (
     id          TEXT PRIMARY KEY,
     title       TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+
+CREATE TABLE meal_plans (
+    id          TEXT PRIMARY KEY,
+    day         TEXT NOT NULL,
+    meal        TEXT NOT NULL,
+    recipe_id   TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+
+CREATE INDEX meal_plans_day ON meal_plans(day);
+
+CREATE TABLE meal_themes (
+    id          TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
+    emoji       TEXT NOT NULL,
+    weekday     INTEGER NOT NULL,
+    meal        TEXT NOT NULL,
+    pick_from   TEXT NOT NULL,
     created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
 

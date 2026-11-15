@@ -1,0 +1,33 @@
+/* A day's meals on the calendar: quieter than its events (no colour of a person), above them. */
+.meals {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	margin: 0 0 0.35rem;
+	padding: 0;
+	list-style: none;
+}
+.meal,
+.theme {
+	display: block;
+	width: 100%;
+	padding: 0.2rem 0.5rem;
+	border-radius: var(--radius-xs);
+	font-size: 0.85rem;
+	line-height: 1.25;
+	text-align: left;
+	overflow-wrap: anywhere;
+}
+.meal {
+	min-height: 2rem;
+	border: 1px dashed var(--line);
+	background: var(--surface);
+	color: var(--text);
+	font: inherit;
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+.theme {
+	color: var(--muted);
+	font-weight: 600;
+}

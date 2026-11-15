@@ -144,3 +144,6 @@ export const COMMON_TAGS: { name: string; emoji: string }[] = [
 /** A tag's picture: the common one's, else a label. */
 export const tagEmoji = (tag: string) =>
 	COMMON_TAGS.find((t) => t.name.toLowerCase() === tag.toLowerCase())?.emoji ?? '🏷️';
+
+/** When prep ahead starts: "the night before", "4 hours before". */
+export const aheadText = (h: number) => (h >= 12 ? 'the night before' : `${h} ${h === 1 ? 'hour' : 'hours'} before`);

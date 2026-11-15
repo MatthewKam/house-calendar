@@ -22,6 +22,7 @@ import { registerLists } from './lists.ts';
 import { registerPush, type Pusher } from './push.ts';
 import { registerCapture, type Understand } from './capture.ts';
 import { registerRecipes, type ReadRecipeFn } from './recipes.ts';
+import { registerMeals } from './meals.ts';
 import { registerDishIdeas, type IdeasFn, type SurpriseFn } from './dishIdeas.ts';
 import { registerLearn } from './learn.ts';
 import { registerEvents } from './events.ts';
@@ -109,6 +110,7 @@ export function buildApp(
 		resolve: opts.recipeResolve,
 	});
 	registerDishIdeas(app, db, opts.dishIdeas, opts.surprise, opts.random);
+	registerMeals(app, db);
 	registerLearn(app, db, opts.push);
 
 	// ---- Display settings (key/value, for things like UI scale) -------------

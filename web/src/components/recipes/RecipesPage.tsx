@@ -2,6 +2,8 @@ import { useCallback, useState } from 'react';
 import { useImageDrop } from '../../lib/useFlyerDrop';
 import { useMembers, useRecipeReading, useRecipes } from '../../lib/queries';
 import DishIdeas from './DishIdeas';
+import ThisWeek from './ThisWeek';
+import { takeWanted } from '../../lib/meals';
 import { flags } from '../../lib/allergies';
 import { coverOf, mealPicture, minutesText, tagEmoji } from '../../lib/recipes';
 import type { Recipe } from '../../lib/types';
@@ -31,7 +33,8 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 	const recipesQuery = useRecipes();
 	const recipes = recipesQuery.data ?? [];
 	const [adding, setAdding] = useState(false);
-	const [ideasOpen, setIdeasOpen] = useState(false);
+	// Dish ideas open (from a themed day: for its kind).
+	const [ideas, setIdeas] = useState<{ kind: string } | null>(null);
 	const reading = useRecipeReading().data;
 	// Pictures dropped onto the page (a computer, or a tablet beside Photos): straight into reading.
 	const [dropped, setDropped] = useState<File[] | null>(null);
@@ -41,7 +44,8 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 	}, []);
 	const notAPicture = useCallback(() => setDropped(null), []);
 	const dragging = useImageDrop(parent, takeDrop, notAPicture);
-	const [open, setOpen] = useState<string | null>(null);
+	// The recipe open; one asked for from elsewhere (the calendar, Today) opens first.
+	const [open, setOpen] = useState<string | null>(takeWanted);
 	// Filters: one chip from each row at most.
 	// Which of TIMES (its place), or null for any time.
 	const [time, setTime] = useState<number | null>(null);
@@ -66,7 +70,7 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 					<span className={s.headButtons}>
 						{/* Out of ideas: dishes to try (with Claude on the server). */}
 						{reading?.on && (
-							<button type="button" className={s.ideasButton} onClick={() => setIdeasOpen(true)}>
+							<button type="button" className={s.ideasButton} onClick={() => setIdeas({ kind: '' })}>
 								✨ Dish ideas
 							</button>
 						)}
@@ -77,51 +81,60 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 				)}
 			</header>
 
-			{recipes.length > 0 && (
-				// Side by side: the time there is, a kind (a meal, a protein, a type), and the family's tags.
-				<div className={s.filters}>
-					<span className={s.select}>
-						<select
-							aria-label="Time you have"
-							value={time === null ? '' : String(time)}
-							onChange={(e) => setTime(e.target.value ? Number(e.target.value) : null)}
-						>
-							<option value="">Any time</option>
-							{TIMES.map(({ label }, i) => (
-								<option key={label} value={String(i)}>
-									{label}
-								</option>
-							))}
-						</select>
-					</span>
-					{tags.length > 1 && (
-						<span className={`${s.select} ${s.kind}`}>
-							<select aria-label="Kind" value={tag ?? ''} onChange={(e) => setTag(e.target.value || null)}>
-								<option value="">Any kind</option>
-								{tags.map((t) => (
-									<option key={t} value={t}>
-										{t[0].toUpperCase() + t.slice(1)}
-									</option>
-								))}
-							</select>
-						</span>
-					)}
-					{familyTags.length > 0 && (
-						<span className={s.select}>
-							<select aria-label="Tag" value={familyTag ?? ''} onChange={(e) => setFamilyTag(e.target.value || null)}>
-								<option value="">Any tag</option>
-								{familyTags.map((t) => (
-									<option key={t} value={t}>
-										{tagEmoji(t)} {t}
-									</option>
-								))}
-							</select>
-						</span>
-					)}
-				</div>
-			)}
-
 			<div className={s.scroll}>
+				{/* The week ahead, then the book (narrowed by the filters). */}
+				{recipes.length > 0 && (
+					<ThisWeek
+						recipes={recipes}
+						parent={parent}
+						kinds={[...tags, ...familyTags]}
+						onOpen={setOpen}
+						onIdeas={(kind) => setIdeas({ kind })}
+					/>
+				)}
+				{recipes.length > 0 && (
+					// Side by side: the time there is, a kind (a meal, a protein, a type), and the family's tags.
+					<div className={s.filters}>
+						<span className={s.select}>
+							<select
+								aria-label="Time you have"
+								value={time === null ? '' : String(time)}
+								onChange={(e) => setTime(e.target.value ? Number(e.target.value) : null)}
+							>
+								<option value="">Any time</option>
+								{TIMES.map(({ label }, i) => (
+									<option key={label} value={String(i)}>
+										{label}
+									</option>
+								))}
+							</select>
+						</span>
+						{tags.length > 1 && (
+							<span className={`${s.select} ${s.kind}`}>
+								<select aria-label="Kind" value={tag ?? ''} onChange={(e) => setTag(e.target.value || null)}>
+									<option value="">Any kind</option>
+									{tags.map((t) => (
+										<option key={t} value={t}>
+											{t[0].toUpperCase() + t.slice(1)}
+										</option>
+									))}
+								</select>
+							</span>
+						)}
+						{familyTags.length > 0 && (
+							<span className={s.select}>
+								<select aria-label="Tag" value={familyTag ?? ''} onChange={(e) => setFamilyTag(e.target.value || null)}>
+									<option value="">Any tag</option>
+									{familyTags.map((t) => (
+										<option key={t} value={t}>
+											{tagEmoji(t)} {t}
+										</option>
+									))}
+								</select>
+							</span>
+						)}
+					</div>
+				)}
 				{recipesQuery.isError ? (
 					<Problem
 						kind="page"
@@ -164,12 +177,13 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 					onAdded={(r) => setOpen(r.id)}
 				/>
 			)}
-			{ideasOpen && (
+			{ideas && (
 				<DishIdeas
 					kinds={tags}
-					onClose={() => setIdeasOpen(false)}
+					kind={ideas.kind}
+					onClose={() => setIdeas(null)}
 					onOpenRecipe={(id) => {
-						setIdeasOpen(false);
+						setIdeas(null);
 						setOpen(id);
 					}}
 				/>

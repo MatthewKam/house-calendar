@@ -3,7 +3,9 @@ import { useMemo, useState } from 'react';
 import { addDays, dayKey, fromDayKey, timeLabel } from '../../lib/dates';
 import { factFor, type KidFact } from '../../lib/kidFacts';
 import { kindWordsFor } from '../../lib/kindWords';
-import { useLists, useMembers, useRangeEvents, useWeather } from '../../lib/queries';
+import { useLists, useMeals, useMembers, useRangeEvents, useRecipes, useWeather } from '../../lib/queries';
+import { plannedOn } from '../../lib/meals';
+import { coverOf, mealPicture } from '../../lib/recipes';
 import { birthdays, sleepsUntil, specialDaysFor, specialWindow, type SpecialDay } from '../../lib/specialDays';
 import type { CalEvent, Member, SprigItem, Weather } from '../../lib/types';
 import { sky } from '../../lib/weather';
@@ -169,6 +171,7 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 			/>
 			{remember.length > 0 && <Remember items={remember} />}
 			{weather && <WhatToWear weather={weather} />}
+			<TonightsDinner today={today} />
 			{weatherQuery.isPending && (
 				<Loading label="Loading the weather">
 					<Skeleton height="9rem" />
@@ -179,6 +182,29 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 			<Card label="Kind words" item={kindWordsFor(today)} />
 			<Card label="Did you know?" item={factFor(today, little)} />
 		</div>
+	);
+}
+
+/** What's for dinner tonight, when it's planned: its photo, big, and its name (a picture to point at). */
+function TonightsDinner({ today }: { today: string }) {
+	const planned = plannedOn(useMeals().data, today).find((m) => m.meal === 'dinner');
+	const recipe = (useRecipes().data ?? []).find((r) => r.id === planned?.recipeId);
+	if (!recipe) return null;
+	const cover = coverOf(recipe);
+	return (
+		<section className={g.wear} aria-label="Dinner tonight">
+			<span className={g.nextLabel}>Dinner tonight</span>
+			<span className={g.dinner}>
+				{cover ? (
+					<img className={g.dinnerPicture} src={cover.url} alt="" />
+				) : (
+					<span className={`${g.dinnerPicture} ${g.dinnerDrawn}`} aria-hidden="true">
+						{mealPicture(recipe.meal)}
+					</span>
+				)}
+				<span className={g.dinnerName}>{recipe.title}</span>
+			</span>
+		</section>
 	);
 }
 
