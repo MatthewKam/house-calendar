@@ -32,8 +32,8 @@ type View = 'cards' | 'list' | 'rows';
 const VIEW = 'sprig:recipes-view';
 const VIEWS: { view: View; label: string; Icon: () => JSX.Element }[] = [
 	{ view: 'cards', label: 'Cards', Icon: CardsIcon },
-	{ view: 'list', label: 'List', Icon: ListIcon },
 	{ view: 'rows', label: 'Pictures and words', Icon: RowsIcon },
+	{ view: 'list', label: 'List', Icon: ListIcon },
 ];
 
 /**
