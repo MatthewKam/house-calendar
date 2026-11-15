@@ -36,25 +36,6 @@ export default function WeekView({ days, today, selected, events, members, onSel
 		return () => cancelAnimationFrame(frame);
 	}, [first, days.length, today]);
 
-	function MostFrequentSentence(text: string) {
-		const counts: Record<string, number> = {};
-		const words = text.split(' ');
-		for (const w of words) {
-			counts[w] = (counts[w] || 0) + 1;
-		}
-		const max = Math.max(0, ...Object.values(counts));
-		let topWords = Object.keys(counts).filter((w) => counts[w] === max);
-		if (words.length === topWords.length) topWords = [];
-		const result = words.map((w) => {
-			if (topWords.includes(w)) return `'${w}'`;
-			return w;
-		});
-		const sentence = result.join(' ');
-		return sentence;
-	}
-
-	MostFrequentSentence('the bear and the boy got some coffee');
-
 	return (
 		<div className={s.week} ref={list}>
 			{days.map((day) => {
