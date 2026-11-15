@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { dayKey, fromDayKey, startOfWeek } from './lib/dates';
-import { useCalendarView, type View } from './lib/useCalendarView';
+import { useCalendarView } from './lib/useCalendarView';
+import { useToday } from './lib/useToday';
 import type { CalEvent, Task, TaskInput, EventInput, Scope } from './lib/types';
 import {
 	useTasks,
@@ -13,24 +14,16 @@ import {
 	useSaveEvent,
 	useSettings,
 	useSyncStatus,
-	useRangeEvents,
 	useAuthStatus,
 } from './lib/queries';
-import WeekView from './components/calendar/WeekView';
-import MonthView from './components/calendar/MonthView';
-import DayPanel from './components/calendar/DayPanel';
 import EventDialog from './components/calendar/EventDialog';
+import CalendarPage from './components/calendar/CalendarPage';
+import { EVERYONE } from './components/calendar/PeopleFilter';
 import TasksPage from './components/tasks/TasksPage';
 import TodayPage from './components/today/TodayPage';
 import NavBar, { type Page } from './components/nav/NavBar';
 import LeaveAlerts from './components/calendar/LeaveAlerts';
-import NowLine from './components/calendar/NowLine';
-import WeatherCard from './components/calendar/WeatherCard';
-import DailyCards from './components/calendar/DailyCards';
-import PhotoCard from './components/photos/PhotoCard';
-import OutboxNotices from './components/calendar/OutboxNotices';
 import Fab from './components/nav/Fab';
-import { FilterChip } from './components/ui/NameChip';
 import { usePage } from './lib/usePage';
 import ListView, { AddToListSheet } from './components/lists/ListView';
 import QuickAdd, { type QuickAction } from './components/nav/QuickAdd';
@@ -48,15 +41,12 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from './lib/api';
 import { useCheer } from './lib/useCheer';
 import TaskDialog from './components/tasks/TaskDialog';
-import { taskProgress, percent, tasksFor } from './lib/tasks';
+import { taskProgress } from './lib/tasks';
 import Celebration from './components/ui/Celebration';
 import Toast, { type ToastMessage } from './components/ui/Toast';
-import { UNASSIGNED } from './lib/color';
-import { PHONE, PHONE_SIDEWAYS, useMediaQuery, NARROW } from './lib/useMediaQuery';
+import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from './lib/useMediaQuery';
 import { useFlyerDrop } from './lib/useFlyerDrop';
-import { Loading, Skeleton } from './components/ui/Skeleton';
 import ErrorBoundary from './components/ui/ErrorBoundary';
-import Problem, { loadProblem } from './components/ui/Problem';
 import s from './App.module.css';
 
 // Loaded when first opened, so a phone opening the calendar doesn't download them: kid mode (with
@@ -70,24 +60,6 @@ import { isKid } from './lib/people';
 import { useTheme } from './lib/useTheme';
 import { useAccent } from './lib/accent';
 import { useUiScale } from './lib/useUiScale';
-
-/** Today's date key, updated when the clock passes midnight. */
-function useToday() {
-	const [today, setToday] = useState(() => dayKey(new Date()));
-	useEffect(() => {
-		const timer = setInterval(() => setToday(dayKey(new Date())), 60_000);
-		return () => clearInterval(timer);
-	}, []);
-	return today;
-}
-
-const VIEWS: [View, string][] = [
-	['month', 'Month'],
-	['week', 'Week'],
-];
-
-/** Header filter value for events that aren't for anyone in particular. */
-const EVERYONE = 'everyone';
 
 /** The one sheet or dialog open over the app (one at a time: opening another closes it). */
 type Open =
@@ -119,14 +91,12 @@ const PAGE_NAMES: Record<Page, string> = {
 
 export default function App() {
 	const today = useToday();
-	// Header filter: a member id, EVERYONE, or null to show all events.
+	// The calendar's name filters (member ids, or EVERYONE): Tasks follows a single one.
 	const [focus, setFocus] = useState<string[]>([]);
 	const [open, setOpen] = useState<Open | null>(null);
 	const close = () => setOpen(null);
 	const dialog = open?.kind === 'event' ? open : null;
 	const taskDialog = open?.kind === 'task' ? open : null;
-	// The pop-up of names that aren't shown in the header (people without tasks, and Everyone).
-	const [moreOpen, setMoreOpen] = useState(false);
 	// Which page fills the main area. Kept in the address (#tasks), so a refresh stays on it.
 	const [page, setPage] = usePage();
 	const [toast, setToast] = useState<ToastMessage | null>(null);
@@ -140,7 +110,7 @@ export default function App() {
 	const saveEvent = useSaveEvent();
 	const saveTask = useSaveTask();
 	const deleteTask = useDeleteTask();
-	// Today's task progress per person, shown as a fill behind each name in the header.
+	// Today's task progress per person, shown as a fill behind each name in the calendar's filters.
 	const tasks = useTasks().data ?? [];
 	const tasksDone = useTasksDone(startOfWeek(fromDayKey(today))).data ?? [];
 	const progress = taskProgress(
@@ -156,20 +126,11 @@ export default function App() {
 	const restoreEvent = useRestoreEvent();
 
 	// The month or week on screen, the day open in the panel, and moving between them.
-	const { view, changeView, cursor, selected, setSelected, days, step, goToday, newEventDay } = useCalendarView(today);
-	const eventsQuery = useRangeEvents(days[0], days.length);
-	// Phones show Month as the same day-by-day list as Week, just for every day of the month.
-	const phone = useMediaQuery(PHONE);
+	const calendar = useCalendarView(today);
+	const { newEventDay } = calendar;
 	// The phone's bar (and its +): along the bottom, or down the left with the phone on its side.
+	const phone = useMediaQuery(PHONE);
 	const phoneBar = useMediaQuery(PHONE_SIDEWAYS) || phone;
-	// Below 960px the week is one scrolling list of days, and the weather scrolls at its end.
-	const narrow = useMediaQuery(NARROW);
-	const listDays = view === 'month' && phone ? days.filter((d) => d.getMonth() === cursor.getMonth()) : days;
-	// Header filters (any number; none shows everything). A person shows every event they're part of;
-	// Everyone shows events for no one in particular. An event shows if it matches any pick.
-	const shown = (ev: CalEvent) =>
-		focus.length === 0 || focus.some((f) => (f === EVERYONE ? ev.memberIds.length === 0 : ev.memberIds.includes(f)));
-	const events = (eventsQuery.data ?? []).filter(shown);
 	// A removed person can't stay picked.
 	const stale = members.length > 0 ? focus.filter((f) => f !== EVERYONE && !members.some((m) => m.id === f)) : [];
 	if (stale.length) setFocus(focus.filter((f) => !stale.includes(f)));
@@ -224,19 +185,6 @@ export default function App() {
 	// With the screen saver on, the screen stays on (it takes over instead of the device sleeping),
 	// unless the battery is low.
 	useWakeLock(saver.settings.enabled && saver.photos.length > 0);
-	// Under the week: the photo slideshow, beside the weather with the day's joke and quote beneath it.
-	const cards = (
-		<div className={s.cards}>
-			<PhotoCard onPlay={saver.show} />
-			<div className={s.cardsSide}>
-				<WeatherCard />
-				<div className={s.cardsDaily}>
-					<DailyCards today={today} />
-				</div>
-			</div>
-		</div>
-	);
-
 	// Back from connecting Google Calendar (…/?calendar=connected, or what went wrong).
 	useEffect(() => {
 		const url = new URL(window.location.href);
@@ -312,84 +260,6 @@ export default function App() {
 			},
 		);
 	}
-
-	const fmt = (d: Date, withYear = false) =>
-		d.toLocaleDateString([], {
-			month: 'short',
-			day: 'numeric',
-			...(withYear ? { year: 'numeric' } : {}),
-		});
-
-	// Header names: people with tasks show; the rest are behind the filter button.
-	const everyone = { id: EVERYONE, name: 'Everyone', color: UNASSIGNED };
-	const withTasks = members.filter((m) => tasksFor(tasks, m.id).length > 0);
-	// Until anyone has tasks, show everybody.
-	const shownPeople = withTasks.length ? withTasks : [...members, everyone];
-	const morePeople = withTasks.length ? [...members.filter((m) => !withTasks.includes(m)), everyone] : [];
-	// Picks from the pop-up show in the header too, so it's clear the calendar is filtered.
-	const hiddenPicked = morePeople.filter((m) => focus.includes(m.id));
-	shownPeople.push(...hiddenPicked);
-	const whoButton = (m: { id: string; name: string; color: string }) => {
-		// Fills with the person's color as they finish today's tasks.
-		const p = progress.get(m.id);
-		const pct = percent(p);
-		return (
-			<FilterChip
-				key={m.id}
-				name={m.name}
-				color={m.color}
-				pct={pct}
-				on={focus.includes(m.id)}
-				dimmed={focus.length > 0 && !focus.includes(m.id)}
-				title={`${focus.includes(m.id) ? `Stop filtering by ${m.name}` : `Show ${m.name}'s events`}${p ? ` · tasks today: ${p.done} of ${p.due}` : ''}`}
-				// Tap to add or remove a filter; the pop-up stays open so several can be picked.
-				onClick={() => setFocus(focus.includes(m.id) ? focus.filter((f) => f !== m.id) : [...focus, m.id])}
-			/>
-		);
-	};
-
-	// Name filters. People with tasks are always shown; the rest (and Everyone) are behind the filter
-	// button, except whoever is picked right now. Beside the month; on phones, under the time and weather.
-	const people = (
-		<div className={s.people}>
-			{/* Shows every event again. */}
-			{focus.length > 0 && (
-				<button className={s.clearFilter} onClick={() => setFocus([])}>
-					Clear
-				</button>
-			)}
-			{shownPeople.map(whoButton)}
-			{morePeople.length > 0 && (
-				<div className={s.moreWrap}>
-					<button
-						className={`${s.moreButton} ${hiddenPicked.length ? s.moreOn : ''}`}
-						aria-expanded={moreOpen}
-						aria-label="More people"
-						title="More people"
-						onClick={() => setMoreOpen(!moreOpen)}
-					>
-						<svg viewBox="0 0 24 24" aria-hidden="true">
-							<path d="M4 5h16l-6 7.5V19l-4-2v-4.5z" />
-						</svg>
-					</button>
-					{moreOpen && (
-						<>
-							<div className={s.moreScrim} onClick={() => setMoreOpen(false)} role="presentation" />
-							<div className={s.morePanel}>{morePeople.map((m) => whoButton(m))}</div>
-						</>
-					)}
-				</div>
-			)}
-		</div>
-	);
-
-	// The month on screen, or both months when the week crosses into a new one.
-	const monthName = (d: Date) => d.toLocaleDateString([], { month: 'long' });
-	const month =
-		view === 'month' || days[0].getMonth() === days[6].getMonth()
-			? monthName(view === 'month' ? cursor : days[0])
-			: `${monthName(days[0])} – ${monthName(days[6])}`;
-	const unit = view === 'month' ? 'month' : 'week';
 
 	if (kidView) {
 		return (
@@ -536,114 +406,18 @@ export default function App() {
 								<PhotosPage onPreview={saver.show} incoming={pickedPhotos} onTaken={() => setPickedPhotos(null)} />
 							</Suspense>
 						) : (
-							<>
-								<div className={s.monthHeaderTitle}>
-									<div>
-										<h1 className={s.monthTitle}>
-											<strong>{month}</strong>
-										</h1>
-										<NowLine />
-									</div>
-									{people}
-								</div>
-								<header className={s.header}>
-									<div className={s.group}>
-										<div className={s.segmented} role="group" aria-label="View">
-											{VIEWS.map(([v, label]) => (
-												<button
-													key={v}
-													className={view === v ? s.on : ''}
-													aria-pressed={view === v}
-													onClick={() => changeView(v)}
-												>
-													{label}
-												</button>
-											))}
-										</div>
-										{/* ‹ Today › and the dates move to the next line together when there's no room. */}
-										<div className={s.stepper}>
-											<button className={s.pill} onClick={() => step(-1)} aria-label={`Previous ${unit}`}>
-												‹
-											</button>
-											<button className={s.pill} onClick={goToday}>
-												Today
-											</button>
-											<button className={s.pill} onClick={() => step(1)} aria-label={`Next ${unit}`}>
-												›
-											</button>
-											<h1 className={s.title}>
-												{view === 'month' ? cursor.getFullYear() : `${fmt(days[0])} – ${fmt(days[6])}`}
-											</h1>
-										</div>
-									</div>
-								</header>
-
-								{eventsQuery.isError && (
-									<div className={s.banner}>Can't reach the calendar service ({eventsQuery.error.message})</div>
-								)}
-								{sync?.lastError && (
-									<div className={s.banner}>Calendar sync failed: {sync.lastError}. Showing what was last synced.</div>
-								)}
-								<OutboxNotices />
-								{sync?.peopleError && (
-									<div className={s.banner}>Couldn't sort new events by person: {sync.peopleError}</div>
-								)}
-
-								<div className={s.body}>
-									{/* Wait for the saved view so the page doesn't flash Week before Month; until then, and
-								    while the events come in, a grid of grey days. */}
-									{eventsQuery.isError ? (
-										<Problem
-											kind="page"
-											message={loadProblem('the calendar', eventsQuery.error)}
-											onRetry={() => void eventsQuery.refetch()}
-										/>
-									) : settings.isPending || eventsQuery.isPending ? (
-										<Loading
-											label="Loading the calendar"
-											className={phone || view === 'week' ? s.calendarLoading : s.calendarLoadingMonth}
-										>
-											{Array.from({ length: phone || view === 'week' ? 7 : 35 }, (_, i) => (
-												<Skeleton key={i} height={phone || view === 'week' ? '4rem' : '5.5rem'} />
-											))}
-										</Loading>
-									) : view === 'month' && !phone ? (
-										<MonthView
-											days={days}
-											month={cursor.getMonth()}
-											today={today}
-											selected={selected}
-											events={events}
-											members={members}
-											onSelect={setSelected}
-											onOpen={openEvent}
-										/>
-									) : (
-										<WeekView
-											days={listDays}
-											today={today}
-											selected={selected}
-											events={events}
-											members={members}
-											onSelect={setSelected}
-											onOpen={openEvent}
-											footer={view === 'week' && narrow ? cards : undefined}
-										/>
-									)}
-									{selected && (
-										<DayPanel
-											shown={shown}
-											day={selected}
-											today={today}
-											members={members}
-											onAdd={parentLock.parent ? (day) => setOpen({ kind: 'event', day }) : undefined}
-											onOpen={openEvent}
-											onClose={() => setSelected(null)}
-										/>
-									)}
-								</div>
-								{view === 'week' && !narrow && !settings.isPending && cards}
-							</>
+							<CalendarPage
+								today={today}
+								members={members}
+								tasks={tasks}
+								progress={progress}
+								focus={focus}
+								onFocus={setFocus}
+								calendar={calendar}
+								onAdd={parentLock.parent ? (day) => setOpen({ kind: 'event', day }) : undefined}
+								onOpen={openEvent}
+								onPlaySlideshow={saver.show}
+							/>
 						)}
 					</ErrorBoundary>
 				</div>

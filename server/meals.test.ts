@@ -102,7 +102,7 @@ describe('planned meals', () => {
 
 	it('keeps themed days, and planning is a parent’s', async () => {
 		const { app, call } = household([{ id: 'kid', name: 'Kid' }]);
-		let viewer: object | undefined;
+		let viewer: object | undefined = undefined;
 		app.addHook('onRequest', async (req) => {
 			req.raw.viewer = viewer as never;
 		});

@@ -115,7 +115,7 @@
 }
 
 /* A phone on its side: each week at least tall enough for its dates and an event, and the page
-   scrolls (App.module.css) rather than squash them. */
+   scrolls (CalendarPage.module.css) rather than squash them. */
 @media (orientation: landscape) and (max-height: 500px) {
 	.month {
 		min-height: auto;

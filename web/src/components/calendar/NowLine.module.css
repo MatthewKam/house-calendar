@@ -1,0 +1,33 @@
+/* Under the month: the time and the weather, with the high and low muted. */
+.now {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.3rem 0.9rem;
+	font-size: 1.1rem;
+}
+.clock {
+	font-weight: 650;
+}
+.weather {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+.sky {
+	font-size: 1.4rem;
+	line-height: 1;
+}
+.temp {
+	font-weight: 650;
+}
+.highLow {
+	color: var(--muted);
+}
+
+/* A phone on its side: smaller, to share the row with the month's name. */
+@media (orientation: landscape) and (max-height: 500px) {
+	.now {
+		font-size: 1rem;
+	}
+}
