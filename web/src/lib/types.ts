@@ -299,6 +299,7 @@ export type {
 	Recipe,
 	RecipeDraft,
 	RecipeFields,
+	SurprisePick,
 } from '../../../shared/recipes.ts';
 
 /** A photo in the album. */

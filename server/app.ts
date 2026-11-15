@@ -22,7 +22,7 @@ import { registerLists } from './lists.ts';
 import { registerPush, type Pusher } from './push.ts';
 import { registerCapture, type Understand } from './capture.ts';
 import { registerRecipes, type ReadRecipeFn } from './recipes.ts';
-import { registerDishIdeas, type IdeasFn } from './dishIdeas.ts';
+import { registerDishIdeas, type IdeasFn, type SurpriseFn } from './dishIdeas.ts';
 import { registerLearn } from './learn.ts';
 import { registerEvents } from './events.ts';
 
@@ -61,6 +61,10 @@ export function buildApp(
 		readRecipe?: ReadRecipeFn;
 		/** Suggests dishes to try (Claude); without it, Dish ideas is off. */
 		dishIdeas?: IdeasFn;
+		/** Picks one dish for the weather (Claude); without it, Surprise me is off. */
+		surprise?: SurpriseFn;
+		/** Chance, from 0 to 1, for Surprise me's book or new (replaced in tests). */
+		random?: () => number;
 		/** How recipe links are fetched and their sites found (replaced in tests). */
 		recipeFetch?: typeof fetch;
 		recipeResolve?: (host: string) => Promise<{ address: string }[]>;
@@ -104,7 +108,7 @@ export function buildApp(
 		fetchImpl: opts.recipeFetch,
 		resolve: opts.recipeResolve,
 	});
-	registerDishIdeas(app, db, opts.dishIdeas);
+	registerDishIdeas(app, db, opts.dishIdeas, opts.surprise, opts.random);
 	registerLearn(app, db, opts.push);
 
 	// ---- Display settings (key/value, for things like UI scale) -------------

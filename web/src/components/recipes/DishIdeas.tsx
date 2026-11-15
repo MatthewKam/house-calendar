@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { api, problemText } from '../../lib/api';
+import { useWeather } from '../../lib/queries';
 import { minutesText } from '../../lib/recipes';
-import type { DishIdea } from '../../lib/types';
+import type { DishIdea, SurprisePick, Weather } from '../../lib/types';
+import { useTempUnit } from '../../lib/units';
+import { sky } from '../../lib/weather';
 import Sheet from '../ui/Sheet';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem from '../ui/Problem';
@@ -23,23 +26,64 @@ const MORE_KINDS = [
 	'indian',
 ];
 
+/** The weather as this device shows it (home, or here), in words for Surprise me: "Rain, feels like 48°F; …". */
+function weatherWords(w: Weather, unit: 'F' | 'C') {
+	const d = (n: number) => `${Math.round(n)}°${unit}`;
+	return `${sky(w.code, w.isDay).label}, feels like ${d(w.feels)}; high ${d(w.high)}, low ${d(w.low)}; ${w.rainChance}% chance of rain today`;
+}
+
 /**
  * Out of ideas: a few dishes to try, picked for the family (their book and ratings, something new mixed in,
  * nobody's allergies), narrowed by time, kind or anything typed. Each one's Search for it opens a web
- * search; a recipe they like goes in the book with ＋ Recipe. More ideas brings a fresh set.
+ * search; a recipe they like goes in the book with ＋ Recipe. More ideas brings a fresh set. Or Surprise
+ * me: one dish for today's weather, from their book (to open) or new to them (to search for).
  */
-export default function DishIdeas({ kinds, onClose }: { kinds: string[]; onClose: () => void }) {
+export default function DishIdeas({
+	kinds,
+	onClose,
+	onOpenRecipe,
+}: {
+	kinds: string[];
+	onClose: () => void;
+	onOpenRecipe: (id: string) => void;
+}) {
 	const [time, setTime] = useState('');
 	const [kind, setKind] = useState('');
 	const [ask, setAsk] = useState('');
 	const [ideas, setIdeas] = useState<DishIdea[]>([]);
 	const [seen, setSeen] = useState<string[]>([]);
-	const [busy, setBusy] = useState(false);
-	const [problem, setProblem] = useState<string | null>(null);
+	// Surprise me: the pick, and the ones picked already this time (so Again brings another).
+	const [pick, setPick] = useState<SurprisePick | null>(null);
+	const [picked, setPicked] = useState<string[]>([]);
+	const [busy, setBusy] = useState<'ideas' | 'surprise' | null>(null);
+	const [problem, setProblem] = useState<{ text: string; retry: () => void } | null>(null);
 	const choices = [...new Set([...kinds, ...MORE_KINDS])].sort();
+	const weather = useWeather().data;
+	const [unit] = useTempUnit();
+
+	async function surprise() {
+		setBusy('surprise');
+		setProblem(null);
+		try {
+			const { pick: next } = await api.surprise({
+				time: time || null,
+				kind: kind || null,
+				ask: ask.trim() || null,
+				weather: weather ? weatherWords(weather, unit) : null,
+				seen: picked,
+			});
+			setPick(next);
+			setIdeas([]);
+			setPicked([...picked, next.name]);
+		} catch (err) {
+			setProblem({ text: problemText(err, "Couldn't pick one just now."), retry: () => void surprise() });
+		} finally {
+			setBusy(null);
+		}
+	}
 
 	async function think(fresh: boolean) {
-		setBusy(true);
+		setBusy('ideas');
 		setProblem(null);
 		try {
 			const shown = fresh ? [] : seen;
@@ -50,11 +94,12 @@ export default function DishIdeas({ kinds, onClose }: { kinds: string[]; onClose
 				seen: shown,
 			});
 			setIdeas(next);
+			setPick(null);
 			setSeen([...shown, ...next.map((i) => i.name)]);
 		} catch (err) {
-			setProblem(problemText(err, "Couldn't think of any just now."));
+			setProblem({ text: problemText(err, "Couldn't think of any just now."), retry: () => void think(false) });
 		} finally {
-			setBusy(false);
+			setBusy(null);
 		}
 	}
 
@@ -101,18 +146,61 @@ export default function DishIdeas({ kinds, onClose }: { kinds: string[]; onClose
 					maxLength={200}
 					onChange={(e) => setAsk(e.target.value)}
 				/>
-				<button type="submit" className={sheet.primary} disabled={busy}>
+				<button type="submit" className={sheet.primary} disabled={busy !== null}>
 					{ideas.length ? 'New ideas' : 'Show ideas'}
 				</button>
 			</form>
+			{/* Or just one, for the weather. */}
+			<div className={s.surpriseRow}>
+				<button type="button" className={s.surpriseButton} disabled={busy !== null} onClick={() => void surprise()}>
+					🎲 {pick ? 'Again' : 'Surprise me'}
+				</button>
+				<span className={s.hint}>
+					One pick for today
+					{weather ? ` (${sky(weather.code, weather.isDay).icon} ${Math.round(weather.feels)}°)` : ''}, from your book
+					or something new.
+				</span>
+			</div>
 
-			{problem && <Problem message={problem} onRetry={() => void think(false)} />}
-			{busy ? (
+			{problem && <Problem message={problem.text} onRetry={problem.retry} />}
+			{busy === 'surprise' ? (
+				<Loading label="Picking one" className={s.ideas}>
+					<Skeleton height="9rem" />
+				</Loading>
+			) : busy === 'ideas' ? (
 				<Loading label="Thinking of dishes" className={s.ideas}>
 					{Array.from({ length: 6 }, (_, i) => (
 						<Skeleton key={i} height="9rem" />
 					))}
 				</Loading>
+			) : pick ? (
+				<div className={`${s.idea} ${s.surprisePick}`} role="status">
+					<span className={s.ideaEmoji} aria-hidden="true">
+						{pick.emoji}
+					</span>
+					<span className={s.ideaText}>
+						<span className={s.surpriseFrom}>{pick.recipeId ? '📖 From your book' : '✨ Something new'}</span>
+						<b>{pick.name}</b>
+						<span>{pick.about}</span>
+						<span className={s.ideaWhy}>
+							{[pick.minutes ? `~${minutesText(pick.minutes)}` : null, pick.why].filter(Boolean).join(' · ')}
+						</span>
+					</span>
+					{pick.recipeId ? (
+						<button type="button" className={s.ideaSearch} onClick={() => onOpenRecipe(pick.recipeId!)}>
+							Open recipe
+						</button>
+					) : (
+						<a
+							className={s.ideaSearch}
+							href={`https://www.google.com/search?q=${encodeURIComponent(`${pick.name} recipe`)}`}
+							target="_blank"
+							rel="noreferrer"
+						>
+							Search for it ↗
+						</a>
+					)}
+				</div>
 			) : (
 				ideas.length > 0 && (
 					<ul className={s.ideas}>
