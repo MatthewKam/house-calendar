@@ -15,7 +15,9 @@ import {
 	NewCook,
 	NewRecipe,
 	ReadRecipe,
+	RecipeCover,
 	RecipeFields,
+	RecipeRating,
 	RecipeTags,
 	type Recipe,
 	type RecipeDraft,
@@ -374,19 +376,9 @@ export function registerRecipes(
 	);
 
 	// The main photo: one of its own (not a step's), or none (null: a default picture shows).
-	app.put<{ Params: { id: string }; Body: { imageId: string | null } }>(
+	app.put<{ Params: { id: string }; Body: z.infer<typeof RecipeCover> }>(
 		'/api/recipes/:id/cover',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['imageId'],
-					additionalProperties: false,
-					// None first (the checker would turn a null into "" for a string).
-					properties: { imageId: { anyOf: [{ type: 'null' }, { type: 'string' }] } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(RecipeCover) } },
 		async (req, reply) => {
 			if (!get(req.params.id)) return reply.code(404).send({ error: 'Recipe not found' });
 			const { imageId } = req.body;
@@ -485,19 +477,9 @@ export function registerRecipes(
 
 	// Someone's rating, out of 5 (null takes it back). Their own, anyone's; a kid's, a parent's too (kids
 	// are fickle, people make mistakes); anyone's at all, the account holder's.
-	app.put<{ Params: { id: string; memberId: string }; Body: { stars: number | null } }>(
+	app.put<{ Params: { id: string; memberId: string }; Body: z.infer<typeof RecipeRating> }>(
 		'/api/recipes/:id/ratings/:memberId',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['stars'],
-					additionalProperties: false,
-					// None first (the checker would turn a null into 0 for a number).
-					properties: { stars: { anyOf: [{ type: 'null' }, { type: 'integer', minimum: 1, maximum: 5 }] } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(RecipeRating) } },
 		async (req, reply) => {
 			const { id, memberId } = req.params;
 			if (!get(id)) return reply.code(404).send({ error: 'Recipe not found' });

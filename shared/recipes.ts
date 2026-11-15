@@ -110,6 +110,12 @@ export const RecipeTags = z.strictObject({
 	tags: z.array(z.string().min(1).max(30)).max(12),
 });
 
+/** The main photo (PUT /api/recipes/:id/cover): one of the recipe's own, or none (a default picture shows). */
+export const RecipeCover = z.strictObject({ imageId: z.string().nullable() });
+
+/** Someone's rating (PUT /api/recipes/:id/ratings/:memberId): out of 5, or null to take it back. */
+export const RecipeRating = z.strictObject({ stars: z.int().min(1).max(5).nullable() });
+
 /** A note after cooking, new or changed (POST /api/recipes/:id/notes, PUT .../notes/:noteId). */
 export const CookNoteText = z.strictObject({
 	text: z.string().min(1).max(1000),
