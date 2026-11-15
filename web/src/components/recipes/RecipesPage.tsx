@@ -2,10 +2,10 @@ import { useCallback, useState } from 'react';
 import { useImageDrop } from '../../lib/useFlyerDrop';
 import { useMembers, useRecipeReading, useRecipes } from '../../lib/queries';
 import DishIdeas from './DishIdeas';
-import ThisWeek from './ThisWeek';
+import PlanAhead from './PlanAhead';
 import { takeWanted } from '../../lib/meals';
 import { flags } from '../../lib/allergies';
-import { coverOf, mealPicture, minutesText, tagEmoji } from '../../lib/recipes';
+import { coverOf, longestPrep, mealPicture, minutesText, OVERNIGHT, prepBadge, tagEmoji } from '../../lib/recipes';
 import type { Recipe } from '../../lib/types';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
@@ -25,9 +25,14 @@ const TIMES: { label: string; fits: (minutes: number) => boolean }[] = [
 	{ label: 'Over 1 hr', fits: (m) => m > 60 },
 ];
 
+type Prep = '' | 'tonight' | 'ahead';
+const TAB = 'sprig:recipes-tab';
+
 /**
- * The family's recipe book (docs/recipes.md): each recipe as a card with its picture, narrowed by the time
- * there is, the meal, a protein or a type. A grown-up adds one from pictures or a link (+ Recipe).
+ * The family's recipes (docs/recipes.md), in two tabs. Recipes: each saved recipe as a card with its picture
+ * (and a badge for prep the night before or earlier), narrowed by the time there is, the meal, a protein or
+ * a type, prep ahead, or a tag. Plan ahead: the days ahead, to put recipes on. A grown-up adds a recipe from
+ * pictures or a link (+ Recipe).
  */
 export default function RecipesPage({ parent }: { parent: boolean }) {
 	const recipesQuery = useRecipes();
@@ -51,14 +56,33 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 	const [time, setTime] = useState<number | null>(null);
 	const [tag, setTag] = useState<string | null>(null);
 	const [familyTag, setFamilyTag] = useState<string | null>(null);
-	// The kinds worth showing: the meals, proteins and types the book has; and the family's own tags.
+	// Ready tonight (no prep the night before or earlier), or only the ones that need it.
+	const [prep, setPrep] = useState<Prep>('');
+	// The tab, remembered on this device.
+	const [tab, setTab] = useState<'recipes' | 'plan'>(() => {
+		try {
+			return localStorage.getItem(TAB) === 'plan' ? 'plan' : 'recipes';
+		} catch {
+			return 'recipes';
+		}
+	});
+	const pickTab = (next: 'recipes' | 'plan') => {
+		setTab(next);
+		try {
+			localStorage.setItem(TAB, next);
+		} catch {
+			// Not kept (a private window): Recipes next time.
+		}
+	};
+	// The kinds worth showing: the meals, proteins and types the recipes have; and the family's own tags.
 	const tags = [...new Set(recipes.flatMap((r) => [r.meal, ...r.proteins, ...r.types]))].sort();
 	const familyTags = [...new Set(recipes.flatMap((r) => r.tags))].sort((a, b) => a.localeCompare(b));
 	const shown = recipes.filter(
 		(r) =>
 			(time === null || (!!r.totalMinutes && TIMES[time].fits(r.totalMinutes))) &&
 			(tag === null || r.meal === tag || r.proteins.includes(tag) || r.types.includes(tag)) &&
-			(familyTag === null || r.tags.includes(familyTag)),
+			(familyTag === null || r.tags.includes(familyTag)) &&
+			(prep === '' || (prep === 'tonight') === longestPrep(r) < OVERNIGHT),
 	);
 	const opened = recipes.find((r) => r.id === open) ?? null;
 
@@ -81,91 +105,115 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 				)}
 			</header>
 
-			<div className={s.scroll}>
-				{/* The week ahead, then the book (narrowed by the filters). */}
-				{recipes.length > 0 && (
-					<ThisWeek
+			{/* Two tabs: the recipes saved over time, and the days ahead to put them on. */}
+			<div className={`${s.tabs} ${s.pageTabs}`} role="tablist" aria-label="Recipes or plan ahead">
+				<button type="button" role="tab" aria-selected={tab === 'recipes'} onClick={() => pickTab('recipes')}>
+					Recipes
+				</button>
+				<button type="button" role="tab" aria-selected={tab === 'plan'} onClick={() => pickTab('plan')}>
+					Plan ahead
+				</button>
+			</div>
+			{tab === 'plan' ? (
+				<div className={s.scroll}>
+					<PlanAhead
 						recipes={recipes}
 						parent={parent}
 						kinds={[...tags, ...familyTags]}
 						onOpen={setOpen}
 						onIdeas={(kind) => setIdeas({ kind })}
 					/>
-				)}
-				{recipes.length > 0 && (
-					// Side by side: the time there is, a kind (a meal, a protein, a type), and the family's tags.
-					<div className={s.filters}>
-						<span className={s.select}>
-							<select
-								aria-label="Time you have"
-								value={time === null ? '' : String(time)}
-								onChange={(e) => setTime(e.target.value ? Number(e.target.value) : null)}
-							>
-								<option value="">Any time</option>
-								{TIMES.map(({ label }, i) => (
-									<option key={label} value={String(i)}>
-										{label}
-									</option>
-								))}
-							</select>
-						</span>
-						{tags.length > 1 && (
-							<span className={`${s.select} ${s.kind}`}>
-								<select aria-label="Kind" value={tag ?? ''} onChange={(e) => setTag(e.target.value || null)}>
-									<option value="">Any kind</option>
-									{tags.map((t) => (
-										<option key={t} value={t}>
-											{t[0].toUpperCase() + t.slice(1)}
-										</option>
-									))}
-								</select>
-							</span>
-						)}
-						{familyTags.length > 0 && (
+				</div>
+			) : (
+				<div className={s.scroll}>
+					{recipes.length > 0 && (
+						// Side by side: the time there is, a kind (a meal, a protein, a type), and the family's tags.
+						<div className={s.filters}>
 							<span className={s.select}>
-								<select aria-label="Tag" value={familyTag ?? ''} onChange={(e) => setFamilyTag(e.target.value || null)}>
-									<option value="">Any tag</option>
-									{familyTags.map((t) => (
-										<option key={t} value={t}>
-											{tagEmoji(t)} {t}
+								<select
+									aria-label="Time you have"
+									value={time === null ? '' : String(time)}
+									onChange={(e) => setTime(e.target.value ? Number(e.target.value) : null)}
+								>
+									<option value="">Any time</option>
+									{TIMES.map(({ label }, i) => (
+										<option key={label} value={String(i)}>
+											{label}
 										</option>
 									))}
 								</select>
 							</span>
-						)}
-					</div>
-				)}
-				{recipesQuery.isError ? (
-					<Problem
-						kind="page"
-						message={loadProblem('recipes', recipesQuery.error)}
-						onRetry={() => void recipesQuery.refetch()}
-					/>
-				) : recipesQuery.isPending ? (
-					<Loading label="Loading recipes" className={s.grid}>
-						{Array.from({ length: 6 }, (_, i) => (
-							<Skeleton key={i} height="13rem" />
-						))}
-					</Loading>
-				) : recipes.length === 0 ? (
-					<p className={s.none}>
-						No recipes yet.{' '}
-						{parent
-							? 'Tap ＋ Recipe to add one from a screenshot, a photo of a cookbook page, or a link.'
-							: 'A grown-up adds them.'}
-					</p>
-				) : shown.length === 0 ? (
-					<p className={s.none}>Nothing fits those. Pick Any time, Any kind or Any tag to see more.</p>
-				) : (
-					<ul className={s.grid}>
-						{shown.map((r) => (
-							<li key={r.id}>
-								<RecipeCard recipe={r} onOpen={() => setOpen(r.id)} />
-							</li>
-						))}
-					</ul>
-				)}
-			</div>
+							{tags.length > 1 && (
+								<span className={`${s.select} ${s.kind}`}>
+									<select aria-label="Kind" value={tag ?? ''} onChange={(e) => setTag(e.target.value || null)}>
+										<option value="">Any kind</option>
+										{tags.map((t) => (
+											<option key={t} value={t}>
+												{t[0].toUpperCase() + t.slice(1)}
+											</option>
+										))}
+									</select>
+								</span>
+							)}
+							{recipes.some((r) => longestPrep(r) >= OVERNIGHT) && (
+								<span className={s.select}>
+									<select aria-label="Prep ahead" value={prep} onChange={(e) => setPrep(e.target.value as Prep)}>
+										<option value="">Any prep</option>
+										<option value="tonight">🍳 Ready tonight</option>
+										<option value="ahead">🌙 Needs prep ahead</option>
+									</select>
+								</span>
+							)}
+							{familyTags.length > 0 && (
+								<span className={s.select}>
+									<select
+										aria-label="Tag"
+										value={familyTag ?? ''}
+										onChange={(e) => setFamilyTag(e.target.value || null)}
+									>
+										<option value="">Any tag</option>
+										{familyTags.map((t) => (
+											<option key={t} value={t}>
+												{tagEmoji(t)} {t}
+											</option>
+										))}
+									</select>
+								</span>
+							)}
+						</div>
+					)}
+					{recipesQuery.isError ? (
+						<Problem
+							kind="page"
+							message={loadProblem('recipes', recipesQuery.error)}
+							onRetry={() => void recipesQuery.refetch()}
+						/>
+					) : recipesQuery.isPending ? (
+						<Loading label="Loading recipes" className={s.grid}>
+							{Array.from({ length: 6 }, (_, i) => (
+								<Skeleton key={i} height="13rem" />
+							))}
+						</Loading>
+					) : recipes.length === 0 ? (
+						<p className={s.none}>
+							No recipes yet.{' '}
+							{parent
+								? 'Tap ＋ Recipe to add one from a screenshot, a photo of a cookbook page, or a link.'
+								: 'A grown-up adds them.'}
+						</p>
+					) : shown.length === 0 ? (
+						<p className={s.none}>Nothing fits those. Pick Any time, Any kind, Any prep or Any tag to see more.</p>
+					) : (
+						<ul className={s.grid}>
+							{shown.map((r) => (
+								<li key={r.id}>
+									<RecipeCard recipe={r} onOpen={() => setOpen(r.id)} />
+								</li>
+							))}
+						</ul>
+					)}
+				</div>
+			)}
 
 			{adding && (
 				<AddRecipe
@@ -207,6 +255,7 @@ function RecipeCard({ recipe: r, onOpen }: { recipe: Recipe; onOpen: () => void 
 	const people = useMembers().data ?? [];
 	const warn = flags(r.ingredients, people).map((f) => f.person.name);
 	const cover = coverOf(r);
+	const badge = prepBadge(r);
 	return (
 		<button type="button" className={s.card} onClick={onOpen}>
 			{cover ? (
@@ -229,6 +278,7 @@ function RecipeCard({ recipe: r, onOpen }: { recipe: Recipe; onOpen: () => void 
 						))}
 					</span>
 				)}
+				{badge && <span className={s.cardPrep}>{badge}</span>}
 				<span className={s.cardMeta}>
 					{[
 						r.rating !== null ? `★ ${r.rating}` : null,

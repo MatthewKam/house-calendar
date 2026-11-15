@@ -2,7 +2,6 @@ import type { FastifyInstance } from 'fastify';
 import type { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
-import { atLocal } from './push.ts';
 import { schemaOf } from './schemas.ts';
 import {
 	MealThemeFields,
@@ -12,75 +11,21 @@ import {
 	type MealTheme,
 	type PlanMeal,
 	type Plans,
+	type Reminder,
 } from '../shared/meals.ts';
 import type { PrepAhead } from '../shared/recipes.ts';
+import { prepReminders } from '../shared/prepTimes.ts';
+
+export { prepReminders };
 
 // Plan ahead (docs/recipes.md): a recipe on a day's breakfast, lunch or dinner, and themed days (Pancake
 // Friday) that suggest from a kind each week (the app picks the suggestion). Planning a recipe with prep
 // ahead (marinate overnight, thaw) puts a reminder for each on To do, at a sensible time; moving the plan
 // moves them, and taking it off takes them off. Changes are a parent's (auth.ts).
 
-/** When each meal usually is, for working out when prep starts. */
-const MEAL_HOUR: Record<PlanMeal, number> = { breakfast: 8, lunch: 12, dinner: 18 };
-/** Prep that would start in the night (from 9 PM to 7 AM) is moved to 8 PM the evening before. */
-const NIGHT_FROM = 21;
-const NIGHT_TO = 7;
-const EVENING = 20;
 /** Plans further back than this aren't sent (the calendar rarely looks that far). */
 const KEEP_DAYS = 60;
 const MEAL_ORDER = `CASE meal WHEN 'breakfast' THEN 0 WHEN 'lunch' THEN 1 ELSE 2 END`;
-
-/** The day (YYYY-MM-DD) and hour an instant falls on in time zone `tz`. */
-function localAt(t: number, tz: string) {
-	const p = Object.fromEntries(
-		new Intl.DateTimeFormat('en-US', {
-			timeZone: tz,
-			hourCycle: 'h23',
-			year: 'numeric',
-			month: '2-digit',
-			day: '2-digit',
-			hour: '2-digit',
-		})
-			.formatToParts(t)
-			.map((x) => [x.type, x.value]),
-	);
-	return { day: `${p.year}-${p.month}-${p.day}`, hour: Number(p.hour) };
-}
-
-/** The day `n` days after `day` (YYYY-MM-DD). */
-const addDays = (day: string, n: number) => {
-	const [y, m, d] = day.split('-').map(Number);
-	return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
-};
-const daysBetween = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
-
-/**
- * The reminders a planned recipe brings: one for each thing to do ahead, at the meal's usual time less
- * how long ahead it is, out of the night. "Tonight: marinate the chicken for tomorrow's dinner (Korean beef)".
- */
-export function prepReminders(title: string, prep: PrepAhead[], day: string, meal: PlanMeal, tz: string) {
-	const at = atLocal(day, MEAL_HOUR[meal], tz);
-	return prep
-		.filter((p) => p.hoursBefore > 0)
-		.map((p) => {
-			let t = at - p.hoursBefore * 3_600_000;
-			const start = localAt(t, tz);
-			if (start.hour >= NIGHT_FROM) t = atLocal(start.day, EVENING, tz);
-			else if (start.hour < NIGHT_TO) t = atLocal(addDays(start.day, -1), EVENING, tz);
-			const when = localAt(t, tz);
-			const ahead = daysBetween(when.day, day);
-			const whose =
-				ahead === 0
-					? 'today’s'
-					: ahead === 1
-						? 'tomorrow’s'
-						: `${new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' })}’s`;
-			const what = p.what.trim().replace(/[.\s]+$/, '');
-			const tonight = ahead > 0 && when.hour >= 17;
-			const said = tonight ? `Tonight: ${what[0].toLowerCase()}${what.slice(1)}` : what;
-			return { title: `${said} for ${whose} ${meal} (${title})`.slice(0, 300), due: new Date(t).toISOString() };
-		});
-}
 
 const realZone = (tz: string) => {
 	try {
@@ -142,17 +87,19 @@ export function registerMeals(app: FastifyInstance, db: DB) {
 		db.prepare('INSERT INTO lists (id, title) VALUES (?, ?)').run(id, 'To do');
 		return id;
 	};
-	/** The plan's reminders, afresh. */
-	const remind = (planId: string, recipeId: string, day: string, meal: PlanMeal, tz: string) => {
+	/** The plan's reminders, afresh: as the app sent them (times changed, some off), or worked out here. */
+	const remind = (planId: string, recipeId: string, day: string, meal: PlanMeal, tz: string, sent?: Reminder[]) => {
 		db.prepare('DELETE FROM list_items WHERE meal_plan_id = ?').run(planId);
 		const r = recipe(recipeId);
-		const due = r ? prepReminders(r.title, r.prepAhead ?? [], day, meal, tz) : [];
+		const due = sent ?? (r ? prepReminders(r.title, r.prepAhead ?? [], day, meal, tz) : []);
 		if (!due.length) return;
 		const list = toDo();
 		const add = db.prepare('INSERT INTO list_items (id, list_id, title, due, meal_plan_id) VALUES (?, ?, ?, ?, ?)');
 		for (const d of due) add.run(randomUUID(), list, d.title, d.due, planId);
 	};
 	const zoneProblem = { error: 'Unknown time zone' };
+	const timeProblem = { error: 'A reminder needs a time' };
+	const realTimes = (list?: Reminder[]) => !list || list.every((x) => !Number.isNaN(Date.parse(x.due)));
 
 	app.get('/api/meals', async () => plansOf(db));
 
@@ -160,8 +107,9 @@ export function registerMeals(app: FastifyInstance, db: DB) {
 		'/api/meals',
 		{ schema: { body: schemaOf(NewMealPlan) } },
 		async (req, reply) => {
-			const { day, meal, recipeId, timeZone } = req.body;
+			const { day, meal, recipeId, timeZone, reminders } = req.body;
 			if (!realZone(timeZone)) return reply.code(400).send(zoneProblem);
+			if (!realTimes(reminders)) return reply.code(400).send(timeProblem);
 			if (!recipe(recipeId)) return reply.code(404).send({ error: 'Recipe not found' });
 			db.transaction(() => {
 				const id = randomUUID();
@@ -171,7 +119,7 @@ export function registerMeals(app: FastifyInstance, db: DB) {
 					meal,
 					recipeId,
 				);
-				remind(id, recipeId, day, meal, timeZone);
+				remind(id, recipeId, day, meal, timeZone, reminders);
 			})();
 			reply.code(201);
 			return plansOf(db);
@@ -182,13 +130,14 @@ export function registerMeals(app: FastifyInstance, db: DB) {
 		'/api/meals/:id',
 		{ schema: { body: schemaOf(MoveMealPlan) } },
 		async (req, reply) => {
-			const { day, meal, timeZone } = req.body;
+			const { day, meal, timeZone, reminders } = req.body;
 			if (!realZone(timeZone)) return reply.code(400).send(zoneProblem);
+			if (!realTimes(reminders)) return reply.code(400).send(timeProblem);
 			const row = db.prepare('SELECT * FROM meal_plans WHERE id = ?').get(req.params.id) as PlanRow | undefined;
 			if (!row) return reply.code(404).send({ error: 'Not planned' });
 			db.transaction(() => {
 				db.prepare('UPDATE meal_plans SET day = ?, meal = ? WHERE id = ?').run(day, meal, row.id);
-				remind(row.id, row.recipe_id, day, meal, timeZone);
+				remind(row.id, row.recipe_id, day, meal, timeZone, reminders);
 			})();
 			return plansOf(db);
 		},

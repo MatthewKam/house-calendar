@@ -30,6 +30,7 @@
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.5rem;
+	margin: 1rem 0;
 }
 /* A row of chips, scrolling sideways on a phone. */
 .chips {
@@ -336,11 +337,34 @@
 .ahead {
 	display: flex;
 	flex-direction: column;
-	gap: 0.2rem;
-	padding: 0.7rem 0.9rem;
-	border-radius: var(--radius-sm);
+	gap: 0.4rem;
+	padding: 0.8rem 0.9rem;
+	border-radius: var(--radius);
 	background: var(--warn-bg);
 	border: 1px solid var(--warn-line);
+}
+.aheadSteps {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	margin: 0;
+	padding: 0 0 0 1.1rem;
+}
+.aheadButtons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.2rem;
+}
+.aheadButton {
+	min-height: 2.75rem;
+	padding: 0 1rem;
+	border-radius: var(--radius-round);
+	border: 1px solid var(--warn-line);
+	background: var(--surface);
+	color: var(--text);
+	font: inherit;
+	font-weight: 650;
 }
 .sectionHead {
 	display: flex;
@@ -1064,7 +1088,7 @@ button.ideaSearch {
 	text-decoration: underline;
 }
 
-/* Plan ahead: the week ahead above the book, a card a day, wrapping onto rows; it folds away. */
+/* Plan ahead (its tab): this week and next, a card a day wrapping onto rows; then the themed days. */
 .week {
 	display: flex;
 	flex-direction: column;
@@ -1086,40 +1110,6 @@ button.ideaSearch {
 	margin: 0;
 	padding: 0;
 	list-style: none;
-}
-/* This week, as a button: a chevron, down while it's folded away, up once open. */
-.weekFold {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.5rem;
-	min-height: 2.75rem;
-	padding: 0;
-	border: none;
-	background: none;
-	color: var(--text);
-	font: inherit;
-	cursor: pointer;
-}
-.weekFold::after {
-	content: '';
-	width: 0.45rem;
-	height: 0.45rem;
-	margin-top: -0.25rem;
-	border-right: 2px solid currentColor;
-	border-bottom: 2px solid currentColor;
-	transform: rotate(45deg);
-	transition:
-		transform 0.2s ease,
-		margin 0.2s ease;
-}
-.weekFold[aria-expanded='true']::after {
-	margin-top: 0.2rem;
-	transform: rotate(-135deg);
-}
-.weekCount {
-	color: var(--muted);
-	font-size: 0.9rem;
-	font-weight: 600;
 }
 .weekDay {
 	display: flex;
@@ -1318,4 +1308,216 @@ button.ideaSearch {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.5rem;
+}
+
+/* The page's two tabs: Recipes and Plan ahead. */
+.pageTabs {
+	flex: none;
+	max-width: 26rem;
+	margin-bottom: 0.8rem;
+}
+.pageTabs button {
+	min-height: 2.75rem;
+	border: none;
+	font: inherit;
+	font-weight: 700;
+}
+/* On a recipe's card: prep the night before or earlier. */
+.cardPrep {
+	align-self: flex-start;
+	padding: 0.1rem 0.55rem;
+	border-radius: var(--radius-round);
+	background: var(--warn-bg);
+	border: 1px solid var(--warn-line);
+	color: var(--warn);
+	font-size: 0.8rem;
+	font-weight: 700;
+}
+.plan {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.weekDayHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.4rem;
+}
+.weekDayHead .weekAdd,
+.weekDayEmpty .weekAdd {
+	flex: none;
+	width: 2.75rem;
+}
+/* A day with nothing on it: one line. */
+.weekDayEmpty {
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.25rem 0.25rem 0.25rem 0.6rem;
+	background: none;
+	border-style: dashed;
+}
+.weekDayEmpty .weekDayName {
+	color: var(--muted);
+	font-weight: 600;
+}
+.themeList {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.themeRow {
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+	width: 100%;
+	min-height: 3.25rem;
+	padding: 0.4rem 0.7rem;
+	border-radius: var(--radius);
+	border: 1px solid var(--good-line);
+	background: var(--good-bg);
+	color: var(--text);
+	font: inherit;
+	text-align: left;
+}
+.themeRow:disabled {
+	opacity: 1;
+}
+.themeEmoji {
+	font-size: 1.6rem;
+}
+/* Put it on a day: the day's heading with the meal beside it. */
+.planHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+/* No time left for a step before that day's meal. */
+.planLate {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	padding: 0.6rem 0.8rem;
+	border-radius: var(--radius-sm);
+	background: var(--warn-bg);
+	border: 1px solid var(--warn-line);
+}
+.planLate .noteAction {
+	align-self: flex-start;
+	min-height: 2.25rem;
+	padding: 0;
+	color: var(--text);
+	font-weight: 650;
+}
+/* The prep as a timeline: when (tap to change), what, and its switch; the meal last. */
+.timeline {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.timelineRow {
+	display: grid;
+	grid-template-columns: 7.5rem minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 0.6rem;
+	min-height: 3rem;
+	border-bottom: 1px solid var(--line);
+}
+.timelineRow[data-off] .timelineWhen,
+.timelineRow[data-off] .timelineWhat {
+	color: var(--muted);
+	text-decoration: line-through;
+}
+.timelineWhen {
+	position: relative;
+	justify-self: start;
+	padding: 0.35rem 0.6rem;
+	border-radius: var(--radius-sm);
+	background: var(--bg);
+	font-weight: 700;
+	font-size: 0.9rem;
+	white-space: nowrap;
+}
+.timelineWhen input {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	opacity: 0;
+	cursor: pointer;
+}
+.timelineWhat {
+	overflow-wrap: anywhere;
+}
+.timelineSwitch {
+	width: 1.4rem;
+	height: 1.4rem;
+	accent-color: var(--accent);
+}
+.timelineMeal {
+	border-bottom: none;
+}
+.timelineMeal .timelineWhen {
+	background: var(--accent);
+	color: var(--on-accent);
+}
+.timelineMeal .timelineWhat {
+	font-weight: 700;
+}
+/* Just remind me: the steps to be reminded of. */
+.remindSteps {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.remindStep {
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+	min-height: 2.75rem;
+	cursor: pointer;
+}
+.remindStep input {
+	flex: none;
+	width: 1.4rem;
+	height: 1.4rem;
+	accent-color: var(--accent);
+}
+/* Putting a recipe on a day: a new one first (as with ＋ Recipe). */
+.planNew {
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	width: 100%;
+	min-height: 3.5rem;
+	padding: 0.5rem 0.7rem;
+	border: 1px dashed var(--accent);
+	border-radius: var(--radius-sm);
+	background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+	color: var(--text);
+	font: inherit;
+	text-align: left;
+}
+.planNew > span:last-child {
+	display: flex;
+	flex-direction: column;
+}
+.planNewPlus {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 2.75rem;
+	height: 2.75rem;
+	border-radius: var(--radius-xs);
+	background: var(--accent);
+	color: var(--on-accent);
+	font-size: 1.4rem;
 }

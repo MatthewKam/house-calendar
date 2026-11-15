@@ -160,8 +160,8 @@ export default function DishIdeas({
 				</button>
 				<span className={s.hint}>
 					One pick for today
-					{weather ? ` (${sky(weather.code, weather.isDay).icon} ${Math.round(weather.feels)}°)` : ''}, from your book
-					or something new.
+					{weather ? ` (${sky(weather.code, weather.isDay).icon} ${Math.round(weather.feels)}°)` : ''}, from your
+					recipes or something new.
 				</span>
 			</div>
 
@@ -182,7 +182,7 @@ export default function DishIdeas({
 						{pick.emoji}
 					</span>
 					<span className={s.ideaText}>
-						<span className={s.surpriseFrom}>{pick.recipeId ? '📖 From your book' : '✨ Something new'}</span>
+						<span className={s.surpriseFrom}>{pick.recipeId ? '📖 From your recipes' : '✨ Something new'}</span>
 						<b>{pick.name}</b>
 						<span>{pick.about}</span>
 						<span className={s.ideaWhy}>

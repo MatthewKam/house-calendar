@@ -82,6 +82,17 @@ describe('planned meals', () => {
 		expect((await call('DELETE', `/api/meals/${meal.id}`)).body.meals).toEqual([]);
 		expect((await call('GET', '/api/lists')).body[0].items).toEqual([]);
 
+		// Times changed in the app, or reminders off: kept as sent.
+		const custom = [{ title: 'Thaw it', due: '2030-01-09T17:00:00.000Z' }];
+		const chosen = (await call('POST', '/api/meals', { ...plan, reminders: custom })).body.meals[0];
+		expect(chosen.reminders).toMatchObject(custom);
+		const none = (
+			await call('PUT', `/api/meals/${chosen.id}`, { day: THURSDAY, meal: 'dinner', timeZone: TZ, reminders: [] })
+		).body.meals[0];
+		expect(none.reminders).toEqual([]);
+		expect((await call('POST', '/api/meals', { ...plan, reminders: [{ title: 'x', due: 'soon' }] })).status).toBe(400);
+		await call('DELETE', `/api/meals/${chosen.id}`);
+
 		// A recipe deleted takes its plans (and their reminders) with it.
 		await call('POST', '/api/meals', plan);
 		await call('DELETE', `/api/recipes/${recipeId}`);

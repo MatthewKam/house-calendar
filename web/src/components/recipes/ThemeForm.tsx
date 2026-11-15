@@ -114,7 +114,7 @@ export default function ThemeForm({
 					<option key={k} value={k} />
 				))}
 			</datalist>
-			<p className={s.hint}>Each week it suggests one from your book that fits, a different one from last week.</p>
+			<p className={s.hint}>Each week it suggests one of your recipes that fits, a different one from last week.</p>
 			<div className={`${sheet.actions} ${s.planActions}`}>
 				{theme && (
 					<button type="button" className={sheet.danger} onClick={() => setRemoving(true)}>

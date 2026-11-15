@@ -41,6 +41,7 @@ import type {
 	MealThemeFields,
 	PlanMeal,
 	Plans,
+	Reminder,
 	Recipe,
 	RecipeDraft,
 	RecipeFields,
@@ -292,9 +293,9 @@ export const api = {
 		call<Recipe>('PUT', `/api/recipes/${id}/ratings/${memberId}`, { stars }),
 	/** Plan ahead (server/meals.ts): recipes on days (their prep reminders on To do), and themed days. */
 	meals: () => call<Plans>('GET', '/api/meals'),
-	planMeal: (plan: { day: string; meal: PlanMeal; recipeId: string; timeZone: string }) =>
+	planMeal: (plan: { day: string; meal: PlanMeal; recipeId: string; timeZone: string; reminders: Reminder[] }) =>
 		call<Plans>('POST', '/api/meals', plan),
-	moveMeal: (id: string, to: { day: string; meal: PlanMeal; timeZone: string }) =>
+	moveMeal: (id: string, to: { day: string; meal: PlanMeal; timeZone: string; reminders: Reminder[] }) =>
 		call<Plans>('PUT', `/api/meals/${id}`, to),
 	unplanMeal: (id: string) => call<Plans>('DELETE', `/api/meals/${id}`),
 	addMealTheme: (theme: MealThemeFields) => call<Plans>('POST', '/api/meal-themes', theme),

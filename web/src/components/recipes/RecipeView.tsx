@@ -7,7 +7,16 @@ import {
 	useRecipeActions,
 	useRecipes,
 } from '../../lib/queries';
-import { aheadText, coverOf, ingredientLine, mealPicture, minutesText, tagEmoji, toJpeg } from '../../lib/recipes';
+import {
+	aheadText,
+	prepBadge,
+	coverOf,
+	ingredientLine,
+	mealPicture,
+	minutesText,
+	tagEmoji,
+	toJpeg,
+} from '../../lib/recipes';
 import { dayWord, mealLabel } from '../../lib/meals';
 import { dayKey } from '../../lib/dates';
 import { useNow } from '../../lib/useNow';
@@ -21,6 +30,7 @@ import CookingBar from './CookingBar';
 import CookNotes from './CookNotes';
 import PhotoViewer from './PhotoViewer';
 import PlanIt from './PlanIt';
+import RemindMe from './RemindMe';
 import RecipeForm from './RecipeForm';
 import TagPicker from './TagPicker';
 import sheet from '../ui/Sheet.module.css';
@@ -76,6 +86,7 @@ export default function RecipeView({
 	const [tagging, setTagging] = useState(false);
 	// Plan it: on a day (or a planned one, to move).
 	const [planning, setPlanning] = useState<MealPlan | 'new' | null>(null);
+	const [reminding, setReminding] = useState(false);
 	const today = dayKey(useNow());
 	const planned = (useMeals().data?.meals ?? []).filter((m) => m.recipeId === r.id && m.day >= today);
 	const knownTags = [...new Set((useRecipes().data ?? []).flatMap((x) => x.tags))];
@@ -343,6 +354,29 @@ export default function RecipeView({
 								)}
 							</div>
 						)}
+						{/* Prep ahead (marinate overnight, thaw a day ahead): up top, with what to do about it. */}
+						{r.prepAhead.length > 0 && (
+							<div className={s.ahead}>
+								<b>{prepBadge(r) ?? '⏰ Ahead of time'}</b>
+								<ul className={s.aheadSteps}>
+									{r.prepAhead.map((p) => (
+										<li key={p.what}>
+											{p.what}, {aheadText(p.hoursBefore)}
+										</li>
+									))}
+								</ul>
+								{parent && (
+									<span className={s.aheadButtons}>
+										<button type="button" className={s.aheadButton} onClick={() => setPlanning('new')}>
+											📅 Put it on a day
+										</button>
+										<button type="button" className={s.aheadButton} onClick={() => setReminding(true)}>
+											⏰ Just remind me
+										</button>
+									</span>
+								)}
+							</div>
+						)}
 						{(r.tags.length > 0 || parent) && (
 							<div className={s.tags}>
 								{r.tags.map((t) => (
@@ -366,17 +400,7 @@ export default function RecipeView({
 								))}
 							</div>
 						)}
-						{r.prepAhead.length > 0 && (
-							<div className={s.ahead}>
-								<b>Ahead of time</b>
-								{r.prepAhead.map((p) => (
-									<span key={p.what}>
-										{p.what}, {aheadText(p.hoursBefore)}
-									</span>
-								))}
-							</div>
-						)}
-						{(planned.length > 0 || parent) && (
+						{(planned.length > 0 || (parent && r.prepAhead.length === 0)) && (
 							<div className={s.tags}>
 								{planned.map((m) => (
 									<button
@@ -389,9 +413,9 @@ export default function RecipeView({
 										📅 {mealLabel(m.meal)}, {dayWord(m.day, today)}
 									</button>
 								))}
-								{parent && (
+								{parent && r.prepAhead.length === 0 && (
 									<button type="button" className={s.tagButton} onClick={() => setPlanning('new')}>
-										📅 Plan it
+										📅 Put it on a day
 									</button>
 								)}
 							</div>
@@ -631,6 +655,7 @@ export default function RecipeView({
 			{planning && (
 				<PlanIt recipe={r} plan={planning === 'new' ? undefined : planning} onClose={() => setPlanning(null)} />
 			)}
+			{reminding && <RemindMe recipe={r} onClose={() => setReminding(false)} />}
 			{removing && (
 				<ConfirmDialog
 					title="Remove this photo?"

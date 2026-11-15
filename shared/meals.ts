@@ -12,12 +12,20 @@ const Day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 /** The device's time zone, so "8 PM the evening before" is the family's 8 PM. */
 const TimeZone = z.string().min(1).max(64);
 
-/** A recipe on a day (POST /api/meals). */
+/** A prep reminder as the app sends it (its time changed, or left as worked out). */
+const ReminderIn = z.strictObject({
+	title: z.string().min(1).max(300),
+	due: z.string().min(1).max(40),
+});
+export type Reminder = z.infer<typeof ReminderIn>;
+
+/** A recipe on a day (POST /api/meals); `reminders`, the prep reminders to keep (left out: worked out). */
 export const NewMealPlan = z.strictObject({
 	day: Day,
 	meal: PlanMeal,
 	recipeId: z.string().min(1).max(64),
 	timeZone: TimeZone,
+	reminders: z.array(ReminderIn).max(10).optional(),
 });
 
 /** Moved to another day or meal (PUT /api/meals/:id); its reminders move with it. */
@@ -25,6 +33,7 @@ export const MoveMealPlan = z.strictObject({
 	day: Day,
 	meal: PlanMeal,
 	timeZone: TimeZone,
+	reminders: z.array(ReminderIn).max(10).optional(),
 });
 
 /** A themed day, new or changed (POST /api/meal-themes, PUT .../:id): every week, suggesting from a kind or tag. */

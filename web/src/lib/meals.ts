@@ -2,6 +2,7 @@
 
 import { addDays, dayKey, fromDayKey } from './dates';
 import type { MealPlan, MealTheme, PlanMeal, Plans, Recipe } from './types';
+import { mealAt, prepAt, prepTitle } from '../../../shared/prepTimes.ts';
 
 export const MEALS: { meal: PlanMeal; label: string; emoji: string }[] = [
 	{ meal: 'breakfast', label: 'Breakfast', emoji: '🍳' },
@@ -77,3 +78,35 @@ export const takeWanted = () => {
 	wanted = null;
 	return id;
 };
+
+// ---- Prep ahead's times, on this device's clock ---------------------------------------------------
+
+/** This device's time zone: when "8 PM the evening before" is. */
+export const zone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+/** Each step ahead of a recipe planned for a day's meal, and when it starts (worked out as the server does). */
+export const prepSteps = (r: Recipe, day: string, meal: PlanMeal) =>
+	r.prepAhead
+		.filter((p) => p.hoursBefore > 0)
+		.map((p) => ({ what: p.what, at: prepAt(p.hoursBefore, day, meal, zone()) }));
+
+/** The first day (of the next two weeks) whose prep hasn't started yet: the earliest it can be made. */
+export function earliestDay(r: Recipe, meal: PlanMeal, now: number, today: string) {
+	return nextDays(today, 14).find((d) => prepSteps(r, d, meal).every((p) => p.at > now)) ?? null;
+}
+
+/** "Fri 6 PM", "Today 8:30 PM". */
+export function whenText(at: number, today: string) {
+	const d = new Date(at);
+	const day = dayKey(d) === today ? 'Today' : d.toLocaleDateString([], { weekday: 'short' });
+	const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).replace(':00', '');
+	return `${day} ${time}`;
+}
+
+/** An instant as a date-and-time box's value: "2026-11-14T20:00". */
+export const boxValue = (at: number) => {
+	const d = new Date(at);
+	return `${dayKey(d)}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
+
+export { mealAt, prepTitle };

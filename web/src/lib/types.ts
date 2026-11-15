@@ -410,4 +410,4 @@ export interface LearnDayChange {
 }
 
 // Plan ahead: written once in shared/meals.ts.
-export type { MealPlan, MealTheme, MealThemeFields, PlanMeal, Plans } from '../../../shared/meals.ts';
+export type { MealPlan, MealTheme, MealThemeFields, PlanMeal, Plans, Reminder } from '../../../shared/meals.ts';

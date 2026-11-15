@@ -145,5 +145,25 @@ export const COMMON_TAGS: { name: string; emoji: string }[] = [
 export const tagEmoji = (tag: string) =>
 	COMMON_TAGS.find((t) => t.name.toLowerCase() === tag.toLowerCase())?.emoji ?? '🏷️';
 
-/** When prep ahead starts: "the night before", "4 hours before". */
-export const aheadText = (h: number) => (h >= 12 ? 'the night before' : `${h} ${h === 1 ? 'hour' : 'hours'} before`);
+/** When prep ahead starts: "2 days ahead", "a day ahead", "the night before", "4 hours before". */
+export function aheadText(h: number) {
+	if (h >= 36) return `${Math.round(h / 24)} days ahead`;
+	if (h >= 20) return 'a day ahead';
+	if (h >= 8) return 'the night before';
+	return `${h} ${h === 1 ? 'hour' : 'hours'} before`;
+}
+
+/** The longest prep ahead, in hours (0: none). */
+export const longestPrep = (r: Recipe) => Math.max(0, ...r.prepAhead.map((p) => p.hoursBefore));
+
+/** Prep that can't be done on the day: from the night before on. */
+export const OVERNIGHT = 8;
+
+/** A recipe card's badge for prep the day before or earlier: "🌙 Overnight", "⏳ 2 days ahead". */
+export function prepBadge(r: Recipe) {
+	const h = longestPrep(r);
+	if (h < OVERNIGHT) return null;
+	if (h >= 36) return `⏳ ${Math.round(h / 24)} days ahead`;
+	if (h >= 20) return '⏳ A day ahead';
+	return '🌙 Overnight';
+}

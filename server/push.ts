@@ -70,31 +70,8 @@ const realZone = (tz: string) => {
 	}
 };
 
-/** The instant it's `hour`:`minute` on `day` (YYYY-MM-DD) in time zone `tz`. */
-export function atLocal(day: string, hour: number, tz: string, minute = 0) {
-	const [y, m, d] = day.split('-').map(Number);
-	const guess = Date.UTC(y, m - 1, d, hour, minute);
-	// How far the zone's clock is from UTC near then (worked out twice, for a day the clocks change).
-	const offset = (t: number) => {
-		const p = Object.fromEntries(
-			new Intl.DateTimeFormat('en-US', {
-				timeZone: tz,
-				hourCycle: 'h23',
-				year: 'numeric',
-				month: 'numeric',
-				day: 'numeric',
-				hour: 'numeric',
-				minute: 'numeric',
-				second: 'numeric',
-			})
-				.formatToParts(t)
-				.map((x) => [x.type, Number(x.value)]),
-		);
-		return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - t;
-	};
-	const first = guess - offset(guess);
-	return guess - offset(first);
-}
+export { atLocal } from '../shared/prepTimes.ts';
+import { atLocal } from '../shared/prepTimes.ts';
 
 /** A reminder with a day but no time comes due at this hour, on each phone's own clock. */
 const DAY_HOUR = 8;

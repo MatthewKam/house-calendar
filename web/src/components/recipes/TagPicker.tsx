@@ -54,7 +54,7 @@ export default function TagPicker({
 				</button>
 			</header>
 			<p className={s.hint}>
-				Tap to add or take off. They show on the recipe's card, and the book can be narrowed by them.
+				Tap to add or take off. They show on the recipe's card, and your recipes can be narrowed by them.
 			</p>
 			<div className={s.tagChoices}>
 				{unique.map((t) => (
