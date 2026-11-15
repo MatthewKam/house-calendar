@@ -19,7 +19,7 @@ import { loadKey, sealer } from './secrets.ts';
 import { loadVapid, webPusher } from './push.ts';
 import { claudeUnderstand } from './capture.ts';
 import { claudeReadRecipe } from './recipes.ts';
-import { claudeDishIdeas } from './dishIdeas.ts';
+import { claudeDishIdeas, claudeSurprise } from './dishIdeas.ts';
 import { combineStatus } from './sync.ts';
 
 const root = resolve(import.meta.dirname, '..');
@@ -47,6 +47,7 @@ const classify = env.ANTHROPIC_API_KEY ? claudeClassifier() : null;
 const understand = env.ANTHROPIC_API_KEY ? claudeUnderstand() : undefined;
 const readRecipe = env.ANTHROPIC_API_KEY ? claudeReadRecipe() : undefined;
 const dishIdeas = env.ANTHROPIC_API_KEY ? claudeDishIdeas() : undefined;
+const surprise = env.ANTHROPIC_API_KEY ? claudeSurprise() : undefined;
 // Drive times and address suggestions are the service's own key, for every household.
 const travel = env.GOOGLE_MAPS_API_KEY ? googleRoutes(env.GOOGLE_MAPS_API_KEY) : undefined;
 const places = env.GOOGLE_MAPS_API_KEY ? googlePlaces(env.GOOGLE_MAPS_API_KEY) : undefined;
@@ -115,6 +116,7 @@ const households = householdRegistry((h) => {
 		understand,
 		readRecipe,
 		dishIdeas,
+		surprise,
 	});
 	sync?.start(app.log);
 	if (oauth) {

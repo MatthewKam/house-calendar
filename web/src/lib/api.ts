@@ -37,6 +37,7 @@ import type {
 	Proposal,
 	LearnDayChange,
 	DishIdea,
+	SurprisePick,
 	Recipe,
 	RecipeDraft,
 	RecipeFields,
@@ -255,6 +256,14 @@ export const api = {
 	/** Dishes to try (Claude): for the time, a kind, anything else; never one already shown. */
 	dishIdeas: (ask: { time: string | null; kind: string | null; ask: string | null; seen: string[] }) =>
 		call<{ ideas: DishIdea[] }>('POST', '/api/recipes/ideas', ask),
+	/** Surprise me (Claude): one dish for the weather (in words), from the book or new; never one already picked. */
+	surprise: (ask: {
+		time: string | null;
+		kind: string | null;
+		ask: string | null;
+		weather: string | null;
+		seen: string[];
+	}) => call<{ pick: SurprisePick }>('POST', '/api/recipes/surprise', ask),
 	readRecipe: (from: { images: RecipeImage[] } | { url: string }) =>
 		call<RecipeDraft>('POST', '/api/recipes/read', from),
 	addRecipe: (recipe: RecipeFields, images: RecipeImage[], cover: number | null) =>

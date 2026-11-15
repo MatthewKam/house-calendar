@@ -133,8 +133,9 @@ const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean]
 	['POST', '/api/learn/:memberId/today'],
 	// Recipes: reading, adding, changing and deleting are a parent's (looking is anyone's).
 	['POST', '/api/recipes/read'],
-	// Dish ideas ask Claude (a cost): a parent's.
+	// Dish ideas and Surprise me ask Claude (a cost): a parent's.
 	['POST', '/api/recipes/ideas'],
+	['POST', '/api/recipes/surprise'],
 	['POST', '/api/recipes'],
 	['PUT', '/api/recipes/:id'],
 	['DELETE', '/api/recipes/:id'],

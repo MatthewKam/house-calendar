@@ -164,7 +164,16 @@ export default function RecipesPage({ parent }: { parent: boolean }) {
 					onAdded={(r) => setOpen(r.id)}
 				/>
 			)}
-			{ideasOpen && <DishIdeas kinds={tags} onClose={() => setIdeasOpen(false)} />}
+			{ideasOpen && (
+				<DishIdeas
+					kinds={tags}
+					onClose={() => setIdeasOpen(false)}
+					onOpenRecipe={(id) => {
+						setIdeasOpen(false);
+						setOpen(id);
+					}}
+				/>
+			)}
 			{dragging && (
 				<div className={s.drop} aria-live="polite">
 					<span className={s.dropBox}>Drop the recipe's pictures</span>

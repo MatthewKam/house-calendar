@@ -151,3 +151,20 @@ export const DishIdea = z.strictObject({
 	why: z.string().max(200),
 });
 export type DishIdea = z.infer<typeof DishIdea>;
+
+/**
+ * Surprise me (POST /api/recipes/surprise): one dish for today's weather, from their book or new to them.
+ * What's narrowed as for Dish ideas, the weather in words as the app shows it ("Feels like 48°F, rain
+ * likely"), and what's been picked already this time.
+ */
+export const SurpriseRequest = z.strictObject({
+	time: z.string().max(40).nullable(),
+	kind: z.string().max(40).nullable(),
+	ask: z.string().max(200).nullable(),
+	weather: z.string().max(300).nullable(),
+	seen: z.array(z.string().max(120)).max(60),
+});
+
+/** The pick: a dish idea, and the recipe in their book it is (null: something new, to search for). */
+export const SurprisePick = DishIdea.extend({ recipeId: z.string().nullable() });
+export type SurprisePick = z.infer<typeof SurprisePick>;

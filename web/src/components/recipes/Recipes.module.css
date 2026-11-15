@@ -916,6 +916,54 @@
 	text-underline-offset: 0.2em;
 }
 
+/* Open recipe looks like Search for it. */
+button.ideaSearch {
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	font-weight: 700;
+	min-height: 2.75rem;
+}
+/* Surprise me: one pick for the weather, from the book or new. */
+.surpriseRow {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.4rem 0.8rem;
+	padding-top: 0.8rem;
+	margin-top: 0.3rem;
+	border-top: 1px solid var(--line);
+}
+.surpriseButton {
+	min-height: 2.75rem;
+	padding: 0 1.1rem;
+	border-radius: var(--radius-round);
+	border: 1px solid var(--accent);
+	background: var(--surface);
+	color: var(--accent);
+	font: inherit;
+	font-weight: 700;
+}
+.surpriseButton:disabled {
+	opacity: 0.5;
+}
+.surpriseRow .hint {
+	flex: 1 1 12rem;
+}
+.surprisePick {
+	margin-top: 0.8rem;
+	border-color: var(--good-line);
+	background: var(--good-bg);
+}
+.surpriseFrom {
+	color: var(--muted);
+	font-size: 0.8rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
 /* The family's tags (Kid approved, their own): on the card and the recipe, apart from its kinds. */
 .familyTag {
 	display: inline-flex;
