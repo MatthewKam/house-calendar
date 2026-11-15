@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
-import type { ReminderList, SprigList, SprigItem } from '../types';
+import type { ListItemPatch, NewListItem, ReminderList, SprigList } from '../types';
 import { type Patch, showNow, putBack, newId, keys } from './shared';
 
 /** Reminders lists; refreshed often so a phone's sync shows up soon after it runs. */
@@ -88,15 +88,7 @@ export function useListActions() {
 		deleteList: usePlain(api.deleteList),
 		clearDone: usePlain(api.clearDone),
 		add: useMutation({
-			mutationFn: ({
-				listId,
-				...item
-			}: {
-				listId: string;
-				title: string;
-				due?: string | null;
-				memberId?: string | null;
-			}) => api.addListItem(listId, item),
+			mutationFn: ({ listId, ...item }: { listId: string } & NewListItem) => api.addListItem(listId, item),
 			onMutate: ({ listId, title, due = null, memberId = null }) =>
 				showNow(qc, [
 					items((l) =>
@@ -116,11 +108,7 @@ export function useListActions() {
 			onSuccess: replace,
 		}),
 		update: useMutation({
-			mutationFn: ({
-				id,
-				...patch
-			}: { id: string } & Partial<Pick<SprigItem, 'title' | 'done' | 'due' | 'memberId'>>) =>
-				api.updateListItem(id, patch),
+			mutationFn: ({ id, ...patch }: { id: string } & ListItemPatch) => api.updateListItem(id, patch),
 			onMutate: ({ id, ...patch }) =>
 				showNow(qc, [items((l) => ({ ...l, items: l.items.map((i) => (i.id === id ? { ...i, ...patch } : i)) }))]),
 			onError: putBack(qc),

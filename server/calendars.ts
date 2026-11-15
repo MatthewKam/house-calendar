@@ -1,10 +1,16 @@
 import type { FastifyInstance } from 'fastify';
 import type { DB } from './db.ts';
-import type { SyncStatus } from './sync.ts';
-import type { Connection } from './connections.ts';
 import { applyPeople } from './people.ts';
-import { VISIBILITIES, type Visibility } from './privacy.ts';
-import { memberExists } from './schemas.ts';
+import { memberExists, schemaOf } from './schemas.ts';
+import {
+	CalendarPatch,
+	ICloudSignIn,
+	type Connection,
+	type Connections,
+	type SyncedCalendar,
+	type SyncStatus,
+	type Visibility,
+} from '../shared/calendars.ts';
 import { localDay } from './stages.ts';
 
 // Synced calendars (who each is for, whether it shows, who sees its events), how syncing is going,
@@ -30,7 +36,7 @@ export interface CalendarOptions {
 
 interface CalendarRow {
 	id: string;
-	provider: string;
+	provider: 'icloud' | 'google';
 	name: string;
 	color: string | null;
 	member_id: string | null;
@@ -40,7 +46,7 @@ interface CalendarRow {
 }
 
 export function registerCalendars(app: FastifyInstance, db: DB, opts: CalendarOptions) {
-	const calendarSummary = (c: CalendarRow) => ({
+	const calendarSummary = (c: CalendarRow): SyncedCalendar => ({
 		id: c.id,
 		provider: c.provider,
 		name: c.name,
@@ -71,22 +77,9 @@ export function registerCalendars(app: FastifyInstance, db: DB, opts: CalendarOp
 		),
 	);
 
-	app.patch<{ Params: { id: string }; Body: { memberId?: string | null; hidden?: boolean; visibility?: Visibility } }>(
+	app.patch<{ Params: { id: string }; Body: CalendarPatch }>(
 		'/api/calendars/:id',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					additionalProperties: false,
-					minProperties: 1,
-					properties: {
-						memberId: { type: ['string', 'null'] },
-						hidden: { type: 'boolean' },
-						visibility: { enum: VISIBILITIES },
-					},
-				},
-			},
-		},
+		{ schema: { body: schemaOf(CalendarPatch, { minProperties: 1 }) } },
 		async (req, reply) => {
 			const row = db.prepare("SELECT * FROM calendars WHERE id = ? AND provider != 'local'").get(req.params.id) as
 				CalendarRow | undefined;
@@ -113,27 +106,15 @@ export function registerCalendars(app: FastifyInstance, db: DB, opts: CalendarOp
 
 	// ---- Calendar connections: Google (connecting is on the front server: /api/account/google/connect)
 	// and iCloud (connected here).
-	app.get('/api/connections', async () => ({
+	app.get('/api/connections', async (): Promise<Connections> => ({
 		google: opts.google ? opts.google.list() : null,
 		icloud: opts.icloud ? opts.icloud.list() : null,
 	}));
 
 	// The person connecting is whoever is signed in; a wall unlocked by a parent connects it for no one.
-	app.post<{ Body: { appleId: string; password: string } }>(
+	app.post<{ Body: ICloudSignIn }>(
 		'/api/connections/icloud',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['appleId', 'password'],
-					additionalProperties: false,
-					properties: {
-						appleId: { type: 'string', minLength: 3, maxLength: 200 },
-						password: { type: 'string', minLength: 1, maxLength: 100 },
-					},
-				},
-			},
-		},
+		{ schema: { body: schemaOf(ICloudSignIn) } },
 		async (req, reply) => {
 			if (!opts.icloud) return reply.code(404).send({ error: 'Not found' });
 			try {

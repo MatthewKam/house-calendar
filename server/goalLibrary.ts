@@ -1,5 +1,5 @@
 import type { Stage } from './stages.ts';
-import type { Activity } from './activities.ts';
+import type { Activity } from '../shared/moments.ts';
 
 // The starter goals for ages 2–6 (docs/product-plan.md, "Growing up"): skills practised over time
 // and confirmed by a parent once a kid has them. Encouragement, not a checklist of milestones: no

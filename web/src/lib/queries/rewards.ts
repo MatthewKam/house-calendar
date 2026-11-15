@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
-import type { RewardInput, Reward, RewardWin, Bucket, StarPlacing } from '../types';
+import type { NewReward, Reward, RewardWin, Bucket, StarPlacing } from '../types';
 import { type Patch, showNow, putBack, newId, REFRESH_MS, keys } from './shared';
 
 /** Reward jars still going (filling, earned or missed), as of `today`. */
@@ -44,7 +44,7 @@ export function useRewardActions() {
 	];
 	return {
 		save: useEdit(
-			({ id, reward, today }: { id?: string; reward: RewardInput; today: string }) =>
+			({ id, reward, today }: { id?: string; reward: NewReward; today: string }) =>
 				id ? api.updateReward(id, reward, today) : api.addReward(reward, today),
 			({ id, reward }) => [
 				jars((list) =>

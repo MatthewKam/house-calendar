@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
-import { DAY_VALUE, isDay, allMembersExist } from './schemas.ts';
+import { isDay, allMembersExist, schemaOf } from './schemas.ts';
 import { assignManually } from './people.ts';
 import { cancelDelete, diff, outboxStatus, queueCreate, queueEdit, queueSeries, resolveConflict } from './outbox.ts';
 import type { Viewer } from './auth.ts';
@@ -11,11 +11,22 @@ import {
 	eventAccess,
 	kidIds,
 	setVisibility,
-	VISIBILITIES,
 	VISIBILITY_SQL,
 	type Access,
 	type Visibility,
 } from './privacy.ts';
+import {
+	EventInput,
+	EventPatch,
+	EventPeople,
+	EventRange,
+	EventSpecial,
+	EventVisibility,
+	Resolve,
+	type CalEvent,
+	type OutboxStatus,
+} from '../shared/events.ts';
+import type { z } from 'zod';
 
 // Events on the wall: its own, and synced ones (iCloud), whose edits go through the outbox
 // (outbox.ts) and are sent to iCloud shortly after.
@@ -88,7 +99,7 @@ function setSpecial(db: DB, eventId: string, special: boolean) {
 	return true;
 }
 
-const toEvent = (r: EventRow) => ({
+const toEvent = (r: EventRow): CalEvent => ({
 	id: r.id,
 	calendarId: r.calendar_id,
 	memberIds: JSON.parse(r.member_ids) as string[],
@@ -109,7 +120,7 @@ const toEvent = (r: EventRow) => ({
 	checklist: toChecklist(r.checklist),
 });
 /** A Busy event someone else is on: just the time and who, never its title or place. */
-const asBusy = (r: EventRow) => ({
+const asBusy = (r: EventRow): CalEvent => ({
 	...toEvent(r),
 	title: 'Busy',
 	location: null,
@@ -142,20 +153,10 @@ function dedupe(rows: EventRow[], access?: Map<EventRow, Access>): EventRow[] {
 	return rows.filter((r) => keep.has(r));
 }
 
-/** memberIds: who it's for; empty means everyone. */
-interface EventInput {
-	title: string;
-	memberIds: string[];
-	allDay: boolean;
-	start: string;
-	end: string;
-	location?: string | null;
-	/** Notes go to iCloud with a synced event; the flyer's photo stays here (iCloud has nowhere for it). */
-	notes?: string | null;
-	photoId?: string | null;
-}
+/** An event's own fields, as a new one has them once filled in, or an edit merged with what it had. */
+type EventFields = Omit<EventInput, 'calendarId' | 'visibility' | 'special'>;
 
-function validateTimes(ev: EventInput): string | null {
+function validateTimes(ev: Pick<EventFields, 'allDay' | 'start' | 'end'>): string | null {
 	if (ev.allDay) {
 		if (!isDay(ev.start) || !isDay(ev.end)) return 'All-day events use YYYY-MM-DD dates';
 		return ev.end > ev.start ? null : 'End must be after start';
@@ -185,34 +186,11 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
 		for (const m of memberIds) add.run(eventId, m);
 	}
 
-	const eventBody = {
-		type: 'object',
-		additionalProperties: false,
-		properties: {
-			title: { type: 'string', minLength: 1, maxLength: 200 },
-			memberIds: { type: 'array', maxItems: 20, items: { type: 'string' } },
-			location: { type: ['string', 'null'], maxLength: 300 },
-			notes: { type: ['string', 'null'], maxLength: 4000 },
-			photoId: { type: ['string', 'null'] },
-			allDay: { type: 'boolean' },
-			start: { type: 'string' },
-			end: { type: 'string' },
-		},
-	} as const;
-
 	// Returns events overlapping [from, to). from/to are YYYY-MM-DD in the display's local zone,
 	// passed with their UTC instants so timed and all-day events can both be compared.
-	app.get<{ Querystring: { from: string; to: string; fromDay: string; toDay: string } }>(
+	app.get<{ Querystring: z.infer<typeof EventRange> }>(
 		'/api/events',
-		{
-			schema: {
-				querystring: {
-					type: 'object',
-					required: ['from', 'to', 'fromDay', 'toDay'],
-					properties: { from: { type: 'string' }, to: { type: 'string' }, fromDay: DAY_VALUE, toDay: DAY_VALUE },
-				},
-			},
-		},
+		{ schema: { querystring: schemaOf(EventRange) } },
 		async (req) => {
 			const { from, to, fromDay, toDay } = req.query;
 			const rows = db
@@ -239,74 +217,57 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
 
 	// calendarId: an iCloud calendar to add it to (sent there shortly); left out, it stays on the wall.
 	// visibility: who sees it, when not its calendar's default. special: a countdown on kid mode's Today.
-	app.post<{ Body: EventInput & { calendarId?: string; visibility?: Visibility; special?: boolean } }>(
-		'/api/events',
-		{
-			schema: {
-				body: {
-					...eventBody,
-					properties: {
-						...eventBody.properties,
-						calendarId: { type: 'string' },
-						visibility: { enum: VISIBILITIES },
-						special: { type: 'boolean' },
-					},
-					required: ['title', 'allDay', 'start', 'end'],
-				},
-			},
-		},
-		async (req, reply) => {
-			const ev = { ...req.body, memberIds: req.body.memberIds ?? [] };
-			const err = validateTimes(ev);
-			if (err) return reply.code(400).send({ error: err });
-			if (!allMembersExist(db, ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
-			if (!knownPhoto(ev.photoId)) return reply.code(400).send({ error: 'Unknown photo' });
-			if (req.body.calendarId && req.body.calendarId !== 'local') {
-				const cal = db
-					.prepare(`SELECT id, remote_id, writable FROM calendars WHERE id = ? AND provider != 'local'`)
-					.get(req.body.calendarId) as { id: string; remote_id: string; writable: number } | undefined;
-				if (!cal) return reply.code(400).send({ error: 'Unknown calendar' });
-				if (!syncedEdits || !cal.writable)
-					return reply.code(409).send({ error: "That calendar can't be added to from here" });
-				const id = queueCreate(db, cal, {
-					title: ev.title.trim(),
-					allDay: ev.allDay,
-					start: ev.start,
-					end: ev.end,
-					location: ev.location?.trim() || null,
-					notes: ev.notes?.trim() || null,
-				});
-				// Who it's for, who sees it, special and the flyer are kept on this display, like any iCloud event's.
-				if (ev.memberIds.length) assignManually(db, id, ev.memberIds);
-				if (req.body.visibility) setVisibility(db, id, req.body.visibility);
-				if (req.body.special) setSpecial(db, id, true);
-				if (ev.photoId) setFlyer(db, id, ev.photoId);
-				syncedEdits.soon();
-				reply.code(201);
-				return getEvent(id);
-			}
-			const id = randomUUID();
-			db.transaction(() => {
-				db.prepare(
-					`INSERT INTO events (id, calendar_id, title, all_day, start, end, location, notes, photo_id) VALUES (?, 'local', ?, ?, ?, ?, ?, ?, ?)`,
-				).run(
-					id,
-					ev.title.trim(),
-					ev.allDay ? 1 : 0,
-					ev.start,
-					ev.end,
-					ev.location?.trim() || null,
-					ev.notes?.trim() || null,
-					ev.photoId ?? null,
-				);
-				setMembers(id, ev.memberIds);
-				if (req.body.visibility) setVisibility(db, id, req.body.visibility);
-				if (req.body.special) setSpecial(db, id, true);
-			})();
+	app.post<{ Body: EventInput }>('/api/events', { schema: { body: schemaOf(EventInput) } }, async (req, reply) => {
+		const ev = req.body;
+		const err = validateTimes(ev);
+		if (err) return reply.code(400).send({ error: err });
+		if (!allMembersExist(db, ev.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
+		if (!knownPhoto(ev.photoId)) return reply.code(400).send({ error: 'Unknown photo' });
+		if (req.body.calendarId && req.body.calendarId !== 'local') {
+			const cal = db
+				.prepare(`SELECT id, remote_id, writable FROM calendars WHERE id = ? AND provider != 'local'`)
+				.get(req.body.calendarId) as { id: string; remote_id: string; writable: number } | undefined;
+			if (!cal) return reply.code(400).send({ error: 'Unknown calendar' });
+			if (!syncedEdits || !cal.writable)
+				return reply.code(409).send({ error: "That calendar can't be added to from here" });
+			const id = queueCreate(db, cal, {
+				title: ev.title.trim(),
+				allDay: ev.allDay,
+				start: ev.start,
+				end: ev.end,
+				location: ev.location?.trim() || null,
+				notes: ev.notes?.trim() || null,
+			});
+			// Who it's for, who sees it, special and the flyer are kept on this display, like any iCloud event's.
+			if (ev.memberIds.length) assignManually(db, id, ev.memberIds);
+			if (req.body.visibility) setVisibility(db, id, req.body.visibility);
+			if (req.body.special) setSpecial(db, id, true);
+			if (ev.photoId) setFlyer(db, id, ev.photoId);
+			syncedEdits.soon();
 			reply.code(201);
 			return getEvent(id);
-		},
-	);
+		}
+		const id = randomUUID();
+		db.transaction(() => {
+			db.prepare(
+				`INSERT INTO events (id, calendar_id, title, all_day, start, end, location, notes, photo_id) VALUES (?, 'local', ?, ?, ?, ?, ?, ?, ?)`,
+			).run(
+				id,
+				ev.title.trim(),
+				ev.allDay ? 1 : 0,
+				ev.start,
+				ev.end,
+				ev.location?.trim() || null,
+				ev.notes?.trim() || null,
+				ev.photoId ?? null,
+			);
+			setMembers(id, ev.memberIds);
+			if (req.body.visibility) setVisibility(db, id, req.body.visibility);
+			if (req.body.special) setSpecial(db, id, true);
+		})();
+		reply.code(201);
+		return getEvent(id);
+	});
 
 	/**
 	 * Other copies of the same event (same title, same times) in other calendars: the wall shows one,
@@ -339,23 +300,15 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
 	const rowDetails = (r: EventRow) => details({ ...r, allDay: r.all_day === 1 });
 
 	// scope "all": a repeating iCloud event's every day (otherwise just the day that was opened).
-	app.patch<{ Params: { id: string }; Body: Partial<EventInput> & { scope?: 'one' | 'all' } }>(
+	app.patch<{ Params: { id: string }; Body: EventPatch }>(
 		'/api/events/:id',
-		{
-			schema: {
-				body: {
-					...eventBody,
-					properties: { ...eventBody.properties, scope: { type: 'string', enum: ['one', 'all'] } },
-					minProperties: 1,
-				},
-			},
-		},
+		{ schema: { body: schemaOf(EventPatch, { minProperties: 1 }) } },
 		async (req, reply) => {
 			const row = db.prepare(`${EVENT_SELECT} WHERE e.id = ?`).get(req.params.id) as EventRow | undefined;
 			if (!row) return reply.code(404).send({ error: 'Event not found' });
 			if (isGoogle(row.calendar_id)) return reply.code(409).send({ error: GOOGLE_READ_ONLY });
 			if (row.calendar_id !== 'local' && !syncedEdits) return reply.code(409).send({ error: READ_ONLY });
-			const ev: EventInput = {
+			const ev: EventFields = {
 				title: req.body.title ?? row.title,
 				memberIds: req.body.memberIds ?? JSON.parse(row.member_ids),
 				allDay: req.body.allDay ?? row.all_day === 1,
@@ -486,20 +439,11 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
 			return ev ? eventAccess(db, viewer, ev.id) === 'full' : viewer.role === 'guardian';
 		});
 	}
-	app.get('/api/outbox', async (req) => visibleOutbox(req.raw.viewer));
+	app.get('/api/outbox', async (req): Promise<OutboxStatus> => visibleOutbox(req.raw.viewer));
 
-	app.post<{ Params: { id: string }; Body: { keep: 'mine' | 'theirs' } }>(
+	app.post<{ Params: { id: string }; Body: z.infer<typeof Resolve> }>(
 		'/api/outbox/:id/resolve',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['keep'],
-					additionalProperties: false,
-					properties: { keep: { type: 'string', enum: ['mine', 'theirs'] } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(Resolve) } },
 		async (req, reply) => {
 			if (!resolveConflict(db, Number(req.params.id), req.body.keep))
 				return reply.code(404).send({ error: 'Already settled' });
@@ -509,18 +453,9 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
 	);
 
 	// Who sees an event (every repeat of it): everyone, busy or private; null goes back to its calendar's default.
-	app.put<{ Params: { id: string }; Body: { visibility: Visibility | null } }>(
+	app.put<{ Params: { id: string }; Body: z.infer<typeof EventVisibility> }>(
 		'/api/events/:id/visibility',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['visibility'],
-					additionalProperties: false,
-					properties: { visibility: { enum: [...VISIBILITIES, null] } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(EventVisibility) } },
 		async (req, reply) => {
 			if (!setVisibility(db, req.params.id, req.body.visibility))
 				return reply.code(404).send({ error: 'Event not found' });
@@ -529,18 +464,9 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
 	);
 
 	// Marked special or not (every repeat of it): a countdown on kid mode's Today.
-	app.put<{ Params: { id: string }; Body: { special: boolean } }>(
+	app.put<{ Params: { id: string }; Body: z.infer<typeof EventSpecial> }>(
 		'/api/events/:id/special',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['special'],
-					additionalProperties: false,
-					properties: { special: { type: 'boolean' } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(EventSpecial) } },
 		async (req, reply) => {
 			if (!setSpecial(db, req.params.id, req.body.special)) return reply.code(404).send({ error: 'Event not found' });
 			return getEvent(req.params.id);
@@ -551,18 +477,9 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
 	registerChecklists(app, db, getEvent);
 
 	// Who a synced event is for (none = everyone). Applies to every repeat of it and survives future syncs.
-	app.put<{ Params: { id: string }; Body: { memberIds: string[] } }>(
+	app.put<{ Params: { id: string }; Body: z.infer<typeof EventPeople> }>(
 		'/api/events/:id/people',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['memberIds'],
-					additionalProperties: false,
-					properties: { memberIds: eventBody.properties.memberIds },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(EventPeople) } },
 		async (req, reply) => {
 			if (!allMembersExist(db, req.body.memberIds)) return reply.code(400).send({ error: 'Unknown member' });
 			if (!assignManually(db, req.params.id, req.body.memberIds)) {

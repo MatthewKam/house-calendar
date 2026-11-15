@@ -1,6 +1,16 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { timingSafeEqual } from 'node:crypto';
 import type { DB } from './db.ts';
+import { schemaOf } from './schemas.ts';
+import {
+	PhonePending,
+	PhoneSync,
+	ReminderAdd,
+	ReminderPatch,
+	type ReminderList,
+	type Reminders,
+} from '../shared/reminders.ts';
+import type { z } from 'zod';
 
 // iCloud Reminders on the wall, synced by an iPhone Shortcut on each phone (see README).
 //
@@ -158,7 +168,7 @@ export function claimPending(db: DB, device: string, now = new Date()) {
 }
 
 /** What the wall shows: each list's latest snapshot with the wall's own pending changes applied. */
-function wallLists(db: DB) {
+function wallLists(db: DB): ReminderList[] {
 	const items = db.prepare('SELECT * FROM reminder_items ORDER BY done, id').all() as ItemRow[];
 	// Renames last, as they'll be applied.
 	const outbox = db.prepare(`SELECT * FROM reminder_outbox ORDER BY op = 'rename', id`).all() as OutboxRow[];
@@ -211,23 +221,11 @@ function wallLists(db: DB) {
 
 export function registerReminders(app: FastifyInstance, db: DB, token: string | undefined, onWallChange?: () => void) {
 	// ---- Wall -----------------------------------------------------------------
-	app.get('/api/reminders', async () => ({ enabled: !!token, lists: wallLists(db) }));
+	app.get('/api/reminders', async (): Promise<Reminders> => ({ enabled: !!token, lists: wallLists(db) }));
 
-	app.post<{ Body: { list: string; title: string } }>(
+	app.post<{ Body: z.infer<typeof ReminderAdd> }>(
 		'/api/reminders',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['list', 'title'],
-					additionalProperties: false,
-					properties: {
-						list: { type: 'string', minLength: 1, maxLength: 200 },
-						title: { type: 'string', minLength: 1, maxLength: 300 },
-					},
-				},
-			},
-		},
+		{ schema: { body: schemaOf(ReminderAdd) } },
 		async (req, reply) => {
 			const known = (db.prepare('SELECT list FROM reminder_devices').all() as { list: string }[]).find((d) =>
 				same(d.list, req.body.list),
@@ -244,19 +242,9 @@ export function registerReminders(app: FastifyInstance, db: DB, token: string | 
 	);
 
 	// Tick, untick or rename, by the id the wall was given (p = from a phone, w = added on the wall).
-	app.patch<{ Params: { id: string }; Body: { done?: boolean; title?: string } }>(
+	app.patch<{ Params: { id: string }; Body: ReminderPatch }>(
 		'/api/reminders/:id',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					minProperties: 1,
-					maxProperties: 1,
-					additionalProperties: false,
-					properties: { done: { type: 'boolean' }, title: { type: 'string', minLength: 1, maxLength: 300 } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(ReminderPatch, { minProperties: 1, maxProperties: 1 }) } },
 		async (req, reply) => {
 			const { id } = req.params;
 			if (req.body.title !== undefined) {
@@ -324,14 +312,10 @@ export function registerReminders(app: FastifyInstance, db: DB, token: string | 
 		if (!token) return reply.code(503).send({ error: 'Set REMINDERS_TOKEN in .env to turn on Reminders sync' });
 		if (!tokenOk(req, token)) return reply.code(401).send({ error: 'Wrong or missing token' });
 	};
-	const DEVICE = { type: 'string', minLength: 1, maxLength: 60 } as const;
 
-	app.get<{ Querystring: { device: string } }>(
+	app.get<{ Querystring: z.infer<typeof PhonePending> }>(
 		'/api/reminders/phone/pending',
-		{
-			preHandler: phoneOnly,
-			schema: { querystring: { type: 'object', required: ['device'], properties: { device: DEVICE } } },
-		},
+		{ preHandler: phoneOnly, schema: { querystring: schemaOf(PhonePending) } },
 		async (req) => ({ changes: claimPending(db, norm(req.query.device)) }),
 	);
 
@@ -347,7 +331,7 @@ export function registerReminders(app: FastifyInstance, db: DB, token: string | 
 		{
 			preHandler: phoneOnly,
 			bodyLimit: 2 * 1024 * 1024,
-			schema: { body: { type: 'object', required: ['device', 'items'], properties: { device: DEVICE } } },
+			schema: { body: schemaOf(PhoneSync) },
 		},
 		async (req, reply) => {
 			// Shortcuts can send lists as JSON or as text; accept either.

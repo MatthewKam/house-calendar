@@ -13,7 +13,9 @@ import { pipeline } from 'node:stream/promises';
 import type { Readable } from 'node:stream';
 import { join } from 'node:path';
 import type { DB } from './db.ts';
-import { noneOrMember } from './schemas.ts';
+import { noneOrMember, schemaOf } from './schemas.ts';
+import { PhotoPatch, PhotosDelete, PhotosInSlideshow, PhotoUpload, VideoUpload, type Photo } from '../shared/photos.ts';
+import type { z } from 'zod';
 import { convertVideo } from './video.ts';
 
 // The photo album. Browsers resize photos before uploading (2560px on the long side, plus a small
@@ -27,7 +29,7 @@ interface PhotoRow {
 	height: number;
 	taken_at: string | null;
 	member_id: string | null;
-	source: string;
+	source: Photo['source'];
 	in_slideshow: number;
 	has_thumb: number;
 	created_at: string;
@@ -44,7 +46,7 @@ const isJpeg = (b: Buffer) => b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && 
 /** How far along each video being converted is, 0 to 1 (by id). */
 const converting = new Map<string, number>();
 
-const toPhoto = (r: PhotoRow) => ({
+const toPhoto = (r: PhotoRow): Photo => ({
 	id: r.id,
 	width: r.width,
 	height: r.height,
@@ -111,7 +113,7 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
 	}
 
 	// Newest first (by when they were taken, else added). Flyers stay with their events.
-	app.get('/api/photos', async () =>
+	app.get('/api/photos', async (): Promise<Photo[]> =>
 		(
 			db
 				.prepare('SELECT * FROM photos WHERE flyer = 0 ORDER BY COALESCE(taken_at, created_at) DESC')
@@ -134,34 +136,9 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
 	setInterval(sweepFlyers, 6 * 3_600_000).unref();
 
 	// flyer: a photo of a flyer, kept for its events but not shown in the album or screen saver.
-	app.post<{
-		Querystring: {
-			width: number;
-			height: number;
-			takenAt?: string;
-			memberId?: string;
-			inSlideshow?: boolean;
-			flyer?: boolean;
-		};
-	}>(
+	app.post<{ Querystring: z.infer<typeof PhotoUpload> }>(
 		'/api/photos',
-		{
-			bodyLimit: MAX_BYTES,
-			schema: {
-				querystring: {
-					type: 'object',
-					required: ['width', 'height'],
-					properties: {
-						width: { type: 'integer', minimum: 1, maximum: 20000 },
-						height: { type: 'integer', minimum: 1, maximum: 20000 },
-						takenAt: { type: 'string', maxLength: 40 },
-						memberId: { type: 'string' },
-						inSlideshow: { type: 'boolean' },
-						flyer: { type: 'boolean' },
-					},
-				},
-			},
-		},
+		{ bodyLimit: MAX_BYTES, schema: { querystring: schemaOf(PhotoUpload) } },
 		async (req, reply) => {
 			const body = req.body as Buffer;
 			if (!Buffer.isBuffer(body) || !isJpeg(body))
@@ -193,20 +170,9 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
 	);
 
 	// A video, as recorded. It's listed straight away (not ready) and converted in the background.
-	app.post<{ Querystring: { takenAt?: string; memberId?: string; inSlideshow?: boolean } }>(
+	app.post<{ Querystring: z.infer<typeof VideoUpload> }>(
 		'/api/photos/video',
-		{
-			schema: {
-				querystring: {
-					type: 'object',
-					properties: {
-						takenAt: { type: 'string', maxLength: 40 },
-						memberId: { type: 'string' },
-						inSlideshow: { type: 'boolean' },
-					},
-				},
-			},
-		},
+		{ schema: { querystring: schemaOf(VideoUpload) } },
 		async (req, reply) => {
 			const { memberId } = req.query;
 			if (!noneOrMember(db, memberId)) return reply.code(400).send({ error: 'Unknown member' });
@@ -293,18 +259,9 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
 		});
 	}
 
-	app.patch<{ Params: { id: string }; Body: { inSlideshow?: boolean; memberId?: string | null } }>(
+	app.patch<{ Params: { id: string }; Body: PhotoPatch }>(
 		'/api/photos/:id',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					additionalProperties: false,
-					minProperties: 1,
-					properties: { inSlideshow: { type: 'boolean' }, memberId: { type: ['string', 'null'] } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(PhotoPatch, { minProperties: 1 }) } },
 		async (req, reply) => {
 			const row = get(req.params.id);
 			if (!row) return reply.code(404).send({ error: 'Photo not found' });
@@ -339,19 +296,9 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
 	});
 
 	// Several at once, for the album's Select mode: in or out of the screen saver, or deleted.
-	const IDS = { type: 'array', minItems: 1, maxItems: 5000, items: { type: 'string' } } as const;
-	app.post<{ Body: { ids: string[]; inSlideshow: boolean } }>(
+	app.post<{ Body: z.infer<typeof PhotosInSlideshow> }>(
 		'/api/photos/slideshow',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['ids', 'inSlideshow'],
-					additionalProperties: false,
-					properties: { ids: IDS, inSlideshow: { type: 'boolean' } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(PhotosInSlideshow) } },
 		async (req) => {
 			db.prepare('UPDATE photos SET in_slideshow = ? WHERE id IN (SELECT value FROM json_each(?))').run(
 				req.body.inSlideshow ? 1 : 0,
@@ -360,11 +307,9 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
 			return { changed: req.body.ids.length };
 		},
 	);
-	app.post<{ Body: { ids: string[] } }>(
+	app.post<{ Body: z.infer<typeof PhotosDelete> }>(
 		'/api/photos/delete',
-		{
-			schema: { body: { type: 'object', required: ['ids'], additionalProperties: false, properties: { ids: IDS } } },
-		},
+		{ schema: { body: schemaOf(PhotosDelete) } },
 		async (req) => ({ deleted: req.body.ids.filter(removePhoto).length }),
 	);
 }

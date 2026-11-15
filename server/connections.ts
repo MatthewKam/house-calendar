@@ -4,6 +4,7 @@ import { createSync } from './sync.ts';
 import type { CalendarSource, CalendarWriter } from './providers/types.ts';
 import type { Classify } from './people.ts';
 import type { Sealer } from './secrets.ts';
+import type { Connection } from '../shared/calendars.ts';
 
 // A household's calendar accounts of one kind (Google, iCloud): one sync per connected account,
 // started when it's connected and stopped when it's removed. The secret that reads the account (a
@@ -18,15 +19,8 @@ interface ConnectionRow {
 	created_at: string;
 }
 
-export interface Connection {
-	id: string;
-	account: string;
-	memberId: string | null;
-	connectedAt: string;
-	lastSuccess: string | null;
-	lastError: string | null;
-	calendars: number;
-}
+/** One calendar account (shared/calendars.ts). */
+export type { Connection };
 
 export interface ConnectionOptions {
 	sealer: Sealer;

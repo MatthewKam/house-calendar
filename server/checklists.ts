@@ -1,17 +1,13 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
+import { schemaOf } from './schemas.ts';
+import { ChecklistInput, ChecklistTick, type CalEvent, type ChecklistItem } from '../shared/events.ts';
+import type { z } from 'zod';
 
 // What to bring: an event's checklist (the jiu jitsu bag: belt, gi, snack). The list belongs to its
 // series (every repeat), like a special mark or a flyer, so it works for synced events too; ticks
 // belong to one time it happens (its start), so they start fresh every week.
-
-export interface ChecklistItem {
-	id: string;
-	title: string;
-	picture: string | null;
-	done: boolean;
-}
 
 /** An event's checklist (alias `e`), in order, with this time's ticks: a JSON array. */
 export const CHECKLIST_SQL = `(SELECT json_group_array(json_object('id', c.id, 'title', c.title, 'picture', c.picture,
@@ -28,39 +24,15 @@ export function dropChecklist(db: DB, eventId: string) {
 }
 
 /** Checklist routes; `getEvent` answers with the event as the events routes do. */
-export function registerChecklists(app: FastifyInstance, db: DB, getEvent: (id: string) => unknown) {
+export function registerChecklists(app: FastifyInstance, db: DB, getEvent: (id: string) => CalEvent) {
 	const eventOf = (id: string) =>
 		db.prepare('SELECT calendar_id, COALESCE(series_id, id) AS key, start FROM events WHERE id = ?').get(id) as
 			{ calendar_id: string; key: string; start: string } | undefined;
 
 	// The whole list, in order (every repeat): items kept by id keep their ticks, new ones have none.
-	app.put<{ Params: { id: string }; Body: { items: { id?: string; title: string; picture: string | null }[] } }>(
+	app.put<{ Params: { id: string }; Body: ChecklistInput }>(
 		'/api/events/:id/checklist',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['items'],
-					additionalProperties: false,
-					properties: {
-						items: {
-							type: 'array',
-							maxItems: 30,
-							items: {
-								type: 'object',
-								required: ['title'],
-								additionalProperties: false,
-								properties: {
-									id: { type: 'string' },
-									title: { type: 'string', minLength: 1, maxLength: 80 },
-									picture: { type: ['string', 'null'], maxLength: 16 },
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+		{ schema: { body: schemaOf(ChecklistInput) } },
 		async (req, reply) => {
 			const ev = eventOf(req.params.id);
 			if (!ev) return reply.code(404).send({ error: 'Event not found' });
@@ -98,18 +70,9 @@ export function registerChecklists(app: FastifyInstance, db: DB, getEvent: (id: 
 	);
 
 	// Ticked or not, for this time it happens only.
-	app.put<{ Params: { id: string; itemId: string }; Body: { done: boolean } }>(
+	app.put<{ Params: { id: string; itemId: string }; Body: z.infer<typeof ChecklistTick> }>(
 		'/api/events/:id/checklist/:itemId',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['done'],
-					additionalProperties: false,
-					properties: { done: { type: 'boolean' } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(ChecklistTick) } },
 		async (req, reply) => {
 			const ev = eventOf(req.params.id);
 			const item =

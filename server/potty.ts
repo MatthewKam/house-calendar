@@ -1,21 +1,21 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
-import { memberExists } from './schemas.ts';
+import { memberExists, schemaOf } from './schemas.ts';
 import { bucket } from './rewards.ts';
+import { PottyOn, PottyStep, Punch, type PottyChart, type PottyKind, type Punched } from '../shared/potty.ts';
+import type { z } from 'zod';
 
 // Potty charts, a punch card for potty training. Each step of a trip has its own row: said I need to
 // go, sat on the potty, went (pee, poop or both), wiped and flushed (with help), washed hands. Seven punches
 // fill a row, and a full row is a star in the kid's bucket. When every row is full the card is done
 // (a celebration) and a fresh one starts. Accidents aren't recorded: the card only goes forward.
 
-export const STEPS = ['ask', 'sit', 'go', 'wipe', 'wash'] as const;
-export type Step = (typeof STEPS)[number];
+export const STEPS = PottyStep.options;
+type Step = PottyStep;
+type Kind = PottyKind;
 /** Punches to fill a row (and earn its star). */
 export const ROW_PUNCHES = 7;
-/** What the go row says it was. */
-export const KINDS = ['pee', 'poo', 'both'] as const;
-export type Kind = (typeof KINDS)[number];
 
 interface CardRow {
 	id: string;
@@ -49,7 +49,7 @@ function rows(db: DB, cardId: string) {
 	>;
 }
 
-function chart(db: DB, memberId: string) {
+function chart(db: DB, memberId: string): PottyChart {
 	const card = currentCard(db, memberId);
 	const done = db
 		.prepare(
@@ -74,18 +74,9 @@ export function registerPotty(app: FastifyInstance, db: DB) {
 	);
 
 	// A parent starts or stops a kid's chart. Stopping keeps the card, to pick up again.
-	app.put<{ Params: { memberId: string }; Body: { on: boolean } }>(
+	app.put<{ Params: { memberId: string }; Body: z.infer<typeof PottyOn> }>(
 		'/api/potty/:memberId',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['on'],
-					additionalProperties: false,
-					properties: { on: { type: 'boolean' } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(PottyOn) } },
 		async (req, reply) => {
 			const { memberId } = req.params;
 			if (!memberExists(db, memberId)) return reply.code(404).send({ error: 'Unknown member' });
@@ -96,18 +87,9 @@ export function registerPotty(app: FastifyInstance, db: DB) {
 	);
 
 	// One step done: a punch in its row. Says whether that filled the row (a star) and the card.
-	app.post<{ Params: { memberId: string }; Body: { step: Step; kind?: Kind } }>(
+	app.post<{ Params: { memberId: string }; Body: Punch }>(
 		'/api/potty/:memberId',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['step'],
-					additionalProperties: false,
-					properties: { step: { enum: STEPS }, kind: { enum: KINDS } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(Punch) } },
 		async (req, reply) => {
 			const { memberId } = req.params;
 			const { step, kind } = req.body;
@@ -116,7 +98,7 @@ export function registerPotty(app: FastifyInstance, db: DB) {
 				return reply
 					.code(400)
 					.send({ error: step === 'go' ? 'Pee, poop or both?' : 'Only the go row says pee or poop' });
-			const result = db.transaction(() => {
+			const result = db.transaction((): Punched | null => {
 				const card = currentCard(db, memberId);
 				const before = rows(db, card.id);
 				if (before[step].length >= ROW_PUNCHES) return null;

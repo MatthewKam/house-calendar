@@ -11,6 +11,7 @@ import {
 	type Details,
 	type SeriesChanges,
 } from './providers/icalEdit.ts';
+import type { OutboxStatus } from '../shared/events.ts';
 
 // Edits to iCloud events made on the wall. Each is saved here and shown on the wall at once, then
 // sent to iCloud after the Undo window, before each sync. If iCloud can't be reached the edit waits
@@ -429,7 +430,10 @@ async function pushSeries(
  * Edits waiting to be sent, and conflicts waiting for a choice, for the wall's notices. `shows`
  * leaves out conflicts the viewer can't see (privacy.ts).
  */
-export function outboxStatus(db: DB, shows: (calendarId: string, remoteId: string) => boolean = () => true) {
+export function outboxStatus(
+	db: DB,
+	shows: (calendarId: string, remoteId: string) => boolean = () => true,
+): OutboxStatus {
 	const rows = db.prepare('SELECT * FROM event_outbox ORDER BY id').all() as OutboxRow[];
 	const pending = rows.filter((r) => r.state === 'pending');
 	return {
@@ -444,7 +448,7 @@ export function outboxStatus(db: DB, shows: (calendarId: string, remoteId: strin
 				return {
 					id: r.id,
 					// Only these are sent if the wall's version is kept; the rest stays as iCloud has it.
-					changed: Object.keys(changes),
+					changed: Object.keys(changes) as (keyof Details)[],
 					mine: { ...before, ...changes },
 					theirs: r.theirs ? (JSON.parse(r.theirs) as Details) : null,
 				};

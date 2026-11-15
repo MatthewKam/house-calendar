@@ -1,11 +1,22 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
-import { DAY_VALUE } from './schemas.ts';
+import { schemaOf } from './schemas.ts';
 import { grownUpDevices, sendOnce, type Pusher } from './push.ts';
 import { stageOf, type Stage } from './stages.ts';
 import { ANIMALS, GAME_LEVELS, GAME_NAMES, type Game } from '../shared/learn.ts';
 import { addTime, changeDay, learnDay } from './learnDay.ts';
+import {
+	LearnDayChange,
+	LearnDone,
+	LearnQuery,
+	LearnSettings,
+	LearnTime,
+	type LearnDoneReply,
+	type LearnSound,
+	type LearnState,
+} from '../shared/learnShapes.ts';
+import type { z } from 'zod';
 
 // Learning (docs/kids-growth.md): short picture-first games in kid mode, with no fail states. A
 // guardian turns it on for each kid, who then picks any of their stage's games. Each game has levels:
@@ -85,7 +96,7 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
 			)
 			.run(memberId, game, level);
 
-	function state(r: KidRow, today: string) {
+	function state(r: KidRow, today: string): LearnState {
 		const games = gamesFor(stageOf(r, today));
 		return {
 			memberId: r.id,
@@ -104,11 +115,9 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
 	}
 
 	// Each kid's learning: on or off, and their games' levels.
-	app.get<{ Querystring: { today: string } }>(
+	app.get<{ Querystring: z.infer<typeof LearnQuery> }>(
 		'/api/learn',
-		{
-			schema: { querystring: { type: 'object', required: ['today'], properties: { today: DAY_VALUE } } },
-		},
+		{ schema: { querystring: schemaOf(LearnQuery) } },
 		async (req) => {
 			const rows = db
 				.prepare(
@@ -127,34 +136,9 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
 
 	// A guardian turns learning on or off for a kid, sets their games and minutes a day (null minutes: no
 	// time limit), and moves games' levels up or down.
-	app.put<{
-		Params: { memberId: string };
-		Body: {
-			enabled?: boolean;
-			gamesADay?: number;
-			minutesADay?: number | null;
-			levels?: Partial<Record<Game, number>>;
-			today: string;
-		};
-	}>(
+	app.put<{ Params: { memberId: string }; Body: LearnSettings }>(
 		'/api/learn/:memberId',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['today'],
-					additionalProperties: false,
-					minProperties: 2,
-					properties: {
-						enabled: { type: 'boolean' },
-						today: DAY_VALUE,
-						gamesADay: { type: 'integer', minimum: 1, maximum: 10 },
-						minutesADay: { anyOf: [{ type: 'integer', minimum: 5, maximum: 240 }, { type: 'null' }] },
-						levels: { type: 'object', additionalProperties: { type: 'integer', minimum: 1, maximum: 9 } },
-					},
-				},
-			},
-		},
+		{ schema: { body: schemaOf(LearnSettings, { minProperties: 2 }) } },
 		async (req, reply) => {
 			const r = kid(req.params.memberId);
 			if (!r) return reply.code(404).send({ error: 'Member not found' });
@@ -188,27 +172,9 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
 
 	// A grown-up's change to a kid's day (parent-only, auth.ts): unlock or lock today (null: back to opening
 	// once the Daily tasks are done), or give them more games or minutes.
-	app.post<{
-		Params: { memberId: string };
-		Body: { today: string; open?: boolean | null; moreGames?: boolean; moreMinutes?: boolean };
-	}>(
+	app.post<{ Params: { memberId: string }; Body: z.infer<typeof LearnDayChange> }>(
 		'/api/learn/:memberId/today',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['today'],
-					additionalProperties: false,
-					minProperties: 2,
-					properties: {
-						today: DAY_VALUE,
-						open: { type: ['boolean', 'null'] },
-						moreGames: { const: true },
-						moreMinutes: { const: true },
-					},
-				},
-			},
-		},
+		{ schema: { body: schemaOf(LearnDayChange, { minProperties: 2 }) } },
 		async (req, reply) => {
 			const r = kid(req.params.memberId);
 			if (!r) return reply.code(404).send({ error: 'Member not found' });
@@ -218,21 +184,9 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
 	);
 
 	// Time spent in a game, sent every so often while they play and when they leave it (for a time limit).
-	app.post<{ Params: { memberId: string }; Body: { today: string; seconds: number } }>(
+	app.post<{ Params: { memberId: string }; Body: z.infer<typeof LearnTime> }>(
 		'/api/learn/:memberId/time',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['today', 'seconds'],
-					additionalProperties: false,
-					properties: {
-						today: DAY_VALUE,
-						seconds: { type: 'integer', minimum: 1, maximum: 600 },
-					},
-				},
-			},
-		},
+		{ schema: { body: schemaOf(LearnTime) } },
 		async (req, reply) => {
 			const r = kid(req.params.memberId);
 			if (!r) return reply.code(404).send({ error: 'Member not found' });
@@ -245,27 +199,9 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
 
 	// A finished game: rounds played and how many were right the first time. The last few plays at its
 	// level all perfect moves it up (a little one's: makes it ready, for a grown-up to move up).
-	app.post<{
-		Params: { memberId: string };
-		Body: { today: string; game: Game; level: number; rounds: number; firstTry: number };
-	}>(
+	app.post<{ Params: { memberId: string }; Body: LearnDone }>(
 		'/api/learn/:memberId/done',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['today', 'game', 'level', 'rounds', 'firstTry'],
-					additionalProperties: false,
-					properties: {
-						today: DAY_VALUE,
-						game: { enum: Object.keys(GAME_LEVELS) },
-						level: { type: 'integer', minimum: 1, maximum: 9 },
-						rounds: { type: 'integer', minimum: 1, maximum: 50 },
-						firstTry: { type: 'integer', minimum: 0, maximum: 50 },
-					},
-				},
-			},
-		},
+		{ schema: { body: schemaOf(LearnDone) } },
 		async (req, reply) => {
 			const r = kid(req.params.memberId);
 			if (!r) return reply.code(404).send({ error: 'Member not found' });
@@ -341,13 +277,16 @@ export function registerLearn(app: FastifyInstance, db: DB, pusher?: Pusher) {
 					req.log,
 				);
 			}
-			return { leveledUp, ...state(kid(r.id)!, today) };
+			const done: LearnDoneReply = { leveledUp, ...state(kid(r.id)!, today) };
+			return done;
 		},
 	);
 
 	// Animal noises a grown-up recorded: which, and when (so a new recording isn't the old one cached).
-	app.get('/api/learn/sounds', async () =>
-		db.prepare('SELECT animal, updated_at AS version FROM learn_sounds ORDER BY animal').all(),
+	app.get(
+		'/api/learn/sounds',
+		async () =>
+			db.prepare('SELECT animal, updated_at AS version FROM learn_sounds ORDER BY animal').all() as LearnSound[],
 	);
 
 	app.get<{ Params: { animal: string } }>('/api/learn/sounds/:animal', async (req, reply) => {

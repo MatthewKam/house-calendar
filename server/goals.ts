@@ -1,8 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
-import { ACTIVITIES } from './activities.ts';
+import { schemaOf } from './schemas.ts';
 import { GOAL_LIBRARY, type GoalTemplate } from './goalLibrary.ts';
+import { GoalHidden, OwnGoalInput, type Activity, type GoalTemplate as Goal } from '../shared/moments.ts';
+import type { z } from 'zod';
 
 // The goal list: starter goals (goalLibrary.ts) and the family's own, to pick from when adding a
 // goal to a kid's list (goals themselves are tasks: category 'bonus', ticked any day for points).
@@ -10,7 +12,7 @@ import { GOAL_LIBRARY, type GoalTemplate } from './goalLibrary.ts';
 
 export function registerGoals(app: FastifyInstance, db: DB) {
 	/** A parent's own goal into the library; the same name again is the same goal (shown again if it was hidden). */
-	function addOwn(title: string, emoji: string, kind: string) {
+	function addOwn(title: string, emoji: string, kind: Activity) {
 		title = title.trim();
 		let goal = library().find((g) => g.own && g.title.toLowerCase() === title.toLowerCase());
 		if (!goal) {
@@ -33,7 +35,7 @@ export function registerGoals(app: FastifyInstance, db: DB) {
 	];
 
 	// Every goal in the list, each marked hidden if the family has hidden it.
-	app.get('/api/goals/library', async () => {
+	app.get('/api/goals/library', async (): Promise<Goal[]> => {
 		const hidden = new Set(
 			(db.prepare('SELECT library_key FROM hidden_goals').all() as { library_key: string }[]).map((r) => r.library_key),
 		);
@@ -41,42 +43,21 @@ export function registerGoals(app: FastifyInstance, db: DB) {
 	});
 
 	// A parent's own goal into the list, when they write one for a kid (or just to have it there).
-	app.post<{ Body: { title: string; emoji: string; kind: string } }>(
+	app.post<{ Body: OwnGoalInput }>(
 		'/api/goals/library',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['title', 'emoji', 'kind'],
-					additionalProperties: false,
-					properties: {
-						title: { type: 'string', minLength: 1, maxLength: 80 },
-						emoji: { type: 'string', minLength: 1, maxLength: 16 },
-						kind: { enum: ACTIVITIES },
-					},
-				},
-			},
-		},
+		{ schema: { body: schemaOf(OwnGoalInput) } },
 		async (req, reply) => {
 			if (!req.body.title.trim()) return reply.code(400).send({ error: 'A goal needs a name' });
 			reply.code(201);
-			return { ...addOwn(req.body.title, req.body.emoji, req.body.kind), hidden: false };
+			const goal: Goal = { ...addOwn(req.body.title, req.body.emoji, req.body.kind), hidden: false };
+			return goal;
 		},
 	);
 
 	// Hide every goal in the library, or show them all again.
-	app.put<{ Body: { hidden: boolean } }>(
+	app.put<{ Body: z.infer<typeof GoalHidden> }>(
 		'/api/goals/library',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['hidden'],
-					additionalProperties: false,
-					properties: { hidden: { type: 'boolean' } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(GoalHidden) } },
 		async (req, reply) => {
 			const keys = library().map((g) => g.key);
 			db.transaction(() => {
@@ -89,18 +70,9 @@ export function registerGoals(app: FastifyInstance, db: DB) {
 	);
 
 	// Hide a goal the family won't use, or show it again.
-	app.put<{ Params: { key: string }; Body: { hidden: boolean } }>(
+	app.put<{ Params: { key: string }; Body: z.infer<typeof GoalHidden> }>(
 		'/api/goals/library/:key',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['hidden'],
-					additionalProperties: false,
-					properties: { hidden: { type: 'boolean' } },
-				},
-			},
-		},
+		{ schema: { body: schemaOf(GoalHidden) } },
 		async (req, reply) => {
 			if (!library().some((g) => g.key === req.params.key)) return reply.code(404).send({ error: 'Unknown goal' });
 			if (req.body.hidden)

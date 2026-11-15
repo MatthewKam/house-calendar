@@ -1,7 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
-import { isDay, noneOrMember } from './schemas.ts';
+import { isDay, noneOrMember, schemaOf } from './schemas.ts';
+import { ListItemInput, ListItemPatch, ListName, type SprigItem, type SprigList } from '../shared/lists.ts';
 
 // Lists kept in Sprig itself: groceries, to-dos, packing. No Reminders Shortcut needed (that's
 // reminders.ts, whose lists show beside these). An item can say when (a reminder, due that day or at
@@ -10,9 +11,6 @@ import { isDay, noneOrMember } from './schemas.ts';
 
 /** A when: a day (YYYY-MM-DD) or an instant. */
 const validDue = (d: string) => isDay(d) || !Number.isNaN(Date.parse(d));
-const TITLE = { type: 'string', minLength: 1, maxLength: 300 } as const;
-const DUE = { type: ['string', 'null'], maxLength: 40 } as const;
-const MEMBER = { type: ['string', 'null'] } as const;
 
 interface ListRow {
 	id: string;
@@ -31,7 +29,7 @@ interface ItemRow {
 }
 
 const tidy = (s: string) => s.trim().replace(/\s+/g, ' ');
-const toItem = (r: ItemRow) => ({
+const toItem = (r: ItemRow): SprigItem => ({
 	id: r.id,
 	title: r.title,
 	done: r.done === 1,
@@ -41,7 +39,7 @@ const toItem = (r: ItemRow) => ({
 });
 
 /** Every list with its items: open ones oldest first, then done ones, most recently done first. */
-function allLists(db: DB) {
+function allLists(db: DB): SprigList[] {
 	const lists = db.prepare('SELECT * FROM lists ORDER BY created_at').all() as ListRow[];
 	const items = db
 		.prepare('SELECT * FROM list_items ORDER BY done, CASE WHEN done = 1 THEN done_at END DESC, created_at')
@@ -56,17 +54,10 @@ const forgetAlerts = (db: DB, itemId: string) =>
 export function registerLists(app: FastifyInstance, db: DB) {
 	app.get('/api/lists', async () => allLists(db));
 
-	app.post<{ Body: { title: string } }>(
+	app.post<{ Body: ListName }>(
 		'/api/lists',
 		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['title'],
-					additionalProperties: false,
-					properties: { title: { ...TITLE, maxLength: 100 } },
-				},
-			},
+			schema: { body: schemaOf(ListName) },
 		},
 		async (req, reply) => {
 			const title = tidy(req.body.title);
@@ -79,17 +70,10 @@ export function registerLists(app: FastifyInstance, db: DB) {
 		},
 	);
 
-	app.patch<{ Params: { id: string }; Body: { title: string } }>(
+	app.patch<{ Params: { id: string }; Body: ListName }>(
 		'/api/lists/:id',
 		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['title'],
-					additionalProperties: false,
-					properties: { title: { ...TITLE, maxLength: 100 } },
-				},
-			},
+			schema: { body: schemaOf(ListName) },
 		},
 		async (req, reply) => {
 			const title = tidy(req.body.title);
@@ -115,20 +99,13 @@ export function registerLists(app: FastifyInstance, db: DB) {
 		return allLists(db);
 	});
 
-	app.post<{ Params: { id: string }; Body: { title: string; due?: string | null; memberId?: string | null } }>(
+	app.post<{ Params: { id: string }; Body: ListItemInput }>(
 		'/api/lists/:id/items',
 		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['title'],
-					additionalProperties: false,
-					properties: { title: TITLE, due: DUE, memberId: MEMBER },
-				},
-			},
+			schema: { body: schemaOf(ListItemInput) },
 		},
 		async (req, reply) => {
-			const { due = null, memberId = null } = req.body;
+			const { due, memberId } = req.body;
 			const title = tidy(req.body.title);
 			if (!title) return reply.code(400).send({ error: 'A name is needed' });
 			if (!db.prepare('SELECT 1 FROM lists WHERE id = ?').get(req.params.id))
@@ -148,20 +125,10 @@ export function registerLists(app: FastifyInstance, db: DB) {
 	);
 
 	// Tick or untick (anyone); rename, when and who (a parent).
-	app.patch<{
-		Params: { id: string };
-		Body: { done?: boolean; title?: string; due?: string | null; memberId?: string | null };
-	}>(
+	app.patch<{ Params: { id: string }; Body: ListItemPatch }>(
 		'/api/lists/items/:id',
 		{
-			schema: {
-				body: {
-					type: 'object',
-					minProperties: 1,
-					additionalProperties: false,
-					properties: { done: { type: 'boolean' }, title: TITLE, due: DUE, memberId: MEMBER },
-				},
-			},
+			schema: { body: schemaOf(ListItemPatch, { minProperties: 1 }) },
 		},
 		async (req, reply) => {
 			const row = db.prepare('SELECT * FROM list_items WHERE id = ?').get(req.params.id) as ItemRow | undefined;

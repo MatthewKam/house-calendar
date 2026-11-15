@@ -1,0 +1,54 @@
+// Lists kept in Sprig itself (server/lists.ts): what the server takes and gives back, written once. The
+// server checks requests against these and the web app imports their types (types only, so zod stays
+// out of its bundle).
+
+import { z } from 'zod';
+
+/** A list's name (POST /api/lists, and renaming one: PATCH /api/lists/:id). */
+export const ListName = z.strictObject({ title: z.string().min(1).max(100) });
+
+/** What can be set on an item, with nothing filled in: an edit changes only what it sends. */
+const itemFields = {
+	title: z.string().min(1).max(300),
+	/** When: YYYY-MM-DD (any time that day) or an instant; null: whenever. */
+	due: z.string().max(40).nullable(),
+	/** Who it's for; null: anyone. */
+	memberId: z.string().nullable(),
+};
+
+/** A new item (POST /api/lists/:id/items). Left out, it's for anyone, whenever. */
+export const ListItemInput = z.strictObject({
+	...itemFields,
+	due: itemFields.due.default(null),
+	memberId: itemFields.memberId.default(null),
+});
+/** A change to an item (PATCH /api/lists/items/:id): ticked or not, and any of its fields; at least one. */
+export const ListItemPatch = z.strictObject({ done: z.boolean(), ...itemFields }).partial();
+
+/** An item as the server gives it back. */
+export const SprigItem = z.object({
+	id: z.string(),
+	title: z.string(),
+	done: z.boolean(),
+	due: itemFields.due,
+	memberId: itemFields.memberId,
+	/** When it was ticked (an instant); null while it's open. */
+	doneAt: z.string().nullable(),
+});
+
+/** A list as the server gives it back. */
+export const SprigList = z.object({
+	id: z.string(),
+	title: z.string(),
+	/** Open ones first (oldest first), then done ones (most recently done first). */
+	items: z.array(SprigItem),
+});
+
+export type ListName = z.infer<typeof ListName>;
+/** A new item with every field there (what the server has once the defaults are filled in). */
+export type ListItemInput = z.output<typeof ListItemInput>;
+/** A new item as the web app sends it: what's left out is filled in. */
+export type NewListItem = z.input<typeof ListItemInput>;
+export type ListItemPatch = z.infer<typeof ListItemPatch>;
+export type SprigItem = z.infer<typeof SprigItem>;
+export type SprigList = z.infer<typeof SprigList>;

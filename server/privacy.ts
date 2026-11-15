@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { DB } from './db.ts';
 import type { Viewer } from './auth.ts';
 import { localDay, stageOf } from './stages.ts';
+import { Visibility } from '../shared/calendars.ts';
 
 // Privacy: who sees an event. Everyone (the default); Busy (anyone not on it sees a "Busy" block at
 // that time, without its title, place or notes); Private (anyone not on it doesn't see it at all).
@@ -9,8 +10,8 @@ import { localDay, stageOf } from './stages.ts';
 // guardians see their kids' events in full. The wall is no one in particular. Hidden details never
 // leave the server. Without a viewer (tests, a household app used on its own) everything shows.
 
-export const VISIBILITIES = ['everyone', 'busy', 'private'] as const;
-export type Visibility = (typeof VISIBILITIES)[number];
+export const VISIBILITIES = Visibility.options;
+export type { Visibility };
 /** What a viewer gets of one event. */
 export type Access = 'full' | 'busy' | 'none';
 

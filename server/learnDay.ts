@@ -1,5 +1,6 @@
 import type { DB } from './db.ts';
 import { localDay } from './stages.ts';
+import type { LearnToday } from '../shared/learnShapes.ts';
 
 // A kid's Learn day: it opens once their Daily tasks are done (or a grown-up unlocks it; a grown-up can
 // lock it too), then they play their games a day (2 unless set), within their time a day if there is
@@ -49,7 +50,7 @@ export function dailyTasksDone(db: DB, memberId: string, today: string) {
 }
 
 /** Today's Learn for a kid: what they've used, what they have, and whether they can start a game. */
-export function learnDay(db: DB, memberId: string, today: string) {
+export function learnDay(db: DB, memberId: string, today: string): LearnToday {
 	const kid = db.prepare('SELECT games_a_day, minutes_a_day FROM learn_kids WHERE member_id = ?').get(memberId) as
 		{ games_a_day: number; minutes_a_day: number | null } | undefined;
 	const day = db

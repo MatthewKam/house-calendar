@@ -50,6 +50,8 @@ beforeEach(async () => {
 describe('reward jars', () => {
 	it('fills from the bucket, is earned when full, and empties again once redeemed', async () => {
 		const jar = await add({});
+		// What it didn't say is filled in (shared/rewards.ts): pooled, no deadline.
+		expect(jar).toMatchObject({ teamMode: 'pooled', deadline: null, status: 'filling' });
 		expect(await buckets()).toEqual({ [riley]: 12, [sam]: 6 });
 		expect((await place(riley, [{ rewardId: jar.id, stars: 6 }])).statusCode).toBe(204);
 		expect((await list())[0]).toMatchObject({ status: 'filling', stars: 6, memberStars: { [riley]: 6 } });
@@ -195,7 +197,18 @@ describe('reward jars', () => {
 		expect(await status({ goal: 0 })).toBe(400);
 		expect(await status({ memberIds: ['nope'] })).toBe(400);
 		expect(await status({ deadline: '2026-10-01' })).toBe(400);
-		await add({});
+		expect(await status({ memberIds: [riley, riley] })).toBe(400);
+		const jar = await add({ teamMode: 'each', deadline: '2026-12-01' });
+		// An edit changes only what it sends, and has to send something.
+		const edit = (payload: object) =>
+			app.inject({ method: 'PATCH', url: `/api/rewards/${jar.id}?today=${TODAY}`, payload });
+		expect(json(await edit({ title: 'Zoo' }))).toMatchObject({
+			title: 'Zoo',
+			goal: 10,
+			teamMode: 'each',
+			deadline: '2026-12-01',
+		});
+		expect((await edit({})).statusCode).toBe(400);
 		await app.inject({ method: 'DELETE', url: `/api/members/${riley}` });
 		expect(await list()).toEqual([]);
 	});

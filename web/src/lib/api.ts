@@ -10,31 +10,43 @@ import type {
 	TaskInput,
 	TaskPatch,
 	EventInput,
+	EventPatch,
+	ChecklistInput,
 	Member,
 	ReminderList,
+	Reminders,
+	PushKey,
 	SyncedCalendar,
+	CalendarPatch,
+	Connections,
 	SyncStatus,
 	Weather,
 	OutboxStatus,
-	RewardInput,
+	NewReward,
+	RewardPatch,
 	RewardWin,
 	Bucket,
 	StarPlacing,
 	Photo,
+	PhotoPatch,
 	Daily,
 	Moment,
-	MomentKind,
+	NewMoment,
+	OwnGoalInput,
 	LearnState,
 	LearnSound,
-	Game,
 	GoalTemplate,
 	PottyChart,
-	PottyKind,
 	PottyStep,
+	Punch,
+	Punched,
 	Visibility,
+	Settings,
 	SprigList,
-	SprigItem,
-	Proposal,
+	ListItemPatch,
+	NewListItem,
+	CaptureOn,
+	Captured,
 	LearnDayChange,
 	DishIdea,
 	SurprisePick,
@@ -42,6 +54,9 @@ import type {
 	PlanMeal,
 	Plans,
 	Reminder,
+	LearnDone,
+	LearnDoneReply,
+	LearnSettings,
 	Recipe,
 	RecipeDraft,
 	RecipeFields,
@@ -128,15 +143,6 @@ export type AuthStatus =
 			pinLength: number | null;
 	  };
 export type SignedIn = Extract<AuthStatus, { signedIn: true }>;
-export interface GoogleConnection {
-	id: string;
-	account: string;
-	memberId: string | null;
-	connectedAt: string;
-	lastSuccess: string | null;
-	lastError: string | null;
-	calendars: number;
-}
 interface AccountConfig {
 	google: string | null;
 	apple: string | null;
@@ -210,8 +216,7 @@ export const api = {
 	checkPin: (pin: string) => call<void>('POST', '/api/auth/check-pin', { pin }),
 	signOutDevice: (id: string) => call<void>('POST', `/api/auth/devices/${id}/sign-out`),
 	/** People's calendar connections; google is null when the server hasn't set Google up. */
-	connections: () =>
-		call<{ google: GoogleConnection[] | null; icloud: GoogleConnection[] | null }>('GET', '/api/connections'),
+	connections: () => call<Connections>('GET', '/api/connections'),
 	connectICloud: (c: { appleId: string; password: string }) => call<void>('POST', '/api/connections/icloud', c),
 	removeConnection: (id: string) => call<void>('DELETE', `/api/connections/${id}`),
 	members: () => call<Member[]>('GET', '/api/members'),
@@ -223,13 +228,9 @@ export const api = {
 	/** Hands the account holder's role to another guardian. */
 	setHolder: (membershipId: string) => call<AuthStatus>('POST', '/api/account/holder', { membershipId }),
 	learn: (today: string) => call<LearnState[]>('GET', `/api/learn?today=${today}`),
-	setLearn: (
-		memberId: string,
-		today: string,
-		p: { enabled?: boolean; gamesADay?: number; minutesADay?: number | null; levels?: Partial<Record<Game, number>> },
-	) => call<LearnState>('PUT', `/api/learn/${memberId}`, { ...p, today }),
-	learnDone: (memberId: string, p: { today: string; game: Game; level: number; rounds: number; firstTry: number }) =>
-		call<LearnState & { leveledUp: boolean }>('POST', `/api/learn/${memberId}/done`, p),
+	setLearn: (memberId: string, today: string, p: Omit<LearnSettings, 'today'>) =>
+		call<LearnState>('PUT', `/api/learn/${memberId}`, { ...p, today }),
+	learnDone: (memberId: string, p: LearnDone) => call<LearnDoneReply>('POST', `/api/learn/${memberId}/done`, p),
 	/** A grown-up unlocking or locking a kid's Learn today, or giving more games or minutes (parent-only). */
 	changeLearnDay: (memberId: string, today: string, change: LearnDayChange) =>
 		call<LearnState>('POST', `/api/learn/${memberId}/today`, { ...change, today }),
@@ -302,8 +303,7 @@ export const api = {
 	editMealTheme: (id: string, theme: MealThemeFields) => call<Plans>('PUT', `/api/meal-themes/${id}`, theme),
 	deleteMealTheme: (id: string) => call<Plans>('DELETE', `/api/meal-themes/${id}`),
 	photos: () => call<Photo[]>('GET', '/api/photos'),
-	updatePhoto: (id: string, p: { inSlideshow?: boolean; memberId?: string | null }) =>
-		call<Photo>('PATCH', `/api/photos/${id}`, p),
+	updatePhoto: (id: string, p: PhotoPatch) => call<Photo>('PATCH', `/api/photos/${id}`, p),
 	deletePhoto: (id: string) => call<void>('DELETE', `/api/photos/${id}`),
 	setSlideshow: (ids: string[], inSlideshow: boolean) =>
 		call<{ changed: number }>('POST', '/api/photos/slideshow', { ids, inSlideshow }),
@@ -320,7 +320,7 @@ export const api = {
 			})}`,
 		),
 	addEvent: (e: EventInput) => call<CalEvent>('POST', '/api/events', e),
-	updateEvent: (id: string, e: Partial<EventInput>) => call<CalEvent>('PATCH', `/api/events/${id}`, e),
+	updateEvent: (id: string, e: EventPatch) => call<CalEvent>('PATCH', `/api/events/${id}`, e),
 	/** Drive time from home and when to leave (Google Maps, on the server). */
 	/** Minutes from home to each of today's events still to come that has an address, by event id. */
 	/** Address suggestions for what's typed so far (Google Places, on the server); none without a key. */
@@ -360,15 +360,14 @@ export const api = {
 		call<CalEvent>('PUT', `/api/events/${id}/visibility`, { visibility }),
 	setSpecial: (id: string, special: boolean) => call<CalEvent>('PUT', `/api/events/${id}/special`, { special }),
 	/** What to bring, in order (every repeat of it); items with an id keep their ticks. */
-	setChecklist: (id: string, items: { id?: string; title: string; picture: string | null }[]) =>
+	setChecklist: (id: string, items: ChecklistInput['items']) =>
 		call<CalEvent>('PUT', `/api/events/${id}/checklist`, { items }),
 	tickChecklist: (id: string, itemId: string, done: boolean) =>
 		call<CalEvent>('PUT', `/api/events/${id}/checklist/${itemId}`, { done }),
 
 	sync: () => call<SyncStatus | null>('GET', '/api/sync'),
 	calendars: () => call<SyncedCalendar[]>('GET', '/api/calendars'),
-	updateCalendar: (id: string, patch: Partial<Pick<SyncedCalendar, 'memberId' | 'hidden' | 'visibility'>>) =>
-		call<SyncedCalendar>('PATCH', `/api/calendars/${id}`, patch),
+	updateCalendar: (id: string, patch: CalendarPatch) => call<SyncedCalendar>('PATCH', `/api/calendars/${id}`, patch),
 
 	tasks: () => call<Task[]>('GET', '/api/tasks'),
 	addTask: (c: TaskInput) => call<Task>('POST', '/api/tasks', c),
@@ -378,13 +377,12 @@ export const api = {
 	rewardHistory: () => call<RewardWin[]>('GET', '/api/rewards/history'),
 	buckets: () => call<Bucket[]>('GET', '/api/rewards/buckets'),
 	moments: (from: string, to: string) => call<Moment[]>('GET', `/api/moments?${new URLSearchParams({ from, to })}`),
-	addMoment: (m: { memberId: string; kind: MomentKind; note?: string; day: string; stars: number }) =>
-		call<Moment>('POST', '/api/moments', m),
+	addMoment: (m: NewMoment) => call<Moment>('POST', '/api/moments', m),
 	removeMoment: (id: string) => call<void>('DELETE', `/api/moments/${id}`),
 	potty: () => call<PottyChart[]>('GET', '/api/potty'),
 	setPotty: (memberId: string, on: boolean) => call<void>('PUT', `/api/potty/${memberId}`, { on }),
-	punch: ({ memberId, step, kind }: { memberId: string; step: PottyStep; kind?: PottyKind }) =>
-		call<{ rowFull: boolean; cardFull: boolean; chart: PottyChart }>('POST', `/api/potty/${memberId}`, {
+	punch: ({ memberId, step, kind }: { memberId: string } & Punch) =>
+		call<Punched>('POST', `/api/potty/${memberId}`, {
 			step,
 			...(kind ? { kind } : {}),
 		}),
@@ -394,10 +392,9 @@ export const api = {
 	hideGoal: ({ key, hidden }: { key: string; hidden: boolean }) =>
 		call<void>('PUT', `/api/goals/library/${encodeURIComponent(key)}`, { hidden }),
 	hideAllGoals: (hidden: boolean) => call<void>('PUT', '/api/goals/library', { hidden }),
-	saveOwnGoal: (g: { title: string; emoji: string; kind: MomentKind }) =>
-		call<GoalTemplate>('POST', '/api/goals/library', g),
-	addReward: (r: RewardInput, today: string) => call<Reward>('POST', '/api/rewards', { ...r, today }),
-	updateReward: (id: string, r: Partial<RewardInput>, today: string) =>
+	saveOwnGoal: (g: OwnGoalInput) => call<GoalTemplate>('POST', '/api/goals/library', g),
+	addReward: (r: NewReward, today: string) => call<Reward>('POST', '/api/rewards', { ...r, today }),
+	updateReward: (id: string, r: RewardPatch, today: string) =>
 		call<Reward>('PATCH', `/api/rewards/${id}?${new URLSearchParams({ today })}`, r),
 	placeStars: (p: StarPlacing) => call<void>('POST', '/api/rewards/place', p),
 	restoreReward: (id: string, deadline: string | null, today: string) =>
@@ -414,7 +411,7 @@ export const api = {
 	setTaskDone: (id: string, memberId: string, day: string, done: boolean) =>
 		call<void>(done ? 'PUT' : 'DELETE', `/api/tasks/${id}/done/${memberId}/${day}`),
 
-	reminders: () => call<{ enabled: boolean; lists: ReminderList[] }>('GET', '/api/reminders'),
+	reminders: () => call<Reminders>('GET', '/api/reminders'),
 	addReminder: (list: string, title: string) =>
 		call<{ lists: ReminderList[] }>('POST', '/api/reminders', { list, title }),
 	setReminderDone: (id: string, done: boolean) =>
@@ -426,23 +423,22 @@ export const api = {
 	renameList: (id: string, title: string) => call<SprigList[]>('PATCH', `/api/lists/${id}`, { title }),
 	deleteList: (id: string) => call<SprigList[]>('DELETE', `/api/lists/${id}`),
 	clearDone: (id: string) => call<SprigList[]>('DELETE', `/api/lists/${id}/done`),
-	addListItem: (listId: string, item: { title: string; due?: string | null; memberId?: string | null }) =>
-		call<SprigList[]>('POST', `/api/lists/${listId}/items`, item),
-	updateListItem: (id: string, patch: Partial<Pick<SprigItem, 'title' | 'done' | 'due' | 'memberId'>>) =>
-		call<SprigList[]>('PATCH', `/api/lists/items/${id}`, patch),
+	addListItem: (listId: string, item: NewListItem) => call<SprigList[]>('POST', `/api/lists/${listId}/items`, item),
+	updateListItem: (id: string, patch: ListItemPatch) => call<SprigList[]>('PATCH', `/api/lists/items/${id}`, patch),
 	deleteListItem: (id: string) => call<SprigList[]>('DELETE', `/api/lists/items/${id}`),
 
-	captureOn: () => call<{ on: boolean }>('GET', '/api/capture'),
+	captureOn: () => call<CaptureOn>('GET', '/api/capture'),
 	capture: (input: { text: string } | { image: { mediaType: string; data: string } }) =>
-		call<{ proposals: Proposal[] }>('POST', '/api/capture', {
+		call<Captured>('POST', '/api/capture', {
 			...input,
 			timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 		}),
-	pushKey: () => call<{ publicKey: string }>('GET', '/api/push/key'),
+	pushKey: () => call<PushKey>('GET', '/api/push/key'),
+	/** The browser's own subscription; the server keeps the part shared/push.ts describes. */
 	pushOn: (subscription: PushSubscriptionJSON, timeZone: string) =>
 		call<void>('POST', '/api/push', { subscription, timeZone }),
 	pushOff: (endpoint: string) => call<void>('DELETE', '/api/push', { endpoint }),
 
-	settings: () => call<Record<string, unknown>>('GET', '/api/settings'),
-	setSetting: (key: string, value: unknown) => call('PUT', `/api/settings/${key}`, { value }),
+	settings: () => call<Settings>('GET', '/api/settings'),
+	setSetting: (key: string, value: unknown) => call<Settings>('PUT', `/api/settings/${key}`, { value }),
 };

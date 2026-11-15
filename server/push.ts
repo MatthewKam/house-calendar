@@ -5,16 +5,16 @@ import { dirname } from 'node:path';
 import webpush from 'web-push';
 import type { DB } from './db.ts';
 import { kidIds } from './privacy.ts';
+import { schemaOf } from './schemas.ts';
+import { PushOff, PushOn, type PushKey, type Subscription } from '../shared/push.ts';
+import type { z } from 'zod';
 
 // Alerts on people's phones (web push): reminders on Sprig's lists as they come due, and time to
 // leave. A grown-up turns them on per device; the browser gives a subscription, kept here with whose
 // device it is and its time zone. Kid and wall devices don't get them. Sending is replaced in tests.
 
-/** A browser's push subscription, as PushSubscription.toJSON() gives it. */
-export interface Subscription {
-	endpoint: string;
-	keys: { p256dh: string; auth: string };
-}
+/** A browser's push subscription (shared/push.ts). */
+export type { Subscription };
 /** What the service worker shows (web/public/sw.js); `tag` keeps one alert per thing. */
 export interface Alert {
 	title: string;
@@ -218,63 +218,31 @@ export function registerPush(app: FastifyInstance, db: DB, pusher?: Pusher) {
 	}
 
 	app.get('/api/push/key', async (_req, reply) =>
-		pusher ? { publicKey: pusher.publicKey } : reply.code(404).send({ error: 'Alerts are off on this server' }),
+		pusher
+			? ({ publicKey: pusher.publicKey } satisfies PushKey)
+			: reply.code(404).send({ error: 'Alerts are off on this server' }),
 	);
 
 	// Turn alerts on for this device (again is fine: it keeps the newest owner and time zone).
-	app.post<{ Body: { subscription: Subscription; timeZone: string } }>(
-		'/api/push',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['subscription', 'timeZone'],
-					additionalProperties: false,
-					properties: {
-						subscription: {
-							type: 'object',
-							required: ['endpoint', 'keys'],
-							properties: {
-								endpoint: { type: 'string', pattern: '^https://', maxLength: 1000 },
-								keys: {
-									type: 'object',
-									required: ['p256dh', 'auth'],
-									properties: {
-										p256dh: { type: 'string', maxLength: 200 },
-										auth: { type: 'string', maxLength: 100 },
-									},
-								},
-							},
-						},
-						timeZone: { type: 'string', maxLength: 64 },
-					},
-				},
-			},
-		},
-		async (req, reply) => {
-			const viewer = req.raw.viewer;
-			if (viewer && viewer.role !== 'guardian') return reply.code(403).send({ error: 'Alerts are for grown-ups' });
-			if (!pusher) return reply.code(404).send({ error: 'Alerts are off on this server' });
-			const {
-				subscription: { endpoint, keys },
-				timeZone,
-			} = req.body;
-			if (!realZone(timeZone)) return reply.code(400).send({ error: 'Unknown time zone' });
-			db.prepare(
-				`INSERT INTO push_devices (id, endpoint, subscription, member_id, time_zone) VALUES (?, ?, ?, ?, ?)
+	app.post<{ Body: PushOn }>('/api/push', { schema: { body: schemaOf(PushOn) } }, async (req, reply) => {
+		const viewer = req.raw.viewer;
+		if (viewer && viewer.role !== 'guardian') return reply.code(403).send({ error: 'Alerts are for grown-ups' });
+		if (!pusher) return reply.code(404).send({ error: 'Alerts are off on this server' });
+		const {
+			subscription: { endpoint, keys },
+			timeZone,
+		} = req.body;
+		if (!realZone(timeZone)) return reply.code(400).send({ error: 'Unknown time zone' });
+		db.prepare(
+			`INSERT INTO push_devices (id, endpoint, subscription, member_id, time_zone) VALUES (?, ?, ?, ?, ?)
       ON CONFLICT (endpoint) DO UPDATE SET subscription = excluded.subscription, member_id = excluded.member_id, time_zone = excluded.time_zone`,
-			).run(randomUUID(), endpoint, JSON.stringify({ endpoint, keys }), viewer?.memberId ?? null, timeZone);
-			return reply.code(204).send();
-		},
-	);
+		).run(randomUUID(), endpoint, JSON.stringify({ endpoint, keys }), viewer?.memberId ?? null, timeZone);
+		return reply.code(204).send();
+	});
 
-	app.delete<{ Body: { endpoint: string } }>(
+	app.delete<{ Body: z.infer<typeof PushOff> }>(
 		'/api/push',
-		{
-			schema: {
-				body: { type: 'object', required: ['endpoint'], properties: { endpoint: { type: 'string', maxLength: 1000 } } },
-			},
-		},
+		{ schema: { body: schemaOf(PushOff) } },
 		async (req, reply) => {
 			db.prepare('DELETE FROM push_devices WHERE endpoint = ?').run(req.body.endpoint);
 			return reply.code(204).send();

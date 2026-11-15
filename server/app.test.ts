@@ -199,8 +199,13 @@ describe('events', () => {
 				},
 			}),
 		);
+		// What it didn't say is filled in (shared/events.ts): for everyone, no place, notes or flyer.
+		expect(ev).toMatchObject({ memberIds: [], location: null, notes: null, photoUrl: null, visibility: 'everyone' });
+		await app.inject({ method: 'PATCH', url: `/api/events/${ev.id}`, payload: { location: 'The diner' } });
 		await app.inject({ method: 'PATCH', url: `/api/events/${ev.id}`, payload: { title: 'Dinner out' } });
-		expect((await list())[0].title).toBe('Dinner out');
+		// An edit changes only what it sends, and has to send something.
+		expect((await list())[0]).toMatchObject({ title: 'Dinner out', location: 'The diner', start: '2026-10-08' });
+		expect((await app.inject({ method: 'PATCH', url: `/api/events/${ev.id}`, payload: {} })).statusCode).toBe(400);
 		await app.inject({ method: 'DELETE', url: `/api/events/${ev.id}` });
 		expect(await list()).toEqual([]);
 	});
@@ -210,5 +215,13 @@ describe('settings', () => {
 	it('stores and returns JSON values', async () => {
 		await app.inject({ method: 'PUT', url: '/api/settings/uiScale', payload: { value: 1.25 } });
 		expect(json(await app.inject({ method: 'GET', url: '/api/settings' }))).toEqual({ uiScale: 1.25 });
+		// Kept as sent: false and an empty text aren't turned into anything else by the check.
+		await app.inject({ method: 'PUT', url: '/api/settings/clock24', payload: { value: false } });
+		await app.inject({ method: 'PUT', url: '/api/settings/homeAddress', payload: { value: '' } });
+		expect(json(await app.inject({ method: 'GET', url: '/api/settings' }))).toMatchObject({
+			clock24: false,
+			homeAddress: '',
+		});
+		expect((await app.inject({ method: 'PUT', url: '/api/settings/uiScale', payload: {} })).statusCode).toBe(400);
 	});
 });

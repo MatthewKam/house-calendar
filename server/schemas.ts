@@ -1,16 +1,10 @@
 import { z } from 'zod';
 import type { DB } from './db.ts';
 
-// Pieces the routes share: request shapes (JSON schema) and checks against the household's data.
+// Pieces the routes share: request shapes from shared/ as JSON schema, and checks against the household's data.
 
-/** A day, YYYY-MM-DD, as a schema pattern. */
-export const DAY = '^\\d{4}-\\d{2}-\\d{2}$';
-/** A day as a request value. */
-export const DAY_VALUE = { type: 'string', pattern: DAY } as const;
 /** Whether a string looks like a day (YYYY-MM-DD); it may still not be a real one (Feb 31). */
 export const isDay = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
-/** A colour, #rrggbb. */
-export const COLOR = { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' } as const;
 
 /**
  * A shape from shared/ as the JSON schema a route checks requests with. Defaults in the shape are filled
@@ -22,9 +16,10 @@ export function schemaOf(shape: z.ZodType, extra: Record<string, unknown> = {}) 
 }
 
 /**
- * Fastify's checker turns a value into the type a rule expects, trying a choice's rules in order: with
- * "a number, or nothing", a null sent became 0 (and an empty text ""). Nothing is tried first, so null
- * stays null.
+ * Fastify's checker turns a value into the type a rule expects. With "a number, or nothing" as a choice of two
+ * rules, it tried them in order: number first, a null sent became 0 (and an empty text ""); null first, a 0
+ * sent became null (and "" too). So a thing that's a type or nothing is one rule with both types, which
+ * changes neither; any other choice keeps nothing first.
  */
 function nullFirst(schema: unknown): Record<string, unknown> {
 	if (Array.isArray(schema)) return schema.map(nullFirst) as unknown as Record<string, unknown>;
@@ -33,7 +28,14 @@ function nullFirst(schema: unknown): Record<string, unknown> {
 	for (const [key, value] of Object.entries(schema)) out[key] = nullFirst(value);
 	if (Array.isArray(out.anyOf)) {
 		const isNull = (s: unknown) => (s as { type?: unknown }).type === 'null';
-		out.anyOf = [...out.anyOf.filter(isNull), ...out.anyOf.filter((s) => !isNull(s))];
+		const others = out.anyOf.filter((s) => !isNull(s)) as Record<string, unknown>[];
+		if (others.length === 1 && others.length < out.anyOf.length && typeof others[0].type === 'string') {
+			const { anyOf: _, ...rest } = out;
+			const { const: one, enum: choices, ...rule } = others[0];
+			const allowed = one !== undefined ? [one] : (choices as unknown[] | undefined);
+			return { ...rest, ...rule, type: [rule.type, 'null'], ...(allowed ? { enum: [...allowed, null] } : {}) };
+		}
+		out.anyOf = [...out.anyOf.filter(isNull), ...others];
 	}
 	return out;
 }

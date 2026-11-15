@@ -48,6 +48,13 @@ describe('lists', () => {
 		expect(
 			(await call('PATCH', `/api/lists/items/${dentist.id}`, { due: null, memberId: null })).body[0].items[0],
 		).toMatchObject({ due: null, memberId: null });
+
+		// An edit changes only what it sends (shared/lists.ts), and has to send something.
+		await call('PATCH', `/api/lists/items/${dentist.id}`, { due: '2099-01-04', memberId: 'alex' });
+		expect(
+			(await call('PATCH', `/api/lists/items/${dentist.id}`, { title: 'Call the vet' })).body[0].items[0],
+		).toMatchObject({ title: 'Call the vet', done: false, due: '2099-01-04', memberId: 'alex' });
+		expect((await call('PATCH', `/api/lists/items/${dentist.id}`, {})).status).toBe(400);
 	});
 
 	it('renames and deletes a list with its items', async () => {

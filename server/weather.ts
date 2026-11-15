@@ -1,6 +1,15 @@
 import type { FastifyInstance } from 'fastify';
 import type { DB } from './db.ts';
-import type { EventWeather, Wear, Weather } from '../shared/weather.ts';
+import {
+	EventWeatherQuery,
+	PlaceQuery,
+	WeatherQuery,
+	type EventWeather,
+	type Wear,
+	type Weather,
+} from '../shared/weather.ts';
+import { schemaOf } from './schemas.ts';
+import type { z } from 'zod';
 import { eventAccess } from './privacy.ts';
 
 /**
@@ -317,19 +326,9 @@ export function registerWeather(app: FastifyInstance, db: DB, fetchImpl: typeof 
 		}
 	}
 
-	app.get<{ Querystring: { lat?: number; lon?: number } }>(
+	app.get<{ Querystring: z.infer<typeof WeatherQuery> }>(
 		'/api/weather',
-		{
-			schema: {
-				querystring: {
-					type: 'object',
-					properties: {
-						lat: { type: 'number', minimum: -90, maximum: 90 },
-						lon: { type: 'number', minimum: -180, maximum: 180 },
-					},
-				},
-			},
-		},
+		{ schema: { querystring: schemaOf(WeatherQuery) } },
 		async (req, reply) => {
 			const { lat, lon } = req.query;
 			let place: Place | null;
@@ -353,17 +352,9 @@ export function registerWeather(app: FastifyInstance, db: DB, fetchImpl: typeof 
 	);
 
 	// A place typed in (Today's third choice, after Home and Here): where it is, rounded like Here.
-	app.get<{ Querystring: { q: string } }>(
+	app.get<{ Querystring: z.infer<typeof PlaceQuery> }>(
 		'/api/weather/place',
-		{
-			schema: {
-				querystring: {
-					type: 'object',
-					required: ['q'],
-					properties: { q: { type: 'string', minLength: 2, maxLength: 300 } },
-				},
-			},
-		},
+		{ schema: { querystring: schemaOf(PlaceQuery) } },
 		async (req, reply) => {
 			const at = await find(req.query.q.trim()).catch(() => null);
 			if (!at) return reply.code(404).send({ error: "Couldn't find that place" });
@@ -371,13 +362,9 @@ export function registerWeather(app: FastifyInstance, db: DB, fetchImpl: typeof 
 		},
 	);
 
-	app.get<{ Querystring: { ids: string } }>(
+	app.get<{ Querystring: z.infer<typeof EventWeatherQuery> }>(
 		'/api/weather/events',
-		{
-			schema: {
-				querystring: { type: 'object', required: ['ids'], properties: { ids: { type: 'string', maxLength: 2000 } } },
-			},
-		},
+		{ schema: { querystring: schemaOf(EventWeatherQuery) } },
 		async (req) => {
 			const address = homeAddress();
 			const home = address ? await find(address).catch(() => null) : null;

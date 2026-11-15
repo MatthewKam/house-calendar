@@ -2,8 +2,9 @@
 // they earn: Little gets instant cheers, Early saves stars in jars, and so on. A guardian can pick a
 // different stage for a kid it fits better.
 
-export const STAGES = ['little', 'early', 'middle', 'tween', 'teen', 'adult'] as const;
-export type Stage = (typeof STAGES)[number];
+import { Stage } from '../shared/stages.ts';
+export { Stage };
+export const STAGES = Stage.options;
 
 /** Whole years old on `today` (both YYYY-MM-DD). */
 export function ageOn(birthdate: string, today: string) {

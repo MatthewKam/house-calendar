@@ -2,6 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
 import { eventAccess } from './privacy.ts';
+import { schemaOf } from './schemas.ts';
+import { AlertInput, type LeaveAlert } from '../shared/travel.ts';
 
 // Drive time from home to an event's location, and when to leave to arrive on time.
 
@@ -123,7 +125,7 @@ interface AlertRow {
 	refreshed_at: string | null;
 	dismissed_at: string | null;
 }
-const toAlert = (r: AlertRow) => ({
+const toAlert = (r: AlertRow): LeaveAlert => ({
 	id: r.id,
 	eventId: r.event_id,
 	title: r.title,
@@ -245,59 +247,44 @@ export function registerTravel(app: FastifyInstance, db: DB, estimate: Estimator
 			.map(toAlert),
 	);
 
-	app.post<{ Body: { eventId: string; minutesBefore: number } }>(
-		'/api/alerts',
-		{
-			schema: {
-				body: {
-					type: 'object',
-					required: ['eventId', 'minutesBefore'],
-					additionalProperties: false,
-					properties: { eventId: { type: 'string' }, minutesBefore: { type: 'integer', minimum: 0, maximum: 120 } },
-				},
-			},
-		},
-		async (req, reply) => {
-			if (!estimate)
-				return reply.code(503).send({ error: 'Travel times need GOOGLE_MAPS_API_KEY in .env (see README)' });
-			const ev = db.prepare('SELECT title, all_day, start, location FROM events WHERE id = ?').get(req.body.eventId) as
-				{ title: string; all_day: number; start: string; location: string | null } | undefined;
-			if (!ev) return reply.code(404).send({ error: 'Event not found' });
-			if (!ev.location || ev.all_day)
-				return reply.code(400).send({ error: 'Alerts need a timed event with an address' });
-			const origin = home();
-			if (!origin) return reply.code(400).send({ error: 'Set your home address in Settings first' });
-			let plan;
-			try {
-				plan = await planTrip(estimate, origin, ev.location, new Date(ev.start));
-			} catch (err) {
-				return reply.code(502).send({ error: err instanceof Error ? err.message : 'Travel time lookup failed' });
-			}
-			if (!plan.leaveAt) return reply.code(400).send({ error: 'This event has already started' });
-			const remindAt = new Date(Date.parse(plan.leaveAt) - req.body.minutesBefore * 60_000).toISOString();
-			const id = randomUUID();
-			db.transaction(() => {
-				// One alert per event: setting a new one replaces the old.
-				db.prepare('DELETE FROM leave_alerts WHERE event_id = ?').run(req.body.eventId);
-				db.prepare(
-					`INSERT INTO leave_alerts (id, event_id, title, destination, arrive_by, minutes_before, drive_minutes, leave_at, remind_at)
+	app.post<{ Body: AlertInput }>('/api/alerts', { schema: { body: schemaOf(AlertInput) } }, async (req, reply) => {
+		if (!estimate) return reply.code(503).send({ error: 'Travel times need GOOGLE_MAPS_API_KEY in .env (see README)' });
+		const ev = db.prepare('SELECT title, all_day, start, location FROM events WHERE id = ?').get(req.body.eventId) as
+			{ title: string; all_day: number; start: string; location: string | null } | undefined;
+		if (!ev) return reply.code(404).send({ error: 'Event not found' });
+		if (!ev.location || ev.all_day) return reply.code(400).send({ error: 'Alerts need a timed event with an address' });
+		const origin = home();
+		if (!origin) return reply.code(400).send({ error: 'Set your home address in Settings first' });
+		let plan;
+		try {
+			plan = await planTrip(estimate, origin, ev.location, new Date(ev.start));
+		} catch (err) {
+			return reply.code(502).send({ error: err instanceof Error ? err.message : 'Travel time lookup failed' });
+		}
+		if (!plan.leaveAt) return reply.code(400).send({ error: 'This event has already started' });
+		const remindAt = new Date(Date.parse(plan.leaveAt) - req.body.minutesBefore * 60_000).toISOString();
+		const id = randomUUID();
+		db.transaction(() => {
+			// One alert per event: setting a new one replaces the old.
+			db.prepare('DELETE FROM leave_alerts WHERE event_id = ?').run(req.body.eventId);
+			db.prepare(
+				`INSERT INTO leave_alerts (id, event_id, title, destination, arrive_by, minutes_before, drive_minutes, leave_at, remind_at)
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				).run(
-					id,
-					req.body.eventId,
-					ev.title,
-					ev.location,
-					ev.start,
-					req.body.minutesBefore,
-					plan.minutes,
-					plan.leaveAt,
-					remindAt,
-				);
-			})();
-			reply.code(201);
-			return toAlert(db.prepare('SELECT * FROM leave_alerts WHERE id = ?').get(id) as AlertRow);
-		},
-	);
+			).run(
+				id,
+				req.body.eventId,
+				ev.title,
+				ev.location,
+				ev.start,
+				req.body.minutesBefore,
+				plan.minutes,
+				plan.leaveAt,
+				remindAt,
+			);
+		})();
+		reply.code(201);
+		return toAlert(db.prepare('SELECT * FROM leave_alerts WHERE id = ?').get(id) as AlertRow);
+	});
 
 	app.post<{ Params: { id: string } }>('/api/alerts/:id/dismiss', async (req, reply) => {
 		db.prepare(`UPDATE leave_alerts SET dismissed_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`).run(
