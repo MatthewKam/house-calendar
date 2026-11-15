@@ -1,0 +1,177 @@
+/* The calendar page: the month's name and the name filters, the view and ‹ Today ›, then the days. */
+.header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+.group {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+.stepper {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+.title {
+	font-size: 1.5rem;
+	margin: 0 0 0 0.5rem;
+	font-weight: 650;
+}
+.pill {
+	background: var(--surface);
+	border: 1px solid var(--line);
+	padding: 0 1rem;
+	font-size: 1.1rem;
+}
+.segmented {
+	display: flex;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	padding: 0.2rem;
+}
+.segmented button {
+	padding: 0 1rem;
+	font-size: 1.1rem;
+	min-height: 2.35rem;
+	border-radius: var(--radius-sm);
+}
+.segmented .on {
+	background: var(--accent);
+	color: var(--on-accent);
+}
+.body {
+	flex: 1;
+	display: flex;
+	gap: 0.75rem;
+	min-height: 0;
+}
+.banner {
+	background: var(--danger-bg);
+	color: var(--danger-strong);
+	padding: 0.6rem 1rem;
+	border-radius: var(--radius);
+}
+/* Month name on the left, name filters on the right. */
+.monthHeaderTitle {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+}
+.monthTitle {
+}
+
+/* Under the week: the weather card, then the day's joke and quote. */
+.cards {
+	flex: none;
+	display: flex;
+	gap: 0.75rem;
+	align-items: stretch;
+}
+/* Beside the photos: the weather across the top, the joke and quote side by side beneath. */
+.cardsSide {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.cards .cardsSide > * {
+	width: auto;
+	min-width: 0;
+}
+.cardsDaily {
+	display: flex;
+	gap: 0.75rem;
+	align-items: stretch;
+}
+@media (max-width: 959.98px) {
+	.cards,
+	.cardsDaily {
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+	/* Stacked: the weather across the full width, like the photos above it (not its own centered column). */
+	.cards .cardsSide > * {
+		width: 100%;
+		max-width: none;
+		margin-inline: 0;
+	}
+}
+
+/* ---- Phones ---- */
+@media (max-width: 700px) {
+	.monthTitle {
+		margin: 0;
+		font-size: 1.5rem;
+	}
+	.header {
+		gap: 0.5rem;
+	}
+	.group {
+		width: 100%;
+		gap: 0.4rem;
+	}
+	.title {
+		font-size: 1.1rem;
+		margin-left: 0.25rem;
+	}
+	.pill,
+	.segmented button {
+		padding: 0 0.75rem;
+		font-size: 1rem;
+	}
+}
+
+/* ---- A phone on its side ---- */
+/* Little height: the month's name, the time and weather, and the name filters share one row, the
+   buttons are slimmer, and the calendar scrolls rather than squash its days. */
+@media (orientation: landscape) and (max-height: 500px) {
+	.monthHeaderTitle {
+		flex-wrap: nowrap;
+	}
+	.monthHeaderTitle > div {
+		display: flex;
+		align-items: baseline;
+		flex-wrap: wrap;
+		gap: 0 1rem;
+		min-width: 0;
+	}
+	.monthTitle {
+		margin: 0;
+		font-size: 1.4rem;
+	}
+	.pill,
+	.segmented button {
+		min-height: 2.2rem;
+		padding: 0 0.75rem;
+		font-size: 1rem;
+	}
+	.title {
+		font-size: 1.2rem;
+	}
+	.body {
+		overflow-y: auto;
+	}
+}
+
+/* The calendar loading: grey days, a week's rows (one a day) or a month's grid (seven across). */
+.calendarLoading {
+	flex: 1;
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.4rem;
+	padding: 0.5rem 0;
+}
+.calendarLoadingMonth {
+	composes: calendarLoading;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+}
