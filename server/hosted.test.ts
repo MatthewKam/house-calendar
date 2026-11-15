@@ -781,3 +781,51 @@ describe('deleting an account', () => {
 		expect((await jordan.get('/api/members')).status).toBe(200);
 	});
 });
+
+describe('the phone app', () => {
+	const APP = 'capacitor://localhost';
+	const call = (method: string, url: string, headers: Record<string, string> = {}, payload?: object) =>
+		inject(server.handle, { method: method as 'GET', url, payload, headers: { origin: APP, ...headers } });
+
+	it('may call from its own origin, and is told what it may send', async () => {
+		const res = await call('OPTIONS', '/api/members', { 'access-control-request-method': 'POST' });
+		expect(res.statusCode).toBe(204);
+		expect(res.headers['access-control-allow-origin']).toBe(APP);
+		expect(res.headers['access-control-allow-headers']).toContain('authorization');
+		// Not another website.
+		const other = await inject(server.handle, {
+			method: 'OPTIONS',
+			url: '/api/members',
+			headers: { origin: 'https://evil.test' },
+		});
+		expect(other.headers['access-control-allow-origin']).toBeUndefined();
+	});
+
+	it('gets its token in a header and uses it instead of a cookie, with a media key for pictures', async () => {
+		await call('POST', '/api/account/email/start', {}, { email: 'alex@example.com' });
+		const signedIn = await call(
+			'POST',
+			'/api/account/email/verify',
+			{},
+			{ email: 'alex@example.com', code: codes.get('alex@example.com')! },
+		);
+		const token = String(signedIn.headers['x-session-token']);
+		const media = String(signedIn.headers['x-media-key']);
+		expect(token.length).toBeGreaterThan(20);
+		expect(signedIn.headers['access-control-expose-headers']).toContain('x-session-token');
+
+		const auth = { authorization: `Bearer ${token}` };
+		expect(
+			(await call('POST', '/api/account/households', auth, { name: 'The Kims', yourName: 'Alex' })).statusCode,
+		).toBe(201);
+		expect((await call('GET', '/api/members', auth)).statusCode).toBe(200);
+
+		// The media key opens pictures (here: none by that id, so the household says not found), and nothing else.
+		expect((await call('GET', `/api/photos/nope/full?media=${media}`)).statusCode).toBe(404);
+		expect((await call('GET', `/api/photos/nope/full?media=${media.slice(0, -1)}x`)).statusCode).toBe(401);
+		expect((await call('GET', `/api/members?media=${media}`)).statusCode).toBe(401);
+		// Signed out, it stops working.
+		await call('POST', '/api/account/signout', auth);
+		expect((await call('GET', `/api/photos/nope/full?media=${media}`)).statusCode).toBe(401);
+	});
+});

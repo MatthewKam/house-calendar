@@ -61,6 +61,7 @@ import type {
 	RecipeDraft,
 	RecipeFields,
 } from './types';
+import { SERVER, authHeaders, forgetSession, isApp, keepSession, mediaUrl } from './native';
 
 /**
  * A problem worth showing as it is: the server's own reason, or one of the plain ones below. Anything
@@ -79,13 +80,25 @@ const SERVER_PROBLEM = "Something went wrong on Sprig's side. Try again in a mom
 /** A recipe's picture as sent: shrunk to JPEG, as base64. */
 export type RecipeImage = { mediaType: 'image/jpeg'; data: string };
 
+/** In the app, the pictures in a reply get addresses it can open (lib/native.ts); on the web they're as sent. */
+function withMedia(value: unknown): unknown {
+	if (Array.isArray(value)) return value.map(withMedia);
+	if (!value || typeof value !== 'object') return value;
+	return Object.fromEntries(
+		Object.entries(value).map(([k, v]) => [
+			k,
+			typeof v === 'string' && /^(url|thumbUrl|photoUrl)$/.test(k) ? mediaUrl(v) : withMedia(v),
+		]),
+	);
+}
+
 async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
 	let res: Response;
 	try {
-		res = await fetch(url, {
+		res = await fetch(SERVER + url, {
 			method,
 			signal,
-			headers: body === undefined ? {} : { 'content-type': 'application/json' },
+			headers: { ...authHeaders(), ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
 			body: body === undefined ? undefined : JSON.stringify(body),
 		});
 	} catch (err) {
@@ -104,7 +117,10 @@ async function call<T>(method: string, url: string, body?: unknown, signal?: Abo
 		);
 		throw new SprigError(msg || (res.status >= 500 ? SERVER_PROBLEM : `Something went wrong (${res.status}).`));
 	}
-	return res.status === 204 ? (undefined as T) : res.json();
+	keepSession(res);
+	if (res.status === 204) return undefined as T;
+	const json = await res.json();
+	return (isApp ? withMedia(json) : json) as T;
 }
 
 type Role = 'guardian' | 'kid' | 'wall';
@@ -181,16 +197,20 @@ export interface HouseholdAccess {
 }
 
 export const api = {
-	authStatus: () => call<AuthStatus>('GET', '/api/auth/status'),
+	authStatus: () =>
+		call<AuthStatus>('GET', '/api/auth/status').then((s) => {
+			if (!s.signedIn) forgetSession();
+			return s;
+		}),
 	accountConfig: () => call<AccountConfig>('GET', '/api/account/config'),
 	signInWith: (provider: 'google' | 'apple', idToken: string, name?: string) =>
 		call<AuthStatus>('POST', `/api/account/signin/${provider}`, { idToken, ...(name ? { name } : {}) }),
 	emailCode: (email: string) => call<{ sent: true }>('POST', '/api/account/email/start', { email }),
 	verifyEmail: (email: string, code: string) => call<AuthStatus>('POST', '/api/account/email/verify', { email, code }),
-	signOut: () => call<void>('POST', '/api/account/signout'),
+	signOut: () => call<void>('POST', '/api/account/signout').then(forgetSession),
 	/** What deleting this account does to each household: deleted for everyone (held), or only left. */
 	deletionPlan: () => call<{ household: string; deleted: boolean }[]>('GET', '/api/account/delete'),
-	deleteAccount: () => call<void>('DELETE', '/api/account/delete'),
+	deleteAccount: () => call<void>('DELETE', '/api/account/delete').then(forgetSession),
 	createHousehold: (b: { name: string; yourName: string }) => call<AuthStatus>('POST', '/api/account/households', b),
 	useHousehold: (id: string) => call<AuthStatus>('POST', `/api/account/households/${id}/use`),
 	previewJoin: (code: string) => call<JoinPreview>('GET', `/api/account/join/${encodeURIComponent(code)}`),
@@ -243,9 +263,9 @@ export const api = {
 	/** Animal noises a grown-up recorded, and when (for each one's address, so a new one isn't cached). */
 	learnSounds: () => call<LearnSound[]>('GET', '/api/learn/sounds'),
 	recordLearnSound: async (animal: string, audio: Blob) => {
-		const res = await fetch(`/api/learn/sounds/${animal}`, {
+		const res = await fetch(`${SERVER}/api/learn/sounds/${animal}`, {
 			method: 'PUT',
-			headers: { 'content-type': audio.type || 'audio/webm' },
+			headers: { ...authHeaders(), 'content-type': audio.type || 'audio/webm' },
 			body: audio,
 		});
 		if (!res.ok)

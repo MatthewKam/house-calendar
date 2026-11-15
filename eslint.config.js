@@ -6,7 +6,7 @@ import globals from 'globals';
 // What `npm run lint` checks: likely mistakes, not style (TypeScript checks the types, and formatting is
 // left to the formatter).
 export default tseslint.config(
-	{ ignores: ['web/dist/', 'data/', 'node_modules/', 'web/public/'] },
+	{ ignores: ['web/dist/', 'data/', 'node_modules/', 'web/public/', 'ios/', 'android/'] },
 	js.configs.recommended,
 	...tseslint.configs.recommended,
 	{

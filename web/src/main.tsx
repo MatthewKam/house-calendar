@@ -8,6 +8,7 @@ import './styles/app.css';
 import { guardTouch } from './lib/touchGuard';
 import { keys } from './lib/queries';
 import { problemText } from './lib/api';
+import { isApp, loadSession } from './lib/native';
 
 const queryClient = new QueryClient({
 	// Edits show straight away and save in the background; if a save fails, the screen goes back and
@@ -41,12 +42,16 @@ window.addEventListener('resize', markNotch);
 
 // Lets the installed app open offline and start fast. Only in the built app: in development it
 // would keep serving old files.
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+// Not in the phone app: its files are already on the phone.
+if (import.meta.env.PROD && !isApp && 'serviceWorker' in navigator) {
 	window.addEventListener('load', () => void navigator.serviceWorker.register('/sw.js').catch(() => {}));
 }
 
 // Buttons press reliably on touch screens (no stray text selection or long-press menus).
 guardTouch();
+
+// The phone app reads its kept sign-in first (on the web there's nothing to wait for).
+await loadSession();
 
 createRoot(document.getElementById('app')!).render(
 	<StrictMode>

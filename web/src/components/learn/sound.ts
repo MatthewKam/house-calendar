@@ -2,6 +2,8 @@
 // or the built-in one in web/public/sounds, recorded by the household), and Counting's numbers said
 // out loud. Nothing else is spoken.
 
+import { mediaUrl } from '../../lib/native';
+
 /** Animals with a built-in noise in web/public/sounds/animals (`<id>.m4a`). */
 const BUILT_IN = new Set<string>([
 	'cow',
@@ -36,7 +38,7 @@ export function setRecorded(list: { animal: string; version: string }[]) {
 /** Where an animal's noise is: a grown-up's recording, the built-in one, or none. */
 export function noiseUrl(id: string, own = true) {
 	const version = recorded.get(id);
-	if (own && version) return `/api/learn/sounds/${id}?v=${encodeURIComponent(version)}`;
+	if (own && version) return mediaUrl(`/api/learn/sounds/${id}?v=${encodeURIComponent(version)}`);
 	return BUILT_IN.has(id) ? `/sounds/animals/${id}.m4a` : null;
 }
 

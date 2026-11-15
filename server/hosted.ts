@@ -6,7 +6,17 @@ import { existsSync } from 'node:fs';
 import { toStored, type AccountsDB, type HouseholdRow } from './accounts.ts';
 import type { HouseholdRegistry } from './households.ts';
 import { sha } from './auth.ts';
-import { ALPHABET, PARENT_MS, later, now, sessions, showCode, type ServerOptions } from './hosted/session.ts';
+import {
+	ALPHABET,
+	APP_ORIGINS,
+	PARENT_MS,
+	later,
+	now,
+	sessions,
+	showCode,
+	withoutMediaKey,
+	type ServerOptions,
+} from './hosted/session.ts';
 import { signInRoutes } from './hosted/signIn.ts';
 import { householdRoutes } from './hosted/household.ts';
 import { unlockRoutes } from './hosted/unlock.ts';
@@ -60,6 +70,22 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 			res.writeHead(301, { location: `https://sprig-family.com${req.url ?? '/'}` });
 			return res.end();
 		}
+		// The phone app is another origin: it may call (with its token, never the cookie), and read the token
+		// it's given when it signs in.
+		const origin = req.headers.origin;
+		if (origin && APP_ORIGINS.includes(origin)) {
+			res.setHeader('access-control-allow-origin', origin);
+			res.setHeader('vary', 'origin');
+			res.setHeader('access-control-expose-headers', 'x-session-token, x-media-key');
+			if (req.method === 'OPTIONS') {
+				res.writeHead(204, {
+					'access-control-allow-methods': 'GET, HEAD, POST, PUT, PATCH, DELETE',
+					'access-control-allow-headers': 'authorization, content-type',
+					'access-control-max-age': '86400',
+				});
+				return res.end();
+			}
+		}
 		const path = (req.url ?? '/').split('?')[0];
 		// The phones' Reminders Shortcut has its own token, for the household from before accounts.
 		if (path.startsWith('/api/reminders/phone/')) {
@@ -86,6 +112,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 					if (!ownParent(c)) setParentUntil(s, later(PARENT_MS));
 				},
 			};
+			req.url = withoutMediaKey(req.url ?? '/');
 			return (await households.get(c.household)).app.routing(req, res);
 		}
 		rootHandler!(req, res);
