@@ -25,6 +25,25 @@
 	gap: 0.8rem;
 	box-shadow: var(--shadow-xl);
 }
+/* Phones: one you type into sits at the top instead (below the clock). Centered, it jumped up by half
+   the keyboard's height as the keyboard opened; from the top it stays put, and the box stays in sight. */
+@media (max-width: 700px), (orientation: landscape) and (max-height: 500px) {
+	.sheet:has(
+			input:is(
+				[type='text'],
+				[type='url'],
+				[type='search'],
+				[type='email'],
+				[type='tel'],
+				[type='number'],
+				:not([type])
+			),
+			textarea
+		):not(.drawer) {
+		top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+		transform: translateX(-50%);
+	}
+}
 .heading {
 	margin: 0;
 	font-size: 1.3rem;
