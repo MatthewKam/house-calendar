@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { SecureStorage } from '@aparajita/capacitor-secure-storage';
 
 // The phone app (Capacitor): the same pages, shipped inside the app, calling sprig-family.com. It's
@@ -51,3 +51,8 @@ export function mediaUrl(url: string | null) {
 	if (!url || !isApp || !url.startsWith('/api/')) return url;
 	return `${SERVER}${url}${url.includes('?') ? '&' : '?'}media=${encodeURIComponent(session?.media ?? '')}`;
 }
+
+// Sign in with Apple through the iPhone's own sheet (ios/App/App/SignInWithApple.swift): the web pop-up
+// doesn't work inside an app. Closing the sheet rejects with code 'canceled'.
+const SignInWithApple = registerPlugin<{ signIn(): Promise<{ idToken: string; name: string }> }>('SignInWithApple');
+export const appleSignIn = () => SignInWithApple.signIn();

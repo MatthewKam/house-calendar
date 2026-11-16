@@ -298,6 +298,10 @@ rather than a cookie (`web/src/lib/native.ts`); pictures carry a media key that 
   Mac's address.
 - The server only accepts the app's calls from its own origins (`capacitor://localhost`, and `https://localhost` for
   Android later), and only with a token.
+- Sign in with Apple uses the iPhone's own sheet (`ios/App/App/SignInWithApple.swift`, a plugin inside the app), not
+  the web pop-up. Its token is for the app's id, `com.sprigfamily.app`, which the server accepts through `APPLE_APP_IDS`.
+  The app is signed by team `9B83U78PDK`, whose App ID needs Sign in with Apple ticked. In the simulator, sign in to
+  an Apple Account in its Settings first.
 
 ## Using it
 

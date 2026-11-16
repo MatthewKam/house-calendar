@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, type AuthStatus } from '../../lib/api';
+import { appleSignIn, isApp } from '../../lib/native';
 import { pendingJoin } from '../../lib/joinCode';
 import JoinForm from './JoinForm';
 import s from './Account.module.css';
@@ -78,7 +79,7 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 
 	useEffect(() => {
 		const clientId = config?.apple;
-		if (!clientId) return;
+		if (!clientId || isApp) return;
 		loadScript('https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js').then(() =>
 			window.AppleID?.auth.init({ clientId, scope: 'name email', redirectURI: `${location.origin}/`, usePopup: true }),
 		);
@@ -87,14 +88,18 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 	async function apple() {
 		setError(null);
 		try {
+			if (isApp) {
+				const r = await appleSignIn();
+				return onSignedIn(await api.signInWith('apple', r.idToken, r.name || undefined));
+			}
 			const r = await window.AppleID!.auth.signIn();
 			// Apple gives the name only the first time someone signs in.
 			const name = [r.user?.name?.firstName, r.user?.name?.lastName].filter(Boolean).join(' ');
 			onSignedIn(await api.signInWith('apple', r.authorization.id_token, name || undefined));
 		} catch (e) {
-			// Closing Apple's pop-up isn't an error worth showing.
+			// Closing Apple's pop-up (or the iPhone's sheet) isn't an error worth showing.
 			const msg = e instanceof Error ? e.message : (e as { error?: string })?.error;
-			if (msg && msg !== 'popup_closed_by_user') setError(msg);
+			if (msg && msg !== 'popup_closed_by_user' && (e as { code?: string })?.code !== 'canceled') setError(msg);
 		}
 	}
 
