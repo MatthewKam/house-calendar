@@ -24,6 +24,12 @@ import { pinRoutes } from './hosted/pin.ts';
 import { googleRoutes } from './hosted/google.ts';
 import { deleteAccountRoutes } from './hosted/deleteAccount.ts';
 
+/**
+ * A Cooking together link's calls: /api/cook/<household>/<secret>, and its /me, /live and photos
+ * (cook.ts). Anything else under /api/cook/ isn't one, and needs signing in like the rest.
+ */
+const COOK_LINK = /^\/api\/cook\/([0-9a-f-]{36})\/([A-Za-z0-9_-]{32})(\/(?:me|live|images\/[A-Za-z0-9-]{1,64}))?$/;
+
 // The front of the hosted app. It signs people in (Apple, Google, or a code by email), keeps track
 // of households, invites and devices (accounts.ts), and passes every other /api call to the
 // household the caller is signed in to, with who they are (auth.ts Viewer).
@@ -64,6 +70,21 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 
 	// ---- Passing calls to households ----------------------------------------
 
+	/** Who's asking, for the household (auth.ts), from their sign-in. */
+	function viewerOf(s: NonNullable<ReturnType<typeof sessionOf>>, c: NonNullable<ReturnType<typeof contextOf>>) {
+		return {
+			role: c.role!,
+			memberId: c.membership?.member_id ?? null,
+			parent: isParent(c),
+			holder: isHolder(c),
+			guardians: guardiansOf(c.household!.id),
+			actor: actorOf(c),
+			stillParent: () => {
+				if (!ownParent(c)) setParentUntil(s, later(PARENT_MS));
+			},
+		};
+	}
+
 	async function handle(req: IncomingMessage, res: ServerResponse) {
 		// www.sprig-family.com is the same app: send it to sprig-family.com, so sign-ins (cookies) live on one name.
 		if (req.headers.host === 'www.sprig-family.com') {
@@ -93,6 +114,21 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 			if (!legacy) return sendJson(res, 404, { error: 'Not found' });
 			return (await households.get(legacy)).app.routing(req, res);
 		}
+		// A Cooking together link (cook.ts): works without signing in, and only for its own calls. The
+		// address names the household; the household checks the secret. Rebuilt from its parts, so
+		// nothing else in the household can be reached this way.
+		const cook = COOK_LINK.exec(path);
+		if (cook) {
+			const h = accounts.prepare('SELECT * FROM households WHERE id = ?').get(cook[1]) as HouseholdRow | undefined;
+			if (!h) return sendJson(res, 404, { error: 'This cooking link has ended. Ask for a new one.' });
+			// Someone in this family, signed in: shown by their own name and colour.
+			const s = sessionOf(req);
+			const c = s && contextOf(s);
+			req.viewer = s && c?.household?.id === h.id && c.role ? viewerOf(s, c) : undefined;
+			const query = (req.url ?? '').slice(path.length);
+			req.url = `/api/cook/${cook[2]}${cook[3] ?? ''}${query}`;
+			return (await households.get(h)).app.routing(req, res);
+		}
 		if (path.startsWith('/api/') && !/^\/api\/(account|auth)\//.test(path)) {
 			const s = sessionOf(req);
 			const c = s && contextOf(s);
@@ -101,17 +137,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 			accounts
 				.prepare('UPDATE sessions SET last_seen = ? WHERE token_hash = ? AND last_seen < ?')
 				.run(now(), s.token_hash, new Date(Date.now() - 60_000).toISOString());
-			req.viewer = {
-				role: c.role,
-				memberId: c.membership?.member_id ?? null,
-				parent: isParent(c),
-				holder: isHolder(c),
-				guardians: guardiansOf(c.household.id),
-				actor: actorOf(c),
-				stillParent: () => {
-					if (!ownParent(c)) setParentUntil(s, later(PARENT_MS));
-				},
-			};
+			req.viewer = viewerOf(s, c);
 			req.url = withoutMediaKey(req.url ?? '/');
 			return (await households.get(c.household)).app.routing(req, res);
 		}
@@ -135,6 +161,8 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 	// ---- Built UI (production) ---------------------------------------------
 	if (opts.webDist && existsSync(opts.webDist)) {
 		app.register(fastifyStatic, { root: opts.webDist });
+		// A Cooking together link opens the app, which shows the cooking page for it (main.tsx).
+		app.get('/cook/*', (_req, reply) => reply.sendFile('index.html'));
 		// The plain pages the App Store links to (web/public/pages/), at short addresses.
 		for (const page of ['privacy', 'support'])
 			app.get(`/${page}`, (_req, reply) => reply.sendFile(`pages/${page}.html`));
