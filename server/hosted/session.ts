@@ -168,7 +168,7 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
 	const isParent = (c: Ctx) => ownParent(c) || (!!c.s.parent_until && c.s.parent_until > now());
 	/**
 	 * The household's account holder (a membership). Theirs if they're still a guardian in it; otherwise
-	 * (taken out, or a household from before) the longest-standing guardian takes it on.
+	 * (taken out, or a household from before) a co-holder, or else the longest-standing guardian, takes it on.
 	 */
 	function holderOf(householdId: string): string | null {
 		const h = accounts.prepare('SELECT holder_id FROM households WHERE id = ?').get(householdId) as
@@ -182,17 +182,26 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
 			return h.holder_id;
 		const first = accounts
 			.prepare(
-				`SELECT id FROM memberships WHERE household_id = ? AND role = 'guardian' ORDER BY created_at, rowid LIMIT 1`,
+				`SELECT id FROM memberships WHERE household_id = ? AND role = 'guardian'
+      ORDER BY co_holder DESC, created_at, rowid LIMIT 1`,
 			)
 			.get(householdId) as { id: string } | undefined;
 		accounts.prepare('UPDATE households SET holder_id = ? WHERE id = ?').run(first?.id ?? null, householdId);
 		return first?.id ?? null;
 	}
-	/** The holder, on their own device or one they unlocked with their PIN. */
+	/** The holder and the guardians they share it with (co-holders), who may do all the holder does. */
+	function holdersOf(householdId: string): Set<string> {
+		const holder = holderOf(householdId);
+		const co = accounts
+			.prepare(`SELECT id FROM memberships WHERE household_id = ? AND role = 'guardian' AND co_holder = 1`)
+			.all(householdId) as { id: string }[];
+		return new Set([...(holder ? [holder] : []), ...co.map((m) => m.id)]);
+	}
+	/** A holder or co-holder, on their own device or one they unlocked with their PIN. */
 	const isHolder = (c: Ctx) => {
 		if (!c.household || !isParent(c)) return false;
-		const holder = holderOf(c.household.id);
-		return !!holder && (ownParent(c) ? c.membership?.id === holder : c.s.parent_by === holder);
+		const by = ownParent(c) ? c.membership?.id : c.s.parent_by;
+		return !!by && holdersOf(c.household.id).has(by);
 	};
 	/** Who is making changes: the person on this device, or on one unlocked with a PIN, whose PIN it was. */
 	const actorOf = (c: Ctx) => {
@@ -343,7 +352,7 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
 			parent: isParent(c),
 			/** A guardian's own device: never locked. */
 			parentAlways: ownParent(c),
-			/** This is the account holder (or a device they unlocked): approves color changes, and the wall wears their accent. */
+			/** This is the account holder or a co-holder (or a device they unlocked): approves color changes. The wall wears the holder's accent. */
 			holder: isHolder(c),
 			holderName: people.find((m) => m.id === holderMember?.member_id)?.name ?? null,
 			hasPin: !!c.membership?.pin_hash,
@@ -385,6 +394,7 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
 		ownParent,
 		isParent,
 		holderOf,
+		holdersOf,
 		isHolder,
 		guardiansOf,
 		actorOf,

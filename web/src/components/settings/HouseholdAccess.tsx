@@ -12,6 +12,9 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 type Kind = 'guardian' | 'kid' | 'wall';
 const ROLE = { guardian: 'Guardian', kid: 'Kid' };
 const DEVICE = { user: '', device: " (kid's device)", wall: '' };
+/** How someone with their own account signs in: their email, or Apple with it hidden. */
+const signsInWith = (email: string | null) =>
+	!email ? 'their own account' : email.endsWith('@privaterelay.appleid.com') ? 'Apple' : email;
 
 /**
  * Settings: who's in the household and how they sign in, inviting a guardian, adding a kid's device
@@ -24,6 +27,14 @@ export default function HouseholdAccess() {
 	const [removing, setRemoving] = useState<{ id: string; name: string } | null>(null);
 	// The account holder handing their role to another guardian, while that's asked.
 	const [handing, setHanding] = useState<{ id: string; name: string } | null>(null);
+	// The account holder making a kid a guardian, or a guardian a co-holder (or not), while that's asked.
+	const [changing, setChanging] = useState<{
+		id: string;
+		change: { role?: 'guardian'; coHolder?: boolean };
+		title: string;
+		label: string;
+		body: string;
+	} | null>(null);
 	// The account holder clearing another guardian's forgotten PIN, while that's asked.
 	const [clearing, setClearing] = useState<{ id: string; name: string } | null>(null);
 	const householdQuery = useQuery({ queryKey: ['account', 'household'], queryFn: api.household });
@@ -43,6 +54,11 @@ export default function HouseholdAccess() {
 	const signOut = useMutation({ mutationFn: api.signOutDevice, onSettled: refresh });
 	const clearPin = useMutation({ mutationFn: api.clearPin, onSettled: refresh });
 	const unlockDevice = useMutation({ mutationFn: api.unlockDevice, onSettled: refresh });
+	const change = useMutation({
+		mutationFn: (c: { id: string; change: { role?: 'guardian'; coHolder?: boolean } }) =>
+			api.changeSignIn(c.id, c.change),
+		onSettled: refresh,
+	});
 	const handOver = useMutation({
 		mutationFn: api.setHolder,
 		onSuccess: (st) => qc.setQueryData(['auth'], st),
@@ -97,12 +113,12 @@ export default function HouseholdAccess() {
 							</span>
 							<span className={s.how}>
 								{p.role
-									? `${p.holder ? 'Account holder' : ROLE[p.role]} · ${p.account ? (p.email ?? 'own account') : 'signs in on devices added by code'}${p.role === 'guardian' && !p.hasPin ? ' · no PIN yet' : ''}`
+									? `${p.holder ? 'Account holder' : p.coHolder ? 'Co-holder' : ROLE[p.role]} · ${p.account ? `signs in with ${signsInWith(p.email)}` : 'signs in on devices added by code'}${p.role === 'guardian' && !p.hasPin ? ' · no PIN yet' : ''}`
 									: "Doesn't sign in"}
 							</span>
 						</span>
 						<span className={s.actions}>
-							{p.role !== 'guardian' && (
+							{p.role !== 'guardian' && !p.account && (
 								<button
 									type="button"
 									className={panel.textLink}
@@ -120,6 +136,50 @@ export default function HouseholdAccess() {
 									}
 								>
 									Invite as guardian
+								</button>
+							)}
+							{me.holder && p.role === 'kid' && p.account && p.membershipId && (
+								<button
+									type="button"
+									className={panel.textLink}
+									onClick={() =>
+										setChanging({
+											id: p.membershipId!,
+											change: { role: 'guardian' },
+											title: `Make ${p.name} a guardian?`,
+											label: 'Make guardian',
+											body: "They'll manage the family like you do, and set a PIN of their own for the wall and kids' devices.",
+										})
+									}
+								>
+									Make guardian
+								</button>
+							)}
+							{me.holder && p.role === 'guardian' && !p.holder && p.memberId !== me.memberId && p.membershipId && (
+								<button
+									type="button"
+									className={panel.textLink}
+									onClick={() =>
+										setChanging(
+											p.coHolder
+												? {
+														id: p.membershipId!,
+														change: { coHolder: false },
+														title: `Stop sharing the account with ${p.name}?`,
+														label: 'Stop sharing',
+														body: "They stay a guardian, but new colors and other guardians' PINs go back to the account holder.",
+													}
+												: {
+														id: p.membershipId!,
+														change: { coHolder: true },
+														title: `Make ${p.name} a co-holder?`,
+														label: 'Make co-holder',
+														body: "They'll do everything the account holder does: OK new colors, reset guardians' PINs, and keep the household if the holder deletes their account. The wall keeps the holder's accent color.",
+													},
+										)
+									}
+								>
+									{p.coHolder ? 'Stop co-holder' : 'Make co-holder'}
 								</button>
 							)}
 							{me.holder && p.role === 'guardian' && p.hasPin && p.memberId !== me.memberId && p.membershipId && (
@@ -154,12 +214,13 @@ export default function HouseholdAccess() {
 				))}
 			</ul>
 			<p className={s.hint}>
-				A kid with their own phone and account can be invited as a guardian would be, then signs in themselves; younger
-				kids' devices just use a code. The account holder OKs new colors for people, and the wall wears their accent
-				color.
+				A code is for joining once. After that, anyone with their own account just signs in on each new phone or tablet,
+				no code needed. Younger kids' devices each get a code. The account holder and co-holders OK new colors for
+				people, and the wall wears the account holder's accent color.
 			</p>
 			{remove.isError && <p className={s.error}>{remove.error.message}</p>}
 			{handOver.isError && <p className={s.error}>{handOver.error.message}</p>}
+			{change.isError && <p className={s.error}>{change.error.message}</p>}
 			{clearPin.isError && <p className={s.error}>{clearPin.error.message}</p>}
 
 			<form className={s.row} onSubmit={inviteNew}>
@@ -259,6 +320,19 @@ export default function HouseholdAccess() {
 					They stay in the family.
 				</ConfirmDialog>
 			)}
+			{changing && (
+				<ConfirmDialog
+					title={changing.title}
+					confirmLabel={changing.label}
+					onCancel={() => setChanging(null)}
+					onConfirm={() => {
+						change.mutate(changing);
+						setChanging(null);
+					}}
+				>
+					{changing.body}
+				</ConfirmDialog>
+			)}
 			{clearing && (
 				<ConfirmDialog
 					title={`Reset ${clearing.name}'s PIN?`}
@@ -283,7 +357,7 @@ export default function HouseholdAccess() {
 						setHanding(null);
 					}}
 				>
-					They'll OK new colors for people, and the wall will wear their accent color. Only they can hand it back.
+					The wall will wear their accent color, and the household is theirs to delete. You stay a guardian.
 				</ConfirmDialog>
 			)}
 		</section>

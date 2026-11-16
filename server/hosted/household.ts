@@ -175,8 +175,18 @@ export function householdRoutes(app: FastifyInstance, accounts: AccountsDB, x: S
 			const existing = accounts
 				.prepare('SELECT * FROM memberships WHERE household_id = ? AND member_id = ?')
 				.get(h.id, memberId) as MembershipRow | undefined;
-			if (existing?.user_id && user)
-				return reply.code(409).send({ error: 'Someone has already signed in as that person' });
+			// They have an account already: a new device just signs in to it (a code is only for joining).
+			if (existing?.user_id && user) {
+				const name = (await membersOf(h)).find((m) => m.id === memberId)?.name ?? 'They';
+				const email = (
+					accounts.prepare('SELECT email FROM users WHERE id = ?').get(existing.user_id) as
+						{ email: string | null } | undefined
+				)?.email;
+				const how = !email ? 'their own account' : email.endsWith('@privaterelay.appleid.com') ? 'Apple' : email;
+				return reply.code(409).send({
+					error: `${name} already signs in with ${how}. On another device, sign out here, then sign in with ${how === email ? 'that email' : how}; no code needed.`,
+				});
+			}
 
 			const membershipId = existing?.id ?? randomUUID();
 			accounts.transaction(() => {
@@ -304,6 +314,7 @@ export function householdRoutes(app: FastifyInstance, accounts: AccountsDB, x: S
 					membershipId: ship?.id ?? null,
 					role: ship?.role ?? null,
 					holder: !!ship && ship.id === holder,
+					coHolder: !!ship && ship.id !== holder && ship.role === 'guardian' && ship.co_holder === 1,
 					// How they sign in: their own account (email shown), or devices added by code.
 					email: ship?.email ?? null,
 					account: !!ship?.user_id,
@@ -357,7 +368,42 @@ export function householdRoutes(app: FastifyInstance, accounts: AccountsDB, x: S
 		return reply.code(204).send();
 	});
 
-	// The account holder hands the role to another guardian.
+	// The account holder (or a co-holder) makes a kid with their own account a guardian (a grown-up who
+	// joined with a kid's code), or shares the holder's role with a guardian as a co-holder, or stops.
+	app.patch<{ Params: { id: string }; Body: { role?: 'guardian'; coHolder?: boolean } }>(
+		'/api/account/memberships/:id',
+		{
+			schema: {
+				body: {
+					type: 'object',
+					additionalProperties: false,
+					properties: { role: { type: 'string', enum: ['guardian'] }, coHolder: { type: 'boolean' } },
+				},
+			},
+		},
+		async (req, reply) => {
+			const c = needParent(req, reply);
+			if (!c) return;
+			if (!isHolder(c)) return reply.code(403).send({ error: 'Only the account holder can change this' });
+			const m = accounts
+				.prepare('SELECT * FROM memberships WHERE id = ? AND household_id = ?')
+				.get(req.params.id, c.household.id) as MembershipRow | undefined;
+			if (!m) return reply.code(404).send({ error: 'Not found' });
+			const { role, coHolder } = req.body;
+			if (role && m.role === 'kid' && !m.user_id)
+				return reply.code(400).send({ error: 'They need their own account first: use Invite as guardian' });
+			if (coHolder !== undefined && (role ?? m.role) !== 'guardian')
+				return reply.code(400).send({ error: 'Only a guardian can be a co-holder' });
+			if (coHolder === false && holderOf(c.household.id) === m.id)
+				return reply.code(400).send({ error: 'They hold the account: hand it to someone else first' });
+			accounts
+				.prepare('UPDATE memberships SET role = COALESCE(?, role), co_holder = COALESCE(?, co_holder) WHERE id = ?')
+				.run(role ?? null, coHolder === undefined ? null : coHolder ? 1 : 0, m.id);
+			return reply.code(204).send();
+		},
+	);
+
+	// The account holder (or a co-holder) hands the holder's role to another guardian.
 	app.post<{ Body: { membershipId: string } }>(
 		'/api/account/holder',
 		{

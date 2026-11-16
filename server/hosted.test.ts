@@ -577,6 +577,67 @@ describe("the account holder and people's colors", () => {
 		expect((await alex.get('/api/auth/status')).body.holder).toBe(true);
 	});
 
+	it("makes a grown-up who joined with a kid's code a guardian, and shares the holder's role", async () => {
+		const { alex, jordan } = await family();
+		// Susan, a grown-up, joined on her iPad with a kid's code while signed in: she's a kid.
+		const ipad = device();
+		await ipad.signIn('susan@example.com');
+		await ipad.post('/api/account/join', {
+			code: (await alex.post('/api/account/invites', { kind: 'kid', name: 'Susan' })).body.code,
+		});
+		const people = async () =>
+			(await alex.get('/api/account/household')).body.people as {
+				name: string;
+				membershipId: string;
+				role: string;
+				holder: boolean;
+				coHolder: boolean;
+			}[];
+		const ship = async (name: string) => (await people()).find((p) => p.name === name)!.membershipId;
+		expect((await people()).find((p) => p.name === 'Susan')).toMatchObject({ role: 'kid' });
+
+		// A new code on her iPhone, signed in as her too: told to just sign in instead.
+		const iphone = device();
+		await iphone.signIn('other@example.com');
+		const again = await iphone.post('/api/account/join', {
+			code: (
+				await alex.post('/api/account/invites', {
+					kind: 'kid',
+					memberId: (await alex.get('/api/members')).body.find((m: { name: string }) => m.name === 'Susan').id,
+				})
+			).body.code,
+		});
+		expect(again.status).toBe(409);
+		expect(again.body.error).toContain('susan@example.com');
+
+		// Only a holder changes roles; a kid without an account can't be made a guardian.
+		expect((await jordan.patch(`/api/account/memberships/${await ship('Susan')}`, { role: 'guardian' })).status).toBe(
+			403,
+		);
+		expect((await alex.patch(`/api/account/memberships/${await ship('Sam')}`, { role: 'guardian' })).status).toBe(400);
+		expect(
+			(await alex.patch(`/api/account/memberships/${await ship('Susan')}`, { role: 'guardian', coHolder: true }))
+				.status,
+		).toBe(204);
+		expect((await people()).find((p) => p.name === 'Susan')).toMatchObject({ role: 'guardian', coHolder: true });
+
+		// A co-holder does what the holder does, but the holder stays the holder.
+		expect((await ipad.get('/api/auth/status')).body).toMatchObject({
+			role: 'guardian',
+			holder: true,
+			holderName: 'Alex',
+		});
+		expect((await ipad.patch(`/api/account/memberships/${await ship('Jordan')}`, { coHolder: true })).status).toBe(204);
+		expect((await jordan.get('/api/auth/status')).body.holder).toBe(true);
+		expect((await jordan.patch(`/api/account/memberships/${await ship('Alex')}`, { coHolder: false })).status).toBe(
+			400,
+		);
+		expect((await alex.patch(`/api/account/memberships/${await ship('Jordan')}`, { coHolder: false })).status).toBe(
+			204,
+		);
+		expect((await jordan.get('/api/auth/status')).body.holder).toBe(false);
+	});
+
 	it("waits for the holder to approve anyone else's change to a color", async () => {
 		const { alex, jordan, ipad, id } = await family();
 		// The holder's own change, and to a kid's: at once.
@@ -792,6 +853,17 @@ describe('deleting an account', () => {
 			households: [],
 		});
 		expect((await ipad.get('/api/auth/status')).body).toEqual({ signedIn: false });
+	});
+
+	it('keeps the household for a co-holder, who holds it from then on', async () => {
+		const { alex, jordan } = await family();
+		const people = (await alex.get('/api/account/household')).body.people as { name: string; membershipId: string }[];
+		await alex.patch(`/api/account/memberships/${people.find((p) => p.name === 'Jordan')!.membershipId}`, {
+			coHolder: true,
+		});
+		expect((await alex.get('/api/account/delete')).body).toEqual([{ household: 'The Kims', deleted: false }]);
+		expect((await alex.del('/api/account/delete')).status).toBe(204);
+		expect((await jordan.get('/api/auth/status')).body).toMatchObject({ holder: true, holderName: 'Jordan' });
 	});
 
 	it('keeps the household when the holder hands it on first', async () => {

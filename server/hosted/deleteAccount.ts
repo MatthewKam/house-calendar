@@ -6,13 +6,18 @@ import type { HouseholdRegistry } from '../households.ts';
 import { COOKIE, type ServerOptions, type Sessions } from './session.ts';
 
 // Deleting your account (the App Store asks that it can be done in the app): your sign-ins, every
-// device signed in as you, and your calendar connections go. In a household you hold (or are the last
-// guardian of), the household goes too, for everyone: its calendar, tasks, jars and photos. Elsewhere
+// device signed in as you, and your calendar connections go. In a household you hold with no co-holder
+// (or are the last guardian of), the household goes too, for everyone: its calendar, tasks, jars and
+// photos. With a co-holder, it's theirs to hold from then on. Elsewhere
 // you leave it: the family keeps you in its list (what they've put in is theirs), but no one signs in
 // as you. A kid with devices added by code keeps those.
 
 /** What deleting this user's account does to each of their households. */
-export function deletionPlan(accounts: AccountsDB, holderOf: Sessions['holderOf'], userId: string) {
+export function deletionPlan(
+	accounts: AccountsDB,
+	{ holderOf, holdersOf }: Pick<Sessions, 'holderOf' | 'holdersOf'>,
+	userId: string,
+) {
 	const ships = accounts.prepare('SELECT * FROM memberships WHERE user_id = ?').all(userId) as MembershipRow[];
 	const guardians = (id: string) =>
 		(
@@ -20,11 +25,17 @@ export function deletionPlan(accounts: AccountsDB, holderOf: Sessions['holderOf'
 				n: number;
 			}
 		).n;
-	return ships.map((m) => ({
-		membership: m,
-		household: accounts.prepare('SELECT * FROM households WHERE id = ?').get(m.household_id) as HouseholdRow,
-		deleted: holderOf(m.household_id) === m.id || (m.role === 'guardian' && guardians(m.household_id) === 1),
-	}));
+	return ships.map((m) => {
+		const held = holderOf(m.household_id) === m.id;
+		// The co-holder who holds it next, when it's theirs.
+		const heir = held ? [...holdersOf(m.household_id)].find((id) => id !== m.id) : undefined;
+		return {
+			membership: m,
+			household: accounts.prepare('SELECT * FROM households WHERE id = ?').get(m.household_id) as HouseholdRow,
+			heir,
+			deleted: (held && !heir) || (m.role === 'guardian' && guardians(m.household_id) === 1),
+		};
+	});
 }
 
 export function deleteAccountRoutes(
@@ -34,13 +45,13 @@ export function deleteAccountRoutes(
 	x: Sessions,
 	opts: ServerOptions,
 ) {
-	const { needUser, holderOf, started } = x;
+	const { needUser, started } = x;
 
 	// For the question before deleting: which households go, and which are only left.
 	app.get('/api/account/delete', async (req, reply) => {
 		const s = needUser(req, reply);
 		if (!s) return;
-		return deletionPlan(accounts, holderOf, s.user_id!).map((p) => ({
+		return deletionPlan(accounts, x, s.user_id!).map((p) => ({
 			household: p.household.name,
 			deleted: p.deleted,
 		}));
@@ -51,7 +62,7 @@ export function deleteAccountRoutes(
 		if (!s) return;
 		if (s.wall_mode) return reply.code(403).send({ error: 'Turn wall mode off first' });
 		const userId = s.user_id!;
-		const plan = deletionPlan(accounts, holderOf, userId);
+		const plan = deletionPlan(accounts, x, userId);
 
 		// Their calendar connections and alerts, in the households they're leaving (the rest go whole).
 		for (const p of plan.filter((p) => !p.deleted)) {
@@ -77,6 +88,7 @@ export function deleteAccountRoutes(
 				} else if (p.membership.role === 'kid') {
 					accounts.prepare('UPDATE memberships SET user_id = NULL WHERE id = ?').run(p.membership.id);
 				} else {
+					if (p.heir) accounts.prepare('UPDATE households SET holder_id = ? WHERE id = ?').run(p.heir, p.household.id);
 					accounts.prepare('DELETE FROM memberships WHERE id = ?').run(p.membership.id);
 				}
 			}

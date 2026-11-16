@@ -106,6 +106,11 @@ export default function JoinForm({ signedIn, onJoined }: { signedIn: boolean; on
 				</>
 			)}
 			{needsAccount && <p className={s.hint}>Guardians sign in first (above); the code will still be here.</p>}
+			{preview?.kind === 'kid' && signedIn && (
+				<p className={s.hint}>
+					This code is for a kid: your account joins as one. A grown-up asks for a guardian code instead.
+				</p>
+			)}
 			{error && <p className={s.error}>{error}</p>}
 			{!needsAccount && (
 				<button className={s.primary} disabled={!preview || !picked || busy}>

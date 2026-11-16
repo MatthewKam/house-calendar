@@ -100,7 +100,7 @@ export function SignOut({ status, onClose }: { status: SignedIn; onClose: () => 
 
 /**
  * Settings, Users: deleting this account, asked first with what goes. A household they hold goes for everyone
- * (unless they make someone else the account holder first); others they just leave.
+ * (unless they make someone else the account holder or a co-holder first); others they just leave.
  */
 export function DeleteAccount({ onClose }: { onClose: () => void }) {
 	const restart = useRestart(onClose);
@@ -135,7 +135,7 @@ export function DeleteAccount({ onClose }: { onClose: () => void }) {
 					{gone.length > 0 && (
 						<p>
 							<strong>{list(gone)}</strong> will be deleted for everyone in it: its calendar, tasks, jars, recipes and
-							photos. To keep it for your family, make another guardian the account holder first.
+							photos. To keep it for your family, make another guardian the account holder or a co-holder first.
 						</p>
 					)}
 					{left.length > 0 && <p>You'll leave {list(left)}. Your family keeps what's been added there.</p>}
