@@ -3,7 +3,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type RecipeImage } from '../api';
 import type { Recipe, RecipeFields, SprigList } from '../types';
-import { putBack, showNow } from './shared';
+import type { RecipeShopping } from '../../../../shared/shopping.ts';
+import { putBack, showNow, useLive } from './shared';
+import { LISTS } from './lists';
 
 /** The recipe book, newest first. */
 export const useRecipes = () => useQuery({ queryKey: ['recipes'], queryFn: api.recipes });
@@ -14,6 +16,55 @@ export const useRecipes = () => useQuery({ queryKey: ['recipes'], queryFn: api.r
  */
 export const useRecipeReading = () =>
 	useQuery({ queryKey: ['recipe-reading'], queryFn: api.recipeReading, staleTime: Infinity });
+
+/** Shopping together from a recipe: who is, and what's ticked by whom. Its own key, not under ['recipes'] (above). */
+const shoppingKey = (id: string) => ['recipe-shopping', id];
+
+/** Who's shopping from the recipe; checked every 30 seconds, so "Mom is shopping · Join" shows up. */
+export const useRecipeShopping = (id: string) =>
+	useQuery({ queryKey: shoppingKey(id), queryFn: () => api.recipeShopping(id), refetchInterval: 30_000 });
+
+/** While shopping together from it here: the other phones' ticks as they're made. */
+export const useLiveRecipeShopping = (id: string, on: boolean) =>
+	useLive(
+		on,
+		shoppingKey(id),
+		(stamp, signal) => api.liveRecipeShopping(id, stamp, signal),
+		({ shopping, ticks }) => ({ shopping, ticks }),
+	);
+
+/** Turning it on or off here, and ticking an ingredient (shown straight away, as this device's). */
+export function useRecipeShoppingActions(id: string) {
+	const qc = useQueryClient();
+	const key = shoppingKey(id);
+	const replace = (state: RecipeShopping) => qc.setQueryData(key, state);
+	return {
+		shopping: useMutation({
+			mutationKey: key,
+			mutationFn: (on: boolean) => api.setRecipeShopping(id, on),
+			onSuccess: replace,
+		}),
+		tick: useMutation({
+			mutationKey: key,
+			mutationFn: ({ index, done }: { index: number; done: boolean; by: string | null }) =>
+				api.tickIngredient(id, index, done),
+			onMutate: ({ index, done, by }) =>
+				showNow(qc, [
+					{
+						key,
+						apply: (state: RecipeShopping) => ({
+							...state,
+							ticks: done
+								? [...state.ticks.filter((t) => t.index !== index), { index, by }]
+								: state.ticks.filter((t) => t.index !== index),
+						}),
+					},
+				]),
+			onError: putBack(qc),
+			onSuccess: replace,
+		}),
+	};
+}
 
 export function useRecipeActions() {
 	const qc = useQueryClient();
@@ -29,7 +80,11 @@ export function useRecipeActions() {
 			mutationFn: ({ id, recipe }: { id: string; recipe: RecipeFields }) => api.updateRecipe(id, recipe),
 			onMutate: ({ id, recipe }) => book((list) => list.map((r) => (r.id === id ? { ...r, ...recipe } : r))),
 			onError: putBack(qc),
-			onSettled: refresh,
+			// Changing it clears any shopping ticks (they go by each ingredient's place).
+			onSettled: (_r, _e, { id }) => {
+				void qc.invalidateQueries({ queryKey: shoppingKey(id) });
+				return refresh();
+			},
 		}),
 		/** Photos: added (of the dish, or a step), the main one picked, one taken out. Each answers the recipe. */
 		addImages: useMutation({
@@ -141,6 +196,7 @@ export function useRecipeActions() {
 export function useAddToGroceries() {
 	const qc = useQueryClient();
 	return useMutation({
+		mutationKey: LISTS,
 		mutationFn: async (lines: string[]) => {
 			let lists = await api.lists();
 			let groceries = lists.find((l) => /^grocer(y|ies)$/i.test(l.title.trim()));
@@ -152,7 +208,7 @@ export function useAddToGroceries() {
 			const adding = lines.filter((l) => !already.has(l.toLowerCase()));
 			let latest: SprigList[] = lists;
 			for (const title of adding) latest = await api.addListItem(groceries.id, { title });
-			qc.setQueryData(['lists'], latest);
+			qc.setQueryData(LISTS, latest);
 			return adding.length;
 		},
 	});

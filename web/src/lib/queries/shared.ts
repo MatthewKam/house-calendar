@@ -1,6 +1,7 @@
 // What every data hook shares: the query keys, the refresh time, and showing an edit straight away.
 
-import type { QueryClient, QueryKey } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { dayKey } from '../dates';
 
 // ---- Edits show straight away ---------------------------------------------------------------
@@ -36,6 +37,53 @@ export const putBack = (qc: QueryClient) => (_e: Error, _v: unknown, ctx?: Befor
 export const newId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
 export const REFRESH_MS = 60_000;
+
+// ---- Live, while shopping together -----------------------------------------------------------
+
+/**
+ * While `on`: asks again and again for what's cached at `key`, each ask answered as soon as it changes
+ * on the server (a tick on the other phone), and puts it in the cache. Its edits use `key` as their
+ * mutation key: while one is on its way it answers with the data itself, and an answer from here could
+ * put its tick back for a moment. Without a signal it tries again in a moment (OfflineBar and the
+ * page say it isn't syncing meanwhile).
+ */
+export function useLive<T extends { stamp: string }>(
+	on: boolean,
+	key: QueryKey,
+	ask: (stamp: string | null, signal: AbortSignal) => Promise<T>,
+	data: (live: T) => unknown,
+) {
+	const qc = useQueryClient();
+	const id = JSON.stringify(key);
+	useEffect(() => {
+		if (!on) return;
+		const queryKey = JSON.parse(id) as QueryKey;
+		const stop = new AbortController();
+		const pause = (ms: number) =>
+			new Promise<void>((done) => {
+				const t = setTimeout(done, ms);
+				stop.signal.addEventListener('abort', () => {
+					clearTimeout(t);
+					done();
+				});
+			});
+		void (async () => {
+			let stamp: string | null = null;
+			while (!stop.signal.aborted) {
+				try {
+					const live = await ask(stamp, stop.signal);
+					stamp = live.stamp;
+					if (!qc.isMutating({ mutationKey: queryKey })) qc.setQueryData(queryKey, data(live));
+				} catch {
+					await pause(3_000);
+				}
+			}
+		})();
+		return () => stop.abort();
+		// ask and data are the same calls each time; the key's words say when it's another one.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [on, id, qc]);
+}
 
 export const keys = {
 	auth: ['auth'] as const,

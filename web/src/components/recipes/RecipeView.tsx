@@ -1,10 +1,14 @@
 import { useRef, useState } from 'react';
+import { useMutationState } from '@tanstack/react-query';
 import {
 	useAddToGroceries,
 	useAuthStatus,
+	useLiveRecipeShopping,
 	useMeals,
 	useMembers,
 	useRecipeActions,
+	useRecipeShopping,
+	useRecipeShoppingActions,
 	useRecipes,
 } from '../../lib/queries';
 import {
@@ -18,13 +22,15 @@ import {
 	toJpeg,
 } from '../../lib/recipes';
 import { dayWord, mealLabel } from '../../lib/meals';
-import { dayKey } from '../../lib/dates';
+import { dayKey, timeLabel } from '../../lib/dates';
 import { useNow } from '../../lib/useNow';
 import { flags } from '../../lib/allergies';
 import type { MealPlan, Member, Recipe } from '../../lib/types';
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
 import { useWakeLock } from '../../lib/useWakeLock';
 import Sheet from '../ui/Sheet';
+import Problem from '../ui/Problem';
+import { ShoppingButton, TickedBy } from '../ui/ShoppingTogether';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import CookingBar from './CookingBar';
 import CookNotes from './CookNotes';
@@ -58,7 +64,8 @@ function asText(r: Recipe) {
 
 /**
  * A recipe, in two states. Planning (as it opens): the ingredients are a checklist of what you have, and
- * the rest go on the Groceries list in a tap. Cooking (Start cooking): a timer counts up, timers can be
+ * the rest go on the Groceries list in a tap; or, shopping together, of what's in the basket, ticked on
+ * each shopper's phone at once (server/recipeShopping.ts). Cooking (Start cooking): a timer counts up, timers can be
  * set, the checklist clears to tick off what's prepped or gathered, and steps grey out as they're done.
  * Big screens: ingredients and steps side by side; phones: one or the other. Sections with nothing in
  * them aren't shown. The screen stays on while it's open.
@@ -136,8 +143,28 @@ export default function RecipeView({
 	// Cooking from it: no sleeping screen while it's open.
 	useWakeLock(true);
 
+	// Shopping together from it: the ticks are shared with the other phones, in place of this one's own.
+	const me = auth?.signedIn ? auth.memberId : null;
+	const shoppingQuery = useRecipeShopping(r.id);
+	const shoppers = shoppingQuery.data?.shopping ?? [];
+	const shoppingHere = shoppers.includes(me);
+	useLiveRecipeShopping(r.id, shoppingHere);
+	const shop = useRecipeShoppingActions(r.id);
+	const tickedBy = new Map((shoppingHere ? (shoppingQuery.data?.ticks ?? []) : []).map((t) => [t.index, t.by]));
+	// Ticks of this phone's on their way to the others.
+	const savingTicks = new Set(
+		useMutationState({
+			filters: { mutationKey: ['recipe-shopping', r.id], status: 'pending' },
+			select: (m) => (m.state.variables as { index?: unknown } | undefined)?.index,
+		}),
+	);
+	const unsynced =
+		shoppingHere &&
+		(shoppingQuery.fetchStatus === 'paused' || shoppingQuery.errorUpdatedAt > shoppingQuery.dataUpdatedAt);
+	const inHand = shoppingHere ? [...tickedBy.keys()] : have;
+
 	const cooking = cookingSince !== null;
-	const ticked = cooking ? prepped : have;
+	const ticked = cooking ? prepped : inHand;
 	const setTicked = cooking ? setPrepped : setHave;
 	const cover = coverOf(r);
 	// The dish's own photos (not a step's), the main one among them.
@@ -145,7 +172,7 @@ export default function RecipeView({
 	const stepPhotos = (n: number) => r.images.filter((i) => i.step === n);
 	const groups = [...new Set(r.ingredients.map((i) => i.group))];
 	const tags = [r.meal, ...r.proteins, ...r.types];
-	const missing = r.ingredients.map((i, n) => ({ i, n })).filter(({ n }) => !have.includes(n));
+	const missing = r.ingredients.map((i, n) => ({ i, n })).filter(({ n }) => !inHand.includes(n));
 	const toggle = (list: number[], n: number) => (list.includes(n) ? list.filter((x) => x !== n) : [...list, n]);
 
 	async function share() {
@@ -193,7 +220,37 @@ export default function RecipeView({
 					</select>
 				</span>
 			</div>
-			<p className={s.hint}>{cooking ? 'Tick each one once it’s prepped or out.' : 'Tick what you have.'}</p>
+			{!cooking && (
+				<div className={s.shopRow}>
+					<ShoppingButton
+						shopping={shoppers}
+						me={me}
+						members={people}
+						onChange={(on) =>
+							shop.shopping.mutate(on, {
+								// What was ticked here as in the house comes along, shared.
+								onSuccess: (state) => {
+									if (!on) return;
+									const shared = new Set(state.ticks.map((t) => t.index));
+									for (const n of have) if (!shared.has(n)) shop.tick.mutate({ index: n, done: true, by: me });
+								},
+							})
+						}
+					/>
+				</div>
+			)}
+			{!cooking && unsynced && (
+				<Problem
+					message={`📶 Not synced since ${timeLabel(new Date(shoppingQuery.dataUpdatedAt))}: ticks from other phones won’t show until the signal’s back.`}
+				/>
+			)}
+			<p className={s.hint}>
+				{cooking
+					? 'Tick each one once it’s prepped or out.'
+					: shoppingHere
+						? 'Tick what’s in the basket. It shows on the other phones too.'
+						: 'Tick what you have.'}
+			</p>
 			{groups.map((g) => (
 				<div key={g ?? ''} className={s.group}>
 					{g && <h4>{g}</h4>}
@@ -206,11 +263,18 @@ export default function RecipeView({
 											type="checkbox"
 											checked={ticked.includes(n)}
 											onChange={() => {
-												setTicked(toggle(ticked, n));
+												if (!cooking && shoppingHere) shop.tick.mutate({ index: n, done: !ticked.includes(n), by: me });
+												else setTicked(toggle(ticked, n));
 												setSent(null);
 											}}
 										/>
 										<span>{ingredientLine(i, scale)}</span>
+										{!cooking && savingTicks.has(n) && (
+											<span className={s.hint} title="Saving…">
+												↻
+											</span>
+										)}
+										{!cooking && tickedBy.get(n) && <TickedBy by={tickedBy.get(n)!} members={people} />}
 										{flaggedRows.has(n) && (
 											<span className={s.allergyMark} title="Someone's allergy">
 												⚠

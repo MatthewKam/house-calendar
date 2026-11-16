@@ -960,6 +960,27 @@ const migrations: string[] = [
   ALTER TABLE special_reminders DROP COLUMN days_before;
   ALTER TABLE special_reminders DROP COLUMN hours_before;
   `,
+	// Who ticked a list item (a member), for the dot beside it; null: not known (or still open).
+	`
+  ALTER TABLE list_items ADD COLUMN done_by TEXT;
+  `,
+	// Shopping together (shopping.ts): who's shopping from a list or a recipe (target: list:… or
+	// recipe:…) until when (ms), and a recipe's ingredients ticked meanwhile, by their place in it.
+	`
+  CREATE TABLE shopping (
+    target    TEXT NOT NULL,
+    -- '' for a device with no one signed in (a key can't be NULL).
+    member_id TEXT NOT NULL,
+    until     INTEGER NOT NULL,
+    PRIMARY KEY (target, member_id)
+  );
+  CREATE TABLE recipe_ticks (
+    recipe_id TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    idx       INTEGER NOT NULL,
+    done_by   TEXT,
+    PRIMARY KEY (recipe_id, idx)
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

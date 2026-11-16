@@ -43,6 +43,7 @@ import type {
 	Visibility,
 	Settings,
 	SprigList,
+	LiveLists,
 	ListItemPatch,
 	NewListItem,
 	CaptureOn,
@@ -63,6 +64,7 @@ import type {
 } from './types';
 import type { SpecialReminder, SpecialReminderNew } from '../../../shared/specialReminders.ts';
 import type { DayPlans, DayTick } from '../../../shared/dayPlans.ts';
+import type { LiveRecipeShopping, RecipeShopping } from '../../../shared/shopping.ts';
 import { SERVER, authHeaders, forgetSession, isApp, keepSession, mediaUrl } from './native';
 
 /**
@@ -78,6 +80,15 @@ export const problemText = (err: unknown, fallback = 'Something went wrong.') =>
 /** What the app says when it can't get through, or the server falls over without saying why. */
 export const OFFLINE = "Couldn't reach Sprig. Check the connection and try again.";
 const SERVER_PROBLEM = "Something went wrong on Sprig's side. Try again in a moment.";
+/** What the app says when an answer takes too long: the connection is there but too slow. */
+export const TOO_SLOW = "The connection's too slow for this right now. Try again when it's better.";
+
+/**
+ * How long to wait for an answer before giving up and saying so (TOO_SLOW), instead of waiting forever
+ * on a weak signal. Claude reading or thinking takes a while on its own, and so does sending pictures.
+ */
+const WAIT_MS = 30_000;
+const LONG_WAIT_MS = 120_000;
 
 /** A recipe's picture as sent: shrunk to JPEG, as base64. */
 export type RecipeImage = { mediaType: 'image/jpeg'; data: string };
@@ -94,19 +105,68 @@ function withMedia(value: unknown): unknown {
 	);
 }
 
-async function call<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+// Whether requests are getting through: false once one couldn't (no signal, or too weak to answer in
+// time), true again when one does. The phone can say it's online with a signal too weak to use, so
+// this is what tells the app (and OfflineBar) that what's on screen may be out of date.
+let through = true;
+const watchers = new Set<() => void>();
+function gotThrough(yes: boolean) {
+	if (through === yes) return;
+	through = yes;
+	watchers.forEach((w) => w());
+}
+export const connection = {
+	subscribe(watch: () => void) {
+		watchers.add(watch);
+		return () => void watchers.delete(watch);
+	},
+	through: () => through,
+};
+
+async function call<T>(
+	method: string,
+	url: string,
+	body?: unknown,
+	{ signal, long = false }: { signal?: AbortSignal; long?: boolean } = {},
+): Promise<T> {
+	const json = body === undefined ? undefined : JSON.stringify(body);
+	// Stops at the time limit (pictures on their way, a big body, get the long one), or when the caller
+	// stops it. By hand rather than AbortSignal.any, which older iPhones don't have.
+	const stop = new AbortController();
+	let slow = false;
+	const timer = setTimeout(
+		() => {
+			slow = true;
+			stop.abort();
+		},
+		long || (json?.length ?? 0) > 200_000 ? LONG_WAIT_MS : WAIT_MS,
+	);
+	const stopped = () => stop.abort();
+	signal?.addEventListener('abort', stopped);
 	let res: Response;
 	try {
+		// No connection at all: say so straight away rather than trying.
+		if (!navigator.onLine) throw new SprigError(OFFLINE);
+		if (signal?.aborted) stop.abort();
 		res = await fetch(SERVER + url, {
 			method,
-			signal,
-			headers: { ...authHeaders(), ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
-			body: body === undefined ? undefined : JSON.stringify(body),
+			signal: stop.signal,
+			headers: { ...authHeaders(), ...(json === undefined ? {} : { 'content-type': 'application/json' }) },
+			body: json,
 		});
+		gotThrough(true);
 	} catch (err) {
+		if (slow) {
+			gotThrough(false);
+			throw new SprigError(TOO_SLOW);
+		}
 		// Stopped on purpose (a newer lookup took over): passed on as it is.
 		if ((err as Error).name === 'AbortError') throw err;
+		gotThrough(false);
 		throw new SprigError(OFFLINE);
+	} finally {
+		clearTimeout(timer);
+		signal?.removeEventListener('abort', stopped);
 	}
 	if (!res.ok) {
 		// Signed out (or taken out of the household): the app shows the sign-in screen.
@@ -121,8 +181,8 @@ async function call<T>(method: string, url: string, body?: unknown, signal?: Abo
 	}
 	keepSession(res);
 	if (res.status === 204) return undefined as T;
-	const json = await res.json();
-	return (isApp ? withMedia(json) : json) as T;
+	const answer = await res.json();
+	return (isApp ? withMedia(answer) : answer) as T;
 }
 
 type Role = 'guardian' | 'kid' | 'wall';
@@ -292,7 +352,7 @@ export const api = {
 	recipes: () => call<Recipe[]>('GET', '/api/recipes'),
 	/** Dishes to try (Claude): for the time, a kind, anything else; never one already shown. */
 	dishIdeas: (ask: { time: string | null; kind: string | null; ask: string | null; seen: string[] }) =>
-		call<{ ideas: DishIdea[] }>('POST', '/api/recipes/ideas', ask),
+		call<{ ideas: DishIdea[] }>('POST', '/api/recipes/ideas', ask, { long: true }),
 	/** Surprise me (Claude): one dish for the weather (in words), from the book or new; never one already picked. */
 	surprise: (ask: {
 		time: string | null;
@@ -300,9 +360,9 @@ export const api = {
 		ask: string | null;
 		weather: string | null;
 		seen: string[];
-	}) => call<{ pick: SurprisePick }>('POST', '/api/recipes/surprise', ask),
+	}) => call<{ pick: SurprisePick }>('POST', '/api/recipes/surprise', ask, { long: true }),
 	readRecipe: (from: { images: RecipeImage[] } | { url: string }) =>
-		call<RecipeDraft>('POST', '/api/recipes/read', from),
+		call<RecipeDraft>('POST', '/api/recipes/read', from, { long: true }),
 	addRecipe: (recipe: RecipeFields, images: RecipeImage[], cover: number | null) =>
 		call<Recipe>('POST', '/api/recipes', { recipe, images, cover }),
 	updateRecipe: (id: string, recipe: RecipeFields) => call<Recipe>('PUT', `/api/recipes/${id}`, recipe),
@@ -318,6 +378,15 @@ export const api = {
 		call<Recipe>('POST', `/api/recipes/${id}/cooks`, { minutes, note }),
 	/** The family's tags; notes after cooking. */
 	setRecipeTags: (id: string, tags: string[]) => call<Recipe>('PUT', `/api/recipes/${id}/tags`, { tags }),
+	/** Shopping together from a recipe (server/recipeShopping.ts): who is, and what's ticked by whom. */
+	recipeShopping: (id: string) => call<RecipeShopping>('GET', `/api/recipes/${id}/shopping`),
+	setRecipeShopping: (id: string, on: boolean) => call<RecipeShopping>('PUT', `/api/recipes/${id}/shopping`, { on }),
+	tickIngredient: (id: string, index: number, done: boolean) =>
+		call<RecipeShopping>('PUT', `/api/recipes/${id}/ticks/${index}`, { done }),
+	liveRecipeShopping: (id: string, stamp: string | null, signal: AbortSignal) =>
+		call<LiveRecipeShopping>('GET', `/api/recipes/${id}/shopping/live${stamp ? `?stamp=${stamp}` : ''}`, undefined, {
+			signal,
+		}),
 	addRecipeNote: (id: string, text: string) => call<Recipe>('POST', `/api/recipes/${id}/notes`, { text }),
 	editRecipeNote: (id: string, noteId: string, text: string) =>
 		call<Recipe>('PUT', `/api/recipes/${id}/notes/${noteId}`, { text }),
@@ -361,10 +430,10 @@ export const api = {
 			'GET',
 			`/api/places?${new URLSearchParams({ q, session })}`,
 			undefined,
-			signal,
+			{ signal },
 		),
 	travelTimes: () => call<Record<string, number>>('GET', '/api/travel/times'),
-	travel: (id: string, signal?: AbortSignal) => call<Trip>('GET', `/api/events/${id}/travel`, undefined, signal),
+	travel: (id: string, signal?: AbortSignal) => call<Trip>('GET', `/api/events/${id}/travel`, undefined, { signal }),
 	/** At home, or (here) where this device is. */
 	weather: (here?: { lat: number; lon: number } | null) =>
 		call<Weather>('GET', here ? `/api/weather?lat=${here.lat}&lon=${here.lon}` : '/api/weather'),
@@ -452,6 +521,11 @@ export const api = {
 		call<{ lists: ReminderList[] }>('PATCH', `/api/reminders/${id}`, { title }),
 	lists: () => call<SprigList[]>('GET', '/api/lists'),
 	addList: (title: string) => call<SprigList[]>('POST', '/api/lists', { title }),
+	/** Shopping together from a list (on), or stopping (server/lists.ts). */
+	setShopping: (id: string, on: boolean) => call<SprigList[]>('PUT', `/api/lists/${id}/shopping`, { on }),
+	/** The lists as soon as they're not as the stamp says, or after a while (asked over and over while shopping together). */
+	liveLists: (stamp: string | null, signal: AbortSignal) =>
+		call<LiveLists>('GET', `/api/lists/live${stamp ? `?stamp=${stamp}` : ''}`, undefined, { signal }),
 	renameList: (id: string, title: string) => call<SprigList[]>('PATCH', `/api/lists/${id}`, { title }),
 	deleteList: (id: string) => call<SprigList[]>('DELETE', `/api/lists/${id}`),
 	clearDone: (id: string) => call<SprigList[]>('DELETE', `/api/lists/${id}/done`),
@@ -461,10 +535,12 @@ export const api = {
 
 	captureOn: () => call<CaptureOn>('GET', '/api/capture'),
 	capture: (input: { text: string } | { image: { mediaType: string; data: string } }) =>
-		call<Captured>('POST', '/api/capture', {
-			...input,
-			timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-		}),
+		call<Captured>(
+			'POST',
+			'/api/capture',
+			{ ...input, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+			{ long: true },
+		),
 	pushKey: () => call<PushKey>('GET', '/api/push/key'),
 	/** The browser's own subscription; the server keeps the part shared/push.ts describes. */
 	pushOn: (subscription: PushSubscriptionJSON, timeZone: string) =>

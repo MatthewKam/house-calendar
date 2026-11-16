@@ -2,12 +2,25 @@ import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
 import { isDay, noneOrMember, schemaOf } from './schemas.ts';
-import { ListItemInput, ListItemPatch, ListName, type SprigItem, type SprigList } from '../shared/lists.ts';
+import { LIVE_TIMES, liveAnswer, memberAsking, setShopping, shoppersOf, type LiveTimes } from './shopping.ts';
+import {
+	ListItemInput,
+	ListItemPatch,
+	ListName,
+	type LiveLists,
+	type SprigItem,
+	type SprigList,
+} from '../shared/lists.ts';
+import { Shopping } from '../shared/shopping.ts';
 
 // Lists kept in Sprig itself: groceries, to-dos, packing. No Reminders Shortcut needed (that's
 // reminders.ts, whose lists show beside these). An item can say when (a reminder, due that day or at
 // a time) and who it's for. Anyone adds and ticks; naming, deleting and the when and who are a
 // parent's (auth.ts).
+//
+// Shopping together (shopping.ts): people shopping from the same list turn it on, and while it's on
+// their phones ask /api/lists/live, which answers as soon as anything on the lists changes (a tick on
+// the other phone, say), so two people don't pick up the same thing.
 
 /** A when: a day (YYYY-MM-DD) or an instant. */
 const validDue = (d: string) => isDay(d) || !Number.isNaN(Date.parse(d));
@@ -26,6 +39,7 @@ interface ItemRow {
 	member_id: string | null;
 	created_at: string;
 	done_at: string | null;
+	done_by: string | null;
 }
 
 const tidy = (s: string) => s.trim().replace(/\s+/g, ' ');
@@ -36,6 +50,7 @@ const toItem = (r: ItemRow): SprigItem => ({
 	due: r.due,
 	memberId: r.member_id,
 	doneAt: r.done_at,
+	doneBy: r.done_at ? r.done_by : null,
 });
 
 /** Every list with its items: open ones oldest first, then done ones, most recently done first. */
@@ -44,15 +59,39 @@ function allLists(db: DB): SprigList[] {
 	const items = db
 		.prepare('SELECT * FROM list_items ORDER BY done, CASE WHEN done = 1 THEN done_at END DESC, created_at')
 		.all() as ItemRow[];
-	return lists.map((l) => ({ id: l.id, title: l.title, items: items.filter((i) => i.list_id === l.id).map(toItem) }));
+	return lists.map((l) => ({
+		id: l.id,
+		title: l.title,
+		items: items.filter((i) => i.list_id === l.id).map(toItem),
+		shopping: shoppersOf(db, `list:${l.id}`),
+	}));
 }
 
 /** Its alerts were sent (push.ts): forgotten, so it can alert again. */
 const forgetAlerts = (db: DB, itemId: string) =>
 	db.prepare(`DELETE FROM push_sent WHERE key LIKE ? ESCAPE '\\'`).run(`item:${itemId.replace(/[\\%_]/g, '\\$&')}:%`);
 
-export function registerLists(app: FastifyInstance, db: DB) {
+export function registerLists(app: FastifyInstance, db: DB, live: LiveTimes = LIVE_TIMES) {
 	app.get('/api/lists', async () => allLists(db));
+
+	// Shopping together from a list: on (for two hours, or until it's turned off), or off.
+	app.put<{ Params: { id: string }; Body: Shopping }>(
+		'/api/lists/:id/shopping',
+		{ schema: { body: schemaOf(Shopping) } },
+		async (req, reply) => {
+			if (!db.prepare('SELECT 1 FROM lists WHERE id = ?').get(req.params.id))
+				return reply.code(404).send({ error: 'List not found' });
+			setShopping(db, `list:${req.params.id}`, memberAsking(db, req.raw.viewer), req.body.on);
+			return allLists(db);
+		},
+	);
+
+	// The lists as soon as they're not as the stamp says (straight away if they already aren't), or as
+	// they are after a while (shopping.ts). Asked over and over while shopping together.
+	app.get<{ Querystring: { stamp?: string } }>('/api/lists/live', async (req, reply): Promise<LiveLists> => {
+		const { stamp, value } = await liveAnswer(() => allLists(db), req.query.stamp, reply, live);
+		return { stamp, lists: value };
+	});
 
 	app.post<{ Body: ListName }>(
 		'/api/lists',
@@ -90,6 +129,7 @@ export function registerLists(app: FastifyInstance, db: DB) {
 	app.delete<{ Params: { id: string } }>('/api/lists/:id', async (req, reply) => {
 		if (!db.prepare('DELETE FROM lists WHERE id = ?').run(req.params.id).changes)
 			return reply.code(404).send({ error: 'List not found' });
+		db.prepare('DELETE FROM shopping WHERE target = ?').run(`list:${req.params.id}`);
 		return allLists(db);
 	});
 
@@ -138,16 +178,19 @@ export function registerLists(app: FastifyInstance, db: DB) {
 			if (b.due && !validDue(b.due)) return reply.code(400).send({ error: 'When should be a day or a time' });
 			if (!noneOrMember(db, b.memberId)) return reply.code(400).send({ error: 'Unknown member' });
 			const done = b.done ?? row.done === 1;
+			// Ticked now: by whoever's asking (kept while it stays ticked).
+			const doneBy = done && row.done !== 1 ? memberAsking(db, req.raw.viewer) : done ? row.done_by : null;
 			// Unticked: its alert can come again.
 			if (!done && row.done === 1) forgetAlerts(db, row.id);
 			db.prepare(
-				`UPDATE list_items SET title = ?, done = ?, due = ?, member_id = ?,
+				`UPDATE list_items SET title = ?, done = ?, due = ?, member_id = ?, done_by = ?,
       done_at = CASE WHEN ? THEN COALESCE(done_at, strftime('%Y-%m-%dT%H:%M:%fZ','now')) END WHERE id = ?`,
 			).run(
 				b.title !== undefined ? tidy(b.title) : row.title,
 				done ? 1 : 0,
 				b.due !== undefined ? b.due : row.due,
 				b.memberId !== undefined ? b.memberId : row.member_id,
+				doneBy,
 				done ? 1 : 0,
 				row.id,
 			);

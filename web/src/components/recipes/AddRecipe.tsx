@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, problemText, type RecipeImage } from '../../lib/api';
 import { useRecipeActions, useRecipeReading } from '../../lib/queries';
 import { fromBase64, toJpeg } from '../../lib/recipes';
+import { NEEDS_INTERNET, useOnline } from '../../lib/useOnline';
 import type { Recipe, RecipeDraft, RecipeFields } from '../../lib/types';
 import Sheet from '../ui/Sheet';
 import { Loading, Skeleton, SkeletonLines } from '../ui/Skeleton';
@@ -48,7 +49,9 @@ export default function AddRecipe({
 	onClose: () => void;
 	onAdded: (r: Recipe) => void;
 }) {
-	const reading = useRecipeReading().data;
+	const readingQuery = useRecipeReading();
+	const reading = readingQuery.data;
+	const online = useOnline();
 	const { add } = useRecipeActions();
 	const [step, setStep] = useState<Step>({ kind: 'source' });
 	const [link, setLink] = useState('');
@@ -61,7 +64,9 @@ export default function AddRecipe({
 		setStep({ kind: 'reading' });
 		try {
 			const pictures = await Promise.all(files.map((f) => toJpeg(f)));
-			if (!reading?.on) return setStep({ kind: 'check', recipe: BLANK, pictures, cover: null });
+			// Off on the server: typed in, with the pictures kept. Not known (it couldn't be asked, offline
+			// say): try anyway, so a problem is said rather than a blank form.
+			if (reading && !reading.on) return setStep({ kind: 'check', recipe: BLANK, pictures, cover: null });
 			const draft = await api.readRecipe({ images: pictures });
 			setStep({ kind: 'check', recipe: draft.recipe, pictures, cover: await cutCover(draft, pictures) });
 		} catch (err) {
@@ -70,14 +75,14 @@ export default function AddRecipe({
 		}
 	}
 
-	// Dropped pictures: read them once it's known whether Claude can (each drop once).
+	// Dropped pictures: read them once it's known whether Claude can, or that it can't be asked (each drop once).
 	const handled = useRef<File[] | null>(null);
 	useEffect(() => {
-		if (!dropped?.length || !reading || handled.current === dropped) return;
+		if (!dropped?.length || readingQuery.isFetching || handled.current === dropped) return;
 		handled.current = dropped;
 		void readPictures(dropped);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dropped, reading]);
+	}, [dropped, reading, readingQuery.isFetching]);
 
 	async function readLink() {
 		setProblem(null);
@@ -150,7 +155,15 @@ export default function AddRecipe({
 			) : (
 				<div className={s.sources}>
 					{problem && <Problem message={problem} />}
-					<button type="button" className={s.source} onClick={() => pick.current?.click()}>
+					{!online && reading?.on !== false && (
+						<Problem message={`Reading pictures and links: ${NEEDS_INTERNET} You can still type it in.`} />
+					)}
+					<button
+						type="button"
+						className={s.source}
+						disabled={!online && reading?.on !== false}
+						onClick={() => pick.current?.click()}
+					>
 						<span aria-hidden="true">📸</span>
 						<span>
 							<b>From pictures</b>
@@ -187,7 +200,7 @@ export default function AddRecipe({
 								value={link}
 								onChange={(e) => setLink(e.target.value)}
 							/>
-							<button type="submit" className={sheet.primary} disabled={!link.trim()}>
+							<button type="submit" className={sheet.primary} disabled={!link.trim() || !online}>
 								Read
 							</button>
 						</form>

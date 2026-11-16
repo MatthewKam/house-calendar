@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
 import type { ListItemPatch, NewListItem, ReminderList, SprigList } from '../types';
-import { type Patch, showNow, putBack, newId, keys } from './shared';
+import { type Patch, showNow, putBack, newId, keys, useLive } from './shared';
 
 /** Reminders lists; refreshed often so a phone's sync shows up soon after it runs. */
 export function useReminders() {
@@ -64,10 +64,19 @@ export function useChangeReminders() {
 	};
 }
 
+/** Sprig's own lists (and their edits, as a mutation key: which edits are on their way). */
+export const LISTS = ['lists'];
+
 /** Sprig's own lists. */
 export function useLists() {
-	return useQuery({ queryKey: ['lists'], queryFn: api.lists, refetchInterval: 30_000 });
+	return useQuery({ queryKey: LISTS, queryFn: api.lists, refetchInterval: 30_000 });
 }
+
+/**
+ * Shopping together: while it's on, the lists come straight from the server as they change (a tick on
+ * the other phone), not every 30 seconds.
+ */
+export const useLiveLists = (on: boolean) => useLive(on, LISTS, api.liveLists, (live) => live.lists);
 
 /**
  * Changing Sprig's lists: each answer is every list, which replaces the cache. Adding and ticking
@@ -75,19 +84,23 @@ export function useLists() {
  */
 export function useListActions() {
 	const qc = useQueryClient();
-	const key = ['lists'];
+	const key = LISTS;
 	const replace = (lists: SprigList[]) => qc.setQueryData(key, lists);
 	const items = (apply: (l: SprigList) => SprigList): Patch => ({
 		key,
 		apply: (lists: SprigList[]) => lists.map(apply),
 	});
-	const usePlain = <V>(mutationFn: (v: V) => Promise<SprigList[]>) => useMutation({ mutationFn, onSuccess: replace });
+	const usePlain = <V>(mutationFn: (v: V) => Promise<SprigList[]>) =>
+		useMutation({ mutationKey: key, mutationFn, onSuccess: replace });
 	return {
 		addList: usePlain(api.addList),
 		renameList: usePlain(({ id, title }: { id: string; title: string }) => api.renameList(id, title)),
 		deleteList: usePlain(api.deleteList),
 		clearDone: usePlain(api.clearDone),
+		/** Shopping together from a list, or stopping. */
+		shopping: usePlain(({ id, on }: { id: string; on: boolean }) => api.setShopping(id, on)),
 		add: useMutation({
+			mutationKey: key,
 			mutationFn: ({ listId, ...item }: { listId: string } & NewListItem) => api.addListItem(listId, item),
 			onMutate: ({ listId, title, due = null, memberId = null }) =>
 				showNow(qc, [
@@ -97,7 +110,7 @@ export function useListActions() {
 									...l,
 									items: [
 										...l.items.filter((i) => !i.done),
-										{ id: newId('item'), title, done: false, due, memberId, doneAt: null },
+										{ id: newId('item'), title, done: false, due, memberId, doneAt: null, doneBy: null },
 										...l.items.filter((i) => i.done),
 									],
 								}
@@ -108,6 +121,7 @@ export function useListActions() {
 			onSuccess: replace,
 		}),
 		update: useMutation({
+			mutationKey: key,
 			mutationFn: ({ id, ...patch }: { id: string } & ListItemPatch) => api.updateListItem(id, patch),
 			onMutate: ({ id, ...patch }) =>
 				showNow(qc, [items((l) => ({ ...l, items: l.items.map((i) => (i.id === id ? { ...i, ...patch } : i)) }))]),

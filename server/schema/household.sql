@@ -1,4 +1,4 @@
--- A household's database (server/db.ts), at version 61. Written by server/schema.test.ts; don't edit by hand.
+-- A household's database (server/db.ts), at version 63. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
@@ -263,7 +263,7 @@ CREATE TABLE list_items (
     member_id   TEXT REFERENCES members(id) ON DELETE SET NULL,
     created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     done_at     TEXT
-  , meal_plan_id TEXT REFERENCES meal_plans(id) ON DELETE CASCADE);
+  , meal_plan_id TEXT REFERENCES meal_plans(id) ON DELETE CASCADE, done_by TEXT);
 
 CREATE INDEX list_items_list ON list_items(list_id);
 
@@ -420,6 +420,13 @@ CREATE TABLE recipe_ratings (
     PRIMARY KEY (recipe_id, member_id)
   );
 
+CREATE TABLE recipe_ticks (
+    recipe_id TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    idx       INTEGER NOT NULL,
+    done_by   TEXT,
+    PRIMARY KEY (recipe_id, idx)
+  );
+
 CREATE TABLE recipes (
     id          TEXT PRIMARY KEY,
     data        TEXT NOT NULL,
@@ -504,6 +511,14 @@ CREATE TABLE sessions (
 CREATE TABLE settings (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
+  );
+
+CREATE TABLE shopping (
+    target    TEXT NOT NULL,
+    -- '' for a device with no one signed in (a key can't be NULL).
+    member_id TEXT NOT NULL,
+    until     INTEGER NOT NULL,
+    PRIMARY KEY (target, member_id)
   );
 
 CREATE TABLE special_reminders (

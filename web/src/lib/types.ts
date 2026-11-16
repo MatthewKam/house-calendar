@@ -86,7 +86,7 @@ export type {
 } from '../../../shared/calendars.ts';
 
 // Lists kept in Sprig itself: written once in shared/lists.ts, for the server and here.
-export type { ListItemPatch, NewListItem, SprigItem, SprigList } from '../../../shared/lists.ts';
+export type { ListItemPatch, LiveLists, NewListItem, SprigItem, SprigList } from '../../../shared/lists.ts';
 
 // Alerts on grown-ups' phones: written once in shared/push.ts.
 export type { PushKey } from '../../../shared/push.ts';

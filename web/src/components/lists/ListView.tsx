@@ -1,15 +1,19 @@
 import { useState, type CSSProperties, type FormEvent } from 'react';
+import { useMutationState } from '@tanstack/react-query';
 import {
+	LISTS,
+	useAuthStatus,
 	useChangeReminders,
 	useListActions,
 	useLists,
+	useLiveLists,
 	useMembers,
 	useReminders,
 	useSetSetting,
 	useSettings,
 } from '../../lib/queries';
 import type { Member, ReminderList } from '../../lib/types';
-import { dayKey, hhmm, toInstant } from '../../lib/dates';
+import { dayKey, hhmm, timeLabel, toInstant } from '../../lib/dates';
 import { dueLabel, isDay, isLate } from '../../lib/lists';
 import { PickChip } from '../ui/NameChip';
 import DateInput from '../ui/DateInput';
@@ -25,6 +29,7 @@ import s from './ListView.module.css';
 import { useParent } from '../../lib/useParent';
 import { textOn } from '../../lib/color';
 import Sheet from '../ui/Sheet';
+import { ShoppingButton, TickedBy } from '../ui/ShoppingTogether';
 
 /** Soft colors for a list's rows, light enough for dark text. */
 const LIST_COLORS = ['#f2dcb3', '#ecb0ea', '#c9dcf7', '#cdebd3', '#ddd3f5', '#f8cfb8', '#f6e7a1', '#c3ece4', '#e4e4e4'];
@@ -43,6 +48,8 @@ interface CardList {
 	title: string;
 	items: CardItem[];
 	syncedBy: ReminderList['syncedBy'];
+	/** Sprig's: who's shopping from it together now (null: a device with no one signed in). */
+	shopping: (string | null)[];
 }
 interface CardItem {
 	id: string;
@@ -52,11 +59,17 @@ interface CardItem {
 	/** Reminders: changed here and waiting for a phone. */
 	pending?: boolean;
 	memberId?: string | null;
+	/** Sprig's: who ticked it. */
+	doneBy?: string | null;
 }
 
 interface CardProps {
 	list: CardList;
 	members: Member[];
+	/** Who's on this device (null: no one in particular, the wall say). */
+	me: string | null;
+	/** Shopping together turned on or off here, from this list. */
+	onShopping: (on: boolean) => void;
 	color: string;
 	onColor: (color: string) => void;
 	/** Item names in the order they were dragged into (kept on the wall). */
@@ -64,7 +77,7 @@ interface CardProps {
 	onReorder: (order: string[]) => void;
 }
 
-function ListCard({ list, members, color, onColor, order, onReorder }: CardProps) {
+function ListCard({ list, members, me, onShopping, color, onColor, order, onReorder }: CardProps) {
 	const reminders = useChangeReminders();
 	const own = useListActions();
 	const sprig = list.source === 'sprig';
@@ -110,6 +123,14 @@ function ListCard({ list, members, color, onColor, order, onReorder }: CardProps
 	const typed = splitIcon(title.trim());
 	const addIcon = typed.icon ?? (newIcon === undefined ? suggestIcon(typed.text) : newIcon === 'none' ? null : newIcon);
 	const last = list.syncedBy[0];
+	// Changes of this device's still on their way: ticks by item, and added items (not given an id yet).
+	const saving = new Set(
+		useMutationState({
+			filters: { mutationKey: LISTS, status: 'pending' },
+			select: (m) => (m.state.variables as { id?: unknown } | undefined)?.id,
+		}),
+	);
+	const isSaving = (it: CardItem) => sprig && (saving.has(it.id) || it.id.startsWith('item-'));
 
 	function submit(e: FormEvent) {
 		e.preventDefault();
@@ -176,12 +197,14 @@ function ListCard({ list, members, color, onColor, order, onReorder }: CardProps
 							</span>
 						)}
 					</span>
-					{/* Changed here; it reaches Reminders at the next sync. */}
-					{it.pending && (
-						<span className={s.pending} title="Waiting to sync">
+					{/* Changed here; it reaches Reminders at the next sync, or the server (and the other phones) in a moment. */}
+					{(it.pending || isSaving(it)) && (
+						<span className={s.pending} title={it.pending ? 'Waiting to sync' : 'Saving…'}>
 							↻
 						</span>
 					)}
+					{/* Who ticked it, in their color. */}
+					{it.done && it.doneBy && <TickedBy by={it.doneBy} members={members} />}
 				</button>
 				{sprig && parent && (
 					<button
@@ -225,6 +248,7 @@ function ListCard({ list, members, color, onColor, order, onReorder }: CardProps
 						⋯
 					</button>
 				)}
+				{sprig && <ShoppingButton shopping={list.shopping} me={me} members={members} onChange={onShopping} />}
 				{last && (
 					<span className={s.synced} title={list.syncedBy.map((d) => `${d.device}: ${ago(d.at)}`).join('\n')}>
 						{last.device} · {ago(last.at)}
@@ -378,8 +402,15 @@ export default function ListView() {
 					))}
 				</div>
 			)}
-			{/* Loading: list-shaped blocks, not "no lists yet". */}
-			{ownQuery.isError ? (
+			{/* Couldn't check with the family's phones since: said, so two people shopping don't both buy it. */}
+			{ownQuery.data && (ownQuery.fetchStatus === 'paused' || ownQuery.errorUpdatedAt > ownQuery.dataUpdatedAt) && (
+				<p className={s.unsynced} role="status">
+					📶 Not synced since {timeLabel(new Date(ownQuery.dataUpdatedAt))}: ticks from other phones won’t show until
+					the signal’s back.
+				</p>
+			)}
+			{/* Loading: list-shaped blocks, not "no lists yet". A failed refresh keeps what's there (above). */}
+			{ownQuery.isError && !ownQuery.data ? (
 				<Problem kind="page" message={loadProblem('lists', ownQuery.error)} onRetry={() => void ownQuery.refetch()} />
 			) : ownQuery.isPending ? (
 				<Loading label="Loading lists" className={s.loading}>
@@ -398,6 +429,12 @@ function Lists({ hidden, onNew }: { hidden: (title: string) => boolean; onNew?: 
 	const reminders = useReminders();
 	const own = useLists();
 	const members = useMembers().data ?? [];
+	const auth = useAuthStatus().data;
+	const me = auth?.signedIn ? auth.memberId : null;
+	const { shopping } = useListActions();
+	// Shopping together from any list here: the lists come live while this page is open. It stays on
+	// for two hours (server/lists.ts) or until it's tapped off, so a look at a recipe and back finds it on.
+	useLiveLists((own.data ?? []).some((l) => l.shopping.includes(me)));
 	// Each list's color and its items' dragged order, kept on the wall by list name.
 	const settings = useSettings().data;
 	const colors = (settings?.listColors as Record<string, string> | undefined) ?? {};
@@ -406,7 +443,7 @@ function Lists({ hidden, onNew }: { hidden: (title: string) => boolean; onNew?: 
 	if (reminders.isPending || own.isPending) return null;
 	const all: CardList[] = [
 		...(own.data ?? []).map((l) => ({ ...l, source: 'sprig' as const, syncedBy: [] })),
-		...(reminders.data?.lists ?? []).map((l) => ({ ...l, id: l.title, source: 'reminders' as const })),
+		...(reminders.data?.lists ?? []).map((l) => ({ ...l, id: l.title, source: 'reminders' as const, shopping: [] })),
 	];
 	if (all.length === 0) {
 		return (
@@ -442,6 +479,8 @@ function Lists({ hidden, onNew }: { hidden: (title: string) => boolean; onNew?: 
 					key={`${l.source}:${l.id}`}
 					list={l}
 					members={members}
+					me={me}
+					onShopping={(on) => shopping.mutate({ id: l.id, on })}
 					// Until one is picked, each list gets the next color in turn.
 					color={colors[l.title.toLowerCase()] ?? LIST_COLORS[all.indexOf(l) % LIST_COLORS.length]}
 					onColor={(c) => setSetting.mutate({ key: 'listColors', value: { ...colors, [l.title.toLowerCase()]: c } })}
