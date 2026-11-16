@@ -908,6 +908,20 @@ const migrations: string[] = [
   );
   ALTER TABLE list_items ADD COLUMN meal_plan_id TEXT REFERENCES meal_plans(id) ON DELETE CASCADE;
   `,
+	// Reminders a grown-up sets on a special day, for themselves, every year (specialReminders.ts), each
+	// with what to do ("Pick up a present"). A special day is kept by its key (shared/specialDays.ts),
+	// since holidays and birthdays aren't rows.
+	`
+  CREATE TABLE special_reminders (
+    id           TEXT PRIMARY KEY,
+    member_id    TEXT REFERENCES members(id) ON DELETE CASCADE,
+    key          TEXT NOT NULL,
+    name         TEXT NOT NULL,
+    days_before  INTEGER NOT NULL,
+    note         TEXT,
+    created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

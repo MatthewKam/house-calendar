@@ -5,12 +5,14 @@ import { dirname } from 'node:path';
 import webpush from 'web-push';
 import type { DB } from './db.ts';
 import { kidIds } from './privacy.ts';
+import { specialRemindersAround } from './specialReminders.ts';
+import { dayIn } from '../shared/days.ts';
 import { schemaOf } from './schemas.ts';
 import { PushOff, PushOn, type PushKey, type Subscription } from '../shared/push.ts';
 import type { z } from 'zod';
 
-// Alerts on people's phones (web push): reminders on Sprig's lists as they come due, and time to
-// leave. A grown-up turns them on per device; the browser gives a subscription, kept here with whose
+// Alerts on people's phones (web push): reminders on Sprig's lists as they come due, time to leave,
+// and reminders on special days. A grown-up turns them on per device; the browser gives a subscription, kept here with whose
 // device it is and its time zone. Kid and wall devices don't get them. Sending is replaced in tests.
 
 /** A browser's push subscription (shared/push.ts). */
@@ -101,7 +103,7 @@ const dueAt = (due: string, d: DeviceRow) =>
 /** A time to leave is sent only this soon after it comes up (the wall shows it until the event). */
 const LEAVE_STALE = 30 * 60_000;
 
-/** Sends what has come due: reminders on Sprig's lists, and time to leave. Run every minute. */
+/** Sends what has come due: reminders on Sprig's lists, time to leave, and special days. Run every minute. */
 export async function sendDue(db: DB, pusher: Pusher, now = new Date(), log?: FastifyInstance['log']) {
 	const t = now.getTime();
 	// Noted sends are kept a month (long after anything could come due again).
@@ -168,6 +170,42 @@ export async function sendDue(db: DB, pusher: Pusher, now = new Date(), log?: Fa
 					body: `Leave by ${by} · ${a.drive_minutes} min to ${a.destination}`,
 					url: '/#today',
 					tag: `leave:${a.id}`,
+				},
+				log,
+			);
+		}
+	}
+	// Special days (specialReminders.ts), to the phones of who set the reminder, by each phone's own day.
+	for (const d of grownUpDevices(db)) {
+		const dayOf = dayIn(d.time_zone);
+		for (const r of specialRemindersAround(db, dayOf(now.toISOString()), dayOf)) {
+			if (r.member_id !== d.member_id) continue;
+			const at = dueAt(r.remindOn, d);
+			if (!(at <= t && t - at < STALE && at >= Date.parse(d.created_at))) continue;
+			const n = r.days_before;
+			const when =
+				n === 0
+					? 'is today'
+					: n === 1
+						? 'is tomorrow'
+						: n % 7 === 0
+							? `is in ${n / 7 === 1 ? 'a week' : `${n / 7} weeks`}`
+							: `is in ${n} days`;
+			const date = new Date(`${r.day}T12:00:00`).toLocaleDateString('en-US', {
+				weekday: 'long',
+				month: 'long',
+				day: 'numeric',
+			});
+			await sendOnce(
+				db,
+				pusher,
+				[d],
+				`special:${r.id}:${r.day}`,
+				{
+					title: `${r.picture} ${r.name} ${when}`,
+					body: r.note ? `${r.note} · ${date}` : date,
+					url: '/#today',
+					tag: `special:${r.id}`,
 				},
 				log,
 			);

@@ -765,9 +765,84 @@ details > summary.cardHead {
 	display: flex;
 	align-items: center;
 	gap: 0.7rem;
+	width: 100%;
 	padding: 0.45rem 0.7rem;
 	border-radius: var(--radius);
 	background: var(--bg);
+	font: inherit;
+	color: inherit;
+	text-align: left;
+}
+/* Your reminders on it, under its date. */
+.specialReminder {
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+
+/* A special day's reminders (SpecialDayDialog). */
+.specialDate {
+	margin: 0;
+	color: var(--muted);
+}
+.specialSubhead {
+	margin: 0.6rem 0 0;
+	font-size: 1rem;
+}
+.specialReminders {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.specialReminders li {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.45rem 0.7rem;
+	border-radius: var(--radius);
+	background: var(--bg);
+}
+.specialRemove {
+	flex: none;
+	min-width: 2.75rem;
+	min-height: 2.75rem;
+	font-size: 1.4rem;
+	color: var(--muted);
+}
+.specialWhen {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+.specialWhen button {
+	min-height: 2.75rem;
+	padding: 0.4rem 0.8rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-round);
+	background: var(--surface);
+	color: var(--text);
+	font: inherit;
+}
+.specialWhen button[aria-pressed='true'] {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--on-accent);
+}
+.specialNote {
+	font: inherit;
+	font-size: 1.05rem;
+	padding: 0.65rem 0.75rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	color: var(--text);
+	min-width: 0;
+}
+.specialProblem {
+	margin: 0;
+	color: var(--danger);
 }
 .specialToday {
 	background: color-mix(in srgb, var(--accent) 14%, var(--surface));

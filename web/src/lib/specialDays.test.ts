@@ -20,13 +20,13 @@ describe('special days', () => {
 		expect(
 			birthdays(
 				[
-					{ name: 'Tayen Kam', birthdate: '2022-11-18' },
-					{ name: 'Nolan', birthdate: null },
+					{ id: 't', name: 'Tayen Kam', birthdate: '2022-11-18' },
+					{ id: 'n', name: 'Nolan', birthdate: null },
 				],
 				2026,
 			),
-		).toEqual([{ day: '2026-11-18', name: "Tayen's birthday", picture: '🎂' }]);
-		expect(birthdays([{ name: 'Leap', birthdate: '2024-02-29' }], 2026)[0].day).toBe('2026-02-28');
+		).toEqual([{ day: '2026-11-18', name: "Tayen's birthday", picture: '🎂', key: 'birthday:t' }]);
+		expect(birthdays([{ id: 'l', name: 'Leap', birthdate: '2024-02-29' }], 2026)[0].day).toBe('2026-02-28');
 	});
 
 	it("shows the month's days, and in its last week the next month's first ones", () => {

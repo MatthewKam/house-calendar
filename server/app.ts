@@ -20,6 +20,7 @@ import { registerPrivacyGuard } from './privacy.ts';
 import { registerReminders } from './reminders.ts';
 import { registerLists } from './lists.ts';
 import { registerPush, type Pusher } from './push.ts';
+import { registerSpecialReminders } from './specialReminders.ts';
 import { registerCapture, type Understand } from './capture.ts';
 import { registerRecipes, type ReadRecipeFn } from './recipes.ts';
 import { registerMeals } from './meals.ts';
@@ -104,6 +105,7 @@ export function buildApp(
 	registerReminders(app, db, opts.remindersToken, opts.onRemindersChanged);
 	registerLists(app, db);
 	registerPush(app, db, opts.push);
+	registerSpecialReminders(app, db);
 	registerCapture(app, db, opts.understand);
 	// Recipe pictures sit beside the album's.
 	registerRecipes(app, db, {
