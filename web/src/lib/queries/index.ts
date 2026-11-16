@@ -12,3 +12,4 @@ export * from './photos';
 export * from './recipes';
 export * from './meals';
 export * from './specialDays';
+export * from './cook';

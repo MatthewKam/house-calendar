@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import inject from 'light-my-request';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { openDb } from './db.ts';
@@ -134,6 +134,28 @@ describe('the web address', () => {
 			expect(res.statusCode).toBe(200);
 			expect(res.body).toContain(`<title>${title}</title>`);
 		}
+		await web.close();
+	});
+
+	it('opens the app for a Cooking together link', async () => {
+		const dist = join(dir, 'dist');
+		mkdirSync(dist);
+		writeFileSync(join(dist, 'index.html'), '<title>Sprig</title>');
+		const web = buildServer(
+			accounts,
+			householdRegistry(() => ({}) as never),
+			{
+				dataDir: dir,
+				logger: false,
+				webDist: dist,
+			},
+		);
+		await web.app.ready();
+		const res = await inject(web.handle, {
+			url: `/cook/${'0'.repeat(8)}-0000-0000-0000-${'0'.repeat(12)}/${'x'.repeat(32)}`,
+		});
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toContain('<title>Sprig</title>');
 		await web.close();
 	});
 });

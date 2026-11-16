@@ -1,25 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { CookTimer } from '../../../../shared/cook.ts';
+import { clock } from '../../lib/cook';
 import s from './Recipes.module.css';
 
 /** Quick picks for a timer, in minutes. */
 const QUICK = [1, 3, 5, 10, 15, 20, 30];
-
-interface Timer {
-	id: number;
-	minutes: number;
-	endsAt: number;
-	/** Rung (it reached zero), until it's put away. */
-	rang: boolean;
-}
-
-/** "4:05", "1:02:30". */
-function clock(ms: number) {
-	const total = Math.max(0, Math.round(ms / 1000));
-	const h = Math.floor(total / 3600);
-	const m = Math.floor((total % 3600) / 60);
-	const sec = String(total % 60).padStart(2, '0');
-	return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
-}
 
 /** Three soft beeps, and a buzz on a phone: a timer's done. */
 function chime() {
@@ -45,13 +30,30 @@ function chime() {
 
 /**
  * Cooking: how long it's been since Start cooking, counting up, and timers set along the way ("cook 5
- * min"): quick picks or any number of minutes, several at once, each ringing when it's done.
+ * min"): quick picks or any number of minutes, several at once, each ringing when it's done, each
+ * with what it's for if that's said ("Soup"). The timers are the cook's (kept by whoever shows this),
+ * so cooking together can show them to the others.
  */
-export default function CookingBar({ startedAt, onDone }: { startedAt: number; onDone: () => void }) {
+export default function CookingBar({
+	startedAt,
+	timers,
+	onTimers,
+	onDone,
+	doneLabel = 'Done cooking',
+}: {
+	startedAt: number;
+	timers: CookTimer[];
+	onTimers: (timers: CookTimer[]) => void;
+	onDone: () => void;
+	doneLabel?: string;
+}) {
 	const [now, setNow] = useState(Date.now());
-	const [timers, setTimers] = useState<Timer[]>([]);
 	const [picking, setPicking] = useState(false);
 	const [typed, setTyped] = useState('');
+	const [name, setName] = useState('');
+	// Timers that have rung here (by id), so each rings once. Ones already done when they arrive (a
+	// day-long recipe opened again) don't ring.
+	const rang = useRef(new Set(timers.filter((t) => t.endsAt <= Date.now()).map((t) => t.id)));
 
 	useEffect(() => {
 		const tick = setInterval(() => setNow(Date.now()), 1000);
@@ -59,17 +61,19 @@ export default function CookingBar({ startedAt, onDone }: { startedAt: number; o
 	}, []);
 	// A timer reaching zero rings once.
 	useEffect(() => {
-		const due = timers.filter((t) => !t.rang && t.endsAt <= now);
+		const due = timers.filter((t) => !rang.current.has(t.id) && t.endsAt <= now);
 		if (!due.length) return;
 		chime();
-		setTimers((all) => all.map((t) => (due.includes(t) ? { ...t, rang: true } : t)));
+		due.forEach((t) => rang.current.add(t.id));
 	}, [now, timers]);
 
 	const start = (minutes: number) => {
 		if (!(minutes > 0)) return;
-		setTimers((all) => [...all, { id: Date.now(), minutes, endsAt: Date.now() + minutes * 60_000, rang: false }]);
+		const label = name.trim().replace(/\s+/g, ' ').slice(0, 40);
+		onTimers([...timers, { id: Date.now(), minutes, endsAt: Date.now() + minutes * 60_000, name: label || null }]);
 		setPicking(false);
 		setTyped('');
+		setName('');
 	};
 
 	return (
@@ -82,7 +86,7 @@ export default function CookingBar({ startedAt, onDone }: { startedAt: number; o
 					＋ Set a timer
 				</button>
 				<button type="button" className={s.doneCooking} onClick={onDone}>
-					Done cooking
+					{doneLabel}
 				</button>
 			</div>
 			{picking && (
@@ -93,6 +97,14 @@ export default function CookingBar({ startedAt, onDone }: { startedAt: number; o
 						start(Number(typed));
 					}}
 				>
+					<input
+						className={s.timerName}
+						placeholder="For what? (soup)"
+						aria-label="What the timer is for"
+						maxLength={40}
+						value={name}
+						onChange={(e) => setName(e.target.value)}
+					/>
 					{QUICK.map((m) => (
 						<button key={m} type="button" className={s.chip} onClick={() => start(m)}>
 							{m} min
@@ -114,15 +126,15 @@ export default function CookingBar({ startedAt, onDone }: { startedAt: number; o
 			{timers.length > 0 && (
 				<ul className={s.timers}>
 					{timers.map((t) => (
-						<li key={t.id} className={`${s.timer} ${t.rang ? s.timerRang : ''}`}>
+						<li key={t.id} className={`${s.timer} ${t.endsAt <= now ? s.timerRang : ''}`}>
 							<span>
-								{t.minutes} min timer: <b>{t.rang ? 'Done!' : clock(t.endsAt - now)}</b>
+								{t.name ?? `${t.minutes} min timer`}: <b>{t.endsAt <= now ? 'Done!' : clock(t.endsAt - now)}</b>
 							</span>
 							<button
 								type="button"
 								className={s.timerClose}
-								aria-label={t.rang ? 'Put the timer away' : 'Stop the timer'}
-								onClick={() => setTimers((all) => all.filter((x) => x.id !== t.id))}
+								aria-label={t.endsAt <= now ? 'Put the timer away' : 'Stop the timer'}
+								onClick={() => onTimers(timers.filter((x) => x.id !== t.id))}
 							>
 								×
 							</button>

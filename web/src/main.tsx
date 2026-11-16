@@ -9,6 +9,7 @@ import { guardTouch } from './lib/touchGuard';
 import { keys } from './lib/queries';
 import { problemText } from './lib/api';
 import { isApp, linksInSheet, loadSession } from './lib/native';
+import CookAlong from './components/recipes/CookAlong';
 
 const queryClient = new QueryClient({
 	// Edits show straight away and save in the background; if a save fails, the screen goes back and
@@ -54,14 +55,21 @@ guardTouch();
 await loadSession();
 linksInSheet();
 
+// A Cooking together link (server/cook.ts): its own page, open to anyone with it, no signing in.
+const cookPage = /^\/cook\/([0-9a-f-]{36})\/([A-Za-z0-9_-]{32})\/?$/.exec(location.pathname);
+
 createRoot(document.getElementById('app')!).render(
 	<StrictMode>
 		<QueryClientProvider client={queryClient}>
 			{/* The last resort: anything that breaks and isn't caught nearer shows a message with Reload. */}
 			<ErrorBoundary what="Sprig" kind="app">
-				<AuthGate>
-					<App />
-				</AuthGate>
+				{cookPage ? (
+					<CookAlong household={cookPage[1]} secret={cookPage[2]} />
+				) : (
+					<AuthGate>
+						<App />
+					</AuthGate>
+				)}
 			</ErrorBoundary>
 		</QueryClientProvider>
 	</StrictMode>,

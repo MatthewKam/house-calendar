@@ -276,6 +276,12 @@
 	background: var(--surface);
 	color: var(--text);
 }
+/* What a timer is for ("Soup"): the whole row above the quick picks. */
+.timerName {
+	composes: timerInput;
+	flex: 1 1 100%;
+	width: auto;
+}
 .timers {
 	list-style: none;
 	margin: 0;
@@ -1645,4 +1651,90 @@ button.ideaSearch {
 .shopRow {
 	display: flex;
 	margin-top: 0.4rem;
+}
+/* Cooking together: the others cooking along, a line each (CookingWith.tsx). */
+.cookingWith {
+	list-style: none;
+	margin: 0;
+	padding: 0.5rem 0.7rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	border-radius: var(--radius-sm);
+	background: var(--bg);
+	font-size: 0.92rem;
+}
+.cookingWith li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.2rem 0.5rem;
+}
+.cookingWith li > span:last-child {
+	color: var(--muted);
+}
+.cookDot {
+	flex: none;
+	width: 0.7rem;
+	height: 0.7rem;
+	border-radius: var(--radius-round);
+}
+/* Cooking together's row: the link to share, how long it lasts, and ending it. */
+.cookTogether {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem 0.6rem;
+	font-size: 0.92rem;
+}
+/* A Cooking together link's page (CookAlong.tsx): the recipe on its own, a column down the middle. */
+.along {
+	min-height: 100dvh;
+	box-sizing: border-box;
+	max-width: 40rem;
+	margin: 0 auto;
+	padding: calc(env(safe-area-inset-top, 0px) + 1rem) 1rem calc(env(safe-area-inset-bottom, 0px) + 2rem);
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+	background: var(--bg);
+}
+.alongHead {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.4rem 1rem;
+}
+.alongMark {
+	height: 1.8rem;
+	align-self: flex-start;
+}
+.alongTitle {
+	margin: 0;
+	font-size: 1.6rem;
+}
+.alongCover {
+	width: 100%;
+	max-height: 16rem;
+	object-fit: cover;
+	border-radius: var(--radius-lg);
+}
+.alongName {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.alongName input {
+	min-height: 3rem;
+	padding: 0 0.8rem;
+	font: inherit;
+	font-size: 1.1rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	color: var(--text);
+}
+.alongName button {
+	min-height: 3rem;
 }

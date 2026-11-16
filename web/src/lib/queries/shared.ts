@@ -42,7 +42,7 @@ export const REFRESH_MS = 60_000;
 
 /**
  * While `on`: asks again and again for what's cached at `key`, each ask answered as soon as it changes
- * on the server (a tick on the other phone), and puts it in the cache. Its edits use `key` as their
+ * on the server (a tick on the other phone), and puts it in the cache (made from the answer, and what was there). Its edits use `key` as their
  * mutation key: while one is on its way it answers with the data itself, and an answer from here could
  * put its tick back for a moment. Without a signal it tries again in a moment (OfflineBar and the
  * page say it isn't syncing meanwhile).
@@ -51,7 +51,7 @@ export function useLive<T extends { stamp: string }>(
 	on: boolean,
 	key: QueryKey,
 	ask: (stamp: string | null, signal: AbortSignal) => Promise<T>,
-	data: (live: T) => unknown,
+	data: (live: T, old: unknown) => unknown,
 ) {
 	const qc = useQueryClient();
 	const id = JSON.stringify(key);
@@ -73,7 +73,7 @@ export function useLive<T extends { stamp: string }>(
 				try {
 					const live = await ask(stamp, stop.signal);
 					stamp = live.stamp;
-					if (!qc.isMutating({ mutationKey: queryKey })) qc.setQueryData(queryKey, data(live));
+					if (!qc.isMutating({ mutationKey: queryKey })) qc.setQueryData(queryKey, (old: unknown) => data(live, old));
 				} catch {
 					await pause(3_000);
 				}
