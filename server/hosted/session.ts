@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { IncomingMessage } from 'node:http';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { createHmac, randomBytes, randomUUID } from 'node:crypto';
 import type { AccountsDB, HouseholdRow, MembershipRow, SessionRow } from '../accounts.ts';
 import type { HouseholdRegistry } from '../households.ts';
 import type { SendCode, VerifyToken } from '../identity.ts';
@@ -50,6 +50,29 @@ export interface ServerOptions {
 	logger?: boolean;
 }
 
+/**
+ * The phone app's pages (Capacitor: iOS, then Android). It's another origin, so it can't use the cookie:
+ * when it signs in, the token comes back in a header (x-session-token), and it sends it as a Bearer token.
+ */
+export const APP_ORIGINS = ['capacitor://localhost', 'https://localhost'];
+
+/**
+ * Pictures, videos and sounds, which the app shows by address (an <img> or <video>) and so can't send its
+ * token with. It adds a media key to the address instead (?media=…): it opens only these, and only while
+ * its session lasts. The key is the session's id (as Settings' device list shows it) and a check made from
+ * the session's hash, so nothing more is stored.
+ */
+const MEDIA = /^\/api\/(photos\/[^/]+\/(full|thumb|video)|recipes\/images\/[^/]+|learn\/sounds\/[^/]+)$/;
+export const mediaKey = (tokenHash: string) =>
+	`${tokenHash.slice(0, 16)}.${createHmac('sha256', tokenHash).update('media').digest('base64url').slice(0, 32)}`;
+/** The address without its media key, for the household it's passed to (and its logs). */
+export const withoutMediaKey = (url: string) => {
+	const u = new URL(url, 'http://x');
+	if (!u.searchParams.has('media')) return url;
+	u.searchParams.delete('media');
+	return u.pathname + u.search;
+};
+
 function tokenOf(req: IncomingMessage) {
 	const m = new RegExp(`(?:^|;\\s*)${COOKIE}=([^;]+)`).exec(req.headers.cookie ?? '');
 	if (m) return m[1];
@@ -94,11 +117,22 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
 	const sessionOf = (req: IncomingMessage | FastifyRequest) => {
 		const raw = 'raw' in req ? req.raw : req;
 		const token = tokenOf(raw);
-		const hash = started.get(raw) ?? (token ? sha(token) : null);
+		const hash = started.get(raw) ?? (token ? sha(token) : mediaSession(raw));
 		return hash
 			? (accounts.prepare('SELECT * FROM sessions WHERE token_hash = ?').get(hash) as SessionRow | undefined)
 			: undefined;
 	};
+	/** The session a picture's address opens with its media key (see MEDIA). */
+	function mediaSession(req: IncomingMessage) {
+		if (req.method !== 'GET' && req.method !== 'HEAD') return null;
+		const url = new URL(req.url ?? '/', 'http://x');
+		const key = url.searchParams.get('media');
+		if (!key || !MEDIA.test(url.pathname)) return null;
+		const rows = accounts
+			.prepare('SELECT token_hash FROM sessions WHERE substr(token_hash, 1, 16) = ?')
+			.all(key.slice(0, 16)) as { token_hash: string }[];
+		return rows.find((r) => mediaKey(r.token_hash) === key)?.token_hash ?? null;
+	}
 	const householdById = (id: string | null) =>
 		id ? (accounts.prepare('SELECT * FROM households WHERE id = ?').get(id) as HouseholdRow | undefined) : undefined;
 
@@ -204,6 +238,9 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
 				entered: row.entered ?? 1,
 			});
 		started.set(req.raw, sha(token));
+		// The phone app keeps its token itself (it has no cookie), with the media key for pictures.
+		if (APP_ORIGINS.includes(req.headers.origin ?? ''))
+			reply.header('x-session-token', token).header('x-media-key', mediaKey(sha(token)));
 		const secure = req.protocol === 'https';
 		reply.header(
 			'set-cookie',

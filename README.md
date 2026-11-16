@@ -284,6 +284,21 @@ alert opens Sprig on Lists (or Today). Kids' devices and the wall don't get aler
   `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (`npx web-push generate-vapid-keys`) and `VAPID_SUBJECT` (an https URL or
   `mailto:`) in `.env` instead.
 
+## The iPhone and iPad app
+
+The same pages, shipped inside a native app made with [Capacitor](https://capacitorjs.com) (`ios/`, set up in
+`capacitor.config.ts`). It calls sprig-family.com for everything, signed in with a token kept in the phone's Keychain
+rather than a cookie (`web/src/lib/native.ts`); pictures carry a media key that opens only them
+(`server/hosted/session.ts`). Needs Xcode; no CocoaPods (the plugins come as Swift packages).
+
+- `npm run ios` builds the pages, copies them into the app and opens Xcode: pick a simulator or your iPhone and press
+  Run. After changing the pages, `npm run ios:sync` copies them in again.
+- To try it against a server on your Mac instead (`npm run dev:test`, say), build with
+  `VITE_APP_SERVER=http://localhost:3000 npm run ios:sync`. The simulator reaches `localhost`; a real iPhone needs the
+  Mac's address.
+- The server only accepts the app's calls from its own origins (`capacitor://localhost`, and `https://localhost` for
+  Android later), and only with a token.
+
 ## Using it
 
 - **Parent lock:** a guardian signed in on their own phone can change anything. The wall and kids' devices start

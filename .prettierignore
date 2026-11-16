@@ -6,3 +6,6 @@ web/dist/
 web/public/
 server/schema/
 docs/
+# The native app projects (Capacitor): Xcode's and the copied pages.
+ios/
+android/

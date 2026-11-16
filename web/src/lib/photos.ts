@@ -1,4 +1,5 @@
 import { SprigError } from './api';
+import { SERVER, authHeaders, mediaUrl } from './native';
 import type { Photo } from './types';
 
 // Getting photos ready in the browser: shrunk to wall size (and a thumbnail) before uploading, so
@@ -91,9 +92,9 @@ export async function uploadPhoto(p: Prepared, inSlideshow: boolean, onProgress:
 	});
 	const photo = await send(`/api/photos?${query}`, 'image/jpeg', p.full, onProgress);
 	// The thumbnail is small; a failure just means the grid shows the full photo.
-	await fetch(`/api/photos/${photo.id}/thumb`, {
+	await fetch(`${SERVER}/api/photos/${photo.id}/thumb`, {
 		method: 'PUT',
-		headers: { 'content-type': 'image/jpeg' },
+		headers: { ...authHeaders(), 'content-type': 'image/jpeg' },
 		body: p.thumb,
 	}).catch(() => {});
 	return photo;
@@ -115,8 +116,9 @@ export async function uploadFlyer(file: File): Promise<Photo> {
 function send(url: string, type: string, body: Blob, onProgress: (f: number) => void): Promise<Photo> {
 	return new Promise((resolve, reject) => {
 		const xhr = new XMLHttpRequest();
-		xhr.open('POST', url);
+		xhr.open('POST', SERVER + url);
 		xhr.setRequestHeader('content-type', type);
+		for (const [k, v] of Object.entries(authHeaders())) xhr.setRequestHeader(k, v);
 		xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total);
 		xhr.onerror = () => reject(new SprigError('Upload failed (no connection)'));
 		xhr.onload = () => {
@@ -129,7 +131,8 @@ function send(url: string, type: string, body: Blob, onProgress: (f: number) => 
 				}
 				return reject(new SprigError(msg));
 			}
-			resolve(JSON.parse(xhr.responseText) as Photo);
+			const photo = JSON.parse(xhr.responseText) as Photo;
+			resolve({ ...photo, url: mediaUrl(photo.url), thumbUrl: mediaUrl(photo.thumbUrl) });
 		};
 		xhr.send(body);
 	});

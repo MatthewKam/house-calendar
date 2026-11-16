@@ -13,6 +13,8 @@
 		"dev:test": "DATA_DIR=data-test ICLOUD_APPLE_ID= ICLOUD_APP_PASSWORD= REMINDERS_MAC= REMINDERS_SHORTCUT= npm run dev",
 		"dev:web": "vite",
 		"build": "vite build",
+		"ios": "vite build && cap sync ios && cap open ios",
+		"ios:sync": "vite build && cap sync ios",
 		"start": "NODE_ENV=production tsx server/index.ts",
 		"test": "vitest run",
 		"check": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json",
@@ -22,6 +24,12 @@
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.131.0",
+		"@aparajita/capacitor-secure-storage": "8.0.1",
+		"@capacitor/android": "8.6.0",
+		"@capacitor/app": "8.1.2",
+		"@capacitor/core": "8.6.0",
+		"@capacitor/ios": "8.6.0",
+		"@capacitor/keyboard": "8.0.6",
 		"@fastify/static": "^10.1.5",
 		"@tanstack/react-query": "^5.104.1",
 		"better-sqlite3": "^13.0.3",
@@ -37,6 +45,7 @@
 		"zod": "^4.6.5"
 	},
 	"devDependencies": {
+		"@capacitor/cli": "8.6.0",
 		"@eslint/js": "^10.0.1",
 		"@types/better-sqlite3": "^9.6.0",
 		"@types/node": "^26.6.4",
