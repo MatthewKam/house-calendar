@@ -86,7 +86,7 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 				{view === null && auth?.signedIn && <SignedInAs status={auth} onClose={onClose} />}
 
 				<Group title="Family">
-					<Section title="Family" note={members.map((m) => m.name).join(', ')}>
+					<Section title="Household" note={members.map((m) => m.name).join(', ')}>
 						<FamilyMembers members={members} />
 					</Section>
 					<Section title="Home address" note={homeAddress || 'Not set'}>
