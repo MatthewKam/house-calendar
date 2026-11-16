@@ -6,3 +6,6 @@ data
 .DS_Store
 docs/media
 *.tgz
+data-*
+ios
+android
