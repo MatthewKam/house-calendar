@@ -338,6 +338,8 @@ export function registerRecipes(
 		async (req, reply) => {
 			if (!get(req.params.id)) return reply.code(404).send({ error: 'Recipe not found' });
 			db.prepare('UPDATE recipes SET data = ? WHERE id = ?').run(JSON.stringify(req.body), req.params.id);
+			// Shopping ticks go by each ingredient's place, which may have changed (recipeShopping.ts).
+			db.prepare('DELETE FROM recipe_ticks WHERE recipe_id = ?').run(req.params.id);
 			return toRecipe(get(req.params.id)!);
 		},
 	);

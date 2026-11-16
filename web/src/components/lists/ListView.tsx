@@ -29,6 +29,7 @@ import s from './ListView.module.css';
 import { useParent } from '../../lib/useParent';
 import { textOn } from '../../lib/color';
 import Sheet from '../ui/Sheet';
+import { ShoppingButton, TickedBy } from '../ui/ShoppingTogether';
 
 /** Soft colors for a list's rows, light enough for dark text. */
 const LIST_COLORS = ['#f2dcb3', '#ecb0ea', '#c9dcf7', '#cdebd3', '#ddd3f5', '#f8cfb8', '#f6e7a1', '#c3ece4', '#e4e4e4'];
@@ -76,9 +77,6 @@ interface CardProps {
 	onReorder: (order: string[]) => void;
 }
 
-/** A shopper's name: theirs, or "Someone" for a device with no one signed in. */
-const nameOf = (members: Member[], id: string | null) => members.find((m) => m.id === id)?.name ?? 'Someone';
-
 function ListCard({ list, members, me, onShopping, color, onColor, order, onReorder }: CardProps) {
 	const reminders = useChangeReminders();
 	const own = useListActions();
@@ -125,9 +123,6 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 	const typed = splitIcon(title.trim());
 	const addIcon = typed.icon ?? (newIcon === undefined ? suggestIcon(typed.text) : newIcon === 'none' ? null : newIcon);
 	const last = list.syncedBy[0];
-	// Shopping together: whether this device is, and who else is.
-	const shoppingHere = list.shopping.includes(me);
-	const others = list.shopping.filter((id) => id !== me).map((id) => nameOf(members, id));
 	// Changes of this device's still on their way: ticks by item, and added items (not given an id yet).
 	const saving = new Set(
 		useMutationState({
@@ -209,14 +204,7 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 						</span>
 					)}
 					{/* Who ticked it, in their color. */}
-					{it.done && it.doneBy && (
-						<span
-							className={s.tickedBy}
-							style={{ background: members.find((m) => m.id === it.doneBy)?.color }}
-							title={`Ticked by ${nameOf(members, it.doneBy)}`}
-							aria-label={`ticked by ${nameOf(members, it.doneBy)}`}
-						/>
-					)}
+					{it.done && it.doneBy && <TickedBy by={it.doneBy} members={members} />}
 				</button>
 				{sprig && parent && (
 					<button
@@ -260,27 +248,7 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 						⋯
 					</button>
 				)}
-				{sprig && (
-					<button
-						className={s.shopping}
-						aria-pressed={shoppingHere}
-						onClick={() => onShopping(!shoppingHere)}
-						title={
-							shoppingHere
-								? 'Ticks from the other phones show straight away, for 2 hours. Tap to stop.'
-								: 'Shopping with someone? Ticks show on each other’s phones straight away, for 2 hours.'
-						}
-					>
-						🛒{' '}
-						{shoppingHere
-							? others.length
-								? `Live with ${others.join(', ')}`
-								: 'Shopping together'
-							: others.length
-								? `${others.join(', ')} ${others.length === 1 ? 'is' : 'are'} shopping · Join`
-								: 'Shopping together'}
-					</button>
-				)}
+				{sprig && <ShoppingButton shopping={list.shopping} me={me} members={members} onChange={onShopping} />}
 				{last && (
 					<span className={s.synced} title={list.syncedBy.map((d) => `${d.device}: ${ago(d.at)}`).join('\n')}>
 						{last.device} · {ago(last.at)}

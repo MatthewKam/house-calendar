@@ -1641,3 +1641,8 @@ button.ideaSearch {
 	font-size: 0.9rem;
 	text-align: center;
 }
+/* Shopping together from a recipe: the button, under the Ingredients heading. */
+.shopRow {
+	display: flex;
+	margin-top: 0.4rem;
+}

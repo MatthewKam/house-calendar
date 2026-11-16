@@ -48,9 +48,6 @@ export const SprigList = z.object({
 	shopping: z.array(z.string().nullable()),
 });
 
-/** Shopping together from a list, or stopping (PUT /api/lists/:id/shopping). */
-export const Shopping = z.strictObject({ on: z.boolean() });
-
 /** The lists, and a stamp of how they are: the same stamp, nothing has changed (GET /api/lists/live). */
 export const LiveLists = z.object({ stamp: z.string(), lists: z.array(SprigList) });
 
@@ -62,5 +59,4 @@ export type NewListItem = z.input<typeof ListItemInput>;
 export type ListItemPatch = z.infer<typeof ListItemPatch>;
 export type SprigItem = z.infer<typeof SprigItem>;
 export type SprigList = z.infer<typeof SprigList>;
-export type Shopping = z.infer<typeof Shopping>;
 export type LiveLists = z.infer<typeof LiveLists>;

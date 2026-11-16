@@ -64,6 +64,7 @@ import type {
 } from './types';
 import type { SpecialReminder, SpecialReminderNew } from '../../../shared/specialReminders.ts';
 import type { DayPlans, DayTick } from '../../../shared/dayPlans.ts';
+import type { LiveRecipeShopping, RecipeShopping } from '../../../shared/shopping.ts';
 import { SERVER, authHeaders, forgetSession, isApp, keepSession, mediaUrl } from './native';
 
 /**
@@ -377,6 +378,15 @@ export const api = {
 		call<Recipe>('POST', `/api/recipes/${id}/cooks`, { minutes, note }),
 	/** The family's tags; notes after cooking. */
 	setRecipeTags: (id: string, tags: string[]) => call<Recipe>('PUT', `/api/recipes/${id}/tags`, { tags }),
+	/** Shopping together from a recipe (server/recipeShopping.ts): who is, and what's ticked by whom. */
+	recipeShopping: (id: string) => call<RecipeShopping>('GET', `/api/recipes/${id}/shopping`),
+	setRecipeShopping: (id: string, on: boolean) => call<RecipeShopping>('PUT', `/api/recipes/${id}/shopping`, { on }),
+	tickIngredient: (id: string, index: number, done: boolean) =>
+		call<RecipeShopping>('PUT', `/api/recipes/${id}/ticks/${index}`, { done }),
+	liveRecipeShopping: (id: string, stamp: string | null, signal: AbortSignal) =>
+		call<LiveRecipeShopping>('GET', `/api/recipes/${id}/shopping/live${stamp ? `?stamp=${stamp}` : ''}`, undefined, {
+			signal,
+		}),
 	addRecipeNote: (id: string, text: string) => call<Recipe>('POST', `/api/recipes/${id}/notes`, { text }),
 	editRecipeNote: (id: string, noteId: string, text: string) =>
 		call<Recipe>('PUT', `/api/recipes/${id}/notes/${noteId}`, { text }),

@@ -1,10 +1,9 @@
 // Lists: Sprig's own, and Reminders.
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
 import { api } from '../api';
 import type { ListItemPatch, NewListItem, ReminderList, SprigList } from '../types';
-import { type Patch, showNow, putBack, newId, keys } from './shared';
+import { type Patch, showNow, putBack, newId, keys, useLive } from './shared';
 
 /** Reminders lists; refreshed often so a phone's sync shows up soon after it runs. */
 export function useReminders() {
@@ -75,39 +74,9 @@ export function useLists() {
 
 /**
  * Shopping together: while it's on, the lists come straight from the server as they change (a tick on
- * the other phone), not every 30 seconds. Each ask waits for a change; without a signal it tries again
- * in a moment (OfflineBar and the Lists page say it isn't syncing meanwhile).
+ * the other phone), not every 30 seconds.
  */
-export function useLiveLists(on: boolean) {
-	const qc = useQueryClient();
-	useEffect(() => {
-		if (!on) return;
-		const stop = new AbortController();
-		const pause = (ms: number) =>
-			new Promise<void>((done) => {
-				const t = setTimeout(done, ms);
-				stop.signal.addEventListener('abort', () => {
-					clearTimeout(t);
-					done();
-				});
-			});
-		void (async () => {
-			let stamp: string | null = null;
-			while (!stop.signal.aborted) {
-				try {
-					const live = await api.liveLists(stamp, stop.signal);
-					stamp = live.stamp;
-					// An edit of this phone's on its way answers with every list itself; this could put its
-					// tick back for a moment.
-					if (!qc.isMutating({ mutationKey: LISTS })) qc.setQueryData(LISTS, live.lists);
-				} catch {
-					await pause(3_000);
-				}
-			}
-		})();
-		return () => stop.abort();
-	}, [on, qc]);
-}
+export const useLiveLists = (on: boolean) => useLive(on, LISTS, api.liveLists, (live) => live.lists);
 
 /**
  * Changing Sprig's lists: each answer is every list, which replaces the cache. Adding and ticking

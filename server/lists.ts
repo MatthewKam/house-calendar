@@ -1,26 +1,26 @@
 import type { FastifyInstance } from 'fastify';
-import { createHash, randomUUID } from 'node:crypto';
-import type { Viewer } from './auth.ts';
+import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
 import { isDay, noneOrMember, schemaOf } from './schemas.ts';
+import { LIVE_TIMES, liveAnswer, memberAsking, setShopping, shoppersOf, type LiveTimes } from './shopping.ts';
 import {
 	ListItemInput,
 	ListItemPatch,
 	ListName,
-	Shopping,
 	type LiveLists,
 	type SprigItem,
 	type SprigList,
 } from '../shared/lists.ts';
+import { Shopping } from '../shared/shopping.ts';
 
 // Lists kept in Sprig itself: groceries, to-dos, packing. No Reminders Shortcut needed (that's
 // reminders.ts, whose lists show beside these). An item can say when (a reminder, due that day or at
 // a time) and who it's for. Anyone adds and ticks; naming, deleting and the when and who are a
 // parent's (auth.ts).
 //
-// Shopping together: people shopping from the same list turn it on, and while it's on their phones
-// ask /api/lists/live, which answers as soon as anything on the lists changes (a tick on the other
-// phone, say) instead of every 30 seconds, so two people don't pick up the same thing.
+// Shopping together (shopping.ts): people shopping from the same list turn it on, and while it's on
+// their phones ask /api/lists/live, which answers as soon as anything on the lists changes (a tick on
+// the other phone, say), so two people don't pick up the same thing.
 
 /** A when: a day (YYYY-MM-DD) or an instant. */
 const validDue = (d: string) => isDay(d) || !Number.isNaN(Date.parse(d));
@@ -53,26 +53,8 @@ const toItem = (r: ItemRow): SprigItem => ({
 	doneBy: r.done_at ? r.done_by : null,
 });
 
-/** How long Shopping together stays on without being turned on again: a trip to the shops, at most. */
-export const SHOPPING_MS = 2 * 60 * 60 * 1000;
-/** How long /api/lists/live waits for a change before answering anyway (under the app's 30-second limit). */
-const LIVE_WAIT_MS = 20_000;
-/** How often it looks while waiting. */
-const LIVE_LOOK_MS = 1_000;
-
-/** Who's shopping from each list together, until when: by list id, then member id (null: a device with no one). */
-type Shoppers = Map<string, Map<string | null, number>>;
-
-/** Who's shopping from a list now, forgetting anyone whose time ran out. */
-function shoppingOn(shoppers: Shoppers, listId: string, now = Date.now()) {
-	const on = shoppers.get(listId);
-	if (!on) return [];
-	for (const [who, until] of on) if (until <= now) on.delete(who);
-	return [...on.keys()];
-}
-
 /** Every list with its items: open ones oldest first, then done ones, most recently done first. */
-function listsOf(db: DB, shoppers: Shoppers): SprigList[] {
+function allLists(db: DB): SprigList[] {
 	const lists = db.prepare('SELECT * FROM lists ORDER BY created_at').all() as ListRow[];
 	const items = db
 		.prepare('SELECT * FROM list_items ORDER BY done, CASE WHEN done = 1 THEN done_at END DESC, created_at')
@@ -81,7 +63,7 @@ function listsOf(db: DB, shoppers: Shoppers): SprigList[] {
 		id: l.id,
 		title: l.title,
 		items: items.filter((i) => i.list_id === l.id).map(toItem),
-		shopping: shoppingOn(shoppers, l.id),
+		shopping: shoppersOf(db, `list:${l.id}`),
 	}));
 }
 
@@ -89,54 +71,26 @@ function listsOf(db: DB, shoppers: Shoppers): SprigList[] {
 const forgetAlerts = (db: DB, itemId: string) =>
 	db.prepare(`DELETE FROM push_sent WHERE key LIKE ? ESCAPE '\\'`).run(`item:${itemId.replace(/[\\%_]/g, '\\$&')}:%`);
 
-/** A stamp of how the lists are now: it changes when anything on them does. */
-const stampOf = (lists: SprigList[]) => createHash('sha1').update(JSON.stringify(lists)).digest('hex');
+export function registerLists(app: FastifyInstance, db: DB, live: LiveTimes = LIVE_TIMES) {
+	app.get('/api/lists', async () => allLists(db));
 
-/** The member asking (a guardian or kid, or whose PIN unlocked the device), if they're in this family. */
-function memberAsking(db: DB, viewer: Viewer | undefined) {
-	const id = viewer?.memberId ?? viewer?.actor ?? null;
-	return id && db.prepare('SELECT 1 FROM members WHERE id = ?').get(id) ? id : null;
-}
-
-export function registerLists(
-	app: FastifyInstance,
-	db: DB,
-	live: { waitMs: number; lookMs: number } = { waitMs: LIVE_WAIT_MS, lookMs: LIVE_LOOK_MS },
-) {
-	const shoppers: Shoppers = new Map();
-	const allLists = () => listsOf(db, shoppers);
-	app.get('/api/lists', async () => allLists());
-
-	// Shopping together from a list: on (for SHOPPING_MS, or until it's turned off), or off.
+	// Shopping together from a list: on (for two hours, or until it's turned off), or off.
 	app.put<{ Params: { id: string }; Body: Shopping }>(
 		'/api/lists/:id/shopping',
 		{ schema: { body: schemaOf(Shopping) } },
 		async (req, reply) => {
 			if (!db.prepare('SELECT 1 FROM lists WHERE id = ?').get(req.params.id))
 				return reply.code(404).send({ error: 'List not found' });
-			const who = memberAsking(db, req.raw.viewer);
-			const on = shoppers.get(req.params.id) ?? new Map<string | null, number>();
-			if (req.body.on) on.set(who, Date.now() + SHOPPING_MS);
-			else on.delete(who);
-			shoppers.set(req.params.id, on);
-			return allLists();
+			setShopping(db, `list:${req.params.id}`, memberAsking(db, req.raw.viewer), req.body.on);
+			return allLists(db);
 		},
 	);
 
 	// The lists as soon as they're not as the stamp says (straight away if they already aren't), or as
-	// they are after LIVE_WAIT_MS. Asked over and over while shopping together.
+	// they are after a while (shopping.ts). Asked over and over while shopping together.
 	app.get<{ Querystring: { stamp?: string } }>('/api/lists/live', async (req, reply): Promise<LiveLists> => {
-		const since = req.query.stamp;
-		const until = Date.now() + live.waitMs;
-		let gone = false;
-		// The phone stopped asking (left the page, lost the signal): no answer to wait for.
-		reply.raw.on('close', () => (gone = true));
-		for (;;) {
-			const lists = allLists();
-			const stamp = stampOf(lists);
-			if (stamp !== since || Date.now() >= until || gone) return { stamp, lists };
-			await new Promise((done) => setTimeout(done, live.lookMs));
-		}
+		const { stamp, value } = await liveAnswer(() => allLists(db), req.query.stamp, reply, live);
+		return { stamp, lists: value };
 	});
 
 	app.post<{ Body: ListName }>(
@@ -151,7 +105,7 @@ export function registerLists(
 			if (taken) return reply.code(409).send({ error: 'There is already a list with that name' });
 			db.prepare('INSERT INTO lists (id, title) VALUES (?, ?)').run(randomUUID(), title);
 			reply.code(201);
-			return allLists();
+			return allLists(db);
 		},
 	);
 
@@ -168,20 +122,21 @@ export function registerLists(
 			}
 			if (!db.prepare('UPDATE lists SET title = ? WHERE id = ?').run(title, req.params.id).changes)
 				return reply.code(404).send({ error: 'List not found' });
-			return allLists();
+			return allLists(db);
 		},
 	);
 
 	app.delete<{ Params: { id: string } }>('/api/lists/:id', async (req, reply) => {
 		if (!db.prepare('DELETE FROM lists WHERE id = ?').run(req.params.id).changes)
 			return reply.code(404).send({ error: 'List not found' });
-		return allLists();
+		db.prepare('DELETE FROM shopping WHERE target = ?').run(`list:${req.params.id}`);
+		return allLists(db);
 	});
 
 	// Done items off the list, for good.
 	app.delete<{ Params: { id: string } }>('/api/lists/:id/done', async (req) => {
 		db.prepare('DELETE FROM list_items WHERE list_id = ? AND done = 1').run(req.params.id);
-		return allLists();
+		return allLists(db);
 	});
 
 	app.post<{ Params: { id: string }; Body: ListItemInput }>(
@@ -205,7 +160,7 @@ export function registerLists(
 				memberId,
 			);
 			reply.code(201);
-			return allLists();
+			return allLists(db);
 		},
 	);
 
@@ -239,7 +194,7 @@ export function registerLists(
 				done ? 1 : 0,
 				row.id,
 			);
-			return allLists();
+			return allLists(db);
 		},
 	);
 
@@ -247,6 +202,6 @@ export function registerLists(
 		if (!db.prepare('DELETE FROM list_items WHERE id = ?').run(req.params.id).changes)
 			return reply.code(404).send({ error: 'Item not found' });
 		forgetAlerts(db, req.params.id);
-		return allLists();
+		return allLists(db);
 	});
 }
