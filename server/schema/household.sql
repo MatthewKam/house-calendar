@@ -1,4 +1,4 @@
--- A household's database (server/db.ts), at version 58. Written by server/schema.test.ts; don't edit by hand.
+-- A household's database (server/db.ts), at version 59. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
@@ -40,6 +40,28 @@ CREATE TABLE daily_items (
     kind  TEXT NOT NULL,
     data  TEXT NOT NULL,
     PRIMARY KEY (day, kind)
+  );
+
+CREATE TABLE day_list (
+    id         TEXT PRIMARY KEY,
+    key        TEXT NOT NULL,
+    title      TEXT NOT NULL,
+    picture    TEXT,
+    sort_order INTEGER NOT NULL
+  );
+
+CREATE INDEX day_list_key ON day_list(key);
+
+CREATE TABLE day_list_ticks (
+    item_id TEXT NOT NULL REFERENCES day_list(id) ON DELETE CASCADE,
+    day     TEXT NOT NULL,
+    PRIMARY KEY (item_id, day)
+  );
+
+CREATE TABLE day_notes (
+    key        TEXT PRIMARY KEY,
+    note       TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
 
 CREATE TABLE event_checklist (

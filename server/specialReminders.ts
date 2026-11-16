@@ -3,12 +3,15 @@ import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
 import { schemaOf } from './schemas.ts';
 import { addDayKey } from '../shared/days.ts';
+import { dateOfKey } from '../shared/dayPlans.ts';
 import { birthdays, specialDaysBetween, specialEvent, type SpecialDay } from '../shared/specialDays.ts';
 import { SpecialReminderNew, type SpecialReminder } from '../shared/specialReminders.ts';
 
 // Reminders on special days: a grown-up taps one on Today (Mom's birthday, Thanksgiving, an event
 // marked special) and adds reminders, each with when (on the day, days or weeks before) and what to do
-// then ("Pick up a present", "Get flowers"). They're theirs alone, and come round every year. push.ts sends them, at 8 in the morning on each phone's own clock.
+// then ("Pick up a present", "Get flowers"). They're theirs alone, and come round every year. Any one
+// day of the calendar takes them too (its key is date:YYYY-MM-DD), just the once. push.ts sends them,
+// at 8 in the morning on each phone's own clock.
 
 interface Row {
 	id: string;
@@ -51,12 +54,12 @@ export function specialRemindersAround(db: DB, today: string, dayOf: (start: str
 	if (!rows.length) return [];
 	// Up to two weeks ahead, for the two-weeks-before ones.
 	const days = specialDaysOn(db, addDayKey(today, -1), addDayKey(today, 16), dayOf);
-	return rows.flatMap((r) =>
-		days
-			.filter((d) => d.key === r.key)
+	return rows.flatMap((r) => {
+		const date = dateOfKey(r.key);
+		return (date ? [{ day: date, picture: '📅' }] : days.filter((d) => d.key === r.key))
 			.map((d) => ({ ...r, day: d.day, picture: d.picture, remindOn: addDayKey(d.day, -r.days_before) }))
-			.filter((d) => d.remindOn >= addDayKey(today, -1) && d.remindOn <= addDayKey(today, 1)),
-	);
+			.filter((d) => d.remindOn >= addDayKey(today, -1) && d.remindOn <= addDayKey(today, 1));
+	});
 }
 
 export function registerSpecialReminders(app: FastifyInstance, db: DB) {

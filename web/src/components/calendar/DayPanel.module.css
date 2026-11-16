@@ -62,3 +62,38 @@
 	color: var(--on-accent);
 	font-weight: 600;
 }
+/* Events or Plans (a grown-up's): two tabs under the date. */
+.tabs {
+	display: flex;
+	gap: 0.25rem;
+	padding: 0.2rem;
+	border-radius: var(--radius-round);
+	background: var(--bg);
+}
+.tabs button {
+	flex: 1;
+	min-height: 2.5rem;
+	border-radius: var(--radius-round);
+	font-weight: 600;
+	color: var(--muted);
+}
+.tabs button[aria-selected='true'] {
+	background: var(--surface);
+	color: var(--text);
+	box-shadow: var(--shadow-sm);
+}
+/* Something's planned on the day. */
+.dot {
+	display: inline-block;
+	width: 0.45rem;
+	height: 0.45rem;
+	margin-left: 0.35rem;
+	vertical-align: middle;
+	border-radius: var(--radius-round);
+	background: var(--accent);
+}
+.plans {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+}

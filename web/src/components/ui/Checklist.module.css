@@ -1,4 +1,4 @@
-/* What to bring on an event: a light box in the event sheet, things to tick, or the list being changed. */
+/* A list to tick (what to bring on an event, a day's list): a light box, things to tick, or the list being changed. */
 .box {
 	display: flex;
 	flex-direction: column;

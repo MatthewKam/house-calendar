@@ -87,4 +87,28 @@ describe('special day reminders', () => {
 		await sendDue(db, pusher, new Date('2026-12-04T16:01:00Z'));
 		expect(sent.map((a) => a.title)).toEqual(['⭐ Zoo trip is tomorrow']);
 	});
+
+	it('sends on one day of the calendar, by what to do then, just the once', async () => {
+		const { db, call, pusher, sent } = setup();
+		await phone(db, call);
+		const add = (daysBefore: number, note?: string) =>
+			call('POST', '/api/special-reminders', {
+				key: 'date:2026-12-12',
+				name: 'Saturday, December 12',
+				daysBefore,
+				note,
+			});
+		expect((await add(2, 'Book the bounce house')).status).toBe(201);
+		await add(0);
+		await sendDue(db, pusher, new Date('2026-12-10T16:01:00Z'));
+		await sendDue(db, pusher, new Date('2026-12-12T16:01:00Z'));
+		await sendDue(db, pusher, new Date('2027-12-10T16:01:00Z'));
+		expect(sent.map((a) => [a.title, a.body])).toEqual([
+			['📅 Book the bounce house', 'In 2 days · Saturday, December 12'],
+			['📅 Reminder', 'Today · Saturday, December 12'],
+		]);
+		expect((await call('POST', '/api/special-reminders', { key: 'someday', name: 'x', daysBefore: 0 })).status).toBe(
+			400,
+		);
+	});
 });

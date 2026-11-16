@@ -6,6 +6,7 @@ import webpush from 'web-push';
 import type { DB } from './db.ts';
 import { kidIds } from './privacy.ts';
 import { specialRemindersAround } from './specialReminders.ts';
+import { dateOfKey } from '../shared/dayPlans.ts';
 import { dayIn } from '../shared/days.ts';
 import { schemaOf } from './schemas.ts';
 import { PushOff, PushOn, type PushKey, type Subscription } from '../shared/push.ts';
@@ -185,12 +186,12 @@ export async function sendDue(db: DB, pusher: Pusher, now = new Date(), log?: Fa
 			const n = r.days_before;
 			const when =
 				n === 0
-					? 'is today'
+					? 'today'
 					: n === 1
-						? 'is tomorrow'
+						? 'tomorrow'
 						: n % 7 === 0
-							? `is in ${n / 7 === 1 ? 'a week' : `${n / 7} weeks`}`
-							: `is in ${n} days`;
+							? `in ${n / 7 === 1 ? 'a week' : `${n / 7} weeks`}`
+							: `in ${n} days`;
 			const date = new Date(`${r.day}T12:00:00`).toLocaleDateString('en-US', {
 				weekday: 'long',
 				month: 'long',
@@ -202,8 +203,13 @@ export async function sendDue(db: DB, pusher: Pusher, now = new Date(), log?: Fa
 				[d],
 				`special:${r.id}:${r.day}`,
 				{
-					title: `${r.picture} ${r.name} ${when}`,
-					body: r.note ? `${r.note} · ${date}` : date,
+					// A special day by name ("🎂 Mom's birthday is in a week"); one day by what to do then.
+					...(dateOfKey(r.key)
+						? {
+								title: `${r.picture} ${r.note ?? 'Reminder'}`,
+								body: `${when[0].toUpperCase()}${when.slice(1)} · ${date}`,
+							}
+						: { title: `${r.picture} ${r.name} is ${when}`, body: r.note ? `${r.note} · ${date}` : date }),
 					url: '/#today',
 					tag: `special:${r.id}`,
 				},

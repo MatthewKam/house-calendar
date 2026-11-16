@@ -922,6 +922,28 @@ const migrations: string[] = [
     created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
   `,
+	// A day's plans (dayPlans.ts): a note and a list, by key like special_reminders (one day, or a
+	// special day every year); ticks are kept for the day they were ticked on, so each year starts fresh.
+	`
+  CREATE TABLE day_notes (
+    key        TEXT PRIMARY KEY,
+    note       TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE TABLE day_list (
+    id         TEXT PRIMARY KEY,
+    key        TEXT NOT NULL,
+    title      TEXT NOT NULL,
+    picture    TEXT,
+    sort_order INTEGER NOT NULL
+  );
+  CREATE INDEX day_list_key ON day_list(key);
+  CREATE TABLE day_list_ticks (
+    item_id TEXT NOT NULL REFERENCES day_list(id) ON DELETE CASCADE,
+    day     TEXT NOT NULL,
+    PRIMARY KEY (item_id, day)
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

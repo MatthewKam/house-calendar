@@ -1,6 +1,8 @@
-// Reminders on special days (server/specialReminders.ts): what the routes take and give back, written once.
+// Reminders on special days, or on any one day (server/specialReminders.ts): what the routes take and
+// give back, written once.
 
 import { z } from 'zod';
+import { PlanKey } from './dayPlans.ts';
 
 /** How long before: on the day, 1, 2 or 3 days, or 1 or 2 weeks. */
 export const DAYS_BEFORE = [0, 1, 2, 3, 7, 14] as const;
@@ -17,7 +19,7 @@ export const SpecialReminder = z.object({
 
 /** A new one (POST /api/special-reminders); DELETE /api/special-reminders/:id takes one off. */
 export const SpecialReminderNew = z.strictObject({
-	key: z.string().min(1).max(200),
+	key: PlanKey,
 	name: z.string().min(1).max(200),
 	daysBefore: DaysBefore,
 	note: z.string().trim().max(200).nullable().optional(),

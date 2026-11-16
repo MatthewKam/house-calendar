@@ -1,9 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { dateKey } from '../../../../shared/dayPlans.ts';
 import { fromDayKey } from '../../lib/dates';
 import { eventsOn } from '../../lib/events';
-import { useRangeEvents } from '../../lib/queries';
+import { useDayPlans, usePlansAccess, useRangeEvents, useSpecialReminders } from '../../lib/queries';
+import { specialDaysIn } from '../../lib/specialDays';
 import type { CalEvent, Member } from '../../lib/types';
 import DayMeals from './DayMeals';
+import DayPlans from './DayPlans';
 import DayTimeline from './DayTimeline';
 import s from './DayPanel.module.css';
 
@@ -19,11 +22,19 @@ interface Props {
 	onClose: () => void;
 }
 
-/** The selected day's events, floating over the right side of the month or week grid. */
+/**
+ * The selected day, floating over the right side of the month or week grid: its events, and for a
+ * grown-up its plans (a note, a list, their own reminders; on a special day, every year or just this day).
+ */
 export default function DayPanel({ day, shown, today, members, onAdd, onOpen, onClose }: Props) {
 	const date = fromDayKey(day);
 	// Its own one-day query, so the panel stays correct when the grid pages to another month or week.
-	const events = eventsOn(useRangeEvents(date, 1).data ?? [], date).filter(shown);
+	const all = eventsOn(useRangeEvents(date, 1).data ?? [], date);
+	const events = all.filter(shown);
+	const specials = specialDaysIn(day, day, members, all);
+	const access = usePlansAccess();
+	const [tab, setTab] = useState<'events' | 'plans'>('events');
+	const planned = usePlanned([...specials.map((d) => d.key), dateKey(day)], access);
 
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -49,17 +60,44 @@ export default function DayPanel({ day, shown, today, members, onAdd, onOpen, on
 					</button>
 				</header>
 
-				<DayMeals day={day} />
-				{events.length === 0 && <p className={s.empty}>Nothing planned.</p>}
-				{/* All 24 hours, scrolled to the time now (or the first event). */}
-				<DayTimeline day={date} today={today} events={events} members={members} onOpen={(ev) => onOpen(ev, day)} />
+				{(access.plans || access.reminders) && (
+					<div className={s.tabs} role="tablist" aria-label="Show">
+						<button role="tab" aria-selected={tab === 'events'} onClick={() => setTab('events')}>
+							Events
+						</button>
+						<button role="tab" aria-selected={tab === 'plans'} onClick={() => setTab('plans')}>
+							Plans{planned && <span className={s.dot} aria-label=" (something planned)" />}
+						</button>
+					</div>
+				)}
 
-				{onAdd && (
-					<button className={s.add} onClick={() => onAdd(day)}>
-						+ Add event
-					</button>
+				{tab === 'plans' && (access.plans || access.reminders) ? (
+					<div className={s.plans}>
+						{/* Keyed by day, so it starts again on the special day when another day is picked. */}
+						<DayPlans key={day} day={day} today={today} specials={specials} />
+					</div>
+				) : (
+					<>
+						<DayMeals day={day} />
+						{events.length === 0 && <p className={s.empty}>Nothing planned.</p>}
+						{/* All 24 hours, scrolled to the time now (or the first event). */}
+						<DayTimeline day={date} today={today} events={events} members={members} onOpen={(ev) => onOpen(ev, day)} />
+
+						{onAdd && (
+							<button className={s.add} onClick={() => onAdd(day)}>
+								+ Add event
+							</button>
+						)}
+					</>
 				)}
 			</aside>
 		</>
 	);
+}
+
+/** Whether there's a note, a list or one of your reminders on any of the day's keys. */
+function usePlanned(keys: string[], access: ReturnType<typeof usePlansAccess>) {
+	const plans = useDayPlans(access.plans).data;
+	const reminders = useSpecialReminders(access.reminders).data ?? [];
+	return keys.some((k) => plans?.notes[k] || plans?.lists[k]?.length || reminders.some((r) => r.key === k));
 }
