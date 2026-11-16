@@ -132,3 +132,24 @@
 	margin: 0;
 	color: var(--danger);
 }
+/* When: On the day or Before, and how long before (a number, then hours, days, weeks or months). */
+.whenRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+}
+.times button[aria-checked='true'] {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--on-accent);
+}
+.howLong {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+.amount {
+	width: 4.5rem;
+	text-align: center;
+}

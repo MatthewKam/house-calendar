@@ -7,6 +7,7 @@ import type { DB } from './db.ts';
 import { kidIds } from './privacy.ts';
 import { specialRemindersAround } from './specialReminders.ts';
 import { dateOfKey } from '../shared/dayPlans.ts';
+import { inLabel } from '../shared/specialReminders.ts';
 import { dayIn } from '../shared/days.ts';
 import { schemaOf } from './schemas.ts';
 import { PushOff, PushOn, type PushKey, type Subscription } from '../shared/push.ts';
@@ -183,16 +184,7 @@ export async function sendDue(db: DB, pusher: Pusher, now = new Date(), log?: Fa
 			if (r.member_id !== d.member_id) continue;
 			const at = r.at ?? dueAt(r.remindOn, d);
 			if (!(at <= t && t - at < STALE && at >= Date.parse(d.created_at))) continue;
-			const n = r.days_before;
-			const when = r.hours_before
-				? `in ${r.hours_before === 1 ? 'an hour' : `${r.hours_before} hours`}`
-				: n === 0
-					? 'today'
-					: n === 1
-						? 'tomorrow'
-						: n % 7 === 0
-							? `in ${n / 7 === 1 ? 'a week' : `${n / 7} weeks`}`
-							: `in ${n} days`;
+			const when = inLabel(r.before);
 			// The day, and an event's time ("Friday, November 20, 5:30 PM"; just the time when it's hours away).
 			const day = new Date(`${r.day}T12:00:00`).toLocaleDateString('en-US', {
 				weekday: 'long',
@@ -203,7 +195,7 @@ export async function sendDue(db: DB, pusher: Pusher, now = new Date(), log?: Fa
 				r.start && !r.allDay
 					? new Date(r.start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: d.time_zone })
 					: null;
-			const date = r.hours_before && time ? time : time ? `${day}, ${time}` : day;
+			const date = r.at && time ? time : time ? `${day}, ${time}` : day;
 			await sendOnce(
 				db,
 				pusher,

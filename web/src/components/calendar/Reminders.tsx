@@ -1,62 +1,55 @@
 import { useState } from 'react';
-import { addDayKey } from '../../../../shared/days.ts';
-import { DAYS_BEFORE, HOURS_BEFORE, beforeLabel, type SpecialReminder } from '../../../../shared/specialReminders.ts';
+import { MOST, UNITS, beforeLabel, remindDay, type Before, type Unit } from '../../../../shared/specialReminders.ts';
 import { dayKey } from '../../lib/dates';
 import { useChangeSpecialReminders, usePlansAccess, useSpecialReminders } from '../../lib/queries';
 import type { CalEvent } from '../../lib/types';
 import { usePush } from '../../lib/usePush';
 import s from './DayPlans.module.css';
 
-/** A time to be reminded: days before (at 8 in the morning), or hours before an event starts. */
-export type Choice = Pick<SpecialReminder, 'daysBefore' | 'hoursBefore'>;
-
-/** The choices for a day (only the ones still to come when it's just the once). */
-export const dayChoices = (day: string, today: string, once: boolean): Choice[] =>
-	DAYS_BEFORE.filter((n) => !once || addDayKey(day, -n) >= today).map((n) => ({ daysBefore: n, hoursBefore: null }));
-
-/** The choices for an event: hours before too when it has a time; a one-off's only while still to come. */
-export function eventChoices(event: CalEvent, now: Date): Choice[] {
-	const day = event.allDay ? event.start : dayKey(new Date(event.start));
-	const hours = event.allDay
-		? []
-		: HOURS_BEFORE.filter((h) => event.repeats || Date.parse(event.start) - h * 3_600_000 > now.getTime()).map((h) => ({
-				daysBefore: 0 as const,
-				hoursBefore: h,
-			}));
-	return [...hours, ...dayChoices(day, dayKey(now), !event.repeats)];
-}
-
-const label = (c: Choice) => beforeLabel(c.daysBefore, c.hoursBefore);
-const same = (a?: Choice, b?: Choice) => a?.daysBefore === b?.daysBefore && a?.hoursBefore === b?.hoursBefore;
-
-/**
- * Your reminders on a day or an event: when, and what to do then ("Pick up a present"). Just yours,
- * as alerts on your phone (server/specialReminders.ts).
- */
-export default function Reminders({
-	planKey,
-	name,
-	choices,
-	hint,
-}: {
+interface Props {
 	planKey: string;
 	/** What it's on ("Mom's birthday", "Saturday, December 12", "Jiu jitsu"). */
 	name: string;
-	choices: Choice[];
+	/** The day it's on (YYYY-MM-DD), and an event's start when it has a time (hours before then). */
+	day: string;
+	start?: string;
+	/** Just the once (not every year or every repeat): only times still to come. */
+	once: boolean;
 	/** How often ("Every year, just for you."). */
 	hint: string;
-}) {
+}
+
+/** Whether a reminder that long before would still come (it's not just the once, or the time's ahead). */
+function stillAhead(before: Before | null, { day, start, once }: Pick<Props, 'day' | 'start' | 'once'>, now: Date) {
+	if (!once) return true;
+	if (before?.unit === 'hour') return !!start && Date.parse(start) - before.amount * 3_600_000 > now.getTime();
+	return remindDay(day, before) >= dayKey(now);
+}
+
+/**
+ * Your reminders on a day or an event: on the day, or a number of hours, days, weeks or months before,
+ * and what to do then ("Pick up a present"). Just yours, as alerts on your phone (server/specialReminders.ts).
+ */
+export default function Reminders(props: Props) {
+	const { planKey, name, start, hint } = props;
 	const mine = (useSpecialReminders().data ?? []).filter((r) => r.key === planKey);
 	const { add, remove } = useChangeSpecialReminders();
 	const push = usePush();
-	const [pick, setPick] = useState<Choice | undefined>(
-		choices.find((c) => c.daysBefore === 1 && !c.hoursBefore) ?? choices[choices.length - 1],
-	);
+	// Hours only for an event with a time.
+	const units = UNITS.filter((u) => u !== 'hour' || !!start);
+	const [onTheDay, setOnTheDay] = useState(false);
+	const [amount, setAmount] = useState('1');
+	const [unit, setUnit] = useState<Unit>('day');
 	const [note, setNote] = useState('');
 
+	const n = Number(amount);
+	const valid = onTheDay || (Number.isInteger(n) && n >= 1 && n <= MOST[unit]);
+	const before: Before | null = onTheDay || !valid ? null : { amount: n, unit };
+	const ahead = valid && stillAhead(before, props, new Date());
+
 	function addIt() {
-		if (!pick) return;
-		add.mutate({ key: planKey, name, ...pick, note: note.trim() || null }, { onSuccess: () => setNote('') });
+		if (!valid || !ahead) return;
+		add.mutate({ key: planKey, name, before, note: note.trim() || null }, { onSuccess: () => setNote('') });
 	}
 
 	return (
@@ -68,12 +61,12 @@ export default function Reminders({
 						<li key={r.id}>
 							<span className={s.what}>
 								<span className={s.title}>{r.note ?? 'Reminder'}</span>
-								<span className={s.when}>{label(r)}</span>
+								<span className={s.when}>{beforeLabel(r.before)}</span>
 							</span>
 							<button
 								type="button"
 								className={s.remove}
-								aria-label={`Take off ${r.note ?? 'the reminder'}, ${label(r).toLowerCase()}`}
+								aria-label={`Take off ${r.note ?? 'the reminder'}, ${beforeLabel(r.before).toLowerCase()}`}
 								onClick={() => remove.mutate(r.id)}
 							>
 								×
@@ -82,39 +75,69 @@ export default function Reminders({
 					))}
 				</ul>
 			)}
-			{choices.length === 0 ? (
-				<p className={s.none}>This has gone by.</p>
-			) : (
-				<>
-					<p className={s.none}>{hint}</p>
-					<div className={s.times} role="group" aria-label="When">
-						{choices.map((c) => (
-							<button key={label(c)} type="button" aria-pressed={same(pick, c)} onClick={() => setPick(c)}>
-								{label(c)}
-							</button>
-						))}
-					</div>
-					<div className={s.addRow}>
+			<p className={s.none}>{hint}</p>
+			<div className={s.whenRow}>
+				<div className={s.times} role="radiogroup" aria-label="When">
+					<button type="button" role="radio" aria-checked={onTheDay} onClick={() => setOnTheDay(true)}>
+						On the day
+					</button>
+					<button type="button" role="radio" aria-checked={!onTheDay} onClick={() => setOnTheDay(false)}>
+						Before
+					</button>
+				</div>
+				{!onTheDay && (
+					<div className={s.howLong}>
 						<input
-							className={s.input}
-							value={note}
-							onChange={(e) => setNote(e.target.value)}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter') {
-									e.preventDefault();
-									addIt();
-								}
-							}}
-							maxLength={200}
-							placeholder="What to do then? (Pick up a present)"
-							aria-label="What to do then"
+							className={`${s.input} ${s.amount}`}
+							type="number"
+							inputMode="numeric"
+							min={1}
+							max={MOST[unit]}
+							value={amount}
+							onChange={(e) => setAmount(e.target.value)}
+							aria-label="How many"
 						/>
-						<button type="button" className={s.add} onClick={addIt} disabled={add.isPending}>
-							Add
-						</button>
+						<select
+							className={s.input}
+							value={unit}
+							onChange={(e) => setUnit(e.target.value as Unit)}
+							aria-label="Hours, days, weeks or months"
+						>
+							{units.map((u) => (
+								<option key={u} value={u}>
+									{n === 1 ? u : `${u}s`}
+								</option>
+							))}
+						</select>
+						<span className={s.when}>before</span>
 					</div>
-				</>
+				)}
+			</div>
+			<div className={s.addRow}>
+				<input
+					className={s.input}
+					value={note}
+					onChange={(e) => setNote(e.target.value)}
+					onKeyDown={(e) => {
+						if (e.key === 'Enter') {
+							e.preventDefault();
+							addIt();
+						}
+					}}
+					maxLength={200}
+					placeholder="What to do then? (Pick up a present)"
+					aria-label="What to do then"
+				/>
+				<button type="button" className={s.add} onClick={addIt} disabled={!valid || !ahead || add.isPending}>
+					Add
+				</button>
+			</div>
+			{!valid && (
+				<p className={s.problem}>
+					From 1 to {MOST[unit]} {unit}s before.
+				</p>
 			)}
+			{valid && !ahead && <p className={s.problem}>That time has already gone by.</p>}
 			{(add.isError || remove.isError) && <p className={s.problem}>{(add.error ?? remove.error)?.message}</p>}
 			{push.state !== 'on' && push.state !== 'loading' && (
 				<p className={s.none}>Reminders come as alerts: turn them on in Settings → Notifications on your phone.</p>
@@ -131,7 +154,9 @@ export function EventReminders({ event }: { event: CalEvent }) {
 		<Reminders
 			planKey={event.planKey}
 			name={event.title}
-			choices={eventChoices(event, new Date())}
+			day={event.allDay ? event.start : dayKey(new Date(event.start))}
+			start={event.allDay ? undefined : event.start}
+			once={!event.repeats}
 			hint={event.repeats ? 'Every time it repeats, just for you.' : 'Just for you.'}
 		/>
 	);

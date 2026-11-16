@@ -1,4 +1,4 @@
--- A household's database (server/db.ts), at version 60. Written by server/schema.test.ts; don't edit by hand.
+-- A household's database (server/db.ts), at version 61. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
@@ -511,10 +511,9 @@ CREATE TABLE special_reminders (
     member_id    TEXT REFERENCES members(id) ON DELETE CASCADE,
     key          TEXT NOT NULL,
     name         TEXT NOT NULL,
-    days_before  INTEGER NOT NULL,
     note         TEXT,
     created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-  , hours_before INTEGER);
+  , amount INTEGER, unit TEXT);
 
 CREATE TABLE "task_done" (
     task_id    TEXT NOT NULL REFERENCES "tasks"(id) ON DELETE CASCADE,

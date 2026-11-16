@@ -78,7 +78,7 @@ export default function SpecialDays({ today, onAdd }: { today: string; onAdd?: (
 											.filter((r) => r.key === d.key)
 											.map((r) => (
 												<span key={r.id} className={s.specialPlanned}>
-													🔔 {beforeLabel(r.daysBefore)}
+													🔔 {beforeLabel(r.before)}
 													{r.note && ` · ${r.note}`}
 												</span>
 											))}
@@ -91,14 +91,7 @@ export default function SpecialDays({ today, onAdd }: { today: string; onAdd?: (
 					})}
 				</ul>
 			)}
-			{open && (
-				<DayDrawer
-					day={open}
-					specials={days.filter((d) => d.day === open.day)}
-					today={today}
-					onClose={() => setOpen(null)}
-				/>
-			)}
+			{open && <DayDrawer day={open} specials={days.filter((d) => d.day === open.day)} onClose={() => setOpen(null)} />}
 		</section>
 	);
 }

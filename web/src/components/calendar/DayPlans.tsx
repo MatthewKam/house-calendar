@@ -5,7 +5,7 @@ import { useChangeDayPlans, useDayPlans, usePlansAccess } from '../../lib/querie
 import type { SpecialDay } from '../../lib/specialDays';
 import type { ChecklistItem } from '../../lib/types';
 import Checklist from '../ui/Checklist';
-import Reminders, { dayChoices } from './Reminders';
+import Reminders from './Reminders';
 import s from './DayPlans.module.css';
 
 /** Pictures to start a day's list from: a party, a trip, a holiday. */
@@ -27,13 +27,11 @@ export const listOn = (plans: Plans | undefined, key: string, day: string): Chec
  */
 export default function DayPlans({
 	day,
-	today,
 	specials,
 	start,
 }: {
 	/** YYYY-MM-DD. */
 	day: string;
-	today: string;
 	/** The special days on it. */
 	specials: SpecialDay[];
 	/** The key to show first (a special day's); else the first special day's, or just this day. */
@@ -69,7 +67,8 @@ export default function DayPlans({
 					key={`reminders-${key}`}
 					planKey={key}
 					name={special?.name ?? date}
-					choices={dayChoices(day, today, !special)}
+					day={day}
+					once={!special}
 					hint={special ? 'Every year, just for you.' : 'Just for this day.'}
 				/>
 			)}

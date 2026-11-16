@@ -948,6 +948,18 @@ const migrations: string[] = [
 	`
   ALTER TABLE special_reminders ADD COLUMN hours_before INTEGER;
   `,
+	// How long before, as a number and a unit (hours, days, weeks or months); none: on the day.
+	`
+  ALTER TABLE special_reminders ADD COLUMN amount INTEGER;
+  ALTER TABLE special_reminders ADD COLUMN unit TEXT;
+  UPDATE special_reminders SET
+    amount = CASE WHEN hours_before IS NOT NULL THEN hours_before WHEN days_before = 0 THEN NULL
+      WHEN days_before % 7 = 0 THEN days_before / 7 ELSE days_before END,
+    unit = CASE WHEN hours_before IS NOT NULL THEN 'hour' WHEN days_before = 0 THEN NULL
+      WHEN days_before % 7 = 0 THEN 'week' ELSE 'day' END;
+  ALTER TABLE special_reminders DROP COLUMN days_before;
+  ALTER TABLE special_reminders DROP COLUMN hours_before;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

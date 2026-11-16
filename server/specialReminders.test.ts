@@ -19,17 +19,26 @@ async function phone(db: ReturnType<typeof setup>['db'], call: ReturnType<typeof
 	db.prepare(`UPDATE push_devices SET created_at = '2026-01-01T00:00:00.000Z'`).run();
 }
 
+/** How long before: a number of days (or `unit`s); 0, on the day. */
+const before = (amount: number, unit = 'day') => (amount ? { amount, unit } : null);
+
 describe('special day reminders', () => {
 	it('keeps yours, several on a day, each with what to do, and takes one off', async () => {
 		const { call } = setup();
-		const add = (daysBefore: number, note?: string) =>
-			call('POST', '/api/special-reminders', { key: 'birthday:alex', name: "Alex's birthday", daysBefore, note });
-		const present = (await add(7, 'Pick up a present')).body.id as string;
+		const add = (n: number, note?: string, unit?: string) =>
+			call('POST', '/api/special-reminders', {
+				key: 'birthday:alex',
+				name: "Alex's birthday",
+				before: before(n, unit),
+				note,
+			});
+		const present = (await add(1, 'Pick up a present', 'week')).body.id as string;
 		expect((await add(1, 'Get flowers')).status).toBe(201);
-		expect((await add(5)).status).toBe(400);
+		expect((await add(13, undefined, 'week')).status).toBe(400);
+		expect((await add(2, undefined, 'fortnight')).status).toBe(400);
 		expect((await call('GET', '/api/special-reminders')).body).toEqual([
-			{ id: present, key: 'birthday:alex', daysBefore: 7, hoursBefore: null, note: 'Pick up a present' },
-			{ id: expect.any(String), key: 'birthday:alex', daysBefore: 1, hoursBefore: null, note: 'Get flowers' },
+			{ id: present, key: 'birthday:alex', before: { amount: 1, unit: 'week' }, note: 'Pick up a present' },
+			{ id: expect.any(String), key: 'birthday:alex', before: { amount: 1, unit: 'day' }, note: 'Get flowers' },
 		]);
 		expect((await call('DELETE', `/api/special-reminders/${present}`)).status).toBe(204);
 		expect((await call('DELETE', `/api/special-reminders/${present}`)).status).toBe(404);
@@ -39,7 +48,11 @@ describe('special day reminders', () => {
 	it('sends a week before a holiday at 8 in the morning, once, and again next year', async () => {
 		const { db, call, pusher, sent } = setup();
 		await phone(db, call);
-		await call('POST', '/api/special-reminders', { key: 'holiday:Thanksgiving', name: 'Thanksgiving', daysBefore: 7 });
+		await call('POST', '/api/special-reminders', {
+			key: 'holiday:Thanksgiving',
+			name: 'Thanksgiving',
+			before: before(1, 'week'),
+		});
 		// Thanksgiving 2026 is Thursday 26 November; a week before, 8 AM in Los Angeles, is 16:00 UTC.
 		await sendDue(db, pusher, new Date('2026-11-19T15:59:00Z'));
 		expect(sent).toEqual([]);
@@ -56,15 +69,23 @@ describe('special day reminders', () => {
 	it('sends each of a birthday’s reminders, with what to do', async () => {
 		const { db, call, pusher, sent } = setup();
 		await phone(db, call);
-		const add = (daysBefore: number, note?: string) =>
-			call('POST', '/api/special-reminders', { key: 'birthday:alex', name: "Alex's birthday", daysBefore, note });
-		await add(7, 'Pick up a present');
+		const add = (n: number, note?: string, unit?: string) =>
+			call('POST', '/api/special-reminders', {
+				key: 'birthday:alex',
+				name: "Alex's birthday",
+				before: before(n, unit),
+				note,
+			});
+		await add(1, 'Plan the party', 'month');
+		await add(1, 'Pick up a present', 'week');
 		await add(1, 'Get flowers');
 		await add(0);
+		await sendDue(db, pusher, new Date('2026-10-26T15:01:00Z'));
 		await sendDue(db, pusher, new Date('2026-11-19T16:01:00Z'));
 		await sendDue(db, pusher, new Date('2026-11-25T16:01:00Z'));
 		await sendDue(db, pusher, new Date('2026-11-26T16:01:00Z'));
 		expect(sent.map((a) => [a.title, a.body])).toEqual([
+			["🎂 Alex's birthday is in a month", 'Plan the party · Thursday, November 26'],
 			["🎂 Alex's birthday is in a week", 'Pick up a present · Thursday, November 26'],
 			["🎂 Alex's birthday is tomorrow", 'Get flowers · Thursday, November 26'],
 			["🎂 Alex's birthday is today", 'Thursday, November 26'],
@@ -83,7 +104,7 @@ describe('special day reminders', () => {
 			special: true,
 		});
 		expect(ev.status).toBe(201);
-		await call('POST', '/api/special-reminders', { key: 'event:Zoo trip', name: 'Zoo trip', daysBefore: 1 });
+		await call('POST', '/api/special-reminders', { key: 'event:Zoo trip', name: 'Zoo trip', before: before(1) });
 		await sendDue(db, pusher, new Date('2026-12-04T16:01:00Z'));
 		expect(sent.map((a) => a.title)).toEqual(['⭐ Zoo trip is tomorrow']);
 	});
@@ -108,22 +129,21 @@ describe('special day reminders', () => {
       VALUES ('jj2', 'local', 'jj', 'Jiu jitsu', 0, '2026-11-28T01:30:00.000Z', '2026-11-28T02:30:00.000Z')`,
 		).run();
 		const add = (b: object) =>
-			call('POST', '/api/special-reminders', { key: 'series:local:jj', name: 'Jiu jitsu', daysBefore: 0, ...b });
-		expect((await add({ daysBefore: 1, note: 'Wash the gi' })).status).toBe(201);
-		expect((await add({ hoursBefore: 2, note: 'Pack the bag' })).status).toBe(201);
+			call('POST', '/api/special-reminders', { key: 'series:local:jj', name: 'Jiu jitsu', before: null, ...b });
+		expect((await add({ before: before(1), note: 'Wash the gi' })).status).toBe(201);
+		expect((await add({ before: before(2, 'hour'), note: 'Pack the bag' })).status).toBe(201);
 		expect(
 			(
 				await call('POST', '/api/special-reminders', {
 					key: 'date:2026-11-20',
 					name: 'x',
-					daysBefore: 0,
-					hoursBefore: 1,
+					before: before(1, 'hour'),
 				})
 			).status,
 		).toBe(400);
 		expect(
-			(await call('GET', '/api/special-reminders')).body.map((r: { hoursBefore: number | null }) => r.hoursBefore),
-		).toEqual([null, 2]);
+			(await call('GET', '/api/special-reminders')).body.map((r: { before: { unit: string } }) => r.before.unit),
+		).toEqual(['day', 'hour']);
 		for (const at of ['2026-11-19T16:01:00Z', '2026-11-20T23:31:00Z', '2026-11-26T16:01:00Z', '2026-11-27T23:31:00Z'])
 			await sendDue(db, pusher, new Date(at));
 		expect(sent.map((a) => [a.title, a.body])).toEqual([
@@ -137,11 +157,11 @@ describe('special day reminders', () => {
 	it('sends on one day of the calendar, by what to do then, just the once', async () => {
 		const { db, call, pusher, sent } = setup();
 		await phone(db, call);
-		const add = (daysBefore: number, note?: string) =>
+		const add = (n: number, note?: string) =>
 			call('POST', '/api/special-reminders', {
 				key: 'date:2026-12-12',
 				name: 'Saturday, December 12',
-				daysBefore,
+				before: before(n),
 				note,
 			});
 		expect((await add(2, 'Book the bounce house')).status).toBe(201);
@@ -153,7 +173,7 @@ describe('special day reminders', () => {
 			['📅 Book the bounce house', 'In 2 days · Saturday, December 12'],
 			['📅 Reminder', 'Today · Saturday, December 12'],
 		]);
-		expect((await call('POST', '/api/special-reminders', { key: 'someday', name: 'x', daysBefore: 0 })).status).toBe(
+		expect((await call('POST', '/api/special-reminders', { key: 'someday', name: 'x', before: null })).status).toBe(
 			400,
 		);
 	});

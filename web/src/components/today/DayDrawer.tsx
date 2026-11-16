@@ -12,14 +12,12 @@ import s from './Today.module.css';
 export default function DayDrawer({
 	day,
 	specials,
-	today,
 	onClose,
 }: {
 	/** The one tapped. */
 	day: SpecialDay;
 	/** Every special day on its date. */
 	specials: SpecialDay[];
-	today: string;
 	onClose: () => void;
 }) {
 	const date = fromDayKey(day.day);
@@ -34,7 +32,7 @@ export default function DayDrawer({
 					×
 				</button>
 			</div>
-			<DayPlans day={day.day} today={today} specials={specials} start={day.key} />
+			<DayPlans day={day.day} specials={specials} start={day.key} />
 		</Sheet>
 	);
 }

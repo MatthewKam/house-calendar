@@ -74,7 +74,7 @@ export default function DayPanel({ day, shown, today, members, onAdd, onOpen, on
 				{tab === 'plans' && (access.plans || access.reminders) ? (
 					<div className={s.plans}>
 						{/* Keyed by day, so it starts again on the special day when another day is picked. */}
-						<DayPlans key={day} day={day} today={today} specials={specials} />
+						<DayPlans key={day} day={day} specials={specials} />
 					</div>
 				) : (
 					<>
