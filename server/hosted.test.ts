@@ -845,6 +845,10 @@ describe('deleting an account', () => {
 
 		expect((await alex.del('/api/account/delete')).status).toBe(204);
 		expect(existsSync(join(dir, 'households', id))).toBe(false);
+		// Its backups are noted for clearing from the bucket.
+		expect(accounts.prepare('SELECT db_file FROM gone_backups').all()).toEqual([
+			{ db_file: `households/${id}/calendar.db` },
+		]);
 		expect((await alex.get('/api/auth/status')).body).toEqual({ signedIn: false });
 		// Jordan is still signed in, with no household; the kid's device is signed out.
 		expect((await jordan.get('/api/auth/status')).body).toMatchObject({

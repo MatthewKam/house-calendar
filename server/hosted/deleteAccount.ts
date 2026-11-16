@@ -85,6 +85,8 @@ export function deleteAccountRoutes(
 						)
 						.run(p.household.id);
 					accounts.prepare('DELETE FROM households WHERE id = ?').run(p.household.id);
+					// Its backups go too, within the 30 days the privacy page promises (server/backups.ts).
+					accounts.prepare('INSERT OR IGNORE INTO gone_backups (db_file) VALUES (?)').run(p.household.db_file);
 				} else if (p.membership.role === 'kid') {
 					accounts.prepare('UPDATE memberships SET user_id = NULL WHERE id = ?').run(p.membership.id);
 				} else {
