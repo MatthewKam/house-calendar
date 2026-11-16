@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type JSX } from 'react';
+import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
 import { useImageDrop } from '../../lib/useFlyerDrop';
 import { useMembers, useRecipeReading, useRecipes } from '../../lib/queries';
 import DishIdeas from './DishIdeas';
@@ -43,10 +43,24 @@ const VIEWS: { view: View; label: string; Icon: () => JSX.Element }[] = [
  * a type, prep ahead, or a tag. Plan ahead: the days ahead, to put recipes on. A grown-up adds a recipe from
  * pictures or a link (+ Recipe).
  */
-export default function RecipesPage({ parent }: { parent: boolean }) {
+export default function RecipesPage({
+	parent,
+	addNow,
+	onAdding,
+}: {
+	parent: boolean;
+	/** Add a recipe asked for elsewhere (the phone's +): opened here, and then `onAdding`. */
+	addNow?: boolean;
+	onAdding?: () => void;
+}) {
 	const recipesQuery = useRecipes();
 	const recipes = recipesQuery.data ?? [];
 	const [adding, setAdding] = useState(false);
+	useEffect(() => {
+		if (!addNow) return;
+		setAdding(true);
+		onAdding?.();
+	}, [addNow, onAdding]);
 	// Dish ideas open (from a themed day: for its kind).
 	const [ideas, setIdeas] = useState<{ kind: string } | null>(null);
 	const reading = useRecipeReading().data;

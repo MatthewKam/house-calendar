@@ -149,6 +149,8 @@ export default function App() {
 	const kids = members.filter(isKid);
 	// Photos the phone's + picked, on their way to the Photos page.
 	const [pickedPhotos, setPickedPhotos] = useState<File[] | null>(null);
+	// Add a recipe from the phone's +, for the Recipes page to open.
+	const [addingRecipe, setAddingRecipe] = useState(false);
 	// Say it, or Snap a flyer: on when the server has Claude.
 	const captureOn = useQuery({ queryKey: ['capture'], queryFn: api.captureOn, staleTime: Infinity }).data?.on ?? false;
 	const kidDevice =
@@ -329,6 +331,18 @@ export default function App() {
 		{ kind: 'list', onPick: () => setOpen({ kind: 'list' }) },
 		...(parentLock.parent && kids.length ? [{ kind: 'good' as const, onPick: () => setOpen({ kind: 'good' }) }] : []),
 		...(parentLock.parent ? [{ kind: 'task' as const, onPick: () => setOpen({ kind: 'task', blank: true }) }] : []),
+		// From pictures (the camera or the phone's photos) or a link: the Recipes page's own Add a recipe.
+		...(parentLock.parent
+			? [
+					{
+						kind: 'recipe' as const,
+						onPick: () => {
+							setAddingRecipe(true);
+							setPage('recipes');
+						},
+					},
+				]
+			: []),
 		{
 			kind: 'photo',
 			files: (files) => {
@@ -405,7 +419,7 @@ export default function App() {
 							<RewardsPage today={today} members={members} />
 						) : page === 'recipes' ? (
 							<Suspense fallback={null}>
-								<RecipesPage parent={parentLock.parent} />
+								<RecipesPage parent={parentLock.parent} addNow={addingRecipe} onAdding={() => setAddingRecipe(false)} />
 							</Suspense>
 						) : page === 'photos' ? (
 							<Suspense fallback={null}>
