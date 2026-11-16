@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api, problemText } from '../../lib/api';
+import { NEEDS_INTERNET, useOnline } from '../../lib/useOnline';
 import { useWeather } from '../../lib/queries';
 import { minutesText } from '../../lib/recipes';
 import type { DishIdea, SurprisePick, Weather } from '../../lib/types';
@@ -59,6 +60,7 @@ export default function DishIdeas({
 	const [pick, setPick] = useState<SurprisePick | null>(null);
 	const [picked, setPicked] = useState<string[]>([]);
 	const [busy, setBusy] = useState<'ideas' | 'surprise' | null>(null);
+	const online = useOnline();
 	const [problem, setProblem] = useState<{ text: string; retry: () => void } | null>(null);
 	const choices = [...new Set([...kinds, ...MORE_KINDS, ...(firstKind ? [firstKind] : [])])].sort();
 	const weather = useWeather().data;
@@ -149,13 +151,18 @@ export default function DishIdeas({
 					maxLength={200}
 					onChange={(e) => setAsk(e.target.value)}
 				/>
-				<button type="submit" className={sheet.primary} disabled={busy !== null}>
+				<button type="submit" className={sheet.primary} disabled={busy !== null || !online}>
 					{ideas.length ? 'New ideas' : 'Show ideas'}
 				</button>
 			</form>
 			{/* Or just one, for the weather. */}
 			<div className={s.surpriseRow}>
-				<button type="button" className={s.surpriseButton} disabled={busy !== null} onClick={() => void surprise()}>
+				<button
+					type="button"
+					className={s.surpriseButton}
+					disabled={busy !== null || !online}
+					onClick={() => void surprise()}
+				>
 					🎲 {pick ? 'Again' : 'Surprise me'}
 				</button>
 				<span className={s.hint}>
@@ -165,7 +172,11 @@ export default function DishIdeas({
 				</span>
 			</div>
 
-			{problem && <Problem message={problem.text} onRetry={problem.retry} />}
+			{!online ? (
+				<Problem message={`Ideas: ${NEEDS_INTERNET}`} />
+			) : (
+				problem && <Problem message={problem.text} onRetry={problem.retry} />
+			)}
 			{busy === 'surprise' ? (
 				<Loading label="Picking one" className={s.ideas}>
 					<Skeleton height="9rem" />

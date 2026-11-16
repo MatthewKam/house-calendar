@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { NEEDS_INTERNET, useOnline } from '../../lib/useOnline';
 import { api, SprigError } from '../../lib/api';
 import { textOn } from '../../lib/color';
 import { addDays, dayKey, fromDayKey, hhmm, toInstant } from '../../lib/dates';
@@ -190,6 +191,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 	const [listening, setListening] = useState(false);
 	const [working, setWorking] = useState(!!photo);
 	const [error, setError] = useState<string | null>(null);
+	const online = useOnline();
 	const [cards, setCards] = useState<Card[] | null>(null);
 	const [adding, setAdding] = useState(false);
 	const rec = useRef<Recognition | null>(null);
@@ -369,7 +371,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 						/>
 						<div className={sheet.actions}>
 							<span className={sheet.spacer} />
-							<button type="submit" className={sheet.primary} disabled={!text.trim() || working}>
+							<button type="submit" className={sheet.primary} disabled={!text.trim() || working || !online}>
 								{working ? 'Working it out…' : 'Go'}
 							</button>
 						</div>
@@ -377,6 +379,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 				)}
 
 				{!cards && photo && working && <p className={s.hint}>Reading the flyer…</p>}
+				{!online && !cards && <p className={s.error}>{NEEDS_INTERNET}</p>}
 				{error && <p className={s.error}>{error}</p>}
 
 				{cards && cards.length === 0 && (

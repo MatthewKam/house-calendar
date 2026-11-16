@@ -9,7 +9,7 @@ import {
 	useSettings,
 } from '../../lib/queries';
 import type { Member, ReminderList } from '../../lib/types';
-import { dayKey, hhmm, toInstant } from '../../lib/dates';
+import { dayKey, hhmm, timeLabel, toInstant } from '../../lib/dates';
 import { dueLabel, isDay, isLate } from '../../lib/lists';
 import { PickChip } from '../ui/NameChip';
 import DateInput from '../ui/DateInput';
@@ -378,8 +378,15 @@ export default function ListView() {
 					))}
 				</div>
 			)}
-			{/* Loading: list-shaped blocks, not "no lists yet". */}
-			{ownQuery.isError ? (
+			{/* Couldn't check with the family's phones since: said, so two people shopping don't both buy it. */}
+			{ownQuery.data && (ownQuery.fetchStatus === 'paused' || ownQuery.errorUpdatedAt > ownQuery.dataUpdatedAt) && (
+				<p className={s.unsynced} role="status">
+					📶 Not synced since {timeLabel(new Date(ownQuery.dataUpdatedAt))}: ticks from other phones won’t show until
+					the signal’s back.
+				</p>
+			)}
+			{/* Loading: list-shaped blocks, not "no lists yet". A failed refresh keeps what's there (above). */}
+			{ownQuery.isError && !ownQuery.data ? (
 				<Problem kind="page" message={loadProblem('lists', ownQuery.error)} onRetry={() => void ownQuery.refetch()} />
 			) : ownQuery.isPending ? (
 				<Loading label="Loading lists" className={s.loading}>

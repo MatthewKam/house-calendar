@@ -1,0 +1,21 @@
+/* Offline (OfflineBar.tsx): a small note under the phone's clock, over the page, out of the way. */
+.bar {
+	position: fixed;
+	top: calc(env(safe-area-inset-top, 0px) + 0.3rem);
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: var(--layer-toast);
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	max-width: calc(100vw - 2rem);
+	padding: 0.3rem 0.8rem;
+	border-radius: var(--radius-round);
+	border: 1px solid var(--warn-line);
+	background: var(--warn-bg);
+	color: var(--text);
+	font-size: 0.85rem;
+	box-shadow: var(--shadow-sm);
+	/* Taps go through to what's under it. */
+	pointer-events: none;
+}

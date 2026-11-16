@@ -44,6 +44,7 @@ import TaskDialog from './components/tasks/TaskDialog';
 import { taskProgress } from './lib/tasks';
 import Celebration from './components/ui/Celebration';
 import Toast, { type ToastMessage } from './components/ui/Toast';
+import OfflineBar from './components/ui/OfflineBar';
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from './lib/useMediaQuery';
 import { useFlyerDrop } from './lib/useFlyerDrop';
 import ErrorBoundary from './components/ui/ErrorBoundary';
@@ -553,6 +554,8 @@ export default function App() {
 			{cheer.cheer && <Celebration cheer={cheer.cheer} onDone={cheer.done} />}
 			{/* "Time to leave" alerts, on whichever page is showing (above the screen saver too). */}
 			<LeaveAlerts />
+			{/* No connection: said at the top of every page (not in kid mode: nothing for them to do about it). */}
+			<OfflineBar />
 
 			{toast && <Toast message={toast} onDone={closeToast} />}
 		</>

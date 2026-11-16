@@ -439,3 +439,13 @@
 	gap: 1rem;
 	padding: 0 1rem;
 }
+/* Couldn't sync with the family's phones lately: said above the lists. */
+.unsynced {
+	margin: 0;
+	padding: 0.5rem 0.8rem;
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--warn-line);
+	background: var(--warn-bg);
+	color: var(--text);
+	font-size: 0.95rem;
+}
