@@ -72,6 +72,7 @@ beforeEach(async () => {
 		dataDir: dir,
 		logger: false,
 		sendCode: async (email, code) => void codes.set(email, code),
+		review: { email: 'review@sprig-family.com', code: '246810' },
 		googleCalendar: {
 			authUrl: (redirect, state, hint) =>
 				`https://google.test/auth?${new URLSearchParams({ redirect, state, hint: hint ?? '' })}`,
@@ -319,6 +320,26 @@ describe('invites', () => {
 		});
 		for (let i = 0; i < 5; i++) await wall.post('/api/auth/enter', { pin: '0000' });
 		expect((await wall.post('/api/auth/enter', { pin: '1357' })).body.error).toMatch(/Too many/);
+	});
+});
+
+describe("App Review's account", () => {
+	it('signs in with its fixed code, and no email goes out', async () => {
+		const reviewer = device();
+		expect((await reviewer.post('/api/account/email/start', { email: 'Review@Sprig-Family.com' })).status).toBe(200);
+		expect(codes.has('review@sprig-family.com')).toBe(false);
+		expect(
+			(await reviewer.post('/api/account/email/verify', { email: 'review@sprig-family.com', code: '111111' })).status,
+		).toBe(401);
+		const signedIn = await reviewer.post('/api/account/email/verify', {
+			email: 'review@sprig-family.com',
+			code: '246810',
+		});
+		expect(signedIn.status).toBe(200);
+		expect(signedIn.body.signedIn).toBe(true);
+		// Anyone else still gets a code by email.
+		await device().post('/api/account/email/start', { email: 'sam@example.com' });
+		expect(codes.get('sam@example.com')).toMatch(/^\d{6}$/);
 	});
 });
 

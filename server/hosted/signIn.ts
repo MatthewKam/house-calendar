@@ -103,14 +103,15 @@ export function signInRoutes(
 			if (last && last.sent_at > new Date(Date.now() - 30_000).toISOString()) {
 				return reply.code(429).send({ error: 'A code was just sent. Wait a moment before asking for another.' });
 			}
-			const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
+			const review = opts.review?.email === email;
+			const code = review ? opts.review!.code : String(randomInt(0, 1_000_000)).padStart(6, '0');
 			accounts
 				.prepare(
 					`INSERT INTO email_codes (email, code_hash, sent_at, expires_at, tries) VALUES (?, ?, ?, ?, 0)
       ON CONFLICT (email) DO UPDATE SET code_hash = excluded.code_hash, sent_at = excluded.sent_at, expires_at = excluded.expires_at, tries = 0`,
 				)
 				.run(email, hashPin(code), now(), later(CODE_MS));
-			await opts.sendCode(email, code);
+			if (!review) await opts.sendCode(email, code);
 			return { sent: true };
 		},
 	);

@@ -179,6 +179,11 @@ const server = buildServer(accounts, households, {
 		? { clientId: env.APPLE_SERVICE_ID, verify: appleVerifier([env.APPLE_SERVICE_ID, ...list(env.APPLE_APP_IDS)]) }
 		: undefined,
 	sendCode,
+	// App Review's account (docs/app-store.md): REVIEW_EMAIL signs in with REVIEW_CODE, six digits.
+	review:
+		env.REVIEW_EMAIL && /^\d{6}$/.test(env.REVIEW_CODE ?? '')
+			? { email: env.REVIEW_EMAIL.trim().toLowerCase(), code: env.REVIEW_CODE! }
+			: undefined,
 	googleCalendar: oauth,
 	publicUrl: env.PUBLIC_URL || undefined,
 	// Hosted behind the host's HTTPS proxy: TRUST_PROXY=1.
