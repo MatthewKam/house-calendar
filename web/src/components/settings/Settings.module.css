@@ -300,6 +300,11 @@
 	composes: textButton from '../ui/Buttons.module.css';
 	padding: 0.2rem;
 }
+/* Your PIN, under your name in People: the row's full width, in line with the name. */
+.myPin {
+	flex-basis: 100%;
+	padding-left: 1.6rem;
+}
 .pinForm {
 	display: flex;
 	flex-direction: column;
