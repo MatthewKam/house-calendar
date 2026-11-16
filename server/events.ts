@@ -118,6 +118,7 @@ const toEvent = (r: EventRow): CalEvent => ({
 	photoUrl: r.flyer_id && `/api/photos/${r.flyer_id}/full`,
 	// What to bring, ticked for this time it happens.
 	checklist: toChecklist(r.checklist),
+	planKey: `series:${r.calendar_id}:${r.series_id ?? r.id}`,
 });
 /** A Busy event someone else is on: just the time and who, never its title or place. */
 const asBusy = (r: EventRow): CalEvent => ({

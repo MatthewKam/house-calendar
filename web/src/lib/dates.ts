@@ -1,11 +1,8 @@
 // All "day" strings are YYYY-MM-DD in the display's local time zone.
 
-export const pad = (n: number) => String(n).padStart(2, '0');
-export const dayKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-export const fromDayKey = (k: string) => {
-	const [y, m, d] = k.split('-').map(Number);
-	return new Date(y, m - 1, d);
-};
+import { dayKey, fromDayKey, pad } from '../../../shared/days.ts';
+
+export { dayKey, fromDayKey, pad };
 export const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 
 /** Start of the week containing d. weekStartsOn: 0 = Sunday, 1 = Monday. */

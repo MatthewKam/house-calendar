@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import s from './QuickAdd.module.css';
 
-type QuickKind = 'event' | 'list' | 'good' | 'task' | 'photo' | 'snap' | 'say';
+type QuickKind = 'event' | 'list' | 'good' | 'task' | 'recipe' | 'photo' | 'snap' | 'say';
 /** The ones that open the phone's picker (Snap: the camera) and get what was picked. */
 type Picking = 'photo' | 'snap';
 
@@ -46,6 +46,12 @@ const LOOK: Record<QuickKind, { label: string; icon: ReactNode; tint: string; in
 		),
 		tint: 'color-mix(in srgb, var(--accent) 10%, #fff)',
 		ink: 'var(--accent)',
+	},
+	recipe: {
+		label: 'Add a recipe',
+		icon: line('M3.5 11h17a8.5 8.5 0 0 1-17 0zM8 8c0-1.5 1-1.5 1-3M12 8c0-1.5 1-1.5 1-3M16 8c0-1.5 1-1.5 1-3'),
+		tint: '#eaf6ec',
+		ink: '#2f6b3a',
 	},
 	photo: {
 		label: 'Add a photo',

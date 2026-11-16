@@ -6,7 +6,14 @@ import { kindWordsFor } from '../../lib/kindWords';
 import { useLists, useMeals, useMembers, useRangeEvents, useRecipes, useWeather } from '../../lib/queries';
 import { plannedOn } from '../../lib/meals';
 import { coverOf, mealPicture } from '../../lib/recipes';
-import { birthdays, sleepsUntil, specialDaysFor, specialWindow, type SpecialDay } from '../../lib/specialDays';
+import {
+	birthdays,
+	sleepsUntil,
+	specialDaysFor,
+	specialEvent,
+	specialWindow,
+	type SpecialDay,
+} from '../../lib/specialDays';
 import type { CalEvent, Member, SprigItem, Weather } from '../../lib/types';
 import { sky } from '../../lib/weather';
 import { DayCalendar } from '../ui/DayCarousel';
@@ -364,11 +371,7 @@ function SpecialDays({ today, kidId }: { today: string; kidId: string }) {
 			const on = e.memberIds.filter((id) => kids.has(id));
 			return on.length === 0 || on.includes(kidId);
 		})
-		.map((e) => ({
-			day: e.allDay ? e.start : dayKey(new Date(e.start)),
-			name: e.title,
-			picture: picture(e.title, '⭐'),
-		}))
+		.map((e) => specialEvent(e.allDay ? e.start : dayKey(new Date(e.start)), e.title, picture(e.title, '⭐')))
 		.filter((d, i, all) => all.findIndex((x) => x.day === d.day && x.name === d.name) === i);
 	const days = specialDaysFor(today, (year) => [
 		...birthdays(people, year),

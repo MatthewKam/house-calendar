@@ -6,6 +6,7 @@ import type { CalEvent, EventInput, Member, Scope, Visibility } from '../../lib/
 import { PencilIcon } from '../ui/icons';
 import TravelInfo from './TravelInfo';
 import EventChecklist from './EventChecklist';
+import { EventReminders } from './Reminders';
 import EventForecast from './EventForecast';
 import AddressInput from './AddressInput';
 import { PickChip } from '../ui/NameChip';
@@ -150,7 +151,7 @@ function SyncedEvent({
 		: `${longDate(new Date(event.start))}, ${timeLabel(event.start)} – ${timeLabel(event.end)}`;
 	return (
 		<>
-			<Sheet label={event.title} onClose={onClose}>
+			<Sheet label={event.title} onClose={onClose} className={sheet.drawer}>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>{event.title}</h2>
 					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
@@ -161,6 +162,7 @@ function SyncedEvent({
 				<TravelInfo event={event} locked={locked} />
 				<EventForecast event={event} />
 				<EventChecklist event={event} locked={locked} />
+				<EventReminders event={event} />
 				{draft ? (
 					<>
 						<WhoPicker members={members} value={draft} onChange={setDraft} />
@@ -349,7 +351,7 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
 
 	return (
 		<>
-			<Sheet label={event ? 'Edit event' : 'New event'} onClose={onClose} onSubmit={submit}>
+			<Sheet label={event ? 'Edit event' : 'New event'} onClose={onClose} onSubmit={submit} className={sheet.drawer}>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>{event ? 'Edit event' : 'New event'}</h2>
 					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
@@ -378,6 +380,7 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
 				<WhoPicker members={members} value={memberIds} onChange={setMemberIds} />
 				{/* What to bring: saved as it's changed, apart from Save (a new event gets one once it's added). */}
 				{event && <EventChecklist event={event} />}
+				{event && <EventReminders event={event} />}
 				<label className={s.toggle}>
 					<input type="checkbox" checked={special} onChange={(e) => setSpecialDay(e.target.checked)} />
 					<span>

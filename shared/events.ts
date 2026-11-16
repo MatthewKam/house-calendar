@@ -110,6 +110,8 @@ export const CalEvent = z.object({
 	photoUrl: z.string().nullable(),
 	/** What to bring (every repeat of it), ticked for this time it happens. */
 	checklist: z.array(ChecklistItem),
+	/** Its key for your reminders on it, every repeat of it (shared/dayPlans.ts). */
+	planKey: z.string(),
 	/** Someone else's Busy time: no title or place, and it can't be opened. */
 	busy: z.boolean().optional(),
 });

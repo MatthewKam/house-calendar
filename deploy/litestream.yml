@@ -1,6 +1,8 @@
 # Continuous backups: every database in the data folder (accounts.db, and each household's
 # calendar.db, including ones added later) is copied to the storage bucket as it changes.
 # The bucket's settings come from `fly storage create` (BUCKET_NAME, AWS_ENDPOINT_URL_S3, and the keys).
+# Litestream takes a fresh copy daily and clears older ones (its defaults); a deleted household's copies
+# are cleared by the app (server/backups.ts), so nothing deleted stays past the privacy page's 30 days.
 dbs:
   - dir: ${DATA_DIR}
     pattern: '*.db'

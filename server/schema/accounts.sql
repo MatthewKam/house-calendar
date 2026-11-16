@@ -1,4 +1,4 @@
--- The accounts database (server/accounts.ts), at version 7. Written by server/schema.test.ts; don't edit by hand.
+-- The accounts database (server/accounts.ts), at version 8. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE email_codes (
     email       TEXT PRIMARY KEY,
@@ -6,6 +6,11 @@ CREATE TABLE email_codes (
     sent_at     TEXT NOT NULL,
     expires_at  TEXT NOT NULL,
     tries       INTEGER NOT NULL DEFAULT 0
+  );
+
+CREATE TABLE gone_backups (
+    db_file  TEXT PRIMARY KEY,
+    gone_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
 
 CREATE TABLE households (

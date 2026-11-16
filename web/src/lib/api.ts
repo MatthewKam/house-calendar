@@ -61,6 +61,8 @@ import type {
 	RecipeDraft,
 	RecipeFields,
 } from './types';
+import type { SpecialReminder, SpecialReminderNew } from '../../../shared/specialReminders.ts';
+import type { DayPlans, DayTick } from '../../../shared/dayPlans.ts';
 import { SERVER, authHeaders, forgetSession, isApp, keepSession, mediaUrl } from './native';
 
 /**
@@ -468,6 +470,19 @@ export const api = {
 	pushOn: (subscription: PushSubscriptionJSON, timeZone: string) =>
 		call<void>('POST', '/api/push', { subscription, timeZone }),
 	pushOff: (endpoint: string) => call<void>('DELETE', '/api/push', { endpoint }),
+
+	/** Your reminders on special days (server/specialReminders.ts). */
+	specialReminders: () => call<SpecialReminder[]>('GET', '/api/special-reminders'),
+	addSpecialReminder: (r: SpecialReminderNew) => call<{ id: string }>('POST', '/api/special-reminders', r),
+	removeSpecialReminder: (id: string) => call<void>('DELETE', `/api/special-reminders/${id}`),
+	/** A day's note and list, shared by the grown-ups (server/dayPlans.ts): every day's at once. */
+	dayPlans: () => call<DayPlans>('GET', '/api/day-plans'),
+	setDayNote: ({ key, note }: { key: string; note: string }) =>
+		call<DayPlans>('PUT', `/api/day-plans/${encodeURIComponent(key)}/note`, { note }),
+	setDayList: ({ key, items }: { key: string } & ChecklistInput) =>
+		call<DayPlans>('PUT', `/api/day-plans/${encodeURIComponent(key)}/list`, { items }),
+	tickDayList: ({ key, itemId, ...tick }: { key: string; itemId: string } & DayTick) =>
+		call<DayPlans>('PUT', `/api/day-plans/${encodeURIComponent(key)}/list/${itemId}`, tick),
 
 	settings: () => call<Settings>('GET', '/api/settings'),
 	setSetting: (key: string, value: unknown) => call<Settings>('PUT', `/api/settings/${key}`, { value }),

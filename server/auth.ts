@@ -129,6 +129,10 @@ const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean]
 	['PUT', '/api/events/:id/special'],
 	// What to bring: changing the list is a parent's; ticking it is anyone's.
 	['PUT', '/api/events/:id/checklist'],
+	// A day's plans: a parent's, ticks too (kids don't see them).
+	['PUT', '/api/day-plans/:key/note'],
+	['PUT', '/api/day-plans/:key/list'],
+	['PUT', '/api/day-plans/:key/list/:itemId'],
 	// Learn's day: unlocking, locking, more games or minutes.
 	['POST', '/api/learn/:memberId/today'],
 	// Recipes: reading, adding, changing and deleting are a parent's (looking is anyone's).

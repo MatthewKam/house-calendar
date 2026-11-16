@@ -19,6 +19,9 @@ interface Props {
 	onDelete: (task: Task) => void;
 	/** A group (one part of the day) was dragged into a new order. */
 	onReorder: (ids: string[]) => void;
+	/** Whether a group ("Morning", "Goals") is folded away, and folding or opening one. */
+	folded: (group: string) => boolean;
+	onFold: (group: string, folded: boolean) => void;
 }
 
 /** Required tasks by part of the day, then goals in their own section. */
@@ -29,9 +32,21 @@ const GROUPS: { label: string; has: (c: Task) => boolean }[] = [
 
 /**
  * A kid's tasks for today by part of the day, then their goals (ticked any day they do them, for
- * stars), or (editing) all of them, in order.
+ * stars), each folding away with a tap on its heading; or (editing) all of them, in order.
  */
-export default function TodayList({ kid, tasks, done, today, editing, onTick, onEdit, onDelete, onReorder }: Props) {
+export default function TodayList({
+	kid,
+	tasks,
+	done,
+	today,
+	editing,
+	onTick,
+	onEdit,
+	onDelete,
+	onReorder,
+	folded,
+	onFold,
+}: Props) {
 	if (editing) {
 		// Drag a row by its handle to reorder it within its part of the day.
 		return (
@@ -85,19 +100,41 @@ export default function TodayList({ kid, tasks, done, today, editing, onTick, on
 			{GROUPS.map((gr) => {
 				const group = dueToday.filter(gr.has);
 				if (group.length === 0) return null;
+				const shut = folded(gr.label);
+				const ticked = group.filter((c) => didTask(done, c, kid.id, today)).length;
 				return (
 					<div key={gr.label} className={s.timeGroup}>
-						<h3 className={s.timeHead}>{gr.label}</h3>
-						<ul className={s.today}>
-							{group.map((c) => {
-								const ticked = didTask(done, c, kid.id, today);
-								return (
-									<li key={c.id}>
-										<TaskTick task={c} ticked={ticked} onToggle={() => onTick(c, ticked)} />
-									</li>
-								);
-							})}
-						</ul>
+						<h3 className={s.timeHead}>
+							<button
+								type="button"
+								className={s.foldHead}
+								aria-expanded={!shut}
+								onClick={() => onFold(gr.label, !shut)}
+							>
+								<span className={s.chevron} aria-hidden="true">
+									{shut ? '▸' : '▾'}
+								</span>
+								{gr.label}
+								{/* Folded: how far along it is. */}
+								{shut && (
+									<span className={s.foldCount}>
+										· {ticked === group.length ? 'All done ✓' : `${ticked} of ${group.length}`}
+									</span>
+								)}
+							</button>
+						</h3>
+						{!shut && (
+							<ul className={s.today}>
+								{group.map((c) => {
+									const ticked = didTask(done, c, kid.id, today);
+									return (
+										<li key={c.id}>
+											<TaskTick task={c} ticked={ticked} onToggle={() => onTick(c, ticked)} />
+										</li>
+									);
+								})}
+							</ul>
+						)}
 					</div>
 				);
 			})}

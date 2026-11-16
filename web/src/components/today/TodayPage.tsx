@@ -1,6 +1,13 @@
 import { type CSSProperties, type ReactNode } from 'react';
 import { addDays, dayKey, fromDayKey, timeLabel, longDate } from '../../lib/dates';
-import { useEventWeather, useRangeEvents, useTravelTimes, useWeather } from '../../lib/queries';
+import {
+	useEventWeather,
+	usePlansAccess,
+	useRangeEvents,
+	useSpecialReminders,
+	useTravelTimes,
+	useWeather,
+} from '../../lib/queries';
 import { pickOfTheDay, useDailyThemes } from '../../lib/dailyThemes';
 import { ENCOURAGEMENT_THEMES } from '../../lib/grownUpWords';
 import { QUOTE_THEMES } from '../../lib/quotes';
@@ -100,6 +107,8 @@ export default function TodayPage({
 		})
 		.filter((d) => d.events.length > 0);
 	const drives = useTravelTimes(upNext.map((e) => e.id)).data ?? {};
+	// Your reminders on each event (every repeat of it), to show a bell.
+	const reminders = useSpecialReminders(usePlansAccess().reminders).data ?? [];
 
 	const who = (e: CalEvent) => (e.memberIds.length === 0 ? [] : members.filter((m) => e.memberIds.includes(m.id)));
 	const when = (e: CalEvent) =>
@@ -133,6 +142,11 @@ export default function TodayPage({
 						{e.checklist.length > 0 && (
 							<span className={`${s.leave} ${e.checklist.every((x) => x.done) ? s.packed : ''}`}>
 								🎒 {packed(e.checklist)}
+							</span>
+						)}
+						{reminders.some((r) => r.key === e.planKey) && (
+							<span className={s.leave}>
+								🔔 {reminders.filter((r) => r.key === e.planKey).length === 1 ? 'Reminder' : 'Reminders'} set
 							</span>
 						)}
 						{/* Under the event, so the title keeps the row's width on a phone. */}

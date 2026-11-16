@@ -127,6 +127,13 @@ const migrations: string[] = [
 	`
   ALTER TABLE memberships ADD COLUMN co_holder INTEGER NOT NULL DEFAULT 0;
   `,
+	// Deleted households' databases, whose backups are still to be cleared from the bucket (server/backups.ts).
+	`
+  CREATE TABLE gone_backups (
+    db_file  TEXT PRIMARY KEY,
+    gone_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  `,
 ];
 
 export function openAccounts(file: string): AccountsDB {

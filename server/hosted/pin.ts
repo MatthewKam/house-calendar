@@ -78,7 +78,7 @@ export function pinRoutes(app: FastifyInstance, accounts: AccountsDB, x: Session
       ON CONFLICT (membership_id) DO UPDATE SET code_hash = excluded.code_hash, sent_at = excluded.sent_at, expires_at = excluded.expires_at, tries = 0`,
 			)
 			.run(g.membership.id, hashPin(code), now(), later(CODE_MS));
-		await opts.sendCode(email, code);
+		await opts.sendCode(email, code, 'pin');
 		return { sentTo: email };
 	});
 

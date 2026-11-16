@@ -6,14 +6,16 @@
 	z-index: var(--layer-sheet);
 	background: rgb(0 0 0 / 0.35);
 }
+/* Centered in the space between the phone's clock (and notch) and its home bar, so a tall one (an open
+   recipe) never starts under the clock. */
 .sheet {
 	position: fixed;
 	left: 50%;
-	top: 50%;
+	top: calc(50% + (env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) / 2);
 	transform: translate(-50%, -50%);
 	z-index: calc(var(--layer-sheet) + 1);
 	width: min(36rem, 92vw);
-	max-height: 92vh;
+	max-height: calc(92dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
 	overflow-y: auto;
 	background: var(--surface);
 	border-radius: var(--radius-lg);
@@ -100,4 +102,29 @@
 	color: var(--danger);
 	padding: 0 1rem;
 	font-weight: 600;
+}
+/* A drawer: from the right edge, full height (the whole screen on a phone), for things beside the page
+   (a day's plans). Below the phone's status bar, and clear of its home bar. */
+.drawer {
+	left: auto;
+	right: 0;
+	top: env(safe-area-inset-top, 0px);
+	bottom: 0;
+	transform: none;
+	width: min(28rem, 100vw);
+	max-height: none;
+	border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+	padding-right: calc(1.4rem + var(--inset-right));
+	padding-bottom: calc(1.4rem + env(safe-area-inset-bottom, 0px));
+	animation: drawerIn 0.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+	.drawer {
+		animation: none;
+	}
+}
+@keyframes drawerIn {
+	from {
+		transform: translateX(100%);
+	}
 }

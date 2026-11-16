@@ -60,4 +60,6 @@ export const keys = {
 	potty: ['tasksDone', 'potty'] as const,
 	// Under 'tasksDone' too: finishing an activity can earn a star.
 	learn: (today: string) => ['tasksDone', 'learn', today] as const,
+	specialReminders: ['specialReminders'] as const,
+	dayPlans: ['dayPlans'] as const,
 };

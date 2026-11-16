@@ -908,6 +908,58 @@ const migrations: string[] = [
   );
   ALTER TABLE list_items ADD COLUMN meal_plan_id TEXT REFERENCES meal_plans(id) ON DELETE CASCADE;
   `,
+	// Reminders a grown-up sets on a special day, for themselves, every year (specialReminders.ts), each
+	// with what to do ("Pick up a present"). A special day is kept by its key (shared/specialDays.ts),
+	// since holidays and birthdays aren't rows.
+	`
+  CREATE TABLE special_reminders (
+    id           TEXT PRIMARY KEY,
+    member_id    TEXT REFERENCES members(id) ON DELETE CASCADE,
+    key          TEXT NOT NULL,
+    name         TEXT NOT NULL,
+    days_before  INTEGER NOT NULL,
+    note         TEXT,
+    created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  `,
+	// A day's plans (dayPlans.ts): a note and a list, by key like special_reminders (one day, or a
+	// special day every year); ticks are kept for the day they were ticked on, so each year starts fresh.
+	`
+  CREATE TABLE day_notes (
+    key        TEXT PRIMARY KEY,
+    note       TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE TABLE day_list (
+    id         TEXT PRIMARY KEY,
+    key        TEXT NOT NULL,
+    title      TEXT NOT NULL,
+    picture    TEXT,
+    sort_order INTEGER NOT NULL
+  );
+  CREATE INDEX day_list_key ON day_list(key);
+  CREATE TABLE day_list_ticks (
+    item_id TEXT NOT NULL REFERENCES day_list(id) ON DELETE CASCADE,
+    day     TEXT NOT NULL,
+    PRIMARY KEY (item_id, day)
+  );
+  `,
+	// Reminders on an event (series:… keys, every time it repeats) can be hours before it starts.
+	`
+  ALTER TABLE special_reminders ADD COLUMN hours_before INTEGER;
+  `,
+	// How long before, as a number and a unit (hours, days, weeks or months); none: on the day.
+	`
+  ALTER TABLE special_reminders ADD COLUMN amount INTEGER;
+  ALTER TABLE special_reminders ADD COLUMN unit TEXT;
+  UPDATE special_reminders SET
+    amount = CASE WHEN hours_before IS NOT NULL THEN hours_before WHEN days_before = 0 THEN NULL
+      WHEN days_before % 7 = 0 THEN days_before / 7 ELSE days_before END,
+    unit = CASE WHEN hours_before IS NOT NULL THEN 'hour' WHEN days_before = 0 THEN NULL
+      WHEN days_before % 7 = 0 THEN 'week' ELSE 'day' END;
+  ALTER TABLE special_reminders DROP COLUMN days_before;
+  ALTER TABLE special_reminders DROP COLUMN hours_before;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

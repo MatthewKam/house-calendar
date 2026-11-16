@@ -94,10 +94,6 @@ export default function HouseholdAccess() {
 	}
 	return (
 		<section className={panel.bare}>
-			{me.role === 'guardian' && me.kind === 'user' && (
-				<MyPin hasPin={me.hasPin} onSaved={(st) => qc.setQueryData(['auth'], st)} />
-			)}
-
 			{issued && <Issued {...issued} onClose={() => setIssued(null)} />}
 			{invite.isError && <p className={s.error}>{invite.error.message}</p>}
 
@@ -210,6 +206,12 @@ export default function HouseholdAccess() {
 								</button>
 							)}
 						</span>
+						{/* Your own PIN, under your name. */}
+						{p.memberId === me.memberId && me.role === 'guardian' && me.kind === 'user' && (
+							<div className={panel.myPin}>
+								<MyPin hasPin={me.hasPin} onSaved={(st) => qc.setQueryData(['auth'], st)} />
+							</div>
+						)}
 					</li>
 				))}
 			</ul>

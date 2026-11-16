@@ -21,6 +21,7 @@ import { claudeUnderstand } from './capture.ts';
 import { claudeReadRecipe } from './recipes.ts';
 import { claudeDishIdeas, claudeSurprise } from './dishIdeas.ts';
 import { combineStatus } from './sync.ts';
+import { clearBackupsHourly, s3Bucket } from './backups.ts';
 
 const root = resolve(import.meta.dirname, '..');
 
@@ -161,9 +162,10 @@ const households = householdRegistry((h) => {
 // with EMAIL_CODES_IN_LOG=1 (a trial, where you read them out of `fly logs`). RESEND_API_KEY sends them.
 const sendCode: SendCode | undefined =
 	env.RESEND_API_KEY && env.EMAIL_FROM
-		? resendSender(env.RESEND_API_KEY, env.EMAIL_FROM)
+		? resendSender(env.RESEND_API_KEY, env.EMAIL_FROM, env.PUBLIC_URL || 'https://sprig-family.com')
 		: env.NODE_ENV !== 'production' || env.EMAIL_CODES_IN_LOG === '1'
-			? async (email, code) => console.log(`Sign-in code for ${email}: ${code}`)
+			? async (email, code, purpose = 'sign-in') =>
+					console.log(`${purpose === 'pin' ? 'PIN' : 'Sign-in'} code for ${email}: ${code}`)
 			: undefined;
 
 const server = buildServer(accounts, households, {
@@ -202,6 +204,18 @@ adoptLegacy(
 // are a few households; with many, this would start them as they're used.)
 for (const h of accounts.prepare('SELECT * FROM households').all() as HouseholdRow[]) {
 	households.get(h).catch((err) => server.app.log.error(err));
+}
+
+// Deleted households' backups are cleared from the storage bucket (fly storage create sets these).
+if (env.BUCKET_NAME && env.AWS_ENDPOINT_URL_S3 && env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY) {
+	const bucket = s3Bucket({
+		endpoint: env.AWS_ENDPOINT_URL_S3,
+		bucket: env.BUCKET_NAME,
+		accessKeyId: env.AWS_ACCESS_KEY_ID,
+		secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+		region: env.AWS_REGION,
+	});
+	clearBackupsHourly(accounts, bucket, (err) => server.app.log.error(err, 'clearing deleted backups'));
 }
 
 // Localhost only by default. Set HOST=0.0.0.0 to reach it from phones on your Wi-Fi, or when hosted.

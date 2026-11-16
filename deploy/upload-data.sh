@@ -19,7 +19,8 @@ if [ "$(sqlite3 "$TMP/stage/accounts.db" "SELECT COUNT(*) FROM households WHERE 
 fi
 # Photos and videos. The encryption key goes up as a Fly secret instead (SECRET_KEY).
 rsync -a --exclude '*.db' --exclude '*.db-wal' --exclude '*.db-shm' --exclude 'secret.key' data/ "$TMP/stage/"
-tar -czf "$TMP/import.tgz" -C "$TMP/stage" .
+# COPYFILE_DISABLE: without it, a Mac adds ._ copies of every file (its own notes about them).
+COPYFILE_DISABLE=1 tar -czf "$TMP/import.tgz" -C "$TMP/stage" .
 echo "Uploading $(du -h "$TMP/import.tgz" | cut -f1)…"
 
 fly ssh sftp put "$TMP/import.tgz" /data/import.tgz

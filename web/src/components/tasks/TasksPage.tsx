@@ -26,6 +26,7 @@ import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import s from './Tasks.module.css';
 import { isKid } from '../../lib/people';
+import { useFolded } from '../../lib/useFolded';
 
 interface Props {
 	today: string;
@@ -71,6 +72,8 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 	const [historyKid, setHistoryKid] = useState<string | null>(null);
 	// Edit mode lists every task with edit and delete, and hides the tick buttons so nothing gets ticked by accident.
 	const [editing, setEditing] = useState(false);
+	// Kids' cards and their task groups folded away on this device (by kid, and kid and group).
+	const folds = useFolded('sprig:task-groups-folded');
 	// Locked again (timed out, say) while editing: back to ticking.
 	if (locked && editing) setEditing(false);
 	// The trash button asks in a pop-up first, since deleting also removes the task's history.
@@ -129,6 +132,9 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 							{kids.map((kid) => {
 								const mine = tasksFor(tasks, kid.id);
 								const showHistory = historyKid === kid.id;
+								// Each group folds by itself; a tap on the header folds everything under it.
+								const groupId = (group: string) => `${kid.id}:${group}`;
+								const folded = folds.isFolded(kid.id) && !editing;
 								return (
 									<section
 										key={kid.id}
@@ -140,11 +146,16 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 											progress={progress.get(kid.id)}
 											stars={buckets.find((b) => b.memberId === kid.id)?.stars ?? 0}
 											showHistory={showHistory}
-											onHistory={() => setHistoryKid(showHistory ? null : kid.id)}
+											onHistory={() => {
+												setHistoryKid(showHistory ? null : kid.id);
+												folds.fold([kid.id], false);
+											}}
 											moments={moments.filter((mo) => mo.memberId === kid.id)}
 											onMoment={locked ? undefined : (moment) => setUnsticking({ kid, moment })}
+											folded={folded}
+											onFold={editing ? undefined : (on) => folds.fold([kid.id], on)}
 										/>
-										{!showHistory && potty.some((c) => c.memberId === kid.id) && (
+										{!folded && !showHistory && potty.some((c) => c.memberId === kid.id) && (
 											<PottyCard
 												kid={kid}
 												chart={potty.find((c) => c.memberId === kid.id)!}
@@ -153,7 +164,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 												foldable
 											/>
 										)}
-										{showHistory ? (
+										{folded ? null : showHistory ? (
 											<TaskHistory kid={kid} tasks={mine} today={today} onEdit={locked ? undefined : onEdit} />
 										) : (
 											<>
@@ -169,13 +180,16 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 													onEdit={onEdit}
 													onDelete={setToDelete}
 													onReorder={reorderGroup}
+													folded={(group) => folds.isFolded(groupId(group))}
+													onFold={(group, on) => folds.fold([groupId(group)], on)}
 												/>
 												{!editing && !locked && (
 													<div className={s.addRow}>
 														<button className={s.addText} onClick={() => onAdd(kid.id)}>
 															+ Add task/goal
 														</button>
-														{isKid(kid) && !potty.some((c) => c.memberId === kid.id) && (
+														{/* Potty training is for the littlest (under 4); a chart already going stays. */}
+														{kid.stage === 'little' && !potty.some((c) => c.memberId === kid.id) && (
 															<button
 																className={s.addText}
 																disabled={pottyActions.setOn.isPending}
