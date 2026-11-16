@@ -162,9 +162,10 @@ const households = householdRegistry((h) => {
 // with EMAIL_CODES_IN_LOG=1 (a trial, where you read them out of `fly logs`). RESEND_API_KEY sends them.
 const sendCode: SendCode | undefined =
 	env.RESEND_API_KEY && env.EMAIL_FROM
-		? resendSender(env.RESEND_API_KEY, env.EMAIL_FROM)
+		? resendSender(env.RESEND_API_KEY, env.EMAIL_FROM, env.PUBLIC_URL || 'https://sprig-family.com')
 		: env.NODE_ENV !== 'production' || env.EMAIL_CODES_IN_LOG === '1'
-			? async (email, code) => console.log(`Sign-in code for ${email}: ${code}`)
+			? async (email, code, purpose = 'sign-in') =>
+					console.log(`${purpose === 'pin' ? 'PIN' : 'Sign-in'} code for ${email}: ${code}`)
 			: undefined;
 
 const server = buildServer(accounts, households, {

@@ -1,4 +1,5 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { codeEmail, type CodeFor } from './codeEmail.ts';
 
 // Signing in with Google or Apple: the app (web page now, the phone app later) gets an ID token from
 // Google's or Apple's own sign-in, and the server checks it was signed by them, for this app, and
@@ -42,20 +43,25 @@ export function appleVerifier(clientIds: string[]): VerifyToken {
 	};
 }
 
-/** Sends a sign-in code. */
-export type SendCode = (email: string, code: string) => Promise<void>;
+/** Sends a code: to sign in, or (purpose "pin") to set a new PIN. */
+export type SendCode = (email: string, code: string, purpose?: CodeFor) => Promise<void>;
 
-/** Through Resend (resend.com), from `from` (e.g. "Household <signin@yourdomain.com>"). */
-export function resendSender(apiKey: string, from: string): SendCode {
-	return async (email, code) => {
+/**
+ * Through Resend (resend.com), from `from` (e.g. "Sprig <signin@yourdomain.com>"), as codeEmail.ts writes
+ * it; `site` is where Sprig is, for its picture and links.
+ */
+export function resendSender(apiKey: string, from: string, site: string): SendCode {
+	return async (email, code, purpose = 'sign-in') => {
+		const { subject, html, text } = codeEmail(code, purpose, site);
 		const res = await fetch('https://api.resend.com/emails', {
 			method: 'POST',
 			headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
 			body: JSON.stringify({
 				from,
 				to: email,
-				subject: `${code} is your sign-in code`,
-				text: `Your Household sign-in code is ${code}.\n\nIt works for 10 minutes. If you didn't ask for it, ignore this email.`,
+				subject,
+				html,
+				text,
 			}),
 		});
 		if (!res.ok) throw new Error(`Email failed: ${res.status} ${await res.text()}`);
