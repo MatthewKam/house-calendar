@@ -15,6 +15,7 @@
 		"build": "vite build",
 		"ios": "vite build && cap sync ios && cap open ios",
 		"ios:sync": "vite build && cap sync ios",
+		"ios:testflight": "sh deploy/testflight.sh",
 		"start": "NODE_ENV=production tsx server/index.ts",
 		"test": "vitest run",
 		"check": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json",

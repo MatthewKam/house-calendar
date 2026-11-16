@@ -38,6 +38,11 @@ export interface ServerOptions {
 	apple?: { clientId: string; verify: VerifyToken };
 	/** Emails sign-in codes; without it, email sign-in is off. */
 	sendCode?: SendCode;
+	/**
+	 * App Review's account: Apple's reviewers can't read our emails, so this address signs in with this
+	 * fixed 6-digit code instead of one sent to it (still five tries per code asked for).
+	 */
+	review?: { email: string; code: string };
 	/** Connecting each person's Google Calendar; without it, that's off. */
 	googleCalendar?: GoogleOAuth;
 	/** The app's address as people reach it (https://…), for Google to come back to; else from each request. */

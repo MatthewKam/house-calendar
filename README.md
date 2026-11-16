@@ -306,6 +306,9 @@ rather than a cookie (`web/src/lib/native.ts`); pictures carry a media key that 
   Connecting Google Calendar does too, with a one-time link from `POST /api/account/google/link`, since the sheet
   has no cookie and Google won't sign in inside the app (`server/hosted/google.ts`).
 - Web alerts can't work in the app, so Settings says they're coming; the app's own alerts are a later step.
+- `npm run ios:testflight` (`deploy/testflight.sh`) builds the app for the App Store and uploads it to TestFlight,
+  once Xcode is signed in to the Apple Developer account. What's left before App Review, the listing and the
+  privacy answers are in `docs/app-store.md`. Reviewers sign in as `REVIEW_EMAIL` with the fixed `REVIEW_CODE`.
 - The icon and launch screen come from `web/public/icon.svg` and `wordmark.svg`; the camera, microphone, speech and
   location messages iPhone shows are in `ios/App/App/Info.plist`.
 
