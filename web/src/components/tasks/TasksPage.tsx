@@ -16,7 +16,7 @@ import { taskProgress, tasksFor, percent } from '../../lib/tasks';
 import type { Task, Member, Moment } from '../../lib/types';
 import { momentKind } from '../../lib/moments';
 import KidHeader from './KidHeader';
-import TodayList from './TodayList';
+import TodayList, { groupsDue } from './TodayList';
 import TaskHistory from './TaskHistory';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import MomentDialog from './MomentDialog';
@@ -26,6 +26,7 @@ import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import s from './Tasks.module.css';
 import { isKid } from '../../lib/people';
+import { useFolded } from '../../lib/useFolded';
 
 interface Props {
 	today: string;
@@ -71,6 +72,8 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 	const [historyKid, setHistoryKid] = useState<string | null>(null);
 	// Edit mode lists every task with edit and delete, and hides the tick buttons so nothing gets ticked by accident.
 	const [editing, setEditing] = useState(false);
+	// Task groups folded away on this device (by kid and group).
+	const folds = useFolded('sprig:task-groups-folded');
 	// Locked again (timed out, say) while editing: back to ticking.
 	if (locked && editing) setEditing(false);
 	// The trash button asks in a pop-up first, since deleting also removes the task's history.
@@ -129,6 +132,10 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 							{kids.map((kid) => {
 								const mine = tasksFor(tasks, kid.id);
 								const showHistory = historyKid === kid.id;
+								// Each group folds by itself; the name folds (or opens) them all.
+								const groupId = (group: string) => `${kid.id}:${group}`;
+								const groups = groupsDue(kid, mine, today).map(groupId);
+								const allFolded = groups.length > 0 && groups.every(folds.isFolded);
 								return (
 									<section
 										key={kid.id}
@@ -143,6 +150,10 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 											onHistory={() => setHistoryKid(showHistory ? null : kid.id)}
 											moments={moments.filter((mo) => mo.memberId === kid.id)}
 											onMoment={locked ? undefined : (moment) => setUnsticking({ kid, moment })}
+											allFolded={allFolded}
+											onFoldAll={
+												showHistory || editing || groups.length === 0 ? undefined : () => folds.fold(groups, !allFolded)
+											}
 										/>
 										{!showHistory && potty.some((c) => c.memberId === kid.id) && (
 											<PottyCard
@@ -169,6 +180,8 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 													onEdit={onEdit}
 													onDelete={setToDelete}
 													onReorder={reorderGroup}
+													folded={(group) => folds.isFolded(groupId(group))}
+													onFold={(group, on) => folds.fold([groupId(group)], on)}
 												/>
 												{!editing && !locked && (
 													<div className={s.addRow}>

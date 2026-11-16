@@ -247,6 +247,28 @@
 	letter-spacing: 0.05em;
 	color: var(--muted);
 }
+/* A group's heading folds it away (and back): the whole line is the button, with a chevron. */
+.foldHead {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	width: 100%;
+	min-height: 2.75rem;
+	padding: 0;
+	letter-spacing: inherit;
+	text-transform: inherit;
+	color: inherit;
+	text-align: left;
+}
+.chevron {
+	width: 0.8rem;
+	font-size: 0.9rem;
+}
+.foldCount {
+	text-transform: none;
+	letter-spacing: 0;
+	font-size: 0.85rem;
+}
 .taskTitle {
 	flex: 1;
 	min-width: 0;
