@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
+import { useState, type CSSProperties, type FormEvent } from 'react';
 import { useMutationState } from '@tanstack/react-query';
 import {
 	LISTS,
@@ -29,7 +29,6 @@ import s from './ListView.module.css';
 import { useParent } from '../../lib/useParent';
 import { textOn } from '../../lib/color';
 import Sheet from '../ui/Sheet';
-import { api } from '../../lib/api';
 
 /** Soft colors for a list's rows, light enough for dark text. */
 const LIST_COLORS = ['#f2dcb3', '#ecb0ea', '#c9dcf7', '#cdebd3', '#ddd3f5', '#f8cfb8', '#f6e7a1', '#c3ece4', '#e4e4e4'];
@@ -268,8 +267,8 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 						onClick={() => onShopping(!shoppingHere)}
 						title={
 							shoppingHere
-								? 'Ticks from the other phones show straight away. Tap to stop.'
-								: 'Shopping with someone? Ticks show on each other’s phones straight away.'
+								? 'Ticks from the other phones show straight away, for 2 hours. Tap to stop.'
+								: 'Shopping with someone? Ticks show on each other’s phones straight away, for 2 hours.'
 						}
 					>
 						🛒{' '}
@@ -465,20 +464,9 @@ function Lists({ hidden, onNew }: { hidden: (title: string) => boolean; onNew?: 
 	const auth = useAuthStatus().data;
 	const me = auth?.signedIn ? auth.memberId : null;
 	const { shopping } = useListActions();
-	// Shopping together from any list here: the lists come live. Leaving the page stops it (on the
-	// server, after two hours anyway), so it's only live while someone's at the shops.
-	const shoppingHere = (own.data ?? []).filter((l) => l.shopping.includes(me)).map((l) => l.id);
-	useLiveLists(shoppingHere.length > 0);
-	const turnedOn = useRef(new Set<string>());
-	useEffect(() => {
-		const on = turnedOn.current;
-		return () => on.forEach((id) => void api.setShopping(id, false).catch(() => {}));
-	}, []);
-	const setShopping = (id: string, on: boolean) => {
-		if (on) turnedOn.current.add(id);
-		else turnedOn.current.delete(id);
-		shopping.mutate({ id, on });
-	};
+	// Shopping together from any list here: the lists come live while this page is open. It stays on
+	// for two hours (server/lists.ts) or until it's tapped off, so a look at a recipe and back finds it on.
+	useLiveLists((own.data ?? []).some((l) => l.shopping.includes(me)));
 	// Each list's color and its items' dragged order, kept on the wall by list name.
 	const settings = useSettings().data;
 	const colors = (settings?.listColors as Record<string, string> | undefined) ?? {};
@@ -524,7 +512,7 @@ function Lists({ hidden, onNew }: { hidden: (title: string) => boolean; onNew?: 
 					list={l}
 					members={members}
 					me={me}
-					onShopping={(on) => setShopping(l.id, on)}
+					onShopping={(on) => shopping.mutate({ id: l.id, on })}
 					// Until one is picked, each list gets the next color in turn.
 					color={colors[l.title.toLowerCase()] ?? LIST_COLORS[all.indexOf(l) % LIST_COLORS.length]}
 					onColor={(c) => setSetting.mutate({ key: 'listColors', value: { ...colors, [l.title.toLowerCase()]: c } })}
