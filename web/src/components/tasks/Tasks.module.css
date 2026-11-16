@@ -35,15 +35,9 @@
 .kid:last-child {
 	border-bottom: none;
 }
-/* A card folded away: just the name, on a bar that opens it again. */
-.kidBar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0.6rem;
-	width: 100%;
-	padding: 0;
-	text-align: left;
+/* A tap anywhere on a kid's header folds their card away (or opens it again). */
+.foldable {
+	cursor: pointer;
 }
 .head {
 	display: flex;

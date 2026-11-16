@@ -17,8 +17,9 @@ interface Props {
 	moments: Moment[];
 	/** Parents: a sticker tapped, to ask whether to take it back. */
 	onMoment?: (moment: Moment) => void;
-	/** Tapping the name folds the card away, to a bar with just the name. */
-	onFold?: () => void;
+	/** Tapping anywhere on it (but History or a sticker) folds away what's under it, or opens it again. */
+	folded?: boolean;
+	onFold?: (folded: boolean) => void;
 }
 
 /** The top of a kid's card: name and today's progress, and the stars in their bucket. */
@@ -30,20 +31,21 @@ export default function KidHeader({
 	onHistory,
 	moments,
 	onMoment,
+	folded,
 	onFold,
 }: Props) {
 	const pct = percent(p);
 	return (
-		<header className={s.kidHead}>
+		<header className={`${s.kidHead} ${onFold ? s.foldable : ''}`} onClick={() => onFold?.(!folded)}>
 			<div className={s.head}>
-				{/* Fills with their color as far as they've got through today's required tasks. */}
+				{/* Fills with their color as far as they've got through today's required tasks. Its tap
+				    (and the keyboard's) reaches the header, which folds the card. */}
 				{onFold ? (
 					<button
 						type="button"
 						className={`${s.namePill} ${pct === 100 ? s.nameDone : ''}`}
-						aria-expanded
-						aria-label={`${kid.name}: fold away`}
-						onClick={onFold}
+						aria-expanded={!folded}
+						aria-label={`${kid.name}: ${folded ? 'open' : 'fold away'}`}
 					>
 						{kid.name}
 						{pct === 100 && ' ✓'}
@@ -57,7 +59,14 @@ export default function KidHeader({
 				<span className={`${s.progress} ${pct === 100 ? s.allDone : ''}`}>
 					{!p ? 'Nothing required today' : pct === 100 ? 'All done! 🎉' : `${p.done} of ${p.due} today`}
 				</span>
-				<button className={s.historyLink} aria-expanded={showHistory} onClick={onHistory}>
+				<button
+					className={s.historyLink}
+					aria-expanded={showHistory}
+					onClick={(e) => {
+						e.stopPropagation();
+						onHistory();
+					}}
+				>
 					{showHistory ? '← Today' : 'History'}
 				</button>
 			</div>
@@ -79,7 +88,10 @@ export default function KidHeader({
 								className={m.sticker}
 								title={label}
 								aria-label={`${label}. Tap to remove`}
-								onClick={() => onMoment(mo)}
+								onClick={(e) => {
+									e.stopPropagation();
+									onMoment(mo);
+								}}
 							>
 								{k.emoji}
 							</button>

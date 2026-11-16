@@ -132,43 +132,30 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 							{kids.map((kid) => {
 								const mine = tasksFor(tasks, kid.id);
 								const showHistory = historyKid === kid.id;
-								// Each group folds by itself; the name folds the whole card to a bar.
+								// Each group folds by itself; a tap on the header folds everything under it.
 								const groupId = (group: string) => `${kid.id}:${group}`;
-								const style = { '--c': kid.color, '--p': `${percent(progress.get(kid.id))}%` } as CSSProperties;
-								const pct = percent(progress.get(kid.id));
-								if (folds.isFolded(kid.id) && !editing)
-									return (
-										<section key={kid.id} className={s.kid} style={style}>
-											<button
-												type="button"
-												className={s.kidBar}
-												aria-expanded={false}
-												aria-label={`${kid.name}: open`}
-												onClick={() => folds.fold([kid.id], false)}
-											>
-												<span className={`${s.namePill} ${pct === 100 ? s.nameDone : ''}`}>
-													{kid.name}
-													{pct === 100 && ' ✓'}
-												</span>
-												<span className={s.chevron} aria-hidden="true">
-													▸
-												</span>
-											</button>
-										</section>
-									);
+								const folded = folds.isFolded(kid.id) && !editing;
 								return (
-									<section key={kid.id} className={s.kid} style={style}>
+									<section
+										key={kid.id}
+										className={s.kid}
+										style={{ '--c': kid.color, '--p': `${percent(progress.get(kid.id))}%` } as CSSProperties}
+									>
 										<KidHeader
 											kid={kid}
 											progress={progress.get(kid.id)}
 											stars={buckets.find((b) => b.memberId === kid.id)?.stars ?? 0}
 											showHistory={showHistory}
-											onHistory={() => setHistoryKid(showHistory ? null : kid.id)}
+											onHistory={() => {
+												setHistoryKid(showHistory ? null : kid.id);
+												folds.fold([kid.id], false);
+											}}
 											moments={moments.filter((mo) => mo.memberId === kid.id)}
 											onMoment={locked ? undefined : (moment) => setUnsticking({ kid, moment })}
-											onFold={editing ? undefined : () => folds.fold([kid.id], true)}
+											folded={folded}
+											onFold={editing ? undefined : (on) => folds.fold([kid.id], on)}
 										/>
-										{!showHistory && potty.some((c) => c.memberId === kid.id) && (
+										{!folded && !showHistory && potty.some((c) => c.memberId === kid.id) && (
 											<PottyCard
 												kid={kid}
 												chart={potty.find((c) => c.memberId === kid.id)!}
@@ -177,7 +164,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 												foldable
 											/>
 										)}
-										{showHistory ? (
+										{folded ? null : showHistory ? (
 											<TaskHistory kid={kid} tasks={mine} today={today} onEdit={locked ? undefined : onEdit} />
 										) : (
 											<>
