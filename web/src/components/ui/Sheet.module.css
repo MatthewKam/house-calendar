@@ -6,14 +6,16 @@
 	z-index: var(--layer-sheet);
 	background: rgb(0 0 0 / 0.35);
 }
+/* Centered in the space between the phone's clock (and notch) and its home bar, so a tall one (an open
+   recipe) never starts under the clock. */
 .sheet {
 	position: fixed;
 	left: 50%;
-	top: 50%;
+	top: calc(50% + (env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) / 2);
 	transform: translate(-50%, -50%);
 	z-index: calc(var(--layer-sheet) + 1);
 	width: min(36rem, 92vw);
-	max-height: 92vh;
+	max-height: calc(92dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
 	overflow-y: auto;
 	background: var(--surface);
 	border-radius: var(--radius-lg);
