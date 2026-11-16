@@ -302,6 +302,12 @@ rather than a cookie (`web/src/lib/native.ts`); pictures carry a media key that 
   the web pop-up. Its token is for the app's id, `com.sprigfamily.app`, which the server accepts through `APPLE_APP_IDS`.
   The app is signed by team `9B83U78PDK`, whose App ID needs Sign in with Apple ticked. In the simulator, sign in to
   an Apple Account in its Settings first.
+- Links that open a new tab (a recipe's page, say) open in a Safari sheet over the app instead (`linksInSheet`).
+  Connecting Google Calendar does too, with a one-time link from `POST /api/account/google/link`, since the sheet
+  has no cookie and Google won't sign in inside the app (`server/hosted/google.ts`).
+- Web alerts can't work in the app, so Settings says they're coming; the app's own alerts are a later step.
+- The icon and launch screen come from `web/public/icon.svg` and `wordmark.svg`; the camera, microphone, speech and
+  location messages iPhone shows are in `ios/App/App/Info.plist`.
 
 ## Using it
 

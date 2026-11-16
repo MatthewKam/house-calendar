@@ -242,6 +242,8 @@ export const api = {
 	connections: () => call<Connections>('GET', '/api/connections'),
 	connectICloud: (c: { appleId: string; password: string }) => call<void>('POST', '/api/connections/icloud', c),
 	removeConnection: (id: string) => call<void>('DELETE', `/api/connections/${id}`),
+	/** The phone app's one-time link for connecting Google Calendar in a Safari sheet. */
+	googleLink: () => call<{ url: string }>('POST', '/api/account/google/link'),
 	members: () => call<Member[]>('GET', '/api/members'),
 	updateMember: (id: string, m: MemberPatch) => call<Member>('PATCH', `/api/members/${id}`, m),
 	/** A new color for someone: made at once by the account holder, otherwise asked for (asked: true). */

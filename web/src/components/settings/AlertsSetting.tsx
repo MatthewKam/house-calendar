@@ -9,6 +9,7 @@ export const ALERTS_NOTE: Record<PushState, string> = {
 	'home-screen': 'Off',
 	blocked: 'Blocked',
 	unsupported: 'Not here',
+	app: 'Soon',
 };
 
 /** Alerts on this device: a switch, or what to do first when it can't be turned on here. */
@@ -41,4 +42,5 @@ const HINTS: Record<Exclude<PushState, 'loading'>, string> = {
 	blocked:
 		"Alerts are blocked for Sprig in this browser. Allow notifications for this site in the browser's settings, then come back.",
 	unsupported: "This browser can't show alerts from Sprig. Try Sprig on your phone, added to the Home Screen.",
+	app: "Alerts are coming to the Sprig app soon: when a reminder on your lists comes due, and when it's time to leave.",
 };

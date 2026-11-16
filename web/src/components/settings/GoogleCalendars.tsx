@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import { isApp, onSheetClosed, openInSheet } from '../../lib/native';
 import { useAuthStatus } from '../../lib/queries';
 import { ago } from '../../lib/dates';
 import type { Member } from '../../lib/types';
@@ -10,7 +11,8 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 
 /**
  * Settings → Calendars: each person's Google Calendar. Connecting is from your own phone (Google
- * asks you to allow it, then brings you back); the wall shows who's connected.
+ * asks you to allow it, then brings you back); the wall shows who's connected. The phone app does it in a
+ * Safari sheet, with a one-time link (server/hosted/google.ts).
  */
 export default function GoogleCalendars({ members }: { members: Member[] }) {
 	const qc = useQueryClient();
@@ -25,6 +27,18 @@ export default function GoogleCalendars({ members }: { members: Member[] }) {
 			void qc.invalidateQueries({ queryKey: ['calendars'] });
 		},
 	});
+	const [linkError, setLinkError] = useState<string | null>(null);
+	// Back from the sheet: show what was connected.
+	useEffect(
+		() =>
+			isApp
+				? onSheetClosed(() => {
+						void qc.invalidateQueries({ queryKey: ['connections'] });
+						void qc.invalidateQueries({ queryKey: ['calendars'] });
+					})
+				: undefined,
+		[qc],
+	);
 	// The server has no Google client set up.
 	if (list === undefined || list === null) return null;
 	const ownAccount = status?.signedIn && status.kind === 'user' && !status.wallMode;
@@ -61,7 +75,23 @@ export default function GoogleCalendars({ members }: { members: Member[] }) {
 				</ul>
 			)}
 			{remove.isError && <p className={s.error}>{remove.error.message}</p>}
-			{ownAccount ? (
+			{linkError && <p className={s.error}>{linkError}</p>}
+			{ownAccount && isApp ? (
+				<button
+					type="button"
+					className={s.primary}
+					style={{ alignSelf: 'flex-start' }}
+					onClick={() => {
+						setLinkError(null);
+						api.googleLink().then(
+							(r) => openInSheet(r.url),
+							(e: Error) => setLinkError(e.message),
+						);
+					}}
+				>
+					{mine ? 'Connect another Google account' : 'Connect my Google Calendar'}
+				</button>
+			) : ownAccount ? (
 				// A full page visit: Google's pages, then back to the app.
 				<a
 					className={s.primary}

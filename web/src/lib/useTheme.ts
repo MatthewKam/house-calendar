@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { statusBarFor } from './native';
 
 /**
  * Light or dark, for this device: "auto" follows the device's own setting. Kept on the device (a wall in
@@ -50,6 +51,7 @@ export function useTheme(lightOnly: boolean) {
 			const mode = lightOnly ? 'light' : pick === 'auto' ? (media.matches ? 'dark' : 'light') : pick;
 			document.documentElement.dataset.theme = mode;
 			document.querySelector('meta[name="theme-color"]')?.setAttribute('content', BAR[mode]);
+			statusBarFor(mode);
 		};
 		apply();
 		media.addEventListener('change', apply);
