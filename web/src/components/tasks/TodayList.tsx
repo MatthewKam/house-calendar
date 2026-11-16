@@ -30,12 +30,6 @@ const GROUPS: { label: string; has: (c: Task) => boolean }[] = [
 	{ label: 'Goals', has: (c: Task) => !c.required },
 ];
 
-/** The groups with something due today ("Morning", "Goals"), in order. */
-export const groupsDue = (kid: Member, tasks: Task[], today: string) => {
-	const due = tasks.filter((c) => dueOn(c, fromDayKey(today), kid.id));
-	return GROUPS.filter((gr) => due.some(gr.has)).map((gr) => gr.label);
-};
-
 /**
  * A kid's tasks for today by part of the day, then their goals (ticked any day they do them, for
  * stars), each folding away with a tap on its heading; or (editing) all of them, in order.

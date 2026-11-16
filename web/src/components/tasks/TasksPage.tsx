@@ -16,7 +16,7 @@ import { taskProgress, tasksFor, percent } from '../../lib/tasks';
 import type { Task, Member, Moment } from '../../lib/types';
 import { momentKind } from '../../lib/moments';
 import KidHeader from './KidHeader';
-import TodayList, { groupsDue } from './TodayList';
+import TodayList from './TodayList';
 import TaskHistory from './TaskHistory';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import MomentDialog from './MomentDialog';
@@ -72,7 +72,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 	const [historyKid, setHistoryKid] = useState<string | null>(null);
 	// Edit mode lists every task with edit and delete, and hides the tick buttons so nothing gets ticked by accident.
 	const [editing, setEditing] = useState(false);
-	// Task groups folded away on this device (by kid and group).
+	// Kids' cards and their task groups folded away on this device (by kid, and kid and group).
 	const folds = useFolded('sprig:task-groups-folded');
 	// Locked again (timed out, say) while editing: back to ticking.
 	if (locked && editing) setEditing(false);
@@ -132,16 +132,32 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 							{kids.map((kid) => {
 								const mine = tasksFor(tasks, kid.id);
 								const showHistory = historyKid === kid.id;
-								// Each group folds by itself; the name folds (or opens) them all.
+								// Each group folds by itself; the name folds the whole card to a bar.
 								const groupId = (group: string) => `${kid.id}:${group}`;
-								const groups = groupsDue(kid, mine, today).map(groupId);
-								const allFolded = groups.length > 0 && groups.every(folds.isFolded);
+								const style = { '--c': kid.color, '--p': `${percent(progress.get(kid.id))}%` } as CSSProperties;
+								const pct = percent(progress.get(kid.id));
+								if (folds.isFolded(kid.id) && !editing)
+									return (
+										<section key={kid.id} className={s.kid} style={style}>
+											<button
+												type="button"
+												className={s.kidBar}
+												aria-expanded={false}
+												aria-label={`${kid.name}: open`}
+												onClick={() => folds.fold([kid.id], false)}
+											>
+												<span className={`${s.namePill} ${pct === 100 ? s.nameDone : ''}`}>
+													{kid.name}
+													{pct === 100 && ' ✓'}
+												</span>
+												<span className={s.chevron} aria-hidden="true">
+													▸
+												</span>
+											</button>
+										</section>
+									);
 								return (
-									<section
-										key={kid.id}
-										className={s.kid}
-										style={{ '--c': kid.color, '--p': `${percent(progress.get(kid.id))}%` } as CSSProperties}
-									>
+									<section key={kid.id} className={s.kid} style={style}>
 										<KidHeader
 											kid={kid}
 											progress={progress.get(kid.id)}
@@ -150,10 +166,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 											onHistory={() => setHistoryKid(showHistory ? null : kid.id)}
 											moments={moments.filter((mo) => mo.memberId === kid.id)}
 											onMoment={locked ? undefined : (moment) => setUnsticking({ kid, moment })}
-											allFolded={allFolded}
-											onFoldAll={
-												showHistory || editing || groups.length === 0 ? undefined : () => folds.fold(groups, !allFolded)
-											}
+											onFold={editing ? undefined : () => folds.fold([kid.id], true)}
 										/>
 										{!showHistory && potty.some((c) => c.memberId === kid.id) && (
 											<PottyCard

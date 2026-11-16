@@ -35,6 +35,16 @@
 .kid:last-child {
 	border-bottom: none;
 }
+/* A card folded away: just the name, on a bar that opens it again. */
+.kidBar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.6rem;
+	width: 100%;
+	padding: 0;
+	text-align: left;
+}
 .head {
 	display: flex;
 	align-items: center;

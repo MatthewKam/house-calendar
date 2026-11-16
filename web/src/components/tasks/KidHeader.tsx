@@ -17,9 +17,8 @@ interface Props {
 	moments: Moment[];
 	/** Parents: a sticker tapped, to ask whether to take it back. */
 	onMoment?: (moment: Moment) => void;
-	/** Tapping the name: folds all their groups away (or, all folded, opens them). */
-	allFolded?: boolean;
-	onFoldAll?: () => void;
+	/** Tapping the name folds the card away, to a bar with just the name. */
+	onFold?: () => void;
 }
 
 /** The top of a kid's card: name and today's progress, and the stars in their bucket. */
@@ -31,21 +30,20 @@ export default function KidHeader({
 	onHistory,
 	moments,
 	onMoment,
-	allFolded,
-	onFoldAll,
+	onFold,
 }: Props) {
 	const pct = percent(p);
 	return (
 		<header className={s.kidHead}>
 			<div className={s.head}>
 				{/* Fills with their color as far as they've got through today's required tasks. */}
-				{onFoldAll ? (
+				{onFold ? (
 					<button
 						type="button"
 						className={`${s.namePill} ${pct === 100 ? s.nameDone : ''}`}
-						aria-expanded={!allFolded}
-						aria-label={`${kid.name}: ${allFolded ? 'open' : 'fold away'} all their tasks`}
-						onClick={onFoldAll}
+						aria-expanded
+						aria-label={`${kid.name}: fold away`}
+						onClick={onFold}
 					>
 						{kid.name}
 						{pct === 100 && ' ✓'}
