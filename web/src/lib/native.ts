@@ -1,5 +1,7 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { SecureStorage } from '@aparajita/capacitor-secure-storage';
+import { Browser } from '@capacitor/browser';
+import { StatusBar, Style } from '@capacitor/status-bar';
 
 // The phone app (Capacitor): the same pages, shipped inside the app, calling sprig-family.com. It's
 // another origin, so instead of the cookie it keeps its session token in the iPhone's Keychain and sends
@@ -56,3 +58,28 @@ export function mediaUrl(url: string | null) {
 // doesn't work inside an app. Closing the sheet rejects with code 'canceled'.
 const SignInWithApple = registerPlugin<{ signIn(): Promise<{ idToken: string; name: string }> }>('SignInWithApple');
 export const appleSignIn = () => SignInWithApple.signIn();
+
+/** Opens a web page over the app in a Safari sheet, with a Done button. */
+export const openInSheet = (url: string) => Browser.open({ url });
+
+/** When the sheet's Done is tapped. Returns how to stop listening. */
+export function onSheetClosed(then: () => void) {
+	const listening = Browser.addListener('browserFinished', then);
+	return () => void listening.then((l) => l.remove());
+}
+
+/** In the app, links that open a new tab (a recipe's page, say) open in a Safari sheet instead. */
+export function linksInSheet() {
+	if (!isApp) return;
+	document.addEventListener('click', (e) => {
+		const a = (e.target as Element | null)?.closest?.('a[target="_blank"]');
+		if (!(a instanceof HTMLAnchorElement) || !/^https?:/.test(a.href)) return;
+		e.preventDefault();
+		void openInSheet(a.href);
+	});
+}
+
+/** The clock and battery over the page: dark on a light page, light on a dark one (Sprig's own pick). */
+export function statusBarFor(mode: 'light' | 'dark') {
+	if (isApp) void StatusBar.setStyle({ style: mode === 'dark' ? Style.Dark : Style.Light }).catch(() => {});
+}

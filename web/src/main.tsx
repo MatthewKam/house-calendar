@@ -8,7 +8,7 @@ import './styles/app.css';
 import { guardTouch } from './lib/touchGuard';
 import { keys } from './lib/queries';
 import { problemText } from './lib/api';
-import { isApp, loadSession } from './lib/native';
+import { isApp, linksInSheet, loadSession } from './lib/native';
 
 const queryClient = new QueryClient({
 	// Edits show straight away and save in the background; if a save fails, the screen goes back and
@@ -52,6 +52,7 @@ guardTouch();
 
 // The phone app reads its kept sign-in first (on the web there's nothing to wait for).
 await loadSession();
+linksInSheet();
 
 createRoot(document.getElementById('app')!).render(
 	<StrictMode>

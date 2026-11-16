@@ -66,5 +66,13 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Sprig uses the camera when you snap a flyer or add a family photo.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Sprig uses the microphone when you tell it something with Say it, or record an animal noise for the learning games.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Sprig turns what you say into text for Say it.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Sprig uses your rough location to show the weather where you are. It isn't saved.</string>
 </dict>
 </plist>

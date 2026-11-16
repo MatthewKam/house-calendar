@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from './api';
+import { isApp } from './native';
 
 /**
  * Alerts on this device (server/push.ts): what the switch in Settings shows.
@@ -7,8 +8,9 @@ import { api } from './api';
  * - home-screen: an iPhone or iPad in Safari; alerts need Sprig added to the Home Screen first.
  * - blocked: the browser was told no; it's allowed again in its settings.
  * - unsupported: this browser can't (or the server has alerts off).
+ * - app: the phone app, where web alerts can't work; its own come later.
  */
-export type PushState = 'loading' | 'on' | 'off' | 'home-screen' | 'blocked' | 'unsupported';
+export type PushState = 'loading' | 'on' | 'off' | 'home-screen' | 'blocked' | 'unsupported' | 'app';
 
 const IOS =
 	/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -36,6 +38,7 @@ async function registration() {
 }
 
 async function current(): Promise<PushState> {
+	if (isApp) return 'app';
 	if (!('Notification' in window) || !('PushManager' in window))
 		return IOS && !STANDALONE ? 'home-screen' : 'unsupported';
 	if (Notification.permission === 'denied') return 'blocked';

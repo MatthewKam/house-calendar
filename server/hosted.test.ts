@@ -828,4 +828,53 @@ describe('the phone app', () => {
 		await call('POST', '/api/account/signout', auth);
 		expect((await call('GET', `/api/photos/nope/full?media=${media}`)).statusCode).toBe(401);
 	});
+
+	it('connects Google Calendar through a one-time link, in a Safari sheet without its cookie', async () => {
+		connected.length = 0;
+		await call('POST', '/api/account/email/start', {}, { email: 'alex@example.com' });
+		const signedIn = await call(
+			'POST',
+			'/api/account/email/verify',
+			{},
+			{ email: 'alex@example.com', code: codes.get('alex@example.com')! },
+		);
+		const auth = { authorization: `Bearer ${String(signedIn.headers['x-session-token'])}` };
+		await call('POST', '/api/account/households', auth, { name: 'The Kims', yourName: 'Alex' });
+		expect((await call('POST', '/api/account/google/link')).statusCode).toBe(401);
+		const newLink = async () => {
+			const url = new URL(JSON.parse((await call('POST', '/api/account/google/link', auth)).body).url);
+			expect(url.pathname).toBe('/api/account/google/connect');
+			return url.pathname + url.search;
+		};
+		// The sheet has no cookie and no token: the link sends it to Google, with a cookie for this connection.
+		const sheet = async () => {
+			const link = await newLink();
+			const start = await inject(server.handle, { url: link });
+			expect(start.statusCode).toBe(302);
+			// A link works once.
+			expect((await inject(server.handle, { url: link })).body).toMatch(/took too long/);
+			return {
+				state: new URL(String(start.headers.location)).searchParams.get('state')!,
+				cookie: String(start.headers['set-cookie']).split(';')[0],
+			};
+		};
+
+		// Another browser with the state can't finish it.
+		const first = await sheet();
+		expect(first.cookie).toMatch(/^google_connect=/);
+		const other = await inject(server.handle, { url: `/api/account/google/callback?code=c&state=${first.state}` });
+		expect(other.body).toMatch(/took too long/);
+		expect(connected).toEqual([]);
+
+		// The sheet can, and ends on a page saying to tap Done.
+		const { state, cookie } = await sheet();
+		const done = await inject(server.handle, {
+			url: `/api/account/google/callback?code=c2&state=${state}`,
+			headers: { cookie },
+		});
+		expect(done.statusCode).toBe(200);
+		expect(done.headers['content-type']).toMatch(/text\/html/);
+		expect(done.body).toMatch(/Google Calendar connected/);
+		expect(connected).toEqual([expect.objectContaining({ account: 'alex@gmail.com', refreshToken: 'refresh-c2' })]);
+	});
 });

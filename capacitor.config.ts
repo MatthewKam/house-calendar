@@ -9,6 +9,8 @@ const config: CapacitorConfig = {
 	ios: {
 		// The pages leave room for the notch and home bar themselves (viewport-fit=cover).
 		contentInset: 'never',
+		// Behind the pages while they load: the light page color (app.css --bg), like the launch screen.
+		backgroundColor: '#f6f5f2',
 	},
 };
 
