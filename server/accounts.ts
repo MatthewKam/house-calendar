@@ -123,6 +123,10 @@ const migrations: string[] = [
     tries         INTEGER NOT NULL DEFAULT 0
   );
   `,
+	// Co-holders: guardians the account holder shares everything the holder does with.
+	`
+  ALTER TABLE memberships ADD COLUMN co_holder INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 export function openAccounts(file: string): AccountsDB {
@@ -179,6 +183,7 @@ export interface MembershipRow {
 	user_id: string | null;
 	role: 'guardian' | 'kid';
 	pin_hash: string | null;
+	co_holder: number;
 }
 export interface SessionRow {
 	token_hash: string;

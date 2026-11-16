@@ -179,6 +179,8 @@ export interface HouseholdAccess {
 		membershipId: string | null;
 		role: 'guardian' | 'kid' | null;
 		holder: boolean;
+		/** Shares everything the account holder does. */
+		coHolder: boolean;
 		email: string | null;
 		account: boolean;
 		hasPin: boolean;
@@ -250,6 +252,9 @@ export const api = {
 	setMemberColor: (id: string, color: string) =>
 		call<{ member: Member; asked: boolean }>('PUT', `/api/members/${id}/color`, { color }),
 	answerColor: (id: string, approve: boolean) => call<Member>('POST', `/api/members/${id}/color/answer`, { approve }),
+	/** The account holder (or a co-holder) makes a kid with their own account a guardian, or a guardian a co-holder (or not). */
+	changeSignIn: (membershipId: string, b: { role?: 'guardian'; coHolder?: boolean }) =>
+		call<void>('PATCH', `/api/account/memberships/${membershipId}`, b),
 	/** Hands the account holder's role to another guardian. */
 	setHolder: (membershipId: string) => call<AuthStatus>('POST', '/api/account/holder', { membershipId }),
 	learn: (today: string) => call<LearnState[]>('GET', `/api/learn?today=${today}`),
