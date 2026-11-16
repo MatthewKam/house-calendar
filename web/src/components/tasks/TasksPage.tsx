@@ -188,7 +188,8 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 														<button className={s.addText} onClick={() => onAdd(kid.id)}>
 															+ Add task/goal
 														</button>
-														{isKid(kid) && !potty.some((c) => c.memberId === kid.id) && (
+														{/* Potty training is for the littlest (under 4); a chart already going stays. */}
+														{kid.stage === 'little' && !potty.some((c) => c.memberId === kid.id) && (
 															<button
 																className={s.addText}
 																disabled={pottyActions.setOn.isPending}
