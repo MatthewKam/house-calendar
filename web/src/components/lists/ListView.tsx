@@ -1,8 +1,12 @@
-import { useState, type CSSProperties, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
+import { useMutationState } from '@tanstack/react-query';
 import {
+	LISTS,
+	useAuthStatus,
 	useChangeReminders,
 	useListActions,
 	useLists,
+	useLiveLists,
 	useMembers,
 	useReminders,
 	useSetSetting,
@@ -25,6 +29,7 @@ import s from './ListView.module.css';
 import { useParent } from '../../lib/useParent';
 import { textOn } from '../../lib/color';
 import Sheet from '../ui/Sheet';
+import { api } from '../../lib/api';
 
 /** Soft colors for a list's rows, light enough for dark text. */
 const LIST_COLORS = ['#f2dcb3', '#ecb0ea', '#c9dcf7', '#cdebd3', '#ddd3f5', '#f8cfb8', '#f6e7a1', '#c3ece4', '#e4e4e4'];
@@ -43,6 +48,8 @@ interface CardList {
 	title: string;
 	items: CardItem[];
 	syncedBy: ReminderList['syncedBy'];
+	/** Sprig's: who's shopping from it together now (null: a device with no one signed in). */
+	shopping: (string | null)[];
 }
 interface CardItem {
 	id: string;
@@ -52,11 +59,17 @@ interface CardItem {
 	/** Reminders: changed here and waiting for a phone. */
 	pending?: boolean;
 	memberId?: string | null;
+	/** Sprig's: who ticked it. */
+	doneBy?: string | null;
 }
 
 interface CardProps {
 	list: CardList;
 	members: Member[];
+	/** Who's on this device (null: no one in particular, the wall say). */
+	me: string | null;
+	/** Shopping together turned on or off here, from this list. */
+	onShopping: (on: boolean) => void;
 	color: string;
 	onColor: (color: string) => void;
 	/** Item names in the order they were dragged into (kept on the wall). */
@@ -64,7 +77,10 @@ interface CardProps {
 	onReorder: (order: string[]) => void;
 }
 
-function ListCard({ list, members, color, onColor, order, onReorder }: CardProps) {
+/** A shopper's name: theirs, or "Someone" for a device with no one signed in. */
+const nameOf = (members: Member[], id: string | null) => members.find((m) => m.id === id)?.name ?? 'Someone';
+
+function ListCard({ list, members, me, onShopping, color, onColor, order, onReorder }: CardProps) {
 	const reminders = useChangeReminders();
 	const own = useListActions();
 	const sprig = list.source === 'sprig';
@@ -110,6 +126,17 @@ function ListCard({ list, members, color, onColor, order, onReorder }: CardProps
 	const typed = splitIcon(title.trim());
 	const addIcon = typed.icon ?? (newIcon === undefined ? suggestIcon(typed.text) : newIcon === 'none' ? null : newIcon);
 	const last = list.syncedBy[0];
+	// Shopping together: whether this device is, and who else is.
+	const shoppingHere = list.shopping.includes(me);
+	const others = list.shopping.filter((id) => id !== me).map((id) => nameOf(members, id));
+	// Changes of this device's still on their way: ticks by item, and added items (not given an id yet).
+	const saving = new Set(
+		useMutationState({
+			filters: { mutationKey: LISTS, status: 'pending' },
+			select: (m) => (m.state.variables as { id?: unknown } | undefined)?.id,
+		}),
+	);
+	const isSaving = (it: CardItem) => sprig && (saving.has(it.id) || it.id.startsWith('item-'));
 
 	function submit(e: FormEvent) {
 		e.preventDefault();
@@ -176,11 +203,20 @@ function ListCard({ list, members, color, onColor, order, onReorder }: CardProps
 							</span>
 						)}
 					</span>
-					{/* Changed here; it reaches Reminders at the next sync. */}
-					{it.pending && (
-						<span className={s.pending} title="Waiting to sync">
+					{/* Changed here; it reaches Reminders at the next sync, or the server (and the other phones) in a moment. */}
+					{(it.pending || isSaving(it)) && (
+						<span className={s.pending} title={it.pending ? 'Waiting to sync' : 'Saving…'}>
 							↻
 						</span>
+					)}
+					{/* Who ticked it, in their color. */}
+					{it.done && it.doneBy && (
+						<span
+							className={s.tickedBy}
+							style={{ background: members.find((m) => m.id === it.doneBy)?.color }}
+							title={`Ticked by ${nameOf(members, it.doneBy)}`}
+							aria-label={`ticked by ${nameOf(members, it.doneBy)}`}
+						/>
 					)}
 				</button>
 				{sprig && parent && (
@@ -223,6 +259,27 @@ function ListCard({ list, members, color, onColor, order, onReorder }: CardProps
 						title="Rename or delete"
 					>
 						⋯
+					</button>
+				)}
+				{sprig && (
+					<button
+						className={s.shopping}
+						aria-pressed={shoppingHere}
+						onClick={() => onShopping(!shoppingHere)}
+						title={
+							shoppingHere
+								? 'Ticks from the other phones show straight away. Tap to stop.'
+								: 'Shopping with someone? Ticks show on each other’s phones straight away.'
+						}
+					>
+						🛒{' '}
+						{shoppingHere
+							? others.length
+								? `Live with ${others.join(', ')}`
+								: 'Shopping together'
+							: others.length
+								? `${others.join(', ')} ${others.length === 1 ? 'is' : 'are'} shopping · Join`
+								: 'Shopping together'}
 					</button>
 				)}
 				{last && (
@@ -405,6 +462,23 @@ function Lists({ hidden, onNew }: { hidden: (title: string) => boolean; onNew?: 
 	const reminders = useReminders();
 	const own = useLists();
 	const members = useMembers().data ?? [];
+	const auth = useAuthStatus().data;
+	const me = auth?.signedIn ? auth.memberId : null;
+	const { shopping } = useListActions();
+	// Shopping together from any list here: the lists come live. Leaving the page stops it (on the
+	// server, after two hours anyway), so it's only live while someone's at the shops.
+	const shoppingHere = (own.data ?? []).filter((l) => l.shopping.includes(me)).map((l) => l.id);
+	useLiveLists(shoppingHere.length > 0);
+	const turnedOn = useRef(new Set<string>());
+	useEffect(() => {
+		const on = turnedOn.current;
+		return () => on.forEach((id) => void api.setShopping(id, false).catch(() => {}));
+	}, []);
+	const setShopping = (id: string, on: boolean) => {
+		if (on) turnedOn.current.add(id);
+		else turnedOn.current.delete(id);
+		shopping.mutate({ id, on });
+	};
 	// Each list's color and its items' dragged order, kept on the wall by list name.
 	const settings = useSettings().data;
 	const colors = (settings?.listColors as Record<string, string> | undefined) ?? {};
@@ -413,7 +487,7 @@ function Lists({ hidden, onNew }: { hidden: (title: string) => boolean; onNew?: 
 	if (reminders.isPending || own.isPending) return null;
 	const all: CardList[] = [
 		...(own.data ?? []).map((l) => ({ ...l, source: 'sprig' as const, syncedBy: [] })),
-		...(reminders.data?.lists ?? []).map((l) => ({ ...l, id: l.title, source: 'reminders' as const })),
+		...(reminders.data?.lists ?? []).map((l) => ({ ...l, id: l.title, source: 'reminders' as const, shopping: [] })),
 	];
 	if (all.length === 0) {
 		return (
@@ -449,6 +523,8 @@ function Lists({ hidden, onNew }: { hidden: (title: string) => boolean; onNew?: 
 					key={`${l.source}:${l.id}`}
 					list={l}
 					members={members}
+					me={me}
+					onShopping={(on) => setShopping(l.id, on)}
 					// Until one is picked, each list gets the next color in turn.
 					color={colors[l.title.toLowerCase()] ?? LIST_COLORS[all.indexOf(l) % LIST_COLORS.length]}
 					onColor={(c) => setSetting.mutate({ key: 'listColors', value: { ...colors, [l.title.toLowerCase()]: c } })}

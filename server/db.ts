@@ -960,6 +960,10 @@ const migrations: string[] = [
   ALTER TABLE special_reminders DROP COLUMN days_before;
   ALTER TABLE special_reminders DROP COLUMN hours_before;
   `,
+	// Who ticked a list item (a member), for the dot beside it; null: not known (or still open).
+	`
+  ALTER TABLE list_items ADD COLUMN done_by TEXT;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

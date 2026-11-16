@@ -34,6 +34,8 @@ export const SprigItem = z.object({
 	memberId: itemFields.memberId,
 	/** When it was ticked (an instant); null while it's open. */
 	doneAt: z.string().nullable(),
+	/** Who ticked it (a member's id); null while it's open, or not known. */
+	doneBy: z.string().nullable(),
 });
 
 /** A list as the server gives it back. */
@@ -42,7 +44,15 @@ export const SprigList = z.object({
 	title: z.string(),
 	/** Open ones first (oldest first), then done ones (most recently done first). */
 	items: z.array(SprigItem),
+	/** Who is shopping from it together now (Shopping together): members' ids, or null for a device with no one signed in. */
+	shopping: z.array(z.string().nullable()),
 });
+
+/** Shopping together from a list, or stopping (PUT /api/lists/:id/shopping). */
+export const Shopping = z.strictObject({ on: z.boolean() });
+
+/** The lists, and a stamp of how they are: the same stamp, nothing has changed (GET /api/lists/live). */
+export const LiveLists = z.object({ stamp: z.string(), lists: z.array(SprigList) });
 
 export type ListName = z.infer<typeof ListName>;
 /** A new item with every field there (what the server has once the defaults are filled in). */
@@ -52,3 +62,5 @@ export type NewListItem = z.input<typeof ListItemInput>;
 export type ListItemPatch = z.infer<typeof ListItemPatch>;
 export type SprigItem = z.infer<typeof SprigItem>;
 export type SprigList = z.infer<typeof SprigList>;
+export type Shopping = z.infer<typeof Shopping>;
+export type LiveLists = z.infer<typeof LiveLists>;

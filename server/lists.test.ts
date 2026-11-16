@@ -67,4 +67,85 @@ describe('lists', () => {
 		expect((await call('DELETE', `/api/lists/${a.id}`)).body.map((l: { title: string }) => l.title)).toEqual(['To do']);
 		expect(db.prepare('SELECT COUNT(*) n FROM list_items').get()).toEqual({ n: 0 });
 	});
+
+	it('keeps who ticked an item, for the dot beside it', async () => {
+		const { app, call } = household([
+			{ id: 'mom', name: 'Mom' },
+			{ id: 'dad', name: 'Dad' },
+		]);
+		let viewer: object | undefined = undefined;
+		app.addHook('onRequest', async (req) => {
+			req.raw.viewer = viewer as never;
+		});
+		const list = (await call('POST', '/api/lists', { title: 'Groceries' })).body[0];
+		const milk = (await call('POST', `/api/lists/${list.id}/items`, { title: 'Milk' })).body[0].items[0];
+		viewer = {
+			role: 'guardian',
+			memberId: 'mom',
+			parent: true,
+			holder: true,
+			actor: 'mom',
+			guardians: [],
+			stillParent() {},
+		};
+		expect((await call('PATCH', `/api/lists/items/${milk.id}`, { done: true })).body[0].items[0].doneBy).toBe('mom');
+		// Ticking it again keeps who did it first; unticking forgets.
+		viewer = {
+			role: 'guardian',
+			memberId: 'dad',
+			parent: true,
+			holder: false,
+			actor: 'dad',
+			guardians: [],
+			stillParent() {},
+		};
+		expect((await call('PATCH', `/api/lists/items/${milk.id}`, { done: true })).body[0].items[0].doneBy).toBe('mom');
+		expect((await call('PATCH', `/api/lists/items/${milk.id}`, { done: false })).body[0].items[0].doneBy).toBe(null);
+		// The wall, with no one signed in: not known.
+		viewer = {
+			role: 'wall',
+			memberId: null,
+			parent: false,
+			holder: false,
+			actor: 'wall',
+			guardians: [],
+			stillParent() {},
+		};
+		expect((await call('PATCH', `/api/lists/items/${milk.id}`, { done: true })).body[0].items[0].doneBy).toBe(null);
+	});
+
+	it('shops together: says who is, and answers live as soon as the lists change', async () => {
+		const { app, call } = household([{ id: 'mom', name: 'Mom' }], { liveLists: { waitMs: 300, lookMs: 20 } });
+		app.addHook('onRequest', async (req) => {
+			req.raw.viewer = {
+				role: 'guardian',
+				memberId: 'mom',
+				parent: true,
+				holder: true,
+				actor: 'mom',
+				guardians: [],
+				stillParent() {},
+			} as never;
+		});
+		const list = (await call('POST', '/api/lists', { title: 'Groceries' })).body[0];
+		expect(list.shopping).toEqual([]);
+		expect((await call('PUT', `/api/lists/${list.id}/shopping`, { on: true })).body[0].shopping).toEqual(['mom']);
+		expect((await call('PUT', '/api/lists/nope/shopping', { on: true })).status).toBe(404);
+
+		// No stamp yet: straight away. The same stamp: waits, and answers the change as soon as it's made.
+		const first = (await call('GET', '/api/lists/live')).body;
+		expect(first.lists[0].shopping).toEqual(['mom']);
+		const asked = Date.now();
+		const waiting = call('GET', `/api/lists/live?stamp=${first.stamp}`);
+		await new Promise((done) => setTimeout(done, 50));
+		await call('POST', `/api/lists/${list.id}/items`, { title: 'Eggs' });
+		const changed = (await waiting).body;
+		expect(changed.stamp).not.toBe(first.stamp);
+		expect(changed.lists[0].items.map((i: { title: string }) => i.title)).toEqual(['Eggs']);
+		expect(Date.now() - asked).toBeLessThan(300);
+		// Nothing changes: the same stamp back after the wait.
+		expect((await call('GET', `/api/lists/live?stamp=${changed.stamp}`)).body.stamp).toBe(changed.stamp);
+
+		expect((await call('PUT', `/api/lists/${list.id}/shopping`, { on: false })).body[0].shopping).toEqual([]);
+	});
 });

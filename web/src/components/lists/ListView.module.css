@@ -449,3 +449,30 @@
 	color: var(--text);
 	font-size: 0.95rem;
 }
+/* Shopping together: off, a quiet pill; on, the accent (ticks are live). */
+.shopping {
+	padding: 0.3rem 0.75rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-round);
+	background: var(--surface);
+	color: var(--muted);
+	font-size: 0.85rem;
+	white-space: nowrap;
+	max-width: 14rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.shopping[aria-pressed='true'] {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--on-accent);
+}
+/* Who ticked a done item: a dot in their color. */
+.tickedBy {
+	flex: none;
+	width: 0.7rem;
+	height: 0.7rem;
+	margin: 0 0.3rem;
+	border-radius: var(--radius-round);
+	border: 1px solid var(--line);
+}

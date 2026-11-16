@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type RecipeImage } from '../api';
 import type { Recipe, RecipeFields, SprigList } from '../types';
 import { putBack, showNow } from './shared';
+import { LISTS } from './lists';
 
 /** The recipe book, newest first. */
 export const useRecipes = () => useQuery({ queryKey: ['recipes'], queryFn: api.recipes });
@@ -141,6 +142,7 @@ export function useRecipeActions() {
 export function useAddToGroceries() {
 	const qc = useQueryClient();
 	return useMutation({
+		mutationKey: LISTS,
 		mutationFn: async (lines: string[]) => {
 			let lists = await api.lists();
 			let groceries = lists.find((l) => /^grocer(y|ies)$/i.test(l.title.trim()));
@@ -152,7 +154,7 @@ export function useAddToGroceries() {
 			const adding = lines.filter((l) => !already.has(l.toLowerCase()));
 			let latest: SprigList[] = lists;
 			for (const title of adding) latest = await api.addListItem(groceries.id, { title });
-			qc.setQueryData(['lists'], latest);
+			qc.setQueryData(LISTS, latest);
 			return adding.length;
 		},
 	});

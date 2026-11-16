@@ -74,6 +74,8 @@ export function buildApp(
 		/** How recipe links are fetched and their sites found (replaced in tests). */
 		recipeFetch?: typeof fetch;
 		recipeResolve?: (host: string) => Promise<{ address: string }[]>;
+		/** How long Shopping together's live lists wait for a change, and how often they look (shorter in tests). */
+		liveLists?: { waitMs: number; lookMs: number };
 	} = {},
 ) {
 	// trustProxy: behind Tailscale's HTTPS (tailscale serve), so the device's address and https are seen.
@@ -104,7 +106,7 @@ export function buildApp(
 	registerDaily(app, db, opts.dailyFetch);
 	if (opts.photosDir) registerPhotos(app, db, opts.photosDir);
 	registerReminders(app, db, opts.remindersToken, opts.onRemindersChanged);
-	registerLists(app, db);
+	registerLists(app, db, opts.liveLists);
 	registerPush(app, db, opts.push);
 	registerSpecialReminders(app, db);
 	registerDayPlans(app, db);
