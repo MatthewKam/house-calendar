@@ -944,6 +944,10 @@ const migrations: string[] = [
     PRIMARY KEY (item_id, day)
   );
   `,
+	// Reminders on an event (series:… keys, every time it repeats) can be hours before it starts.
+	`
+  ALTER TABLE special_reminders ADD COLUMN hours_before INTEGER;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

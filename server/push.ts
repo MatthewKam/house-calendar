@@ -181,29 +181,36 @@ export async function sendDue(db: DB, pusher: Pusher, now = new Date(), log?: Fa
 		const dayOf = dayIn(d.time_zone);
 		for (const r of specialRemindersAround(db, dayOf(now.toISOString()), dayOf)) {
 			if (r.member_id !== d.member_id) continue;
-			const at = dueAt(r.remindOn, d);
+			const at = r.at ?? dueAt(r.remindOn, d);
 			if (!(at <= t && t - at < STALE && at >= Date.parse(d.created_at))) continue;
 			const n = r.days_before;
-			const when =
-				n === 0
+			const when = r.hours_before
+				? `in ${r.hours_before === 1 ? 'an hour' : `${r.hours_before} hours`}`
+				: n === 0
 					? 'today'
 					: n === 1
 						? 'tomorrow'
 						: n % 7 === 0
 							? `in ${n / 7 === 1 ? 'a week' : `${n / 7} weeks`}`
 							: `in ${n} days`;
-			const date = new Date(`${r.day}T12:00:00`).toLocaleDateString('en-US', {
+			// The day, and an event's time ("Friday, November 20, 5:30 PM"; just the time when it's hours away).
+			const day = new Date(`${r.day}T12:00:00`).toLocaleDateString('en-US', {
 				weekday: 'long',
 				month: 'long',
 				day: 'numeric',
 			});
+			const time =
+				r.start && !r.allDay
+					? new Date(r.start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: d.time_zone })
+					: null;
+			const date = r.hours_before && time ? time : time ? `${day}, ${time}` : day;
 			await sendOnce(
 				db,
 				pusher,
 				[d],
-				`special:${r.id}:${r.day}`,
+				`special:${r.id}:${r.start ?? r.day}`,
 				{
-					// A special day by name ("🎂 Mom's birthday is in a week"); one day by what to do then.
+					// A special day or an event by name ("🎂 Mom's birthday is in a week"); one day by what to do then.
 					...(dateOfKey(r.key)
 						? {
 								title: `${r.picture} ${r.note ?? 'Reminder'}`,

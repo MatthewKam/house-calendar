@@ -6,9 +6,10 @@ import { ChecklistInput } from './events.ts';
 
 /**
  * Whose plans: one day (date:YYYY-MM-DD), or a special day every year (its key in specialDays.ts:
- * holiday:<name>, birthday:<person's id> or event:<title>). Reminders (specialReminders.ts) use the same keys.
+ * holiday:<name>, birthday:<person's id> or event:<title>). Reminders (specialReminders.ts) use the same
+ * keys, and an event's too: series:<calendar id>:<series> (every time it repeats; CalEvent's planKey).
  */
-export const PLAN_KEY = /^(date:\d{4}-\d{2}-\d{2}|(holiday|birthday|event):.+)$/;
+export const PLAN_KEY = /^(date:\d{4}-\d{2}-\d{2}|(holiday|birthday|event|series):.+)$/;
 export const PlanKey = z.string().max(200).regex(PLAN_KEY);
 
 /** One day's key. */

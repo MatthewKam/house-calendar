@@ -10,8 +10,9 @@ import { SpecialReminderNew, type SpecialReminder } from '../shared/specialRemin
 // Reminders on special days: a grown-up taps one on Today (Mom's birthday, Thanksgiving, an event
 // marked special) and adds reminders, each with when (on the day, days or weeks before) and what to do
 // then ("Pick up a present", "Get flowers"). They're theirs alone, and come round every year. Any one
-// day of the calendar takes them too (its key is date:YYYY-MM-DD), just the once. push.ts sends them,
-// at 8 in the morning on each phone's own clock.
+// day of the calendar takes them too (its key is date:YYYY-MM-DD), just the once, and so does an event
+// (series:…), every time it repeats, also 1 or 2 hours before it starts. push.ts sends them, at 8 in
+// the morning on each phone's own clock (or those hours before).
 
 interface Row {
 	id: string;
@@ -19,6 +20,7 @@ interface Row {
 	key: string;
 	name: string;
 	days_before: number;
+	hours_before: number | null;
 	note: string | null;
 	created_at: string;
 }
@@ -46,18 +48,45 @@ export function specialDaysOn(db: DB, from: string, to: string, dayOf: (start: s
 }
 
 /**
- * The reminders that come due around `today` (YYYY-MM-DD), each with the day it's for and the day it
- * reminds on. The caller checks each phone's own clock, so a day either side is included.
+ * The reminders that come due around `today` (YYYY-MM-DD), each with the day it's for (and an event's
+ * title and start), the day it reminds on, and for hours before an event, when. The caller checks each
+ * phone's own clock, so a day either side is included.
  */
 export function specialRemindersAround(db: DB, today: string, dayOf: (start: string) => string) {
 	const rows = db.prepare('SELECT * FROM special_reminders').all() as Row[];
 	if (!rows.length) return [];
 	// Up to two weeks ahead, for the two-weeks-before ones.
-	const days = specialDaysOn(db, addDayKey(today, -1), addDayKey(today, 16), dayOf);
+	const from = addDayKey(today, -1);
+	const to = addDayKey(today, 16);
+	const days = specialDaysOn(db, from, to, dayOf);
+	const series = db.prepare(
+		`SELECT title, start, all_day FROM events
+    WHERE 'series:' || calendar_id || ':' || COALESCE(series_id, id) = ? AND start >= ? AND start < ?
+    ORDER BY start`,
+	);
 	return rows.flatMap((r) => {
 		const date = dateOfKey(r.key);
-		return (date ? [{ day: date, picture: '📅' }] : days.filter((d) => d.key === r.key))
-			.map((d) => ({ ...r, day: d.day, picture: d.picture, remindOn: addDayKey(d.day, -r.days_before) }))
+		const on: { day: string; picture: string; name: string; start?: string; allDay?: boolean }[] = date
+			? [{ day: date, picture: '📅', name: r.name }]
+			: r.key.startsWith('series:')
+				? (series.all(r.key, from, addDayKey(to, 1)) as { title: string; start: string; all_day: number }[]).map(
+						(e) => ({
+							day: e.all_day ? e.start : dayOf(e.start),
+							picture: '📅',
+							name: e.title,
+							start: e.start,
+							allDay: !!e.all_day,
+						}),
+					)
+				: days.filter((d) => d.key === r.key).map((d) => ({ ...d, name: r.name }));
+		return on
+			.filter((d) => !r.hours_before || (d.start && !d.allDay))
+			.map((d) => ({
+				...r,
+				...d,
+				remindOn: r.hours_before ? d.day : addDayKey(d.day, -r.days_before),
+				at: r.hours_before && d.start ? Date.parse(d.start) - r.hours_before * 3_600_000 : null,
+			}))
 			.filter((d) => d.remindOn >= addDayKey(today, -1) && d.remindOn <= addDayKey(today, 1));
 	});
 }
@@ -70,10 +99,16 @@ export function registerSpecialReminders(app: FastifyInstance, db: DB) {
 		(
 			db
 				.prepare(
-					`SELECT * FROM special_reminders WHERE COALESCE(member_id, '') = ? ORDER BY days_before DESC, created_at`,
+					`SELECT * FROM special_reminders WHERE COALESCE(member_id, '') = ? ORDER BY days_before DESC, COALESCE(hours_before, 0) DESC, created_at`,
 				)
 				.all(mine(req)) as Row[]
-		).map((r) => ({ id: r.id, key: r.key, daysBefore: r.days_before as SpecialReminder['daysBefore'], note: r.note })),
+		).map((r) => ({
+			id: r.id,
+			key: r.key,
+			daysBefore: r.days_before as SpecialReminder['daysBefore'],
+			hoursBefore: r.hours_before as SpecialReminder['hoursBefore'],
+			note: r.note,
+		})),
 	);
 
 	app.post<{ Body: SpecialReminderNew }>(
@@ -82,11 +117,13 @@ export function registerSpecialReminders(app: FastifyInstance, db: DB) {
 		async (req, reply) => {
 			const viewer = req.raw.viewer;
 			if (viewer && viewer.role !== 'guardian') return reply.code(403).send({ error: 'Reminders are for grown-ups' });
-			const { key, name, daysBefore, note } = req.body;
+			const { key, name, daysBefore, hoursBefore, note } = req.body;
+			if (hoursBefore && !key.startsWith('series:'))
+				return reply.code(400).send({ error: 'Hours before are for events' });
 			const id = randomUUID();
 			db.prepare(
-				'INSERT INTO special_reminders (id, member_id, key, name, days_before, note) VALUES (?, ?, ?, ?, ?, ?)',
-			).run(id, viewer?.memberId ?? null, key, name, daysBefore, note || null);
+				'INSERT INTO special_reminders (id, member_id, key, name, days_before, hours_before, note) VALUES (?, ?, ?, ?, ?, ?, ?)',
+			).run(id, viewer?.memberId ?? null, key, name, hoursBefore ? 0 : daysBefore, hoursBefore ?? null, note || null);
 			reply.code(201);
 			return { id };
 		},
