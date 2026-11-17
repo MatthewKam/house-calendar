@@ -143,21 +143,6 @@
 	gap: 1.5rem;
 	align-items: start;
 }
-/* Each scrolls on its own, as tall as the screen allows: the steps move on while the ingredients stay
-   in view. Its heading stays at the top of it. (The recipe in the app and a Cooking together link both.) */
-.columns > * {
-	max-height: calc(100dvh - 7rem);
-	overflow-y: auto;
-	padding-right: 0.3rem;
-}
-.columns .sectionHead {
-	position: sticky;
-	top: 0;
-	z-index: 1;
-	margin-top: 0;
-	padding: 0.3rem 0;
-	background: var(--surface);
-}
 .part {
 	display: flex;
 	flex-direction: column;
