@@ -17,6 +17,7 @@ import { googleCalendars } from './googleSync.ts';
 import { icloudCalendars } from './icloudSync.ts';
 import { loadKey, sealer } from './secrets.ts';
 import { loadVapid, webPusher } from './push.ts';
+import { applePusher } from './apns.ts';
 import { claudeUnderstand } from './capture.ts';
 import { claudeReadRecipe } from './recipes.ts';
 import { claudeDishIdeas, claudeSurprise } from './dishIdeas.ts';
@@ -59,10 +60,22 @@ const oauth =
 		: undefined;
 const secrets = sealer(loadKey(env.SECRET_KEY, resolve(dataDir, 'secret.key')));
 // Alerts on phones: the server's own push keys (VAPID_*), or a key file made on first start.
-const push = webPusher(
-	loadVapid({ publicKey: env.VAPID_PUBLIC_KEY, privateKey: env.VAPID_PRIVATE_KEY }, resolve(dataDir, 'vapid.json')),
-	env.VAPID_SUBJECT || (env.PUBLIC_URL?.startsWith('https://') ? env.PUBLIC_URL : 'mailto:alerts@sprig.example'),
-);
+// The iPhone app's alerts go through Apple, with the team's push key (APNS_*), for the app's bundle ID.
+const push = {
+	...webPusher(
+		loadVapid({ publicKey: env.VAPID_PUBLIC_KEY, privateKey: env.VAPID_PRIVATE_KEY }, resolve(dataDir, 'vapid.json')),
+		env.VAPID_SUBJECT || (env.PUBLIC_URL?.startsWith('https://') ? env.PUBLIC_URL : 'mailto:alerts@sprig.example'),
+	),
+	apple:
+		env.APNS_KEY && env.APNS_KEY_ID && env.APNS_TEAM_ID
+			? applePusher({
+					key: env.APNS_KEY,
+					keyId: env.APNS_KEY_ID,
+					teamId: env.APNS_TEAM_ID,
+					topic: env.APNS_TOPIC || list(env.APPLE_APP_IDS)[0] || 'com.sprigfamily.app',
+				})
+			: undefined,
+};
 
 const households = householdRegistry((h) => {
 	const db = openDb(fromStored(dataDir, h.db_file));
