@@ -49,13 +49,17 @@ export function ShoppingButton({
 
 /** Who ticked it: a dot in their colour, their name on a long press or hover. */
 export function TickedBy({ by, members }: { by: string; members: Member[] }) {
-	const name = nameOf(members, by);
+	return <PersonDot name={nameOf(members, by)} color={members.find((m) => m.id === by)?.color} />;
+}
+
+/** Someone's dot beside something they've done (ticked, or done cooking along), in their colour. */
+export function PersonDot({ name, color, what = 'Ticked' }: { name: string; color?: string; what?: string }) {
 	return (
 		<span
 			className={s.tickedBy}
-			style={{ background: members.find((m) => m.id === by)?.color }}
-			title={`Ticked by ${name}`}
-			aria-label={`ticked by ${name}`}
+			style={{ background: color }}
+			title={`${what} by ${name}`}
+			aria-label={`${what.toLowerCase()} by ${name}`}
 		/>
 	);
 }

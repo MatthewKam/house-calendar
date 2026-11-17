@@ -39,7 +39,7 @@
 				:not([type])
 			),
 			textarea
-		):not(.drawer) {
+		):not(.drawer, .full) {
 		top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
 		transform: translateX(-50%);
 	}
@@ -121,6 +121,21 @@
 	color: var(--danger);
 	padding: 0 1rem;
 	font-weight: 600;
+}
+/* Full screen (a recipe being cooked from): edge to edge, no corners. Two classes, so it wins over a
+   sheet's own width. The phone's clock area is a border in the sheet's colour, so the title row sticks
+   just below it and nothing scrolls through behind the clock. */
+.sheet.full {
+	inset: 0;
+	transform: none;
+	width: auto;
+	max-height: none;
+	border-radius: 0;
+	border-top: env(safe-area-inset-top, 0px) solid var(--surface);
+	padding-left: calc(1.4rem + var(--inset-left));
+	padding-right: calc(1.4rem + var(--inset-right));
+	padding-bottom: calc(1.4rem + env(safe-area-inset-bottom, 0px));
+	box-shadow: none;
 }
 /* A drawer: from the right edge, full height (the whole screen on a phone), for things beside the page
    (a day's plans). Below the phone's status bar, and clear of its home bar. */

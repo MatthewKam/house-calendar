@@ -1,4 +1,4 @@
--- A household's database (server/db.ts), at version 63. Written by server/schema.test.ts; don't edit by hand.
+-- A household's database (server/db.ts), at version 64. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
@@ -34,6 +34,27 @@ CREATE TABLE "connections" (
     created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     UNIQUE (provider, account)
   );
+
+CREATE TABLE cook_people (
+    room_id   TEXT NOT NULL REFERENCES cook_rooms(id) ON DELETE CASCADE,
+    cook_id   TEXT NOT NULL,
+    name      TEXT NOT NULL,
+    member_id TEXT REFERENCES members(id) ON DELETE SET NULL,
+    progress  TEXT NOT NULL,
+    joined_at INTEGER NOT NULL,
+    seen_at   INTEGER NOT NULL,
+    PRIMARY KEY (room_id, cook_id)
+  );
+
+CREATE TABLE cook_rooms (
+    id         TEXT PRIMARY KEY,
+    secret     TEXT NOT NULL UNIQUE,
+    recipe_id  TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    until      INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+
+CREATE INDEX cook_rooms_recipe ON cook_rooms(recipe_id);
 
 CREATE TABLE daily_items (
     day   TEXT NOT NULL,

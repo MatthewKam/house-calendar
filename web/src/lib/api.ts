@@ -65,6 +65,7 @@ import type {
 import type { SpecialReminder, SpecialReminderNew } from '../../../shared/specialReminders.ts';
 import type { DayPlans, DayTick } from '../../../shared/dayPlans.ts';
 import type { LiveRecipeShopping, RecipeShopping } from '../../../shared/shopping.ts';
+import type { CookAlong, CookMe, CookRoom, CookStatus, LiveCook } from '../../../shared/cook.ts';
 import { SERVER, authHeaders, forgetSession, isApp, keepSession, mediaUrl } from './native';
 
 /**
@@ -379,6 +380,16 @@ export const api = {
 	/** The family's tags; notes after cooking. */
 	setRecipeTags: (id: string, tags: string[]) => call<Recipe>('PUT', `/api/recipes/${id}/tags`, { tags }),
 	/** Shopping together from a recipe (server/recipeShopping.ts): who is, and what's ticked by whom. */
+	/** Cooking together (server/cook.ts): the recipe's link, made, made to last longer, or ended. */
+	cookRoom: (id: string) => call<{ room: CookRoom | null }>('GET', `/api/recipes/${id}/cook`),
+	startCook: (id: string) => call<{ room: CookRoom }>('POST', `/api/recipes/${id}/cook`),
+	cookLength: (id: string, hours: number) => call<{ room: CookRoom }>('PUT', `/api/recipes/${id}/cook`, { hours }),
+	endCook: (id: string) => call<void>('DELETE', `/api/recipes/${id}/cook`),
+	/** The link's side (base: lib/cook.ts cookBase): the recipe and who's cooking, joining and saying how far, live. */
+	cookAlong: (base: string) => call<CookAlong>('GET', base),
+	cookMe: (base: string, me: CookMe) => call<CookStatus>('PUT', `${base}/me`, me),
+	cookLive: (base: string, stamp: string | null, signal: AbortSignal) =>
+		call<LiveCook>('GET', `${base}/live${stamp ? `?stamp=${stamp}` : ''}`, undefined, { signal }),
 	recipeShopping: (id: string) => call<RecipeShopping>('GET', `/api/recipes/${id}/shopping`),
 	setRecipeShopping: (id: string, on: boolean) => call<RecipeShopping>('PUT', `/api/recipes/${id}/shopping`, { on }),
 	tickIngredient: (id: string, index: number, done: boolean) =>

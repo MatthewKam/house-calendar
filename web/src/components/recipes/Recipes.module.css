@@ -245,14 +245,25 @@
 	background: var(--good-bg);
 	border: 1px solid var(--good-line);
 }
+/* Each in a place of its own, so the clock's width changing (this font's figures aren't all one width)
+   never moves the buttons: wrapping as it ticked made the row jump back and forth every few seconds. */
 .cookingRow {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
 	align-items: center;
 	gap: 0.6rem;
 }
+/* Phones: the clock and Set a timer, then Done cooking on a line of its own. */
+@media (max-width: 700px) {
+	.cookingRow {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+	.cookingRow .doneCooking {
+		grid-column: 1 / -1;
+		justify-self: start;
+	}
+}
 .elapsed {
-	margin-right: auto;
 	font-size: 1.6rem;
 	font-weight: 750;
 	font-variant-numeric: tabular-nums;
@@ -275,6 +286,12 @@
 	border-radius: var(--radius-sm);
 	background: var(--surface);
 	color: var(--text);
+}
+/* What a timer is for ("Soup"): the whole row above the quick picks. */
+.timerName {
+	composes: timerInput;
+	flex: 1 1 100%;
+	width: auto;
 }
 .timers {
 	list-style: none;
@@ -1645,4 +1662,105 @@ button.ideaSearch {
 .shopRow {
 	display: flex;
 	margin-top: 0.4rem;
+}
+/* Cooking together: the others cooking along, a line each (CookingWith.tsx). */
+.cookingWith {
+	list-style: none;
+	margin: 0;
+	padding: 0.5rem 0.7rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	border-radius: var(--radius-sm);
+	background: var(--bg);
+	font-size: 0.92rem;
+}
+.cookingWith li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.2rem 0.5rem;
+}
+.cookingWith li > span:last-child {
+	color: var(--muted);
+}
+.cookDot {
+	flex: none;
+	width: 0.7rem;
+	height: 0.7rem;
+	border-radius: var(--radius-round);
+}
+/* Cooking together's row: the link to share, how long it lasts, and ending it. */
+.cookTogether {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem 0.6rem;
+	font-size: 0.92rem;
+}
+/* A Cooking together link's page (CookAlong.tsx): a recipe on its own, laid out as one opened in the
+   app (.view), in a column that scrolls by itself (the app's page doesn't). */
+.alongPage {
+	position: fixed;
+	inset: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	background: var(--surface);
+}
+.along {
+	box-sizing: border-box;
+	max-width: 100%;
+	margin: 0 auto;
+	padding: calc(env(safe-area-inset-top, 0px) + 1rem) calc(1rem + var(--inset-right))
+		calc(env(safe-area-inset-bottom, 0px) + 2rem) calc(1rem + var(--inset-left));
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+}
+.alongHead {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.4rem 1rem;
+}
+.alongMark {
+	height: 1.8rem;
+	align-self: flex-start;
+}
+.alongTitle {
+	margin: 0;
+	font-size: 1.6rem;
+}
+.alongCover {
+	width: 100%;
+	max-height: 16rem;
+	object-fit: cover;
+	border-radius: var(--radius-lg);
+}
+.alongName {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.alongName input {
+	min-height: 3rem;
+	padding: 0 0.8rem;
+	font: inherit;
+	font-size: 1.1rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	color: var(--text);
+}
+.alongName button {
+	min-height: 3rem;
+}
+/* Cooking together: who's done an ingredient or a step, their dots at the end of its row. */
+.doneBy {
+	flex: none;
+	margin-left: auto;
+	align-self: center;
+	display: inline-flex;
+	gap: 0.15rem;
 }

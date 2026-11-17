@@ -1,8 +1,11 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutationState } from '@tanstack/react-query';
 import {
 	useAddToGroceries,
 	useAuthStatus,
+	useCookActions,
+	useCookRoom,
+	useCookTogether,
 	useLiveRecipeShopping,
 	useMeals,
 	useMembers,
@@ -23,6 +26,9 @@ import {
 } from '../../lib/recipes';
 import { dayWord, mealLabel } from '../../lib/meals';
 import { dayKey, timeLabel } from '../../lib/dates';
+import { cookBase, cookId, cookLink, untilWords } from '../../lib/cook';
+import { api } from '../../lib/api';
+import type { CookProgress, CookTimer } from '../../../../shared/cook.ts';
 import { useNow } from '../../lib/useNow';
 import { flags } from '../../lib/allergies';
 import type { MealPlan, Member, Recipe } from '../../lib/types';
@@ -33,6 +39,7 @@ import Problem from '../ui/Problem';
 import { ShoppingButton, TickedBy } from '../ui/ShoppingTogether';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import CookingBar from './CookingBar';
+import { CookingWith, DoneBy } from './CookingWith';
 import CookNotes from './CookNotes';
 import PhotoViewer from './PhotoViewer';
 import PlanIt from './PlanIt';
@@ -66,7 +73,7 @@ function asText(r: Recipe) {
  * A recipe, in two states. Planning (as it opens): the ingredients are a checklist of what you have, and
  * the rest go on the Groceries list in a tap; or, shopping together, of what's in the basket, ticked on
  * each shopper's phone at once (server/recipeShopping.ts). Cooking (Start cooking): a timer counts up, timers can be
- * set, the checklist clears to tick off what's prepped or gathered, and steps grey out as they're done.
+ * set, the checklist clears to tick off what's prepped or gathered, steps grey out as they're done, and it fills the screen.
  * Big screens: ingredients and steps side by side; phones: one or the other. Sections with nothing in
  * them aren't shown. The screen stays on while it's open.
  */
@@ -87,6 +94,12 @@ export default function RecipeView({
 		if (save && finished) logCook.mutate({ id: r.id, minutes: finished, note: cookNote.trim() || null });
 		setFinished(null);
 		setCookNote('');
+		// Cooking together: the others see this cook's done.
+		if (joined && base)
+			void api
+				.cookMe(base, { cookId: mine, name: myName, progress: { ...progress, doneAt: Date.now() } })
+				.catch(() => {});
+		setJoined(false);
 		setCookingSince(null);
 	};
 	// The family's tags: picking them, from the ones used across the book.
@@ -142,6 +155,62 @@ export default function RecipeView({
 	const phone = upright || sideways;
 	// Cooking from it: no sleeping screen while it's open.
 	useWakeLock(true);
+
+	// Cooking together (server/cook.ts): the recipe's link while there is one, and this device cooking
+	// along with it (joined). Each cook keeps their own ticks and timers; the others' show beside them.
+	const [timers, setTimers] = useState<CookTimer[]>([]);
+	const room = useCookRoom(r.id).data?.room ?? null;
+	const cookActions = useCookActions(r.id);
+	const household = auth?.signedIn ? auth.household?.id : undefined;
+	const canCookTogether = !!household && auth?.signedIn && auth.role !== 'kid';
+	const base = room && household ? cookBase(household, room.secret) : null;
+	const mine = cookId();
+	const myName = (auth?.signedIn && auth.me?.name) || 'Someone';
+	const [joined, setJoined] = useState(false);
+	const progress: CookProgress = { startedAt: cookingSince, prepped, steps: stepsDone, timers, doneAt: null };
+	const together = useCookTogether(
+		joined ? base : null,
+		joined && cookingSince !== null ? { name: myName, progress } : null,
+	);
+	const cooks = (joined ? together.data?.people : room?.people) ?? [];
+	const others = cooks.filter((p) => p.cookId !== mine);
+	// Everyone for the dots, this cook as they are here (not as last saved).
+	const everyone = cooks.map((p) => (p.cookId === mine && joined ? { ...p, progress } : p));
+	// Coming back to a recipe being cooked together (a day-long one, say): carries on where this cook was.
+	const restored = useRef(false);
+	useEffect(() => {
+		if (restored.current || !room) return;
+		restored.current = true;
+		const was = room.people.find((p) => p.cookId === mine)?.progress;
+		if (!was?.startedAt || was.doneAt) return;
+		setCookingSince(was.startedAt);
+		setPrepped(was.prepped);
+		setStepsDone(was.steps);
+		setTimers(was.timers);
+		setJoined(true);
+	}, [room, mine]);
+	/** The link, sent with the phone's own share sheet (or copied). */
+	async function shareLink(secret: string) {
+		if (!household) return;
+		const url = cookLink(household, secret);
+		try {
+			if (navigator.share) await navigator.share({ title: `Cook ${r.title} with me`, url });
+			else {
+				await navigator.clipboard.writeText(url);
+				setSaid('Copied the link. Send it to whoever’s cooking along.');
+			}
+		} catch {
+			// Closed the share sheet: nothing to say.
+		}
+	}
+	/** Cooking, from the start: the checklist and steps clear, and the timers go. */
+	const startCooking = () => {
+		setPrepped([]);
+		setStepsDone([]);
+		setTimers([]);
+		setCookingSince(Date.now());
+	};
+	const [ending, setEnding] = useState(false);
 
 	// Shopping together from it: the ticks are shared with the other phones, in place of this one's own.
 	const me = auth?.signedIn ? auth.memberId : null;
@@ -275,6 +344,7 @@ export default function RecipeView({
 											</span>
 										)}
 										{!cooking && tickedBy.get(n) && <TickedBy by={tickedBy.get(n)!} members={people} />}
+										{cooking && <DoneBy people={everyone} done={(p) => p.progress.prepped.includes(n)} />}
 										{flaggedRows.has(n) && (
 											<span className={s.allergyMark} title="Someone's allergy">
 												⚠
@@ -336,6 +406,7 @@ export default function RecipeView({
 						>
 							<span className={s.stepNumber}>{n + 1}</span>
 							{step}
+							{cooking && <DoneBy people={everyone} done={(p) => p.progress.steps.includes(n)} />}
 						</button>
 						{/* Its photos: how it should look by then. */}
 						{(stepPhotos(n).length > 0 || parent) && (
@@ -360,7 +431,7 @@ export default function RecipeView({
 
 	return (
 		<>
-			<Sheet label={r.title} onClose={onClose} className={s.view}>
+			<Sheet label={r.title} onClose={onClose} className={`${s.view} ${cooking ? sheet.full : ''}`}>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>{r.title}</h2>
 					<span className={sheet.spacer} />
@@ -485,23 +556,91 @@ export default function RecipeView({
 							</div>
 						)}
 						{cooking ? (
-							<CookingBar
-								startedAt={cookingSince}
-								onDone={() => setFinished(Math.max(1, Math.round((Date.now() - cookingSince) / 60_000)))}
-							/>
+							<>
+								<CookingBar
+									startedAt={cookingSince}
+									timers={timers}
+									onTimers={setTimers}
+									onDone={() => setFinished(Math.max(1, Math.round((Date.now() - cookingSince) / 60_000)))}
+								/>
+								{/* Cooking together: the link, how long it lasts, ending it, and the others. */}
+								{canCookTogether &&
+									(!room ? (
+										<button
+											type="button"
+											className={s.tagButton}
+											disabled={cookActions.start.isPending}
+											onClick={() =>
+												cookActions.start.mutate(undefined, {
+													onSuccess: ({ room: made }) => {
+														setJoined(true);
+														void shareLink(made.secret);
+													},
+												})
+											}
+										>
+											👩‍🍳 Cook together
+										</button>
+									) : (
+										<>
+											<div className={s.cookTogether}>
+												<span>👩‍🍳 Cooking together until {untilWords(room.until)}</span>
+												{joined ? (
+													<button type="button" className={s.tagButton} onClick={() => void shareLink(room.secret)}>
+														Send the link
+													</button>
+												) : (
+													<button type="button" className={s.tagButton} onClick={() => setJoined(true)}>
+														Join
+													</button>
+												)}
+												<span className={s.select}>
+													<select
+														aria-label="How long the link lasts"
+														value=""
+														onChange={(e) => e.target.value && cookActions.length.mutate(Number(e.target.value))}
+													>
+														<option value="">Keep it for…</option>
+														<option value="24">A day from now</option>
+														<option value="48">2 days</option>
+														<option value="72">3 days</option>
+														<option value="168">A week</option>
+													</select>
+												</span>
+												<button type="button" className={s.textLink} onClick={() => setEnding(true)}>
+													End
+												</button>
+											</div>
+											{joined && (
+												<CookingWith others={others} steps={r.steps.length} ingredients={r.ingredients.length} />
+											)}
+										</>
+									))}
+							</>
 						) : (
-							<button
-								type="button"
-								className={s.startCooking}
-								onClick={() => {
-									// A fresh start: the checklist clears, for what's prepped or gathered.
-									setPrepped([]);
-									setStepsDone([]);
-									setCookingSince(Date.now());
-								}}
-							>
-								Start cooking
-							</button>
+							<>
+								{/* Someone's cooking it together: joining starts cooking here too. */}
+								{canCookTogether && room && others.some((p) => !p.progress.doneAt) && (
+									<button
+										type="button"
+										className={s.tagButton}
+										onClick={() => {
+											startCooking();
+											setJoined(true);
+										}}
+									>
+										👩‍🍳{' '}
+										{others
+											.filter((p) => !p.progress.doneAt)
+											.map((p) => p.name)
+											.join(', ')}{' '}
+										cooking this · Join
+									</button>
+								)}
+								<button type="button" className={s.startCooking} onClick={startCooking}>
+									Start cooking
+								</button>
+							</>
 						)}
 						{said && (
 							<p className={s.said} role="status">
@@ -680,6 +819,20 @@ export default function RecipeView({
 							: undefined
 					}
 				/>
+			)}
+			{ending && (
+				<ConfirmDialog
+					title="End cooking together?"
+					confirmLabel="End it"
+					onCancel={() => setEnding(false)}
+					onConfirm={() => {
+						setEnding(false);
+						setJoined(false);
+						cookActions.end.mutate();
+					}}
+				>
+					The link stops working for everyone cooking along. Your own ticks and timers stay.
+				</ConfirmDialog>
 			)}
 			{finished !== null && (
 				<ConfirmDialog

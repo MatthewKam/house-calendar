@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import inject from 'light-my-request';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { openDb } from './db.ts';
@@ -134,6 +134,28 @@ describe('the web address', () => {
 			expect(res.statusCode).toBe(200);
 			expect(res.body).toContain(`<title>${title}</title>`);
 		}
+		await web.close();
+	});
+
+	it('opens the app for a Cooking together link', async () => {
+		const dist = join(dir, 'dist');
+		mkdirSync(dist);
+		writeFileSync(join(dist, 'index.html'), '<title>Sprig</title>');
+		const web = buildServer(
+			accounts,
+			householdRegistry(() => ({}) as never),
+			{
+				dataDir: dir,
+				logger: false,
+				webDist: dist,
+			},
+		);
+		await web.app.ready();
+		const res = await inject(web.handle, {
+			url: `/cook/${'0'.repeat(8)}-0000-0000-0000-${'0'.repeat(12)}/${'x'.repeat(32)}`,
+		});
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toContain('<title>Sprig</title>');
 		await web.close();
 	});
 });
@@ -973,5 +995,59 @@ describe('the phone app', () => {
 		expect(done.headers['content-type']).toMatch(/text\/html/);
 		expect(done.body).toMatch(/Google Calendar connected/);
 		expect(connected).toEqual([expect.objectContaining({ account: 'alex@gmail.com', refreshToken: 'refresh-c2' })]);
+	});
+});
+
+describe('a Cooking together link', () => {
+	const soup = {
+		title: 'Soup',
+		servings: 4,
+		totalMinutes: 30,
+		activeMinutes: 10,
+		ingredients: [{ group: null, amount: 1, unit: null, item: 'onion' }],
+		steps: ['Chop.', 'Simmer.'],
+		notes: null,
+		prepAhead: [],
+		proteins: [],
+		vegetables: [],
+		types: [],
+		meal: 'dinner',
+		sourceUrl: null,
+	};
+	const progress = { startedAt: 1, prepped: [0], steps: [], timers: [], doneAt: null };
+
+	it('opens the recipe for anyone with it, and nothing else of the family', async () => {
+		const phone = await guardian();
+		const household = (await phone.get('/api/auth/status')).body.household.id;
+		const recipe = (await phone.post('/api/recipes', { recipe: soup, images: [], cover: null })).body;
+		const { secret } = (await phone.post(`/api/recipes/${recipe.id}/cook`)).body.room;
+		const link = `/api/cook/${household}/${secret}`;
+
+		// Someone with the link, not signed in: the recipe and who's cooking, and they can join.
+		const grandma = device();
+		const opened = await grandma.get(link);
+		expect(opened.status).toBe(200);
+		expect(opened.body).toMatchObject({ recipe: { title: 'Soup', steps: ['Chop.', 'Simmer.'] }, people: [] });
+		const joined = await grandma.put(`${link}/me`, { cookId: 'grandma-phone', name: 'Grandma', progress });
+		expect(joined.body.people).toMatchObject([{ name: 'Grandma', memberId: null, progress: { prepped: [0] } }]);
+		expect((await grandma.get(`${link}/live`)).body.people).toHaveLength(1);
+
+		// Nothing else: the family's data, a made-up link, or a way round the address.
+		expect((await grandma.get('/api/recipes')).status).toBe(401);
+		expect((await grandma.get('/api/members')).status).toBe(401);
+		expect((await grandma.get(`/api/cook/${household}/${'x'.repeat(32)}`)).status).toBe(404);
+		expect((await grandma.get(`${link}/../../../members`)).status).toBe(401);
+		expect((await grandma.get(`${link}/nope`)).status).toBe(401);
+		expect((await grandma.get(`/api/cook/${'0'.repeat(8)}-0000-0000-0000-${'0'.repeat(12)}/${secret}`)).status).toBe(
+			404,
+		);
+
+		// Someone in the family, signed in: shown as themselves.
+		const mine = await phone.put(`${link}/me`, { cookId: 'alex-phone', name: 'whoever', progress });
+		expect(mine.body.people[1]).toMatchObject({ name: 'Alex', memberId: expect.any(String) });
+
+		// Ended: the link stops working.
+		await phone.del(`/api/recipes/${recipe.id}/cook`);
+		expect((await grandma.get(link)).status).toBe(404);
 	});
 });

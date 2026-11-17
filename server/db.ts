@@ -981,6 +981,29 @@ const migrations: string[] = [
     PRIMARY KEY (recipe_id, idx)
   );
   `,
+	// Cooking together (cook.ts): a link to a recipe (its secret), until when it works (ms), and each
+	// person cooking along: their device's own id, name, who they are in the family (if they are),
+	// and how far they've got (JSON: shared/cook.ts CookProgress).
+	`
+  CREATE TABLE cook_rooms (
+    id         TEXT PRIMARY KEY,
+    secret     TEXT NOT NULL UNIQUE,
+    recipe_id  TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    until      INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX cook_rooms_recipe ON cook_rooms(recipe_id);
+  CREATE TABLE cook_people (
+    room_id   TEXT NOT NULL REFERENCES cook_rooms(id) ON DELETE CASCADE,
+    cook_id   TEXT NOT NULL,
+    name      TEXT NOT NULL,
+    member_id TEXT REFERENCES members(id) ON DELETE SET NULL,
+    progress  TEXT NOT NULL,
+    joined_at INTEGER NOT NULL,
+    seen_at   INTEGER NOT NULL,
+    PRIMARY KEY (room_id, cook_id)
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */
