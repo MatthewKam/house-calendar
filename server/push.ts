@@ -10,12 +10,21 @@ import { dateOfKey } from '../shared/dayPlans.ts';
 import { inLabel } from '../shared/specialReminders.ts';
 import { dayIn } from '../shared/days.ts';
 import { schemaOf } from './schemas.ts';
-import { PushOff, PushOn, type PushKey, type Subscription } from '../shared/push.ts';
+import {
+	appleEndpoint,
+	PUSH_ON_ONE_OF,
+	PushOff,
+	PushOn,
+	type AppleDevice,
+	type PushKey,
+	type Subscription,
+} from '../shared/push.ts';
+import type { ApplePusher } from './apns.ts';
 import type { z } from 'zod';
 
 // Alerts on people's phones (web push): reminders on Sprig's lists as they come due, time to leave,
-// and reminders on special days. A grown-up turns them on per device; the browser gives a subscription, kept here with whose
-// device it is and its time zone. Kid and wall devices don't get them. Sending is replaced in tests.
+// and reminders on special days. A grown-up turns them on per device; the browser gives a subscription (the
+// iPhone app its Apple device token), kept here with whose device it is and its time zone. Kid and wall devices don't get them. Sending is replaced in tests.
 
 /** A browser's push subscription (shared/push.ts). */
 export type { Subscription };
@@ -32,6 +41,8 @@ export interface Pusher {
 	publicKey: string;
 	/** Throws an error with `statusCode` when the push service turns it down (404 or 410: gone). */
 	send(sub: Subscription, alert: Alert): Promise<void>;
+	/** Alerts to the iPhone app (apns.ts), when the server has Apple's push key. */
+	apple?: ApplePusher;
 }
 
 /** VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY (hosted), or a key file made the first time (your own machine). */
@@ -58,7 +69,9 @@ export function webPusher(keys: { publicKey: string; privateKey: string }, subje
 
 interface DeviceRow {
 	id: string;
+	/** A browser's push endpoint, or `apple:` and the app's token. */
 	endpoint: string;
+	/** JSON: a browser's Subscription, or the app's AppleDevice. */
 	subscription: string;
 	member_id: string | null;
 	time_zone: string;
@@ -233,7 +246,7 @@ export async function sendOnce(
 	for (const d of devices) {
 		if (db.prepare('SELECT 1 FROM push_sent WHERE device_id = ? AND key = ?').get(d.id, key)) continue;
 		try {
-			await pusher.send(JSON.parse(d.subscription) as Subscription, alert);
+			await deliver(pusher, d, alert);
 			db.prepare('INSERT OR IGNORE INTO push_sent (device_id, key) VALUES (?, ?)').run(d.id, key);
 		} catch (err) {
 			const status = (err as { statusCode?: number }).statusCode;
@@ -242,6 +255,14 @@ export async function sendOnce(
 			else log?.warn({ err, status }, 'An alert could not be sent');
 		}
 	}
+}
+
+/** Sends to one device, the browser's way or Apple's. */
+function deliver(pusher: Pusher, d: DeviceRow, alert: Alert) {
+	const to = JSON.parse(d.subscription) as Subscription | AppleDevice;
+	if (!('token' in to)) return pusher.send(to, alert);
+	if (!pusher.apple) throw new Error('Alerts to the app are off on this server');
+	return pusher.apple.send(to, alert);
 }
 
 export function registerPush(app: FastifyInstance, db: DB, pusher?: Pusher) {
@@ -262,26 +283,61 @@ export function registerPush(app: FastifyInstance, db: DB, pusher?: Pusher) {
 
 	app.get('/api/push/key', async (_req, reply) =>
 		pusher
-			? ({ publicKey: pusher.publicKey } satisfies PushKey)
+			? ({ publicKey: pusher.publicKey, apple: !!pusher.apple } satisfies PushKey)
 			: reply.code(404).send({ error: 'Alerts are off on this server' }),
 	);
 
 	// Turn alerts on for this device (again is fine: it keeps the newest owner and time zone).
-	app.post<{ Body: PushOn }>('/api/push', { schema: { body: schemaOf(PushOn) } }, async (req, reply) => {
-		const viewer = req.raw.viewer;
-		if (viewer && viewer.role !== 'guardian') return reply.code(403).send({ error: 'Alerts are for grown-ups' });
-		if (!pusher) return reply.code(404).send({ error: 'Alerts are off on this server' });
-		const {
-			subscription: { endpoint, keys },
-			timeZone,
-		} = req.body;
-		if (!realZone(timeZone)) return reply.code(400).send({ error: 'Unknown time zone' });
-		db.prepare(
-			`INSERT INTO push_devices (id, endpoint, subscription, member_id, time_zone) VALUES (?, ?, ?, ?, ?)
+	app.post<{ Body: PushOn }>(
+		'/api/push',
+		{ schema: { body: schemaOf(PushOn, PUSH_ON_ONE_OF) } },
+		async (req, reply) => {
+			const viewer = req.raw.viewer;
+			if (viewer && viewer.role !== 'guardian') return reply.code(403).send({ error: 'Alerts are for grown-ups' });
+			const { subscription, apple, timeZone } = req.body;
+			if (!pusher || (apple && !pusher.apple)) return reply.code(404).send({ error: 'Alerts are off on this server' });
+			if (!realZone(timeZone)) return reply.code(400).send({ error: 'Unknown time zone' });
+			// One of the two, by PUSH_ON_ONE_OF.
+			const [endpoint, kept] = apple
+				? [appleEndpoint(apple.token), { token: apple.token.toLowerCase(), sandbox: apple.sandbox }]
+				: [subscription!.endpoint, { endpoint: subscription!.endpoint, keys: subscription!.keys }];
+			db.prepare(
+				`INSERT INTO push_devices (id, endpoint, subscription, member_id, time_zone) VALUES (?, ?, ?, ?, ?)
       ON CONFLICT (endpoint) DO UPDATE SET subscription = excluded.subscription, member_id = excluded.member_id, time_zone = excluded.time_zone`,
-		).run(randomUUID(), endpoint, JSON.stringify({ endpoint, keys }), viewer?.memberId ?? null, timeZone);
-		return reply.code(204).send();
-	});
+			).run(randomUUID(), endpoint, JSON.stringify(kept), viewer?.memberId ?? null, timeZone);
+			return reply.code(204).send();
+		},
+	);
+
+	// A test alert to this device, right away (Settings → Notifications), to see that alerts arrive.
+	app.post<{ Body: z.infer<typeof PushOff> }>(
+		'/api/push/test',
+		{ schema: { body: schemaOf(PushOff) } },
+		async (req, reply) => {
+			const viewer = req.raw.viewer;
+			const d = db.prepare('SELECT * FROM push_devices WHERE endpoint = ?').get(req.body.endpoint) as
+				DeviceRow | undefined;
+			if (!pusher || !d || (viewer && d.member_id !== viewer.memberId))
+				return reply.code(404).send({ error: "Alerts aren't on for this device" });
+			try {
+				await deliver(pusher, d, {
+					title: '🌱 Alerts are on',
+					body: "This is how Sprig's reminders and time to leave will show here.",
+					url: '/#settings',
+					tag: 'test',
+				});
+			} catch (err) {
+				const status = (err as { statusCode?: number }).statusCode;
+				if (status === 404 || status === 410) {
+					db.prepare('DELETE FROM push_devices WHERE id = ?').run(d.id);
+					return reply.code(410).send({ error: 'This device stopped taking alerts. Turn them on again.' });
+				}
+				req.log.warn({ err, status }, 'A test alert could not be sent');
+				return reply.code(502).send({ error: "The alert couldn't be sent. Try again in a minute." });
+			}
+			return reply.code(204).send();
+		},
+	);
 
 	app.delete<{ Body: z.infer<typeof PushOff> }>(
 		'/api/push',

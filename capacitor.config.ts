@@ -12,6 +12,10 @@ const config: CapacitorConfig = {
 		// Behind the pages while they load: the light page color (app.css --bg), like the launch screen.
 		backgroundColor: '#f6f5f2',
 	},
+	plugins: {
+		// An alert that comes while Sprig is open shows as a banner too, as it would with Sprig closed.
+		PushNotifications: { presentationOptions: ['banner', 'list', 'sound'] },
+	},
 };
 
 export default config;

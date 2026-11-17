@@ -89,7 +89,7 @@ export type {
 export type { ListItemPatch, LiveLists, NewListItem, SprigItem, SprigList } from '../../../shared/lists.ts';
 
 // Alerts on grown-ups' phones: written once in shared/push.ts.
-export type { PushKey } from '../../../shared/push.ts';
+export type { AppleDevice, PushKey } from '../../../shared/push.ts';
 
 // Reminders from the family's iPhones: written once in shared/reminders.ts, for the server and here.
 export type { ReminderList, ReminderPatch, Reminders } from '../../../shared/reminders.ts';

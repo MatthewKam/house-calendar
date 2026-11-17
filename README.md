@@ -283,6 +283,11 @@ alert opens Sprig on Lists (or Today). Kids' devices and the wall don't get aler
 - The server's push keys are made in `data/vapid.json` on first start; keep it with the data. When hosting, set
   `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (`npx web-push generate-vapid-keys`) and `VAPID_SUBJECT` (an https URL or
   `mailto:`) in `.env` instead.
+- The iPhone app gets its alerts through Apple instead (`server/apns.ts`): set `APNS_KEY` (the `.p8` from Apple
+  Developer → Keys, with Apple Push Notifications service), `APNS_KEY_ID` and `APNS_TEAM_ID`. Without them the
+  app's switch says alerts are coming soon. A build run from Xcode uses Apple's sandbox, TestFlight and the App
+  Store the real service; the app tells the server which. Settings → Notifications → Send a test alert sends one
+  to this device right away.
 
 ## The iPhone and iPad app
 

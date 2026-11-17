@@ -3,7 +3,7 @@ import { openDb } from './db.ts';
 import { atLocal, sendDue, sendOnce, type Alert, type Pusher, type Subscription } from './push.ts';
 import { household } from './testing.ts';
 
-function setup(withPush = true) {
+function setup(withPush = true, withApple = true) {
 	const sent: { endpoint: string; alert: Alert }[] = [];
 	const gone = new Set<string>();
 	const pusher: Pusher = {
@@ -12,6 +12,15 @@ function setup(withPush = true) {
 			if (gone.has(sub.endpoint)) throw Object.assign(new Error('Gone'), { statusCode: 410 });
 			sent.push({ endpoint: sub.endpoint, alert });
 		},
+		apple: withApple
+			? {
+					async send(device, alert) {
+						const endpoint = `apple:${device.token}${device.sandbox ? ' (sandbox)' : ''}`;
+						if (gone.has(endpoint)) throw Object.assign(new Error('Gone'), { statusCode: 410 });
+						sent.push({ endpoint, alert });
+					},
+				}
+			: undefined,
 	};
 	const { db, call } = household([{ id: 'alex', name: 'Alex' }], withPush ? { push: pusher } : {});
 	return { db, call, pusher, sent, gone };
@@ -35,7 +44,7 @@ const alert: Alert = { title: 'Hi', body: 'There', url: '/', tag: 't' };
 describe('push', () => {
 	it('saves a device, again keeps one, and removes it', async () => {
 		const { db, call } = setup();
-		expect((await call('GET', '/api/push/key')).body).toEqual({ publicKey: 'public-key' });
+		expect((await call('GET', '/api/push/key')).body).toEqual({ publicKey: 'public-key', apple: true });
 		expect((await call('POST', '/api/push', sub('a'))).status).toBe(204);
 		expect((await call('POST', '/api/push', sub('a', 'Europe/London'))).status).toBe(204);
 		expect(devices(db)).toMatchObject([{ endpoint: 'https://push.test/a', time_zone: 'Europe/London' }]);
@@ -67,6 +76,45 @@ describe('push', () => {
 		await sendOnce(db, pusher, devices(db), 'k1', alert);
 		expect(sent.map((s) => s.endpoint)).toEqual(['https://push.test/a']);
 		expect(devices(db).map((d) => d.endpoint)).toEqual(['https://push.test/a']);
+	});
+
+	it("saves the iPhone app's device by its Apple token, and sends to it through Apple", async () => {
+		const { db, call, pusher, sent, gone } = setup();
+		const token = 'AB'.repeat(32);
+		const apple = (sandbox = false) => ({ apple: { token, sandbox }, timeZone: 'America/Los_Angeles' });
+		expect((await call('POST', '/api/push', apple())).status).toBe(204);
+		expect((await call('POST', '/api/push', apple(true))).status).toBe(204);
+		expect(devices(db)).toMatchObject([{ endpoint: `apple:${'ab'.repeat(32)}` }]);
+		expect(
+			(await call('POST', '/api/push', { apple: { token: 'not-hex', sandbox: false }, timeZone: 'UTC' })).status,
+		).toBe(400);
+		await call('POST', '/api/push', sub('a'));
+		await sendOnce(db, pusher, devices(db), 'k1', alert);
+		expect(sent.map((s) => s.endpoint).sort()).toEqual([`apple:${'ab'.repeat(32)} (sandbox)`, 'https://push.test/a']);
+		// Deleted from the phone: Apple says it's gone, and it's forgotten.
+		gone.add(`apple:${'ab'.repeat(32)} (sandbox)`);
+		await sendOnce(db, pusher, devices(db), 'k2', alert);
+		expect(devices(db).map((d) => d.endpoint)).toEqual(['https://push.test/a']);
+	});
+
+	it("turns the app's device away without Apple's key, and keeps browsers working", async () => {
+		const { call } = setup(true, false);
+		expect(
+			(await call('POST', '/api/push', { apple: { token: 'ab'.repeat(32), sandbox: false }, timeZone: 'UTC' })).status,
+		).toBe(404);
+		expect((await call('POST', '/api/push', sub('a'))).status).toBe(204);
+	});
+
+	it('sends a test alert to a device right away, as often as asked', async () => {
+		const { db, call, sent, gone } = setup();
+		await call('POST', '/api/push', sub('a'));
+		expect((await call('POST', '/api/push/test', { endpoint: 'https://push.test/a' })).status).toBe(204);
+		expect((await call('POST', '/api/push/test', { endpoint: 'https://push.test/a' })).status).toBe(204);
+		expect(sent.map((s) => s.alert.title)).toEqual(['🌱 Alerts are on', '🌱 Alerts are on']);
+		expect((await call('POST', '/api/push/test', { endpoint: 'https://push.test/nope' })).status).toBe(404);
+		gone.add('https://push.test/a');
+		expect((await call('POST', '/api/push/test', { endpoint: 'https://push.test/a' })).status).toBe(410);
+		expect(devices(db)).toEqual([]);
 	});
 
 	it('finds 8 AM on a day in a time zone, across a clock change', () => {
