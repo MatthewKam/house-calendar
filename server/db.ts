@@ -1004,6 +1004,13 @@ const migrations: string[] = [
     PRIMARY KEY (room_id, cook_id)
   );
   `,
+	// A list item's section: the recipe it was added for (server/lists.ts), its name. Lines sent from a
+	// recipe before this ended "· for <recipe>"; that ending becomes their section.
+	`
+  ALTER TABLE list_items ADD COLUMN section TEXT;
+  UPDATE list_items SET section = substr(title, instr(title, ' · for ') + 7), title = substr(title, 1, instr(title, ' · for ') - 1)
+    WHERE instr(title, ' · for ') > 1;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

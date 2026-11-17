@@ -190,24 +190,26 @@ export function useRecipeActions() {
 }
 
 /**
- * What's missing for a recipe, onto the Groceries list (made if there isn't one): each a line, skipping
- * any already on it and not ticked off. Answers how many went on.
+ * What's missing for a recipe, onto the Groceries list (made if there isn't one), under the recipe's
+ * name: each a line, skipping any already under it and not ticked off. Answers how many went on.
  */
 export function useAddToGroceries() {
 	const qc = useQueryClient();
 	return useMutation({
 		mutationKey: LISTS,
-		mutationFn: async (lines: string[]) => {
+		mutationFn: async ({ section, lines }: { section: string; lines: string[] }) => {
 			let lists = await api.lists();
 			let groceries = lists.find((l) => /^grocer(y|ies)$/i.test(l.title.trim()));
 			if (!groceries) {
 				lists = await api.addList('Groceries');
 				groceries = lists.find((l) => l.title === 'Groceries')!;
 			}
-			const already = new Set(groceries.items.filter((i) => !i.done).map((i) => i.title.toLowerCase()));
+			const already = new Set(
+				groceries.items.filter((i) => !i.done && i.section === section).map((i) => i.title.toLowerCase()),
+			);
 			const adding = lines.filter((l) => !already.has(l.toLowerCase()));
 			let latest: SprigList[] = lists;
-			for (const title of adding) latest = await api.addListItem(groceries.id, { title });
+			for (const title of adding) latest = await api.addListItem(groceries.id, { title, section });
 			qc.setQueryData(LISTS, latest);
 			return adding.length;
 		},

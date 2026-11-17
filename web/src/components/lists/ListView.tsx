@@ -30,6 +30,7 @@ import { useParent } from '../../lib/useParent';
 import { textOn } from '../../lib/color';
 import Sheet from '../ui/Sheet';
 import { ShoppingButton, TickedBy } from '../ui/ShoppingTogether';
+import { useFolded } from '../../lib/useFolded';
 
 /** Soft colors for a list's rows, light enough for dark text. */
 const LIST_COLORS = ['#f2dcb3', '#ecb0ea', '#c9dcf7', '#cdebd3', '#ddd3f5', '#f8cfb8', '#f6e7a1', '#c3ece4', '#e4e4e4'];
@@ -61,6 +62,8 @@ interface CardItem {
 	memberId?: string | null;
 	/** Sprig's: who ticked it. */
 	doneBy?: string | null;
+	/** Sprig's: the section it's under (the recipe it was added for); none, with the list's other items. */
+	section?: string | null;
 }
 
 interface CardProps {
@@ -114,6 +117,29 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 		.map((it, i) => ({ it, i }))
 		.sort((a, b) => rank(a.it.title) - rank(b.it.title) || a.i - b.i)
 		.map(({ it }) => it);
+	// Open items under no section first, then a section for each recipe they were added for, in the
+	// order they were added; each folds away on this device. Done ones are all together at the end.
+	const loose = open.filter((it) => !it.section);
+	const sections = [...new Set(list.items.filter((it) => !it.done && it.section).map((it) => it.section!))].map(
+		(name) => ({ name, items: open.filter((it) => it.section === name) }),
+	);
+	const folds = useFolded(`sprig:list-sections-folded:${list.id}`);
+	// Dragged within a part: those items take the front of the order, the rest keep theirs.
+	const reorder = (part: CardItem[], ids: string[]) => {
+		const keys = ids.map((id) => keyOf(part.find((it) => it.id === id)!.title));
+		onReorder([...keys, ...order.filter((k) => !keys.includes(k))]);
+	};
+	const sortable = (part: CardItem[]) => (
+		<SortableList
+			items={part}
+			getId={(it) => it.id}
+			onReorder={(ids) => reorder(part, ids)}
+			className={s.items}
+			draggingClass={s.dragging}
+		>
+			{(it, handle) => row(it, handle)}
+		</SortableList>
+	);
 	const done = list.items.filter((it) => it.done);
 	const [title, setTitle] = useState('');
 	// The item whose icon is being picked; id "new" is the item being typed in the add box.
@@ -273,15 +299,19 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 					))}
 				</div>
 			)}
-			<SortableList
-				items={open}
-				getId={(it) => it.id}
-				onReorder={(ids) => onReorder(ids.map((id) => keyOf(open.find((it) => it.id === id)!.title)))}
-				className={s.items}
-				draggingClass={s.dragging}
-			>
-				{(it, handle) => row(it, handle)}
-			</SortableList>
+			{sortable(loose)}
+			{sections.map(({ name, items }) => {
+				const folded = folds.isFolded(name);
+				return (
+					<div key={name} className={s.section}>
+						<button className={s.sectionHead} aria-expanded={!folded} onClick={() => folds.fold([name], !folded)}>
+							<span className={s.sectionName}>{name}</span>
+							<span className={s.sectionCount}>{items.length}</span>
+						</button>
+						{!folded && sortable(items)}
+					</div>
+				);
+			})}
 			{done.length > 0 && (
 				<ul className={s.items}>
 					{done.map((it) => (

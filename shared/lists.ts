@@ -14,13 +14,16 @@ const itemFields = {
 	due: z.string().max(40).nullable(),
 	/** Who it's for; null: anyone. */
 	memberId: z.string().nullable(),
+	/** The section it's under: the recipe it was added for (its name); null: none, with the list's other items. */
+	section: z.string().max(100).nullable(),
 };
 
-/** A new item (POST /api/lists/:id/items). Left out, it's for anyone, whenever. */
+/** A new item (POST /api/lists/:id/items). Left out, it's for anyone, whenever, in no section. */
 export const ListItemInput = z.strictObject({
 	...itemFields,
 	due: itemFields.due.default(null),
 	memberId: itemFields.memberId.default(null),
+	section: itemFields.section.default(null),
 });
 /** A change to an item (PATCH /api/lists/items/:id): ticked or not, and any of its fields; at least one. */
 export const ListItemPatch = z.strictObject({ done: z.boolean(), ...itemFields }).partial();
@@ -32,6 +35,7 @@ export const SprigItem = z.object({
 	done: z.boolean(),
 	due: itemFields.due,
 	memberId: itemFields.memberId,
+	section: itemFields.section,
 	/** When it was ticked (an instant); null while it's open. */
 	doneAt: z.string().nullable(),
 	/** Who ticked it (a member's id); null while it's open, or not known. */

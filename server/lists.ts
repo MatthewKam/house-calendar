@@ -15,8 +15,8 @@ import { Shopping } from '../shared/shopping.ts';
 
 // Lists kept in Sprig itself: groceries, to-dos, packing. No Reminders Shortcut needed (that's
 // reminders.ts, whose lists show beside these). An item can say when (a reminder, due that day or at
-// a time) and who it's for. Anyone adds and ticks; naming, deleting and the when and who are a
-// parent's (auth.ts).
+// a time) and who it's for, and sit under a section: the recipe it was added for. Anyone adds and
+// ticks; naming, deleting and the when and who are a parent's (auth.ts).
 //
 // Shopping together (shopping.ts): people shopping from the same list turn it on, and while it's on
 // their phones ask /api/lists/live, which answers as soon as anything on the lists changes (a tick on
@@ -37,6 +37,7 @@ interface ItemRow {
 	done: number;
 	due: string | null;
 	member_id: string | null;
+	section: string | null;
 	created_at: string;
 	done_at: string | null;
 	done_by: string | null;
@@ -49,6 +50,7 @@ const toItem = (r: ItemRow): SprigItem => ({
 	done: r.done === 1,
 	due: r.due,
 	memberId: r.member_id,
+	section: r.section,
 	doneAt: r.done_at,
 	doneBy: r.done_at ? r.done_by : null,
 });
@@ -146,18 +148,20 @@ export function registerLists(app: FastifyInstance, db: DB, live: LiveTimes = LI
 		},
 		async (req, reply) => {
 			const { due, memberId } = req.body;
+			const section = req.body.section && tidy(req.body.section);
 			const title = tidy(req.body.title);
 			if (!title) return reply.code(400).send({ error: 'A name is needed' });
 			if (!db.prepare('SELECT 1 FROM lists WHERE id = ?').get(req.params.id))
 				return reply.code(404).send({ error: 'List not found' });
 			if (due && !validDue(due)) return reply.code(400).send({ error: 'When should be a day or a time' });
 			if (!noneOrMember(db, memberId)) return reply.code(400).send({ error: 'Unknown member' });
-			db.prepare('INSERT INTO list_items (id, list_id, title, due, member_id) VALUES (?, ?, ?, ?, ?)').run(
+			db.prepare('INSERT INTO list_items (id, list_id, title, due, member_id, section) VALUES (?, ?, ?, ?, ?, ?)').run(
 				randomUUID(),
 				req.params.id,
 				title,
 				due,
 				memberId,
+				section || null,
 			);
 			reply.code(201);
 			return allLists(db);
@@ -183,13 +187,14 @@ export function registerLists(app: FastifyInstance, db: DB, live: LiveTimes = LI
 			// Unticked: its alert can come again.
 			if (!done && row.done === 1) forgetAlerts(db, row.id);
 			db.prepare(
-				`UPDATE list_items SET title = ?, done = ?, due = ?, member_id = ?, done_by = ?,
+				`UPDATE list_items SET title = ?, done = ?, due = ?, member_id = ?, section = ?, done_by = ?,
       done_at = CASE WHEN ? THEN COALESCE(done_at, strftime('%Y-%m-%dT%H:%M:%fZ','now')) END WHERE id = ?`,
 			).run(
 				b.title !== undefined ? tidy(b.title) : row.title,
 				done ? 1 : 0,
 				b.due !== undefined ? b.due : row.due,
 				b.memberId !== undefined ? b.memberId : row.member_id,
+				b.section !== undefined ? (b.section && tidy(b.section)) || null : row.section,
 				doneBy,
 				done ? 1 : 0,
 				row.id,

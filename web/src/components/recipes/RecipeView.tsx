@@ -374,7 +374,7 @@ export default function RecipeView({
 						disabled={groceries.isPending}
 						onClick={() =>
 							groceries.mutate(
-								missing.map(({ i }) => `${ingredientLine(i, scale)} · for ${r.title}`),
+								{ section: r.title, lines: missing.map(({ i }) => ingredientLine(i, scale)) },
 								{
 									onSuccess: (n) => {
 										setSent(n);

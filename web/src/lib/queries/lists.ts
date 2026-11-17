@@ -102,7 +102,7 @@ export function useListActions() {
 		add: useMutation({
 			mutationKey: key,
 			mutationFn: ({ listId, ...item }: { listId: string } & NewListItem) => api.addListItem(listId, item),
-			onMutate: ({ listId, title, due = null, memberId = null }) =>
+			onMutate: ({ listId, title, due = null, memberId = null, section = null }) =>
 				showNow(qc, [
 					items((l) =>
 						l.id === listId
@@ -110,7 +110,7 @@ export function useListActions() {
 									...l,
 									items: [
 										...l.items.filter((i) => !i.done),
-										{ id: newId('item'), title, done: false, due, memberId, doneAt: null, doneBy: null },
+										{ id: newId('item'), title, done: false, due, memberId, section, doneAt: null, doneBy: null },
 										...l.items.filter((i) => i.done),
 									],
 								}
