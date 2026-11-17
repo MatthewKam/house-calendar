@@ -283,7 +283,7 @@ export function registerPush(app: FastifyInstance, db: DB, pusher?: Pusher) {
 
 	app.get('/api/push/key', async (_req, reply) =>
 		pusher
-			? ({ publicKey: pusher.publicKey } satisfies PushKey)
+			? ({ publicKey: pusher.publicKey, apple: !!pusher.apple } satisfies PushKey)
 			: reply.code(404).send({ error: 'Alerts are off on this server' }),
 	);
 

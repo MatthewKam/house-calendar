@@ -36,8 +36,8 @@ export const PushOff = z.object({ endpoint: z.string().max(1000) });
 /** How the app's device is named in place of a browser's endpoint. */
 export const appleEndpoint = (token: string) => `apple:${token.toLowerCase()}`;
 
-/** The server's public key, to subscribe with (GET /api/push/key). */
-export const PushKey = z.object({ publicKey: z.string() });
+/** The server's public key, to subscribe with (GET /api/push/key), and whether it can send to the iPhone app. */
+export const PushKey = z.object({ publicKey: z.string(), apple: z.boolean() });
 
 export type Subscription = z.infer<typeof Subscription>;
 export type AppleDevice = z.infer<typeof AppleDevice>;

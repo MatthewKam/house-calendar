@@ -1,6 +1,7 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { SecureStorage } from '@aparajita/capacitor-secure-storage';
 import { Browser } from '@capacitor/browser';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
 // The phone app (Capacitor): the same pages, shipped inside the app, calling sprig-family.com. It's
@@ -82,4 +83,49 @@ export function linksInSheet() {
 /** The clock and battery over the page: dark on a light page, light on a dark one (Sprig's own pick). */
 export function statusBarFor(mode: 'light' | 'dark') {
 	if (isApp) void StatusBar.setStyle({ style: mode === 'dark' ? Style.Dark : Style.Light }).catch(() => {});
+}
+
+// Alerts in the app: Apple's own (server/apns.ts), as web alerts can't work inside an app. Apple gives the
+// app a device token once it's allowed; whether it's a build run from Xcode (Apple's sandbox) comes from
+// the app itself (ios/App/App/Alerts.swift).
+const AppAlerts = registerPlugin<{ environment(): Promise<{ sandbox: boolean }> }>('AppAlerts');
+
+/** Whether the iPhone lets Sprig show alerts: yes, no (changed in its Settings), or not asked yet. */
+export async function appAlertsAllowed(): Promise<'granted' | 'denied' | 'prompt'> {
+	const { receive } = await PushNotifications.checkPermissions();
+	return receive === 'granted' ? 'granted' : receive === 'denied' ? 'denied' : 'prompt';
+}
+
+/** Asks the iPhone (the first time, its "Allow notifications?"); then 'granted' or not. */
+export async function askAppAlerts() {
+	const { receive } = await PushNotifications.requestPermissions();
+	return receive;
+}
+
+/** This phone's address with Apple, once alerts are allowed. */
+export async function appleDevice(): Promise<{ token: string; sandbox: boolean }> {
+	const token = new Promise<string>((resolve, reject) => {
+		const done = Promise.all([
+			PushNotifications.addListener('registration', (t) => {
+				void done.then((ls) => ls.forEach((l) => void l.remove()));
+				resolve(t.value);
+			}),
+			PushNotifications.addListener('registrationError', (e) => {
+				void done.then((ls) => ls.forEach((l) => void l.remove()));
+				reject(new Error(e.error || "Apple didn't give this phone an alert address"));
+			}),
+		]);
+		void done.then(() => PushNotifications.register());
+	});
+	const [value, { sandbox }] = await Promise.all([token, AppAlerts.environment()]);
+	return { token: value, sandbox };
+}
+
+/** A tapped alert opens what it's about (its page, as the server's `url` says: '/#lists'). */
+export function openTappedAlerts() {
+	if (!isApp) return;
+	void PushNotifications.addListener('pushNotificationActionPerformed', ({ notification }) => {
+		const url = (notification.data as { url?: unknown } | undefined)?.url;
+		if (typeof url === 'string' && url.startsWith('/#')) location.hash = url.slice(1);
+	});
 }

@@ -44,7 +44,7 @@ const alert: Alert = { title: 'Hi', body: 'There', url: '/', tag: 't' };
 describe('push', () => {
 	it('saves a device, again keeps one, and removes it', async () => {
 		const { db, call } = setup();
-		expect((await call('GET', '/api/push/key')).body).toEqual({ publicKey: 'public-key' });
+		expect((await call('GET', '/api/push/key')).body).toEqual({ publicKey: 'public-key', apple: true });
 		expect((await call('POST', '/api/push', sub('a'))).status).toBe(204);
 		expect((await call('POST', '/api/push', sub('a', 'Europe/London'))).status).toBe(204);
 		expect(devices(db)).toMatchObject([{ endpoint: 'https://push.test/a', time_zone: 'Europe/London' }]);

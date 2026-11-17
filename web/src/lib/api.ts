@@ -15,6 +15,7 @@ import type {
 	Member,
 	ReminderList,
 	Reminders,
+	AppleDevice,
 	PushKey,
 	SyncedCalendar,
 	CalendarPatch,
@@ -556,7 +557,11 @@ export const api = {
 	/** The browser's own subscription; the server keeps the part shared/push.ts describes. */
 	pushOn: (subscription: PushSubscriptionJSON, timeZone: string) =>
 		call<void>('POST', '/api/push', { subscription, timeZone }),
+	/** The iPhone app's Apple device token (server/apns.ts). */
+	pushOnApple: (apple: AppleDevice, timeZone: string) => call<void>('POST', '/api/push', { apple, timeZone }),
 	pushOff: (endpoint: string) => call<void>('DELETE', '/api/push', { endpoint }),
+	/** A test alert to this device right away: a browser's endpoint, or appleEndpoint(token). */
+	pushTest: (endpoint: string) => call<void>('POST', '/api/push/test', { endpoint }),
 
 	/** Your reminders on special days (server/specialReminders.ts). */
 	specialReminders: () => call<SpecialReminder[]>('GET', '/api/special-reminders'),
