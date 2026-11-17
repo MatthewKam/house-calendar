@@ -245,14 +245,25 @@
 	background: var(--good-bg);
 	border: 1px solid var(--good-line);
 }
+/* Each in a place of its own, so the clock's width changing (this font's figures aren't all one width)
+   never moves the buttons: wrapping as it ticked made the row jump back and forth every few seconds. */
 .cookingRow {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
 	align-items: center;
 	gap: 0.6rem;
 }
+/* Phones: the clock and Set a timer, then Done cooking on a line of its own. */
+@media (max-width: 700px) {
+	.cookingRow {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+	.cookingRow .doneCooking {
+		grid-column: 1 / -1;
+		justify-self: start;
+	}
+}
 .elapsed {
-	margin-right: auto;
 	font-size: 1.6rem;
 	font-weight: 750;
 	font-variant-numeric: tabular-nums;
