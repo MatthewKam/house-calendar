@@ -78,8 +78,9 @@
 	flex-direction: column;
 	gap: 0.9rem;
 }
-/* A tablet either way up, or a phone on its side: rows of two, the calendar and the photos across both. */
-@media (orientation: landscape) and (max-height: 500px), (min-width: 744px) and (min-height: 600px) {
+/* A tablet either way up (from 800px wide: an iPad mini upright keeps one roomy column), or a phone on its
+   side: rows of two, the calendar and the photos across both. */
+@media (orientation: landscape) and (max-height: 500px), (min-width: 800px) and (min-height: 600px) {
 	.cards {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -266,7 +267,8 @@ details > summary.cardHead {
 }
 .title {
 	font-weight: 600;
-	overflow-wrap: anywhere;
+	/* A word too long for the line breaks; others wrap between words. */
+	overflow-wrap: break-word;
 }
 .where {
 	font-size: 0.85rem;
@@ -407,7 +409,7 @@ details > summary.cardHead {
 	flex-direction: column;
 	gap: 0.9rem;
 }
-@media (orientation: landscape) and (max-height: 500px), (min-width: 744px) and (min-height: 600px) {
+@media (orientation: landscape) and (max-height: 500px), (min-width: 800px) and (min-height: 600px) {
 	.calendar {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
