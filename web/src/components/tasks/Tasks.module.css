@@ -25,6 +25,16 @@
 	gap: 1.1rem;
 	border-bottom: 1px solid lightgrey;
 }
+/* A phone on its side: too short for a box of its own under the heading, so the whole page scrolls. */
+@media (orientation: landscape) and (max-height: 500px) {
+	.page {
+		overflow-y: auto;
+	}
+	.scroll {
+		flex: none;
+		overflow-y: visible;
+	}
+}
 .kid {
 	display: flex;
 	flex-direction: column;

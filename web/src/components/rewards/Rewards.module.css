@@ -27,6 +27,16 @@
 	gap: 0.6rem;
 	padding-bottom: 1rem;
 }
+/* A phone on its side: too short for a box of its own under the heading, so the whole page scrolls. */
+@media (orientation: landscape) and (max-height: 500px) {
+	.page {
+		overflow-y: auto;
+	}
+	.scroll {
+		flex: none;
+		overflow-y: visible;
+	}
+}
 .section {
 	margin: 0.6rem 0 0;
 	font-size: 1.2rem;
