@@ -1,4 +1,4 @@
--- A household's database (server/db.ts), at version 64. Written by server/schema.test.ts; don't edit by hand.
+-- A household's database (server/db.ts), at version 65. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
@@ -284,7 +284,7 @@ CREATE TABLE list_items (
     member_id   TEXT REFERENCES members(id) ON DELETE SET NULL,
     created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     done_at     TEXT
-  , meal_plan_id TEXT REFERENCES meal_plans(id) ON DELETE CASCADE, done_by TEXT);
+  , meal_plan_id TEXT REFERENCES meal_plans(id) ON DELETE CASCADE, done_by TEXT, section TEXT);
 
 CREATE INDEX list_items_list ON list_items(list_id);
 

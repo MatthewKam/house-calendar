@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { openDb } from './db.ts';
 import { household } from './testing.ts';
 
 const setup = () => household([{ id: 'alex', name: 'Alex' }]);
@@ -55,6 +59,48 @@ describe('lists', () => {
 			(await call('PATCH', `/api/lists/items/${dentist.id}`, { title: 'Call the vet' })).body[0].items[0],
 		).toMatchObject({ title: 'Call the vet', done: false, due: '2099-01-04', memberId: 'alex' });
 		expect((await call('PATCH', `/api/lists/items/${dentist.id}`, {})).status).toBe(400);
+	});
+
+	it("keeps an item's section: the recipe it was added for", async () => {
+		const { call } = setup();
+		const list = (await call('POST', '/api/lists', { title: 'Groceries' })).body[0];
+		await call('POST', `/api/lists/${list.id}/items`, { title: 'Milk' });
+		const added = await call('POST', `/api/lists/${list.id}/items`, {
+			title: '2 onions',
+			section: ' Spaghetti  bolognese ',
+		});
+		expect(added.body[0].items).toMatchObject([
+			{ title: 'Milk', section: null },
+			{ title: '2 onions', section: 'Spaghetti bolognese' },
+		]);
+		const onions = added.body[0].items[1];
+		// A tick keeps it there; an empty section takes it out.
+		expect((await call('PATCH', `/api/lists/items/${onions.id}`, { done: true })).body[0].items[1].section).toBe(
+			'Spaghetti bolognese',
+		);
+		expect((await call('PATCH', `/api/lists/items/${onions.id}`, { section: ' ' })).body[0].items[1].section).toBe(
+			null,
+		);
+	});
+
+	it('moves lines sent from a recipe before sections ("· for Tacos") under that section', () => {
+		const file = join(mkdtempSync(join(tmpdir(), 'sprig-')), 'old.db');
+		const before = openDb(file, 64);
+		before.prepare(`INSERT INTO lists (id, title) VALUES ('g', 'Groceries')`).run();
+		before
+			.prepare(
+				`INSERT INTO list_items (id, list_id, title) VALUES
+      ('a', 'g', '1 lb beef · for Tacos'), ('b', 'g', 'Milk'), ('c', 'g', '2 limes · for Fish · for two')`,
+			)
+			.run();
+		before.close();
+		const db = openDb(file);
+		expect(db.prepare('SELECT id, title, section FROM list_items ORDER BY id').all()).toEqual([
+			{ id: 'a', title: '1 lb beef', section: 'Tacos' },
+			{ id: 'b', title: 'Milk', section: null },
+			{ id: 'c', title: '2 limes', section: 'Fish · for two' },
+		]);
+		db.close();
 	});
 
 	it('renames and deletes a list with its items', async () => {

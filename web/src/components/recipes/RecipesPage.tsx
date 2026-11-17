@@ -12,6 +12,7 @@ import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import AddRecipe from './AddRecipe';
 import RecipePages, { PAGE_SIZE } from './RecipePages';
+import { allProgress, progressText, saveProgress } from '../../lib/recipeProgress';
 import RecipeView from './RecipeView';
 import s from './Recipes.module.css';
 
@@ -127,6 +128,12 @@ export default function RecipesPage({
 			(prep === '' || (prep === 'tonight') === longestPrep(r) < OVERNIGHT),
 	);
 	const opened = recipes.find((r) => r.id === open) ?? null;
+	// Recipes left partway on this device (read again as one closes, or one is cleared).
+	const [, setCleared] = useState(0);
+	const viewing = allProgress().flatMap((p) => {
+		const r = recipes.find((x) => x.id === p.id);
+		return r ? [{ r, p }] : [];
+	});
 
 	return (
 		<section className={s.page} aria-label="Recipes">
@@ -168,6 +175,45 @@ export default function RecipesPage({
 				</div>
 			) : (
 				<div className={s.scroll} ref={scroller}>
+					{viewing.length > 0 && (
+						<section className={s.viewing} aria-label="Currently viewing">
+							<h2 className={s.viewingTitle}>Currently viewing</h2>
+							<ul className={s.viewingList}>
+								{viewing.map(({ r, p }) => {
+									const cover = coverOf(r);
+									return (
+										<li key={r.id} className={s.viewingCard}>
+											<button type="button" className={s.viewingOpen} onClick={() => setOpen(r.id)}>
+												{cover ? (
+													<img className={s.viewingImage} src={cover.thumbUrl} alt="" />
+												) : (
+													<span className={`${s.viewingImage} ${s.defaultPicture}`} aria-hidden="true">
+														{mealPicture(r.meal)}
+													</span>
+												)}
+												<span className={s.cardText}>
+													<span className={s.cardTitle}>{r.title}</span>
+													<span className={s.cardMeta}>{progressText(p, r.ingredients.length, r.steps.length)}</span>
+												</span>
+											</button>
+											<button
+												type="button"
+												className={s.viewingClear}
+												aria-label={`Clear the ticks in ${r.title}`}
+												title="Clear the ticks"
+												onClick={() => {
+													saveProgress(r.id, null);
+													setCleared((n) => n + 1);
+												}}
+											>
+												✕
+											</button>
+										</li>
+									);
+								})}
+							</ul>
+						</section>
+					)}
 					{recipes.length > 0 && (
 						// Side by side: the time there is, a kind (a meal, a protein, a type), and the family's tags.
 						<div className={s.filters}>

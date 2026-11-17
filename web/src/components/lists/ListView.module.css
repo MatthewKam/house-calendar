@@ -246,6 +246,45 @@
 	color: var(--muted);
 	font-size: 0.9rem;
 }
+/* A recipe's lines under its name; the name folds them away and back, with a chevron. */
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.sectionHead {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	min-height: 2.75rem;
+	padding: 0 0.4rem;
+	background: none;
+	color: var(--text);
+	font: inherit;
+	font-weight: 600;
+	text-align: left;
+}
+.sectionName {
+	overflow-wrap: anywhere;
+}
+.sectionCount {
+	color: var(--muted);
+	font-weight: normal;
+}
+.sectionHead::after {
+	content: '';
+	flex: none;
+	width: 0.5rem;
+	height: 0.5rem;
+	margin-left: auto;
+	border-right: 2px solid var(--muted);
+	border-bottom: 2px solid var(--muted);
+	rotate: 45deg;
+	transition: rotate 0.2s;
+}
+.sectionHead[aria-expanded='false']::after {
+	rotate: -45deg;
+}
 .empty {
 	color: var(--muted);
 	padding: 0.3rem 0.4rem;
