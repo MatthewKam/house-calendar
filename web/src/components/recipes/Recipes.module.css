@@ -1605,6 +1605,65 @@ button.ideaSearch {
 	padding: 0.5rem 0.8rem;
 }
 
+/* Currently viewing: recipes left partway on this device, a small card each to carry on, with ✕ to clear. */
+.viewing {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	margin-bottom: 0.8rem;
+}
+.viewingTitle {
+	margin: 0;
+	font-size: 1rem;
+	color: var(--muted);
+}
+.viewingList {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+	gap: 0.5rem;
+}
+.viewingCard {
+	display: flex;
+	align-items: center;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--surface);
+	box-shadow: var(--shadow-sm);
+	overflow: hidden;
+}
+.viewingOpen {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	padding: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+}
+.viewingImage {
+	flex: none;
+	width: 3.5rem;
+	height: 3.5rem;
+	margin: 0.4rem 0 0.4rem 0.4rem;
+	border-radius: var(--radius-sm);
+	object-fit: cover;
+	font-size: 1.8rem;
+}
+.viewingClear {
+	flex: none;
+	width: 2.75rem;
+	height: 2.75rem;
+	margin-right: 0.2rem;
+	border-radius: var(--radius-round);
+	background: none;
+	color: var(--muted);
+}
+
 /* The page menu: how many showing and ‹ 1 2 3 ›, staying at the top of the recipes while scrolling. */
 .pager {
 	position: sticky;

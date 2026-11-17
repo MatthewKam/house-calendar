@@ -28,6 +28,7 @@ import { dayWord, mealLabel } from '../../lib/meals';
 import { dayKey, timeLabel } from '../../lib/dates';
 import { cookBase, cookId, cookLink, untilWords } from '../../lib/cook';
 import { api } from '../../lib/api';
+import { progressOf, saveProgress } from '../../lib/recipeProgress';
 import type { CookProgress, CookTimer } from '../../../../shared/cook.ts';
 import { useNow } from '../../lib/useNow';
 import { flags } from '../../lib/allergies';
@@ -100,6 +101,11 @@ export default function RecipeView({
 				.cookMe(base, { cookId: mine, name: myName, progress: { ...progress, doneAt: Date.now() } })
 				.catch(() => {});
 		setJoined(false);
+		// Cooked: it starts fresh next time, and leaves Currently viewing.
+		setHave([]);
+		setPrepped([]);
+		setStepsDone([]);
+		setTimers([]);
 		setCookingSince(null);
 	};
 	// The family's tags: picking them, from the ones used across the book.
@@ -135,12 +141,14 @@ export default function RecipeView({
 	}
 	const [removing, setRemoving] = useState<string | null>(null);
 	const groceries = useAddToGroceries();
-	const [scale, setScale] = useState(1);
+	// Where it was left on this device (lib/recipeProgress.ts), if within a day.
+	const [left] = useState(() => progressOf(r.id));
+	const [scale, setScale] = useState(left?.scale ?? 1);
 	// Ingredients ticked: what's in the house (planning), or what's prepped (cooking), by index.
-	const [have, setHave] = useState<number[]>([]);
-	const [prepped, setPrepped] = useState<number[]>([]);
-	const [stepsDone, setStepsDone] = useState<number[]>([]);
-	const [cookingSince, setCookingSince] = useState<number | null>(null);
+	const [have, setHave] = useState<number[]>(left?.have ?? []);
+	const [prepped, setPrepped] = useState<number[]>(left?.prepped ?? []);
+	const [stepsDone, setStepsDone] = useState<number[]>(left?.steps ?? []);
+	const [cookingSince, setCookingSince] = useState<number | null>(left?.cookingSince ?? null);
 	const [tab, setTab] = useState<'ingredients' | 'steps'>('ingredients');
 	const [editing, setEditing] = useState(false);
 	const [deleting, setDeleting] = useState(false);
@@ -158,7 +166,16 @@ export default function RecipeView({
 
 	// Cooking together (server/cook.ts): the recipe's link while there is one, and this device cooking
 	// along with it (joined). Each cook keeps their own ticks and timers; the others' show beside them.
-	const [timers, setTimers] = useState<CookTimer[]>([]);
+	const [timers, setTimers] = useState<CookTimer[]>(left?.timers ?? []);
+	// Each change kept, so it opens where it was (and shows under Currently viewing). Only a change:
+	// opening it doesn't start its day again.
+	const kept = useRef(JSON.stringify([have, prepped, stepsDone, scale, cookingSince, timers]));
+	useEffect(() => {
+		const now = JSON.stringify([have, prepped, stepsDone, scale, cookingSince, timers]);
+		if (now === kept.current) return;
+		kept.current = now;
+		saveProgress(r.id, { have, prepped, steps: stepsDone, scale, cookingSince, timers });
+	}, [r.id, have, prepped, stepsDone, scale, cookingSince, timers]);
 	const room = useCookRoom(r.id).data?.room ?? null;
 	const cookActions = useCookActions(r.id);
 	const household = auth?.signedIn ? auth.household?.id : undefined;
