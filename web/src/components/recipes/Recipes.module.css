@@ -143,6 +143,21 @@
 	gap: 1.5rem;
 	align-items: start;
 }
+/* Each scrolls on its own, as tall as the screen allows: the steps move on while the ingredients stay
+   in view. Its heading stays at the top of it. (The recipe in the app and a Cooking together link both.) */
+.columns > * {
+	max-height: calc(100dvh - 7rem);
+	overflow-y: auto;
+	padding-right: 0.3rem;
+}
+.columns .sectionHead {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	margin-top: 0;
+	padding: 0.3rem 0;
+	background: var(--surface);
+}
 .part {
 	display: flex;
 	flex-direction: column;
@@ -1698,17 +1713,24 @@ button.ideaSearch {
 	gap: 0.4rem 0.6rem;
 	font-size: 0.92rem;
 }
-/* A Cooking together link's page (CookAlong.tsx): the recipe on its own, a column down the middle. */
+/* A Cooking together link's page (CookAlong.tsx): a recipe on its own, laid out as one opened in the
+   app (.view), in a column that scrolls by itself (the app's page doesn't). */
+.alongPage {
+	position: fixed;
+	inset: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	background: var(--surface);
+}
 .along {
-	min-height: 100dvh;
 	box-sizing: border-box;
-	max-width: 40rem;
+	max-width: 100%;
 	margin: 0 auto;
-	padding: calc(env(safe-area-inset-top, 0px) + 1rem) 1rem calc(env(safe-area-inset-bottom, 0px) + 2rem);
+	padding: calc(env(safe-area-inset-top, 0px) + 1rem) calc(1rem + var(--inset-right))
+		calc(env(safe-area-inset-bottom, 0px) + 2rem) calc(1rem + var(--inset-left));
 	display: flex;
 	flex-direction: column;
 	gap: 0.9rem;
-	background: var(--bg);
 }
 .alongHead {
 	display: flex;
@@ -1748,4 +1770,12 @@ button.ideaSearch {
 }
 .alongName button {
 	min-height: 3rem;
+}
+/* Cooking together: who's done an ingredient or a step, their dots at the end of its row. */
+.doneBy {
+	flex: none;
+	margin-left: auto;
+	align-self: center;
+	display: inline-flex;
+	gap: 0.15rem;
 }

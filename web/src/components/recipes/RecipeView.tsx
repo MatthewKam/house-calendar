@@ -172,7 +172,10 @@ export default function RecipeView({
 		joined ? base : null,
 		joined && cookingSince !== null ? { name: myName, progress } : null,
 	);
-	const others = ((joined ? together.data?.people : room?.people) ?? []).filter((p) => p.cookId !== mine);
+	const cooks = (joined ? together.data?.people : room?.people) ?? [];
+	const others = cooks.filter((p) => p.cookId !== mine);
+	// Everyone for the dots, this cook as they are here (not as last saved).
+	const everyone = cooks.map((p) => (p.cookId === mine && joined ? { ...p, progress } : p));
 	// Coming back to a recipe being cooked together (a day-long one, say): carries on where this cook was.
 	const restored = useRef(false);
 	useEffect(() => {
@@ -341,7 +344,7 @@ export default function RecipeView({
 											</span>
 										)}
 										{!cooking && tickedBy.get(n) && <TickedBy by={tickedBy.get(n)!} members={people} />}
-										{cooking && <DoneBy others={others} done={(p) => p.progress.prepped.includes(n)} />}
+										{cooking && <DoneBy people={everyone} done={(p) => p.progress.prepped.includes(n)} />}
 										{flaggedRows.has(n) && (
 											<span className={s.allergyMark} title="Someone's allergy">
 												⚠
@@ -403,7 +406,7 @@ export default function RecipeView({
 						>
 							<span className={s.stepNumber}>{n + 1}</span>
 							{step}
-							{cooking && <DoneBy others={others} done={(p) => p.progress.steps.includes(n)} />}
+							{cooking && <DoneBy people={everyone} done={(p) => p.progress.steps.includes(n)} />}
 						</button>
 						{/* Its photos: how it should look by then. */}
 						{(stepPhotos(n).length > 0 || parent) && (

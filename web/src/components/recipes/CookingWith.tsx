@@ -5,7 +5,7 @@ import { PersonDot } from '../ui/ShoppingTogether';
 import s from './Recipes.module.css';
 
 // Cooking together: the others cooking along (not this device), each with how far they've got and
-// their timers, and the dots beside what they've done. Nothing here changes anyone's own ticks.
+// their timers, and everyone's dots beside what they've done. Nothing here changes anyone's own ticks.
 
 /** Everyone else cooking along, a line each. */
 export function CookingWith({
@@ -36,7 +36,15 @@ export function CookingWith({
 	);
 }
 
-/** The others' dots beside an ingredient they've prepped or a step they've done. */
-export function DoneBy({ others, done }: { others: CookPerson[]; done: (p: CookPerson) => boolean }) {
-	return others.filter(done).map((p) => <PersonDot key={p.cookId} name={p.name} color={p.color} what="Done" />);
+/** Everyone's dots (this cook's too) at the end of an ingredient's or a step's row, for who's done it. */
+export function DoneBy({ people, done }: { people: CookPerson[]; done: (p: CookPerson) => boolean }) {
+	const who = people.filter(done);
+	if (!who.length) return null;
+	return (
+		<span className={s.doneBy}>
+			{who.map((p) => (
+				<PersonDot key={p.cookId} name={p.name} color={p.color} what="Done" />
+			))}
+		</span>
+	);
 }
