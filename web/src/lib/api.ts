@@ -46,6 +46,7 @@ import type {
 	SprigList,
 	LiveLists,
 	ListItemPatch,
+	ListPatch,
 	NewListItem,
 	CaptureOn,
 	Captured,
@@ -538,7 +539,7 @@ export const api = {
 	/** The lists as soon as they're not as the stamp says, or after a while (asked over and over while shopping together). */
 	liveLists: (stamp: string | null, signal: AbortSignal) =>
 		call<LiveLists>('GET', `/api/lists/live${stamp ? `?stamp=${stamp}` : ''}`, undefined, { signal }),
-	renameList: (id: string, title: string) => call<SprigList[]>('PATCH', `/api/lists/${id}`, { title }),
+	changeList: (id: string, patch: ListPatch) => call<SprigList[]>('PATCH', `/api/lists/${id}`, patch),
 	deleteList: (id: string) => call<SprigList[]>('DELETE', `/api/lists/${id}`),
 	clearDone: (id: string) => call<SprigList[]>('DELETE', `/api/lists/${id}/done`),
 	addListItem: (listId: string, item: NewListItem) => call<SprigList[]>('POST', `/api/lists/${listId}/items`, item),

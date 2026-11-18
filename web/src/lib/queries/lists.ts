@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
-import type { ListItemPatch, NewListItem, ReminderList, SprigList } from '../types';
+import type { ListItemPatch, ListPatch, NewListItem, ReminderList, SprigList } from '../types';
 import { type Patch, showNow, putBack, newId, keys, useLive } from './shared';
 
 /** Reminders lists; refreshed often so a phone's sync shows up soon after it runs. */
@@ -94,7 +94,8 @@ export function useListActions() {
 		useMutation({ mutationKey: key, mutationFn, onSuccess: replace });
 	return {
 		addList: usePlain(api.addList),
-		renameList: usePlain(({ id, title }: { id: string; title: string }) => api.renameList(id, title)),
+		/** A list's name, or whether it sorts unchecked first. */
+		changeList: usePlain(({ id, ...patch }: { id: string } & ListPatch) => api.changeList(id, patch)),
 		deleteList: usePlain(api.deleteList),
 		clearDone: usePlain(api.clearDone),
 		/** Shopping together from a list, or stopping. */

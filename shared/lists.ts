@@ -4,8 +4,10 @@
 
 import { z } from 'zod';
 
-/** A list's name (POST /api/lists, and renaming one: PATCH /api/lists/:id). */
+/** A list's name (POST /api/lists). */
 export const ListName = z.strictObject({ title: z.string().min(1).max(100) });
+/** A change to a list (PATCH /api/lists/:id): its name, or whether it sorts unchecked first; at least one. */
+export const ListPatch = z.strictObject({ ...ListName.shape, sortUnchecked: z.boolean() }).partial();
 
 /** What can be set on an item, with nothing filled in: an edit changes only what it sends. */
 const itemFields = {
@@ -46,8 +48,10 @@ export const SprigItem = z.object({
 export const SprigList = z.object({
 	id: z.string(),
 	title: z.string(),
-	/** Open ones first (oldest first; an unticked one counts from then), then done ones (in the order they were ticked). */
+	/** In the order they were added (on a list sorting unchecked first, an unticked one counts from then). */
 	items: z.array(SprigItem),
+	/** Sort by unchecked first: ticked items go to the bottom, unticked ones back to the end of the rest. Off: items stay in place. */
+	sortUnchecked: z.boolean(),
 	/** Who is shopping from it together now (Shopping together): members' ids, or null for a device with no one signed in. */
 	shopping: z.array(z.string().nullable()),
 });
@@ -56,6 +60,7 @@ export const SprigList = z.object({
 export const LiveLists = z.object({ stamp: z.string(), lists: z.array(SprigList) });
 
 export type ListName = z.infer<typeof ListName>;
+export type ListPatch = z.infer<typeof ListPatch>;
 /** A new item with every field there (what the server has once the defaults are filled in). */
 export type ListItemInput = z.output<typeof ListItemInput>;
 /** A new item as the web app sends it: what's left out is filled in. */

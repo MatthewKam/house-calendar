@@ -30,6 +30,7 @@ import s from './ListView.module.css';
 import { useParent } from '../../lib/useParent';
 import { textOn } from '../../lib/color';
 import Sheet from '../ui/Sheet';
+import Switch from '../ui/Switch';
 import { ShoppingButton, TickedBy } from '../ui/ShoppingTogether';
 import { useFolded } from '../../lib/useFolded';
 
@@ -91,6 +92,8 @@ interface CardList {
 	syncedBy: ReminderList['syncedBy'];
 	/** Sprig's: who's shopping from it together now (null: a device with no one signed in). */
 	shopping: (string | null)[];
+	/** Sprig's: sort by unchecked first (ticked ones slide to the bottom); otherwise items stay in place. */
+	sortUnchecked?: boolean;
 }
 interface CardItem {
 	id: string;
@@ -148,18 +151,23 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 	// Adding, ticking and editing an item are anyone's; colors and order need a parent.
 	const { parent } = useParent();
 	const [choosingColor, setChoosingColor] = useState(false);
-	// Tapped items wait a moment where they were, ticked or not, so the tick is seen; then every row
-	// slides to its new place: ticked ones to the very bottom, unticked ones to the end of the open ones.
-	// While waiting, the rows keep the order they had at the first tap (by id), and each tapped item
-	// stays open or done as it was shown (pinned).
+	// Items stay in place when ticked, unless the list sorts unchecked first (its ⋯). Then tapped items
+	// wait a moment where they were, ticked or not, so the tick is seen; then every row slides to its new
+	// place: ticked ones to the very bottom, unticked ones to the end of the open ones. While waiting, the
+	// rows keep the order they had at the first tap (by id), and each tapped item stays open or done as it
+	// was shown (pinned).
+	const sorted = !!list.sortUnchecked;
+	// Just ticked, in place: its ✓ pops.
+	const [popped, setPopped] = useState<string | null>(null);
 	const [held, setHeld] = useState<{ order: Map<string, number>; pinned: Map<string, boolean> } | null>(null);
 	const card = useRef<HTMLElement>(null);
 	const wait = useRef<ReturnType<typeof setTimeout>>(undefined);
 	const tapped = useRef(new Set<string>());
 	useEffect(() => () => clearTimeout(wait.current), []);
-	const isOpen = (it: CardItem) => held?.pinned.get(it.id) ?? !it.done;
+	const isOpen = (it: CardItem) => !sorted || (held?.pinned.get(it.id) ?? !it.done);
 	function tick(it: CardItem) {
 		setDone.mutate({ id: it.id, done: !it.done });
+		if (!sorted) return setPopped(it.done ? null : it.id);
 		// Unticked: it goes to the end of the open ones, so it leaves the dragged order.
 		if (it.done && order.includes(keyOf(it.title))) onReorder(order.filter((k) => k !== keyOf(it.title)));
 		setHeld((h) => ({
@@ -185,7 +193,8 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 		const [from, to] = [keyOf(it.title), keyOf(title)];
 		if (from !== to && order.includes(from)) onReorder(order.map((k) => (k === from ? to : k)));
 	}
-	// Open items in the dragged order (new ones at the end, as Reminders has them); done ones after.
+	// Items in the dragged order (new ones at the end, as Reminders has them); sorting unchecked first, the
+	// open ones that way and the done ones after.
 	const rank = (title: string) => {
 		const i = order.indexOf(keyOf(title));
 		return i < 0 ? order.length : i;
@@ -197,8 +206,9 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 			.sort((a, b) => rank(a.it.title) - rank(b.it.title) || a.i - b.i)
 			.map(({ it }) => it),
 	);
-	// Open items under no section first, then a section for each recipe they were added for, in the
-	// order they were added; each folds away on this device. Done ones are all together at the end.
+	// Items under no section first, then a section for each recipe they were added for, in the order
+	// they were added; each folds away on this device. Sorting unchecked first, done ones are all together
+	// at the end.
 	const loose = open.filter((it) => !it.section);
 	const sections = [...new Set(list.items.filter((it) => isOpen(it) && it.section).map((it) => it.section!))].map(
 		(name) => ({ name, items: open.filter((it) => it.section === name) }),
@@ -276,7 +286,7 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 		const toggle = () => tick(it);
 		return (
 			<div
-				className={`${s.row} ${it.done ? s.done : ''} ${it.done && held?.pinned.has(it.id) ? s.justTicked : ''}`}
+				className={`${s.row} ${it.done ? s.done : ''} ${it.done && (popped === it.id || held?.pinned.has(it.id)) ? s.justTicked : ''}`}
 				style={{ '--c': color } as CSSProperties}
 				data-row={it.id}
 			>
@@ -725,8 +735,9 @@ export function AddToListSheet({
 
 /** A list of Sprig's own: rename it, or delete it with everything on it. */
 function ListSheet({ list, onClose }: { list: CardList; onClose: () => void }) {
-	const { renameList, deleteList } = useListActions();
+	const { changeList, deleteList } = useListActions();
 	const [title, setTitle] = useState(list.title);
+	const [sort, setSort] = useState(!!list.sortUnchecked);
 	const [deleting, setDeleting] = useState(false);
 	return (
 		<>
@@ -736,8 +747,12 @@ function ListSheet({ list, onClose }: { list: CardList; onClose: () => void }) {
 				className={sheet.confirm}
 				onSubmit={(e) => {
 					e.preventDefault();
-					if (title.trim() && title.trim() !== list.title)
-						renameList.mutate({ id: list.id, title }, { onSuccess: onClose });
+					const renamed = title.trim() && title.trim() !== list.title;
+					if (renamed || sort !== !!list.sortUnchecked)
+						changeList.mutate(
+							{ id: list.id, ...(renamed ? { title } : {}), sortUnchecked: sort },
+							{ onSuccess: onClose },
+						);
 					else onClose();
 				}}
 			>
@@ -749,8 +764,15 @@ function ListSheet({ list, onClose }: { list: CardList; onClose: () => void }) {
 					maxLength={100}
 					aria-label="List name"
 				/>
-				{(renameList.error ?? deleteList.error) && (
-					<p className={s.error}>{(renameList.error ?? deleteList.error)!.message}</p>
+				<div className={s.sortRow}>
+					<span>
+						Sort unchecked first
+						<span className={s.pickNote}>Ticked items move to the bottom. Off, they stay in place.</span>
+					</span>
+					<Switch on={sort} onChange={setSort} label="Sort unchecked first" />
+				</div>
+				{(changeList.error ?? deleteList.error) && (
+					<p className={s.error}>{(changeList.error ?? deleteList.error)!.message}</p>
 				)}
 				<div className={sheet.actions}>
 					<button

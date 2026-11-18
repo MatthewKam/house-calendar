@@ -7,6 +7,7 @@ import {
 	ListItemInput,
 	ListItemPatch,
 	ListName,
+	ListPatch,
 	type LiveLists,
 	type SprigItem,
 	type SprigList,
@@ -29,6 +30,7 @@ interface ListRow {
 	id: string;
 	title: string;
 	created_at: string;
+	sort_unchecked: number;
 }
 interface ItemRow {
 	id: string;
@@ -55,16 +57,15 @@ const toItem = (r: ItemRow): SprigItem => ({
 	doneBy: r.done_at ? r.done_by : null,
 });
 
-/** Every list with its items: open ones oldest first (an unticked one counts from then), then done ones in the order they were ticked. */
+/** Every list with its items in the order they were added (the page sorts a list that sorts unchecked first). */
 function allLists(db: DB): SprigList[] {
 	const lists = db.prepare('SELECT * FROM lists ORDER BY created_at').all() as ListRow[];
-	const items = db
-		.prepare('SELECT * FROM list_items ORDER BY done, CASE WHEN done = 1 THEN done_at END, created_at')
-		.all() as ItemRow[];
+	const items = db.prepare('SELECT * FROM list_items ORDER BY created_at').all() as ItemRow[];
 	return lists.map((l) => ({
 		id: l.id,
 		title: l.title,
 		items: items.filter((i) => i.list_id === l.id).map(toItem),
+		sortUnchecked: l.sort_unchecked === 1,
 		shopping: shoppersOf(db, `list:${l.id}`),
 	}));
 }
@@ -111,19 +112,21 @@ export function registerLists(app: FastifyInstance, db: DB, live: LiveTimes = LI
 		},
 	);
 
-	app.patch<{ Params: { id: string }; Body: ListName }>(
+	app.patch<{ Params: { id: string }; Body: ListPatch }>(
 		'/api/lists/:id',
 		{
-			schema: { body: schemaOf(ListName) },
+			schema: { body: schemaOf(ListPatch) },
 		},
 		async (req, reply) => {
-			const title = tidy(req.body.title);
+			const row = db.prepare('SELECT * FROM lists WHERE id = ?').get(req.params.id) as ListRow | undefined;
+			if (!row) return reply.code(404).send({ error: 'List not found' });
+			const title = req.body.title === undefined ? row.title : tidy(req.body.title);
 			if (!title) return reply.code(400).send({ error: 'A name is needed' });
-			if (db.prepare('SELECT 1 FROM lists WHERE title = ? COLLATE NOCASE AND id != ?').get(title, req.params.id)) {
+			if (db.prepare('SELECT 1 FROM lists WHERE title = ? COLLATE NOCASE AND id != ?').get(title, row.id)) {
 				return reply.code(409).send({ error: 'There is already a list with that name' });
 			}
-			if (!db.prepare('UPDATE lists SET title = ? WHERE id = ?').run(title, req.params.id).changes)
-				return reply.code(404).send({ error: 'List not found' });
+			const sort = req.body.sortUnchecked ?? row.sort_unchecked === 1;
+			db.prepare('UPDATE lists SET title = ?, sort_unchecked = ? WHERE id = ?').run(title, sort ? 1 : 0, row.id);
 			return allLists(db);
 		},
 	);
@@ -184,9 +187,13 @@ export function registerLists(app: FastifyInstance, db: DB, live: LiveTimes = LI
 			const done = b.done ?? row.done === 1;
 			// Ticked now: by whoever's asking (kept while it stays ticked).
 			const doneBy = done && row.done !== 1 ? memberAsking(db, req.raw.viewer) : done ? row.done_by : null;
-			// Unticked: its alert can come again, and it goes to the end of the open ones, as if just added.
+			// Unticked: its alert can come again. On a list sorting unchecked first, it goes to the end of the
+			// unchecked ones, as if just added; otherwise it stays where it is.
 			const unticked = !done && row.done === 1;
 			if (unticked) forgetAlerts(db, row.id);
+			const moves =
+				unticked &&
+				(db.prepare('SELECT sort_unchecked FROM lists WHERE id = ?').get(row.list_id) as ListRow).sort_unchecked === 1;
 			db.prepare(
 				`UPDATE list_items SET title = ?, done = ?, due = ?, member_id = ?, section = ?, done_by = ?,
       done_at = CASE WHEN ? THEN COALESCE(done_at, strftime('%Y-%m-%dT%H:%M:%fZ','now')) END,
@@ -199,7 +206,7 @@ export function registerLists(app: FastifyInstance, db: DB, live: LiveTimes = LI
 				b.section !== undefined ? (b.section && tidy(b.section)) || null : row.section,
 				doneBy,
 				done ? 1 : 0,
-				unticked ? 1 : 0,
+				moves ? 1 : 0,
 				row.id,
 			);
 			return allLists(db);

@@ -462,6 +462,22 @@
 	font-weight: 600;
 	font-size: 0.9rem;
 }
+/* A list's ⋯: sort unchecked first, with what it does under it, and its switch. */
+.sortRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+.sortRow > span {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	font-weight: 600;
+}
+.sortRow .pickNote {
+	font-weight: normal;
+}
 .nameInput {
 	font-size: 1.1rem;
 	padding: 0.6rem 0.7rem;
