@@ -27,7 +27,8 @@ export function memberAsking(db: DB, viewer: Viewer | undefined) {
  */
 export function shoppersOf(db: DB, target: string): (string | null)[] {
 	db.prepare('DELETE FROM shopping WHERE until <= ?').run(Date.now());
-	const rows = db.prepare('SELECT member_id FROM shopping WHERE target = ? ORDER BY until').all(target) as {
+	// In the order they started; two starting in the same millisecond, by which was saved first.
+	const rows = db.prepare('SELECT member_id FROM shopping WHERE target = ? ORDER BY until, rowid').all(target) as {
 		member_id: string;
 	}[];
 	// '' in the table (a key can't be null): no one in particular.
