@@ -1,4 +1,5 @@
 import { useState, type CSSProperties, type FormEvent } from 'react';
+import { flushSync } from 'react-dom';
 import { useMutationState } from '@tanstack/react-query';
 import {
 	LISTS,
@@ -20,7 +21,7 @@ import DateInput from '../ui/DateInput';
 import { GROCERY_ICONS, splitIcon, suggestIcon } from '../../lib/emoji';
 import IconPicker from '../ui/IconPicker';
 import SortableList, { type HandleProps } from '../ui/SortableList';
-import { GripIcon } from '../ui/icons';
+import { GripIcon, PencilIcon } from '../ui/icons';
 import sheet from '../ui/Sheet.module.css';
 import { ago } from '../../lib/dates';
 import { Loading, Skeleton } from '../ui/Skeleton';
@@ -37,6 +38,29 @@ const LIST_COLORS = ['#f2dcb3', '#ecb0ea', '#c9dcf7', '#cdebd3', '#ddd3f5', '#f8
 
 /** An item's place in the saved order: its name without the icon, ignoring case. */
 const keyOf = (title: string) => splitIcon(title).text.trim().toLowerCase();
+
+/** The icons offered first for an item: the one its name suggests, then groceries. */
+const iconChoices = (text: string) => [
+	...new Set([suggestIcon(text), ...GROCERY_ICONS].filter((x): x is string => !!x)),
+];
+
+const REMINDERS_ICON_NOTE = 'The icon is added to the start of its name in Reminders, so it shows on your phones too.';
+
+/** A set without one id, for a state update. */
+const without = (id: string) => (ids: Set<string>) => {
+	const next = new Set(ids);
+	next.delete(id);
+	return next;
+};
+
+/** Each row's name for the slide, so it glides to its new place (CSS names: letters, digits, - and _). */
+const slideName = (id: string) => `list-item-${id.replace(/[^\w-]/g, '_')}`;
+
+/** Moves rows to their new places with a slide where the browser can, and straight away where it can't. */
+function slide(change: () => void) {
+	if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) return change();
+	document.startViewTransition(() => flushSync(change));
+}
 
 /**
  * A list on the page: one of Sprig's own (server/lists.ts), or an iCloud Reminders list synced by
@@ -101,26 +125,45 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 	const problem = sprig
 		? (own.add.error ?? own.update.error ?? own.clearDone.error)
 		: (reminders.add.error ?? reminders.setDone.error ?? reminders.rename.error);
-	// Sprig's lists: an item's when and who, and the list's name, open in a sheet.
+	// An item's name and icon (and on Sprig's lists, when and who) open in a sheet, as does the list's name.
 	const [details, setDetails] = useState<CardItem | null>(null);
 	const [settingUp, setSettingUp] = useState(false);
-	// Adding and ticking are anyone's; renaming (icons), colors and order need a parent.
+	// Adding, ticking and editing an item are anyone's; colors and order need a parent.
 	const { parent } = useParent();
 	const [choosingColor, setChoosingColor] = useState(false);
+	// Just ticked: stays in its place a moment, so it's seen to tick, then slides down to the done ones.
+	const [held, setHeld] = useState<Set<string>>(new Set());
+	// Unticked while the list is open: stays where it was, down with the done ones, until the list opens again.
+	const [kept, setKept] = useState<Set<string>>(new Set());
+	const isOpen = (it: CardItem) => (!it.done || held.has(it.id)) && !kept.has(it.id);
+	function tick(it: CardItem) {
+		setDone.mutate({ id: it.id, done: !it.done });
+		if (held.has(it.id)) return setHeld(without(it.id));
+		if (kept.has(it.id)) return setKept(without(it.id));
+		if (it.done) return setKept((ids) => new Set(ids).add(it.id));
+		setHeld((ids) => new Set(ids).add(it.id));
+		setTimeout(() => slide(() => setHeld(without(it.id))), 600);
+	}
+	/** A new name (and icon) for an item; it keeps its place in the dragged order. */
+	function renameItem(it: CardItem, title: string) {
+		rename.mutate({ id: it.id, title });
+		const [from, to] = [keyOf(it.title), keyOf(title)];
+		if (from !== to && order.includes(from)) onReorder(order.map((k) => (k === from ? to : k)));
+	}
 	// Open items in the dragged order (new ones at the end, as Reminders has them); done ones after.
 	const rank = (title: string) => {
 		const i = order.indexOf(keyOf(title));
 		return i < 0 ? order.length : i;
 	};
 	const open = list.items
-		.filter((it) => !it.done)
+		.filter(isOpen)
 		.map((it, i) => ({ it, i }))
 		.sort((a, b) => rank(a.it.title) - rank(b.it.title) || a.i - b.i)
 		.map(({ it }) => it);
 	// Open items under no section first, then a section for each recipe they were added for, in the
 	// order they were added; each folds away on this device. Done ones are all together at the end.
 	const loose = open.filter((it) => !it.section);
-	const sections = [...new Set(list.items.filter((it) => !it.done && it.section).map((it) => it.section!))].map(
+	const sections = [...new Set(list.items.filter((it) => isOpen(it) && it.section).map((it) => it.section!))].map(
 		(name) => ({ name, items: open.filter((it) => it.section === name) }),
 	);
 	const folds = useFolded(`sprig:list-sections-folded:${list.id}`);
@@ -140,10 +183,11 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 			{(it, handle) => row(it, handle)}
 		</SortableList>
 	);
-	const done = list.items.filter((it) => it.done);
+	const done = list.items.filter((it) => !isOpen(it));
+	const doneCount = list.items.filter((it) => it.done).length;
 	const [title, setTitle] = useState('');
-	// The item whose icon is being picked; id "new" is the item being typed in the add box.
-	const [picking, setPicking] = useState<{ id: string; title: string } | null>(null);
+	// Picking the icon for the item being typed in the add box.
+	const [picking, setPicking] = useState(false);
 	// The add box's icon: picked, "none", or undefined to use the suggestion for what's typed.
 	const [newIcon, setNewIcon] = useState<string | undefined>(undefined);
 	const typed = splitIcon(title.trim());
@@ -169,30 +213,27 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 		setNewIcon(undefined);
 	}
 
-	/** The icon goes at the start of the item's name in Reminders; None takes it off. */
+	/** The new item's icon; it takes the place of any icon typed into the box, and None takes it off. */
 	function setIcon(icon: string | null) {
-		if (!picking) return;
-		if (picking.id === 'new') {
-			// Takes the place of any icon typed into the box.
-			setTitle(typed.text);
-			setNewIcon(icon ?? 'none');
-			setPicking(null);
-			return;
-		}
-		const { text } = splitIcon(picking.title);
-		const next = icon ? `${icon} ${text}` : text;
-		if (next !== picking.title) rename.mutate({ id: picking.id, title: next });
-		setPicking(null);
+		setTitle(typed.text);
+		setNewIcon(icon ?? 'none');
+		setPicking(false);
 	}
 
-	/** One item: tick circle, icon, name, and (open items) a grip to drag it up or down. */
+	/**
+	 * One item: tick circle, then its icon and name (tapping either ticks it too), ✏️ to edit it, and
+	 * (open items) a grip to drag it up or down.
+	 */
 	function row(it: CardItem, handle?: HandleProps) {
 		const { icon, text } = splitIcon(it.title);
-		// No icon in its name: show a suggested one, lighter, until it's picked.
+		// No icon in its name: show a suggested one, lighter; the ✏️ sheet keeps it or picks another.
 		const suggested = icon ? null : suggestIcon(text);
-		const toggle = () => setDone.mutate({ id: it.id, done: !it.done });
+		const toggle = () => tick(it);
 		return (
-			<div className={`${s.row} ${it.done ? s.done : ''}`} style={{ '--c': color } as CSSProperties}>
+			<div
+				className={`${s.row} ${it.done ? s.done : ''} ${held.has(it.id) ? s.justTicked : ''}`}
+				style={{ '--c': color, viewTransitionName: slideName(it.id) } as CSSProperties}
+			>
 				<button
 					className={s.boxButton}
 					aria-pressed={it.done}
@@ -203,16 +244,10 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 						{it.done ? '✓' : ''}
 					</span>
 				</button>
-				<button
-					className={`${s.iconSpot} ${suggested ? s.suggested : ''} ${!icon && !suggested ? s.noIcon : ''}`}
-					disabled={!parent}
-					onClick={() => setPicking({ id: it.id, title: it.title })}
-					aria-label={`Icon for ${text}`}
-					title={icon ? 'Change icon' : suggested ? 'Suggested icon: tap to keep or change' : 'Add an icon'}
-				>
-					{icon ?? suggested ?? '+'}
-				</button>
 				<button className={s.item} onClick={toggle} tabIndex={-1}>
+					<span className={`${s.iconSpot} ${suggested ? s.suggested : ''}`} aria-hidden="true">
+						{icon ?? suggested}
+					</span>
 					<span className={s.text}>
 						{text}
 						{/* When it's due and who it's for. */}
@@ -232,16 +267,14 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 					{/* Who ticked it, in their color. */}
 					{it.done && it.doneBy && <TickedBy by={it.doneBy} members={members} />}
 				</button>
-				{sprig && parent && (
-					<button
-						className={s.more}
-						onClick={() => setDetails(it)}
-						aria-label={`When and who for ${text}`}
-						title="When, who, or delete"
-					>
-						⋯
-					</button>
-				)}
+				<button
+					className={`${s.more} ${s.edit}`}
+					onClick={() => setDetails(it)}
+					aria-label={`Edit ${text}`}
+					title={sprig ? 'Name, icon, when, who, or delete' : 'Name or icon'}
+				>
+					<PencilIcon />
+				</button>
 				{handle && parent && (
 					<span className={s.grip} {...handle}>
 						<GripIcon />
@@ -319,9 +352,9 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 					))}
 				</ul>
 			)}
-			{sprig && done.length > 0 && (
+			{sprig && doneCount > 0 && (
 				<button className={s.clearDone} onClick={() => own.clearDone.mutate(list.id)}>
-					Clear {done.length} done
+					Clear {doneCount} done
 				</button>
 			)}
 			{list.items.length === 0 && <p className={s.empty}>Nothing here.</p>}
@@ -329,12 +362,7 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 				<button
 					type="button"
 					className={`${s.iconSpot} ${s.iconAdd} ${newIcon === undefined && !typed.icon && addIcon ? s.suggested : ''} ${!addIcon ? s.noIcon : ''}`}
-					onClick={() =>
-						setPicking({
-							id: 'new',
-							title: addIcon ? `${addIcon} ${typed.text}` : typed.text,
-						})
-					}
+					onClick={() => setPicking(true)}
 					aria-label="Icon for the new item"
 					title={addIcon ? 'Change the icon' : 'Add an icon'}
 				>
@@ -352,31 +380,27 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 				</button>
 			</form>
 			{problem && <p className={s.error}>Couldn't save: {problem.message}</p>}
-			{details && <ItemSheet item={details} members={members} onClose={() => setDetails(null)} />}
+			{details && (
+				<ItemSheet
+					item={details}
+					members={members}
+					sprig={sprig}
+					onRename={(title) => renameItem(details, title)}
+					onClose={() => setDetails(null)}
+				/>
+			)}
 			{settingUp && <ListSheet list={list} onClose={() => setSettingUp(false)} />}
 			{picking && (
 				<>
-					<Sheet label="Pick an icon" onClose={() => setPicking(null)}>
+					<Sheet label="Pick an icon" onClose={() => setPicking(false)}>
 						<header className={sheet.head}>
-							<h2 className={sheet.heading}>Icon for {splitIcon(picking.title).text || 'the new item'}</h2>
-							<button className={sheet.close} onClick={() => setPicking(null)} aria-label="Close">
+							<h2 className={sheet.heading}>Icon for {typed.text || 'the new item'}</h2>
+							<button className={sheet.close} onClick={() => setPicking(false)} aria-label="Close">
 								×
 							</button>
 						</header>
-						<IconPicker
-							value={splitIcon(picking.title).icon}
-							onChange={setIcon}
-							featured={[
-								...new Set(
-									[suggestIcon(splitIcon(picking.title).text), ...GROCERY_ICONS].filter((x): x is string => !!x),
-								),
-							]}
-						/>
-						{!sprig && (
-							<p className={s.pickNote}>
-								The icon is added to the start of its name in Reminders, so it shows on your phones too.
-							</p>
-						)}
+						<IconPicker value={addIcon} onChange={setIcon} featured={iconChoices(typed.text)} />
+						{!sprig && <p className={s.pickNote}>{REMINDERS_ICON_NOTE}</p>}
 					</Sheet>
 				</>
 			)}
@@ -703,80 +727,152 @@ function ListSheet({ list, onClose }: { list: CardList; onClose: () => void }) {
 	);
 }
 
-/** An item on one of Sprig's lists: when it's due (a day, and a time if it matters) and who it's for, or delete it. */
-function ItemSheet({ item, members, onClose }: { item: CardItem; members: Member[]; onClose: () => void }) {
+interface ItemSheetProps {
+	item: CardItem;
+	members: Member[];
+	/** One of Sprig's lists: when, who and delete too. Reminders: the name and icon only. */
+	sprig: boolean;
+	/** A new name, with the icon at its start. */
+	onRename: (title: string) => void;
+	onClose: () => void;
+}
+
+/**
+ * Editing an item (its ✏️): the name and icon; on Sprig's lists also when it's due (a day, and a time if
+ * it matters) and who it's for, or delete it.
+ */
+function ItemSheet({ item, members, sprig, onRename, onClose }: ItemSheetProps) {
 	const { update, remove } = useListActions();
+	const [name, setName] = useState(splitIcon(item.title).text);
+	const [icon, setIcon] = useState(splitIcon(item.title).icon);
+	const [choosingIcon, setChoosingIcon] = useState(false);
 	const [day, setDay] = useState(item.due ? (isDay(item.due) ? item.due : dayKey(new Date(item.due))) : '');
 	const [time, setTime] = useState(item.due && !isDay(item.due) ? hhmm(item.due) : '');
 	const [who, setWho] = useState(item.memberId ?? null);
 	const [deleting, setDeleting] = useState(false);
-	const { text } = splitIcon(item.title);
-	function save() {
-		const due = !day ? null : time ? toInstant(day, time) : day;
-		update.mutate({ id: item.id, due, memberId: who });
+	function save(e?: FormEvent) {
+		e?.preventDefault();
+		const text = name.trim();
+		const title = !text ? item.title : icon ? `${icon} ${text}` : text;
+		if (title !== item.title) onRename(title);
+		if (sprig) {
+			const due = !day ? null : time ? toInstant(day, time) : day;
+			if (due !== item.due || who !== (item.memberId ?? null)) update.mutate({ id: item.id, due, memberId: who });
+		}
 		onClose();
 	}
 	return (
 		<>
-			<Sheet label={text} onClose={onClose} className={sheet.confirm}>
+			<Sheet label={`Edit ${name || 'item'}`} onClose={onClose} className={sheet.confirm}>
 				<div className={sheet.head}>
-					<h2 className={sheet.heading}>{text}</h2>
+					<h2 className={sheet.heading}>Edit item</h2>
 					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
 						×
 					</button>
 				</div>
-				<div className={s.whenRow}>
-					<label>
-						Day
-						<DateInput value={day} onChange={(e) => setDay(e.target.value)} />
-					</label>
-					<label>
-						Time (optional)
-						<input type="time" step={300} value={time} disabled={!day} onChange={(e) => setTime(e.target.value)} />
-					</label>
-					{day && (
-						<button
-							type="button"
-							className={s.clearDone}
-							onClick={() => {
-								setDay('');
-								setTime('');
-							}}
-						>
-							No date
-						</button>
-					)}
-				</div>
-				<p className={s.pickNote}>With a day, it shows under Needs you on Today when it's due.</p>
-				<div className={s.pickNote}>Who it's for</div>
-				<div className={s.whoRow}>
-					{members.map((m) => (
-						<PickChip
-							key={m.id}
-							name={m.name}
-							color={m.color}
-							on={who === m.id}
-							onClick={() => setWho(who === m.id ? null : m.id)}
-						/>
-					))}
-				</div>
-				<div className={sheet.actions}>
+				<form className={s.nameRow} onSubmit={save}>
 					<button
 						type="button"
-						className={sheet.danger}
-						onClick={() => (deleting ? remove.mutate(item.id, { onSuccess: onClose }) : setDeleting(true))}
+						className={`${s.iconSpot} ${s.iconAdd} ${!icon ? s.noIcon : ''}`}
+						aria-expanded={choosingIcon}
+						onClick={() => setChoosingIcon(!choosingIcon)}
+						aria-label="Icon"
+						title={icon ? 'Change the icon' : 'Add an icon'}
 					>
-						{deleting ? 'Tap again to delete' : 'Delete'}
+						{icon ?? '+'}
 					</button>
+					<input value={name} onChange={(e) => setName(e.target.value)} maxLength={300} aria-label="Name" />
+				</form>
+				{choosingIcon && (
+					<IconPicker
+						value={icon}
+						onChange={(picked) => {
+							setIcon(picked);
+							setChoosingIcon(false);
+						}}
+						featured={iconChoices(name)}
+					/>
+				)}
+				{!sprig && <p className={s.pickNote}>{REMINDERS_ICON_NOTE}</p>}
+				{sprig && <ItemWhenWho {...{ day, setDay, time, setTime, who, setWho, members }} />}
+				<div className={sheet.actions}>
+					{sprig && (
+						<button
+							type="button"
+							className={sheet.danger}
+							onClick={() => (deleting ? remove.mutate(item.id, { onSuccess: onClose }) : setDeleting(true))}
+						>
+							{deleting ? 'Tap again to delete' : 'Delete'}
+						</button>
+					)}
 					<span className={sheet.spacer} />
 					<button type="button" className={sheet.secondary} onClick={onClose}>
 						Cancel
 					</button>
-					<button type="button" className={sheet.primary} onClick={save}>
+					<button type="button" className={sheet.primary} onClick={() => save()}>
 						Save
 					</button>
 				</div>
 			</Sheet>
+		</>
+	);
+}
+
+/** When a Sprig list item is due and who it's for, in its edit sheet. */
+function ItemWhenWho({
+	day,
+	setDay,
+	time,
+	setTime,
+	who,
+	setWho,
+	members,
+}: {
+	day: string;
+	setDay: (day: string) => void;
+	time: string;
+	setTime: (time: string) => void;
+	who: string | null;
+	setWho: (who: string | null) => void;
+	members: Member[];
+}) {
+	return (
+		<>
+			<div className={s.whenRow}>
+				<label>
+					Day
+					<DateInput value={day} onChange={(e) => setDay(e.target.value)} />
+				</label>
+				<label>
+					Time (optional)
+					<input type="time" step={300} value={time} disabled={!day} onChange={(e) => setTime(e.target.value)} />
+				</label>
+				{day && (
+					<button
+						type="button"
+						className={s.clearDone}
+						onClick={() => {
+							setDay('');
+							setTime('');
+						}}
+					>
+						No date
+					</button>
+				)}
+			</div>
+			<p className={s.pickNote}>With a day, it shows under Needs you on Today when it's due.</p>
+			<div className={s.pickNote}>Who it's for</div>
+			<div className={s.whoRow}>
+				{members.map((m) => (
+					<PickChip
+						key={m.id}
+						name={m.name}
+						color={m.color}
+						on={who === m.id}
+						onClick={() => setWho(who === m.id ? null : m.id)}
+					/>
+				))}
+			</div>
 		</>
 	);
 }
