@@ -99,6 +99,8 @@
 /* One item: tick circle, icon, name. Tapping the circle or the name ticks it; the icon picks one. */
 /* Each item is a rounded bar in its list's color (--c). */
 .row {
+	/* So a sliding row can pass over the others. */
+	position: relative;
 	display: flex;
 	align-items: center;
 	gap: 0.15rem;
@@ -175,17 +177,17 @@
 	display: grid;
 	place-items: center;
 }
+/* An item's icon. In a row it's only a picture (tapping it ticks, like the name), and an empty spot
+   without one, so names line up; in the add box and the edit sheet it's a button to pick one. */
 .iconSpot {
 	min-width: 0;
 	width: 2.3rem;
 	min-height: 2.3rem;
 	flex: none;
+	display: grid;
+	place-items: center;
 	font-size: 1.3rem;
 	border-radius: var(--radius-xs);
-}
-.iconSpot:hover {
-	background: var(--surface);
-	box-shadow: 0 0 0 1px var(--line);
 }
 
 /* Suggested, not yet in its name. */
@@ -231,6 +233,26 @@
 	background: var(--accent);
 	border-color: var(--accent);
 	color: var(--on-accent);
+}
+/* Just ticked: the ✓ pops in while the row waits a moment before sliding down (ListView's slideRows). */
+.justTicked .box {
+	animation: tick-pop 0.3s ease-out;
+}
+@keyframes tick-pop {
+	0% {
+		scale: 0.6;
+	}
+	60% {
+		scale: 1.2;
+	}
+	100% {
+		scale: 1;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.justTicked .box {
+		animation: none;
+	}
 }
 .done .text {
 	color: var(--muted);
@@ -368,15 +390,10 @@
 	}
 }
 
-/* Locked (parents only): the icon and color show, but don't open anything. */
-.iconSpot:disabled,
+/* Locked (parents only): the color shows, but doesn't open anything. */
 .colorDot:disabled {
 	cursor: default;
 	opacity: 1;
-}
-.iconSpot:disabled:hover {
-	background: none;
-	box-shadow: none;
 }
 
 /* Sprig's own lists: + New list in the page head, ⋯ for a list or an item, when and who under an
@@ -394,6 +411,36 @@
 	font-size: 1.2rem;
 	font-weight: 800;
 	line-height: 1;
+}
+/* ✏️ on each item: its name, icon, when and who. */
+.edit svg {
+	width: 1.15rem;
+	height: 1.15rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+/* The edit sheet: the icon (tap to pick another) and the name. */
+.nameRow {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+}
+.nameRow input {
+	flex: 1;
+	min-width: 0;
+	font-size: 1.05rem;
+	padding: 0.5rem 0.7rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	color: var(--text);
+}
+.nameRow .iconAdd {
+	padding: 0;
+	border: 1px solid var(--line);
+	background: var(--surface);
 }
 .meta {
 	display: flex;
@@ -414,6 +461,22 @@
 	color: var(--muted);
 	font-weight: 600;
 	font-size: 0.9rem;
+}
+/* A list's ⋯: sort unchecked first, with what it does under it, and its switch. */
+.sortRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+.sortRow > span {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	font-weight: 600;
+}
+.sortRow .pickNote {
+	font-weight: normal;
 }
 .nameInput {
 	font-size: 1.1rem;

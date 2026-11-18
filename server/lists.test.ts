@@ -33,14 +33,14 @@ describe('lists', () => {
 			{ title: 'Call the dentist', due: '2099-01-02T17:00:00.000Z', memberId: 'alex' },
 		]);
 
-		// Done ones go after the open ones, and Clear done takes them off.
+		// Ticked ones stay in place, and Clear done takes them off.
 		const milk = added.body[0].items[0];
 		const ticked = await call('PATCH', `/api/lists/items/${milk.id}`, { done: true });
 		expect(ticked.body[0].items.map((i: { title: string; done: boolean }) => [i.title, i.done])).toEqual([
-			['Call the dentist', false],
 			['🥛 Milk', true],
+			['Call the dentist', false],
 		]);
-		expect(ticked.body[0].items[1].doneAt).toEqual(expect.any(String));
+		expect(ticked.body[0].items[0].doneAt).toEqual(expect.any(String));
 		const cleared = await call('DELETE', `/api/lists/${list.id}/done`);
 		expect(cleared.body[0].items.map((i: { title: string }) => i.title)).toEqual(['Call the dentist']);
 
@@ -59,6 +59,41 @@ describe('lists', () => {
 			(await call('PATCH', `/api/lists/items/${dentist.id}`, { title: 'Call the vet' })).body[0].items[0],
 		).toMatchObject({ title: 'Call the vet', done: false, due: '2099-01-04', memberId: 'alex' });
 		expect((await call('PATCH', `/api/lists/items/${dentist.id}`, {})).status).toBe(400);
+	});
+
+	it('keeps items in place when ticked, unless the list sorts unchecked first', async () => {
+		const { call } = setup();
+		const list = (await call('POST', '/api/lists', { title: 'Groceries' })).body[0];
+		expect(list.sortUnchecked).toBe(false);
+		for (const title of ['Milk', 'Eggs', 'Bread', 'Rice']) await call('POST', `/api/lists/${list.id}/items`, { title });
+		const id = async (title: string) =>
+			(await call('GET', '/api/lists')).body[0].items.find((i: { title: string }) => i.title === title).id;
+		const titles = (res: { body: { items: { title: string; done: boolean }[] }[] }) =>
+			res.body[0].items.map((i) => `${i.title}${i.done ? ' ✓' : ''}`);
+		const pause = () => new Promise((done) => setTimeout(done, 5));
+
+		// In place: ticking and unticking move nothing.
+		await call('PATCH', `/api/lists/items/${await id('Milk')}`, { done: true });
+		expect(titles(await call('PATCH', `/api/lists/items/${await id('Milk')}`, { done: false }))).toEqual([
+			'Milk',
+			'Eggs',
+			'Bread',
+			'Rice',
+		]);
+
+		// Sorting unchecked first (the page puts done ones last): an unticked one goes to the end of the rest.
+		expect((await call('PATCH', `/api/lists/${list.id}`, { sortUnchecked: true })).body[0]).toMatchObject({
+			title: 'Groceries',
+			sortUnchecked: true,
+		});
+		await call('PATCH', `/api/lists/items/${await id('Eggs')}`, { done: true });
+		await pause();
+		expect(titles(await call('PATCH', `/api/lists/items/${await id('Eggs')}`, { done: false }))).toEqual([
+			'Milk',
+			'Bread',
+			'Rice',
+			'Eggs',
+		]);
 	});
 
 	it("keeps an item's section: the recipe it was added for", async () => {

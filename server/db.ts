@@ -1011,6 +1011,10 @@ const migrations: string[] = [
   UPDATE list_items SET section = substr(title, instr(title, ' · for ') + 7), title = substr(title, 1, instr(title, ' · for ') - 1)
     WHERE instr(title, ' · for ') > 1;
   `,
+	// A list sorted by unchecked first (server/lists.ts): ticked items go to the bottom. Off, they stay in place.
+	`
+  ALTER TABLE lists ADD COLUMN sort_unchecked INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */
