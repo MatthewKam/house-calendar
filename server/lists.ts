@@ -55,11 +55,11 @@ const toItem = (r: ItemRow): SprigItem => ({
 	doneBy: r.done_at ? r.done_by : null,
 });
 
-/** Every list with its items: open ones oldest first, then done ones, most recently done first. */
+/** Every list with its items: open ones oldest first (an unticked one counts from then), then done ones in the order they were ticked. */
 function allLists(db: DB): SprigList[] {
 	const lists = db.prepare('SELECT * FROM lists ORDER BY created_at').all() as ListRow[];
 	const items = db
-		.prepare('SELECT * FROM list_items ORDER BY done, CASE WHEN done = 1 THEN done_at END DESC, created_at')
+		.prepare('SELECT * FROM list_items ORDER BY done, CASE WHEN done = 1 THEN done_at END, created_at')
 		.all() as ItemRow[];
 	return lists.map((l) => ({
 		id: l.id,
@@ -184,11 +184,13 @@ export function registerLists(app: FastifyInstance, db: DB, live: LiveTimes = LI
 			const done = b.done ?? row.done === 1;
 			// Ticked now: by whoever's asking (kept while it stays ticked).
 			const doneBy = done && row.done !== 1 ? memberAsking(db, req.raw.viewer) : done ? row.done_by : null;
-			// Unticked: its alert can come again.
-			if (!done && row.done === 1) forgetAlerts(db, row.id);
+			// Unticked: its alert can come again, and it goes to the end of the open ones, as if just added.
+			const unticked = !done && row.done === 1;
+			if (unticked) forgetAlerts(db, row.id);
 			db.prepare(
 				`UPDATE list_items SET title = ?, done = ?, due = ?, member_id = ?, section = ?, done_by = ?,
-      done_at = CASE WHEN ? THEN COALESCE(done_at, strftime('%Y-%m-%dT%H:%M:%fZ','now')) END WHERE id = ?`,
+      done_at = CASE WHEN ? THEN COALESCE(done_at, strftime('%Y-%m-%dT%H:%M:%fZ','now')) END,
+      created_at = CASE WHEN ? THEN strftime('%Y-%m-%dT%H:%M:%fZ','now') ELSE created_at END WHERE id = ?`,
 			).run(
 				b.title !== undefined ? tidy(b.title) : row.title,
 				done ? 1 : 0,
@@ -197,6 +199,7 @@ export function registerLists(app: FastifyInstance, db: DB, live: LiveTimes = LI
 				b.section !== undefined ? (b.section && tidy(b.section)) || null : row.section,
 				doneBy,
 				done ? 1 : 0,
+				unticked ? 1 : 0,
 				row.id,
 			);
 			return allLists(db);

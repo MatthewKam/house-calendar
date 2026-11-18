@@ -61,6 +61,31 @@ describe('lists', () => {
 		expect((await call('PATCH', `/api/lists/items/${dentist.id}`, {})).status).toBe(400);
 	});
 
+	it('puts the last ticked at the very bottom, and an unticked one at the end of the open ones', async () => {
+		const { call } = setup();
+		const list = (await call('POST', '/api/lists', { title: 'Groceries' })).body[0];
+		for (const title of ['Milk', 'Eggs', 'Bread', 'Rice']) await call('POST', `/api/lists/${list.id}/items`, { title });
+		const id = async (title: string) =>
+			(await call('GET', '/api/lists')).body[0].items.find((i: { title: string }) => i.title === title).id;
+		const titles = (res: { body: { items: { title: string; done: boolean }[] }[] }) =>
+			res.body[0].items.map((i) => `${i.title}${i.done ? ' ✓' : ''}`);
+		await call('PATCH', `/api/lists/items/${await id('Milk')}`, { done: true });
+		await new Promise((done) => setTimeout(done, 5));
+		expect(titles(await call('PATCH', `/api/lists/items/${await id('Eggs')}`, { done: true }))).toEqual([
+			'Bread',
+			'Rice',
+			'Milk ✓',
+			'Eggs ✓',
+		]);
+		await new Promise((done) => setTimeout(done, 5));
+		expect(titles(await call('PATCH', `/api/lists/items/${await id('Milk')}`, { done: false }))).toEqual([
+			'Bread',
+			'Rice',
+			'Milk',
+			'Eggs ✓',
+		]);
+	});
+
 	it("keeps an item's section: the recipe it was added for", async () => {
 		const { call } = setup();
 		const list = (await call('POST', '/api/lists', { title: 'Groceries' })).body[0];

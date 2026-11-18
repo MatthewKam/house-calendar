@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { useMutationState } from '@tanstack/react-query';
 import {
@@ -46,20 +46,36 @@ const iconChoices = (text: string) => [
 
 const REMINDERS_ICON_NOTE = 'The icon is added to the start of its name in Reminders, so it shows on your phones too.';
 
-/** A set without one id, for a state update. */
-const without = (id: string) => (ids: Set<string>) => {
-	const next = new Set(ids);
-	next.delete(id);
-	return next;
-};
+/** How long a tapped item waits in its place, ticked or not, before it slides to its new one (ms). */
+const WAIT_TICKED = 300;
+const WAIT_UNTICKED = 250;
 
-/** Each row's name for the slide, so it glides to its new place (CSS names: letters, digits, - and _). */
-const slideName = (id: string) => `list-item-${id.replace(/[^\w-]/g, '_')}`;
-
-/** Moves rows to their new places with a slide where the browser can, and straight away where it can't. */
-function slide(change: () => void) {
-	if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) return change();
-	document.startViewTransition(() => flushSync(change));
+/**
+ * Moves a card's rows to their new places by sliding each from where it was: measures every row
+ * (data-row), makes the change, then glides each moved row from its old place to its new one. Only the
+ * rows move, inside the page, so nothing flashes or shows over the bar at the bottom. The tapped rows
+ * start slowly, so they're seen to go, take longer the further they go, and pass over the others.
+ */
+function slideRows(card: HTMLElement | null, tapped: Set<string>, change: () => void) {
+	const rows = () => [...(card?.querySelectorAll<HTMLElement>('[data-row]') ?? [])];
+	const before = new Map(rows().map((el) => [el.dataset.row, el.getBoundingClientRect().top]));
+	flushSync(change);
+	if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+	for (const el of rows()) {
+		const was = before.get(el.dataset.row);
+		const by = was === undefined ? 0 : was - el.getBoundingClientRect().top;
+		if (Math.abs(by) < 1) continue;
+		const mine = tapped.has(el.dataset.row!);
+		el.animate(
+			[
+				{ transform: `translateY(${by}px)`, zIndex: mine ? 3 : 'auto' },
+				{ transform: 'none', zIndex: mine ? 3 : 'auto' },
+			],
+			mine
+				? { duration: Math.min(900, 350 + Math.abs(by) * 0.5), easing: 'cubic-bezier(0.5, 0, 0.25, 1)' }
+				: { duration: 300, easing: 'ease-out' },
+		);
+	}
 }
 
 /**
@@ -84,8 +100,9 @@ interface CardItem {
 	/** Reminders: changed here and waiting for a phone. */
 	pending?: boolean;
 	memberId?: string | null;
-	/** Sprig's: who ticked it. */
+	/** Sprig's: who ticked it, and when. */
 	doneBy?: string | null;
+	doneAt?: string | null;
 	/** Sprig's: the section it's under (the recipe it was added for); none, with the list's other items. */
 	section?: string | null;
 }
@@ -131,19 +148,37 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 	// Adding, ticking and editing an item are anyone's; colors and order need a parent.
 	const { parent } = useParent();
 	const [choosingColor, setChoosingColor] = useState(false);
-	// Just ticked: stays in its place a moment, so it's seen to tick, then slides down to the done ones.
-	const [held, setHeld] = useState<Set<string>>(new Set());
-	// Unticked while the list is open: stays where it was, down with the done ones, until the list opens again.
-	const [kept, setKept] = useState<Set<string>>(new Set());
-	const isOpen = (it: CardItem) => (!it.done || held.has(it.id)) && !kept.has(it.id);
+	// Tapped items wait a moment where they were, ticked or not, so the tick is seen; then every row
+	// slides to its new place: ticked ones to the very bottom, unticked ones to the end of the open ones.
+	// While waiting, the rows keep the order they had at the first tap (by id), and each tapped item
+	// stays open or done as it was shown (pinned).
+	const [held, setHeld] = useState<{ order: Map<string, number>; pinned: Map<string, boolean> } | null>(null);
+	const card = useRef<HTMLElement>(null);
+	const wait = useRef<ReturnType<typeof setTimeout>>(undefined);
+	const tapped = useRef(new Set<string>());
+	useEffect(() => () => clearTimeout(wait.current), []);
+	const isOpen = (it: CardItem) => held?.pinned.get(it.id) ?? !it.done;
 	function tick(it: CardItem) {
 		setDone.mutate({ id: it.id, done: !it.done });
-		if (held.has(it.id)) return setHeld(without(it.id));
-		if (kept.has(it.id)) return setKept(without(it.id));
-		if (it.done) return setKept((ids) => new Set(ids).add(it.id));
-		setHeld((ids) => new Set(ids).add(it.id));
-		setTimeout(() => slide(() => setHeld(without(it.id))), 600);
+		// Unticked: it goes to the end of the open ones, so it leaves the dragged order.
+		if (it.done && order.includes(keyOf(it.title))) onReorder(order.filter((k) => k !== keyOf(it.title)));
+		setHeld((h) => ({
+			order: h?.order ?? new Map(shownIds.map((id, i) => [id, i])),
+			pinned: new Map(h?.pinned).set(it.id, h?.pinned.get(it.id) ?? !it.done),
+		}));
+		tapped.current.add(it.id);
+		clearTimeout(wait.current);
+		wait.current = setTimeout(
+			() => {
+				slideRows(card.current, tapped.current, () => setHeld(null));
+				tapped.current = new Set();
+			},
+			it.done ? WAIT_UNTICKED : WAIT_TICKED,
+		);
 	}
+	// While tapped items wait, the order at the first tap.
+	const asHeld = (items: CardItem[]) =>
+		held ? [...items].sort((a, b) => (held.order.get(a.id) ?? 1e9) - (held.order.get(b.id) ?? 1e9)) : items;
 	/** A new name (and icon) for an item; it keeps its place in the dragged order. */
 	function renameItem(it: CardItem, title: string) {
 		rename.mutate({ id: it.id, title });
@@ -155,11 +190,13 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 		const i = order.indexOf(keyOf(title));
 		return i < 0 ? order.length : i;
 	};
-	const open = list.items
-		.filter(isOpen)
-		.map((it, i) => ({ it, i }))
-		.sort((a, b) => rank(a.it.title) - rank(b.it.title) || a.i - b.i)
-		.map(({ it }) => it);
+	const open = asHeld(
+		list.items
+			.filter(isOpen)
+			.map((it, i) => ({ it, i }))
+			.sort((a, b) => rank(a.it.title) - rank(b.it.title) || a.i - b.i)
+			.map(({ it }) => it),
+	);
 	// Open items under no section first, then a section for each recipe they were added for, in the
 	// order they were added; each folds away on this device. Done ones are all together at the end.
 	const loose = open.filter((it) => !it.section);
@@ -183,8 +220,16 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 			{(it, handle) => row(it, handle)}
 		</SortableList>
 	);
-	const done = list.items.filter((it) => !isOpen(it));
+	// Done ones in the order they were ticked, the latest at the very bottom (one just ticked here has no time yet).
+	const done = asHeld(
+		list.items
+			.filter((it) => !isOpen(it))
+			.map((it, i) => ({ it, i }))
+			.sort((a, b) => (a.it.doneAt ?? '~').localeCompare(b.it.doneAt ?? '~') || a.i - b.i)
+			.map(({ it }) => it),
+	);
 	const doneCount = list.items.filter((it) => it.done).length;
+	const shownIds = [...loose, ...sections.flatMap((x) => x.items), ...done].map((it) => it.id);
 	const [title, setTitle] = useState('');
 	// Picking the icon for the item being typed in the add box.
 	const [picking, setPicking] = useState(false);
@@ -231,8 +276,9 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 		const toggle = () => tick(it);
 		return (
 			<div
-				className={`${s.row} ${it.done ? s.done : ''} ${held.has(it.id) ? s.justTicked : ''}`}
-				style={{ '--c': color, viewTransitionName: slideName(it.id) } as CSSProperties}
+				className={`${s.row} ${it.done ? s.done : ''} ${it.done && held?.pinned.has(it.id) ? s.justTicked : ''}`}
+				style={{ '--c': color } as CSSProperties}
+				data-row={it.id}
 			>
 				<button
 					className={s.boxButton}
@@ -285,7 +331,7 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 	}
 
 	return (
-		<section className={s.card}>
+		<section className={s.card} ref={card}>
 			<header className={s.head}>
 				<button
 					className={s.colorDot}

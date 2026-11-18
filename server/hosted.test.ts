@@ -512,7 +512,8 @@ describe('privacy', () => {
 		);
 		expect(await seen(wall)).toEqual(['Work call', 'Park']);
 
-		// Lists: a kid adds and ticks, but naming and the when and who are a parent's.
+		// Lists: a kid adds and ticks, but naming and the when and who are a grown-up's; the wall edits
+		// an item without the PIN (its ✏️), and also moves the list's order (an unticked item leaves it).
 		const groceries = (await alex.post('/api/lists', { title: 'Groceries' })).body[0];
 		expect((await ipad.post('/api/lists', { title: 'Mine' })).status).toBe(403);
 		const milk = (await ipad.post(`/api/lists/${groceries.id}/items`, { title: 'Milk' })).body[0].items[0];
@@ -520,6 +521,9 @@ describe('privacy', () => {
 		expect((await ipad.patch(`/api/lists/items/${milk.id}`, { title: 'Chocolate milk' })).status).toBe(403);
 		expect((await ipad.patch(`/api/lists/items/${milk.id}`, { due: '2099-01-01' })).status).toBe(403);
 		expect((await ipad.del(`/api/lists/items/${milk.id}`)).status).toBe(403);
+		expect((await wall.patch(`/api/lists/items/${milk.id}`, { title: '🥛 Milk' })).status).toBe(200);
+		expect((await wall.put('/api/settings/listOrder', { value: { groceries: ['milk'] } })).status).toBe(200);
+		expect((await wall.put('/api/settings/listColors', { value: {} })).status).toBe(403);
 
 		// Alerts on phones are for grown-ups.
 		const sub = (n: string) => ({

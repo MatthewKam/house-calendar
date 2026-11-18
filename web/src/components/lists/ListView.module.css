@@ -99,6 +99,8 @@
 /* One item: tick circle, icon, name. Tapping the circle or the name ticks it; the icon picks one. */
 /* Each item is a rounded bar in its list's color (--c). */
 .row {
+	/* So a sliding row can pass over the others. */
+	position: relative;
 	display: flex;
 	align-items: center;
 	gap: 0.15rem;
@@ -232,7 +234,7 @@
 	border-color: var(--accent);
 	color: var(--on-accent);
 }
-/* Just ticked: the ✓ pops in, and the row waits a moment before sliding down to the done ones. */
+/* Just ticked: the ✓ pops in while the row waits a moment before sliding down (ListView's slideRows). */
 .justTicked .box {
 	animation: tick-pop 0.3s ease-out;
 }
@@ -246,10 +248,6 @@
 	100% {
 		scale: 1;
 	}
-}
-/* The slide itself (ListView's slide()): every row glides from its old place to its new one. */
-::view-transition-group(*) {
-	animation-duration: 0.35s;
 }
 @media (prefers-reduced-motion: reduce) {
 	.justTicked .box {

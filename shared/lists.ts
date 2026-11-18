@@ -46,7 +46,7 @@ export const SprigItem = z.object({
 export const SprigList = z.object({
 	id: z.string(),
 	title: z.string(),
-	/** Open ones first (oldest first), then done ones (most recently done first). */
+	/** Open ones first (oldest first; an unticked one counts from then), then done ones (in the order they were ticked). */
 	items: z.array(SprigItem),
 	/** Who is shopping from it together now (Shopping together): members' ids, or null for a device with no one signed in. */
 	shopping: z.array(z.string().nullable()),

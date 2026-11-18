@@ -112,20 +112,25 @@ const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean]
 	['PATCH', '/api/members/:id'],
 	['DELETE', '/api/members/:id'],
 	['PATCH', '/api/calendars/:id'],
-	// Month or week is anyone's choice; the rest of Settings isn't.
-	['PUT', '/api/settings/:key', (req) => req.params.key !== 'view'],
+	// Month or week is anyone's choice, and so is a list's order (an unticked item leaves it); the rest of Settings isn't.
+	['PUT', '/api/settings/:key', (req) => !['view', 'listOrder'].includes(req.params.key)],
 	['PATCH', '/api/photos/:id'],
 	['DELETE', '/api/photos/:id'],
 	['POST', '/api/photos/slideshow'],
 	['POST', '/api/photos/delete'],
-	// Ticking a list item is fine; renaming it (or its icon) isn't.
-	['PATCH', '/api/reminders/:id', (req) => req.body?.title !== undefined],
-	// Sprig's own lists: adding and ticking are anyone's; the rest is a parent's.
+	// List items: anyone adds and ticks, and a grown-up or the wall edits one (its ✏️: name, icon, when,
+	// who) or deletes it without the PIN; a kid's own device only ticks.
+	['PATCH', '/api/reminders/:id', (req) => req.raw.viewer?.role === 'kid' && req.body?.title !== undefined],
+	['DELETE', '/api/lists/items/:id', (req) => req.raw.viewer?.role === 'kid'],
+	[
+		'PATCH',
+		'/api/lists/items/:id',
+		(req) => req.raw.viewer?.role === 'kid' && Object.keys(req.body ?? {}).some((k) => k !== 'done'),
+	],
+	// Sprig's own lists: making, renaming and deleting one is a parent's.
 	['POST', '/api/lists'],
 	['PATCH', '/api/lists/:id'],
 	['DELETE', '/api/lists/:id'],
-	['DELETE', '/api/lists/items/:id'],
-	['PATCH', '/api/lists/items/:id', (req) => Object.keys(req.body ?? {}).some((k) => k !== 'done')],
 	['PUT', '/api/events/:id/special'],
 	// What to bring: changing the list is a parent's; ticking it is anyone's.
 	['PUT', '/api/events/:id/checklist'],
