@@ -239,7 +239,8 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 			.map(({ it }) => it),
 	);
 	const doneCount = list.items.filter((it) => it.done).length;
-	const shownIds = [...loose, ...sections.flatMap((x) => x.items), ...done].map((it) => it.id);
+	const shown = [...loose, ...sections.flatMap((x) => x.items), ...done];
+	const shownIds = shown.map((it) => it.id);
 	const [title, setTitle] = useState('');
 	// Picking the icon for the item being typed in the add box.
 	const [picking, setPicking] = useState(false);
@@ -445,7 +446,14 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 					onClose={() => setDetails(null)}
 				/>
 			)}
-			{settingUp && <ListSheet list={list} onClose={() => setSettingUp(false)} />}
+			{settingUp && (
+				<ListSheet
+					list={list}
+					// Sorting turned off: the list keeps the order it shows now (unchecked first), as its dragged order.
+					onUnsort={() => onReorder([...new Set(shown.map((it) => keyOf(it.title)))])}
+					onClose={() => setSettingUp(false)}
+				/>
+			)}
 			{picking && (
 				<>
 					<Sheet label="Pick an icon" onClose={() => setPicking(false)}>
@@ -734,7 +742,7 @@ export function AddToListSheet({
 }
 
 /** A list of Sprig's own: rename it, or delete it with everything on it. */
-function ListSheet({ list, onClose }: { list: CardList; onClose: () => void }) {
+function ListSheet({ list, onUnsort, onClose }: { list: CardList; onUnsort: () => void; onClose: () => void }) {
 	const { changeList, deleteList } = useListActions();
 	const [title, setTitle] = useState(list.title);
 	const [sort, setSort] = useState(!!list.sortUnchecked);
@@ -748,6 +756,7 @@ function ListSheet({ list, onClose }: { list: CardList; onClose: () => void }) {
 				onSubmit={(e) => {
 					e.preventDefault();
 					const renamed = title.trim() && title.trim() !== list.title;
+					if (!sort && list.sortUnchecked) onUnsort();
 					if (renamed || sort !== !!list.sortUnchecked)
 						changeList.mutate(
 							{ id: list.id, ...(renamed ? { title } : {}), sortUnchecked: sort },
