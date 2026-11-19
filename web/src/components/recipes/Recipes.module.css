@@ -1630,8 +1630,12 @@ button.ideaSearch {
 }
 /* Cooking today: what's planned today on one raised panel tinted with the accent, so it stands out from the
    filters and recipes below (plain card colour blended in with the filters on a phone); each row is its meal (in
-   the accent) then the recipe, and a tap opens it. */
+   the accent) then the recipe, and a tap opens it. Only as wide as its longest row (never past the page), so on a
+   computer it doesn't stretch across the screen. */
 .todayList {
+	width: fit-content;
+	min-width: min(100%, 20rem);
+	max-width: 100%;
 	list-style: none;
 	margin: 0;
 	padding: 0 0.8rem;
