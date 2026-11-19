@@ -134,6 +134,10 @@ const migrations: string[] = [
     gone_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
   `,
+	// The site's demo (hosted/demo.ts): a visitor's made-up account, deleted with its household after this.
+	`
+  ALTER TABLE users ADD COLUMN demo_until TEXT;
+  `,
 ];
 
 export function openAccounts(file: string): AccountsDB {

@@ -1,4 +1,4 @@
--- The accounts database (server/accounts.ts), at version 8. Written by server/schema.test.ts; don't edit by hand.
+-- The accounts database (server/accounts.ts), at version 9. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE email_codes (
     email       TEXT PRIMARY KEY,
@@ -84,4 +84,4 @@ CREATE TABLE users (
     name        TEXT NOT NULL,
     email       TEXT,
     created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-  );
+  , demo_until TEXT);

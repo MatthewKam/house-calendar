@@ -64,6 +64,8 @@ export function signInRoutes(
 		google: opts.google?.clientId ?? null,
 		apple: opts.apple?.clientId ?? null,
 		email: !!opts.sendCode,
+		// The site's demo (hosted/demo.ts).
+		demo: true,
 	}));
 
 	app.post<{ Params: { provider: 'google' | 'apple' }; Body: { idToken: string; name?: string } }>(

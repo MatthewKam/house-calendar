@@ -4,6 +4,7 @@ import { api, type AuthStatus } from '../../lib/api';
 import { appleSignIn, isApp } from '../../lib/native';
 import { pendingJoin } from '../../lib/joinCode';
 import JoinForm from './JoinForm';
+import buttons from '../ui/Buttons.module.css';
 import s from './Account.module.css';
 
 // Google's and Apple's own sign-in buttons give the page an ID token, which the server checks.
@@ -118,6 +119,8 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 				{config?.email && <EmailSignIn onSignedIn={onSignedIn} />}
 				{error && <p className={s.error}>{error}</p>}
 				<div className={s.or}>or</div>
+				{/* On the website: a made-up family to look around first (not in the App Store app). */}
+				{config?.demo && !isApp && <TryDemo onSignedIn={onSignedIn} />}
 				{showCode ? (
 					<JoinForm signedIn={false} onJoined={onSignedIn} />
 				) : (
@@ -127,6 +130,36 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 				)}
 			</div>
 		</main>
+	);
+}
+
+/** The site's demo: the visitor's own copy of a made-up family, no email needed (server/hosted/demo.ts). */
+function TryDemo({ onSignedIn }: { onSignedIn: (s: AuthStatus) => void }) {
+	const [busy, setBusy] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
+	async function start() {
+		setBusy(true);
+		setError(null);
+		try {
+			onSignedIn(await api.startDemo());
+		} catch (err) {
+			setError(err instanceof Error ? err.message : String(err));
+			setBusy(false);
+		}
+	}
+
+	return (
+		<div className={s.card}>
+			<button type="button" className={s.demo} disabled={busy} onClick={() => void start()}>
+				<span className={buttons.buttonIcon} aria-hidden="true">
+					👀
+				</span>
+				<span className={buttons.buttonText}>{busy ? 'Making your demo family…' : 'Try the demo'}</span>
+			</button>
+			<p className={s.hint}>Look around a made-up family's week. No email needed; it's deleted after a day.</p>
+			{error && <p className={s.error}>{error}</p>}
+		</div>
 	);
 }
 

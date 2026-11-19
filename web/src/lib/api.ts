@@ -223,12 +223,16 @@ export type AuthStatus =
 			guardianPins: number;
 			/** Every guardian's PIN has this many digits (null: they differ, or aren't known). */
 			pinLength: number | null;
+			/** The site's demo: a made-up family, deleted at `until`; its grown-ups' PIN. */
+			demo: { until: string; pin: string } | null;
 	  };
 export type SignedIn = Extract<AuthStatus, { signedIn: true }>;
 interface AccountConfig {
 	google: string | null;
 	apple: string | null;
 	email: boolean;
+	/** "Try the demo" (server/hosted/demo.ts). */
+	demo?: boolean;
 }
 export interface JoinPreview {
 	kind: 'guardian' | 'kid' | 'wall';
@@ -279,6 +283,11 @@ export const api = {
 	/** What deleting this account does to each household: deleted for everyone (held), or only left. */
 	deletionPlan: () => call<{ household: string; deleted: boolean }[]>('GET', '/api/account/delete'),
 	deleteAccount: () => call<void>('DELETE', '/api/account/delete').then(forgetSession),
+	/** A made-up family of the visitor's own to look around, laid out in their time zone. */
+	startDemo: () =>
+		call<AuthStatus>('POST', '/api/account/demo', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+	/** Ends the demo now (it's deleted), back to signing in. */
+	endDemo: () => call<void>('DELETE', '/api/account/demo').then(forgetSession),
 	createHousehold: (b: { name: string; yourName: string }) => call<AuthStatus>('POST', '/api/account/households', b),
 	useHousehold: (id: string) => call<AuthStatus>('POST', `/api/account/households/${id}/use`),
 	previewJoin: (code: string) => call<JoinPreview>('GET', `/api/account/join/${encodeURIComponent(code)}`),

@@ -24,6 +24,7 @@ import { unlockRoutes } from './hosted/unlock.ts';
 import { pinRoutes } from './hosted/pin.ts';
 import { googleRoutes } from './hosted/google.ts';
 import { deleteAccountRoutes } from './hosted/deleteAccount.ts';
+import { DEMO_OFF, demoBlocks, demoRoutes } from './hosted/demo.ts';
 
 /**
  * A Cooking together link's calls: /api/cook/<household>/<secret>, and its /me, /live and photos
@@ -40,11 +41,12 @@ const COOK_LINK = /^\/api\/cook\/([0-9a-f-]{36})\/([A-Za-z0-9_-]{32})(\/(?:me|li
 //   with an invite code. A guardian on their own phone can change anything.
 // - A younger kid's device joins with a kid code (no account).
 // - The wall joins with a wall code, then needs a guardian's PIN to enter.
+// - A visitor to the site can try the demo: a made-up family of their own, for a day (hosted/demo.ts).
 // A wall or kid's device can be unlocked for parent changes with any guardian's PIN, for 10 minutes
 // (each change starts it over).
 //
 // Its routes are in hosted/: signing in, households and joining, the wall and the parent unlock, guardians'
-// PINs, connecting Google Calendar, and deleting an account; hosted/session.ts is who a request's session is, shared by them all.
+// PINs, connecting Google Calendar, deleting an account, and the site's demo; hosted/session.ts is who a request's session is, shared by them all.
 
 /**
  * What browsers are told to protect people with, on every answer: https only, never shown inside another site
@@ -154,6 +156,9 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 			}
 		}
 		const path = (req.url ?? '/').split('?')[0];
+		// The site's demo doesn't do everything (hosted/demo.ts).
+		if (path.startsWith('/api/') && demoBlocks(accounts, req.method ?? 'GET', path, () => sessionOf(req)))
+			return sendJson(res, 403, { error: DEMO_OFF, demo: true });
 		// The phones' Reminders Shortcut has its own token, for the household from before accounts.
 		if (path.startsWith('/api/reminders/phone/')) {
 			const legacy = accounts.prepare('SELECT * FROM households WHERE legacy = 1').get() as HouseholdRow | undefined;
@@ -197,6 +202,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 	pinRoutes(app, accounts, x, opts);
 	googleRoutes(app, accounts, households, x, opts);
 	deleteAccountRoutes(app, accounts, households, x, opts);
+	demoRoutes(app, accounts, households, x, opts);
 
 	// For the host's health check: up, and the accounts database answers.
 	app.get('/health', async () => {

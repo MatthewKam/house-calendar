@@ -26,6 +26,8 @@ export const later = (ms: number) => new Date(Date.now() + ms).toISOString();
 export const normalizeCode = (code: string) => code.toUpperCase().replace(/[^A-Z0-9]/g, '');
 export const showCode = (code: string) => `${code.slice(0, 4)}-${code.slice(4)}`;
 export const PIN = { type: 'string', pattern: '^[0-9]{4,8}$' } as const;
+/** The demo family's grown-ups' PIN, shown in the demo (hosted/demo.ts). */
+export const DEMO_PIN = '1234';
 export const NAME = { type: 'string', minLength: 1, maxLength: 40 } as const;
 
 export interface ServerOptions {
@@ -324,12 +326,14 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
 			accounts.prepare('DELETE FROM sessions WHERE token_hash = ?').run(s.token_hash);
 			return { signedIn: false as const };
 		}
-		const user = s.user_id
-			? (accounts.prepare('SELECT name, email FROM users WHERE id = ?').get(s.user_id) as {
+		const row = s.user_id
+			? (accounts.prepare('SELECT name, email, demo_until FROM users WHERE id = ?').get(s.user_id) as {
 					name: string;
 					email: string | null;
+					demo_until: string | null;
 				})
 			: null;
+		const user = row && { name: row.name, email: row.email };
 		const theirs = s.user_id
 			? (accounts
 					.prepare(
@@ -389,6 +393,8 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
 			guardianPins,
 			/** How long every guardian's PIN is, when they're all the same (and known): the pad checks it at that length. */
 			pinLength: pinLengths.length && pinLengths.every((n) => n !== null && n === pinLengths[0]) ? pinLengths[0] : null,
+			/** The site's demo (hosted/demo.ts): when it's deleted, and the PIN to unlock with. */
+			demo: row?.demo_until ? { until: row.demo_until, pin: DEMO_PIN } : null,
 		};
 	}
 
