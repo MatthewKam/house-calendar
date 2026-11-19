@@ -12,6 +12,8 @@ export const NARROW = '(max-width: 959.98px)';
 export const TABLET = '(min-width: 744px) and (min-height: 600px)';
 /** A big screen. */
 export const WIDE = '(min-width: 1401px)';
+/** A touch screen, whatever its size: phones and tablets, not a computer with a mouse. */
+export const TOUCH = '(pointer: coarse)';
 /** A tablet on its side, or bigger: room for two columns of cards. */
 export const LANDSCAPE_TABLET = '(orientation: landscape) and (min-width: 1000px)';
 

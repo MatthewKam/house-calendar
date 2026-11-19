@@ -7,6 +7,7 @@ How Sprig's CSS is put together, and which shared names to use. The names all li
 ## Where styles go
 
 - Each component's CSS module sits beside it, in its feature's folder: `components/tasks/TasksPage.tsx` uses `components/tasks/Tasks.module.css`. Components of one feature can share a module. Building blocks used everywhere (`Sheet`, `Toast`, `Switch`, and `Buttons.module.css` to `composes:` from) are in `components/ui/`.
+- A button with an icon before its words: its class composes `withIcon` from `Buttons.module.css`, and the icon and words go in spans with `buttons.buttonIcon` and `buttons.buttonText` (4px apart).
 - This folder holds only what's global: `app.css`, this guide, and `scale.test.ts`.
 - `app.css` holds only what's global: the shared names below, the page's base (`button`, `input`, the body) and a few app-wide attributes (`[data-theme]`, `[data-busy]`).
 - Animations (`@keyframes`) stay in the module that uses them. Modules keep their names to themselves, so two files can both have a `pop` without clashing.
@@ -61,7 +62,7 @@ What sits over what is named by role, bottom to top: `--layer-panel`, `--layer-f
 
 ## Screen sizes
 
-The same five everywhere, listed at the top of `app.css` and named in code in `lib/useMediaQuery.ts`:
+The same six everywhere, listed at the top of `app.css` and named in code in `lib/useMediaQuery.ts`:
 
 | Name | Query |
 | --- | --- |
@@ -70,6 +71,7 @@ The same five everywhere, listed at the top of `app.css` and named in code in `l
 | Narrow | `(max-width: 959.98px)` |
 | Tablet | `(min-width: 744px) and (min-height: 600px)` |
 | Wide | `(min-width: 1401px)` |
+| Touch (phones and tablets, any size) | `(pointer: coarse)` |
 
 CSS can't use variables in a media query, so write the query out and keep it exactly as listed. In components, import the name (`useMediaQuery(PHONE)`) rather than writing the query again.
 

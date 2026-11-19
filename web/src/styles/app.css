@@ -22,6 +22,7 @@
  *   Narrow             (max-width: 959.98px)                            phones and tablets upright
  *   Tablet             (min-width: 744px) and (min-height: 600px)       an iPad either way up, and bigger
  *   Wide               (min-width: 1401px)                              a big screen
+ *   Touch              (pointer: coarse)                                phones and tablets, any size
  * A component may also use a size of its own content (a small phone, 480px; the game-over pop-up on a
  * short tablet), said so where it is.
  */

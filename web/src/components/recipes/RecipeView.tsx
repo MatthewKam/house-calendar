@@ -7,6 +7,7 @@ import {
 	useCookRoom,
 	useCookTogether,
 	useLiveRecipeShopping,
+	useMealActions,
 	useMeals,
 	useMembers,
 	useRecipeActions,
@@ -33,7 +34,7 @@ import type { CookProgress, CookTimer } from '../../../../shared/cook.ts';
 import { useNow } from '../../lib/useNow';
 import { flags } from '../../lib/allergies';
 import type { MealPlan, Member, Recipe } from '../../lib/types';
-import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
+import { PHONE, PHONE_SIDEWAYS, TOUCH, useMediaQuery } from '../../lib/useMediaQuery';
 import { useWakeLock } from '../../lib/useWakeLock';
 import Sheet from '../ui/Sheet';
 import Problem from '../ui/Problem';
@@ -47,6 +48,7 @@ import PlanIt from './PlanIt';
 import RemindMe from './RemindMe';
 import RecipeForm from './RecipeForm';
 import TagPicker from './TagPicker';
+import buttons from '../ui/Buttons.module.css';
 import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
 
@@ -115,6 +117,9 @@ export default function RecipeView({
 	const [reminding, setReminding] = useState(false);
 	const today = dayKey(useNow());
 	const planned = (useMeals().data?.meals ?? []).filter((m) => m.recipeId === r.id && m.day >= today);
+	// Cook today: on today's dinner in one tap, so it shows on everyone's Today; once on, its day shows instead.
+	const { plan } = useMealActions();
+	const onToday = planned.some((m) => m.day === today);
 	const knownTags = [...new Set((useRecipes().data ?? []).flatMap((x) => x.tags))];
 	// Ratings: everyone in the family. Each changes their own; a parent a kid's; the account holder anyone's.
 	const people = useMembers().data ?? [];
@@ -161,6 +166,8 @@ export default function RecipeView({
 	const upright = useMediaQuery(PHONE);
 	const sideways = useMediaQuery(PHONE_SIDEWAYS);
 	const phone = upright || sideways;
+	// Phones and tablets: the recipe fills the screen, its × pinned at the top; a computer's stays a card.
+	const fullScreen = useMediaQuery(TOUCH) || phone;
 	// Cooking from it: no sleeping screen while it's open.
 	useWakeLock(true);
 
@@ -448,7 +455,7 @@ export default function RecipeView({
 
 	return (
 		<>
-			<Sheet label={r.title} onClose={onClose} className={`${s.view} ${cooking ? sheet.full : ''}`}>
+			<Sheet label={r.title} onClose={onClose} className={`${s.view} ${cooking || fullScreen ? sheet.full : ''}`}>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>{r.title}</h2>
 					<span className={sheet.spacer} />
@@ -520,10 +527,12 @@ export default function RecipeView({
 								{parent && (
 									<span className={s.aheadButtons}>
 										<button type="button" className={s.aheadButton} onClick={() => setPlanning('new')}>
-											📅 Put it on a day
+											<span className={buttons.buttonIcon}>📅&nbsp;</span>
+											<span className={buttons.buttonText}>Pick a cook day</span>
 										</button>
 										<button type="button" className={s.aheadButton} onClick={() => setReminding(true)}>
-											⏰ Just remind me
+											<span className={buttons.buttonIcon}>⏰&nbsp;</span>
+											<span className={buttons.buttonText}>Just remind me</span>
 										</button>
 									</span>
 								)}
@@ -538,7 +547,8 @@ export default function RecipeView({
 								))}
 								{parent && (
 									<button type="button" className={s.tagButton} onClick={() => setTagging(true)}>
-										{r.tags.length ? 'Edit tags' : '🏷️ Add tags'}
+										<span className={buttons.buttonIcon}>🏷️&nbsp;</span>
+										<span className={buttons.buttonText}>{r.tags.length ? 'Edit tags' : 'Add tags'}</span>
 									</button>
 								)}
 							</div>
@@ -562,12 +572,27 @@ export default function RecipeView({
 										disabled={!parent}
 										onClick={() => setPlanning(m)}
 									>
-										📅 {mealLabel(m.meal)}, {dayWord(m.day, today)}
+										<span className={buttons.buttonIcon}>📅&nbsp;</span>
+										<span className={buttons.buttonText}>
+											{mealLabel(m.meal)}, {dayWord(m.day, today)}
+										</span>
 									</button>
 								))}
+								{parent && r.prepAhead.length === 0 && !onToday && (
+									<button
+										type="button"
+										className={s.tagButton}
+										disabled={plan.isPending}
+										onClick={() => plan.mutate({ day: today, meal: 'dinner', recipeId: r.id, reminders: [] })}
+									>
+										<span className={buttons.buttonIcon}>🍳&nbsp;</span>
+										<span className={buttons.buttonText}>Cook today</span>
+									</button>
+								)}
 								{parent && r.prepAhead.length === 0 && (
 									<button type="button" className={s.tagButton} onClick={() => setPlanning('new')}>
-										📅 Put it on a day
+										<span className={buttons.buttonIcon}>📅&nbsp;</span>
+										<span className={buttons.buttonText}>Pick a cook day</span>
 									</button>
 								)}
 							</div>
@@ -596,7 +621,8 @@ export default function RecipeView({
 												})
 											}
 										>
-											👩‍🍳 Cook together
+											<span className={buttons.buttonIcon}>👩‍🍳&nbsp;</span>
+											<span className={buttons.buttonText}>Cook together</span>
 										</button>
 									) : (
 										<>
@@ -646,12 +672,14 @@ export default function RecipeView({
 											setJoined(true);
 										}}
 									>
-										👩‍🍳{' '}
-										{others
-											.filter((p) => !p.progress.doneAt)
-											.map((p) => p.name)
-											.join(', ')}{' '}
-										cooking this · Join
+										<span className={buttons.buttonIcon}>👩‍🍳&nbsp;</span>
+										<span className={buttons.buttonText}>
+											{others
+												.filter((p) => !p.progress.doneAt)
+												.map((p) => p.name)
+												.join(', ')}{' '}
+											cooking this · Join
+										</span>
 									</button>
 								)}
 								<button type="button" className={s.startCooking} onClick={startCooking}>

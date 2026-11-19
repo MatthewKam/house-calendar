@@ -2,8 +2,10 @@ import { type CSSProperties, type ReactNode } from 'react';
 import { addDays, dayKey, fromDayKey, timeLabel, longDate } from '../../lib/dates';
 import {
 	useEventWeather,
+	useMeals,
 	usePlansAccess,
 	useRangeEvents,
+	useRecipes,
 	useSpecialReminders,
 	useTravelTimes,
 	useWeather,
@@ -15,7 +17,8 @@ import { sky } from '../../lib/weather';
 import { useNow } from '../../lib/useNow';
 import { LANDSCAPE_TABLET, useMediaQuery } from '../../lib/useMediaQuery';
 import { firstName } from '../../lib/people';
-import type { CalEvent, Member } from '../../lib/types';
+import { askToOpen, mealAt, mealLabel, plannedOn, zone } from '../../lib/meals';
+import type { CalEvent, Member, PlanMeal, Recipe } from '../../lib/types';
 import type { Page } from '../nav/NavBar';
 import { DayCalendar } from '../ui/DayCarousel';
 import ForecastCard, { ForecastLoading } from './ForecastCard';
@@ -45,6 +48,14 @@ interface Props {
 	onAddSpecial?: () => void;
 	/** The photo slideshow's "Play screen saver". */
 	onPlaySlideshow: () => void;
+}
+
+/** A recipe planned on a day, at its meal's usual time (ms). */
+interface Meal {
+	id: string;
+	meal: PlanMeal;
+	recipe: Recipe;
+	at: number;
 }
 
 /** Be there this many minutes before it starts, for parking and walking in (as server/travel.ts plans). */
@@ -97,15 +108,26 @@ export default function TodayPage({
 	const upNext = todays.filter((e) => !ended(e));
 	const earlier = todays.filter(ended);
 	const tomorrows = sorted.filter((e) => onDay(e, dayKey(addDays(day, 1))));
+	// The recipes planned on a day (Cook today, or Plan ahead), each at its meal's usual time, among the
+	// events; today's stay up next all day (Cook today at 8 PM still shows).
+	const plans = useMeals().data;
+	const recipes = useRecipes().data ?? [];
+	const mealsOn = (d: string): Meal[] =>
+		plannedOn(plans, d).flatMap((m) => {
+			const r = recipes.find((x) => x.id === m.recipeId);
+			return r ? [{ id: m.id, meal: m.meal, recipe: r, at: mealAt(d, m.meal, zone()) }] : [];
+		});
+	const mealsToday = mealsOn(today);
+	const mealsTomorrow = mealsOn(dayKey(addDays(day, 1)));
 	// The rest of the week, day by day (an all-day event over several days: once, on its first).
 	const shown = new Set([...todays, ...tomorrows].map((e) => e.id));
 	const restOfWeek = Array.from({ length: WEEK - 2 }, (_, i) => dayKey(addDays(day, i + 2)))
 		.map((key) => {
 			const on = sorted.filter((e) => onDay(e, key) && !shown.has(e.id));
 			on.forEach((e) => shown.add(e.id));
-			return { key, events: on };
+			return { key, events: on, meals: mealsOn(key) };
 		})
-		.filter((d) => d.events.length > 0);
+		.filter((d) => d.events.length > 0 || d.meals.length > 0);
 	const drives = useTravelTimes(upNext.map((e) => e.id)).data ?? {};
 	// Your reminders on each event (every repeat of it), to show a bell.
 	const reminders = useSpecialReminders(usePlansAccess().reminders).data ?? [];
@@ -161,20 +183,47 @@ export default function TodayPage({
 		);
 	};
 
-	const list = (items: CalEvent[], leave = false) => (
-		<ul className={s.events}>{items.map((e) => eventRow(e, leave))}</ul>
+	// A planned meal: its meal where the time goes, the recipe's name; a tap opens the recipe.
+	const mealRow = (m: Meal) => (
+		<li key={m.id}>
+			<button
+				type="button"
+				className={s.event}
+				onClick={() => {
+					askToOpen(m.recipe.id);
+					onPage('recipes');
+				}}
+				style={{ '--c': 'var(--accent)' } as CSSProperties}
+			>
+				<span className={s.when}>{mealLabel(m.meal)}</span>
+				<span className={s.what}>
+					<span className={s.title}>🍽️ {m.recipe.title}</span>
+				</span>
+			</button>
+		</li>
+	);
+	// Events and meals together, by time (all-day events first).
+	const list = (items: CalEvent[], leave = false, meals: Meal[] = []) => (
+		<ul className={s.events}>
+			{[
+				...items.map((e) => ({ at: e.allDay ? -Infinity : Date.parse(e.start), row: eventRow(e, leave) })),
+				...meals.map((m) => ({ at: m.at, row: mealRow(m) })),
+			]
+				.sort((a, b) => a.at - b.at)
+				.map((x) => x.row)}
+		</ul>
 	);
 	const calendar: { label: string; body: ReactNode }[] = [
 		{
 			label: 'Today',
 			body: (
 				<>
-					{todays.length === 0 ? (
+					{todays.length + mealsToday.length === 0 ? (
 						<p className={s.none}>Nothing on the calendar today.</p>
-					) : upNext.length === 0 ? (
+					) : upNext.length + mealsToday.length === 0 ? (
 						<p className={s.none}>Nothing else today.</p>
 					) : (
-						list(upNext, true)
+						list(upNext, true, mealsToday)
 					)}
 					{earlier.length > 0 && (
 						<details className={s.earlier}>
@@ -187,7 +236,12 @@ export default function TodayPage({
 		},
 		{
 			label: 'Tomorrow',
-			body: tomorrows.length === 0 ? <p className={s.none}>Nothing on tomorrow.</p> : list(tomorrows),
+			body:
+				tomorrows.length + mealsTomorrow.length === 0 ? (
+					<p className={s.none}>Nothing on tomorrow.</p>
+				) : (
+					list(tomorrows, false, mealsTomorrow)
+				),
 		},
 		{
 			label: 'Rest of the week',
@@ -204,7 +258,7 @@ export default function TodayPage({
 									day: 'numeric',
 								})}
 							</h3>
-							{list(d.events)}
+							{list(d.events, false, d.meals)}
 						</div>
 					))
 				),
