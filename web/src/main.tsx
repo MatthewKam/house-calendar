@@ -8,7 +8,7 @@ import './styles/app.css';
 import { guardTouch } from './lib/touchGuard';
 import { keys } from './lib/queries';
 import { problemText } from './lib/api';
-import { isApp, linksInSheet, openTappedAlerts, loadSession } from './lib/native';
+import { isApp, linksInSheet, openTappedAlerts, loadSession, syncPhoneCalendars } from './lib/native';
 import CookAlong from './components/recipes/CookAlong';
 
 const queryClient = new QueryClient({
@@ -56,6 +56,10 @@ await loadSession();
 linksInSheet();
 // Tapping an alert, even one that opened the app, opens what it's about.
 openTappedAlerts();
+// The phone's shared calendars go to the family each time Sprig opens or comes back into view.
+const sendCalendars = () => void syncPhoneCalendars().catch(() => {});
+sendCalendars();
+document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && sendCalendars());
 
 // A Cooking together link (server/cook.ts): its own page, open to anyone with it, no signing in.
 const cookPage = /^\/cook\/([0-9a-f-]{36})\/([A-Za-z0-9_-]{32})\/?$/.exec(location.pathname);

@@ -37,7 +37,7 @@ export interface RemoteCalendar {
  * calendar is small, and a snapshot avoids tracking how repeating events were expanded last time.
  */
 export interface CalendarSource {
-	readonly id: 'google' | 'icloud';
+	readonly id: 'google' | 'icloud' | 'phone';
 	/** Which account, when several of one kind sync (e.g. 'google:<connection id>'); else the id. */
 	readonly key?: string;
 	/** Who connected it; their primary calendar is linked to them. */

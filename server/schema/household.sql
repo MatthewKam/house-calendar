@@ -1,4 +1,4 @@
--- A household's database (server/db.ts), at version 66. Written by server/schema.test.ts; don't edit by hand.
+-- A household's database (server/db.ts), at version 67. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
@@ -6,15 +6,19 @@ CREATE TABLE auth (
     set_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   , master_hash TEXT);
 
-CREATE TABLE calendars (
+CREATE TABLE "calendars" (
     id          TEXT PRIMARY KEY,
-    provider    TEXT NOT NULL CHECK (provider IN ('local','google','icloud')),
+    provider    TEXT NOT NULL CHECK (provider IN ('local','google','icloud','phone')),
     remote_id   TEXT,
     name        TEXT NOT NULL,
     member_id   TEXT REFERENCES members(id) ON DELETE SET NULL,
-    sync_token  TEXT
-  , hidden INTEGER NOT NULL DEFAULT 0, color TEXT, writable INTEGER NOT NULL DEFAULT 1, source TEXT, visibility TEXT NOT NULL DEFAULT 'everyone'
-    CHECK (visibility IN ('everyone','busy','private')));
+    sync_token  TEXT,
+    hidden      INTEGER NOT NULL DEFAULT 0,
+    color       TEXT,
+    writable    INTEGER NOT NULL DEFAULT 1,
+    source      TEXT,
+    visibility  TEXT NOT NULL DEFAULT 'everyone' CHECK (visibility IN ('everyone','busy','private'))
+  );
 
 CREATE UNIQUE INDEX calendars_remote ON calendars(provider, remote_id) WHERE remote_id IS NOT NULL;
 
@@ -349,6 +353,13 @@ CREATE TABLE own_goals (
     emoji       TEXT NOT NULL,
     kind        TEXT NOT NULL CHECK (kind IN ('helpful','attitude','bravery','cleanliness','problem_solving','self_care')),
     created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+
+CREATE TABLE phones (
+    id         TEXT PRIMARY KEY,
+    member_id  TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL,
+    last_sync  TEXT NOT NULL
   );
 
 CREATE TABLE photos (

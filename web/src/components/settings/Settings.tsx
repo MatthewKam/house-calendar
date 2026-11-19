@@ -15,6 +15,8 @@ import GoogleCalendars from './GoogleCalendars';
 import HomeAddress from './HomeAddress';
 import HouseholdAccess from './HouseholdAccess';
 import ICloudCalendars from './ICloudCalendars';
+import PhoneCalendars, { SharingPhones } from './PhoneCalendars';
+import { isApp } from '../../lib/native';
 import LearnSettings, { LearnAbout, learnNote } from './LearnSettings';
 import ScreenSettings from './ScreenSettings';
 import { Group, InfoButton, Section, SettingsView } from './parts';
@@ -93,6 +95,13 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 						<HomeAddress />
 					</Section>
 					<Section title="Calendars">
+						<PhoneCalendars />
+						<SharingPhones members={members} />
+						{isApp && (
+							<p className={s.hint}>
+								Or keep iCloud in step all the time, even when no one opens Sprig, with an app-specific password:
+							</p>
+						)}
 						<ICloudCalendars members={members} />
 						<GoogleCalendars members={members} />
 						{hasCalendars && <CalendarList members={members} />}

@@ -22,6 +22,7 @@ import type { CalEvent, Member, PlanMeal, Recipe } from '../../lib/types';
 import type { Page } from '../nav/NavBar';
 import { DayCalendar } from '../ui/DayCarousel';
 import ForecastCard, { ForecastLoading } from './ForecastCard';
+import FinishSetup from './FinishSetup';
 import PhotoCard from '../photos/PhotoCard';
 import KidsToday from './KidsToday';
 import NeedsYou from './NeedsYou';
@@ -372,6 +373,7 @@ export default function TodayPage({
 				{twoColumns ? (
 					<div className={s.columns}>
 						<div className={s.column}>
+							{guard('finishing setting up', <FinishSetup />)}
 							{guard('the quote', quoteCard)}
 							{guard('the encouragement', encouragementCard)}
 							{guard('the weather', weatherCard)}
@@ -386,6 +388,7 @@ export default function TodayPage({
 					</div>
 				) : (
 					<div className={s.cards}>
+						{guard('finishing setting up', <FinishSetup />)}
 						{guard('the calendar', calendarCard)}
 						{guard('the weather', weatherCard)}
 						{guard('special days', specialCard)}

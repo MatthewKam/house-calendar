@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dueOn, expired, goalsOf, requiredDone, taskProgress } from './tasks';
+import { dueOn, expired, goalsOf, requiredDone, starterTasks, taskProgress } from './tasks';
 import type { Task, TaskDone } from './types';
 
 // Tuesday 10 November 2026.
@@ -76,5 +76,15 @@ describe("today's tasks", () => {
 		];
 		expect(goalsOf(goals, 'mia', '2026-11-10').map((g) => g.id)).toEqual(['g1', 'g2']);
 		expect(goalsOf(goals, 'mia', '2026-11-10', 'g1').map((g) => g.id)).toEqual(['g2']);
+	});
+});
+
+describe('starter tasks', () => {
+	it('offers tasks for a kid by age, and none for grown-ups', () => {
+		expect(starterTasks('little').map((t) => t.title)).toContain('Tidy toys');
+		expect(starterTasks('early').map((t) => t.title)).toContain('Get dressed');
+		expect(starterTasks('tween')).toEqual(starterTasks('middle'));
+		expect(starterTasks('adult')).toEqual([]);
+		expect(starterTasks(null)).toEqual([]);
 	});
 });

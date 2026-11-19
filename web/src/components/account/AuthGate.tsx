@@ -1,20 +1,25 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, type AuthStatus } from '../../lib/api';
 import { keys, useAuthStatus } from '../../lib/queries';
 import PinScreen from './PinScreen';
+import Setup from './Setup';
+import { finishSetup, setupPending } from '../../lib/setup';
 import SignIn from './SignIn';
 import Welcome from './Welcome';
 import a from './Account.module.css';
 
 /**
  * Shows the app once this device is in a household; before that, signing in, then starting or
- * joining a household. The wall also needs a guardian's PIN to enter. If the device is signed out
+ * joining a household, and the setup steps on the device that started it. The wall also needs a guardian's
+ * PIN to enter. If the device is signed out
  * later (from Settings, say), it goes back to the start.
  */
 export default function AuthGate({ children }: { children: ReactNode }) {
 	const qc = useQueryClient();
 	const status = useAuthStatus();
+	// Bumped when the setup steps finish, so the app shows.
+	const [, setSetupDone] = useState(0);
 	useEffect(() => {
 		const signedOut = () => void qc.invalidateQueries({ queryKey: keys.auth });
 		window.addEventListener('household:signed-out', signedOut);
@@ -40,6 +45,19 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 	if (!s) return <>{children}</>;
 	if (!s.signedIn) return <SignIn onSignedIn={update} />;
 	if (!s.household) return <Welcome status={s} onDone={update} />;
+	const setup = s.parent ? setupPending(s.household.id) : null;
+	if (setup) {
+		return (
+			<Setup
+				status={s}
+				kind={setup}
+				onDone={() => {
+					finishSetup();
+					setSetupDone((n) => n + 1);
+				}}
+			/>
+		);
+	}
 	if (!s.entered) {
 		return (
 			<PinScreen
