@@ -205,6 +205,8 @@ const server = buildServer(accounts, households, {
 	// Hosted behind the host's HTTPS proxy: TRUST_PROXY=1, believing only the address that proxy adds (the
 	// last in X-Forwarded-For). Believing them all would let anyone claim any address and dodge the limits.
 	trustProxy: env.TRUST_PROXY === '1' ? oneHop : 'loopback',
+	// On Fly, its own header says who's calling (X-Forwarded-For ends with one of Fly's servers).
+	clientIpHeader: env.FLY_APP_NAME ? 'fly-client-ip' : undefined,
 });
 
 // The household from before accounts (data/calendar.db) is kept; claim it with the code this logs.

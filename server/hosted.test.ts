@@ -1096,6 +1096,36 @@ describe('limits a stranger can’t dodge', () => {
 		await front.close();
 	});
 
+	it("on Fly, counts each caller by the address Fly gives, not by Fly's own servers", async () => {
+		const front = buildServer(
+			accounts,
+			householdRegistry(() => null as never),
+			{
+				dataDir: dir,
+				logger: false,
+				sendCode: async () => {},
+				trustProxy: oneHop,
+				clientIpHeader: 'fly-client-ip',
+			},
+		);
+		await front.app.ready();
+		// Every request comes through the same Fly server; each caller has its own Fly-Client-IP.
+		const start = (email: string, caller: string) =>
+			inject(front.handle, {
+				method: 'POST',
+				url: '/api/account/email/start',
+				payload: { email },
+				headers: { 'x-forwarded-for': `made-up, 2a09:8280:1::207:ef59:0`, 'fly-client-ip': caller },
+			});
+		// Ten callers asking once each don't add up to one device's limit...
+		for (let i = 0; i < 12; i++) expect((await start(`p${i}@example.com`, `203.0.113.${i}`)).statusCode).toBe(200);
+		// ...but one caller asking eleven times does.
+		const one = [];
+		for (let i = 0; i < 11; i++) one.push((await start(`q${i}@example.com`, '198.51.100.9')).statusCode);
+		expect(one.at(-1)).toBe(429);
+		await front.close();
+	});
+
 	it('stops guessing codes from one device after five wrong ones, across addresses', async () => {
 		const phone = device();
 		for (let i = 0; i < 5; i++) {

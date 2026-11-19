@@ -125,6 +125,9 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 	}
 
 	async function handle(req: IncomingMessage, res: ServerResponse) {
+		// The caller's real address, as the host says it (see clientIpHeader): what the one trusted hop believes.
+		const real = opts.clientIpHeader && req.headers[opts.clientIpHeader];
+		if (typeof real === 'string' && real) req.headers['x-forwarded-for'] = real;
 		for (const [name, value] of Object.entries(protect)) res.setHeader(name, value);
 		// Reached over https (Fly's proxy says so): only ever over https from now on.
 		if (req.headers['x-forwarded-proto'] === 'https')
