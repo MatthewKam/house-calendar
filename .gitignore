@@ -16,3 +16,5 @@ docs/*.md
 docs/brand/
 # App Store screenshots and drafts (docs/app-store/): kept on this computer.
 docs/app-store/
+# Xcode Cloud's link to this project: builds are made here (npm run ios:testflight), not in Xcode Cloud.
+ios/App/App.xcodeproj/xcshareddata/xcodecloud/
