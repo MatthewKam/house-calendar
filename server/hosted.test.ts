@@ -550,6 +550,17 @@ describe('privacy', () => {
 		// A kid's own device puts stars in jars only with a parent there.
 		const place = await ipad.post('/api/rewards/place', { memberId: id('Sam'), today: '2099-01-01', places: [] });
 		expect(place).toMatchObject({ status: 403, body: { locked: true } });
+
+		// Handing a reward over, rating a recipe and cooking together are a grown-up's. (A special day's
+		// reminder is an alert on your own phone, which kids' devices don't get.)
+		expect((await ipad.post('/api/rewards/wins/w1/given')).status).toBe(403);
+		expect((await ipad.post('/api/rewards/wins/w1/undo')).status).toBe(403);
+		expect((await ipad.put(`/api/recipes/r1/ratings/${id('Sam')}`, { stars: 5 })).status).toBe(403);
+		expect((await ipad.post('/api/recipes/r1/cook')).status).toBe(403);
+		expect((await ipad.del('/api/recipes/r1/cook')).status).toBe(403);
+		const reminder = { key: 'date:2099-01-01', name: 'Grandma visits', before: null };
+		expect((await ipad.post('/api/special-reminders', reminder)).status).toBe(403);
+		expect((await alex.post('/api/special-reminders', reminder)).status).toBe(201);
 	});
 });
 
