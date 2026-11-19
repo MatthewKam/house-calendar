@@ -1101,3 +1101,16 @@ describe('limits a stranger can’t dodge', () => {
 		expect(sixth.status).toBe(429);
 	});
 });
+
+describe('what browsers are told', () => {
+	it('to stay on https, never frame Sprig, never guess a file is a page, and run only its own scripts', async () => {
+		const res = await inject(server.handle, { url: '/api/auth/status', headers: { 'x-forwarded-proto': 'https' } });
+		expect(res.headers['strict-transport-security']).toMatch(/max-age=31536000/);
+		expect(res.headers['x-frame-options']).toBe('DENY');
+		expect(res.headers['x-content-type-options']).toBe('nosniff');
+		const csp = String(res.headers['content-security-policy']);
+		expect(csp).toContain("frame-ancestors 'none'");
+		expect(csp).toContain("object-src 'none'");
+		expect(csp).not.toMatch(/script-src[^;]*'unsafe-inline'/);
+	});
+});
