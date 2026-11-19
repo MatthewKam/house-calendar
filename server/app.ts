@@ -17,6 +17,7 @@ import { registerWeather } from './weather.ts';
 import { registerPhotos } from './photos.ts';
 import { registerDaily } from './daily.ts';
 import { registerGuard } from './auth.ts';
+import { registerClaudeLimit } from './claudeLimit.ts';
 import { registerPrivacyGuard } from './privacy.ts';
 import { registerReminders } from './reminders.ts';
 import { registerLists } from './lists.ts';
@@ -79,6 +80,8 @@ export function buildApp(
 		recipeResolve?: (host: string) => Promise<{ address: string }[]>;
 		/** How long Shopping and Cooking together's live answers wait for a change, and how often they look (shorter in tests). */
 		liveLists?: { waitMs: number; lookMs: number };
+		/** How much a household may ask Claude (claudeLimit.ts); tests make it small. */
+		claudeLimits?: { perMinute: number; perDay: number };
 	} = {},
 ) {
 	// trustProxy: behind Tailscale's HTTPS (tailscale serve), so the device's address and https are seen.
@@ -88,6 +91,8 @@ export function buildApp(
 	registerGuard(app);
 	// Events someone can't see (privacy.ts) can't be opened or changed either.
 	registerPrivacyGuard(app, db);
+	// Asking Claude: a fair amount per household (claudeLimit.ts).
+	registerClaudeLimit(app, opts.claudeLimits);
 
 	// ---- The family (members.ts) --------------------------------------------
 	registerMembers(app, db, opts);

@@ -8,6 +8,7 @@ import { buildApp } from './app.ts';
 import { openAccounts, type AccountsDB } from './accounts.ts';
 import { householdRegistry } from './households.ts';
 import { adoptLegacy, buildServer } from './hosted.ts';
+import { oneHop } from './hosted/session.ts';
 
 // Accounts, households and the guardian PIN, through the front server.
 let dir: string;
@@ -1053,5 +1054,50 @@ describe('a Cooking together link', () => {
 		// Ended: the link stops working.
 		await phone.del(`/api/recipes/${recipe.id}/cook`);
 		expect((await grandma.get(link)).status).toBe(404);
+	});
+});
+
+describe('limits a stranger can’t dodge', () => {
+	it('caps sign-in codes per address and per device, whatever address a request claims', async () => {
+		const front = buildServer(
+			accounts,
+			householdRegistry(() => null as never),
+			{
+				dataDir: dir,
+				logger: false,
+				sendCode: async () => {},
+				trustProxy: oneHop,
+			},
+		);
+		await front.app.ready();
+		// Through Fly's proxy: it adds the real address last; anything before it was made up by the caller.
+		const start = (email: string, claimed: string) =>
+			inject(front.handle, {
+				method: 'POST',
+				url: '/api/account/email/start',
+				payload: { email },
+				headers: { 'x-forwarded-for': `${claimed}, 203.0.113.7` },
+			});
+		const answers = [];
+		for (let i = 0; i < 11; i++) answers.push((await start(`person${i}@example.com`, `10.0.0.${i}`)).statusCode);
+		expect(answers.slice(0, 10).every((s) => s === 200)).toBe(true);
+		expect(answers[10]).toBe(429);
+		await front.close();
+	});
+
+	it('stops guessing codes from one device after five wrong ones, across addresses', async () => {
+		const phone = device();
+		for (let i = 0; i < 5; i++) {
+			await phone.post('/api/account/email/start', { email: `guess${i}@example.com` });
+			expect(
+				(await phone.post('/api/account/email/verify', { email: `guess${i}@example.com`, code: '000000' })).status,
+			).toBe(401);
+		}
+		await phone.post('/api/account/email/start', { email: 'guess9@example.com' });
+		const sixth = await phone.post('/api/account/email/verify', {
+			email: 'guess9@example.com',
+			code: codes.get('guess9@example.com')!,
+		});
+		expect(sixth.status).toBe(429);
 	});
 });

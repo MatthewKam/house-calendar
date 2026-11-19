@@ -364,3 +364,20 @@ describe("a recipe's link", () => {
 		expect((await call('POST', '/api/recipes', { recipe: fine, images: [], cover: null })).status).toBe(201);
 	});
 });
+
+describe('asking Claude', () => {
+	it('stops a household that asks too often, with a friendly word', async () => {
+		dir = mkdtempSync(join(tmpdir(), 'recipes-'));
+		const { call } = household([], {
+			photosDir: dir,
+			readRecipe: async () => ({ recipe: BULGOGI, cover: null }),
+			claudeLimits: { perMinute: 2, perDay: 3 },
+		});
+		const read = () => call('POST', '/api/recipes/read', { images: [PICTURE] });
+		expect((await read()).status).toBe(200);
+		expect((await read()).status).toBe(200);
+		const third = await read();
+		expect(third.status).toBe(429);
+		expect(third.body.error).toMatch(/minute/);
+	});
+});

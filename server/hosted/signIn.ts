@@ -3,7 +3,17 @@ import { randomInt, randomUUID } from 'node:crypto';
 import type { AccountsDB } from '../accounts.ts';
 import type { Identity } from '../identity.ts';
 import { hashPin, pinMatches } from '../auth.ts';
-import { CODE_MS, COOKIE, MAX_TRIES, later, now, type ServerOptions, type Sessions } from './session.ts';
+import {
+	CODE_MS,
+	COOKIE,
+	MAX_TRIES,
+	later,
+	limiter,
+	now,
+	windowLimit,
+	type ServerOptions,
+	type Sessions,
+} from './session.ts';
 
 // Signing in: with Apple or Google, or a code by email; and signing out.
 
@@ -13,6 +23,11 @@ export function signInRoutes(
 	{ started, sessionOf, startSession, status }: Sessions,
 	opts: ServerOptions,
 ) {
+	const HOUR = 60 * 60_000;
+	const codesPerEmail = windowLimit(5, HOUR);
+	const codesPerDevice = windowLimit(10, HOUR);
+	const wrongCodes = limiter();
+
 	/** The user for an identity: the same one as last time, or one with the same verified email, or new. */
 	function userFor(provider: 'google' | 'apple' | 'email', id: Identity) {
 		const known = accounts
@@ -98,6 +113,10 @@ export function signInRoutes(
 		async (req, reply) => {
 			if (!opts.sendCode) return reply.code(400).send({ error: 'Email sign-in is off' });
 			const email = req.body.email.trim().toLowerCase();
+			// A few codes an hour per address and per device: no flooding someone's inbox, or ours.
+			if (!codesPerEmail.take(email) || !codesPerDevice.take(req.ip)) {
+				return reply.code(429).send({ error: 'Too many codes asked for. Try again in a while.' });
+			}
 			const last = accounts.prepare('SELECT sent_at FROM email_codes WHERE email = ?').get(email) as
 				{ sent_at: string } | undefined;
 			if (last && last.sent_at > new Date(Date.now() - 30_000).toISOString()) {
@@ -129,6 +148,10 @@ export function signInRoutes(
 			},
 		},
 		async (req, reply) => {
+			// Wrong codes from one device lock it a while, whichever addresses it tries (App Review's fixed
+			// code too, whose tries would otherwise start over with each code asked for).
+			const blocked = wrongCodes.blocked(req.ip);
+			if (blocked) return reply.code(429).send({ error: blocked });
 			const email = req.body.email.trim().toLowerCase();
 			const row = accounts.prepare('SELECT * FROM email_codes WHERE email = ?').get(email) as
 				{ code_hash: string; expires_at: string; tries: number } | undefined;
@@ -136,6 +159,7 @@ export function signInRoutes(
 				return reply.code(401).send({ error: 'That code has expired. Ask for a new one.' });
 			if (!pinMatches(req.body.code.replace(/\D/g, ''), row.code_hash)) {
 				accounts.prepare('UPDATE email_codes SET tries = tries + 1 WHERE email = ?').run(email);
+				wrongCodes.wrong(req.ip);
 				return reply.code(401).send({ error: 'Wrong code' });
 			}
 			accounts.prepare('DELETE FROM email_codes WHERE email = ?').run(email);
