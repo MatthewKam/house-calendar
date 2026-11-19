@@ -53,6 +53,12 @@ export interface ServerOptions {
 	 * else only tailscale serve on this machine.
 	 */
 	trustProxy?: boolean | string | ((address: string, hop: number) => boolean);
+	/**
+	 * A header the host sets to the caller's real address, overwriting any the caller sent (Fly's Fly-Client-IP).
+	 * Fly passes requests through more than one of its own servers, so X-Forwarded-For's last address is one
+	 * of Fly's, not the caller's; this one is the caller's.
+	 */
+	clientIpHeader?: string;
 	logger?: boolean;
 }
 
