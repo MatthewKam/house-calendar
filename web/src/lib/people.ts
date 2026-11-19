@@ -7,6 +7,12 @@ export const isKid = (m: { stage: Stage | null }) => m.stage !== null && m.stage
 
 /** The first part of someone's name ("Tayen Kam" → "Tayen"). */
 export const firstName = (name: string) => name.split(' ')[0];
+/** A new household's name from its maker's: "The Kam family", or "Matt's family" with no last name. */
+export function familyName(name: string) {
+	const words = name.trim().split(/\s+/).filter(Boolean);
+	if (words.length === 0) return '';
+	return words.length > 1 ? `The ${words[words.length - 1]} family` : `${words[0]}'s family`;
+}
 
 /** Kids this old and up, on their own device, pick their own accent and ask for a new color (server/members.ts). */
 export const OLDER_KID_AGE = 7;

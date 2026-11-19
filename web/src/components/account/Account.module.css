@@ -105,6 +105,12 @@
 	align-self: center;
 	padding: 0.4rem;
 }
+/* A text button inside a line of text ("Your family: The Kams Change"). */
+.inlineLink {
+	composes: textButton from '../ui/Buttons.module.css';
+	padding: 0 0.2rem;
+	font-size: inherit;
+}
 .hint {
 	margin: 0;
 	color: var(--muted);

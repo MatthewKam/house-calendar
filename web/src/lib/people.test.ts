@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { firstName, isKid } from './people';
+import { familyName, firstName, isKid } from './people';
 import { listOf } from './useCheer';
 import { dueLabel, isDue, isLate } from './lists';
 
@@ -17,6 +17,13 @@ describe('people', () => {
 		expect(listOf(['Ice cream'])).toBe('Ice cream');
 		expect(listOf(['Ice cream', 'Zoo trip'])).toBe('Ice cream and Zoo trip');
 		expect(listOf(['A', 'B', 'C'])).toBe('A, B and C');
+	});
+
+	it("names a new household for whoever makes it", () => {
+		expect(familyName('Matt Kam')).toBe('The Kam family');
+		expect(familyName('  Mary Ann  Lee ')).toBe('The Lee family');
+		expect(familyName('Matt')).toBe("Matt's family");
+		expect(familyName(' ')).toBe('');
 	});
 });
 
