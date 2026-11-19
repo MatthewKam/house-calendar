@@ -48,6 +48,7 @@ import PlanIt from './PlanIt';
 import RemindMe from './RemindMe';
 import RecipeForm from './RecipeForm';
 import TagPicker from './TagPicker';
+import buttons from '../ui/Buttons.module.css';
 import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
 
@@ -526,12 +527,12 @@ export default function RecipeView({
 								{parent && (
 									<span className={s.aheadButtons}>
 										<button type="button" className={s.aheadButton} onClick={() => setPlanning('new')}>
-											<span className={s.recipeButtonLogo}>📅&nbsp;</span>
-											<span className={s.recipeButtonText}>Put it on a day</span>
+											<span className={buttons.buttonIcon}>📅&nbsp;</span>
+											<span className={buttons.buttonText}>Cook today</span>
 										</button>
 										<button type="button" className={s.aheadButton} onClick={() => setReminding(true)}>
-											<span className={s.recipeButtonLogo}>⏰&nbsp;</span>
-											<span className={s.recipeButtonText}>Just remind me</span>
+											<span className={buttons.buttonIcon}>⏰&nbsp;</span>
+											<span className={buttons.buttonText}>Just remind me</span>
 										</button>
 									</span>
 								)}
@@ -546,8 +547,8 @@ export default function RecipeView({
 								))}
 								{parent && (
 									<button type="button" className={s.tagButton} onClick={() => setTagging(true)}>
-										<span className={s.recipeButtonLogo}>🏷️&nbsp;</span>
-										<span className={s.recipeButtonText}>{r.tags.length ? 'Edit tags' : 'Add tags'}</span>
+										<span className={buttons.buttonIcon}>🏷️&nbsp;</span>
+										<span className={buttons.buttonText}>{r.tags.length ? 'Edit tags' : 'Add tags'}</span>
 									</button>
 								)}
 							</div>
@@ -571,7 +572,10 @@ export default function RecipeView({
 										disabled={!parent}
 										onClick={() => setPlanning(m)}
 									>
-										📅 {mealLabel(m.meal)}, {dayWord(m.day, today)}
+										<span className={buttons.buttonIcon}>📅&nbsp;</span>
+										<span className={buttons.buttonText}>
+											{mealLabel(m.meal)}, {dayWord(m.day, today)}
+										</span>
 									</button>
 								))}
 								{parent && r.prepAhead.length === 0 && !onToday && (
@@ -581,14 +585,14 @@ export default function RecipeView({
 										disabled={plan.isPending}
 										onClick={() => plan.mutate({ day: today, meal: 'dinner', recipeId: r.id, reminders: [] })}
 									>
-										<span className={s.recipeButtonLogo}>🍳&nbsp;</span>
-										<span className={s.recipeButtonText}>Cook today</span>
+										<span className={buttons.buttonIcon}>🍳&nbsp;</span>
+										<span className={buttons.buttonText}>Cook today</span>
 									</button>
 								)}
 								{parent && r.prepAhead.length === 0 && (
 									<button type="button" className={s.tagButton} onClick={() => setPlanning('new')}>
-										<span className={s.recipeButtonLogo}>📅&nbsp;</span>
-										<span className={s.recipeButtonText}>Put it on a day</span>
+										<span className={buttons.buttonIcon}>📅&nbsp;</span>
+										<span className={buttons.buttonText}>Put it on a day</span>
 									</button>
 								)}
 							</div>
@@ -617,7 +621,8 @@ export default function RecipeView({
 												})
 											}
 										>
-											👩‍🍳 Cook together
+											<span className={buttons.buttonIcon}>👩‍🍳&nbsp;</span>
+											<span className={buttons.buttonText}>Cook together</span>
 										</button>
 									) : (
 										<>
@@ -667,12 +672,14 @@ export default function RecipeView({
 											setJoined(true);
 										}}
 									>
-										👩‍🍳{' '}
-										{others
-											.filter((p) => !p.progress.doneAt)
-											.map((p) => p.name)
-											.join(', ')}{' '}
-										cooking this · Join
+										<span className={buttons.buttonIcon}>👩‍🍳&nbsp;</span>
+										<span className={buttons.buttonText}>
+											{others
+												.filter((p) => !p.progress.doneAt)
+												.map((p) => p.name)
+												.join(', ')}{' '}
+											cooking this · Join
+										</span>
 									</button>
 								)}
 								<button type="button" className={s.startCooking} onClick={startCooking}>

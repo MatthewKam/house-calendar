@@ -374,6 +374,7 @@
 	margin-top: 0.2rem;
 }
 .aheadButton {
+	composes: withIcon from '../ui/Buttons.module.css';
 	min-height: 2.75rem;
 	padding: 0 1rem;
 	border-radius: var(--radius-round);
@@ -1024,6 +1025,7 @@ button.ideaSearch {
 	margin: 0.15rem 0;
 }
 .tagButton {
+	composes: withIcon from '../ui/Buttons.module.css';
 	padding: 0.15rem 0.7rem;
 	min-height: 2rem;
 	border-radius: var(--radius-round);
@@ -1032,9 +1034,6 @@ button.ideaSearch {
 	color: var(--muted);
 	font: inherit;
 	font-size: 0.85rem;
-	display: flex;
-	align-items: center;
-	gap: 4px;
 }
 .tagChoices {
 	display: flex;
@@ -1230,6 +1229,7 @@ button.ideaSearch {
 }
 /* On a recipe: when it's planned. */
 .planned {
+	composes: withIcon from '../ui/Buttons.module.css';
 	padding: 0.15rem 0.7rem;
 	min-height: 2rem;
 	border-radius: var(--radius-round);

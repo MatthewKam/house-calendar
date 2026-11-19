@@ -18,3 +18,19 @@ html button:where(.quiet) {
 	font-weight: 600;
 	color: var(--muted);
 }
+
+/* A button with an icon before its words, 4px apart, anywhere in the app: the button's own class
+   composes withIcon (composes: withIcon from "../ui/Buttons.module.css"), and inside it the icon and
+   the words each have a span: <span className={buttons.buttonIcon}>📅&nbsp;</span>
+   <span className={buttons.buttonText}>Put it on a day</span>. */
+html button:where(.withIcon) {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+.buttonIcon {
+	flex: none;
+}
+.buttonText {
+	min-width: 0;
+}
