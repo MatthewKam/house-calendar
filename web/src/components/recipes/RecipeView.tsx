@@ -121,14 +121,15 @@ export default function RecipeView({
 	const { plan } = useMealActions();
 	const onToday = planned.some((m) => m.day === today);
 	const knownTags = [...new Set((useRecipes().data ?? []).flatMap((x) => x.tags))];
-	// Ratings: everyone in the family. Each changes their own; a parent a kid's; the account holder anyone's.
+	// Ratings: everyone in the family's, set on a grown-up's screen (not a kid's own device or a locked wall).
+	// Each grown-up changes their own and the kids'; the account holder anyone's.
 	const people = useMembers().data ?? [];
 	// Anyone's allergies in it: who and what, and which ingredient rows.
 	const allergyFlags = flags(r.ingredients, people);
 	const flaggedRows = new Set(allergyFlags.flatMap((f) => f.allergies.flatMap((a) => a.rows)));
 	const auth = useAuthStatus().data;
 	const canRate = (m: Member) =>
-		!auth?.signedIn || auth.holder || auth.memberId === m.id || (auth.parent && !m.guardian);
+		!auth?.signedIn || (auth.parent && (auth.holder || auth.memberId === m.id || !m.guardian));
 	// Adding photos: which step they're of (null: of the dish), then the picker.
 	const picker = useRef<HTMLInputElement>(null);
 	const photosFor = useRef<number | null>(null);
@@ -608,22 +609,25 @@ export default function RecipeView({
 								{/* Cooking together: the link, how long it lasts, ending it, and the others. */}
 								{canCookTogether &&
 									(!room ? (
-										<button
-											type="button"
-											className={s.tagButton}
-											disabled={cookActions.start.isPending}
-											onClick={() =>
-												cookActions.start.mutate(undefined, {
-													onSuccess: ({ room: made }) => {
-														setJoined(true);
-														void shareLink(made.secret);
-													},
-												})
-											}
-										>
-											<span className={buttons.buttonIcon}>👩‍🍳&nbsp;</span>
-											<span className={buttons.buttonText}>Cook together</span>
-										</button>
+										// Starting one is a grown-up's (cooking needs one); anyone can join one under way.
+										parent && (
+											<button
+												type="button"
+												className={s.tagButton}
+												disabled={cookActions.start.isPending}
+												onClick={() =>
+													cookActions.start.mutate(undefined, {
+														onSuccess: ({ room: made }) => {
+															setJoined(true);
+															void shareLink(made.secret);
+														},
+													})
+												}
+											>
+												<span className={buttons.buttonIcon}>👩‍🍳&nbsp;</span>
+												<span className={buttons.buttonText}>Cook together</span>
+											</button>
+										)
 									) : (
 										<>
 											<div className={s.cookTogether}>
@@ -637,22 +641,27 @@ export default function RecipeView({
 														Join
 													</button>
 												)}
-												<span className={s.select}>
-													<select
-														aria-label="How long the link lasts"
-														value=""
-														onChange={(e) => e.target.value && cookActions.length.mutate(Number(e.target.value))}
-													>
-														<option value="">Keep it for…</option>
-														<option value="24">A day from now</option>
-														<option value="48">2 days</option>
-														<option value="72">3 days</option>
-														<option value="168">A week</option>
-													</select>
-												</span>
-												<button type="button" className={s.textLink} onClick={() => setEnding(true)}>
-													End
-												</button>
+												{/* How long it lasts, and ending it: a grown-up's. */}
+												{parent && (
+													<>
+														<span className={s.select}>
+															<select
+																aria-label="How long the link lasts"
+																value=""
+																onChange={(e) => e.target.value && cookActions.length.mutate(Number(e.target.value))}
+															>
+																<option value="">Keep it for…</option>
+																<option value="24">A day from now</option>
+																<option value="48">2 days</option>
+																<option value="72">3 days</option>
+																<option value="168">A week</option>
+															</select>
+														</span>
+														<button type="button" className={s.textLink} onClick={() => setEnding(true)}>
+															End
+														</button>
+													</>
+												)}
 											</div>
 											{joined && (
 												<CookingWith others={others} steps={r.steps.length} ingredients={r.ingredients.length} />

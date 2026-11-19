@@ -213,14 +213,15 @@ describe('recipes', () => {
 		expect((await call('PUT', `/api/recipes/${id}/ratings/dad`, { stars: 4 })).status).toBe(200);
 		expect((await call('PUT', `/api/recipes/${id}/ratings/kid`, { stars: 5 })).status).toBe(200);
 		expect((await call('PUT', `/api/recipes/${id}/ratings/mom`, { stars: 1 })).status).toBe(403);
-		// The kid on their own device: theirs only. The holder: anyone's (and taking one back).
+		// Rating is done on a grown-up's screen: not on the kid's own device. The holder: anyone's (and taking one back).
 		viewer = { ...dad, role: 'kid', memberId: 'kid', parent: false, actor: 'kid' };
-		expect((await call('PUT', `/api/recipes/${id}/ratings/kid`, { stars: 3 })).status).toBe(200);
+		expect((await call('PUT', `/api/recipes/${id}/ratings/kid`, { stars: 3 })).status).toBe(403);
 		expect((await call('PUT', `/api/recipes/${id}/ratings/dad`, { stars: 1 })).status).toBe(403);
 		viewer = { ...dad, memberId: 'mom', holder: true, actor: 'mom' };
 		const last = (await call('PUT', `/api/recipes/${id}/ratings/dad`, { stars: null })).body;
 		expect(last.ratings.map((r: { memberId: string }) => r.memberId).sort()).toEqual(['kid', 'mom']);
-		expect(last.rating).toBe(4);
+		// Mom 5 and the kid's 5 (set by Dad).
+		expect(last.rating).toBe(5);
 	});
 
 	it("keeps the family's tags and notes after cooking (who wrote each), a parent's to change", async () => {
