@@ -1,12 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { openDb } from './db.ts';
 import { buildApp } from './app.ts';
-import { convertVideo, readInfo } from './video.ts';
+import { containerOf, convertVideo, readInfo } from './video.ts';
 
 const ffmpeg = createRequire(import.meta.url)('ffmpeg-static') as string;
 let dir: string;
@@ -61,6 +61,28 @@ describe('convertVideo', () => {
 		expect(seen.some((f) => f > 0 && f < 1)).toBe(true);
 		expect(seen).toEqual([...seen].sort((a, b) => a - b));
 	}, 60_000);
+});
+
+describe('what counts as a video', () => {
+	it('takes .mov, .mp4 and WebM, and refuses a playlist pretending to be one', async () => {
+		const mov = join(dir, 'kind.mov');
+		writeFileSync(mov, sample);
+		expect(await containerOf(mov)).toBe('mov');
+		const webm = join(dir, 'kind.webm');
+		writeFileSync(webm, Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0, 0, 0, 0, 0, 0, 0, 0]));
+		expect(await containerOf(webm)).toBe('matroska');
+
+		// An HLS playlist naming a file on the server: ffmpeg must never be pointed at it.
+		const secret = join(dir, 'secret.txt');
+		writeFileSync(secret, 'SECRET_KEY=hunter2');
+		const playlist = join(dir, 'evil.mp4');
+		writeFileSync(playlist, `#EXTM3U\n#EXT-X-MEDIA-SEQUENCE:0\n#EXTINF:1.0,\nfile://${secret}\n#EXT-X-ENDLIST\n`);
+		expect(await containerOf(playlist)).toBeNull();
+		await expect(convertVideo(playlist, join(dir, 'evil-out.mp4'), join(dir, 'evil.jpg'))).rejects.toThrow(
+			"That isn't a video",
+		);
+		expect(existsSync(join(dir, 'evil-out.mp4'))).toBe(false);
+	});
 });
 
 describe('videos in the album', () => {

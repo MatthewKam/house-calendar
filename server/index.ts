@@ -11,6 +11,7 @@ import { macRemindersSync } from './macReminders.ts';
 import { fromStored, openAccounts, relativizePaths, type HouseholdRow } from './accounts.ts';
 import { householdRegistry } from './households.ts';
 import { adoptLegacy, buildServer } from './hosted.ts';
+import { oneHop } from './hosted/session.ts';
 import { appleVerifier, googleVerifier, resendSender, type SendCode } from './identity.ts';
 import { googleOAuth } from './providers/google.ts';
 import { googleCalendars } from './googleSync.ts';
@@ -201,8 +202,9 @@ const server = buildServer(accounts, households, {
 			: undefined,
 	googleCalendar: oauth,
 	publicUrl: env.PUBLIC_URL || undefined,
-	// Hosted behind the host's HTTPS proxy: TRUST_PROXY=1.
-	trustProxy: env.TRUST_PROXY === '1' ? true : 'loopback',
+	// Hosted behind the host's HTTPS proxy: TRUST_PROXY=1, believing only the address that proxy adds (the
+	// last in X-Forwarded-For). Believing them all would let anyone claim any address and dodge the limits.
+	trustProxy: env.TRUST_PROXY === '1' ? oneHop : 'loopback',
 });
 
 // The household from before accounts (data/calendar.db) is kept; claim it with the code this logs.

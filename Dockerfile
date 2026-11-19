@@ -14,9 +14,12 @@ RUN npm run build && npm prune --omit=dev
 FROM node:22-bookworm-slim
 WORKDIR /app
 ARG LITESTREAM=0.5.17
+# Its fingerprint, from the release's checksums.txt: a changed download fails the build instead of shipping.
+ARG LITESTREAM_SHA256=cfb371176d164437ae869f8351cfde49bd1804ae71c61923f75c9cba9c9c006d
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
-  && curl -fsSL "https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM}/litestream-${LITESTREAM}-linux-x86_64.tar.gz" \
-    | tar -xz -C /usr/local/bin litestream \
+  && curl -fsSL -o /tmp/litestream.tar.gz "https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM}/litestream-${LITESTREAM}-linux-x86_64.tar.gz" \
+  && echo "${LITESTREAM_SHA256}  /tmp/litestream.tar.gz" | sha256sum -c - \
+  && tar -xzf /tmp/litestream.tar.gz -C /usr/local/bin litestream && rm /tmp/litestream.tar.gz \
   && apt-get purge -y curl && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app /app
 ENV NODE_ENV=production

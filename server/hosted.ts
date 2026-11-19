@@ -1,8 +1,9 @@
 import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { randomInt, randomUUID } from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { createHash, randomInt, randomUUID } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { toStored, type AccountsDB, type HouseholdRow } from './accounts.ts';
 import type { HouseholdRegistry } from './households.ts';
 import { sha } from './auth.ts';
@@ -45,6 +46,43 @@ const COOK_LINK = /^\/api\/cook\/([0-9a-f-]{36})\/([A-Za-z0-9_-]{32})(\/(?:me|li
 // Its routes are in hosted/: signing in, households and joining, the wall and the parent unlock, guardians'
 // PINs, connecting Google Calendar, and deleting an account; hosted/session.ts is who a request's session is, shared by them all.
 
+/**
+ * What browsers are told to protect people with, on every answer: https only, never shown inside another site
+ * (no tricking taps through a frame), files never guessed to be pages, and scripts only from Sprig and the
+ * Apple and Google sign-in buttons (index.html's one inline script by its hash, worked out from the built page).
+ */
+export function securityHeaders(webDist?: string): Record<string, string> {
+	const page =
+		webDist && existsSync(join(webDist, 'index.html')) ? readFileSync(join(webDist, 'index.html'), 'utf8') : '';
+	const inline = [...page.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(
+		(m) => `'sha256-${createHash('sha256').update(m[1]).digest('base64')}'`,
+	);
+	const policy = [
+		"default-src 'self'",
+		`script-src 'self' ${inline.join(' ')} https://accounts.google.com/gsi/client https://appleid.cdn-apple.com`,
+		// React sets styles on elements, and Google's button brings its own.
+		"style-src 'self' 'unsafe-inline' https://accounts.google.com",
+		"img-src 'self' data: blob: https:",
+		"font-src 'self' data:",
+		"media-src 'self' blob:",
+		"connect-src 'self' https://accounts.google.com https://appleid.apple.com",
+		'frame-src https://accounts.google.com https://appleid.apple.com',
+		"worker-src 'self'",
+		"manifest-src 'self'",
+		"object-src 'none'",
+		"base-uri 'self'",
+		"form-action 'self'",
+		"frame-ancestors 'none'",
+	].join('; ');
+	return {
+		'content-security-policy': policy,
+		'x-content-type-options': 'nosniff',
+		'x-frame-options': 'DENY',
+		'referrer-policy': 'strict-origin-when-cross-origin',
+		'permissions-policy': 'camera=(self), microphone=(self), geolocation=(self), payment=()',
+	};
+}
+
 function sendJson(res: ServerResponse, code: number, body: unknown) {
 	res.writeHead(code, { 'content-type': 'application/json; charset=utf-8' });
 	res.end(JSON.stringify(body));
@@ -66,6 +104,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 		},
 	});
 	const x = sessions(accounts, households);
+	const protect = securityHeaders(opts.webDist);
 	const { sessionOf, contextOf, ownParent, isParent, isHolder, guardiansOf, actorOf, setParentUntil } = x;
 
 	// ---- Passing calls to households ----------------------------------------
@@ -86,6 +125,10 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 	}
 
 	async function handle(req: IncomingMessage, res: ServerResponse) {
+		for (const [name, value] of Object.entries(protect)) res.setHeader(name, value);
+		// Reached over https (Fly's proxy says so): only ever over https from now on.
+		if (req.headers['x-forwarded-proto'] === 'https')
+			res.setHeader('strict-transport-security', 'max-age=31536000; includeSubDomains');
 		// www.sprig-family.com is the same app: send it to sprig-family.com, so sign-ins (cookies) live on one name.
 		if (req.headers.host === 'www.sprig-family.com') {
 			res.writeHead(301, { location: `https://sprig-family.com${req.url ?? '/'}` });

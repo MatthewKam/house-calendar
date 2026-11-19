@@ -49,11 +49,15 @@ export interface ServerOptions {
 	publicUrl?: string;
 	/**
 	 * Which proxies' X-Forwarded-For to believe (for each device's address, which limits wrong codes):
-	 * the host's load balancer when hosted (true), else only tailscale serve on this machine.
+	 * the host's load balancer when hosted (1: the one hop in front, so the address it adds is the one believed),
+	 * else only tailscale serve on this machine.
 	 */
-	trustProxy?: boolean | string;
+	trustProxy?: boolean | string | ((address: string, hop: number) => boolean);
 	logger?: boolean;
 }
+
+/** Hosted: only the proxy right in front is believed, so the address it adds is the one used. */
+export const oneHop = (_address: string, hop: number) => hop < 1;
 
 /**
  * The phone app's pages (Capacitor: iOS, then Android). It's another origin, so it can't use the cookie:
@@ -84,6 +88,26 @@ function tokenOf(req: IncomingMessage) {
 	// The phone app (later) sends its token as a header instead of a cookie.
 	const bearer = /^Bearer (\S+)$/.exec(req.headers.authorization ?? '');
 	return bearer?.[1] ?? null;
+}
+
+/**
+ * At most `max` of something per key (an address, an email) in each `ms`: sign-in codes asked for, say. Old
+ * keys are dropped as it goes, so it doesn't grow without end.
+ */
+export function windowLimit(max: number, ms: number) {
+	const seen = new Map<string, number[]>();
+	return {
+		/** Counts one more; false when that's over the limit (and it isn't counted). */
+		take(key: string) {
+			const now = Date.now();
+			if (seen.size > 10_000) for (const [k, t] of seen) if (t.every((at) => at <= now - ms)) seen.delete(k);
+			const recent = (seen.get(key) ?? []).filter((at) => at > now - ms);
+			if (recent.length >= max) return false;
+			recent.push(now);
+			seen.set(key, recent);
+			return true;
+		},
+	};
 }
 
 /** Tries per key (an address, or a device for PINs); five wrong ones lock it for 15 minutes. */

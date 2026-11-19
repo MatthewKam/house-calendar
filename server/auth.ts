@@ -99,6 +99,9 @@ const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean]
 	['POST', '/api/rewards/:id/take-back'],
 	// A kid's own device puts stars in jars only with a parent there.
 	['POST', '/api/rewards/place', (req) => req.raw.viewer?.role === 'kid'],
+	// Kids redeem; a grown-up says when the reward was actually handed over (or takes that back).
+	['POST', '/api/rewards/wins/:id/given'],
+	['POST', '/api/rewards/wins/:id/undo'],
 	['PUT', '/api/events/:id/visibility'],
 	['POST', '/api/moments'],
 	['DELETE', '/api/moments/:id'],
@@ -157,6 +160,12 @@ const PARENT_ONLY: [method: string, route: string, when?: (req: Req) => boolean]
 	['PUT', '/api/recipes/:id/notes/:noteId'],
 	['DELETE', '/api/recipes/:id/notes/:noteId'],
 	['POST', '/api/recipes/:id/cooks', (req) => typeof req.body?.note === 'string' && req.body.note.trim() !== ''],
+	// Rating a recipe is done on a grown-up's screen.
+	['PUT', '/api/recipes/:id/ratings/:memberId'],
+	// Cooking together (a link anyone can open to cook along): cooking needs a grown-up.
+	['POST', '/api/recipes/:id/cook'],
+	['PUT', '/api/recipes/:id/cook'],
+	['DELETE', '/api/recipes/:id/cook'],
 	// Plan ahead: planning meals and themed days is a parent's (seeing the plan is anyone's).
 	['POST', '/api/meals'],
 	['PUT', '/api/meals/:id'],
