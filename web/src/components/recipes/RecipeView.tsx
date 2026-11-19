@@ -7,6 +7,7 @@ import {
 	useCookRoom,
 	useCookTogether,
 	useLiveRecipeShopping,
+	useMealActions,
 	useMeals,
 	useMembers,
 	useRecipeActions,
@@ -115,6 +116,9 @@ export default function RecipeView({
 	const [reminding, setReminding] = useState(false);
 	const today = dayKey(useNow());
 	const planned = (useMeals().data?.meals ?? []).filter((m) => m.recipeId === r.id && m.day >= today);
+	// Cook today: on today's dinner in one tap, so it shows on everyone's Today; once on, its day shows instead.
+	const { plan } = useMealActions();
+	const onToday = planned.some((m) => m.day === today);
 	const knownTags = [...new Set((useRecipes().data ?? []).flatMap((x) => x.tags))];
 	// Ratings: everyone in the family. Each changes their own; a parent a kid's; the account holder anyone's.
 	const people = useMembers().data ?? [];
@@ -522,10 +526,12 @@ export default function RecipeView({
 								{parent && (
 									<span className={s.aheadButtons}>
 										<button type="button" className={s.aheadButton} onClick={() => setPlanning('new')}>
-											📅 Put it on a day
+											<span className={s.recipeButtonLogo}>📅&nbsp;</span>
+											<span className={s.recipeButtonText}>Put it on a day</span>
 										</button>
 										<button type="button" className={s.aheadButton} onClick={() => setReminding(true)}>
-											⏰ Just remind me
+											<span className={s.recipeButtonLogo}>⏰&nbsp;</span>
+											<span className={s.recipeButtonText}>Just remind me</span>
 										</button>
 									</span>
 								)}
@@ -540,8 +546,8 @@ export default function RecipeView({
 								))}
 								{parent && (
 									<button type="button" className={s.tagButton} onClick={() => setTagging(true)}>
-										<span>🏷️&nbsp;</span>
-										<span>{r.tags.length ? 'Edit tags' : 'Add tags'}</span>
+										<span className={s.recipeButtonLogo}>🏷️&nbsp;</span>
+										<span className={s.recipeButtonText}>{r.tags.length ? 'Edit tags' : 'Add tags'}</span>
 									</button>
 								)}
 							</div>
@@ -568,9 +574,21 @@ export default function RecipeView({
 										📅 {mealLabel(m.meal)}, {dayWord(m.day, today)}
 									</button>
 								))}
+								{parent && r.prepAhead.length === 0 && !onToday && (
+									<button
+										type="button"
+										className={s.tagButton}
+										disabled={plan.isPending}
+										onClick={() => plan.mutate({ day: today, meal: 'dinner', recipeId: r.id, reminders: [] })}
+									>
+										<span className={s.recipeButtonLogo}>🍳&nbsp;</span>
+										<span className={s.recipeButtonText}>Cook today</span>
+									</button>
+								)}
 								{parent && r.prepAhead.length === 0 && (
 									<button type="button" className={s.tagButton} onClick={() => setPlanning('new')}>
-										📅 Put it on a day
+										<span className={s.recipeButtonLogo}>📅&nbsp;</span>
+										<span className={s.recipeButtonText}>Put it on a day</span>
 									</button>
 								)}
 							</div>

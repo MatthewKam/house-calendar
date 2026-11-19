@@ -1032,6 +1032,9 @@ button.ideaSearch {
 	color: var(--muted);
 	font: inherit;
 	font-size: 0.85rem;
+	display: flex;
+	align-items: center;
+	gap: 4px;
 }
 .tagChoices {
 	display: flex;
