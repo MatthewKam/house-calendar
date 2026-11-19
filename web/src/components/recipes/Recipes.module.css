@@ -1628,6 +1628,37 @@ button.ideaSearch {
 	grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
 	gap: 0.5rem;
 }
+/* Cooking today: a plain list (no cards) of what's planned today, its meal then the recipe; a tap opens it. */
+.todayList {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+.todayList li + li {
+	border-top: 1px solid var(--line);
+}
+.todayRow {
+	width: 100%;
+	display: flex;
+	align-items: baseline;
+	gap: 0.8rem;
+	min-height: 2.75rem;
+	padding: 0.4rem 0.2rem;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+}
+.todayMeal {
+	flex: none;
+	width: 5rem;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.todayTitle {
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
 .viewingCard {
 	display: flex;
 	align-items: center;

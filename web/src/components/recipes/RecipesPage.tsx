@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
 import { useImageDrop } from '../../lib/useFlyerDrop';
-import { useMembers, useRecipeReading, useRecipes } from '../../lib/queries';
+import { useMeals, useMembers, useRecipeReading, useRecipes } from '../../lib/queries';
 import DishIdeas from './DishIdeas';
 import PlanAhead from './PlanAhead';
-import { takeWanted } from '../../lib/meals';
+import { mealLabel, plannedOn, takeWanted } from '../../lib/meals';
+import { dayKey } from '../../lib/dates';
+import { useNow } from '../../lib/useNow';
 import { flags } from '../../lib/allergies';
 import { coverOf, longestPrep, mealPicture, minutesText, OVERNIGHT, prepBadge, tagEmoji } from '../../lib/recipes';
 import type { Recipe } from '../../lib/types';
@@ -134,6 +136,12 @@ export default function RecipesPage({
 		const r = recipes.find((x) => x.id === p.id);
 		return r ? [{ r, p }] : [];
 	});
+	// What's being cooked today (Cook today, or planned for today): a plain list at the top.
+	const today = dayKey(useNow());
+	const cookingToday = plannedOn(useMeals().data, today).flatMap((m) => {
+		const r = recipes.find((x) => x.id === m.recipeId);
+		return r ? [{ m, r }] : [];
+	});
 
 	return (
 		<section className={s.page} aria-label="Recipes">
@@ -175,6 +183,21 @@ export default function RecipesPage({
 				</div>
 			) : (
 				<div className={s.scroll} ref={scroller}>
+					{cookingToday.length > 0 && (
+						<section className={s.viewing} aria-label="Cooking today">
+							<h2 className={s.viewingTitle}>Cooking today</h2>
+							<ul className={s.todayList}>
+								{cookingToday.map(({ m, r }) => (
+									<li key={m.id}>
+										<button type="button" className={s.todayRow} onClick={() => setOpen(r.id)}>
+											<span className={s.todayMeal}>{mealLabel(m.meal)}</span>
+											<span className={s.todayTitle}>{r.title}</span>
+										</button>
+									</li>
+								))}
+							</ul>
+						</section>
+					)}
 					{viewing.length > 0 && (
 						<section className={s.viewing} aria-label="Currently viewing">
 							<h2 className={s.viewingTitle}>Currently viewing</h2>
