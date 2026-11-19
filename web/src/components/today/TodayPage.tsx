@@ -376,13 +376,13 @@ export default function TodayPage({
 							{guard('finishing setting up', <FinishSetup />)}
 							{guard('the quote', quoteCard)}
 							{guard('the encouragement', encouragementCard)}
-							{guard('the weather', weatherCard)}
-							{guard("the kids' day", kidsCard)}
 							{guard('Needs you', needsCard)}
 							{guard('the photos', photosCard)}
+							{guard('the weather', weatherCard)}
 						</div>
 						<div className={s.column}>
 							{guard('the calendar', calendarCard)}
+							{guard("the kids' day", kidsCard)}
 							{guard('special days', specialCard)}
 						</div>
 					</div>
@@ -390,13 +390,14 @@ export default function TodayPage({
 					<div className={s.cards}>
 						{guard('finishing setting up', <FinishSetup />)}
 						{guard('the calendar', calendarCard)}
-						{guard('the weather', weatherCard)}
-						{guard('special days', specialCard)}
 						{guard("the kids' day", kidsCard)}
 						{guard('Needs you', needsCard)}
+						{guard('special days', specialCard)}
+						{guard('the photos', photosCard)}
 						{guard('the quote', quoteCard)}
 						{guard('the encouragement', encouragementCard)}
-						{guard('the photos', photosCard)}
+
+						{guard('the weather', weatherCard)}
 					</div>
 				)}
 			</div>
