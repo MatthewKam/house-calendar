@@ -37,6 +37,7 @@ import ErrorBoundary from '../ui/ErrorBoundary';
 import s from './KidMode.module.css';
 import { firstName } from '../../lib/people';
 import GrownUpPin from '../account/GrownUpPin';
+import { LEARN_ON } from '../../lib/features';
 
 /** Learn's games load when the tab is first opened, so Today shows without waiting for them. */
 const LearnTab = lazy(() => import('../learn/LearnTab'));
@@ -87,7 +88,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin, startWi
 	const [pickedId, setPickedId] = useState(kids.find((k) => k.id === startWith)?.id ?? kids[0]?.id ?? null);
 	const kid = kids.find((k) => k.id === pickedId) ?? kids[0];
 	const [picked, setTab] = useState<KidTab>('today');
-	const learning = useLearn(today).data?.find((l) => l.memberId === kid?.id && l.enabled);
+	const learning = useLearn(today).data?.find((l) => LEARN_ON && l.memberId === kid?.id && l.enabled);
 	const tabs = TABS.filter((t) => t.id !== 'learn' || learning);
 	// Learn for a kid without it (switched kids): back to Today.
 	const tab = tabs.some((t) => t.id === picked) ? picked : 'today';
