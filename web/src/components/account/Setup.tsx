@@ -86,7 +86,7 @@ function Kids({ kids, onNext }: { kids: Member[]; onNext: () => void }) {
 	return (
 		<>
 			<h1 className={s.title}>Your kids</h1>
-			<p className={s.lead}>Their birthday picks the right games and tasks for their age.</p>
+			<p className={s.lead}>Their birthday picks the right tasks and rewards for their age.</p>
 			{kids.length > 0 && (
 				<ul className={s.people}>
 					{kids.map((k) => (
