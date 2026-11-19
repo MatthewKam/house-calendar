@@ -38,6 +38,74 @@ export function deletionPlan(
 	});
 }
 
+/**
+ * Deletes a user's account, as planned by deletionPlan: their own sign-ins and devices, their calendar
+ * connections, and the households that go with them (files and all). Settings' Delete my account, and the
+ * site's demo when it ends (hosted/demo.ts).
+ */
+export async function deleteUser(
+	accounts: AccountsDB,
+	households: HouseholdRegistry,
+	x: Pick<Sessions, 'holderOf' | 'holdersOf'>,
+	dataDir: string,
+	userId: string,
+) {
+	const plan = deletionPlan(accounts, x, userId);
+
+	// Their calendar connections and alerts, in the households they're leaving (the rest go whole).
+	for (const p of plan.filter((p) => !p.deleted)) {
+		const h = await households.get(p.household);
+		await h.disconnect?.(p.membership.member_id);
+		h.db.prepare('DELETE FROM push_devices WHERE member_id = ?').run(p.membership.member_id);
+	}
+	const gone = plan.filter((p) => p.deleted).map((p) => p.household);
+	for (const h of gone) await households.drop(h.id);
+
+	const user = accounts.prepare('SELECT email FROM users WHERE id = ?').get(userId) as
+		{ email: string | null } | undefined;
+	accounts.transaction(() => {
+		for (const p of plan) {
+			if (p.deleted) {
+				// Other people's own devices stay signed in, out of it; its kids' devices and walls go with it.
+				accounts
+					.prepare(
+						`UPDATE sessions SET household_id = NULL, parent_until = NULL WHERE kind = 'user' AND household_id = ?`,
+					)
+					.run(p.household.id);
+				accounts.prepare('DELETE FROM households WHERE id = ?').run(p.household.id);
+				// Its backups go too, within the 30 days the privacy page promises (server/backups.ts).
+				accounts.prepare('INSERT OR IGNORE INTO gone_backups (db_file) VALUES (?)').run(p.household.db_file);
+			} else if (p.membership.role === 'kid') {
+				accounts.prepare('UPDATE memberships SET user_id = NULL WHERE id = ?').run(p.membership.id);
+			} else {
+				if (p.heir) accounts.prepare('UPDATE households SET holder_id = ? WHERE id = ?').run(p.heir, p.household.id);
+				accounts.prepare('DELETE FROM memberships WHERE id = ?').run(p.membership.id);
+			}
+		}
+		const emails = (
+			accounts.prepare('SELECT email FROM identities WHERE user_id = ? AND email IS NOT NULL').all(userId) as {
+				email: string;
+			}[]
+		).map((r) => r.email);
+		for (const e of new Set([user?.email, ...emails]))
+			if (e) accounts.prepare('DELETE FROM email_codes WHERE email = ?').run(e.toLowerCase());
+		// Their sign-ins (identities) and sessions go with them.
+		accounts.prepare('DELETE FROM users WHERE id = ?').run(userId);
+	})();
+
+	// The households' files: a household's own folder (data/households/<id>), or for the one from before
+	// accounts, its database and photos.
+	for (const h of gone) {
+		const db = fromStored(dataDir, h.db_file);
+		const own = dirname(db);
+		if (own.startsWith(resolve(dataDir, 'households') + sep)) rmSync(own, { recursive: true, force: true });
+		else {
+			for (const f of [db, `${db}-wal`, `${db}-shm`]) rmSync(f, { force: true });
+			rmSync(fromStored(dataDir, h.photos_dir), { recursive: true, force: true });
+		}
+	}
+}
+
 export function deleteAccountRoutes(
 	app: FastifyInstance,
 	accounts: AccountsDB,
@@ -61,62 +129,7 @@ export function deleteAccountRoutes(
 		const s = needUser(req, reply);
 		if (!s) return;
 		if (s.wall_mode) return reply.code(403).send({ error: 'Turn wall mode off first' });
-		const userId = s.user_id!;
-		const plan = deletionPlan(accounts, x, userId);
-
-		// Their calendar connections and alerts, in the households they're leaving (the rest go whole).
-		for (const p of plan.filter((p) => !p.deleted)) {
-			const h = await households.get(p.household);
-			await h.disconnect?.(p.membership.member_id);
-			h.db.prepare('DELETE FROM push_devices WHERE member_id = ?').run(p.membership.member_id);
-		}
-		const gone = plan.filter((p) => p.deleted).map((p) => p.household);
-		for (const h of gone) await households.drop(h.id);
-
-		const user = accounts.prepare('SELECT email FROM users WHERE id = ?').get(userId) as
-			{ email: string | null } | undefined;
-		accounts.transaction(() => {
-			for (const p of plan) {
-				if (p.deleted) {
-					// Other people's own devices stay signed in, out of it; its kids' devices and walls go with it.
-					accounts
-						.prepare(
-							`UPDATE sessions SET household_id = NULL, parent_until = NULL WHERE kind = 'user' AND household_id = ?`,
-						)
-						.run(p.household.id);
-					accounts.prepare('DELETE FROM households WHERE id = ?').run(p.household.id);
-					// Its backups go too, within the 30 days the privacy page promises (server/backups.ts).
-					accounts.prepare('INSERT OR IGNORE INTO gone_backups (db_file) VALUES (?)').run(p.household.db_file);
-				} else if (p.membership.role === 'kid') {
-					accounts.prepare('UPDATE memberships SET user_id = NULL WHERE id = ?').run(p.membership.id);
-				} else {
-					if (p.heir) accounts.prepare('UPDATE households SET holder_id = ? WHERE id = ?').run(p.heir, p.household.id);
-					accounts.prepare('DELETE FROM memberships WHERE id = ?').run(p.membership.id);
-				}
-			}
-			const emails = (
-				accounts.prepare('SELECT email FROM identities WHERE user_id = ? AND email IS NOT NULL').all(userId) as {
-					email: string;
-				}[]
-			).map((r) => r.email);
-			for (const e of new Set([user?.email, ...emails]))
-				if (e) accounts.prepare('DELETE FROM email_codes WHERE email = ?').run(e.toLowerCase());
-			// Their sign-ins (identities) and sessions go with them.
-			accounts.prepare('DELETE FROM users WHERE id = ?').run(userId);
-		})();
-
-		// The households' files: a household's own folder (data/households/<id>), or for the one from before
-		// accounts, its database and photos.
-		for (const h of gone) {
-			const db = fromStored(opts.dataDir, h.db_file);
-			const own = dirname(db);
-			if (own.startsWith(resolve(opts.dataDir, 'households') + sep)) rmSync(own, { recursive: true, force: true });
-			else {
-				for (const f of [db, `${db}-wal`, `${db}-shm`]) rmSync(f, { force: true });
-				rmSync(fromStored(opts.dataDir, h.photos_dir), { recursive: true, force: true });
-			}
-		}
-
+		await deleteUser(accounts, households, x, opts.dataDir, s.user_id!);
 		started.delete(req.raw);
 		reply.header('set-cookie', `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`);
 		return reply.code(204).send();

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, type AuthStatus } from '../../lib/api';
 import { keys, useAuthStatus } from '../../lib/queries';
+import DemoBar from './DemoBar';
 import PinScreen from './PinScreen';
 import Setup from './Setup';
 import { finishSetup, setupPending } from '../../lib/setup';
@@ -68,5 +69,10 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 			/>
 		);
 	}
-	return <>{children}</>;
+	return (
+		<>
+			{children}
+			{s.demo && <DemoBar demo={s.demo} onEnded={() => update({ signedIn: false })} />}
+		</>
+	);
 }

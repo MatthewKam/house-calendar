@@ -1,0 +1,29 @@
+/* The demo's note (DemoBar.tsx): a small pill at the bottom of every screen, above the phone's bar, under
+   sheets and menus. Centered by its margins, not a transform: a pressed button's own (app.css) would
+   replace it, and the pill would jump out from under the finger. */
+.bar {
+	composes: withIcon from '../ui/Buttons.module.css';
+	position: fixed;
+	inset-inline: 0;
+	margin-inline: auto;
+	width: fit-content;
+	bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+	z-index: var(--layer-nav);
+	max-width: calc(100vw - 2rem);
+	min-height: 2.4rem;
+	padding: 0.3rem 0.9rem;
+	border-radius: var(--radius-round);
+	border: 1px solid var(--warn-line);
+	background: var(--warn-bg);
+	color: var(--text);
+	font-size: 0.85rem;
+	font-weight: 650;
+	box-shadow: var(--shadow-sm);
+	white-space: nowrap;
+}
+/* Phones: above the bottom bar. */
+@media (max-width: 700px) {
+	.bar {
+		bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+	}
+}

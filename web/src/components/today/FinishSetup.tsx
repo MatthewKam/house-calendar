@@ -35,7 +35,9 @@ export default function FinishSetup() {
 	});
 	const [open, setOpen] = useState<Step | null>(null);
 	// Only for a guardian's own device, and only once everything it looks at has loaded.
-	if (!auth?.signedIn || auth.kind !== 'user' || auth.role !== 'guardian' || !household || hidden) return null;
+	// Not in the site's demo: its family is made up, and invites and calendars are off there.
+	if (!auth?.signedIn || auth.kind !== 'user' || auth.role !== 'guardian' || !household || hidden || auth.demo)
+		return null;
 	if (!members || !tasks || !calendars) return null;
 
 	const kids = members.filter(isKid);
