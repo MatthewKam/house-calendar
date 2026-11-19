@@ -1628,19 +1628,24 @@ button.ideaSearch {
 	grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
 	gap: 0.5rem;
 }
-/* Cooking today: what's planned today on one raised panel, so it stands out from the recipes below; each row is
-   its meal (in the accent) then the recipe, and a tap opens it. */
+/* Cooking today: what's planned today on one raised panel tinted with the accent, so it stands out from the
+   filters and recipes below (plain card colour blended in with the filters on a phone); each row is its meal (in
+   the accent) then the recipe, and a tap opens it. Only as wide as its longest row (never past the page), so on a
+   computer it doesn't stretch across the screen. */
 .todayList {
+	width: fit-content;
+	min-width: min(100%, 20rem);
+	max-width: 100%;
 	list-style: none;
 	margin: 0;
 	padding: 0 0.8rem;
-	background: var(--surface);
-	border: 1px solid var(--line);
+	background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+	border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
 	border-radius: var(--radius);
 	box-shadow: var(--shadow-sm);
 }
 .todayList li + li {
-	border-top: 1px solid var(--line);
+	border-top: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line));
 }
 .todayRow {
 	width: 100%;
