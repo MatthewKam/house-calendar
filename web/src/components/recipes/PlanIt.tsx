@@ -149,7 +149,7 @@ export default function PlanIt({
 
 	return (
 		<Sheet
-			label={plan ? 'Move' : 'Put it on a day'}
+			label={plan ? 'Move' : 'Pick a cook day'}
 			onClose={onClose}
 			className={s.planView}
 			onSubmit={(e) => {

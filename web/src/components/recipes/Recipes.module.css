@@ -1409,7 +1409,7 @@ button.ideaSearch {
 .themeEmoji {
 	font-size: 1.6rem;
 }
-/* Put it on a day: the day's heading with the meal beside it. */
+/* Pick a cook day: the day's heading with the meal beside it. */
 .planHead {
 	display: flex;
 	align-items: center;

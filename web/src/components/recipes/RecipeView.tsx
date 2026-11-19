@@ -528,7 +528,7 @@ export default function RecipeView({
 									<span className={s.aheadButtons}>
 										<button type="button" className={s.aheadButton} onClick={() => setPlanning('new')}>
 											<span className={buttons.buttonIcon}>📅&nbsp;</span>
-											<span className={buttons.buttonText}>Cook today</span>
+											<span className={buttons.buttonText}>Pick a cook day</span>
 										</button>
 										<button type="button" className={s.aheadButton} onClick={() => setReminding(true)}>
 											<span className={buttons.buttonIcon}>⏰&nbsp;</span>
@@ -592,7 +592,7 @@ export default function RecipeView({
 								{parent && r.prepAhead.length === 0 && (
 									<button type="button" className={s.tagButton} onClick={() => setPlanning('new')}>
 										<span className={buttons.buttonIcon}>📅&nbsp;</span>
-										<span className={buttons.buttonText}>Put it on a day</span>
+										<span className={buttons.buttonText}>Pick a cook day</span>
 									</button>
 								)}
 							</div>
