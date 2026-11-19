@@ -374,16 +374,17 @@ export default function TodayPage({
 					<div className={s.columns}>
 						<div className={s.column}>
 							{guard('finishing setting up', <FinishSetup />)}
-							{guard('the quote', quoteCard)}
-							{guard('the encouragement', encouragementCard)}
-							{guard('Needs you', needsCard)}
+							{guard('the calendar', calendarCard)}
+							{guard("the kids' day", kidsCard)}
+							{guard('special days', specialCard)}
+
 							{guard('the photos', photosCard)}
 							{guard('the weather', weatherCard)}
 						</div>
 						<div className={s.column}>
-							{guard('the calendar', calendarCard)}
-							{guard("the kids' day", kidsCard)}
-							{guard('special days', specialCard)}
+							{guard('the quote', quoteCard)}
+							{guard('the encouragement', encouragementCard)}
+							{guard('Needs you', needsCard)}
 						</div>
 					</div>
 				) : (
