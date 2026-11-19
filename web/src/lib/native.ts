@@ -37,11 +37,12 @@ export function keepSession(res: { headers: { get(name: string): string | null }
 	void SecureStorage.set(KEY, session).catch(() => {});
 }
 
-/** Signed out, or the account deleted: the token is no use any more. */
+/** Signed out, or the account deleted: the token is no use any more, and the phone stops sending calendars. */
 export function forgetSession() {
 	if (!isApp || !session) return;
 	session = null;
 	void SecureStorage.remove(KEY).catch(() => {});
+	void PhoneCalendars.stop().catch(() => {});
 }
 
 /** The headers that say who's calling: the token in the app, nothing on the web (the cookie does it). */
@@ -129,3 +130,63 @@ export function openTappedAlerts() {
 		if (typeof url === 'string' && url.startsWith('/#')) location.hash = url.slice(1);
 	});
 }
+
+// The phone's own calendars, shared without a password (ios/App/App/PhoneCalendars.swift, which sends them
+// itself: when Sprig opens, and in the background when iOS allows).
+export interface PhoneCalendarChoice {
+	id: string;
+	name: string;
+	/** The account it's in: "iCloud", "Gmail". */
+	account: string;
+	/** The phone's default calendar for new events. */
+	primary: boolean;
+}
+const PhoneCalendars = registerPlugin<{
+	access(): Promise<{ access: 'granted' | 'denied' | 'prompt' }>;
+	requestAccess(): Promise<{ granted: boolean }>;
+	calendars(): Promise<{ calendars: PhoneCalendarChoice[] }>;
+	share(o: {
+		server: string;
+		phone: string;
+		name: string;
+		token: string;
+		calendarIds: string[];
+	}): Promise<{ events: number }>;
+	shared(): Promise<{ phone?: string; calendarIds?: string[] }>;
+	syncNow(o: { token?: string }): Promise<{ events: number }>;
+	stop(): Promise<void>;
+}>('PhoneCalendars');
+
+/** Whether Sprig may read this phone's calendars: yes, no (changed in its Settings), or not asked yet. */
+export const phoneCalendarAccess = async () => (await PhoneCalendars.access()).access;
+/** Asks (the first time, the iPhone's "Allow access to your calendars?"); true when allowed. */
+export const askPhoneCalendars = async () => (await PhoneCalendars.requestAccess()).granted;
+/** The phone's calendars, to pick which to share. */
+export const phoneCalendarList = async () => (await PhoneCalendars.calendars()).calendars;
+/** What this phone shares now: its id with Sprig and the calendars picked, or null. */
+export async function phoneCalendarsShared() {
+	const s = await PhoneCalendars.shared();
+	return s.phone ? { phone: s.phone, calendarIds: s.calendarIds ?? [] } : null;
+}
+
+/** Starts (or changes) sharing these calendars from this phone, and sends them now; how many events went. */
+export async function sharePhoneCalendars(calendarIds: string[], name: string) {
+	const phone = (await phoneCalendarsShared())?.phone ?? crypto.randomUUID();
+	const { events } = await PhoneCalendars.share({
+		server: SERVER,
+		phone,
+		name,
+		token: session?.token ?? '',
+		calendarIds,
+	});
+	return { phone, events };
+}
+
+/** Sends the shared calendars again (Sprig opened); nothing when none are shared. */
+export async function syncPhoneCalendars() {
+	if (!isApp || !(await phoneCalendarsShared())) return;
+	await PhoneCalendars.syncNow({ token: session?.token });
+}
+
+/** Stops sharing from this phone. */
+export const stopPhoneCalendars = () => PhoneCalendars.stop();

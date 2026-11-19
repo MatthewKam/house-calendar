@@ -4,6 +4,9 @@ import { dirname } from 'node:path';
 
 export type DB = Database.Database;
 
+/** Starts a migration that rebuilds a table others point at: it runs with foreign keys off (SQLite's way). */
+const FOREIGN_KEYS_OFF = '-- foreign keys off';
+
 // Each entry runs once, in order. Never edit a shipped migration; add a new one.
 const migrations: string[] = [
 	`
@@ -1015,6 +1018,34 @@ const migrations: string[] = [
 	`
   ALTER TABLE lists ADD COLUMN sort_unchecked INTEGER NOT NULL DEFAULT 0;
   `,
+	// Calendars read from someone's iPhone (server/phoneCalendars.ts): a 'phone' provider, and each phone that
+	// sends them. Rebuilding calendars needs foreign keys off, or dropping it would delete every event.
+	`${FOREIGN_KEYS_OFF}
+  CREATE TABLE calendars_new (
+    id          TEXT PRIMARY KEY,
+    provider    TEXT NOT NULL CHECK (provider IN ('local','google','icloud','phone')),
+    remote_id   TEXT,
+    name        TEXT NOT NULL,
+    member_id   TEXT REFERENCES members(id) ON DELETE SET NULL,
+    sync_token  TEXT,
+    hidden      INTEGER NOT NULL DEFAULT 0,
+    color       TEXT,
+    writable    INTEGER NOT NULL DEFAULT 1,
+    source      TEXT,
+    visibility  TEXT NOT NULL DEFAULT 'everyone' CHECK (visibility IN ('everyone','busy','private'))
+  );
+  INSERT INTO calendars_new (id, provider, remote_id, name, member_id, sync_token, hidden, color, writable, source, visibility)
+    SELECT id, provider, remote_id, name, member_id, sync_token, hidden, color, writable, source, visibility FROM calendars;
+  DROP TABLE calendars;
+  ALTER TABLE calendars_new RENAME TO calendars;
+  CREATE UNIQUE INDEX calendars_remote ON calendars(provider, remote_id) WHERE remote_id IS NOT NULL;
+  CREATE TABLE phones (
+    id         TEXT PRIMARY KEY,
+    member_id  TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL,
+    last_sync  TEXT NOT NULL
+  );
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */
@@ -1038,9 +1069,19 @@ function migrate(db: DB, upTo: number) {
 		);
 	}
 	for (let v = current; v < upTo; v++) {
-		db.transaction(() => {
-			db.exec(migrations[v]);
-			db.pragma(`user_version = ${v + 1}`);
-		})();
+		// Foreign keys can only be switched off outside a transaction; they're checked before it commits.
+		const keysOff = migrations[v].startsWith(FOREIGN_KEYS_OFF);
+		if (keysOff) db.pragma('foreign_keys = OFF');
+		try {
+			db.transaction(() => {
+				db.exec(migrations[v]);
+				if (keysOff && (db.pragma('foreign_key_check') as unknown[]).length > 0) {
+					throw new Error(`Upgrade ${v + 1} would leave rows pointing at nothing`);
+				}
+				db.pragma(`user_version = ${v + 1}`);
+			})();
+		} finally {
+			if (keysOff) db.pragma('foreign_keys = ON');
+		}
 	}
 }

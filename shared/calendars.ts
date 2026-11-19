@@ -10,7 +10,7 @@ import { z } from 'zod';
  */
 export const Visibility = z.enum(['everyone', 'busy', 'private']);
 /** Where a synced calendar comes from. */
-export const Provider = z.enum(['icloud', 'google']);
+export const Provider = z.enum(['icloud', 'google', 'phone']);
 
 /** A change to a synced calendar (PATCH /api/calendars/:id): any of these, at least one. */
 export const CalendarPatch = z
@@ -79,6 +79,58 @@ export const Connections = z.object({
 	icloud: z.array(Connection).nullable(),
 });
 
+/**
+ * How far around today a phone sends its events (server/sync.ts keeps the same window for every calendar):
+ * from the start of the month this many months back, to the start of the month this many ahead.
+ */
+export const PHONE_MONTHS = { back: 3, ahead: 13 };
+const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+/** An instant: 2026-11-18T17:30:00Z or with an offset. */
+const instant = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/);
+/** One occurrence of an event on the phone (repeats arrive one per occurrence). */
+export const PhoneEvent = z.strictObject({
+	/** The phone's calendar it's in (PhoneCalendar.id). */
+	calendarId: z.string().min(1).max(200),
+	/** The phone's id for the event plus "#<start>" for each occurrence of a repeat. */
+	id: z.string().min(1).max(400),
+	title: z.string().max(1000),
+	allDay: z.boolean(),
+	/** Timed: an instant. All-day: YYYY-MM-DD, and the end is the day after the last. */
+	start: z.union([instant, day]),
+	end: z.union([instant, day]),
+	location: z.string().max(1000).nullable(),
+	notes: z.string().max(20_000).nullable(),
+});
+/** A calendar on the phone the person chose to share. */
+export const PhoneCalendar = z.strictObject({
+	id: z.string().min(1).max(200),
+	name: z.string().min(1).max(200),
+	/** #rrggbb from the phone's Calendar app. */
+	color: z
+		.string()
+		.regex(/^#[0-9a-fA-F]{6}$/)
+		.nullable(),
+	/** The account it's in, as the phone names it: "iCloud", "Gmail", "Outlook". */
+	account: z.string().max(200),
+	/** The phone's default calendar for new events: it's linked to the person, as an iCloud account's main one is. */
+	primary: z.boolean(),
+});
+/** A phone's calendars and their events (PUT /api/phone-calendars/:phone): the whole window, every time. */
+export const PhoneSync = z.strictObject({
+	/** What to call the phone in Settings: "Matt's iPhone". */
+	name: z.string().min(1).max(100),
+	calendars: z.array(PhoneCalendar).max(100),
+	events: z.array(PhoneEvent).max(20_000),
+});
+/** A phone sending its calendars (GET /api/phone-calendars). */
+export const Phone = z.object({
+	id: z.string(),
+	memberId: z.string(),
+	name: z.string(),
+	lastSync: z.string(),
+	calendars: z.int(),
+});
+
 export type Visibility = z.infer<typeof Visibility>;
 export type CalendarPatch = z.infer<typeof CalendarPatch>;
 export type ICloudSignIn = z.infer<typeof ICloudSignIn>;
@@ -86,3 +138,7 @@ export type SyncedCalendar = z.infer<typeof SyncedCalendar>;
 export type SyncStatus = z.infer<typeof SyncStatus>;
 export type Connection = z.infer<typeof Connection>;
 export type Connections = z.infer<typeof Connections>;
+export type PhoneEvent = z.infer<typeof PhoneEvent>;
+export type PhoneCalendar = z.infer<typeof PhoneCalendar>;
+export type PhoneSync = z.infer<typeof PhoneSync>;
+export type Phone = z.infer<typeof Phone>;

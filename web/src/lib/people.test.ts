@@ -19,7 +19,7 @@ describe('people', () => {
 		expect(listOf(['A', 'B', 'C'])).toBe('A, B and C');
 	});
 
-	it("names a new household for whoever makes it", () => {
+	it('names a new household for whoever makes it', () => {
 		expect(familyName('Matt Kam')).toBe('The Kam family');
 		expect(familyName('  Mary Ann  Lee ')).toBe('The Lee family');
 		expect(familyName('Matt')).toBe("Matt's family");

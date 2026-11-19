@@ -68,6 +68,7 @@ import type { SpecialReminder, SpecialReminderNew } from '../../../shared/specia
 import type { DayPlans, DayTick } from '../../../shared/dayPlans.ts';
 import type { LiveRecipeShopping, RecipeShopping } from '../../../shared/shopping.ts';
 import type { CookAlong, CookMe, CookRoom, CookStatus, LiveCook } from '../../../shared/cook.ts';
+import type { Phone } from '../../../shared/calendars.ts';
 import { SERVER, authHeaders, forgetSession, isApp, keepSession, mediaUrl } from './native';
 
 /**
@@ -307,6 +308,9 @@ export const api = {
 	signOutDevice: (id: string) => call<void>('POST', `/api/auth/devices/${id}/sign-out`),
 	/** People's calendar connections; google is null when the server hasn't set Google up. */
 	connections: () => call<Connections>('GET', '/api/connections'),
+	/** Phones sharing their own calendars (lib/native.ts sends them). */
+	phones: () => call<Phone[]>('GET', '/api/phone-calendars'),
+	removePhone: (id: string) => call<void>('DELETE', `/api/phone-calendars/${encodeURIComponent(id)}`),
 	connectICloud: (c: { appleId: string; password: string }) => call<void>('POST', '/api/connections/icloud', c),
 	removeConnection: (id: string) => call<void>('DELETE', `/api/connections/${id}`),
 	/** The phone app's one-time link for connecting Google Calendar in a Safari sheet. */

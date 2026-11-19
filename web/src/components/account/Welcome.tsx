@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { api, type AuthStatus, type SignedIn } from '../../lib/api';
 import { pendingJoin } from '../../lib/joinCode';
 import { startSetup } from '../../lib/setup';
+import { isApp } from '../../lib/native';
 import JoinForm from './JoinForm';
 import s from './Account.module.css';
 import { familyName, firstName } from '../../lib/people';
@@ -47,7 +48,15 @@ export default function Welcome({ status, onDone }: { status: SignedIn; onDone: 
 				{joining ? (
 					<>
 						<p className={s.lead}>Type the code your family sent you.</p>
-						<JoinForm signedIn onJoined={onDone} />
+						<JoinForm
+							signedIn
+							onJoined={(st) => {
+								// A parent who joins on their phone shares its calendars next (Setup's calendar step).
+								if (isApp && st.signedIn && st.household && st.role === 'guardian')
+									startSetup(st.household.id, 'joined');
+								onDone(st);
+							}}
+						/>
 						<button className={s.link} onClick={() => setJoining(false)}>
 							Start a new family instead
 						</button>

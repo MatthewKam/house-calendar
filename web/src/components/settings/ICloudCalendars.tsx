@@ -12,14 +12,7 @@ import ConfirmDialog from '../ui/ConfirmDialog';
  * Settings → Calendars: each person's iCloud Calendar, connected with their Apple ID and an
  * app-specific password (their normal Apple password is never asked for). Events sync both ways.
  */
-export default function ICloudCalendars({
-	members,
-	onConnected,
-}: {
-	members: Member[];
-	/** Setup's calendar step: told once an account connects. */
-	onConnected?: () => void;
-}) {
+export default function ICloudCalendars({ members }: { members: Member[] }) {
 	const qc = useQueryClient();
 	const status = useAuthStatus().data;
 	// The account being disconnected, while that's asked.
@@ -35,7 +28,6 @@ export default function ICloudCalendars({
 	const connect = useMutation({
 		mutationFn: api.connectICloud,
 		onSuccess: () => {
-			onConnected?.();
 			setOpen(false);
 			setAppleId('');
 			setPassword('');

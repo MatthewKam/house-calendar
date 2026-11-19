@@ -5,6 +5,7 @@ import { existsSync } from 'node:fs';
 import type { DB } from './db.ts';
 import { registerMembers } from './members.ts';
 import { registerCalendars, type CalendarOptions } from './calendars.ts';
+import { registerPhoneCalendars } from './phoneCalendars.ts';
 import { registerTasks } from './tasks.ts';
 import { registerRewards } from './rewards.ts';
 import { registerMoments } from './moments.ts';
@@ -96,6 +97,7 @@ export function buildApp(
 
 	// ---- Synced calendars, sync status and calendar accounts (calendars.ts) --
 	registerCalendars(app, db, opts);
+	registerPhoneCalendars(app, db, opts);
 
 	registerTasks(app, db);
 	registerRewards(app, db);

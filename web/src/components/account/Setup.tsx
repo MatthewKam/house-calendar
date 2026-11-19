@@ -1,12 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, type SignedIn } from '../../lib/api';
+import { isApp } from '../../lib/native';
+import type { SetupKind } from '../../lib/setup';
 import { keys, useMembers } from '../../lib/queries';
 import { PALETTE } from '../../lib/color';
 import { isKid } from '../../lib/people';
 import { starterTasks, type StarterTask } from '../../lib/tasks';
 import type { Member } from '../../lib/types';
-import ICloudCalendars from '../settings/ICloudCalendars';
+import PhoneCalendars from '../settings/PhoneCalendars';
 import { Issued } from '../settings/HouseholdAccess';
 import s from './Account.module.css';
 
@@ -16,14 +18,18 @@ const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
 
 /**
  * Right after starting a household, on that device: a few steps, one per screen, each skippable. The kids
- * (name and birthday), starter tasks for their ages, the family's calendar, and inviting the other parent.
- * Anything skipped is still in Settings.
+ * (name and birthday), starter tasks for their ages, your phone's calendars, and inviting the other parent.
+ * A parent who joins gets just the calendar step, for their own phone. Anything skipped is still in Settings.
  */
-export default function Setup({ status, onDone }: { status: SignedIn; onDone: () => void }) {
-	const [step, setStep] = useState<Step>('kids');
+export default function Setup({ status, kind, onDone }: { status: SignedIn; kind: SetupKind; onDone: () => void }) {
 	const kids = (useMembers().data ?? []).filter(isKid);
-	// Starter tasks only make sense once there's a kid to give them to.
-	const steps = STEPS.filter((x) => x !== 'tasks' || kids.length > 0);
+	const steps = STEPS.filter(
+		(x) =>
+			(kind === 'started' || x === 'calendar') &&
+			// Starter tasks only make sense once there's a kid to give them to.
+			(x !== 'tasks' || kids.length > 0),
+	);
+	const [step, setStep] = useState<Step>(steps[0]);
 	const at = steps.indexOf(step);
 	const next = () => (at + 1 < steps.length ? setStep(steps[at + 1]) : onDone());
 
@@ -37,7 +43,7 @@ export default function Setup({ status, onDone }: { status: SignedIn; onDone: ()
 				</ol>
 				{step === 'kids' && <Kids kids={kids} onNext={next} />}
 				{step === 'tasks' && <Tasks kids={kids} onNext={next} />}
-				{step === 'calendar' && <Calendar onNext={next} />}
+				{step === 'calendar' && <Calendar joined={kind === 'joined'} onNext={next} last={at === steps.length - 1} />}
 				{step === 'invite' && <Invite household={status.household?.name ?? 'your family'} onNext={next} />}
 			</div>
 		</main>
@@ -208,16 +214,28 @@ const taskFor = (memberId: string, t: StarterTask) => ({
 	dueBy: null,
 });
 
-/** The family's calendar: iCloud, connected here as in Settings → Calendars. */
-function Calendar({ onNext }: { onNext: () => void }) {
-	const members = useMembers().data ?? [];
-	const [connected, setConnected] = useState(false);
+/**
+ * Your calendars: on the iPhone, its own calendars in a tap (no password). On a computer, a pointer to the app;
+ * iCloud by password is in Settings → Calendars for anyone who wants it.
+ */
+function Calendar({ joined, last, onNext }: { joined: boolean; last: boolean; onNext: () => void }) {
+	const [shared, setShared] = useState(false);
 	return (
 		<>
 			<h1 className={s.title}>Your calendar</h1>
-			<p className={s.lead}>Bring in your iCloud Calendar, so the family's events are all in one place.</p>
-			<ICloudCalendars members={members} onConnected={() => setConnected(true)} />
-			<NextButton done={connected} onNext={onNext} />
+			<p className={s.lead}>
+				{joined ? 'Share your calendar with the family too, ' : 'Bring in your calendar, '}so everyone's events are in
+				one place.
+			</p>
+			{isApp ? (
+				<PhoneCalendars onShared={() => setShared(true)} />
+			) : (
+				<p className={s.hint}>
+					Open Sprig on your iPhone to share its calendars in one tap. On a computer, iCloud can be connected in
+					Settings → Calendars.
+				</p>
+			)}
+			<NextButton done={shared} onNext={onNext} last={last} />
 		</>
 	);
 }
@@ -251,7 +269,10 @@ function Invite({ household, onNext }: { household: string; onNext: () => void }
 	return (
 		<>
 			<h1 className={s.title}>Invite family</h1>
-			<p className={s.lead}>Send the other parent a link to join {household}. Grandparents can come too.</p>
+			<p className={s.lead}>
+				Send the other parent a link to join {household}. When they join, Sprig helps them share their phone's calendar
+				too. Grandparents can come too.
+			</p>
 			{issued ? (
 				<Issued {...issued} onClose={() => setIssued(null)} />
 			) : (

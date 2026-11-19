@@ -45,10 +45,12 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 	if (!s) return <>{children}</>;
 	if (!s.signedIn) return <SignIn onSignedIn={update} />;
 	if (!s.household) return <Welcome status={s} onDone={update} />;
-	if (s.parent && setupPending(s.household.id)) {
+	const setup = s.parent ? setupPending(s.household.id) : null;
+	if (setup) {
 		return (
 			<Setup
 				status={s}
+				kind={setup}
 				onDone={() => {
 					finishSetup();
 					setSetupDone((n) => n + 1);

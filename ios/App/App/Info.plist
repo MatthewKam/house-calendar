@@ -68,6 +68,18 @@
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Sprig shows the calendars you pick to your family, so everyone's events are in one place.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Sprig shows the calendars you pick to your family, so everyone's events are in one place.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.sprigfamily.app.calendars</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Sprig uses the camera when you snap a flyer or add a family photo.</string>
 	<key>NSMicrophoneUsageDescription</key>
