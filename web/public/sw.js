@@ -21,7 +21,11 @@ self.addEventListener('fetch', (e) => {
   // Built files have the version in their names, so a kept copy is always right.
   if (url.pathname.startsWith('/assets/')) {
     e.respondWith(caches.match(e.request).then((hit) => hit ?? fetch(e.request).then((res) => {
-      if (res.ok) caches.open(CACHE).then((c) => c.put(e.request, res.clone()));
+      // Copied now, before the page reads it: once it has, there's nothing left to copy.
+      if (res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy));
+      }
       return res;
     })));
     return;
@@ -30,7 +34,10 @@ self.addEventListener('fetch', (e) => {
   if (e.request.mode === 'navigate') {
     e.respondWith(fetch(e.request).then((res) => {
       // The app's page only: not the plain pages (privacy, support), which would then open as the app offline.
-      if (res.ok && !PAGES.includes(url.pathname)) caches.open(CACHE).then((c) => c.put('/', res.clone()));
+      if (res.ok && !PAGES.includes(url.pathname)) {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put('/', copy));
+      }
       return res;
     }).catch(() => caches.match('/')));
   }

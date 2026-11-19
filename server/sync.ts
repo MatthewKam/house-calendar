@@ -113,11 +113,8 @@ export function combineStatus(list: SyncStatus[]): SyncStatus | null {
 		provider: list[0].provider,
 		running: list.some((s) => s.running),
 		lastSuccess: done[0] ?? null,
-		lastError:
-			list
-				.map((s) => s.lastError)
-				.filter(Boolean)
-				.join('; ') || null,
+		// Each problem once, however many accounts have it.
+		lastError: [...new Set(list.map((s) => s.lastError).filter(Boolean))].join('; ') || null,
 		calendars: list.reduce((n, s) => n + s.calendars, 0),
 		events: list.reduce((n, s) => n + s.events, 0),
 		peopleError: list.find((s) => s.peopleError)?.peopleError ?? null,

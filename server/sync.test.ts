@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { openDb } from './db.ts';
 import { buildApp } from './app.ts';
-import { REFUSED_PATIENCE_MS, syncError, syncOnce } from './sync.ts';
+import { REFUSED_PATIENCE_MS, syncError, syncOnce, combineStatus } from './sync.ts';
 import { CalDavAuthError } from './providers/caldav.ts';
 import type { CalendarSource, RemoteCalendar, RemoteEvent } from './providers/types.ts';
 
@@ -146,6 +146,24 @@ describe('sync errors', () => {
 		// Anything else says what went wrong.
 		expect(syncError(new Error('CalDAV PROPFIND failed: 503 Service Unavailable'), null, now)).toBe(
 			'CalDAV PROPFIND failed: 503 Service Unavailable',
+		);
+	});
+});
+
+describe('one status for every account', () => {
+	it('says each problem once, however many accounts have it', () => {
+		const refused = (provider: 'icloud' | 'google') => ({
+			provider,
+			running: false,
+			lastSuccess: null,
+			lastError: "iCloud isn't letting Sprig in right now",
+			calendars: 0,
+			events: 0,
+			peopleError: null,
+			canWrite: true,
+		});
+		expect(combineStatus([refused('icloud'), refused('icloud')])?.lastError).toBe(
+			"iCloud isn't letting Sprig in right now",
 		);
 	});
 });
