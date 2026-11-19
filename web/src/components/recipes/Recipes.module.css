@@ -1628,11 +1628,16 @@ button.ideaSearch {
 	grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
 	gap: 0.5rem;
 }
-/* Cooking today: a plain list (no cards) of what's planned today, its meal then the recipe; a tap opens it. */
+/* Cooking today: what's planned today on one raised panel, so it stands out from the recipes below; each row is
+   its meal (in the accent) then the recipe, and a tap opens it. */
 .todayList {
 	list-style: none;
 	margin: 0;
-	padding: 0;
+	padding: 0 0.8rem;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-sm);
 }
 .todayList li + li {
 	border-top: 1px solid var(--line);
@@ -1652,8 +1657,9 @@ button.ideaSearch {
 .todayMeal {
 	flex: none;
 	width: 5rem;
-	color: var(--muted);
+	color: var(--accent);
 	font-size: 0.9rem;
+	font-weight: 600;
 }
 .todayTitle {
 	font-weight: 600;
