@@ -1,4 +1,5 @@
 import { execFile, spawn } from 'node:child_process';
+import { open } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { promisify } from 'node:util';
 
@@ -27,9 +28,30 @@ export function readInfo(text: string): VideoInfo | null {
 	return { width: +v[1], height: +v[2], seconds: +d[1] * 3600 + +d[2] * 60 + +d[3] };
 }
 
-async function info(file: string) {
+/**
+ * What kind of video file it is, from its first bytes: an iPhone's .mov or an .mp4 (ISO "ftyp"), or a WebM or
+ * .mkv (Matroska). Anything else is refused. ffmpeg is then told the kind instead of guessing it: left to
+ * guess, a "video" that's really a playlist (HLS, concat) could make it read other files on the server.
+ */
+export async function containerOf(file: string): Promise<'mov' | 'matroska' | null> {
+	const f = await open(file, 'r');
+	try {
+		const head = Buffer.alloc(12);
+		const { bytesRead } = await f.read(head, 0, 12, 0);
+		if (bytesRead >= 12 && head.toString('latin1', 4, 8) === 'ftyp') return 'mov';
+		if (bytesRead >= 4 && head.readUInt32BE(0) === 0x1a45dfa3) return 'matroska';
+		return null;
+	} finally {
+		await f.close();
+	}
+}
+
+/** What goes before an input: its kind, read from local files only. */
+const inputOf = (format: 'mov' | 'matroska', file: string) => ['-f', format, '-protocol_whitelist', 'file', '-i', file];
+
+async function info(format: 'mov' | 'matroska', file: string) {
 	// With no output named, ffmpeg describes the file and exits with an error; the description is what we want.
-	const out = await run(ffmpeg!, ['-hide_banner', '-i', file]).catch((e: { stderr?: string }) => ({
+	const out = await run(ffmpeg!, ['-hide_banner', ...inputOf(format, file)]).catch((e: { stderr?: string }) => ({
 		stderr: e.stderr ?? '',
 	}));
 	return readInfo(out.stderr);
@@ -46,14 +68,15 @@ export async function convertVideo(
 	onProgress: (f: number) => void = () => {},
 ): Promise<VideoInfo> {
 	if (!ffmpeg) throw new Error('ffmpeg is missing (npm install ffmpeg-static)');
+	const format = await containerOf(input);
+	if (!format) throw new Error("That isn't a video this can play");
 	// How much there is to convert, for the progress.
-	const total = Math.min(MAX_SECONDS, (await info(input))?.seconds ?? MAX_SECONDS);
+	const total = Math.min(MAX_SECONDS, (await info(format, input))?.seconds ?? MAX_SECONDS);
 	await new Promise<void>((resolve, reject) => {
 		const p = spawn(ffmpeg, [
 			'-hide_banner',
 			'-y',
-			'-i',
-			input,
+			...inputOf(format, input),
 			'-t',
 			String(MAX_SECONDS),
 			'-map',
@@ -96,7 +119,7 @@ export async function convertVideo(
 			code === 0 ? resolve() : reject(new Error(`ffmpeg failed: ${errors.trim().split('\n').at(-1)}`)),
 		);
 	});
-	const meta = await info(output);
+	const meta = await info('mov', output);
 	if (!meta) throw new Error("Couldn't read the converted video");
 	// A frame from just in, 480 on its long side, for the album grid (and behind the video while it loads).
 	await run(ffmpeg, [
@@ -104,8 +127,7 @@ export async function convertVideo(
 		'-y',
 		'-ss',
 		String(Math.min(0.5, meta.seconds / 2)),
-		'-i',
-		output,
+		...inputOf('mov', output),
 		'-frames:v',
 		'1',
 		'-vf',

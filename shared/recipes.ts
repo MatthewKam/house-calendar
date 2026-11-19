@@ -45,7 +45,12 @@ export const RecipeFields = z.strictObject({
 	types: z.array(z.string().max(30)).max(8),
 	meal: Meal,
 	/** Where it came from (a link), or null. */
-	sourceUrl: z.string().max(2000).nullable(),
+	// A web address only (never javascript: or the like): it's shown as a link.
+	sourceUrl: z
+		.string()
+		.max(2000)
+		.regex(/^https?:\/\//i)
+		.nullable(),
 });
 export type RecipeFields = z.infer<typeof RecipeFields>;
 export type Ingredient = z.infer<typeof Ingredient>;

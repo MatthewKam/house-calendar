@@ -4,6 +4,8 @@ import { z } from 'zod';
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import { lookup } from 'node:dns/promises';
+import { lookup as lookupCallback, type LookupAddress } from 'node:dns';
+import { Agent, fetch as undiciFetch } from 'undici';
 import { isIP } from 'node:net';
 import { mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -91,22 +93,38 @@ export function claudeReadRecipe(client = new Anthropic()): ReadRecipeFn {
 
 // ---- Reading a link ---------------------------------------------------------
 
-/** No reaching into the home network or the server itself through a link. */
-function privateAddress(ip: string) {
+/**
+ * No reaching into the home network, Fly's private network or the server itself through a link: loopback,
+ * private, link-local, shared (carrier) and reserved addresses, and IPv6's own kinds and IPv4 wrapped in it.
+ */
+export function privateAddress(ip: string): boolean {
 	if (isIP(ip) === 6) {
 		const v = ip.toLowerCase();
+		// IPv4 inside IPv6 (::ffff:10.0.0.1, ::10.0.0.1, 64:ff9b::10.0.0.1): judged as the IPv4 it is.
+		const inner = /(?:^::(?:ffff:)?|^64:ff9b::)(\d+\.\d+\.\d+\.\d+)$/.exec(v)?.[1];
+		if (inner) return privateAddress(inner);
+		const first = parseInt(v.split(':')[0] || '0', 16);
 		return (
-			v === '::1' || v.startsWith('fc') || v.startsWith('fd') || v.startsWith('fe80') || v.startsWith('::ffff:127.')
+			v === '::' ||
+			v === '::1' ||
+			v.startsWith('::ffff:') ||
+			(first & 0xfe00) === 0xfc00 || // fc00::/7, unique local (Fly's fdaa:: too)
+			(first & 0xffc0) === 0xfe80 || // fe80::/10, link-local
+			(first & 0xff00) === 0xff00 // multicast
 		);
 	}
 	const [a, b] = ip.split('.').map(Number);
 	return (
+		a === 0 ||
 		a === 10 ||
 		a === 127 ||
-		a === 0 ||
+		(a === 100 && b >= 64 && b <= 127) ||
+		(a === 169 && b === 254) ||
 		(a === 172 && b >= 16 && b <= 31) ||
+		(a === 192 && b === 0) ||
 		(a === 192 && b === 168) ||
-		(a === 169 && b === 254)
+		(a === 198 && (b === 18 || b === 19)) ||
+		a >= 224
 	);
 }
 
@@ -114,21 +132,77 @@ function privateAddress(ip: string) {
 type Resolve = (host: string) => Promise<{ address: string }[]>;
 const dnsResolve: Resolve = (host) => lookup(host, { all: true });
 
+/**
+ * Fetching for real: the address is checked again as the connection is made, so a site can't pass the
+ * check with a public address and then connect to a private one (DNS rebinding).
+ */
+const publicOnly = new Agent({
+	connect: {
+		lookup: (host, options, done) =>
+			lookupCallback(host, { ...options, all: true }, (err, addresses) => {
+				if (err) return done(err, '', 0);
+				const list = addresses as unknown as LookupAddress[];
+				const bad = list.find((a) => privateAddress(a.address));
+				if (bad || !list.length) return done(new Error('That link isn’t a public web page'), '', 0);
+				if (options.all) return (done as unknown as (e: null, a: LookupAddress[]) => void)(null, list);
+				done(null, list[0].address, list[0].family);
+			}),
+	},
+});
+const publicFetch = ((url: URL, init: RequestInit) =>
+	undiciFetch(url, { ...(init as object), dispatcher: publicOnly })) as unknown as typeof fetch;
+
+/** Redirects followed, each checked like the first. */
+const MAX_HOPS = 5;
+
 async function fetchPublic(url: string, fetchImpl: typeof fetch, maxBytes: number, resolve: Resolve) {
-	const u = new URL(url);
-	if (u.protocol !== 'https:' && u.protocol !== 'http:') throw new Error('That link isn’t a web page');
-	const addresses = await resolve(u.hostname).catch(() => []);
-	if (!addresses.length) throw new Error('Couldn’t find that website');
-	if (addresses.some((a) => privateAddress(a.address))) throw new Error('That link isn’t a public web page');
-	const res = await fetchImpl(u, {
-		headers: { 'user-agent': 'Mozilla/5.0 (Sprig recipe reader)' },
-		redirect: 'follow',
-		signal: AbortSignal.timeout(15_000),
-	});
-	if (!res.ok) throw new Error(`The page answered ${res.status}`);
-	const body = Buffer.from(await res.arrayBuffer());
-	if (body.length > maxBytes) throw new Error('That page is too big to read');
-	return { body, type: res.headers.get('content-type') ?? '' };
+	let u = new URL(url);
+	for (let hop = 0; ; hop++) {
+		if (u.protocol !== 'https:' && u.protocol !== 'http:') throw new Error('That link isn’t a web page');
+		const host = u.hostname.replace(/^\[|\]$/g, '');
+		const addresses = isIP(host) ? [{ address: host }] : await resolve(host).catch(() => []);
+		if (!addresses.length) throw new Error('Couldn’t find that website');
+		if (addresses.some((a) => privateAddress(a.address))) throw new Error('That link isn’t a public web page');
+		const res = await fetchImpl(u, {
+			headers: { 'user-agent': 'Mozilla/5.0 (Sprig recipe reader)' },
+			redirect: 'manual',
+			signal: AbortSignal.timeout(15_000),
+		}).catch((err: Error & { cause?: Error }) => {
+			// Refused as it connected (publicOnly), or the site couldn't be reached.
+			throw new Error(err.cause?.message ?? 'Couldn’t reach that website');
+		});
+		const next = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null;
+		if (next) {
+			await res.body?.cancel().catch(() => {});
+			if (hop >= MAX_HOPS) throw new Error('That link goes round in circles');
+			u = new URL(next, u);
+			continue;
+		}
+		if (!res.ok) throw new Error(`The page answered ${res.status}`);
+		return { body: await capped(res, maxBytes), type: res.headers.get('content-type') ?? '' };
+	}
+}
+
+/** The answer's body, given up on as soon as it's bigger than `maxBytes` (not read whole first). */
+async function capped(res: Response, maxBytes: number) {
+	if (Number(res.headers.get('content-length') ?? 0) > maxBytes) {
+		await res.body?.cancel().catch(() => {});
+		throw new Error('That page is too big to read');
+	}
+	const chunks: Buffer[] = [];
+	let size = 0;
+	const reader = res.body?.getReader();
+	while (reader) {
+		const { done, value } = await reader.read();
+		if (done) break;
+		size += value.length;
+		if (size > maxBytes) {
+			await reader.cancel().catch(() => {});
+			throw new Error('That page is too big to read');
+		}
+		chunks.push(Buffer.from(value));
+	}
+	return Buffer.concat(chunks);
 }
 
 /** A recipe a page describes for search engines (schema.org Recipe in JSON-LD), when it has one. */
@@ -204,7 +278,7 @@ export function registerRecipes(
 		resolve?: Resolve;
 	},
 ) {
-	const { dir, read, fetchImpl = fetch, resolve = dnsResolve } = opts;
+	const { dir, read, fetchImpl = publicFetch, resolve = dnsResolve } = opts;
 	const file = (id: string) => join(dir!, `${id}.jpg`);
 	const images = (recipeId: string) =>
 		(

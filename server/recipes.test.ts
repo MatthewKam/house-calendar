@@ -3,7 +3,9 @@ import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { household } from './testing.ts';
-import type { RecipeInput } from './recipes.ts';
+import { privateAddress, type RecipeInput } from './recipes.ts';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import type { RecipeFields } from '../shared/recipes.ts';
 
 const BULGOGI: RecipeFields = {
@@ -288,5 +290,77 @@ describe('recipes', () => {
 			(await call('POST', '/api/recipes', { recipe: { ...BULGOGI, title: '' }, images: [], cover: null })).status,
 		).toBe(400);
 		expect((await call('PUT', '/api/recipes/nope', BULGOGI)).status).toBe(404);
+	});
+});
+
+describe('reading a link safely', () => {
+	const reader = async () => ({ recipe: BULGOGI, cover: null });
+	const publicDns = async () => [{ address: '93.184.216.34' }];
+
+	it('knows private addresses, IPv6 ones and IPv4 wrapped in IPv6', () => {
+		for (const ip of ['10.0.0.1', '127.0.0.1', '100.64.0.1', '169.254.169.254', '172.20.0.1', '192.168.1.1', '0.0.0.0'])
+			expect(privateAddress(ip), ip).toBe(true);
+		for (const ip of ['::1', '::', 'fdaa:0:1::2', 'fe80::1', '::ffff:10.0.0.1', '::ffff:127.0.0.1', 'ff02::1'])
+			expect(privateAddress(ip), ip).toBe(true);
+		for (const ip of ['93.184.216.34', '8.8.8.8', '2606:4700::1111', '::ffff:93.184.216.34'])
+			expect(privateAddress(ip), ip).toBe(false);
+	});
+
+	it('checks every redirect, and gives up on one that leads home', async () => {
+		dir = mkdtempSync(join(tmpdir(), 'recipes-'));
+		const { call } = household([], {
+			photosDir: dir,
+			readRecipe: reader,
+			recipeFetch: (async () =>
+				new Response(null, {
+					status: 302,
+					headers: { location: 'http://169.254.169.254/latest' },
+				})) as unknown as typeof fetch,
+			recipeResolve: publicDns,
+		});
+		const res = await call('POST', '/api/recipes/read', { url: 'https://food.example/bulgogi' });
+		expect(res.status).toBe(502);
+		expect(res.body.error).toMatch(/public web page/);
+	});
+
+	it('stops reading a page that is too big', async () => {
+		dir = mkdtempSync(join(tmpdir(), 'recipes-'));
+		const huge = new ReadableStream({
+			pull: (c) => c.enqueue(new Uint8Array(1_000_000)),
+		});
+		const { call } = household([], {
+			photosDir: dir,
+			readRecipe: reader,
+			recipeFetch: (async () =>
+				new Response(huge, { headers: { 'content-type': 'text/html' } })) as unknown as typeof fetch,
+			recipeResolve: publicDns,
+		});
+		const res = await call('POST', '/api/recipes/read', { url: 'https://food.example/bulgogi' });
+		expect(res.status).toBe(502);
+		expect(res.body.error).toMatch(/too big/);
+	});
+
+	it('checks the address again as it connects, so a site that changes its address is still refused', async () => {
+		dir = mkdtempSync(join(tmpdir(), 'recipes-'));
+		const server = createServer((_req, res) => res.end('<html>inside</html>'));
+		await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
+		const { port } = server.address() as AddressInfo;
+		// The check is told it's public; the real connection finds it's this machine.
+		const { call } = household([], { photosDir: dir, readRecipe: reader, recipeResolve: publicDns });
+		const res = await call('POST', '/api/recipes/read', { url: `http://localhost:${port}/` });
+		server.close();
+		expect(res.status).toBe(502);
+		expect(res.body.error).toMatch(/public web page/);
+	});
+});
+
+describe("a recipe's link", () => {
+	it('is a web address, never a script', async () => {
+		dir = mkdtempSync(join(tmpdir(), 'recipes-'));
+		const { call } = household([], { photosDir: dir });
+		const sneaky = { ...BULGOGI, sourceUrl: 'javascript:alert(1)' };
+		expect((await call('POST', '/api/recipes', { recipe: sneaky, images: [], cover: null })).status).toBe(400);
+		const fine = { ...BULGOGI, sourceUrl: 'https://food.example/bulgogi' };
+		expect((await call('POST', '/api/recipes', { recipe: fine, images: [], cover: null })).status).toBe(201);
 	});
 });
