@@ -61,7 +61,7 @@ What sits over what is named by role, bottom to top: `--layer-panel`, `--layer-f
 
 ## Screen sizes
 
-The same five everywhere, listed at the top of `app.css` and named in code in `lib/useMediaQuery.ts`:
+The same six everywhere, listed at the top of `app.css` and named in code in `lib/useMediaQuery.ts`:
 
 | Name | Query |
 | --- | --- |
@@ -70,6 +70,7 @@ The same five everywhere, listed at the top of `app.css` and named in code in `l
 | Narrow | `(max-width: 959.98px)` |
 | Tablet | `(min-width: 744px) and (min-height: 600px)` |
 | Wide | `(min-width: 1401px)` |
+| Touch (phones and tablets, any size) | `(pointer: coarse)` |
 
 CSS can't use variables in a media query, so write the query out and keep it exactly as listed. In components, import the name (`useMediaQuery(PHONE)`) rather than writing the query again.
 

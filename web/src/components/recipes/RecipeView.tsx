@@ -33,7 +33,7 @@ import type { CookProgress, CookTimer } from '../../../../shared/cook.ts';
 import { useNow } from '../../lib/useNow';
 import { flags } from '../../lib/allergies';
 import type { MealPlan, Member, Recipe } from '../../lib/types';
-import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
+import { PHONE, PHONE_SIDEWAYS, TOUCH, useMediaQuery } from '../../lib/useMediaQuery';
 import { useWakeLock } from '../../lib/useWakeLock';
 import Sheet from '../ui/Sheet';
 import Problem from '../ui/Problem';
@@ -161,6 +161,8 @@ export default function RecipeView({
 	const upright = useMediaQuery(PHONE);
 	const sideways = useMediaQuery(PHONE_SIDEWAYS);
 	const phone = upright || sideways;
+	// Phones and tablets: the recipe fills the screen, its × pinned at the top; a computer's stays a card.
+	const fullScreen = useMediaQuery(TOUCH) || phone;
 	// Cooking from it: no sleeping screen while it's open.
 	useWakeLock(true);
 
@@ -448,7 +450,7 @@ export default function RecipeView({
 
 	return (
 		<>
-			<Sheet label={r.title} onClose={onClose} className={`${s.view} ${cooking ? sheet.full : ''}`}>
+			<Sheet label={r.title} onClose={onClose} className={`${s.view} ${cooking || fullScreen ? sheet.full : ''}`}>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>{r.title}</h2>
 					<span className={sheet.spacer} />
@@ -538,7 +540,8 @@ export default function RecipeView({
 								))}
 								{parent && (
 									<button type="button" className={s.tagButton} onClick={() => setTagging(true)}>
-										{r.tags.length ? 'Edit tags' : '🏷️ Add tags'}
+										<span>🏷️&nbsp;</span>
+										<span>{r.tags.length ? 'Edit tags' : 'Add tags'}</span>
 									</button>
 								)}
 							</div>
