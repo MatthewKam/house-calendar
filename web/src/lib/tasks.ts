@@ -1,5 +1,5 @@
 import { dayKey, fromDayKey } from './dates';
-import type { Task, TaskCategory, TaskDone, TaskTime } from './types';
+import type { Stage, Task, TaskCategory, TaskDone, TaskTime } from './types';
 
 const CATEGORIES: { id: TaskCategory; label: string; hint: string }[] = [
 	{ id: 'non_negotiable', label: 'Daily', hint: "Must be done every day it's due; always counts toward the bar." },
@@ -125,6 +125,45 @@ export const TASK_ICONS = [
 	'🐟',
 	'⭐',
 ];
+
+/** A task offered while setting up, for a kid of one age (Setup's "Starter tasks"). */
+export interface StarterTask {
+	title: string;
+	icon: string;
+	category: 'non_negotiable' | 'chores';
+	time: 'morning' | 'evening' | null;
+}
+const STARTERS: Record<'little' | 'early' | 'older', StarterTask[]> = {
+	// 2–3: a few small things with a grown-up's help.
+	little: [
+		{ title: 'Brush teeth', icon: '🦷', category: 'non_negotiable', time: 'morning' },
+		{ title: 'Brush teeth', icon: '🦷', category: 'non_negotiable', time: 'evening' },
+		{ title: 'Wash hands', icon: '🧼', category: 'non_negotiable', time: null },
+		{ title: 'Tidy toys', icon: '🧸', category: 'chores', time: 'evening' },
+	],
+	// 4–6: their own morning and evening, and a first chore.
+	early: [
+		{ title: 'Get dressed', icon: '👕', category: 'non_negotiable', time: 'morning' },
+		{ title: 'Brush teeth', icon: '🦷', category: 'non_negotiable', time: 'morning' },
+		{ title: 'Brush teeth', icon: '🦷', category: 'non_negotiable', time: 'evening' },
+		{ title: 'Make bed', icon: '🛏️', category: 'chores', time: 'morning' },
+		{ title: 'Tidy toys', icon: '🧸', category: 'chores', time: 'evening' },
+		{ title: 'Set the table', icon: '🍽️', category: 'chores', time: 'evening' },
+	],
+	// 7 and up.
+	older: [
+		{ title: 'Make bed', icon: '🛏️', category: 'chores', time: 'morning' },
+		{ title: 'Brush teeth', icon: '🦷', category: 'non_negotiable', time: 'evening' },
+		{ title: 'Homework', icon: '📚', category: 'non_negotiable', time: null },
+		{ title: 'Tidy room', icon: '🧸', category: 'chores', time: null },
+		{ title: 'Clear dishes', icon: '🧽', category: 'chores', time: 'evening' },
+	],
+};
+/** The starter tasks for a kid's stage (none for a grown-up, or someone with no stage). */
+export function starterTasks(stage: Stage | null): StarterTask[] {
+	if (!stage || stage === 'adult') return [];
+	return STARTERS[stage === 'little' || stage === 'early' ? stage : 'older'];
+}
 
 /** Quick titles in the task sheet, each with a matching icon. */
 export const QUICK_TASKS: { title: string; icon: string }[] = [

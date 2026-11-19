@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type AuthStatus } from '../../lib/api';
 import { useAuthStatus } from '../../lib/queries';
 import { ago } from '../../lib/dates';
+import { joinLink } from '../../lib/joinCode';
 import { Loading, Skeleton, SkeletonLines } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import s from '../account/Account.module.css';
@@ -367,7 +368,7 @@ export default function HouseholdAccess() {
 }
 
 /** A new code, big enough to read across the room, with a link to send. */
-function Issued({
+export function Issued({
 	code,
 	expiresAt,
 	what,
@@ -378,7 +379,7 @@ function Issued({
 	what: string;
 	onClose: () => void;
 }) {
-	const link = `${location.origin}/?join=${code}`;
+	const link = joinLink(code);
 	const [copied, setCopied] = useState(false);
 	const share = async () => {
 		if (navigator.share)

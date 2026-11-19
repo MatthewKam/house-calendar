@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { api, type AuthStatus, type SignedIn } from '../../lib/api';
 import { pendingJoin } from '../../lib/joinCode';
+import { startSetup } from '../../lib/setup';
 import JoinForm from './JoinForm';
 import s from './Account.module.css';
 import { familyName, firstName } from '../../lib/people';
@@ -10,7 +11,9 @@ import { familyName, firstName } from '../../lib/people';
  * named for you ("The Kam family", changed here or later in Settings), or join one with a code.
  */
 export default function Welcome({ status, onDone }: { status: SignedIn; onDone: (s: AuthStatus) => void }) {
-	const [yourName, setYourName] = useState(status.user?.name ?? '');
+	// An email sign-up's name is only the start of the address (server/hosted/signIn.ts): asked for, not used.
+	const given = status.user && status.user.name !== status.user.email?.split('@')[0] ? status.user.name : '';
+	const [yourName, setYourName] = useState(given);
 	// The household's name follows yours until it's changed by hand.
 	const [name, setName] = useState<string | null>(null);
 	const [naming, setNaming] = useState(false);
@@ -25,7 +28,10 @@ export default function Welcome({ status, onDone }: { status: SignedIn; onDone: 
 		setBusy(true);
 		setError(null);
 		try {
-			onDone(await api.createHousehold({ name: household, yourName: yourName.trim() }));
+			const st = await api.createHousehold({ name: household, yourName: yourName.trim() });
+			// The setup steps (Setup.tsx) come next, on this device.
+			if (st.signedIn && st.household) startSetup(st.household.id);
+			onDone(st);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		} finally {
@@ -37,7 +43,7 @@ export default function Welcome({ status, onDone }: { status: SignedIn; onDone: 
 		<main className={s.screen}>
 			<div className={s.column}>
 				<img src="/wordmark.svg" alt="Sprig" className={s.wordmark} />
-				<h1 className={s.title}>Hi{status.user?.name ? `, ${firstName(status.user.name)}` : ''}</h1>
+				<h1 className={s.title}>Hi{given ? `, ${firstName(given)}` : ''}</h1>
 				{joining ? (
 					<>
 						<p className={s.lead}>Type the code your family sent you.</p>

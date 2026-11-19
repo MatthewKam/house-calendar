@@ -312,6 +312,7 @@ export const api = {
 	/** The phone app's one-time link for connecting Google Calendar in a Safari sheet. */
 	googleLink: () => call<{ url: string }>('POST', '/api/account/google/link'),
 	members: () => call<Member[]>('GET', '/api/members'),
+	addMember: (m: { name: string; color: string }) => call<Member>('POST', '/api/members', m),
 	updateMember: (id: string, m: MemberPatch) => call<Member>('PATCH', `/api/members/${id}`, m),
 	/** A new color for someone: made at once by the account holder, otherwise asked for (asked: true). */
 	setMemberColor: (id: string, color: string) =>

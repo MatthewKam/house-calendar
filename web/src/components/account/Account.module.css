@@ -140,6 +140,31 @@
 	color: var(--on-accent);
 	border-color: var(--accent);
 }
+/* A quieter note inside a choice ("· morning"). */
+.choiceNote {
+	font-weight: 500;
+	opacity: 0.8;
+}
+
+/* Setup: which step this is, as dots. */
+.steps {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	justify-content: center;
+	gap: 0.5rem;
+}
+.stepDot {
+	width: 0.55rem;
+	height: 0.55rem;
+	border-radius: var(--radius-round);
+	background: var(--line);
+}
+.stepDot[aria-current='step'] {
+	width: 1.4rem;
+	background: var(--accent);
+}
 
 /* Settings: people and how they sign in, invite codes, devices. */
 .people {
