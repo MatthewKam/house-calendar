@@ -857,3 +857,9 @@ details > summary.cardHead {
 	align-items: stretch;
 	gap: 1.2rem;
 }
+
+/* Finish setting up: Hide, quiet, beside its heading. */
+.hideSetup {
+	composes: quiet from '../ui/Buttons.module.css';
+	font-size: 0.85rem;
+}

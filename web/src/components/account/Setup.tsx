@@ -64,7 +64,7 @@ function NextButton({ done, onNext, last }: { done: boolean; onNext: () => void;
 }
 
 /** The kids: a name and a birthday each (the birthday sets their stage: games, tasks and how they earn). */
-function Kids({ kids, onNext }: { kids: Member[]; onNext: () => void }) {
+export function Kids({ kids, last, onNext }: { kids: Member[]; last?: boolean; onNext: () => void }) {
 	const qc = useQueryClient();
 	const members = useMembers().data ?? [];
 	const [name, setName] = useState('');
@@ -128,13 +128,13 @@ function Kids({ kids, onNext }: { kids: Member[]; onNext: () => void }) {
 					{kids.length ? 'Add another' : 'Add'}
 				</button>
 			</form>
-			<NextButton done={kids.length > 0} onNext={onNext} />
+			<NextButton done={kids.length > 0} onNext={onNext} last={last} />
 		</>
 	);
 }
 
 /** A few tasks for each kid's age, all picked to start with; a tap leaves one out. */
-function Tasks({ kids, onNext }: { kids: Member[]; onNext: () => void }) {
+export function Tasks({ kids, onNext }: { kids: Member[]; onNext: () => void }) {
 	const qc = useQueryClient();
 	const offers = kids.flatMap((k) => starterTasks(k.stage).map((t, i) => ({ key: `${k.id}:${i}`, kid: k, t })));
 	const [left, setLeft] = useState<Set<string>>(new Set());
@@ -218,7 +218,7 @@ const taskFor = (memberId: string, t: StarterTask) => ({
  * Your calendars: on the iPhone, its own calendars in a tap (no password). On a computer, a pointer to the app;
  * iCloud by password is in Settings → Calendars for anyone who wants it.
  */
-function Calendar({ joined, last, onNext }: { joined: boolean; last: boolean; onNext: () => void }) {
+export function Calendar({ joined, last, onNext }: { joined: boolean; last: boolean; onNext: () => void }) {
 	const [shared, setShared] = useState(false);
 	return (
 		<>
@@ -241,7 +241,7 @@ function Calendar({ joined, last, onNext }: { joined: boolean; last: boolean; on
 }
 
 /** The other parent (or a grandparent): a code and a link to send them. */
-function Invite({ household, onNext }: { household: string; onNext: () => void }) {
+export function Invite({ household, onNext }: { household: string; onNext: () => void }) {
 	const [name, setName] = useState('');
 	const [issued, setIssued] = useState<{ code: string; expiresAt: string; what: string } | null>(null);
 	// Someone's been invited (the code may be closed again, to invite another).
