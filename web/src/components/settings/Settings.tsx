@@ -20,6 +20,7 @@ import ScreenSettings from './ScreenSettings';
 import { Group, InfoButton, Section, SettingsView } from './parts';
 import sheet from '../ui/Sheet.module.css';
 import s from './Settings.module.css';
+import { LEARN_ON } from '../../lib/features';
 
 interface Props {
 	members: Member[];
@@ -99,13 +100,15 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 					</Section>
 				</Group>
 
-				{/* A big one: its own group, not folded inside Family. */}
-				<Group title="Learning" note={learnNote(learn, members)}>
-					<div className={s.foldBody}>
-						{learnInfo && <LearnAbout />}
-						<LearnSettings members={members} today={today} />
-					</div>
-				</Group>
+				{/* A big one: its own group, not folded inside Family. Hidden while Learn is off (lib/features.ts). */}
+				{LEARN_ON && (
+					<Group title="Learning" note={learnNote(learn, members)}>
+						<div className={s.foldBody}>
+							{learnInfo && <LearnAbout />}
+							<LearnSettings members={members} today={today} />
+						</div>
+					</Group>
+				)}
 
 				<Group title="Appearance">
 					<AppearanceSettings />
