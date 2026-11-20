@@ -1,5 +1,6 @@
 import { useEffect, type RefObject } from 'react';
 import { isApp } from './native';
+import { canGoBack, screenOpen } from './usePage';
 
 // Swipe back from the left edge, on Sprig added to the Home Screen: there the phone has no swipe of its
 // own. The page follows the finger and goes back past a third of the way (or a quick flick); short of
@@ -14,23 +15,30 @@ const homeScreen = () =>
 	(window.matchMedia('(display-mode: standalone)').matches ||
 		(navigator as { standalone?: boolean }).standalone === true);
 
-/** While `on` (there's somewhere to go back to), a swipe from the left edge of `ref` calls `onBack`. */
-export function useEdgeSwipe(ref: RefObject<HTMLElement | null>, on: boolean, onBack: () => void) {
+/**
+ * A swipe from the left edge calls `onBack` when there's somewhere to go back to (usePage's canGoBack).
+ * The page (`ref`) follows the finger; a screen open over it (a recipe, Settings) just closes at the end.
+ */
+export function useEdgeSwipe(ref: RefObject<HTMLElement | null>, onBack: () => void) {
 	useEffect(() => {
-		const el = ref.current;
-		if (!el || !on || !homeScreen()) return;
+		const page = ref.current;
+		if (!page || !homeScreen()) return;
+		// What follows the finger: the page, or nothing while a screen is open over it.
+		let el: HTMLElement | null = null;
 		let start: { x: number; y: number; t: number } | null = null;
 		// Sideways (true) once it's clearly a swipe; up and down (false) leaves it to scrolling.
 		let sideways: boolean | null = null;
 		let dx = 0;
 
 		const slide = (x: number, animate: boolean) => {
+			if (!el) return;
 			el.style.transition = animate ? 'transform 0.2s ease-out' : '';
 			el.style.transform = x ? `translateX(${x}px)` : '';
 		};
 		const down = (e: TouchEvent) => {
 			const t = e.touches[0];
-			if (e.touches.length !== 1 || t.clientX > EDGE) return;
+			if (e.touches.length !== 1 || t.clientX > EDGE || !canGoBack()) return;
+			el = screenOpen() ? null : page;
 			start = { x: t.clientX, y: t.clientY, t: e.timeStamp };
 			sideways = null;
 			dx = 0;
@@ -48,8 +56,9 @@ export function useEdgeSwipe(ref: RefObject<HTMLElement | null>, on: boolean, on
 		const up = (e: TouchEvent) => {
 			if (!start) return;
 			const flick = dx > 40 && dx / Math.max(1, e.timeStamp - start.t) > 0.5;
-			if (sideways && (dx > el.clientWidth / 3 || flick)) {
-				slide(el.clientWidth, true);
+			const width = window.innerWidth;
+			if (sideways && (dx > width / 3 || flick)) {
+				slide(width, true);
 				window.setTimeout(() => {
 					onBack();
 					slide(0, false);
@@ -58,16 +67,17 @@ export function useEdgeSwipe(ref: RefObject<HTMLElement | null>, on: boolean, on
 			start = null;
 		};
 
-		el.addEventListener('touchstart', down, { passive: true });
-		el.addEventListener('touchmove', move, { passive: false });
-		el.addEventListener('touchend', up);
-		el.addEventListener('touchcancel', up);
+		// The whole window: a screen open over the page isn't inside it.
+		window.addEventListener('touchstart', down, { passive: true });
+		window.addEventListener('touchmove', move, { passive: false });
+		window.addEventListener('touchend', up);
+		window.addEventListener('touchcancel', up);
 		return () => {
-			el.removeEventListener('touchstart', down);
-			el.removeEventListener('touchmove', move);
-			el.removeEventListener('touchend', up);
-			el.removeEventListener('touchcancel', up);
+			window.removeEventListener('touchstart', down);
+			window.removeEventListener('touchmove', move);
+			window.removeEventListener('touchend', up);
+			window.removeEventListener('touchcancel', up);
 			slide(0, false);
 		};
-	}, [ref, on, onBack]);
+	}, [ref, onBack]);
 }

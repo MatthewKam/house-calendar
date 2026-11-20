@@ -12,15 +12,21 @@ const PAGES: Page[] = ['calendar', 'today', 'tasks', 'rewards', 'lists', 'photos
  */
 const NAV_BAR_STEPS = false;
 
-/** What each step in the browser's history keeps: the page a link came from, and how many links deep. */
-interface Step {
+/**
+ * What each step in the browser's history keeps: the page a link came from, how many steps deep (links
+ * and screens opened over the page), and the screens open over the page (useBackStep), by key.
+ */
+export interface Step {
 	from?: Page;
 	depth?: number;
+	open?: string[];
 }
-const step = (): Step => (history.state as Step | null) ?? {};
+export const step = (): Step => (history.state as Step | null) ?? {};
 
 /** The nav bar's page, while going back past the link steps to put it in place of where they began. */
 let landing: Page | null = null;
+/** True while the nav bar is going back past the steps to its page (open screens close by themselves). */
+export const leaving = () => landing !== null;
 
 const read = (): Page => {
 	if (landing) return landing;
@@ -59,9 +65,15 @@ if (!window.location.hash && window.matchMedia(PHONE).matches) {
 
 /** Where a link on another page brought us from (kept with this step in the browser's history), or null. */
 const readFrom = (): Page | null => {
-	const from = step().from;
-	return !landing && from && PAGES.includes(from) && from !== read() ? from : null;
+	const { from, open } = step();
+	// A screen open over the page has its own way back (useBackStep).
+	return !landing && !open?.length && from && PAGES.includes(from) && from !== read() ? from : null;
 };
+
+/** Whether there's a step to go back to: a link from another page, or a screen open over this one. */
+export const canGoBack = () => readFrom() !== null || (!landing && (step().open?.length ?? 0) > 0);
+/** Whether a screen is open over the page (a recipe, Settings). */
+export const screenOpen = () => (step().open?.length ?? 0) > 0;
 
 export interface Pages {
 	/** The page on screen. */
@@ -107,6 +119,7 @@ export function usePage(): Pages {
 	const follow = useCallback((next: Page) => {
 		const here = read();
 		if (next === here) return;
+		// A new page: the screens open on this one aren't open on it.
 		const s: Step = { from: here, depth: (step().depth ?? 0) + 1 };
 		// pushState doesn't send hashchange, which updates `page`: send it.
 		history.pushState(s, '', address(next));

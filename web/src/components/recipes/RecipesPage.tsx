@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
+import { useBackStep } from '../../lib/useBackStep';
 import { useImageDrop } from '../../lib/useFlyerDrop';
 import { useMeals, useMembers, useRecipeReading, useRecipes } from '../../lib/queries';
 import DishIdeas from './DishIdeas';
@@ -130,6 +131,8 @@ export default function RecipesPage({
 			(prep === '' || (prep === 'tonight') === longestPrep(r) < OVERNIGHT),
 	);
 	const opened = recipes.find((r) => r.id === open) ?? null;
+	// An open recipe is a step of its own: Back or a swipe closes it before leaving Recipes.
+	useBackStep(!!opened, () => setOpen(null));
 	// Recipes left partway on this device (read again as one closes, or one is cleared).
 	const [, setCleared] = useState(0);
 	const viewing = allProgress().flatMap((p) => {
