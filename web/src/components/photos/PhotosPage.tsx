@@ -12,6 +12,7 @@ import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import s from './Photos.module.css';
 import Sheet from '../ui/Sheet';
+import { Button, IconButton } from '../ui/Button';
 
 interface Props {
 	/** Starts the screen saver now (to see how it looks). */
@@ -248,9 +249,9 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 				<h1 className={s.pageTitle}>Photos</h1>
 				<div className={s.actions}>
 					{parent && (
-						<button className={s.textButton} onClick={() => setSettingsOpen(true)}>
+						<Button variant="link" size="sm" type="submit" onClick={() => setSettingsOpen(true)}>
 							Screen saver settings
-						</button>
+						</Button>
 					)}
 					<input
 						ref={input}
@@ -285,9 +286,9 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 						</button>
 					))}
 					{photos.length > 0 && parent && (
-						<button className={s.secondary} disabled={selecting} onClick={startSelecting}>
+						<Button type="submit" disabled={selecting} onClick={startSelecting}>
 							Select images
-						</button>
+						</Button>
 					)}
 				</div>
 			)}
@@ -298,19 +299,27 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 					<span className={s.selectCount}>
 						{picked.length} of {photos.length} selected for the screen saver
 					</span>
-					<button
-						className={s.textButton}
+					<Button
+						variant="link"
+						size="sm"
+						type="submit"
+
 						onClick={() => setSelected(picked.length === photos.length ? new Set() : new Set(photos.map((p) => p.id)))}
 					>
 						{picked.length === photos.length ? 'Select none' : 'Select all'}
-					</button>
+					</Button>
 					<span className={s.spacer} />
-					<button className={s.textButton} onClick={stopSelecting}>
+					<Button variant="link" size="sm" type="submit" onClick={stopSelecting}>
 						Cancel
-					</button>
-					<button className={s.save} disabled={setSlideshow.isPending} onClick={() => void saveSelection()}>
+					</Button>
+					<Button
+						variant="primary"
+						type="submit"
+						disabled={setSlideshow.isPending}
+						onClick={() => void saveSelection()}
+					>
 						Save selection
-					</button>
+					</Button>
 				</div>
 			)}
 
@@ -481,9 +490,7 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 					<Sheet label="Screen saver settings" onClose={() => setSettingsOpen(false)}>
 						<header className={sheet.head}>
 							<h2 className={sheet.heading}>Screen saver settings</h2>
-							<button className={sheet.close} onClick={() => setSettingsOpen(false)} aria-label="Close">
-								×
-							</button>
+							<IconButton label="Close" icon="×" className={sheet.close} onClick={() => setSettingsOpen(false)} />
 						</header>
 						<ScreenSaverSettings
 							bare
@@ -528,9 +535,7 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 					<Sheet label="Upload photos" onClose={() => setUploadOpen(false)}>
 						<header className={sheet.head}>
 							<h2 className={sheet.heading}>Upload photos and videos</h2>
-							<button className={sheet.close} onClick={() => setUploadOpen(false)} aria-label="Close">
-								×
-							</button>
+							<IconButton label="Close" icon="×" className={sheet.close} onClick={() => setUploadOpen(false)} />
 						</header>
 						<div className={`${s.dropZone} ${dragging ? s.dropHot : ''}`}>
 							<span className={s.dropIcon} aria-hidden="true">
@@ -538,9 +543,9 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 							</span>
 							<strong>Drag photos or videos here</strong>
 							<span className={s.dropOr}>or</span>
-							<button className={s.upload} onClick={() => input.current?.click()}>
+							<Button variant="primary" type="submit" onClick={() => input.current?.click()}>
 								Choose from Finder
-							</button>
+							</Button>
 							<span className={s.dropHint}>
 								Pick as many as you like. They're shrunk to wall size before uploading.
 							</span>

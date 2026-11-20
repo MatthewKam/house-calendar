@@ -2,54 +2,44 @@
 .box {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
-	padding: 0.8rem 0.9rem;
+	gap: var(--space-3);
+	padding: var(--space-4) var(--space-5);
 	border-radius: var(--radius);
 	background: var(--bg);
 }
 .head {
 	display: flex;
 	align-items: center;
-	gap: 0.6rem;
+	gap: var(--space-3);
 	flex-wrap: wrap;
 }
 .label {
-	font-weight: 700;
+	font-weight: var(--weight-bold);
 }
 .count {
 	color: var(--muted);
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 	white-space: nowrap;
 }
-.edit {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.3rem;
-	padding: 0 0.8rem;
-	border-radius: var(--radius-round);
-	background: var(--surface);
-	border: 1px solid var(--line);
-	font-size: 0.9rem;
-	margin-left: auto;
-}
+
 .items {
 	list-style: none;
 	margin: 0;
 	padding: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 0.35rem;
+	gap: var(--space-2);
 }
 .item {
 	width: 100%;
 	display: flex;
 	align-items: center;
-	gap: 0.6rem;
-	padding: 0.35rem 0.6rem;
+	gap: var(--space-3);
+	padding: var(--space-2) var(--space-3);
 	border-radius: var(--radius-sm);
 	background: var(--surface);
 	text-align: left;
-	font-size: 1.05rem;
+	font-size: var(--text-md);
 }
 .tick {
 	flex: none;
@@ -59,7 +49,7 @@
 	height: 1.5rem;
 	border-radius: var(--radius-xs);
 	border: 2px solid var(--line);
-	font-weight: 800;
+	font-weight: var(--weight-heavy);
 }
 .done .tick {
 	background: var(--accent);
@@ -71,7 +61,7 @@
 	text-decoration: line-through;
 }
 .picture {
-	font-size: 1.4rem;
+	font-size: var(--text-xl);
 	line-height: 1;
 }
 .guess {
@@ -84,14 +74,14 @@
 .note {
 	margin: 0;
 	color: var(--muted);
-	font-size: 0.85rem;
+	font-size: var(--text-sm);
 }
 
 /* Changing the list: a picture button, the name and × on each row, and a row to add one. */
 .editRow {
 	display: flex;
 	align-items: center;
-	gap: 0.4rem;
+	gap: var(--space-2);
 	flex-wrap: wrap;
 }
 .pick {
@@ -103,17 +93,17 @@
 	border-radius: var(--radius-sm);
 	background: var(--surface);
 	border: 1px solid var(--line);
-	font-size: 1.4rem;
+	font-size: var(--text-xl);
 }
 .noPicture {
 	color: var(--muted);
-	font-size: 1.1rem;
+	font-size: var(--text-lg);
 }
 .input {
 	flex: 1;
 	min-width: 0;
-	font-size: 1.05rem;
-	padding: 0.5rem 0.65rem;
+	font-size: var(--text-md);
+	padding: var(--space-3) var(--space-3);
 	border: 1px solid var(--line);
 	border-radius: var(--radius-sm);
 	background: var(--surface);
@@ -121,39 +111,19 @@
 }
 .remove {
 	flex: none;
-	font-size: 1.5rem;
+	font-size: var(--text-xl);
 	color: var(--muted);
-	padding: 0 0.6rem;
+	padding: 0 var(--space-3);
 }
-.addButton {
-	flex: none;
-	padding: 0 1rem;
-	border-radius: var(--radius-sm);
-	background: var(--surface);
-	border: 1px solid var(--line);
-	font-weight: 600;
-}
-.addButton:disabled {
-	opacity: 0.4;
-}
+
 .picker {
 	flex-basis: 100%;
-	padding: 0.5rem;
+	padding: var(--space-3);
 	border-radius: var(--radius-sm);
 	background: var(--surface);
 }
 .actions {
 	display: flex;
 	justify-content: flex-end;
-	gap: 0.5rem;
-}
-.cancel {
-	padding: 0 1rem;
-}
-.save {
-	padding: 0 1.2rem;
-	border-radius: var(--radius-sm);
-	background: var(--accent);
-	color: var(--on-accent);
-	font-weight: 650;
+	gap: var(--space-3);
 }

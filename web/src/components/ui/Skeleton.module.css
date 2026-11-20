@@ -2,12 +2,12 @@
 .loading {
 	display: flex;
 	flex-direction: column;
-	gap: 0.6rem;
+	gap: var(--space-3);
 }
 .lines {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--space-3);
 	width: 100%;
 }
 .block {

@@ -11,6 +11,7 @@ import {
 import s from './Learn.module.css';
 import sheet from '../ui/Sheet.module.css';
 import Sheet from '../ui/Sheet';
+import { Button } from '../ui/Button';
 
 /** The game being played, for its How to play: its name, and how to play it, for a grown-up to explain. */
 export const HowTo = createContext<{ title: string; how: string[] } | null>(null);
@@ -202,9 +203,9 @@ function HowToPlay({ title, how, onClose }: { title: string; how: string[]; onCl
 				</ul>
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />
-					<button type="button" className={sheet.primary} onClick={onClose}>
+					<Button variant="primary" onClick={onClose}>
 						Got it
-					</button>
+					</Button>
 				</div>
 			</Sheet>
 		</>

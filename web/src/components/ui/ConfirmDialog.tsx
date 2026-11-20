@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import sheet from './Sheet.module.css';
 import Sheet from './Sheet';
+import { Button } from './Button';
 
 interface Props {
 	title: string;
@@ -32,12 +33,12 @@ export default function ConfirmDialog({
 				{children && <div className={sheet.body}>{children}</div>}
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />
-					<button type="button" className={sheet.secondary} onClick={onCancel} autoFocus>
+					<Button onClick={onCancel} autoFocus>
 						{cancelLabel}
-					</button>
-					<button type="button" className={safe ? sheet.primary : sheet.destructive} onClick={onConfirm}>
+					</Button>
+					<Button variant={safe ? 'primary' : 'destructive'} onClick={onConfirm}>
 						{confirmLabel}
-					</button>
+					</Button>
 				</div>
 			</Sheet>
 		</>

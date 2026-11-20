@@ -1,11 +1,11 @@
 /* Shopping together (ShoppingTogether.tsx): off, a quiet pill; on, the accent (ticks are live). */
 .button {
-	padding: 0.3rem 0.75rem;
+	padding: var(--space-2) var(--space-4);
 	border: 1px solid var(--line);
 	border-radius: var(--radius-round);
 	background: var(--surface);
 	color: var(--muted);
-	font-size: 0.85rem;
+	font-size: var(--text-sm);
 	white-space: nowrap;
 	max-width: 14rem;
 	overflow: hidden;
@@ -21,7 +21,7 @@
 	flex: none;
 	width: 0.7rem;
 	height: 0.7rem;
-	margin: 0 0.3rem;
+	margin: 0 var(--space-2);
 	border-radius: var(--radius-round);
 	border: 1px solid var(--line);
 }

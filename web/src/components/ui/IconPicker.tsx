@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ALL_EMOJI, searchEmoji } from '../../lib/emoji';
 import s from './IconPicker.module.css';
+import { Button } from './Button';
 
 interface Props {
 	value: string | null;
@@ -51,9 +52,9 @@ export default function IconPicker({ value, onChange, featured, autoFocus }: Pro
 			</div>
 			{found && found.length === 0 && <div className={s.empty}>No icons match “{query.trim()}”.</div>}
 			{!found && (
-				<button type="button" className={s.more} onClick={() => setMore(!more)}>
+				<Button variant="link" size="sm" className={s.more} onClick={() => setMore(!more)}>
 					{more ? 'Show fewer' : `Show more (${ALL_EMOJI.length})`}
-				</button>
+				</Button>
 			)}
 		</div>
 	);

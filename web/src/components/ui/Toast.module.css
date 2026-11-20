@@ -5,18 +5,18 @@
 	transform: translateX(-50%);
 	z-index: var(--layer-toast);
 	background: var(--float);
-	color: #fff;
+	color: #fff; /* own: on the dark --float */
 	border-radius: var(--radius);
-	padding: 0.4rem 0.5rem 0.4rem 1.2rem;
+	padding: var(--space-2) var(--space-3) var(--space-2) var(--space-6);
 	display: flex;
 	align-items: center;
-	gap: 1rem;
-	font-size: 1.05rem;
+	gap: var(--space-5);
+	font-size: var(--text-md);
 }
 .toast button {
-	color: #ffd76a;
-	font-weight: 650;
-	padding: 0 1rem;
+	color: #ffd76a; /* own: on the dark --float */
+	font-weight: var(--weight-semibold);
+	padding: 0 var(--space-5);
 }
 /* Phones: above the bottom bar. */
 @media (max-width: 700px) {

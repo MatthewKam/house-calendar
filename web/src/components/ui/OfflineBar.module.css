@@ -7,14 +7,14 @@
 	z-index: var(--layer-toast);
 	display: flex;
 	align-items: center;
-	gap: 0.4rem;
+	gap: var(--space-2);
 	max-width: calc(100vw - 2rem);
-	padding: 0.3rem 0.8rem;
+	padding: var(--space-2) var(--space-4);
 	border-radius: var(--radius-round);
 	border: 1px solid var(--warn-line);
 	background: var(--warn-bg);
 	color: var(--text);
-	font-size: 0.85rem;
+	font-size: var(--text-sm);
 	box-shadow: var(--shadow-sm);
 	/* Taps go through to what's under it. */
 	pointer-events: none;

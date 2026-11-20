@@ -4,7 +4,7 @@
 	position: fixed;
 	inset: 0;
 	z-index: var(--layer-sheet);
-	background: rgb(0 0 0 / 0.35);
+	background: rgb(0 0 0 / 0.35); /* own: the dim behind a sheet */
 }
 /* Centered in the space between the phone's clock (and notch) and its home bar, so a tall one (an open
    recipe) never starts under the clock. */
@@ -19,10 +19,10 @@
 	overflow-y: auto;
 	background: var(--surface);
 	border-radius: var(--radius-lg);
-	padding: 1.4rem;
+	padding: var(--space-6);
 	display: flex;
 	flex-direction: column;
-	gap: 0.8rem;
+	gap: var(--space-4);
 	box-shadow: var(--shadow-xl);
 }
 /* Phones: one you type into sits at the top instead (below the clock). Centered, it jumped up by half
@@ -46,7 +46,7 @@
 }
 .heading {
 	margin: 0;
-	font-size: 1.3rem;
+	font-size: var(--text-xl);
 }
 /* Title row with an × to close. It stays at the top while the rest scrolls under it: pulled out to
    the sheet's edges (over its padding), with the sheet's background behind it. */
@@ -54,25 +54,25 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: flex-start;
-	gap: 0.5rem;
+	gap: var(--space-3);
 	position: sticky;
 	top: -1.4rem;
 	z-index: 2;
 	flex: none;
-	margin: -1.4rem -1.4rem 0;
-	padding: 1.4rem 1.4rem 0.6rem;
+	margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) 0;
+	padding: var(--space-6) var(--space-6) var(--space-3);
 	background: var(--surface);
 	border-bottom: 1px solid transparent;
 }
 .close {
-	font-size: 1.6rem;
+	font-size: var(--text-2xl);
 	color: var(--muted);
-	margin: -0.5rem -0.6rem 0 0;
+	margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-3)) 0 0;
 }
 .actions {
 	display: flex;
-	gap: 0.5rem;
-	margin-top: 0.4rem;
+	gap: var(--space-3);
+	margin-top: var(--space-2);
 }
 .spacer {
 	flex: 1;
@@ -80,21 +80,21 @@
 .primary {
 	background: var(--accent);
 	color: var(--on-accent);
-	padding: 0 1.6rem;
-	font-weight: 650;
+	padding: 0 var(--space-6);
+	font-weight: var(--weight-semibold);
 }
 .primary:disabled {
 	opacity: 0.4;
 }
 .secondary {
 	background: var(--bg);
-	padding: 0 1.2rem;
+	padding: 0 var(--space-6);
 }
 /* Confirmation pop-ups: narrower, with a filled red button for the action. */
 /* A question over another sheet: its backdrop and the box above that sheet. */
 .scrimOver {
 	z-index: calc(var(--layer-sheet) + 2);
-	background: rgb(0 0 0 / 0.45);
+	background: rgb(0 0 0 / 0.45); /* own: the dim behind a sheet */
 }
 .confirm {
 	z-index: calc(var(--layer-sheet) + 3);
@@ -112,15 +112,15 @@
 	line-height: 1.4;
 }
 .destructive {
-	background: #b42318;
-	color: #fff;
-	padding: 0 1.4rem;
-	font-weight: 650;
+	background: var(--danger-solid);
+	color: var(--on-danger);
+	padding: 0 var(--space-6);
+	font-weight: var(--weight-semibold);
 }
 .danger {
 	color: var(--danger);
-	padding: 0 1rem;
-	font-weight: 600;
+	padding: 0 var(--space-5);
+	font-weight: var(--weight-semibold);
 }
 /* Full screen (a recipe being cooked from): edge to edge, no corners. Two classes, so it wins over a
    sheet's own width. The phone's clock area is a border in the sheet's colour, so the title row sticks
@@ -132,9 +132,9 @@
 	max-height: none;
 	border-radius: 0;
 	border-top: env(safe-area-inset-top, 0px) solid var(--surface);
-	padding-left: calc(1.4rem + var(--inset-left));
-	padding-right: calc(1.4rem + var(--inset-right));
-	padding-bottom: calc(1.4rem + env(safe-area-inset-bottom, 0px));
+	padding-left: calc(var(--space-6) + var(--inset-left));
+	padding-right: calc(var(--space-6) + var(--inset-right));
+	padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
 	box-shadow: none;
 }
 /* A drawer: from the right edge, full height (the whole screen on a phone), for things beside the page
@@ -148,8 +148,8 @@
 	width: min(28rem, 100vw);
 	max-height: none;
 	border-radius: var(--radius-lg) 0 0 var(--radius-lg);
-	padding-right: calc(1.4rem + var(--inset-right));
-	padding-bottom: calc(1.4rem + env(safe-area-inset-bottom, 0px));
+	padding-right: calc(var(--space-6) + var(--inset-right));
+	padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
 	animation: drawerIn 0.2s ease-out;
 }
 @media (prefers-reduced-motion: reduce) {

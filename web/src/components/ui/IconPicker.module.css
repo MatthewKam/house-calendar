@@ -1,12 +1,12 @@
 .picker {
 	display: flex;
 	flex-direction: column;
-	gap: 0.4rem;
+	gap: var(--space-2);
 	min-width: 0;
 }
 .search {
-	font-size: 1rem;
-	padding: 0.5rem 0.75rem;
+	font-size: var(--text-md);
+	padding: var(--space-3) var(--space-4);
 	border: 1px solid var(--line);
 	border-radius: var(--radius-sm);
 	background: var(--surface);
@@ -15,7 +15,7 @@
 .grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(2.6rem, 1fr));
-	gap: 0.25rem;
+	gap: var(--space-1);
 	/* Everything can be long; it scrolls rather than pushing the form off screen. */
 	max-height: 13rem;
 	overflow-y: auto;
@@ -23,7 +23,7 @@
 .choice {
 	min-width: 0;
 	min-height: 2.6rem;
-	font-size: 1.35rem;
+	font-size: var(--text-xl);
 	border-radius: var(--radius-sm);
 	border: 2px solid transparent;
 }
@@ -35,17 +35,14 @@
 	background: var(--bg);
 }
 .none {
-	font-size: 0.75rem;
+	font-size: var(--text-xs);
 	color: var(--muted);
 }
 .empty {
 	color: var(--muted);
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 }
 /* A text button under the icons. */
 .more {
-	composes: textButton from './Buttons.module.css';
 	align-self: flex-start;
-	padding: 0.2rem 0;
-	font-size: 0.9rem;
 }
