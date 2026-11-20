@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useBackStep } from '../../lib/useBackStep';
 import { useAuthStatus, useCalendars, useLearn, useSettings } from '../../lib/queries';
 import { dayKey } from '../../lib/dates';
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
@@ -56,6 +57,8 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 	const isWall = wallModeOn || (!!auth?.signedIn && auth.kind === 'wall');
 	// The group showing (null: the list), back at the top each time it changes.
 	const [view, setView] = useState<string | null>(null);
+	// A group is a step of its own: Back or a swipe goes back to the list of groups.
+	useBackStep(view !== null, () => setView(null));
 	// How Learning works, shown with the ⓘ by its title.
 	const [learnInfo, setLearnInfo] = useState(false);
 	const top = useRef<HTMLElement>(null);

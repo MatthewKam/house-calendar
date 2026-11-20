@@ -27,6 +27,7 @@ import Fab from './components/nav/Fab';
 import { usePage } from './lib/usePage';
 import { BackButton } from './components/ui/BackButton';
 import { useEdgeSwipe } from './lib/useEdgeSwipe';
+import { useBackStep } from './lib/useBackStep';
 import ListView, { AddToListSheet } from './components/lists/ListView';
 import QuickAdd, { type QuickAction } from './components/nav/QuickAdd';
 import MomentDialog from './components/tasks/MomentDialog';
@@ -98,6 +99,8 @@ export default function App() {
 	const [focus, setFocus] = useState<string[]>([]);
 	const [open, setOpen] = useState<Open | null>(null);
 	const close = () => setOpen(null);
+	// Settings is a step of its own: Back or a swipe closes it.
+	useBackStep(open?.kind === 'settings', close);
 	const dialog = open?.kind === 'event' ? open : null;
 	const taskDialog = open?.kind === 'task' ? open : null;
 	// Which page fills the main area. Kept in the address (#tasks), so a refresh stays on it.
@@ -105,7 +108,7 @@ export default function App() {
 	const { page, go, follow, from, back } = usePage();
 	// On the Home Screen, a swipe from the left edge goes back too (the iPhone app and Safari have their own).
 	const shell = useRef<HTMLDivElement>(null);
-	useEdgeSwipe(shell, from !== null, back);
+	useEdgeSwipe(shell, back);
 	const [toast, setToast] = useState<ToastMessage | null>(null);
 
 	const closeToast = useCallback(() => setToast(null), []);
