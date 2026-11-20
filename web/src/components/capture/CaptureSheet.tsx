@@ -14,6 +14,8 @@ import sheet from '../ui/Sheet.module.css';
 import s from './Capture.module.css';
 import { isKid, firstName } from '../../lib/people';
 import Sheet from '../ui/Sheet';
+import { Button, IconButton } from '../ui/Button';
+import { Input, TextArea } from '../ui/Field';
 
 /** A card being checked: the proposal, in the shape the fields edit. */
 interface Card {
@@ -328,9 +330,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 			<Sheet label={photo ? 'Snap a flyer' : 'Say it'} onClose={onClose} className={s.capture}>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>{cards ? 'Add these?' : photo ? 'Snap a flyer' : 'Say it'}</h2>
-					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-						×
-					</button>
+					<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 				</header>
 
 				{!cards && !photo && (
@@ -360,7 +360,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 									? 'Tap to talk, or type.'
 									: 'Type, or use the 🎤 on your keyboard.'}
 						</p>
-						<textarea
+						<TextArea
 							className={s.text}
 							value={text}
 							onChange={(e) => setText(e.target.value)}
@@ -371,9 +371,9 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 						/>
 						<div className={sheet.actions}>
 							<span className={sheet.spacer} />
-							<button type="submit" className={sheet.primary} disabled={!text.trim() || working || !online}>
+							<Button variant="primary" type="submit" disabled={!text.trim() || working || !online}>
 								{working ? 'Working it out…' : 'Go'}
-							</button>
+							</Button>
 						</div>
 					</form>
 				)}
@@ -413,7 +413,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 										×
 									</button>
 								</div>
-								<input
+								<Input
 									className={s.title}
 									value={c.title}
 									onChange={(e) => set(c.id, { title: e.target.value })}
@@ -423,7 +423,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 								{c.kind === 'item' && (
 									<label className={s.field}>
 										<span>List</span>
-										<input
+										<Input
 											list="capture-lists"
 											value={c.list}
 											onChange={(e) => set(c.id, { list: e.target.value })}
@@ -447,7 +447,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 										}
 									/>
 									{c.kind !== 'task' && (
-										<input
+										<Input
 											type="time"
 											className={s.time}
 											value={c.time}
@@ -458,7 +458,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 									{c.kind === 'event' && c.time && (
 										<>
 											<span aria-hidden="true">–</span>
-											<input
+											<Input
 												type="time"
 												className={s.time}
 												value={c.endTime}
@@ -472,7 +472,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 								</div>
 								{c.kind === 'task' ? whoPick(c, kids, true) : whoPick(c, members, c.kind === 'item')}
 								{c.kind === 'event' && (
-									<textarea
+									<TextArea
 										className={s.notes}
 										value={c.notes}
 										onChange={(e) => set(c.id, { notes: e.target.value })}
@@ -495,9 +495,7 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 				{cards?.some((c) => c.kind === 'event') && <CalendarPick target={target} className={s.calendarPick} />}
 				{cards && (
 					<div className={sheet.actions}>
-						<button
-							type="button"
-							className={sheet.secondary}
+						<Button
 							onClick={() => {
 								setCards(null);
 								setError(null);
@@ -505,19 +503,17 @@ export default function CaptureSheet({ photo, members, onClose, onAdded }: Props
 							hidden={!!photo}
 						>
 							Back
-						</button>
+						</Button>
 						<span className={sheet.spacer} />
-						<button type="button" className={sheet.secondary} onClick={onClose}>
-							Cancel
-						</button>
-						<button
-							type="button"
-							className={sheet.primary}
+						<Button onClick={onClose}>Cancel</Button>
+						<Button
+							variant="primary"
+
 							disabled={!ready.length || adding}
 							onClick={() => void addAll()}
 						>
 							{adding ? 'Adding…' : 'Add'}
-						</button>
+						</Button>
 					</div>
 				)}
 			</Sheet>
