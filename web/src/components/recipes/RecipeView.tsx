@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { BackButton } from '../ui/BackButton';
+import { follow } from '../../lib/usePage';
 import type { Page } from '../nav/NavBar';
 import { useMutationState } from '@tanstack/react-query';
 import {
@@ -391,7 +392,15 @@ export default function RecipeView({
 			{!cooking && sent !== null ? (
 				<p className={s.sent} role="status">
 					✓ {sent ? `Sent ${sent} to Groceries` : 'Already on Groceries'}
-					<a href="#lists" className={s.sentLink}>
+					{/* A link: Lists shows ‹ Recipes to come back. */}
+					<a
+						href="#lists"
+						className={s.sentLink}
+						onClick={(e) => {
+							e.preventDefault();
+							follow('lists');
+						}}
+					>
 						Open the list
 					</a>
 				</p>

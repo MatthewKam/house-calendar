@@ -23,6 +23,10 @@ export interface Step {
 }
 export const step = (): Step => (history.state as Step | null) ?? {};
 
+/** The screens open right now (useBackStep's keys); a step can name one that has since gone. */
+export const liveScreens = new Set<string>();
+const openHere = () => (step().open ?? []).filter((k) => liveScreens.has(k));
+
 /** The nav bar's page, while going back past the link steps to put it in place of where they began. */
 let landing: Page | null = null;
 /** True while the nav bar is going back past the steps to its page (open screens close by themselves). */
@@ -39,6 +43,10 @@ const changed = () => window.dispatchEvent(new HashChangeEvent('hashchange'));
 
 // Back at the start of the links (see go): the nav bar's page takes that step's place.
 window.addEventListener('popstate', () => {
+	// Back onto the step of a screen that's gone (left by a link from inside it, like a recipe's "Open
+	// the list"): nothing to show there, so on back past it.
+	const open = step().open ?? [];
+	if (!landing && open.length && !open.some((k) => liveScreens.has(k))) return history.back();
 	if (!landing) return;
 	history.replaceState(null, '', address(landing));
 	landing = null;
@@ -65,15 +73,15 @@ if (!window.location.hash && window.matchMedia(PHONE).matches) {
 
 /** Where a link on another page brought us from (kept with this step in the browser's history), or null. */
 const readFrom = (): Page | null => {
-	const { from, open } = step();
+	const { from } = step();
 	// A screen open over the page has its own way back (useBackStep).
-	return !landing && !open?.length && from && PAGES.includes(from) && from !== read() ? from : null;
+	return !landing && !openHere().length && from && PAGES.includes(from) && from !== read() ? from : null;
 };
 
 /** Whether there's a step to go back to: a link from another page, or a screen open over this one. */
-export const canGoBack = () => readFrom() !== null || (!landing && (step().open?.length ?? 0) > 0);
+export const canGoBack = () => readFrom() !== null || (!landing && openHere().length > 0);
 /** Whether a screen is open over the page (a recipe, Settings). */
-export const screenOpen = () => (step().open?.length ?? 0) > 0;
+export const screenOpen = () => openHere().length > 0;
 
 /**
  * This page no longer offers Back to where a link came from (its ‹ Back is gone), though the step stays
@@ -96,6 +104,20 @@ export interface Pages {
 	from: Page | null;
 	/** Back to `from` (the browser's own Back, so its history stays the same as the app's). */
 	back: () => void;
+}
+
+/**
+ * Go to a page from a link on this one (Today's cards, a meal on the calendar, the + menu): the next page
+ * shows ‹ Back. Usable anywhere, not only through usePage.
+ */
+export function follow(next: Page) {
+	const here = read();
+	if (next === here) return;
+	// A new page: the screens open on this one aren't open on it.
+	const s: Step = { from: here, depth: (step().depth ?? 0) + 1 };
+	// pushState doesn't send hashchange, which updates `page`: send it.
+	history.pushState(s, '', address(next));
+	changed();
 }
 
 export function usePage(): Pages {
@@ -124,15 +146,6 @@ export function usePage(): Pages {
 			return;
 		}
 		history.replaceState(null, '', address(next));
-		changed();
-	}, []);
-	const follow = useCallback((next: Page) => {
-		const here = read();
-		if (next === here) return;
-		// A new page: the screens open on this one aren't open on it.
-		const s: Step = { from: here, depth: (step().depth ?? 0) + 1 };
-		// pushState doesn't send hashchange, which updates `page`: send it.
-		history.pushState(s, '', address(next));
 		changed();
 	}, []);
 	const back = useCallback(() => history.back(), []);

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { leaving, step } from './usePage';
+import { leaving, liveScreens, step } from './usePage';
 
 // A screen opened over a page (a recipe, Settings and its parts) is a step of its own in the browser's
 // history, so Back, a swipe and the browser's Back close it before leaving the page. Closing it in the
@@ -51,6 +51,7 @@ export function useBackStep(open: boolean, close: () => void) {
 			key.current = mine;
 		}
 		const mine = key.current;
+		liveScreens.add(mine);
 		const onPop = () => {
 			if (inStack(mine)) return;
 			key.current = null;
@@ -59,6 +60,7 @@ export function useBackStep(open: boolean, close: () => void) {
 		window.addEventListener('popstate', onPop);
 		return () => {
 			window.removeEventListener('popstate', onPop);
+			liveScreens.delete(mine);
 			// Closed in the app: take its step away (unless it's opening again, or the nav bar is already
 			// going back past it).
 			pendingBack.current = window.setTimeout(() => {
