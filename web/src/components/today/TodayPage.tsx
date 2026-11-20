@@ -15,7 +15,7 @@ import { ENCOURAGEMENT_THEMES } from '../../lib/grownUpWords';
 import { QUOTE_THEMES } from '../../lib/quotes';
 import { sky } from '../../lib/weather';
 import { useNow } from '../../lib/useNow';
-import { LANDSCAPE_TABLET, WIDE, EXTRAWIDE, useMediaQuery } from '../../lib/useMediaQuery';
+import { LANDSCAPE_TABLET, EXTRAWIDE, useMediaQuery } from '../../lib/useMediaQuery';
 import { firstName } from '../../lib/people';
 import { askToOpen, mealAt, mealLabel, plannedOn, zone } from '../../lib/meals';
 import type { CalEvent, Member, PlanMeal, Recipe } from '../../lib/types';
@@ -381,8 +381,8 @@ export default function TodayPage({
 						</div>
 						<div className={s.column}>
 							{guard("the kids' day", kidsCard)}
+							{guard('List items', needsCard)}
 							{guard('special days', specialCard)}
-							{guard('Needs you', needsCard)}
 						</div>
 						<div className={s.column}>
 							{guard('the photos', photosCard)}
@@ -401,7 +401,7 @@ export default function TodayPage({
 						<div className={s.column}>
 							{guard('the quote', quoteCard)}
 							{guard('the encouragement', encouragementCard)}
-							{guard('Needs you', needsCard)}
+							{guard('List items', needsCard)}
 							{guard('the photos', photosCard)}
 						</div>
 					</div>
@@ -410,7 +410,7 @@ export default function TodayPage({
 						{guard('finishing setting up', <FinishSetup />)}
 						{guard('the calendar', calendarCard)}
 						{guard("the kids' day", kidsCard)}
-						{guard('Needs you', needsCard)}
+						{guard('List items', needsCard)}
 						{guard('special days', specialCard)}
 						{guard('the photos', photosCard)}
 						{guard('the quote', quoteCard)}
