@@ -62,6 +62,38 @@
 	--shadow-md: 0 0.3rem 1rem rgb(0 0 0 / 0.1); /* cards on the page */
 	--shadow-lg: 0 0.6rem 1.6rem rgb(0 0 0 / 0.18); /* floating over the page: menus, the + button, a dragged card */
 	--shadow-xl: 0 1rem 3rem rgb(0 0 0 / 0.25); /* dialogs, alerts and cheers, over everything */
+	/* Space: gaps, padding and margins, small to large. Each step is a little more than the last, so things
+	   that belong together sit closer than things that don't. */
+	--space-1: 0.2rem; /* an icon and its words, a badge's padding */
+	--space-2: 0.4rem; /* inside a row: chips side by side, a label and its field */
+	--space-3: 0.6rem; /* between rows in a list, a button's padding */
+	--space-4: 0.8rem; /* inside a card: its padding, between its parts */
+	--space-5: 1rem; /* between cards; a page's side margin on a phone */
+	--space-6: 1.4rem; /* inside a sheet; between sections of a page */
+	--space-7: 2rem; /* a page's margins on a big screen */
+	--space-8: 3rem; /* room at the end of a page, a big empty state */
+	/* Text sizes, small to large (the base is 1rem; the UI scale setting changes what 1rem is). Pictures and
+	   games drawn bigger (an emoji on a kid's card, a Learn tile) say their own size. */
+	--text-xs: 0.75rem; /* tiny labels: a day's letter, a count on a badge */
+	--text-sm: 0.9rem; /* quieter text: hints, times, a card's second line */
+	--text-md: 1rem; /* body text, buttons, fields */
+	--text-lg: 1.15rem; /* a card's title, a row that matters */
+	--text-xl: 1.4rem; /* a sheet's or section's heading */
+	--text-2xl: 1.8rem; /* a page's title */
+	--text-3xl: 2.4rem; /* big numbers: the temperature, a clock */
+	--text-4xl: 3.2rem; /* the wall's clock, a kid's star count */
+	/* Weights of Aleo: one of these, not the steps in between. */
+	--weight-regular: 400; /* body text */
+	--weight-semibold: 600; /* labels, buttons, a row's name */
+	--weight-bold: 700; /* titles and headings */
+	--weight-heavy: 800; /* kid mode, big numbers */
+	/* Line heights: tight for headings and one-line things, relaxed for paragraphs. */
+	--leading-tight: 1.2;
+	--leading-relaxed: 1.4;
+	/* How big a thing you press is, at least (height, and width for a square one). */
+	--tap-sm: 2.4rem; /* dense rows: chips, small pills, a row's own buttons */
+	--tap: 2.75rem; /* every button, by default */
+	--tap-lg: 3.2rem; /* a page's main action, and kid mode's buttons */
 	font-family:
 		'Aleo',
 		system-ui,
@@ -117,8 +149,8 @@ button {
 	border: none;
 	background: none;
 	cursor: pointer;
-	min-height: 2.75rem;
-	min-width: 2.75rem;
+	min-height: var(--tap);
+	min-width: var(--tap);
 	border-radius: var(--radius);
 }
 button:active {
