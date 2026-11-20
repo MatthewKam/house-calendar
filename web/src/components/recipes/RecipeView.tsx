@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { BackButton } from '../ui/BackButton';
+import type { Page } from '../nav/NavBar';
 import { useMutationState } from '@tanstack/react-query';
 import {
 	useAddToGroceries,
@@ -84,10 +86,13 @@ export default function RecipeView({
 	recipe: r,
 	parent,
 	onClose,
+	back,
 }: {
 	recipe: Recipe;
 	parent: boolean;
 	onClose: () => void;
+	/** Opened by a link on another page (a meal on Today): "‹ Today" at the top left goes back there. */
+	back?: { to: Page; onBack: () => void };
 }) {
 	const { update, remove, addImages, setCover, removeImage, logCook, rate, setTags } = useRecipeActions();
 	// Done cooking: how long it took, while it's asked whether to keep that (and a note for next time).
@@ -458,6 +463,7 @@ export default function RecipeView({
 		<>
 			<Sheet label={r.title} onClose={onClose} className={`${s.view} ${cooking || fullScreen ? sheet.full : ''}`}>
 				<header className={sheet.head}>
+					{back && <BackButton to={back.to} onBack={back.onBack} />}
 					<h2 className={sheet.heading}>{r.title}</h2>
 					<span className={sheet.spacer} />
 					<button type="button" className={s.iconButton} onClick={() => void share()} aria-label="Share the recipe">

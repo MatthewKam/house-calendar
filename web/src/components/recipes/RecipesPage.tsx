@@ -381,6 +381,11 @@ export default function RecipesPage({
 				<RecipeView
 					recipe={opened}
 					parent={parent}
+					back={
+						opened.id === linked.current && step().from
+							? { to: step().from!, onBack: () => history.back() }
+							: undefined
+					}
 					onClose={() => {
 						// Closed by hand: open again, it's a step like any other.
 						linked.current = null;
