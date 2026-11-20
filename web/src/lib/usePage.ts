@@ -20,6 +20,8 @@ export interface Step {
 	from?: Page;
 	depth?: number;
 	open?: string[];
+	/** The page's own ‹ Back is hidden (a screen over it shows it instead: hideBack). */
+	quiet?: boolean;
 }
 export const step = (): Step => (history.state as Step | null) ?? {};
 
@@ -72,24 +74,26 @@ if (!window.location.hash && window.matchMedia(PHONE).matches) {
 }
 
 /** Where a link on another page brought us from (kept with this step in the browser's history), or null. */
-const readFrom = (): Page | null => {
+/** Where a link came from, shown or not. */
+const linkFrom = (): Page | null => {
 	const { from } = step();
-	// A screen open over the page has its own way back (useBackStep).
-	return !landing && !openHere().length && from && PAGES.includes(from) && from !== read() ? from : null;
+	return !landing && from && PAGES.includes(from) && from !== read() ? from : null;
 };
+const readFrom = (): Page | null =>
+	// A screen open over the page has its own way back (useBackStep), and a quiet page shows none.
+	openHere().length || step().quiet ? null : linkFrom();
 
 /** Whether there's a step to go back to: a link from another page, or a screen open over this one. */
-export const canGoBack = () => readFrom() !== null || (!landing && openHere().length > 0);
+export const canGoBack = () => linkFrom() !== null || (!landing && openHere().length > 0);
 /** Whether a screen is open over the page (a recipe, Settings). */
 export const screenOpen = () => openHere().length > 0;
 
 /**
- * This page no longer offers Back to where a link came from (its ‹ Back is gone), though the step stays
- * in the history: for a page that was only passed through, like Recipes under a meal's recipe.
+ * The page's own ‹ Back is hidden from now on, though going back works as before (a swipe, the browser's
+ * Back): for a page under a screen that shows it instead, like Recipes under a meal's recipe.
  */
-export function dropFrom() {
-	const { from: _from, ...rest } = step();
-	history.replaceState(rest, '', window.location.href);
+export function hideBack() {
+	history.replaceState({ ...step(), quiet: true }, '', window.location.href);
 	changed();
 }
 

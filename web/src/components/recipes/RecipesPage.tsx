@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type JSX } from 'react';
 import { useBackStep } from '../../lib/useBackStep';
-import { dropFrom, step } from '../../lib/usePage';
+import { hideBack, step } from '../../lib/usePage';
 import { useImageDrop } from '../../lib/useFlyerDrop';
 import { useMeals, useMembers, useRecipeReading, useRecipes } from '../../lib/queries';
 import DishIdeas from './DishIdeas';
@@ -134,8 +134,12 @@ export default function RecipesPage({
 	const opened = recipes.find((r) => r.id === open) ?? null;
 	// An open recipe is a step of its own: Back or a swipe closes it before leaving Recipes. Not the one a
 	// link brought us here for (a meal on Today): Back from it goes straight back where the link was.
-	const linked = useRef(open !== null && step().from ? open : null);
-	useBackStep(!!opened && opened.id !== linked.current, () => setOpen(null));
+	// Its ‹ Back is on the recipe only: Recipes behind it takes the link's way back for it, so it shows none.
+	const linked = useRef(open !== null && step().from ? { id: open, from: step().from! } : null);
+	useLayoutEffect(() => {
+		if (linked.current) hideBack();
+	}, []);
+	useBackStep(!!opened && opened.id !== linked.current?.id, () => setOpen(null));
 	// Recipes left partway on this device (read again as one closes, or one is cleared).
 	const [, setCleared] = useState(0);
 	const viewing = allProgress().flatMap((p) => {
@@ -382,14 +386,12 @@ export default function RecipesPage({
 					recipe={opened}
 					parent={parent}
 					back={
-						opened.id === linked.current && step().from
-							? { to: step().from!, onBack: () => history.back() }
+						opened.id === linked.current?.id
+							? { to: linked.current.from, onBack: () => history.back() }
 							: undefined
 					}
 					onClose={() => {
-						// Closed by hand: Recipes itself offers no ‹ Today (only the recipe did), and opened again
-						// it's a step like any other.
-						if (linked.current) dropFrom();
+						// Closed by hand: opened again, it's a step like any other.
 						linked.current = null;
 						setOpen(null);
 					}}
