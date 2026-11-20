@@ -3,13 +3,14 @@ import s from './Button.module.css';
 
 // Sprig's buttons: one look per job, the same everywhere. A sheet's Save is `primary`, its Cancel
 // `secondary`; Delete in a confirm is `destructive`, a quieter red word is `danger`; Undo, Clear and
-// "Use a different email" are `link`. Kid mode's buttons are `size="lg"`.
+// "Use a different email" are `link`; a quieter grey one beside another button (Cancel in a row, Undo,
+// Take back) is `quiet`. Kid mode's buttons are `size="lg"`.
 
-type Variant = 'primary' | 'secondary' | 'destructive' | 'danger' | 'link';
+type Variant = 'primary' | 'secondary' | 'destructive' | 'danger' | 'link' | 'quiet';
 type Size = 'sm' | 'md' | 'lg';
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
-	/** What it does, by look: primary (the one main action), secondary, destructive (filled red), danger (red words), link. */
+	/** What it does, by look: primary (the one main action), secondary, destructive (filled red), danger (red words), link, quiet (grey words). */
 	variant?: Variant;
 	/** How big a thing to press: sm in dense rows, md everywhere else, lg for a page's main action and kids. */
 	size?: Size;

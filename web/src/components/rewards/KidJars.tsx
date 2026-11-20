@@ -7,6 +7,8 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 import { JarProgress, eachFills, shortDay } from './JarBits';
 import s from './Rewards.module.css';
 import DateInput from '../ui/DateInput';
+import { Button, IconButton } from '../ui/Button';
+import { Field } from '../ui/Field';
 
 interface Props {
 	kid: Member;
@@ -58,6 +60,8 @@ export default function KidJars({ kid, members, today, bucket, jars, onEdit, ask
 	} | null>(null);
 	const [removing, setRemoving] = useState<Reward | null>(null);
 	const grownUp = (then: () => void) => (askFirst ? askFirst(then) : then());
+	// Kid mode's buttons are big.
+	const size = big ? 'lg' : 'md';
 	// Parents only: the jar a kid's stars are being taken back out of, and how many of theirs are in it.
 
 	const filling = jars.filter((j) => j.status === 'filling');
@@ -128,19 +132,19 @@ export default function KidJars({ kid, members, today, bucket, jars, onEdit, ask
 				</span>
 				{stage ? (
 					<>
-						<button className={s.cancel} onClick={() => setStage(null)}>
+						<Button variant="quiet" onClick={() => setStage(null)}>
 							Cancel
-						</button>
-						<button className={s.use} disabled={!staged} onClick={() => setConfirming(true)}>
+						</Button>
+						<Button variant="primary" size={size} disabled={!staged} onClick={() => setConfirming(true)}>
 							Done
-						</button>
+						</Button>
 					</>
 				) : (
 					filling.length > 0 &&
 					bucket > 0 && (
-						<button className={s.use} onClick={() => grownUp(() => setStage({ counts: {} }))}>
+						<Button variant="primary" size={size} onClick={() => grownUp(() => setStage({ counts: {} }))}>
 							Use stars
-						</button>
+						</Button>
 					)
 				)}
 			</header>
@@ -168,8 +172,8 @@ export default function KidJars({ kid, members, today, bucket, jars, onEdit, ask
 						</span>
 						{n > 0 && !stage && (
 							<span className={s.missedActions}>
-								<button
-									className={s.quiet}
+								<Button
+									variant="quiet"
 									onClick={() =>
 										grownUp(() =>
 											place.mutate({
@@ -182,22 +186,22 @@ export default function KidJars({ kid, members, today, bucket, jars, onEdit, ask
 									}
 								>
 									Back to my bucket
-								</button>
+								</Button>
 								{filling.length > 0 && (
-									<button className={s.use} onClick={() => grownUp(() => setStage({ from: j, counts: {} }))}>
+									<Button variant="primary" size={size} onClick={() => grownUp(() => setStage({ from: j, counts: {} }))}>
 										Move to another jar
-									</button>
+									</Button>
 								)}
 							</span>
 						)}
 						{j.stars === 0 && onEdit && (
 							<span className={s.missedActions}>
-								<button className={s.quiet} onClick={() => setRemoving(j)}>
+								<Button variant="quiet" onClick={() => setRemoving(j)}>
 									Remove
-								</button>
-								<button className={s.use} onClick={() => setRestoring({ jar: j, deadline: '' })}>
+								</Button>
+								<Button variant="primary" onClick={() => setRestoring({ jar: j, deadline: '' })}>
 									Add back
-								</button>
+								</Button>
 							</span>
 						)}
 					</div>
@@ -221,9 +225,13 @@ export default function KidJars({ kid, members, today, bucket, jars, onEdit, ask
 								<span className={s.rowTitle}>
 									{j.title}
 									{!stage && onEdit && (
-										<button className={s.edit} onClick={() => onEdit?.(j)} aria-label={`Change ${j.title}`}>
-											<PencilIcon />
-										</button>
+										<IconButton
+											size="sm"
+											className={s.edit}
+											label={`Change ${j.title}`}
+											icon={<PencilIcon />}
+											onClick={() => onEdit?.(j)}
+										/>
 									)}
 								</span>
 								<span className={s.rowSub}>{subtitle(j)}</span>
@@ -231,29 +239,29 @@ export default function KidJars({ kid, members, today, bucket, jars, onEdit, ask
 							</div>
 							{stage ? (
 								<div className={s.stager}>
-									<button
-										className={s.step}
+									<IconButton
+										variant="secondary"
+										size={size}
+										icon="−"
 										disabled={!count(j)}
-										aria-label={`Take a star back from ${j.title}`}
+										label={`Take a star back from ${j.title}`}
 										onClick={(e) => {
 											e.stopPropagation();
 											bump(j, -1);
 										}}
-									>
-										−
-									</button>
+									/>
 									<span className={s.staged}>{count(j) ? `+${count(j)}` : room(j) > 0 ? '' : 'Full'}</span>
-									<button
-										className={s.step}
+									<IconButton
+										variant="secondary"
+										size={size}
+										icon="+"
 										disabled={!canAdd(j)}
-										aria-label={`Put a star in ${j.title}`}
+										label={`Put a star in ${j.title}`}
 										onClick={(e) => {
 											e.stopPropagation();
 											addStar(j);
 										}}
-									>
-										+
-									</button>
+									/>
 								</div>
 							) : null}
 						</li>
@@ -288,15 +296,14 @@ export default function KidJars({ kid, members, today, bucket, jars, onEdit, ask
 						setRestoring(null);
 					}}
 				>
-					<label className={s.restoreDate}>
-						New deadline (leave empty for none)
+					<Field label="New deadline" hint="Leave it empty for none">
 						<DateInput
 							className={s.date}
 							value={restoring.deadline}
 							min={today}
 							onChange={(e) => setRestoring({ ...restoring, deadline: e.target.value })}
 						/>
-					</label>
+					</Field>
 				</ConfirmDialog>
 			)}
 			{removing && (

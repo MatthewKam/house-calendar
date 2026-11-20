@@ -5,11 +5,12 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 import TakeBackDialog from './TakeBackDialog';
 import { PickChip } from '../ui/NameChip';
 import sheet from '../ui/Sheet.module.css';
-import s from '../calendar/EventDialog.module.css';
-import t from '../tasks/Tasks.module.css';
 import r from './Rewards.module.css';
 import DateInput from '../ui/DateInput';
 import Sheet from '../ui/Sheet';
+import { Button, IconButton } from '../ui/Button';
+import { Chip } from '../ui/Chip';
+import { Field, Fieldset, Input } from '../ui/Field';
 
 interface Props {
 	/** Who a new jar starts out for (e.g. the kid whose section it was added from). */
@@ -73,58 +74,48 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 			<Sheet label={reward ? 'Change jar' : 'New reward jar'} onClose={onClose} onSubmit={submit}>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>{reward ? 'Change jar' : 'New reward jar'}</h2>
-					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-						×
-					</button>
+					<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 				</header>
-				<input
-					className={s.title}
-					placeholder="What do they earn? e.g. Movie night"
-					value={title}
-					maxLength={80}
-					autoFocus={!reward}
-					onChange={(e) => setTitle(e.target.value)}
-				/>
+				<Field label="What they earn">
+					<Input
+						placeholder="e.g. Movie night"
+						value={title}
+						maxLength={80}
+						autoFocus={!reward}
+						onChange={(e) => setTitle(e.target.value)}
+					/>
+				</Field>
 
-				<div className={s.label}>
-					Who <span className={s.labelHint}>· pick more than one to earn it together</span>
-				</div>
-				<div className={s.wrap}>
+				<Fieldset label="Who" labelHint="pick more than one to earn it together">
 					{members.map((m) => {
 						const on = memberIds.includes(m.id);
 						return <PickChip key={m.id} name={m.name} color={m.color} on={on} onClick={() => toggle(m.id)} />;
 					})}
-				</div>
+				</Fieldset>
 				{together && (
-					<>
-						<div className={s.wrap}>
-							{TEAM.map((x) => (
-								<button
-									key={x.id}
-									type="button"
-									aria-pressed={teamMode === x.id}
-									className={`${s.chip} ${teamMode === x.id ? t.chipOn : ''}`}
-									onClick={() => setTeamMode(x.id)}
-								>
-									{x.label}
-								</button>
-							))}
-						</div>
-						<p className={t.hint}>
-							{teamMode === 'pooled'
+					<Fieldset
+						label="Filled how"
+						hint={
+							teamMode === 'pooled'
 								? `${names.join(' and ')}'s stars fill one jar.`
-								: `${names.join(' and ')} each put in the full amount.`}
-						</p>
-					</>
+								: `${names.join(' and ')} each put in the full amount.`
+						}
+					>
+						{TEAM.map((x) => (
+							<Chip key={x.id} pressed={teamMode === x.id} onClick={() => setTeamMode(x.id)}>
+								{x.label}
+							</Chip>
+						))}
+					</Fieldset>
 				)}
 
-				<label className={t.points}>
-					{together && teamMode === 'pooled'
-						? 'Stars to fill it, together'
-						: together
-							? 'Stars each'
-							: 'Stars to fill it'}
-					<input
+				<Field
+					className={r.goal}
+					label={
+						together && teamMode === 'pooled' ? 'Stars to fill it, together' : together ? 'Stars each' : 'Stars to fill it'
+					}
+				>
+					<Input
 						type="number"
 						min={1}
 						max={100000}
@@ -132,25 +123,21 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 						value={goal}
 						onChange={(e) => setGoal(Math.max(0, Math.round(Number(e.target.value) || 0)))}
 					/>
-				</label>
-				<div className={s.label}>Deadline</div>
-				<div className={s.wrap}>
-					<button
-						type="button"
-						aria-pressed={deadline === null}
-						className={`${s.chip} ${deadline === null ? t.chipOn : ''}`}
-						onClick={() => setDeadline(null)}
-					>
+				</Field>
+				<Fieldset
+					label="Deadline"
+					hint={
+						deadline === null
+							? "After it's redeemed, it empties and can be filled again."
+							: "One time only. If it isn't redeemed by then, the kids get their stars back to use on another jar."
+					}
+				>
+					<Chip pressed={deadline === null} onClick={() => setDeadline(null)}>
 						None
-					</button>
-					<button
-						type="button"
-						aria-pressed={deadline !== null}
-						className={`${s.chip} ${deadline !== null ? t.chipOn : ''}`}
-						onClick={() => setDeadline(deadline ?? today)}
-					>
+					</Chip>
+					<Chip pressed={deadline !== null} onClick={() => setDeadline(deadline ?? today)}>
 						By a date
-					</button>
+					</Chip>
 					{deadline !== null && (
 						<DateInput
 							className={r.date}
@@ -160,16 +147,11 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 							onChange={(e) => e.target.value && setDeadline(e.target.value)}
 						/>
 					)}
-				</div>
-				<p className={t.hint}>
-					{deadline === null
-						? "After it's redeemed, it empties and can be filled again."
-						: "One time only. If it isn't redeemed by then, the kids get their stars back to use on another jar."}
-				</p>
+				</Fieldset>
 				{inJar.length > 0 && (
 					<>
-						<div className={s.label}>
-							Stars in it <span className={s.labelHint}>· parents can take some back (master PIN)</span>
+						<div className={r.inJarHead}>
+							Stars in it <span className={r.labelHint}>· parents can take some back (master PIN)</span>
 						</div>
 						<ul className={r.inJar}>
 							{inJar.map((m) => (
@@ -177,28 +159,26 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 									<span>
 										<b>{m.name}</b> · {reward!.memberStars[m.id]} ⭐
 									</span>
-									<button type="button" className={r.takeBack} onClick={() => setTakingBack(m)}>
+									<Button variant="quiet" size="sm" onClick={() => setTakingBack(m)}>
 										Take back
-									</button>
+									</Button>
 								</li>
 							))}
 						</ul>
 					</>
 				)}
-				{save.isError && <div className={s.problem}>Couldn't save: {save.error.message}</div>}
+				{save.isError && <div className={r.problem}>Couldn't save: {save.error.message}</div>}
 				<div className={sheet.actions}>
 					{reward && (
-						<button type="button" className={sheet.danger} onClick={() => setConfirmDelete(true)}>
+						<Button variant="danger" onClick={() => setConfirmDelete(true)}>
 							Delete
-						</button>
+						</Button>
 					)}
 					<span className={sheet.spacer} />
-					<button type="button" className={sheet.secondary} onClick={onClose}>
-						Cancel
-					</button>
-					<button type="submit" className={sheet.primary} disabled={!!problem}>
+					<Button onClick={onClose}>Cancel</Button>
+					<Button variant="primary" type="submit" disabled={!!problem}>
 						Save
-					</button>
+					</Button>
 				</div>
 			</Sheet>
 			{reward && takingBack && (
