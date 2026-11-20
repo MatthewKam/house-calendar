@@ -459,13 +459,9 @@ details > summary.cardHead {
 .carousel {
 	display: flex;
 	flex-direction: column;
-	gap: 0.6rem;
 	min-width: 0;
 	/* Up and down still scrolls the page; sideways is a swipe. */
 	touch-action: pan-y;
-	background-color: var(--bg);
-	padding: var(--space-3);
-	border-radius: var(--radius-sm);
 }
 .dayButtons {
 	display: flex;
@@ -539,6 +535,9 @@ details > summary.cardHead {
 	display: flex;
 	flex-direction: column;
 	gap: 0.6rem;
+	padding: 0.8rem 0.6rem;
+	border-radius: var(--radius-sm);
+	background: var(--bg);
 }
 .dayFromRight {
 	animation: dayFromRight 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);

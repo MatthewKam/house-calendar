@@ -402,13 +402,13 @@ export default function TodayPage({
 							{guard('the calendar', calendarCard)}
 							{guard("the kids' day", kidsCard)}
 							{guard('special days', specialCard)}
-							{guard('the weather', weatherCard)}
 						</div>
 						<div className={s.column}>
 							{guard('the quote', quoteCard)}
 							{guard('the encouragement', encouragementCard)}
 							{guard('List items', needsCard)}
 							{guard('the photos', photosCard)}
+							{guard('the weather', weatherCard)}
 						</div>
 					</div>
 				) : (
