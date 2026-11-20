@@ -1,0 +1,28 @@
+/* Back to the page a link came from (BackButton.tsx): the accent's words after a chevron, at the top
+   left, sitting on the page's own left edge. */
+.back {
+	align-self: flex-start;
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	min-height: var(--tap);
+	margin-left: calc(-1 * var(--space-2));
+	padding: 0 var(--space-3) 0 var(--space-1);
+	border-radius: var(--radius-sm);
+	color: var(--accent);
+	font-size: var(--text-md);
+	font-weight: var(--weight-semibold);
+}
+.back:hover {
+	background: var(--surface);
+}
+.chevron {
+	width: var(--text-xl);
+	height: var(--text-xl);
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.4;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
