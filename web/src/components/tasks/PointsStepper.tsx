@@ -1,4 +1,5 @@
 import s from './Goals.module.css';
+import { IconButton } from '../ui/Button';
 
 /** − 1 ★ +: how many stars something is worth. 0 shows as a sticker (a cheer, nothing to save). */
 export default function PointsStepper({
@@ -14,27 +15,23 @@ export default function PointsStepper({
 }) {
 	return (
 		<div className={s.stepper} role="group" aria-label={label}>
-			<button
-				type="button"
-				className={s.step}
+			<IconButton
+				variant="secondary"
+				icon="−"
+				label="One fewer"
 				disabled={value <= 0}
-				aria-label="One fewer"
 				onClick={() => onChange(value - 1)}
-			>
-				−
-			</button>
+			/>
 			<span className={s.stepValue} aria-live="polite">
 				{value === 0 ? 'Sticker' : `${value} ★`}
 			</span>
-			<button
-				type="button"
-				className={s.step}
+			<IconButton
+				variant="secondary"
+				icon="+"
+				label="One more"
 				disabled={value >= max}
-				aria-label="One more"
 				onClick={() => onChange(value + 1)}
-			>
-				+
-			</button>
+			/>
 		</div>
 	);
 }

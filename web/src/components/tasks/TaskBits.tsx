@@ -2,8 +2,8 @@ import { dayKey, fromDayKey } from '../../lib/dates';
 import { categoryLabel } from '../../lib/tasks';
 import type { Task } from '../../lib/types';
 import { StarIcon } from '../ui/icons';
+import { Tag } from '../ui/Chip';
 import s from './Tasks.module.css';
-import g from './Goals.module.css';
 
 /** A task's icon (if any) and title. */
 export function TaskName({ task }: { task: Task }) {
@@ -24,22 +24,26 @@ export function TaskTags({ task }: { task: Task }) {
 	return (
 		<>
 			{/* Editing or deleting a shared task changes it for the whole family. */}
-			{!task.memberId && <span className={s.sharedTag}>Everyone</span>}
-			<span className={`${s.catTag} ${task.required ? '' : g.goalTag}`}>{categoryLabel(task.category)}</span>
+			{!task.memberId && <Tag className={s.tag}>Everyone</Tag>}
+			<Tag className={s.tag} tone={task.required ? 'plain' : 'good'}>
+				{categoryLabel(task.category)}
+			</Tag>
 			{/* One-time: when it's gone from the list. */}
 			{task.dueBy && (
-				<span className={`${s.catTag} ${s.dueTag}`}>
+				<Tag className={s.tag} tone="soon">
 					{task.dueBy === dayKey(new Date())
 						? 'Today only'
 						: `By ${fromDayKey(task.dueBy).toLocaleDateString([], { weekday: 'short' })}`}
-				</span>
+				</Tag>
 			)}
 			{/* Stars, for an extra worth any (a chore can be worth none). */}
 			{!task.required && task.points > 0 && (
-				<span className={s.starTag} aria-label={`${task.points} stars`}>
-					{task.points}
-					<StarIcon className={s.star} />
-				</span>
+				<Tag className={s.tag} tone="warn">
+					<span className={s.starTag} aria-label={`${task.points} stars`}>
+						{task.points}
+						<StarIcon className={s.star} />
+					</span>
+				</Tag>
 			)}
 		</>
 	);

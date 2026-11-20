@@ -1,32 +1,23 @@
 /* Catching a moment (MomentDialog), and the stickers on a kid's card (KidHeader). */
-.note {
-	font: inherit;
-	font-size: 1.05rem;
-	padding: 0.65rem 0.75rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius-sm);
-	background: var(--surface);
-	color: var(--text);
-	min-width: 0;
-}
 /* Big pictures: one tap saves. */
 .kinds {
+	width: 100%;
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
-	gap: 0.6rem;
+	gap: var(--space-3);
 }
 .kind {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 0.3rem;
+	gap: var(--space-2);
 	min-height: 6rem;
-	padding: 0.7rem 0.4rem;
+	padding: var(--space-4) var(--space-2);
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
 	background: var(--bg);
-	font-weight: 600;
-	font-size: 0.9rem;
+	font-weight: var(--weight-semibold);
+	font-size: var(--text-sm);
 	color: var(--text);
 }
 .kind:active {
@@ -40,40 +31,17 @@
 .form {
 	display: flex;
 	flex-direction: column;
-	gap: 0.6rem;
+	gap: var(--space-3);
 }
-.kids {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.5rem;
-}
-/* Catch one | History */
-.tabs {
-	display: flex;
-	background: var(--bg);
-	border-radius: var(--radius);
-	padding: 0.2rem;
-}
-.tabs button {
-	flex: 1;
-	min-height: 2.5rem;
-	border-radius: var(--radius-sm);
-	font-weight: 600;
-	color: var(--muted);
-}
-.tabs button[aria-selected='true'] {
-	background: var(--surface);
-	color: var(--text);
-	box-shadow: var(--shadow-sm);
-}
+
 .kindEmoji {
-	font-size: 2.2rem;
+	font-size: var(--text-3xl);
 	line-height: 1;
 }
 .problem {
 	margin: 0;
 	color: var(--danger);
-	font-size: 0.95rem;
+	font-size: var(--text-md);
 }
 
 /* On the kid's card: today's stickers. */
@@ -81,7 +49,7 @@
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
-	gap: 0.3rem;
+	gap: var(--space-2);
 }
 .sticker {
 	display: grid;
@@ -93,6 +61,6 @@
 	background: var(--surface);
 	border: 1px solid var(--line);
 	box-shadow: var(--shadow-sm);
-	font-size: 1.35rem;
+	font-size: var(--text-xl);
 	line-height: 1;
 }

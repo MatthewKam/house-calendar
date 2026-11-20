@@ -4,6 +4,7 @@ import type { Member, Task, TaskDone } from '../../lib/types';
 import SortableList from '../ui/SortableList';
 import { TaskName, TaskTags, TaskTick } from './TaskBits';
 import { GripIcon, PencilIcon, TrashIcon } from '../ui/icons';
+import { IconButton } from '../ui/Button';
 import s from './Tasks.module.css';
 
 interface Props {
@@ -73,16 +74,18 @@ export default function TodayList({
 											<TaskName task={c} /> <TaskTags task={c} />
 										</span>
 										<div>
-											<button className={s.iconButton} onClick={() => onEdit(c)} aria-label={`Edit ${c.title}`}>
-												<PencilIcon />
-											</button>
-											<button
-												className={`${s.iconButton} ${s.trash}`}
+											<IconButton
+												className={s.rowIcon}
+												icon={<PencilIcon />}
+												label={`Edit ${c.title}`}
+												onClick={() => onEdit(c)}
+											/>
+											<IconButton
+												className={s.rowIcon}
+												icon={<TrashIcon />}
+												label={`Delete ${c.title}`}
 												onClick={() => onDelete(c)}
-												aria-label={`Delete ${c.title}`}
-											>
-												<TrashIcon />
-											</button>
+											/>
 										</div>
 									</div>
 								)}

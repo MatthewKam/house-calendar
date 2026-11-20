@@ -112,7 +112,11 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 				<Field
 					className={r.goal}
 					label={
-						together && teamMode === 'pooled' ? 'Stars to fill it, together' : together ? 'Stars each' : 'Stars to fill it'
+						together && teamMode === 'pooled'
+							? 'Stars to fill it, together'
+							: together
+								? 'Stars each'
+								: 'Stars to fill it'
 					}
 				>
 					<Input

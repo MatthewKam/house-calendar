@@ -10,6 +10,7 @@ import { StarIcon } from '../ui/icons';
 import sheet from '../ui/Sheet.module.css';
 import s from './Potty.module.css';
 import Sheet from '../ui/Sheet';
+import { Button, IconButton } from '../ui/Button';
 
 type Kind = PottyKind | null;
 
@@ -65,6 +66,8 @@ const zero = (): Record<PottyStep, number> => ({ ask: 0, sit: 0, go: 0, wipe: 0,
  * Save. Parents' Edit takes stickers back (a row's last one first) or stops the chart.
  */
 export default function PottyCard({ kid, chart, canEdit, askFirst, compact, attached, editAsked, foldable }: Props) {
+	// Kid mode's buttons are big; on the Tasks page, the usual size.
+	const size = compact ? 'md' : 'lg';
 	const [folded, fold] = useState(() => !!foldable && foldedKids().includes(kid.id));
 	const { setOn, punch, takeBack } = usePottyActions();
 	// Stickers added and not saved yet, per row.
@@ -191,13 +194,13 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact, atta
 						)}
 					</h3>
 					{canEdit && !editing && !changed && !folded && (
-						<button
-							type="button"
-							className={s.edit}
+						<Button
+							variant={compact ? 'link' : 'secondary'}
+							size={compact ? 'sm' : 'md'}
 							onClick={() => (askFirst ? askFirst(() => setEditing(true)) : setEditing(true))}
 						>
 							Edit
-						</button>
+						</Button>
 					)}
 				</div>
 			)}
@@ -265,17 +268,23 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact, atta
 					{(changed || editing) && (
 						<div className={s.actions}>
 							{editing && (
-								<button type="button" className={s.stop} onClick={() => setStopping(true)}>
+								<Button variant="danger" size={size} onClick={() => setStopping(true)}>
 									Stop chart
-								</button>
+								</Button>
 							)}
 							<span className={s.spacer} />
-							<button type="button" className={s.cancel} onClick={cancel} disabled={saving}>
+							<Button size={size} onClick={cancel} disabled={saving}>
 								Cancel
-							</button>
-							<button type="button" className={s.save} onClick={() => void save()} disabled={!changed || saving}>
+							</Button>
+							<Button
+								variant="primary"
+								size={size}
+								className={s.save}
+								onClick={() => void save()}
+								disabled={!changed || saving}
+							>
 								Save ✓
-							</button>
+							</Button>
 						</div>
 					)}
 					{last && (
@@ -289,9 +298,7 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact, atta
 							<Sheet label="Pee or poop?" onClose={() => setChoosing(false)} className={s.chooser}>
 								<div className={sheet.head}>
 									<h2 className={s.chooseHeading}>Pee or poop?</h2>
-									<button type="button" className={sheet.close} onClick={() => setChoosing(false)} aria-label="Close">
-										×
-									</button>
+									<IconButton label="Close" icon="×" className={sheet.close} onClick={() => setChoosing(false)} />
 								</div>
 								{/* Each one toggles; both on is both. */}
 								<div className={s.choices}>
@@ -316,8 +323,9 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact, atta
 								</div>
 								<div className={sheet.actions}>
 									<span className={sheet.spacer} />
-									<button
-										type="button"
+									<Button
+										variant="primary"
+										size="lg"
 										className={s.save}
 										disabled={!pee && !poo}
 										onClick={() => {
@@ -326,7 +334,7 @@ export default function PottyCard({ kid, chart, canEdit, askFirst, compact, atta
 										}}
 									>
 										OK ✓
-									</button>
+									</Button>
 								</div>
 							</Sheet>
 						</>

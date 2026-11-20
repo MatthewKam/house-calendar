@@ -12,10 +12,13 @@ import g from './Goals.module.css';
 import IconPicker from '../ui/IconPicker';
 import { PickChip } from '../ui/NameChip';
 import sheet from '../ui/Sheet.module.css';
-import s from '../calendar/EventDialog.module.css';
 import c from './Tasks.module.css';
 import DateInput from '../ui/DateInput';
 import Sheet from '../ui/Sheet';
+import { Button, IconButton } from '../ui/Button';
+import { Chip } from '../ui/Chip';
+import { Field, Fieldset, Input } from '../ui/Field';
+import { Segmented } from '../ui/Segmented';
 
 interface Props {
 	task?: Task;
@@ -145,42 +148,40 @@ export default function TaskDialog({
 					<h2 className={sheet.heading}>
 						{task ? (isGoal ? 'Edit goal' : 'Edit task') : isGoal ? 'New goal' : 'New task'}
 					</h2>
-					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-						×
-					</button>
+					<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 				</header>
 
-				<div className={g.modeSwitch} role="group" aria-label="Task or goal">
-					<button type="button" aria-pressed={!isGoal} onClick={() => setMode('task')}>
-						Task
-						<span className={g.modeHint}>Required for the day</span>
-					</button>
-					<button type="button" aria-pressed={isGoal} onClick={() => setMode('goal')}>
-						Goal
-						<span className={g.modeHint}>Earns stars any day they do it</span>
-					</button>
-				</div>
+				<Segmented
+					label="Task or goal"
+					value={mode}
+					onChange={setMode}
+					options={[
+						{ id: 'task', label: 'Task', hint: 'Required for the day' },
+						{ id: 'goal', label: 'Goal', hint: 'Earns stars any day they do it' },
+					]}
+				/>
 
-				<div className={c.titleRow}>
-					{/* The chosen icon, shown before the name like on the Tasks page. Tap to pick one. */}
-					<button
-						type="button"
-						className={c.iconPreview}
-						aria-expanded={pickingIcon}
-						aria-label={icon ? 'Change icon' : 'Add an icon'}
-						onClick={() => setPickingIcon(!pickingIcon)}
-					>
-						{icon ?? '+'}
-					</button>
-					<input
-						className={s.title}
-						placeholder={isGoal ? 'Pick a goal below, or type your own' : 'What needs doing?'}
-						value={title}
-						maxLength={80}
-						autoFocus={!task}
-						onChange={(e) => setTitle(e.target.value)}
-					/>
-				</div>
+				<Field label={isGoal ? 'Goal' : 'Task'}>
+					<div className={c.titleRow}>
+						{/* The chosen icon, shown before the name like on the Tasks page. Tap to pick one. */}
+						<button
+							type="button"
+							className={c.iconPreview}
+							aria-expanded={pickingIcon}
+							aria-label={icon ? 'Change icon' : 'Add an icon'}
+							onClick={() => setPickingIcon(!pickingIcon)}
+						>
+							{icon ?? '+'}
+						</button>
+						<Input
+							placeholder={isGoal ? 'Pick a goal below, or type your own' : 'What needs doing?'}
+							value={title}
+							maxLength={80}
+							autoFocus={!task}
+							onChange={(e) => setTitle(e.target.value)}
+						/>
+					</div>
+				</Field>
 				{pickingIcon && (
 					<IconPicker
 						value={icon}
@@ -192,26 +193,20 @@ export default function TaskDialog({
 					/>
 				)}
 				{isGoal && title.trim() && !fromList && (
-					<>
-						<div className={s.wrap} role="group" aria-label="Activity">
-							{MOMENT_KINDS.map((k) => (
-								<button
-									key={k.kind}
-									type="button"
-									aria-pressed={kind === k.kind}
-									className={`${s.chip} ${kind === k.kind ? c.chipOn : ''}`}
-									onClick={() => setKind(k.kind)}
-								>
-									{k.emoji} {k.label}
-								</button>
-							))}
-						</div>
-						<p className={c.hint}>
-							{icon
+					<Fieldset
+						label="Activity"
+						hint={
+							icon
 								? 'Your own goal: it joins the goal list for every kid, until you hide it.'
-								: 'Tap the square to give it a picture.'}
-						</p>
-					</>
+								: 'Tap the square to give it a picture.'
+						}
+					>
+						{MOMENT_KINDS.map((k) => (
+							<Chip key={k.kind} icon={k.emoji} pressed={kind === k.kind} onClick={() => setKind(k.kind)}>
+								{k.label}
+							</Chip>
+						))}
+					</Fieldset>
 				)}
 				{isGoal && (
 					<GoalPicker
@@ -224,25 +219,28 @@ export default function TaskDialog({
 					/>
 				)}
 				{!task && !isGoal && (
-					<div className={s.wrap}>
+					<Fieldset label="Quick picks">
 						{QUICK_TASKS.map((q) => (
-							<button
+							<Chip
 								key={q.title}
-								type="button"
-								className={s.chip}
+								icon={q.icon}
 								onClick={() => {
 									setTitle(q.title);
 									setIcon(q.icon);
 								}}
 							>
-								{q.icon} {q.title}
-							</button>
+								{q.title}
+							</Chip>
 						))}
-					</div>
+					</Fieldset>
 				)}
 
-				<div className={s.label}>Who</div>
-				<div className={s.wrap}>
+				<Fieldset
+					label="Who"
+					hint={
+						memberId === null ? `Everyone gets this ${isGoal ? 'goal' : 'task'} and ticks off their own.` : undefined
+					}
+				>
 					{[...members, { id: null, name: 'Everyone', color: UNASSIGNED }].map((m) => (
 						<PickChip
 							key={m.id ?? 'everyone'}
@@ -252,10 +250,7 @@ export default function TaskDialog({
 							onClick={() => setMemberId(m.id)}
 						/>
 					))}
-				</div>
-				{memberId === null && (
-					<p className={c.hint}>Everyone gets this {isGoal ? 'goal' : 'task'} and ticks off their own.</p>
-				)}
+				</Fieldset>
 				{full && (
 					<p className={g.warning} role="status">
 						{memberId === null ? 'Someone' : who?.name} has {MAX_GOALS} goals already, the most at once. Remove one from
@@ -264,47 +259,35 @@ export default function TaskDialog({
 					</p>
 				)}
 				{isGoal && (
-					<>
-						<div className={s.label}>Worth</div>
+					<Fieldset label="Worth">
 						<PointsStepper value={points} onChange={setPoints} max={50} />
-					</>
+					</Fieldset>
 				)}
 
-				<div className={s.label}>Days</div>
-				<div className={s.wrap}>
+				<Fieldset label="Days">
 					{PRESETS.map(([label, set]) => (
-						<button
+						<Chip
 							key={label}
-							type="button"
-							className={`${s.chip} ${dueBy === null && same(days, set) ? c.chipOn : ''}`}
+							pressed={dueBy === null && same(days, set)}
 							onClick={() => {
 								setDays(set);
 								setDueBy(null);
 							}}
 						>
 							{label}
-						</button>
+						</Chip>
 					))}
-					<button
-						type="button"
-						className={`${s.chip} ${dueBy !== null ? c.chipOn : ''}`}
-						onClick={() => setDueBy(dueBy ?? TODAY())}
-					>
+					<Chip pressed={dueBy !== null} onClick={() => setDueBy(dueBy ?? TODAY())}>
 						One time
-					</button>
-				</div>
+					</Chip>
+				</Fieldset>
 				{dueBy !== null ? (
 					<>
-						<div className={s.wrap}>
+						<div className={c.choices} role="group" aria-label="Due by">
 							{DUE_PICKS().map(([label, day]) => (
-								<button
-									key={label}
-									type="button"
-									className={`${s.chip} ${dueBy === day ? c.chipOn : ''}`}
-									onClick={() => setDueBy(day)}
-								>
+								<Chip key={label} pressed={dueBy === day} onClick={() => setDueBy(day)}>
 									{label}
-								</button>
+								</Chip>
 							))}
 							<DateInput
 								className={c.dueDate}
@@ -341,65 +324,46 @@ export default function TaskDialog({
 
 				{!isGoal && (
 					<>
-						<div className={s.label}>Time of day</div>
-						<div className={s.wrap}>
+						<Fieldset label="Time of day">
 							{TIMES.map((t) => (
-								<button
-									key={t.label}
-									type="button"
-									aria-pressed={time === t.id}
-									className={`${s.chip} ${time === t.id ? c.chipOn : ''}`}
-									onClick={() => setTime(t.id)}
-								>
+								<Chip key={t.label} pressed={time === t.id} onClick={() => setTime(t.id)}>
 									{t.label}
-								</button>
+								</Chip>
 							))}
-						</div>
+						</Fieldset>
 
-						<div className={s.label}>Category</div>
-						<div className={s.wrap}>
+						<Fieldset label="Category" hint="Tasks are required: they count toward finishing the day.">
 							{TASK_CATEGORIES.map((k) => (
-								<button
-									key={k.id}
-									type="button"
-									aria-pressed={category === k.id}
-									title={k.hint}
-									className={`${s.chip} ${category === k.id ? c.chipOn : ''}`}
-									onClick={() => setCategory(k.id)}
-								>
+								<Chip key={k.id} pressed={category === k.id} title={k.hint} onClick={() => setCategory(k.id)}>
 									{k.label}
-								</button>
+								</Chip>
 							))}
-						</div>
-						<p className={c.hint}>Tasks are required: they count toward finishing the day.</p>
+						</Fieldset>
 					</>
 				)}
 
-				{problem && title && <div className={s.problem}>{problem}</div>}
+				{problem && title && <div className={c.problem}>{problem}</div>}
 
 				<div className={sheet.actions}>
 					{task && (
-						<button type="button" className={sheet.danger} onClick={() => setConfirmDelete(true)}>
+						<Button variant="danger" onClick={() => setConfirmDelete(true)}>
 							Delete
-						</button>
+						</Button>
 					)}
 					<span className={sheet.spacer} />
-					<button type="button" className={sheet.secondary} onClick={onClose}>
-						Cancel
-					</button>
+					<Button onClick={onClose}>Cancel</Button>
 					{full && !fromList && icon && title.trim() ? (
-						<button
-							type="button"
-							className={sheet.primary}
+						<Button
+							variant="primary"
 							disabled={saveToList.isPending}
 							onClick={() => saveToList.mutate({ title: title.trim(), emoji: icon, kind }, { onSuccess: onClose })}
 						>
 							Save to the goal list
-						</button>
+						</Button>
 					) : (
-						<button type="submit" className={sheet.primary} disabled={!!problem}>
+						<Button variant="primary" type="submit" disabled={!!problem}>
 							Save
-						</button>
+						</Button>
 					)}
 				</div>
 			</Sheet>

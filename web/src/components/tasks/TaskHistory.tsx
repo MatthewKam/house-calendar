@@ -5,6 +5,8 @@ import { didTask, dueOn } from '../../lib/tasks';
 import type { Member, Task, TaskDone } from '../../lib/types';
 import { TaskName, TaskTick } from './TaskBits';
 import { StarIcon } from '../ui/icons';
+import { IconButton } from '../ui/Button';
+import { Segmented } from '../ui/Segmented';
 import s from './Tasks.module.css';
 
 type Period = 'week' | 'month';
@@ -55,45 +57,41 @@ export default function TaskHistory({ kid, tasks, today, onEdit }: Props) {
 	return (
 		<>
 			<div className={s.historyTools}>
-				<div className={s.periods} role="group" aria-label="History period">
-					{(['week', 'month'] as const).map((p) => (
-						<button
-							key={p}
-							className={period === p ? s.periodOn : ''}
-							aria-pressed={period === p}
-							onClick={() => {
-								setPeriod(p);
-								setBack(0);
-								setPickedDay(null);
-							}}
-						>
-							{p === 'week' ? 'Week' : 'Month'}
-						</button>
-					))}
-				</div>
+				<Segmented
+					className={s.periods}
+					label="History period"
+					value={period}
+					onChange={(p) => {
+						setPeriod(p);
+						setBack(0);
+						setPickedDay(null);
+					}}
+					options={[
+						{ id: 'week', label: 'Week' },
+						{ id: 'month', label: 'Month' },
+					]}
+				/>
 				<div className={s.pager}>
-					<button
-						className={s.toolButton}
+					<IconButton
+						variant="secondary"
+						icon="‹"
+						label={`Earlier ${period}`}
 						onClick={() => {
 							setBack(back + 1);
 							setPickedDay(null);
 						}}
-						aria-label={`Earlier ${period}`}
-					>
-						‹
-					</button>
+					/>
 					<span className={s.rangeLabel}>{label}</span>
-					<button
-						className={s.toolButton}
+					<IconButton
+						variant="secondary"
+						icon="›"
+						label={`Later ${period}`}
+						disabled={back === 0}
 						onClick={() => {
 							setBack(back - 1);
 							setPickedDay(null);
 						}}
-						disabled={back === 0}
-						aria-label={`Later ${period}`}
-					>
-						›
-					</button>
+					/>
 				</div>
 			</div>
 			{period === 'week' ? (
