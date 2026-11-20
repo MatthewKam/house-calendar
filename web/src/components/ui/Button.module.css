@@ -1,0 +1,102 @@
+/* Buttons (Button.tsx): the looks a sheet's buttons have always had (Sheet.module.css), now shared. */
+.button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-1);
+	padding: 0 var(--space-6);
+	font-weight: var(--weight-semibold);
+	line-height: var(--leading-tight);
+	text-align: center;
+}
+.button:disabled,
+.iconButton:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+.icon {
+	flex: none;
+}
+.text {
+	min-width: 0;
+}
+.block {
+	display: flex;
+	width: 100%;
+}
+
+/* Sizes: how big a thing to press. */
+.sm {
+	min-height: var(--tap-sm);
+	min-width: var(--tap-sm);
+	padding-inline: var(--space-4);
+	font-size: var(--text-sm);
+}
+.md {
+	min-height: var(--tap);
+	font-size: var(--text-md);
+}
+.lg {
+	min-height: var(--tap-lg);
+	min-width: var(--tap-lg);
+	padding-inline: var(--space-7);
+	font-size: var(--text-lg);
+	font-weight: var(--weight-bold);
+	border-radius: var(--radius-lg);
+}
+
+/* Looks: one per job. */
+.primary {
+	background: var(--accent);
+	color: var(--on-accent);
+}
+.secondary {
+	background: var(--bg);
+	color: var(--text);
+}
+.destructive {
+	background: var(--danger-solid);
+	color: var(--on-danger);
+}
+.danger {
+	color: var(--danger);
+	padding-inline: var(--space-5);
+}
+/* Words that are a button: underlined, no box. Small, so it sits in a line of text or under a form. */
+.link {
+	min-height: 0;
+	min-width: 0;
+	padding: var(--space-1) var(--space-1);
+	color: var(--accent);
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+
+/* Just a picture: square, the size of the press. */
+.iconButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	padding: 0;
+	line-height: 1;
+}
+.iconButton.sm {
+	width: var(--tap-sm);
+	height: var(--tap-sm);
+	font-size: var(--text-md);
+}
+.iconButton.md {
+	width: var(--tap);
+	height: var(--tap);
+	font-size: var(--text-lg);
+}
+.iconButton.lg {
+	width: var(--tap-lg);
+	height: var(--tap-lg);
+	font-size: var(--text-xl);
+	padding: 0;
+}
+.plain {
+	color: var(--muted);
+}

@@ -1,0 +1,72 @@
+/* Chips and tags (Chip.tsx). */
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	flex: none;
+	min-height: var(--tap-sm);
+	padding: 0 var(--space-4);
+	border-radius: var(--radius-round);
+	border: 1px solid var(--line);
+	background: var(--surface);
+	color: var(--text);
+	font-size: var(--text-sm);
+	font-weight: var(--weight-semibold);
+}
+.chip[aria-pressed='true'] {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--on-accent);
+}
+.chip:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+/* Touch screens: the full press size, so a small finger finds it. */
+@media (pointer: coarse) {
+	.chip {
+		min-height: var(--tap);
+	}
+}
+.icon {
+	flex: none;
+}
+
+.tag {
+	display: inline-flex;
+	align-items: center;
+	padding: var(--space-1) var(--space-2);
+	border-radius: var(--radius-xs);
+	font-size: var(--text-xs);
+	font-weight: var(--weight-bold);
+	line-height: var(--leading-tight);
+	white-space: nowrap;
+}
+.plain {
+	background: var(--bg);
+	color: var(--muted);
+}
+.accent {
+	background: var(--accent);
+	color: var(--on-accent);
+}
+.info {
+	background: var(--info-bg);
+	color: var(--text);
+}
+.warn {
+	background: var(--warn-bg);
+	color: var(--warn);
+}
+.good {
+	background: var(--good-bg);
+	color: var(--good);
+}
+.danger {
+	background: var(--danger-bg);
+	color: var(--danger);
+}
+.soon {
+	background: var(--soon-bg);
+	color: var(--soon);
+}

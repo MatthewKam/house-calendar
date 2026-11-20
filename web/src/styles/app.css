@@ -190,6 +190,9 @@ input {
 	--danger-bg: #fef3f2;
 	--danger-line: #fecdca;
 	--danger-strong: #8a1f1f;
+	/* A filled button for something that can't be undone (Delete): the same strong red light or dark, white on it. */
+	--danger-solid: #b42318;
+	--on-danger: #fff;
 	/* A heads-up (amber). */
 	--warn: #8a5a00;
 	--warn-bg: #fff8e6;
@@ -223,6 +226,8 @@ input {
 	--danger-bg: #3a1c1a;
 	--danger-line: #6e2c26;
 	--danger-strong: #ffb3aa;
+	--danger-solid: #b42318;
+	--on-danger: #fff;
 	--warn: #f2c35b;
 	--warn-bg: #3a2f14;
 	--warn-line: #6b5420;

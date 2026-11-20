@@ -15,6 +15,22 @@ How Sprig's CSS is put together, and which shared names to use. The names all li
 - `app.css` holds only what's global: the shared names below, the page's base (`button`, `input`, the body) and a few app-wide attributes (`[data-theme]`, `[data-busy]`).
 - Animations (`@keyframes`) stay in the module that uses them. Modules keep their names to themselves, so two files can both have a `pop` without clashing.
 
+## Components
+
+Before styling a button, card, field, chip or row of your own, use the shared one in `components/ui/`. Each is built only from the names below, so it fits light and dark, every screen size and the UI scale. Pass `className` to place it (margins, grid spots), not to change its look: a new look is a new variant here, so every screen gets it.
+
+| Component | For |
+| --- | --- |
+| `Button` (`Button.tsx`) | words you press. `variant`: `primary` (the one main action), `secondary` (the default), `destructive` (Delete, filled red), `danger` (red words), `link` (Undo, Clear). `size`: `sm` in dense rows, `md`, `lg` for a page's main action and kid mode. `icon` puts a picture before the words. Never submits a form unless `type="submit"`. |
+| `IconButton` (`Button.tsx`) | a picture only (×, ⋯, ✏️), square, named by `label` |
+| `Card`, `SectionHead` (`Card.tsx`) | a box of one thing, with its small capitals `title` and an `action` on the right; `tone` for a note (`info`, `warn`, `good`, `danger`). `SectionHead` heads part of a page or sheet (`level` 2 or 3). |
+| `Field`, `Input`, `TextArea`, `Select` (`Field.tsx`) | a labelled box with a `hint` or an `error` under it; the box inside is tied to them for screen readers by itself |
+| `Chip`, `Tag` (`Chip.tsx`) | a pill to tap, a filter or choice (`pressed` fills it); a small label that isn't pressed (`tone`) |
+| `List`, `ListRow` (`ListRow.tsx`) | rows with something on the left (`leading`), a `title` and `detail`, and something on the right (`trailing`: a Switch, a button). `onClick` makes the row tappable; `divided` lines them up with rules between. |
+| `Sheet`, `ConfirmDialog`, `Switch`, `Toast` | dialogs, a question before something can't be undone, on/off, a short note at the bottom |
+
+Older screens still have their own versions of these (`.primary` in `Sheet.module.css`, a `.card` in many modules); they move over area by area.
+
 ## Colours
 
 Use the colour names, never hex values, for anything on the page. Each one has a light and a dark value, so a component written with them works in dark mode without extra code.
@@ -24,6 +40,7 @@ Use the colour names, never hex values, for anything on the page. Each one has a
 | `--bg`, `--surface` | the page behind everything; cards, sheets and bars |
 | `--text`, `--muted`, `--line` | text, quieter text, borders and dividers |
 | `--accent`, `--on-accent` | buttons and highlights, and the text on them (each device picks its accent: `lib/accent.ts`) |
+| `--danger-solid`, `--on-danger` | a filled button for something that can't be undone (Delete), and the text on it |
 | `--danger`, `--warn`, `--good`, `--soon` | something wrong, a heads-up, done, a due date. Each has `-bg` and `-line` for a box in that tone |
 | `--info-bg`, `--today`, `--float` | a note to know, today's cell, dark pills over the page (toasts) |
 
