@@ -100,6 +100,16 @@
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	align-items: start;
 	gap: 0.9rem;
+	padding: var(--space-5) 0;
+}
+.threeColumns {
+	width: 100%;
+	max-width: max(56rem, 80%);
+	margin-inline: auto;
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	align-items: start;
+	gap: var(--space-4);
 }
 .column {
 	min-width: 0;
@@ -128,6 +138,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 0.6rem;
+	box-shadow: var(--shadow-md);
 }
 .cardTop {
 	display: flex;
@@ -239,6 +250,9 @@ details > summary.cardHead {
 	flex-direction: column;
 	gap: 0.45rem;
 }
+.needs {
+	gap: var(--space-3);
+}
 .event {
 	width: 100%;
 	display: flex;
@@ -247,9 +261,11 @@ details > summary.cardHead {
 	text-align: left;
 	padding: 0.55rem 0.7rem;
 	border-radius: var(--radius);
+	border: 1px solid var(--c);
 	border-left: 0.35rem solid var(--c);
-	background: var(--bg);
+	background: var(--surface);
 	min-height: 3.2rem;
+	box-shadow: var(--shadow-sm);
 }
 .when {
 	flex: none;
@@ -323,6 +339,7 @@ details > summary.cardHead {
 	border-radius: var(--radius);
 	background: color-mix(in srgb, var(--c) 10%, var(--surface));
 	border: 2px solid color-mix(in srgb, var(--c) 35%, var(--surface));
+	box-shadow: var(--shadow-sm);
 }
 .kidName {
 	grid-area: name;
@@ -382,6 +399,7 @@ details > summary.cardHead {
 	border-radius: var(--radius);
 	background: var(--bg);
 	font-weight: 600;
+	box-shadow: var(--shadow-sm);
 }
 
 /* A reminder that's due: its name, then when (red once it's late). */
@@ -445,29 +463,77 @@ details > summary.cardHead {
 	min-width: 0;
 	/* Up and down still scrolls the page; sideways is a swipe. */
 	touch-action: pan-y;
+	background-color: var(--bg);
+	padding: var(--space-3);
+	border-radius: var(--radius-sm);
 }
 .dayButtons {
 	display: flex;
-	gap: 0.4rem;
+	gap: var(--space-2);
+	padding: 0 var(--space-5);
 }
 .dayButton {
-	flex: 1 1 auto;
-	white-space: nowrap;
-	min-height: 2.6rem;
-	padding: 0.2rem 0.7rem;
-	border-radius: var(--radius-round);
-	border: 1px solid var(--line);
-	background: var(--bg);
+	--tab-color: var(--line);
+	--curve: var(--radius-sm);
+	position: relative;
+	background: var(--tab-color);
 	color: var(--text);
-	font: inherit;
-	font-size: 0.9rem;
-	font-weight: 650;
-	cursor: pointer;
+	padding: var(--space-2) var(--space-4);
+	border: 0;
+	border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+	font-size: var(--text-md);
+	font-weight: var(--weight-bold);
+	line-height: var(--leading-tight);
+	white-space: nowrap;
+}
+
+.dayButton::before,
+.dayButton::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	width: var(--curve);
+	height: var(--curve);
+	border-radius: 0;
+	box-shadow: none;
+	pointer-events: none;
+}
+
+.dayButton::before {
+	right: 100%;
+	background: radial-gradient(circle at top left, transparent 70%, var(--tab-color) 71%);
+}
+
+.dayButton::after {
+	left: 100%;
+	background: radial-gradient(circle at top right, transparent 70%, var(--tab-color) 71%);
 }
 .dayButtonOn {
 	border-color: var(--c);
 	background: var(--c);
 	color: #fff;
+}
+.dayButtonOn::before,
+.dayButtonOn::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	width: var(--curve);
+	height: var(--curve);
+	border-radius: 0;
+	box-shadow: none;
+	pointer-events: none;
+}
+.dayButtonOn::before {
+	right: 100%;
+	background: radial-gradient(circle at top left, transparent 70%, var(--c) 71%);
+	z-index: 1;
+}
+
+.dayButtonOn::after {
+	left: 100%;
+	background: radial-gradient(circle at top right, transparent 70%, var(--c) 71%);
+	z-index: 1;
 }
 .dayPage {
 	display: flex;
@@ -761,7 +827,7 @@ details > summary.cardHead {
 	padding: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 0.4rem;
+	gap: var(--space-3);
 }
 .specialRow {
 	display: flex;
@@ -774,6 +840,7 @@ details > summary.cardHead {
 	font: inherit;
 	color: inherit;
 	text-align: left;
+	box-shadow: var(--shadow-sm);
 }
 /* What's planned on it (reminders, a note, a list), under its date. */
 .specialPlanned {
