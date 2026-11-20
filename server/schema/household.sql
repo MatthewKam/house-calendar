@@ -1,4 +1,4 @@
--- A household's database (server/db.ts), at version 68. Written by server/schema.test.ts; don't edit by hand.
+-- A household's database (server/db.ts), at version 69. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
