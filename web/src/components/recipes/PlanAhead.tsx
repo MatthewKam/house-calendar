@@ -9,6 +9,7 @@ import AddRecipe from './AddRecipe';
 import PlanIt from './PlanIt';
 import ThemeForm from './ThemeForm';
 import s from './Recipes.module.css';
+import { Button } from '../ui/Button';
 
 const WEEKDAYS = Array.from({ length: 7 }, (_, i) =>
 	new Date(2024, 0, 7 + i).toLocaleDateString([], { weekday: 'long' }),
@@ -130,28 +131,30 @@ export default function PlanAhead({
 									<span className={s.weekSuggest}>{pick.title}?</span>
 									{parent && (
 										<span className={s.weekThemeButtons}>
-											<button
-												type="button"
-												className={s.noteAction}
+											<Button
+												variant="quiet"
+												size="sm"
+
 												onClick={() => setPlanning({ day, meal: t.meal, recipe: pick })}
 											>
 												Use it
-											</button>
-											<button
-												type="button"
-												className={s.noteAction}
+											</Button>
+											<Button
+												variant="quiet"
+												size="sm"
+
 												onClick={() => setAnother({ ...another, [key]: (another[key] ?? 0) + 1 })}
 											>
 												Another
-											</button>
+											</Button>
 										</span>
 									)}
 								</>
 							) : (
 								parent && (
-									<button type="button" className={s.noteAction} onClick={() => onIdeas(t.from)}>
+									<Button variant="quiet" size="sm" onClick={() => onIdeas(t.from)}>
 										✨ Ideas for {t.from}
-									</button>
+									</Button>
 								)
 							)}
 						</div>
@@ -175,9 +178,9 @@ export default function PlanAhead({
 				<div className={s.sectionHead}>
 					<h2 className={s.weekTitle}>Themed days</h2>
 					{parent && (
-						<button type="button" className={s.addPhoto} onClick={() => setTheme('new')}>
+						<Button size="sm" onClick={() => setTheme('new')}>
 							＋ Themed day
-						</button>
+						</Button>
 					)}
 				</div>
 				{(plans?.themes ?? []).length === 0 ? (

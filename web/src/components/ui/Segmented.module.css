@@ -5,6 +5,8 @@
 	padding: var(--space-1);
 	background: var(--bg);
 	border-radius: var(--radius);
+	/* A hairline edge, so the bar shows on the page's own background too. */
+	box-shadow: inset 0 0 0 1px var(--line);
 }
 .option {
 	flex: 1;

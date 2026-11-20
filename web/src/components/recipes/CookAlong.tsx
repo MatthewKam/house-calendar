@@ -11,8 +11,10 @@ import Problem from '../ui/Problem';
 import { Loading, Skeleton, SkeletonLines } from '../ui/Skeleton';
 import CookingBar from './CookingBar';
 import { CookingWith, DoneBy } from './CookingWith';
-import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
+import { Button } from '../ui/Button';
+import { Segmented } from '../ui/Segmented';
+import { Input } from '../ui/Field';
 
 /** Ticked off, or back on. */
 const toggle = (list: number[], n: number) => (list.includes(n) ? list.filter((x) => x !== n) : [...list, n]);
@@ -104,7 +106,7 @@ export default function CookAlong({ household, secret }: { household: string; se
 					}}
 				>
 					<label htmlFor="cook-name">Your name</label>
-					<input
+					<Input
 						id="cook-name"
 						value={name}
 						maxLength={40}
@@ -112,9 +114,9 @@ export default function CookAlong({ household, secret }: { household: string; se
 						placeholder="Grandma"
 						onChange={(e) => setName(e.target.value)}
 					/>
-					<button type="submit" className={sheet.primary} disabled={!name.trim()}>
+					<Button variant="primary" type="submit" disabled={!name.trim()}>
 						Start cooking
-					</button>
+					</Button>
 				</form>
 			</Page>
 		);
@@ -210,9 +212,9 @@ export default function CookAlong({ household, secret }: { household: string; se
 					{progress.doneAt ? (
 						<p className={s.said} role="status">
 							🎉 Done! The others can see you’ve finished.{' '}
-							<button type="button" className={s.textLink} onClick={() => set({ doneAt: null })}>
+							<Button variant="link" size="sm" className={s.textLink} onClick={() => set({ doneAt: null })}>
 								Keep cooking
-							</button>
+							</Button>
 						</p>
 					) : (
 						<CookingBar
@@ -229,14 +231,16 @@ export default function CookAlong({ household, secret }: { household: string; se
 
 			{/* Phones: one at a time; bigger screens: side by side. */}
 			{phone && ingredients && steps && (
-				<div className={s.tabs} role="tablist" aria-label="Recipe">
-					<button type="button" role="tab" aria-selected={tab === 'ingredients'} onClick={() => setTab('ingredients')}>
-						Ingredients
-					</button>
-					<button type="button" role="tab" aria-selected={tab === 'steps'} onClick={() => setTab('steps')}>
-						Steps
-					</button>
-				</div>
+				<Segmented
+					tabs
+					label="Recipe"
+					value={tab}
+					onChange={setTab}
+					options={[
+						{ id: 'ingredients', label: 'Ingredients' },
+						{ id: 'steps', label: 'Steps' },
+					]}
+				/>
 			)}
 			<div className={phone ? undefined : s.columns}>
 				{(!phone || tab === 'ingredients' || !steps) && ingredients}

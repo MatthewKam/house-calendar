@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import type { CookTimer } from '../../../../shared/cook.ts';
 import { clock } from '../../lib/cook';
 import s from './Recipes.module.css';
+import { Button } from '../ui/Button';
+import { Chip } from '../ui/Chip';
+import { Input } from '../ui/Field';
 
 /** Quick picks for a timer, in minutes. */
 const QUICK = [1, 3, 5, 10, 15, 20, 30];
@@ -82,12 +85,12 @@ export default function CookingBar({
 				<span className={s.elapsed} aria-label={`Cooking for ${clock(now - startedAt)}`}>
 					⏱ {clock(now - startedAt)}
 				</span>
-				<button type="button" className={s.cookButton} aria-expanded={picking} onClick={() => setPicking(!picking)}>
+				<Button size="sm" aria-expanded={picking} onClick={() => setPicking(!picking)}>
 					＋ Set a timer
-				</button>
-				<button type="button" className={s.doneCooking} onClick={onDone}>
+				</Button>
+				<Button variant="primary" size="sm" className={s.doneCooking} onClick={onDone}>
 					{doneLabel}
-				</button>
+				</Button>
 			</div>
 			{picking && (
 				<form
@@ -97,7 +100,7 @@ export default function CookingBar({
 						start(Number(typed));
 					}}
 				>
-					<input
+					<Input
 						className={s.timerName}
 						placeholder="For what? (soup)"
 						aria-label="What the timer is for"
@@ -106,11 +109,11 @@ export default function CookingBar({
 						onChange={(e) => setName(e.target.value)}
 					/>
 					{QUICK.map((m) => (
-						<button key={m} type="button" className={s.chip} onClick={() => start(m)}>
+						<Chip key={m} onClick={() => start(m)}>
 							{m} min
-						</button>
+						</Chip>
 					))}
-					<input
+					<Input
 						className={s.timerInput}
 						inputMode="numeric"
 						placeholder="Min"
@@ -118,9 +121,9 @@ export default function CookingBar({
 						value={typed}
 						onChange={(e) => setTyped(e.target.value.replace(/\D/g, ''))}
 					/>
-					<button type="submit" className={s.cookButton} disabled={!Number(typed)}>
+					<Button size="sm" type="submit" disabled={!Number(typed)}>
 						Start
-					</button>
+					</Button>
 				</form>
 			)}
 			{timers.length > 0 && (
