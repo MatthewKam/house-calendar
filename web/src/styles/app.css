@@ -176,13 +176,13 @@ input {
 :root,
 [data-theme='light'] {
 	color-scheme: light;
-	--bg: #f6f5f2;
-	--surface: #ffffff;
-	--text: #1d1f23;
-	--muted: #6b7079;
-	--line: #e3e1dc;
-	--today: #fff6dc;
-	--accent: #146c43;
+	--bg: #f6f5f2; /* the page, behind the cards */
+	--surface: #ffffff; /* cards, sheets and bars */
+	--text: #1d1f23; /* words */
+	--muted: #6b7079; /* quieter words: hints, times, a card's heading */
+	--line: #e3e1dc; /* borders and dividers */
+	--today: #fff6dc; /* today on the calendar */
+	--accent: #146c43; /* buttons and highlights (each device picks its own: lib/accent.ts) */
 	/* Text and icons on the accent (lib/accent.ts swaps both for this device's pick). */
 	--on-accent: #fff;
 	/* Something wrong: text, a box's background and its border, and darker text in that box. */

@@ -29,6 +29,8 @@ Before styling a button, card, field, chip or row of your own, use the shared on
 | `List`, `ListRow` (`ListRow.tsx`) | rows with something on the left (`leading`), a `title` and `detail`, and something on the right (`trailing`: a Switch, a button). `onClick` makes the row tappable; `divided` lines them up with rules between. |
 | `Sheet`, `ConfirmDialog`, `Switch`, `Toast` | dialogs, a question before something can't be undone, on/off, a short note at the bottom |
 
+**See them all:** while developing (`npm run dev`), open `/design`: every shared name and component, live in light or dark and each accent. It reads the names from `app.css` itself, so it never falls behind. The built app doesn't have it.
+
 Older screens still have their own versions of these (`.primary` in `Sheet.module.css`, a `.card` in many modules); they move over area by area.
 
 ## Colours
@@ -142,6 +144,10 @@ The same six everywhere, listed at the top of `app.css` and named in code in `li
 CSS can't use variables in a media query, so write the query out and keep it exactly as listed. In components, import the name (`useMediaQuery(PHONE)`) rather than writing the query again.
 
 **Room for the phone's edges:** `--top-room` is the space under the clock and status bar; `--inset-left` and `--inset-right` are room for the notch on its side.
+
+## Textures
+
+Tiling background pictures live in `web/public/textures/` (`canvas`, `paper`, `linen`; its README says what each is), loaded as `url('/textures/paper.png')`. They're nearly white, so they suit light backgrounds only; no screen uses them yet.
 
 ## Kids' screens
 
