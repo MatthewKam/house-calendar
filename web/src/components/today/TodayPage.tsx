@@ -224,11 +224,14 @@ export default function TodayPage({
 					{todays.length + mealsToday.length === 0 ? (
 						<p className={s.none}>Nothing on the calendar today.</p>
 					) : upNext.length + mealsToday.length === 0 ? (
-						// The day's events are over: a quote about time, or a dad joke.
-						<blockquote className={s.quote}>
-							<p>{timeLine.by ? `“${timeLine.text}”` : timeLine.text}</p>
-							{timeLine.by && <footer>{timeLine.by}</footer>}
-						</blockquote>
+						// The day's events are over: saying so, then a quote about time or a dad joke.
+						<>
+							<p className={s.none}>No more scheduled events today.</p>
+							<blockquote className={s.quote}>
+								<p>{timeLine.by ? `“${timeLine.text}”` : timeLine.text}</p>
+								{timeLine.by && <footer>{timeLine.by}</footer>}
+							</blockquote>
+						</>
 					) : (
 						list(upNext, true, mealsToday)
 					)}
