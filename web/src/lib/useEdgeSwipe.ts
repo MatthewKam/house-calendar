@@ -17,13 +17,13 @@ const homeScreen = () =>
 
 /**
  * A swipe from the left edge calls `onBack` when there's somewhere to go back to (usePage's canGoBack).
- * The page (`ref`) follows the finger; a screen open over it (a recipe, Settings) just closes at the end.
+ * The page (`ref`) follows the finger, or the screen open over it (a recipe, Settings).
  */
 export function useEdgeSwipe(ref: RefObject<HTMLElement | null>, onBack: () => void) {
 	useEffect(() => {
 		const page = ref.current;
 		if (!page || !homeScreen()) return;
-		// What follows the finger: the page, or nothing while a screen is open over it.
+		// What follows the finger: the page, or the screen open over it (the top one).
 		let el: HTMLElement | null = null;
 		let start: { x: number; y: number; t: number } | null = null;
 		// Sideways (true) once it's clearly a swipe; up and down (false) leaves it to scrolling.
@@ -32,13 +32,15 @@ export function useEdgeSwipe(ref: RefObject<HTMLElement | null>, onBack: () => v
 
 		const slide = (x: number, animate: boolean) => {
 			if (!el) return;
-			el.style.transition = animate ? 'transform 0.2s ease-out' : '';
-			el.style.transform = x ? `translateX(${x}px)` : '';
+			// `translate`, not `transform`: a sheet's own transform places it, and this leaves that alone.
+			el.style.transition = animate ? 'translate 0.2s ease-out' : '';
+			el.style.translate = x ? `${x}px 0` : '';
 		};
 		const down = (e: TouchEvent) => {
 			const t = e.touches[0];
 			if (e.touches.length !== 1 || t.clientX > EDGE || !canGoBack()) return;
-			el = screenOpen() ? null : page;
+			const screens = document.querySelectorAll<HTMLElement>('[aria-modal="true"]');
+			el = screenOpen() ? (screens[screens.length - 1] ?? null) : page;
 			start = { x: t.clientX, y: t.clientY, t: e.timeStamp };
 			sideways = null;
 			dx = 0;
@@ -59,9 +61,11 @@ export function useEdgeSwipe(ref: RefObject<HTMLElement | null>, onBack: () => v
 			const width = window.innerWidth;
 			if (sideways && (dx > width / 3 || flick)) {
 				slide(width, true);
+				const gone = el;
 				window.setTimeout(() => {
 					onBack();
-					slide(0, false);
+					// The page stays and slides home; a screen that closed has gone with it.
+					if (gone === el) slide(0, false);
 				}, 200);
 			} else if (sideways) slide(0, true);
 			start = null;
