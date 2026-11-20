@@ -2,7 +2,10 @@
 
 How Sprig's CSS is put together, and which shared names to use. The names all live in `app.css` (this folder), each with a comment saying what it's for.
 
-**The rule:** if a shared name fits, use it instead of a number or colour of your own. A one-off value is fine when it's part of a drawn thing (a picture made in CSS, a game piece), and then a comment says why. For corners and plain drop shadows, `scale.test.ts` checks this: a value of your own needs `/* own: why */` on its line or the line before, like the shadow that stands out on any photo.
+**The rule:** if a shared name fits, use it instead of a number or colour of your own. A one-off value is fine when it's part of a drawn thing (a picture made in CSS, a game piece), and then a comment says why: `/* own: why */` on its line or the line before, like the shadow that stands out on any photo. `scale.test.ts` checks this:
+
+- **Corners and plain drop shadows:** none of their own anywhere, unless marked `own:`.
+- **Text sizes, weights, spacing and colours:** older stylesheets still have values of their own, counted per file in `scale-baseline.json`. A file may only ever have fewer, and a new file starts at none. After moving a file to the shared names, lower its numbers with `UPDATE_SCALE=1 npx vitest run web/src/styles/scale.test.ts` (and check the diff only went down).
 
 ## Where styles go
 
@@ -56,6 +59,52 @@ Three kinds are written where they're used, because their colour is set on the e
 - **A ring round a picked thing:** `0 0 0 2px var(--accent)`. It can sit on top of a lift: `0 0 0 2px var(--accent), var(--shadow-md)`.
 - **A kid button's pressed edge:** `0 0.3rem 0` plus a darker shade of its colour. On `:active` it drops to `0 0.1rem 0` as the button moves down.
 
+## Space
+
+For gaps, padding and margins. Each step is a little more than the last, so things that belong together sit closer than things that don't.
+
+| Name | Size | For |
+| --- | --- | --- |
+| `--space-1` | 0.2rem | an icon and its words, a badge's padding |
+| `--space-2` | 0.4rem | inside a row: chips side by side, a label and its field |
+| `--space-3` | 0.6rem | between rows in a list, a button's padding |
+| `--space-4` | 0.8rem | inside a card: its padding, between its parts |
+| `--space-5` | 1rem | between cards; a page's side margin on a phone |
+| `--space-6` | 1.4rem | inside a sheet; between sections of a page |
+| `--space-7` | 2rem | a page's margins on a big screen |
+| `--space-8` | 3rem | room at the end of a page, a big empty state |
+
+`0`, `auto` and a hairline that's part of a drawn thing need no name.
+
+## Text
+
+| Name | Size | For |
+| --- | --- | --- |
+| `--text-xs` | 0.75rem | tiny labels: a day's letter, a count on a badge |
+| `--text-sm` | 0.9rem | quieter text: hints, times, a card's second line |
+| `--text-md` | 1rem | body text, buttons, fields |
+| `--text-lg` | 1.15rem | a card's title, a row that matters |
+| `--text-xl` | 1.4rem | a sheet's or section's heading |
+| `--text-2xl` | 1.8rem | a page's title |
+| `--text-3xl` | 2.4rem | big numbers: the temperature, a clock |
+| `--text-4xl` | 3.2rem | the wall's clock, a kid's star count |
+
+1rem is whatever the UI scale setting makes it, so everything grows together. Pictures and games drawn bigger (an emoji on a kid's card, a Learn tile) say their own size; text that sizes with its parent uses `em`.
+
+**Weights** (Aleo): `--weight-regular` (400) for body text, `--weight-semibold` (600) for labels, buttons and names, `--weight-bold` (700) for titles and headings, `--weight-heavy` (800) for kid mode and big numbers. Not the steps in between.
+
+**Line heights:** `--leading-tight` (1.2) for headings and one-line things, `--leading-relaxed` (1.4) for paragraphs. An icon or emoji box can use `1`.
+
+## Touch sizes
+
+How big a thing you press is, at least: its height, and its width when it's square.
+
+| Name | Size | For |
+| --- | --- | --- |
+| `--tap-sm` | 2.4rem | dense rows: chips, small pills, a row's own buttons |
+| `--tap` | 2.75rem | every button, by default (app.css) |
+| `--tap-lg` | 3.2rem | a page's main action, and kid mode's buttons |
+
 ## Layers
 
 What sits over what is named by role, bottom to top: `--layer-panel`, `--layer-fab`, `--layer-nav`, `--layer-menu`, `--layer-sheet`, `--layer-saver`, `--layer-alert`, `--layer-toast`, `--layer-celebration`, `--layer-photo`. Use the role, not a number. Inside one component, small numbers (0 to 5) order its own parts.
@@ -79,4 +128,4 @@ CSS can't use variables in a media query, so write the query out and keep it exa
 
 ## Kids' screens
 
-Kid mode and Learn are for ages 2 to 6: big touch targets (every `button` is at least 2.75rem), pictures over words, and nothing that looks like failing. Keep a new kid screen to the same sizes, and check it on a phone on its side as well as on a tablet.
+Kid mode and Learn are for ages 2 to 6: big touch targets (every `button` is at least `--tap`, and kid buttons `--tap-lg`), pictures over words, and nothing that looks like failing. Keep a new kid screen to the same sizes, and check it on a phone on its side as well as on a tablet.
