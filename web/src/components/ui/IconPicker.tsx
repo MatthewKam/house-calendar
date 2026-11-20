@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ALL_EMOJI, searchEmoji } from '../../lib/emoji';
 import s from './IconPicker.module.css';
 import { Button } from './Button';
+import { Input } from './Field';
 
 interface Props {
 	value: string | null;
@@ -37,8 +38,7 @@ export default function IconPicker({ value, onChange, featured, autoFocus }: Pro
 	);
 	return (
 		<div className={s.picker}>
-			<input
-				className={s.search}
+			<Input
 				type="search"
 				placeholder="Search icons, e.g. milk or soccer"
 				value={query}

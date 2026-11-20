@@ -4,7 +4,6 @@ import { api, type AuthStatus } from '../../lib/api';
 import { appleSignIn, isApp } from '../../lib/native';
 import { pendingJoin } from '../../lib/joinCode';
 import JoinForm from './JoinForm';
-import buttons from '../ui/Buttons.module.css';
 import s from './Account.module.css';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Field';
@@ -153,12 +152,9 @@ function TryDemo({ onSignedIn }: { onSignedIn: (s: AuthStatus) => void }) {
 
 	return (
 		<div className={s.card}>
-			<button type="button" className={s.demo} disabled={busy} onClick={() => void start()}>
-				<span className={buttons.buttonIcon} aria-hidden="true">
-					👀
-				</span>
-				<span className={buttons.buttonText}>{busy ? 'Making your demo family…' : 'Try the demo'}</span>
-			</button>
+			<Button size="lg" block icon="👀" disabled={busy} onClick={() => void start()}>
+				{busy ? 'Making your demo family…' : 'Try the demo'}
+			</Button>
 			<p className={s.hint}>Look around a made-up family's week. No email needed; it's deleted after a day.</p>
 			{error && <p className={s.error}>{error}</p>}
 		</div>

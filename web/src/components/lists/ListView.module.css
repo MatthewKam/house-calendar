@@ -292,9 +292,6 @@
 .add input {
 	flex: 1;
 	min-width: 0;
-	padding: var(--space-3) var(--space-4);
-	border: 1px solid var(--line);
-	border-radius: var(--radius-sm);
 }
 /* Add: the list's color once there's something to add, gray until then. Its text is dark on a light color. */
 .add button {

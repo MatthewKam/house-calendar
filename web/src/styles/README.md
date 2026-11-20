@@ -36,6 +36,15 @@ Before styling a button, card, field, chip or row of your own, use the shared on
 
 Every screen but the calendar uses these now. The calendar (`components/calendar/`) still has its own versions (`.primary` and friends in `Sheet.module.css` are only for it) until its rework; then those go.
 
+**Checked:** `usage.test.ts` (this folder) counts, per file, what should be a shared component: a raw `<input>` to type in (not a checkbox, radio, file, colour or range), `<select>` or `<textarea>`; a `Sheet`'s own button looks (`sheet.primary` and friends); and the old text buttons and icon spans from `Buttons.module.css`. Like the scale, a file may only ever have fewer (`usage-baseline.json`), and a new file starts at none. Moving one over, lower its numbers with `UPDATE_USAGE=1 npx vitest run web/src/styles/usage.test.ts`. What's left is the calendar, a chip that opens the browser's own date picker (Recipes' Other day and Pick a time), the demo bar and a planned meal's chip.
+
+## Building a screen
+
+1. **Lay it out from the components first.** A page is cards (`Card`) or sections (`SectionHead`) of rows (`List`, `ListRow`); a sheet is a `Sheet` with its heading, `Field`s and `Fieldset`s, and `Button`s in `sheet.actions` (`secondary` Cancel, `primary` Save, `danger` Delete on the left).
+2. **Then the screen's own module**, for what's only its own: where things sit (grids, columns, gaps between the parts) and the drawn things (a jar's bar, a kid's tile). Use the shared names for every size, weight, space and colour; mark anything else `own:` with why.
+3. **A look the components don't have** (a new kind of button, a box in a new tone): add it as a variant in `components/ui/`, with a line in the table above and a spot on `/design`, rather than styling it in the screen. Then every screen can use it.
+4. **Check it** in light and dark, on a phone (upright and on its side) and a tablet, and with Settings › Appearance › Text size up. `npm test` runs `scale.test.ts` and `usage.test.ts`.
+
 ## Colours
 
 Use the colour names, never hex values, for anything on the page. Each one has a light and a dark value, so a component written with them works in dark mode without extra code.

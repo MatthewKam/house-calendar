@@ -5,6 +5,7 @@ import IconPicker from './IconPicker';
 import { PencilIcon } from './icons';
 import s from './Checklist.module.css';
 import { Button } from './Button';
+import { Input } from './Field';
 
 interface Props {
 	/** Its heading ("🎒 What to bring") and, for screen readers, `name`. */
@@ -147,7 +148,7 @@ export default function Checklist({
 						>
 							{x.picture || suggestIcon(x.title) ? <Picture item={x} /> : <span className={s.noPicture}>+</span>}
 						</button>
-						<input
+						<Input
 							className={s.input}
 							value={x.title}
 							maxLength={80}
@@ -184,7 +185,7 @@ export default function Checklist({
 					<span className={s.pick} aria-hidden="true">
 						{suggestIcon(typed) ?? <span className={s.noPicture}>+</span>}
 					</span>
-					<input
+					<Input
 						className={s.input}
 						value={typed}
 						maxLength={80}
