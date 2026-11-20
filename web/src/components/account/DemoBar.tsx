@@ -4,6 +4,7 @@ import Sheet from '../ui/Sheet';
 import buttons from '../ui/Buttons.module.css';
 import a from './Account.module.css';
 import s from './DemoBar.module.css';
+import { Button } from '../ui/Button';
 
 /** "in about 5 hours", "within the hour": how long until the demo is deleted. */
 function timeLeft(until: string) {
@@ -57,12 +58,12 @@ export default function DemoBar({ demo, onEnded }: { demo: { until: string; pin:
 							Off in the demo: reading flyers and recipes, photos, calendar connections, alerts and invites.
 						</p>
 						{error && <p className={a.error}>{error}</p>}
-						<button type="button" className={a.primary} disabled={busy} onClick={() => void makeOwn()}>
+						<Button variant="primary" size="lg" block disabled={busy} onClick={() => void makeOwn()}>
 							Make your own family
-						</button>
-						<button type="button" className={a.link} onClick={() => setOpen(false)}>
+						</Button>
+						<Button variant="link" className={a.link} onClick={() => setOpen(false)}>
 							Keep looking
-						</button>
+						</Button>
 					</div>
 				</Sheet>
 			)}

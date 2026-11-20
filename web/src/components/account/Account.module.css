@@ -6,7 +6,7 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: var(--top-room) 1rem calc(2rem + env(safe-area-inset-bottom, 0px));
+	padding: var(--top-room) var(--space-5) calc(var(--space-7) + env(safe-area-inset-bottom, 0px));
 	box-sizing: border-box;
 	background: var(--bg);
 }
@@ -17,16 +17,16 @@
 	max-width: 22rem;
 	display: flex;
 	flex-direction: column;
-	gap: 0.9rem;
+	gap: var(--space-5);
 }
 .wordmark {
 	height: 3.6rem;
 	align-self: center;
-	margin-bottom: 0.4rem;
+	margin-bottom: var(--space-2);
 }
 .title {
 	margin: 0;
-	font-size: 1.5rem;
+	font-size: var(--text-xl);
 	text-align: center;
 }
 .lead {
@@ -37,40 +37,32 @@
 .card {
 	display: flex;
 	flex-direction: column;
-	gap: 0.6rem;
-	padding: 1rem;
+	gap: var(--space-3);
+	padding: var(--space-5);
 	background: var(--surface);
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
 }
 .card h2 {
 	margin: 0;
-	font-size: 1.05rem;
+	font-size: var(--text-md);
 }
-.input {
-	font: inherit;
-	font-size: 1.05rem;
-	padding: 0.65rem 0.75rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius-sm);
-	background: var(--surface);
-	color: var(--text);
-	min-width: 0;
-}
+
 .code {
-	composes: input;
 	text-transform: uppercase;
 	letter-spacing: 0.15em;
 	text-align: center;
-	font-weight: 650;
+	font-weight: var(--weight-semibold);
 }
+/* A link that looks like the main button (Connect Google), and Apple's own button: the shared large
+   button's size and corners. */
 .primary,
 .apple {
-	min-height: 2.9rem;
-	border-radius: var(--radius-xl);
-	padding: 0 1.2rem;
-	font-weight: 650;
-	font-size: 1rem;
+	min-height: var(--tap-lg);
+	border-radius: var(--radius-lg);
+	padding: 0 var(--space-6);
+	font-weight: var(--weight-semibold);
+	font-size: var(--text-md);
 	background: var(--accent);
 	color: var(--on-accent);
 	border: none;
@@ -79,8 +71,8 @@
 	opacity: 0.4;
 }
 .apple {
-	background: #000;
-	color: #fff;
+	background: #000; /* own: Apple's sign-in button is black */
+	color: #fff; /* own: Apple's sign-in button is black */
 }
 .google {
 	display: flex;
@@ -90,9 +82,9 @@
 .or {
 	display: flex;
 	align-items: center;
-	gap: 0.7rem;
+	gap: var(--space-4);
 	color: var(--muted);
-	font-size: 0.85rem;
+	font-size: var(--text-sm);
 }
 .or::before,
 .or::after {
@@ -106,9 +98,9 @@
 	justify-content: center;
 	min-height: 2.9rem;
 	border-radius: var(--radius-xl);
-	padding: 0 1.2rem;
-	font-weight: 650;
-	font-size: 1rem;
+	padding: 0 var(--space-6);
+	font-weight: var(--weight-semibold);
+	font-size: var(--text-md);
 	background: var(--surface);
 	color: var(--text);
 	border: 1px solid var(--line);
@@ -117,48 +109,32 @@
 	opacity: 0.6;
 }
 .link {
-	composes: textButton from '../ui/Buttons.module.css';
 	align-self: center;
-	padding: 0.4rem;
 }
 /* A text button inside a line of text ("Your family: The Kams Change"). */
 .inlineLink {
-	composes: textButton from '../ui/Buttons.module.css';
-	padding: 0 0.2rem;
 	font-size: inherit;
 }
 .hint {
 	margin: 0;
 	color: var(--muted);
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 }
 .error {
 	margin: 0;
 	color: var(--danger);
-	font-weight: 600;
-	font-size: 0.95rem;
+	font-weight: var(--weight-semibold);
+	font-size: var(--text-md);
 }
 .choices {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.5rem;
+	gap: var(--space-3);
 }
-.choice {
-	min-height: 2.5rem;
-	padding: 0 1rem;
-	border-radius: var(--radius-lg);
-	border: 1px solid var(--line);
-	background: var(--surface);
-	font-weight: 600;
-}
-.choice[aria-pressed='true'] {
-	background: var(--accent);
-	color: var(--on-accent);
-	border-color: var(--accent);
-}
+
 /* A quieter note inside a choice ("· morning"). */
 .choiceNote {
-	font-weight: 500;
+	font-weight: var(--weight-semibold);
 	opacity: 0.8;
 }
 
@@ -169,7 +145,7 @@
 	padding: 0;
 	display: flex;
 	justify-content: center;
-	gap: 0.5rem;
+	gap: var(--space-3);
 }
 .stepDot {
 	width: 0.55rem;
@@ -189,12 +165,12 @@
 	padding: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 0.7rem;
+	gap: var(--space-4);
 }
 .person {
 	display: flex;
 	align-items: center;
-	gap: 0.7rem;
+	gap: var(--space-4);
 	flex-wrap: wrap;
 }
 .dot {
@@ -211,43 +187,40 @@
 }
 .how {
 	color: var(--muted);
-	font-size: 0.85rem;
+	font-size: var(--text-sm);
 	overflow-wrap: anywhere;
 }
 .actions {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.2rem 0.6rem;
+	gap: var(--space-1) var(--space-3);
 }
 .row {
 	display: flex;
-	gap: 0.5rem;
+	gap: var(--space-3);
 	flex-wrap: wrap;
 	align-items: center;
 }
-.row .input {
-	flex: 1;
-	min-width: 8rem;
-}
+
 .issued {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 0.4rem;
-	padding: 1rem;
+	gap: var(--space-2);
+	padding: var(--space-5);
 	border-radius: var(--radius);
 	background: var(--today);
 	text-align: center;
 }
 .bigCode {
-	font-size: 2rem;
-	font-weight: 750;
+	font-size: var(--text-2xl);
+	font-weight: var(--weight-heavy);
 	letter-spacing: 0.12em;
 	font-variant-numeric: tabular-nums;
 }
 .subhead {
-	margin: 0.4rem 0 0;
-	font-size: 0.95rem;
+	margin: var(--space-2) 0 0;
+	font-size: var(--text-md);
 }
 
 /* Opening the app (AuthGate, while it checks who this is): the name, gently pulsing. */

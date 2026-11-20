@@ -6,6 +6,8 @@ import { pendingJoin } from '../../lib/joinCode';
 import JoinForm from './JoinForm';
 import buttons from '../ui/Buttons.module.css';
 import s from './Account.module.css';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Field';
 
 // Google's and Apple's own sign-in buttons give the page an ID token, which the server checks.
 declare global {
@@ -124,9 +126,9 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 				{showCode ? (
 					<JoinForm signedIn={false} onJoined={onSignedIn} />
 				) : (
-					<button className={s.link} onClick={() => setShowCode(true)}>
+					<Button variant="link" className={s.link} type="submit" onClick={() => setShowCode(true)}>
 						Have a code? Set up a kid's device or the wall
-					</button>
+					</Button>
 				)}
 			</div>
 		</main>
@@ -192,8 +194,7 @@ function EmailSignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => void }) {
 	return (
 		<form className={s.card} onSubmit={submit}>
 			{!sent ? (
-				<input
-					className={s.input}
+				<Input
 					type="email"
 					autoComplete="email"
 					placeholder="Email"
@@ -204,7 +205,7 @@ function EmailSignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => void }) {
 			) : (
 				<>
 					<p className={s.hint}>We sent a code to {email}.</p>
-					<input
+					<Input
 						className={s.code}
 						inputMode="numeric"
 						autoComplete="one-time-code"
@@ -218,20 +219,27 @@ function EmailSignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => void }) {
 				</>
 			)}
 			{error && <p className={s.error}>{error}</p>}
-			<button className={s.primary} disabled={busy || (sent ? code.length !== 6 : !/\S+@\S+\.\S+/.test(email))}>
+			<Button
+				variant="primary"
+				size="lg"
+				block
+				type="submit"
+				disabled={busy || (sent ? code.length !== 6 : !/\S+@\S+\.\S+/.test(email))}
+			>
 				{sent ? 'Sign in' : 'Email me a code'}
-			</button>
+			</Button>
 			{sent && (
-				<button
-					type="button"
+				<Button
+					variant="link"
 					className={s.link}
+
 					onClick={() => {
 						setSent(false);
 						setCode('');
 					}}
 				>
 					Use a different email
-				</button>
+				</Button>
 			)}
 		</form>
 	);

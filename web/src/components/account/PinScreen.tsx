@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import s from './PinScreen.module.css';
+import { Button } from '../ui/Button';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
 
@@ -74,9 +75,16 @@ export default function PinScreen({ title, hint, onSubmit, onDone }: Props) {
 					),
 				)}
 			</div>
-			<button className={s.go} disabled={pin.length < 4 || busy} onClick={() => void submit()}>
+			<Button
+				variant="primary"
+				size="lg"
+				className={s.go}
+				type="submit"
+				disabled={pin.length < 4 || busy}
+				onClick={() => void submit()}
+			>
 				Enter
-			</button>
+			</Button>
 			{hint && <p className={s.hint}>{hint}</p>}
 		</main>
 	);
