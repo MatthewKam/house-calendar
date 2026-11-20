@@ -1,7 +1,9 @@
 import { isApp } from '../../lib/native';
 import type { PushState, usePush } from '../../lib/usePush';
 import s from './Settings.module.css';
-import sheet from '../ui/Sheet.module.css';
+import { Button } from '../ui/Button';
+import Switch from '../ui/Switch';
+import { List, ListRow } from '../ui/ListRow';
 
 /** The word beside Notifications in Settings while it's folded. */
 export const ALERTS_NOTE: Record<PushState, string> = {
@@ -20,21 +22,25 @@ export default function AlertsSetting({ push }: { push: ReturnType<typeof usePus
 	return (
 		<section className={s.bare}>
 			{state === 'on' || state === 'off' ? (
-				<label className={s.saverRow}>
-					<input
-						type="checkbox"
-						checked={state === 'on'}
-						disabled={busy}
-						onChange={(e) => void (e.target.checked ? turnOn() : turnOff())}
+				<List>
+					<ListRow
+						title="Alerts on this device"
+						trailing={
+							<Switch
+								on={state === 'on'}
+								disabled={busy}
+								onChange={(on) => void (on ? turnOn() : turnOff())}
+								label="Alerts on this device"
+							/>
+						}
 					/>
-					Alerts on this device
-				</label>
+				</List>
 			) : null}
 			{state !== 'loading' && <p className={s.hint}>{isApp && state === 'blocked' ? APP_BLOCKED : HINTS[state]}</p>}
 			{state === 'on' && (
-				<button type="button" className={sheet.secondary} disabled={busy} onClick={() => void test()}>
+				<Button disabled={busy} onClick={() => void test()}>
 					Send a test alert
-				</button>
+				</Button>
 			)}
 			{tested && <p className={s.hint}>Sent. It should show on this device in a moment.</p>}
 			{error && <p className={s.error}>{error}</p>}

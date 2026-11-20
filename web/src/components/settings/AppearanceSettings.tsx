@@ -6,6 +6,7 @@ import { useThemeSetting, type Theme } from '../../lib/useTheme';
 import { useUiScale } from '../../lib/useUiScale';
 import { Section } from './parts';
 import s from './Settings.module.css';
+import { Segmented } from '../ui/Segmented';
 
 const THEMES: [Theme, string][] = [
 	['auto', 'Same as this device'],
@@ -68,36 +69,25 @@ export default function AppearanceSettings() {
 			)}
 
 			<Section title="Light or dark" note={THEMES.find(([v]) => v === theme)![1]}>
-				<div className={s.theme} role="radiogroup" aria-label="Light or dark">
-					{THEMES.map(([v, label]) => (
-						<button
-							key={v}
-							role="radio"
-							aria-checked={theme === v}
-							className={theme === v ? s.themeOn : ''}
-							onClick={() => setTheme(v)}
-						>
-							{label}
-						</button>
-					))}
-				</div>
+				<Segmented
+					label="Light or dark"
+					value={theme}
+					onChange={setTheme}
+					options={THEMES.map(([id, label]) => ({ id, label }))}
+				/>
 				<p className={s.themeNote}>Kid mode stays light.</p>
 			</Section>
 
 			<Section title="Temperature" note={unit === 'C' ? '°C · km/h' : '°F · mph'}>
-				<div className={s.theme} role="radiogroup" aria-label="Temperature">
-					{(['F', 'C'] as const).map((u) => (
-						<button
-							key={u}
-							role="radio"
-							aria-checked={unit === u}
-							className={unit === u ? s.themeOn : ''}
-							onClick={() => setUnit(u)}
-						>
-							°{u}
-						</button>
-					))}
-				</div>
+				<Segmented
+					label="Temperature"
+					value={unit}
+					onChange={setUnit}
+					options={[
+						{ id: 'F', label: '°F' },
+						{ id: 'C', label: '°C' },
+					]}
+				/>
 				<p className={s.themeNote}>The weather on this device. Wind goes with it: mph with °F, km/h with °C.</p>
 			</Section>
 

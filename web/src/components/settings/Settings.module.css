@@ -1,16 +1,16 @@
 .section {
 	margin: 0;
-	font-size: 1.05rem;
+	font-size: var(--text-md);
 }
 .hint {
 	margin: 0;
 	color: var(--muted);
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 }
 .error {
 	margin: 0;
 	color: var(--danger);
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 }
 .list {
 	list-style: none;
@@ -18,17 +18,17 @@
 	margin: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--space-3);
 }
 .row {
 	display: flex;
-	gap: 0.6rem;
+	gap: var(--space-3);
 	align-items: center;
 }
 .member {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--space-3);
 }
 /* Tap to show the color set below the row. */
 .swatch {
@@ -48,8 +48,8 @@
 .palette {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.4rem;
-	padding-left: 3.35rem;
+	gap: var(--space-2);
+	padding-left: var(--space-8);
 }
 .dot {
 	width: 2.75rem;
@@ -67,6 +67,7 @@
 }
 /* Rainbow until a custom color is chosen, then that color. */
 .custom {
+	/* own: a rainbow, drawn */
 	background: var(--c, conic-gradient(#e0457b, #f08a24, #b08900, #2fa66a, #13a3b5, #2f7de1, #8e5bd8, #e0457b));
 }
 .custom input {
@@ -80,54 +81,41 @@
 .name {
 	flex: 1;
 	min-width: 0;
-	font-size: 1.1rem;
-	padding: 0.55rem 0.8rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius-sm);
 }
 /* A name shows as text; the pencil opens it for editing. */
 .nameText {
 	flex: 1;
-	font-size: 1.1rem;
-	padding: 0.55rem 0.8rem;
+	font-size: var(--text-lg);
+	padding: var(--space-3) var(--space-4);
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--space-3);
 	flex-wrap: wrap;
 }
 /* The person's stage (Little, Early...), beside their name. */
 .stageTag {
-	font-size: 0.75rem;
-	font-weight: 600;
+	font-size: var(--text-xs);
+	font-weight: var(--weight-semibold);
 	color: var(--accent);
 	background: color-mix(in srgb, var(--accent) 10%, transparent);
 	border-radius: var(--radius-round);
-	padding: 0.15rem 0.55rem;
+	padding: var(--space-1) var(--space-3);
 }
 /* Birthday and stage, while editing a person: under the name, lined up with it. */
 .details {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.6rem 1rem;
-	padding-left: 3.35rem;
+	gap: var(--space-3) var(--space-5);
+	padding-left: var(--space-8);
 }
 .detail {
 	display: flex;
 	flex-direction: column;
-	gap: 0.25rem;
-	font-size: 0.85rem;
+	gap: var(--space-1);
+	font-size: var(--text-sm);
 	color: var(--muted);
 }
-.dateInput {
-	font: inherit;
-	font-size: 1rem;
-	color: var(--text);
-	padding: 0.5rem 0.7rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius-sm);
-	background: var(--surface);
-	min-height: 2.75rem;
-}
+
 .editButton {
 	color: var(--muted);
 }
@@ -136,10 +124,6 @@
 	box-shadow:
 		0 0 0 2px var(--surface),
 		0 0 0 3.5px var(--line);
-}
-.editButton:hover {
-	color: var(--text);
-	background: var(--bg);
 }
 .editButton svg {
 	width: 1.3rem;
@@ -153,7 +137,7 @@
 .editName {
 	flex: 1;
 	display: flex;
-	gap: 0.4rem;
+	gap: var(--space-2);
 	min-width: 0;
 }
 .editName .name {
@@ -162,50 +146,32 @@
 .scale {
 	display: flex;
 	align-items: center;
-	gap: 0.8rem;
+	gap: var(--space-4);
 	color: var(--muted);
 }
 .scale input {
 	flex: 1;
 }
-/* Light or dark: three choices side by side, the picked one filled. */
-.theme {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.2rem;
-	padding: 0.2rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius);
-}
-.theme button {
-	flex: 1 1 auto;
-	padding: 0 0.9rem;
-	border-radius: var(--radius-sm);
-}
-.theme .themeOn {
-	background: var(--accent);
-	color: var(--on-accent);
-	font-weight: 650;
-}
+
 /* Accent colors: a circle (light shade over dark, split on the diagonal) and its name under it. */
 .accents {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.3rem;
+	gap: var(--space-2);
 }
 .accent {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 0.3rem;
+	gap: var(--space-2);
 	min-width: 4.2rem;
-	padding: 0.3rem 0.2rem;
-	font-size: 0.8rem;
+	padding: var(--space-2) var(--space-1);
+	font-size: var(--text-xs);
 	color: var(--muted);
 }
 .accent[aria-checked='true'] {
 	color: var(--text);
-	font-weight: 650;
+	font-weight: var(--weight-semibold);
 }
 .accentDot {
 	width: 2.75rem;
@@ -219,61 +185,32 @@
 	box-shadow: 0 0 0 3px var(--accent);
 }
 .kidColorsHead {
-	margin: 0.4rem 0 0;
-	font-size: 1rem;
+	margin: var(--space-2) 0 0;
+	font-size: var(--text-md);
 }
 .themeNote {
 	margin: 0;
 	color: var(--muted);
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 }
 .home {
 	display: flex;
 	flex-direction: column;
-	gap: 0.4rem;
+	gap: var(--space-2);
 	border-top: 1px solid var(--line);
-	padding-top: 0.8rem;
+	padding-top: var(--space-4);
 }
-/* Screen saver settings. */
-.saverRow {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-.saverRow input {
-	width: 1.2rem;
-	height: 1.2rem;
-}
+
 .saverGrid {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.6rem 1rem;
+	gap: var(--space-3) var(--space-5);
 }
-.saverGrid label {
-	display: flex;
-	flex-direction: column;
-	gap: 0.2rem;
-	font-size: 0.85rem;
-	color: var(--muted);
-}
-.saverGrid select,
-.saverGrid input {
-	font-size: 1rem;
-	padding: 0.4rem 0.5rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius-sm);
-	background: var(--surface);
-	color: var(--text);
-}
-.saverPreview {
-	composes: textButton from '../ui/Buttons.module.css';
-	align-self: flex-start;
-	padding: 0.2rem 0;
-}
+
 .bare {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--space-3);
 }
 /* Family PIN: the devices signed in, and the form to set or change it. */
 .devices {
@@ -282,44 +219,35 @@
 	padding: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 0.3rem;
+	gap: var(--space-2);
 }
 .devices li {
 	display: flex;
 	align-items: center;
-	gap: 0.6rem;
+	gap: var(--space-3);
 }
 .devices li > span:first-child {
 	flex: 1;
 }
 .deviceSeen {
 	color: var(--muted);
-	font-size: 0.85rem;
+	font-size: var(--text-sm);
 }
-.textLink {
-	composes: textButton from '../ui/Buttons.module.css';
-	padding: 0.2rem;
-}
+
 /* Your PIN, under your name in People: the row's full width, in line with the name. */
 .myPin {
 	flex-basis: 100%;
-	padding-left: 1.6rem;
+	padding-left: var(--space-6);
 }
 .pinForm {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
-}
-.pinForm input {
-	font-size: 1.05rem;
-	padding: 0.55rem 0.7rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius-sm);
+	gap: var(--space-3);
 }
 .pinError {
 	margin: 0;
 	color: var(--danger);
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 }
 
 /* Settings: a row for each group (Family, Learning, Appearance, Screen, Notifications, Users); tapped, just that group. */
@@ -327,16 +255,16 @@
 	width: 100%;
 	display: flex;
 	align-items: center;
-	gap: 0.8rem;
+	gap: var(--space-4);
 	min-height: 3.2rem;
-	padding: 0.4rem 0;
+	padding: var(--space-2) 0;
 	border-top: 1px solid var(--line);
 	border-radius: 0;
 	background: none;
 	color: var(--text);
 	text-align: left;
-	font-size: 1.1rem;
-	font-weight: 650;
+	font-size: var(--text-lg);
+	font-weight: var(--weight-semibold);
 	cursor: pointer;
 }
 /* A chevron: tap to go in. */
@@ -345,7 +273,7 @@
 	flex: none;
 	width: 0.55rem;
 	height: 0.55rem;
-	margin: 0 0.3rem 0 auto;
+	margin: 0 var(--space-2) 0 auto;
 	border-right: 2px solid var(--muted);
 	border-bottom: 2px solid var(--muted);
 	rotate: -45deg;
@@ -358,11 +286,11 @@
 	list-style: none;
 	display: flex;
 	align-items: center;
-	gap: 0.8rem;
+	gap: var(--space-4);
 	min-height: 3rem;
-	padding: 0.4rem 0;
-	font-size: 1.05rem;
-	font-weight: 650;
+	padding: var(--space-2) 0;
+	font-size: var(--text-md);
+	font-weight: var(--weight-semibold);
 	cursor: pointer;
 }
 .foldHead::-webkit-details-marker {
@@ -373,8 +301,8 @@
 	min-width: 0;
 	text-align: right;
 	color: var(--muted);
-	font-size: 0.9rem;
-	font-weight: 400;
+	font-size: var(--text-sm);
+	font-weight: var(--weight-regular);
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -385,7 +313,7 @@
 	flex: none;
 	width: 0.55rem;
 	height: 0.55rem;
-	margin: 0 0.3rem 0 auto;
+	margin: 0 var(--space-2) 0 auto;
 	border-right: 2px solid var(--muted);
 	border-bottom: 2px solid var(--muted);
 	rotate: -45deg;
@@ -399,16 +327,16 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 0.8rem;
+	gap: var(--space-4);
 	min-height: 3rem;
-	padding: 0.4rem 0;
-	font-size: 1.05rem;
-	font-weight: 650;
+	padding: var(--space-2) 0;
+	font-size: var(--text-md);
+	font-weight: var(--weight-semibold);
 }
 .switchTitle {
 	display: flex;
 	align-items: center;
-	gap: 0.2rem;
+	gap: var(--space-1);
 }
 /* ⓘ beside a title: what it does, shown when tapped. A small circle, with room around it to tap. */
 .info {
@@ -420,7 +348,7 @@
 	min-height: 0;
 	padding: 0;
 	/* A little room from the title before it. */
-	margin: 0 -0.2rem 0 0.15rem;
+	margin: 0 calc(-1 * var(--space-1)) 0 var(--space-1);
 	background: none;
 	color: var(--muted);
 	font:
@@ -442,15 +370,15 @@
 	color: var(--accent);
 }
 .switchHint {
-	margin: 0 0 0.7rem;
+	margin: 0 0 var(--space-4);
 	color: var(--muted);
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 }
 .foldBody {
 	display: flex;
 	flex-direction: column;
-	gap: 0.6rem;
-	padding-bottom: 1rem;
+	gap: var(--space-3);
+	padding-bottom: var(--space-5);
 }
 /* A part's title, with the way back to the list before it. */
 .viewTitle {
@@ -458,27 +386,27 @@
 	align-items: center;
 }
 .back {
-	min-width: 2.75rem;
-	min-height: 2.75rem;
-	margin: -0.5rem 0.1rem -0.5rem -0.7rem;
-	font-size: 2rem;
-	line-height: 1;
+	margin: calc(-1 * var(--space-3)) 0 calc(-1 * var(--space-3)) calc(-1 * var(--space-4));
 	color: var(--accent);
+}
+/* The ‹ is a small letter: drawn at a heading's size. */
+.backIcon {
+	font-size: var(--text-2xl);
 }
 
 /* Learning: inside each kid's dropdown, their switch, day and games. */
 .learnKid {
 	display: flex;
 	flex-direction: column;
-	gap: 0.3rem;
-	padding: 0 0 0.8rem;
+	gap: var(--space-2);
+	padding: 0 0 var(--space-4);
 }
 /* Learn's day for a kid: games a day, time a day, and today (with unlock, lock and more). */
 .learnDay {
 	display: flex;
 	flex-direction: column;
-	gap: 0.4rem;
-	padding: 0.5rem 0.7rem;
+	gap: var(--space-2);
+	padding: var(--space-3) var(--space-4);
 	border-radius: var(--radius-sm);
 	background: var(--bg);
 }
@@ -486,10 +414,10 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 0.5rem;
+	gap: var(--space-3);
 }
 .learnTime select {
-	padding: 0.4rem 0.5rem;
+	padding: var(--space-2) var(--space-3);
 	border: 1px solid var(--line);
 	border-radius: var(--radius-xs);
 	background: var(--surface);
@@ -497,22 +425,22 @@
 }
 .learnToday {
 	margin: 0;
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 	color: var(--muted);
 }
 .learnTodayButtons {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.4rem;
+	gap: var(--space-2);
 }
 .learnChip {
 	min-height: 2.4rem;
-	padding: 0 0.9rem;
+	padding: 0 var(--space-5);
 	border-radius: var(--radius-round);
 	border: 1px solid var(--line);
 	background: var(--surface);
-	font-weight: 650;
-	font-size: 0.9rem;
+	font-weight: var(--weight-semibold);
+	font-size: var(--text-sm);
 }
 .learnChip:disabled {
 	opacity: 0.5;
@@ -522,15 +450,15 @@
 	display: grid;
 	grid-template-columns: 1fr auto auto auto;
 	align-items: center;
-	gap: 0.4rem;
+	gap: var(--space-2);
 }
 .learnStep {
 	width: 2.4rem;
 	height: 2.4rem;
 	border-radius: 50%;
 	background: var(--bg);
-	font-size: 1.3rem;
-	font-weight: 700;
+	font-size: var(--text-xl);
+	font-weight: var(--weight-bold);
 }
 .learnStep:disabled {
 	opacity: 0.35;
@@ -539,7 +467,7 @@
 	min-width: 6.5rem;
 	text-align: center;
 	color: var(--muted);
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 }
 /* Learning's animal sounds: each animal, its sound to hear, and recording your own. */
 .soundList {
@@ -550,8 +478,8 @@
 	display: grid;
 	grid-template-columns: 2.4rem 1fr auto auto;
 	align-items: center;
-	gap: 0.5rem;
-	padding: 0.3rem 0;
+	gap: var(--space-3);
+	padding: var(--space-2) 0;
 	border-top: 1px solid var(--line);
 }
 .soundRow > :nth-child(5) {
@@ -565,78 +493,63 @@
 .soundName {
 	display: flex;
 	flex-direction: column;
-	font-weight: 600;
+	font-weight: var(--weight-semibold);
 }
 .soundName small {
 	color: var(--muted);
-	font-weight: 400;
+	font-weight: var(--weight-regular);
 }
 .recording {
-	background: #b42318;
-	color: #fff;
+	background: var(--danger-solid);
+	color: var(--on-danger);
 }
 .recordDot {
 	color: var(--danger);
 }
 .learnReady {
 	display: inline-block;
-	margin: 0.2rem 0 0 0.5rem;
-	padding: 0.2rem 0.65rem;
+	margin: var(--space-1) 0 0 var(--space-3);
+	padding: var(--space-1) var(--space-3);
 	border-radius: var(--radius-round);
 	background: var(--good-bg);
 	color: var(--good);
-	font-size: 0.8rem;
-	font-weight: 700;
+	font-size: var(--text-xs);
+	font-weight: var(--weight-bold);
 }
 .learnReady:disabled {
 	opacity: 0.5;
 }
 .learnTop {
-	margin-left: 0.5rem;
-	padding: 0.05rem 0.5rem;
+	margin-left: var(--space-3);
+	padding: 0 var(--space-3);
 	border-radius: var(--radius-round);
 	background: var(--warn-bg);
 	color: var(--warn);
-	font-size: 0.8rem;
-	font-weight: 700;
+	font-size: var(--text-xs);
+	font-weight: var(--weight-bold);
 }
 
 /* A person's allergies: beside their name, and (editing) the ones to tap and their own. */
 .allergyTag {
-	font-size: 0.75rem;
-	font-weight: 600;
+	font-size: var(--text-xs);
+	font-weight: var(--weight-semibold);
 	color: var(--danger);
 	background: var(--danger-bg);
 	border-radius: var(--radius-round);
-	padding: 0.15rem 0.55rem;
+	padding: var(--space-1) var(--space-3);
 }
 .allergies {
 	display: flex;
 	flex-direction: column;
-	gap: 0.4rem;
-	padding-left: 3.35rem;
+	gap: var(--space-2);
+	padding-left: var(--space-8);
 }
 .allergiesLabel {
-	font-size: 0.85rem;
+	font-size: var(--text-sm);
 	color: var(--muted);
 }
 .allergyChips {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.35rem;
-}
-.allergyChip {
-	min-height: 2.5rem;
-	padding: 0 0.8rem;
-	border-radius: var(--radius-round);
-	border: 1px solid var(--line);
-	background: var(--surface);
-	color: var(--text);
-	font-weight: 600;
-	text-transform: capitalize;
-}
-.allergyChip[aria-pressed='true'] {
-	background: var(--danger-bg);
-	border-color: var(--danger-line);
-	color: var(--danger);
+	gap: var(--space-2);
 }

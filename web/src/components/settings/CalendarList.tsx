@@ -2,6 +2,7 @@ import { useCalendars, useUpdateCalendar } from '../../lib/queries';
 import { UNASSIGNED } from '../../lib/color';
 import type { Member, Visibility } from '../../lib/types';
 import s from './CalendarList.module.css';
+import { Select } from '../ui/Field';
 
 /** Synced calendars: whose each one is, who sees its events, and whether it shows on the wall. */
 export default function CalendarList({ members }: { members: Member[] }) {
@@ -26,7 +27,7 @@ export default function CalendarList({ members }: { members: Member[] }) {
 							</div>
 							{c.sample.length > 0 && <div className={s.sample}>{c.sample.join(' · ')}</div>}
 						</div>
-						<select
+						<Select
 							className={s.who}
 							value={c.memberId ?? ''}
 							disabled={c.hidden}
@@ -39,8 +40,8 @@ export default function CalendarList({ members }: { members: Member[] }) {
 									{m.name}
 								</option>
 							))}
-						</select>
-						<select
+						</Select>
+						<Select
 							className={s.who}
 							value={c.visibility}
 							disabled={c.hidden}
@@ -50,7 +51,7 @@ export default function CalendarList({ members }: { members: Member[] }) {
 							<option value="everyone">Sees: everyone</option>
 							<option value="busy">Sees: busy only</option>
 							<option value="private">Sees: private</option>
-						</select>
+						</Select>
 						<label className={s.show}>
 							<input
 								type="checkbox"

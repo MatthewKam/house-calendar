@@ -24,6 +24,7 @@ import { Group, InfoButton, Section, SettingsView } from './parts';
 import sheet from '../ui/Sheet.module.css';
 import s from './Settings.module.css';
 import { LEARN_ON } from '../../lib/features';
+import { Button, IconButton } from '../ui/Button';
 
 interface Props {
 	members: Member[];
@@ -75,18 +76,20 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 					<h2 className={sheet.heading}>Settings</h2>
 				) : (
 					<h2 className={`${sheet.heading} ${s.viewTitle}`}>
-						<button type="button" className={s.back} onClick={() => setView(null)} aria-label="Back to Settings">
-							‹
-						</button>
+						<IconButton
+							size="lg"
+							className={s.back}
+							label="Back to Settings"
+							icon={<span className={s.backIcon}>‹</span>}
+							onClick={() => setView(null)}
+						/>
 						{view}
 						{view === 'Learning' && (
 							<InfoButton about="Learning" open={learnInfo} onToggle={() => setLearnInfo(!learnInfo)} />
 						)}
 					</h2>
 				)}
-				<button className={sheet.close} onClick={onClose} aria-label="Close Settings">
-					×
-				</button>
+				<IconButton className={sheet.close} label="Close Settings" icon="×" onClick={onClose} />
 			</header>
 			<SettingsView.Provider value={{ view, open: setView }}>
 				{view === null && auth?.signedIn && <SignedInAs status={auth} onClose={onClose} />}
@@ -171,9 +174,9 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 			<div className={sheet.actions}>
 				{view === null && auth?.signedIn && <SignOut status={auth} onClose={onClose} />}
 				<span className={sheet.spacer} />
-				<button className={sheet.secondary} onClick={onClose}>
+				<Button type="submit" onClick={onClose}>
 					Done
-				</button>
+				</Button>
 			</div>
 		</Sheet>
 	);

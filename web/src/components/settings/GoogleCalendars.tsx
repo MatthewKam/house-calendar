@@ -8,6 +8,7 @@ import type { Member } from '../../lib/types';
 import s from '../account/Account.module.css';
 import panel from './Settings.module.css';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import { Button } from '../ui/Button';
 
 /**
  * Settings → Calendars: each person's Google Calendar. Connecting is from your own phone (Google
@@ -66,9 +67,9 @@ export default function GoogleCalendars({ members }: { members: Member[] }) {
 										)}
 									</span>
 								</span>
-								<button type="button" className={panel.textLink} onClick={() => setDisconnecting(c)}>
+								<Button variant="link" size="sm" onClick={() => setDisconnecting(c)}>
 									Disconnect
-								</button>
+								</Button>
 							</li>
 						);
 					})}
@@ -77,9 +78,9 @@ export default function GoogleCalendars({ members }: { members: Member[] }) {
 			{remove.isError && <p className={s.error}>{remove.error.message}</p>}
 			{linkError && <p className={s.error}>{linkError}</p>}
 			{ownAccount && isApp ? (
-				<button
-					type="button"
-					className={s.primary}
+				<Button
+					variant="primary"
+
 					style={{ alignSelf: 'flex-start' }}
 					onClick={() => {
 						setLinkError(null);
@@ -90,7 +91,7 @@ export default function GoogleCalendars({ members }: { members: Member[] }) {
 					}}
 				>
 					{mine ? 'Connect another Google account' : 'Connect my Google Calendar'}
-				</button>
+				</Button>
 			) : ownAccount ? (
 				// A full page visit: Google's pages, then back to the app.
 				<a
