@@ -4,6 +4,7 @@ import DayPlans from '../calendar/DayPlans';
 import Sheet from '../ui/Sheet';
 import sheet from '../ui/Sheet.module.css';
 import s from './Today.module.css';
+import { IconButton } from '../ui/Button';
 
 /**
  * A special day's plans, in a drawer from the right: the note, the list and your reminders, for it
@@ -28,9 +29,7 @@ export default function DayDrawer({
 					<div className={s.drawerDay}>{date.toLocaleDateString([], { weekday: 'long' })}</div>
 					<h2 className={sheet.heading}>{date.toLocaleDateString([], { month: 'long', day: 'numeric' })}</h2>
 				</div>
-				<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-					×
-				</button>
+				<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 			</div>
 			<DayPlans day={day.day} specials={specials} start={day.key} />
 		</Sheet>

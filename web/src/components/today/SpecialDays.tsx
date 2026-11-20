@@ -8,6 +8,8 @@ import { listOn } from '../calendar/DayPlans';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import DayDrawer from './DayDrawer';
 import s from './Today.module.css';
+import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
 
 /** Special days this far ahead, and at most this many of them. */
 const SPECIAL_DAYS_AHEAD = 60;
@@ -33,15 +35,16 @@ export default function SpecialDays({ today, onAdd }: { today: string; onAdd?: (
 	const days = specialDaysIn(today, to, people, eventsQuery.data ?? []).slice(0, SPECIAL_DAYS_SHOWN);
 	const tappable = access.plans || access.reminders;
 	return (
-		<section className={s.card} aria-label="Special days">
-			<div className={s.cardTop}>
-				<h2 className={s.cardHead}>Special days</h2>
-				{onAdd && (
-					<button type="button" className={s.catch} onClick={onAdd}>
-						＋ Add a special day
-					</button>
-				)}
-			</div>
+		<Card
+			title="Special days"
+			action={
+				onAdd && (
+					<Button size="sm" icon="＋" onClick={onAdd}>
+						Add a special day
+					</Button>
+				)
+			}
+		>
 			{eventsQuery.isPending ? (
 				<Loading label="Loading special days">
 					<Skeleton height="3rem" />
@@ -92,7 +95,7 @@ export default function SpecialDays({ today, onAdd }: { today: string; onAdd?: (
 				</ul>
 			)}
 			{open && <DayDrawer day={open} specials={days.filter((d) => d.day === open.day)} onClose={() => setOpen(null)} />}
-		</section>
+		</Card>
 	);
 }
 

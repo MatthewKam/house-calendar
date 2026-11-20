@@ -6,13 +6,13 @@
 	min-height: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 0.8rem;
+	gap: var(--space-4);
 }
 .head {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 0.8rem;
+	gap: var(--space-4);
 	/* As wide as the cards, over them. */
 	width: 100%;
 	max-width: max(56rem, 80%);
@@ -21,7 +21,7 @@
 .headText {
 	display: flex;
 	flex-direction: column;
-	gap: 0.2rem;
+	gap: var(--space-1);
 	min-width: 0;
 }
 /* The weather now, top right: the sky, the temperature, and how warm it feels. */
@@ -30,36 +30,36 @@
 	display: grid;
 	grid-template-columns: auto auto;
 	align-items: center;
-	column-gap: 0.35rem;
+	column-gap: var(--space-2);
 	text-align: right;
 }
 .headIcon {
 	grid-row: span 2;
-	font-size: 2rem;
+	font-size: var(--text-2xl);
 }
 .headTemp {
-	font-size: 1.5rem;
-	font-weight: 750;
+	font-size: var(--text-xl);
+	font-weight: var(--weight-heavy);
 	line-height: 1;
 }
 .headFeels {
-	font-size: 0.8rem;
+	font-size: var(--text-xs);
 	color: var(--muted);
 }
 .hello {
 	margin: 0;
-	font-size: 2rem;
+	font-size: var(--text-2xl);
 }
 .date {
 	color: var(--muted);
-	font-size: 0.95rem;
+	font-size: var(--text-md);
 }
 @media (max-width: 700px) {
 	.hello {
-		font-size: 1.55rem;
+		font-size: var(--text-xl);
 	}
 	.date {
-		font-size: 0.88rem;
+		font-size: var(--text-sm);
 	}
 }
 .scroll {
@@ -68,7 +68,7 @@
 	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
-	padding-bottom: 1rem;
+	padding-bottom: var(--space-5);
 }
 .cards {
 	width: 100%;
@@ -76,7 +76,7 @@
 	margin-inline: auto;
 	display: flex;
 	flex-direction: column;
-	gap: 0.9rem;
+	gap: var(--space-5);
 }
 /* A tablet either way up (from 800px wide: an iPad mini upright keeps one roomy column), or a phone on its
    side: rows of two, the calendar and the photos across both. */
@@ -99,7 +99,7 @@
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	align-items: start;
-	gap: 0.9rem;
+	gap: var(--space-5);
 	padding: var(--space-5) 0;
 }
 .threeColumns {
@@ -115,7 +115,7 @@
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 0.9rem;
+	gap: var(--space-5);
 }
 /* A big screen: rows of three. */
 @media (min-width: 1401px) {
@@ -130,49 +130,33 @@
 .scroll::-webkit-scrollbar {
 	display: none;
 }
-.card {
-	background: var(--surface);
-	border: 1px solid var(--line);
-	border-radius: var(--radius);
-	padding: 0.9rem;
-	display: flex;
-	flex-direction: column;
-	gap: 0.6rem;
-	box-shadow: var(--shadow-md);
-}
-.cardTop {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0.5rem;
-	flex-wrap: wrap;
-}
+
 /* The weather card's head: its name, and Home or Here. */
 .weatherHead {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	gap: 0.5rem;
+	gap: var(--space-3);
 }
 .place {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-end;
-	gap: 0.2rem;
+	gap: var(--space-1);
 }
 .placeSwitch {
 	display: flex;
-	padding: 0.15rem;
+	padding: var(--space-1);
 	border-radius: var(--radius-round);
 	background: var(--bg);
 }
 .placeOption {
 	min-height: 2.2rem;
-	padding: 0 0.75rem;
+	padding: 0 var(--space-4);
 	border-radius: var(--radius-round);
-	font-size: 0.85rem;
-	font-weight: 600;
+	font-size: var(--text-sm);
+	font-weight: var(--weight-semibold);
 	color: var(--muted);
 }
 /* A long place name: cut short. */
@@ -191,35 +175,25 @@
 .placeForm {
 	flex-basis: 100%;
 	display: flex;
-	gap: 0.5rem;
+	gap: var(--space-3);
 }
 .placeForm > :first-child {
 	flex: 1;
 }
-.placeGo {
-	min-height: 2.6rem;
-	padding: 0 1rem;
-	border-radius: var(--radius-sm);
-	background: var(--accent);
-	color: var(--on-accent);
-	font-weight: 700;
-}
-.placeGo:disabled {
-	opacity: 0.5;
-}
+
 .placeProblem {
-	font-size: 0.8rem;
+	font-size: var(--text-xs);
 	color: var(--danger);
 }
 .cardHead {
 	margin: 0;
-	font-size: 0.8rem;
+	font-size: var(--text-xs);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 	color: var(--muted);
 }
 .cardHeadSubtext {
-	font-size: 0.5rem;
+	font-size: 0.7em;
 }
 details > summary.cardHead {
 	cursor: pointer;
@@ -228,8 +202,8 @@ details > summary.cardHead {
 	align-items: center;
 }
 .subHead {
-	margin: 0.3rem 0 0;
-	font-size: 0.75rem;
+	margin: var(--space-2) 0 0;
+	font-size: var(--text-xs);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 	color: var(--muted);
@@ -248,7 +222,7 @@ details > summary.cardHead {
 	padding: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 0.45rem;
+	gap: var(--space-2);
 }
 .needs {
 	gap: var(--space-3);
@@ -257,9 +231,9 @@ details > summary.cardHead {
 	width: 100%;
 	display: flex;
 	align-items: center;
-	gap: 0.8rem;
+	gap: var(--space-4);
 	text-align: left;
-	padding: 0.55rem 0.7rem;
+	padding: var(--space-3) var(--space-4);
 	border-radius: var(--radius);
 	border: 1px solid var(--c);
 	border-left: 0.35rem solid var(--c);
@@ -270,8 +244,8 @@ details > summary.cardHead {
 .when {
 	flex: none;
 	width: 5.5rem;
-	font-size: 0.85rem;
-	font-weight: 600;
+	font-size: var(--text-sm);
+	font-weight: var(--weight-semibold);
 	color: var(--muted);
 	font-variant-numeric: tabular-nums;
 }
@@ -282,12 +256,12 @@ details > summary.cardHead {
 	flex-direction: column;
 }
 .title {
-	font-weight: 600;
+	font-weight: var(--weight-semibold);
 	/* A word too long for the line breaks; others wrap between words. */
 	overflow-wrap: break-word;
 }
 .where {
-	font-size: 0.85rem;
+	font-size: var(--text-sm);
 	color: var(--muted);
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -295,13 +269,13 @@ details > summary.cardHead {
 }
 .leave {
 	align-self: flex-start;
-	margin-top: 0.35rem;
-	padding: 0.2rem 0.55rem;
+	margin-top: var(--space-2);
+	padding: var(--space-1) var(--space-3);
 	border-radius: var(--radius-round);
 	background: var(--surface);
 	border: 1px solid var(--line);
-	font-size: 0.8rem;
-	font-weight: 650;
+	font-size: var(--text-xs);
+	font-weight: var(--weight-semibold);
 	white-space: nowrap;
 }
 .leaveSoon {
@@ -316,26 +290,15 @@ details > summary.cardHead {
 	color: var(--good);
 }
 
-/* The kids: name, a bar filling with their color, then tasks, stickers and stars. */
-.catch {
-	min-height: 2.5rem;
-	padding: 0 0.9rem;
-	border: 1px dashed var(--accent);
-	border-radius: var(--radius-round);
-	background: var(--surface);
-	color: var(--accent);
-	font-weight: 650;
-	font-size: 0.9rem;
-}
 .kid {
 	width: 100%;
 	display: grid;
 	grid-template-columns: auto 1fr;
 	grid-template-areas: 'name bar' 'meta meta';
 	align-items: center;
-	gap: 0.35rem 0.8rem;
+	gap: var(--space-2) var(--space-4);
 	text-align: left;
-	padding: 0.6rem 0.7rem;
+	padding: var(--space-3) var(--space-4);
 	border-radius: var(--radius);
 	background: color-mix(in srgb, var(--c) 10%, var(--surface));
 	border: 2px solid color-mix(in srgb, var(--c) 35%, var(--surface));
@@ -343,8 +306,8 @@ details > summary.cardHead {
 }
 .kidName {
 	grid-area: name;
-	font-weight: 700;
-	font-size: 1.1rem;
+	font-weight: var(--weight-bold);
+	font-size: var(--text-lg);
 }
 .kidBar {
 	grid-area: bar;
@@ -364,27 +327,27 @@ details > summary.cardHead {
 	grid-area: meta;
 	display: flex;
 	align-items: center;
-	gap: 0.7rem;
+	gap: var(--space-4);
 	flex-wrap: wrap;
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 	color: var(--muted);
 }
 .stickers {
-	font-size: 1.1rem;
+	font-size: var(--text-lg);
 	letter-spacing: 0.1em;
 }
 .stars {
 	margin-left: auto;
 	display: inline-flex;
 	align-items: center;
-	gap: 0.2rem;
-	font-weight: 700;
+	gap: var(--space-1);
+	font-weight: var(--weight-bold);
 	color: var(--text);
 }
 .star {
 	width: 1rem;
 	height: 1rem;
-	color: #e3a21a;
+	color: var(--star);
 }
 
 /* Needs you. */
@@ -392,13 +355,13 @@ details > summary.cardHead {
 	width: 100%;
 	display: flex;
 	align-items: center;
-	gap: 0.6rem;
+	gap: var(--space-3);
 	text-align: left;
 	min-height: 2.9rem;
-	padding: 0.4rem 0.7rem;
+	padding: var(--space-2) var(--space-4);
 	border-radius: var(--radius);
 	background: var(--bg);
-	font-weight: 600;
+	font-weight: var(--weight-semibold);
 	box-shadow: var(--shadow-sm);
 }
 
@@ -409,8 +372,8 @@ details > summary.cardHead {
 }
 .needText .dueWhen,
 .needText .late {
-	font-size: 0.85rem;
-	font-weight: 600;
+	font-size: var(--text-sm);
+	font-weight: var(--weight-semibold);
 }
 .needText .dueWhen {
 	color: var(--muted);
@@ -425,14 +388,14 @@ details > summary.cardHead {
 	--c: var(--accent);
 	display: flex;
 	flex-direction: column;
-	gap: 0.9rem;
+	gap: var(--space-5);
 }
 @media (orientation: landscape) and (max-height: 500px), (min-width: 800px) and (min-height: 600px) {
 	.calendar {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		align-items: start;
-		gap: 1.2rem;
+		gap: var(--space-6);
 	}
 }
 @media (min-width: 1401px) {
@@ -443,7 +406,7 @@ details > summary.cardHead {
 .group {
 	display: flex;
 	flex-direction: column;
-	gap: 0.6rem;
+	gap: var(--space-3);
 	min-width: 0;
 }
 .groupHead {
@@ -451,7 +414,7 @@ details > summary.cardHead {
 	min-height: 2.6rem;
 	display: flex;
 	align-items: center;
-	font-size: 0.8rem;
+	font-size: var(--text-xs);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 	color: var(--muted);
@@ -507,7 +470,7 @@ details > summary.cardHead {
 .dayButtonOn {
 	border-color: var(--c);
 	background: var(--c);
-	color: #fff;
+	color: var(--on-accent);
 }
 .dayButtonOn::before,
 .dayButtonOn::after {
@@ -534,8 +497,8 @@ details > summary.cardHead {
 .dayPage {
 	display: flex;
 	flex-direction: column;
-	gap: 0.6rem;
-	padding: 0.8rem 0.6rem;
+	gap: var(--space-3);
+	padding: var(--space-4) var(--space-3);
 	border-radius: var(--radius-sm);
 	background: var(--bg);
 }
@@ -569,7 +532,7 @@ details > summary.cardHead {
 	min-height: 2rem;
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--space-3);
 	list-style: none;
 }
 .earlier > summary::-webkit-details-marker {
@@ -580,7 +543,7 @@ details > summary.cardHead {
 	content: '';
 	width: 0.45rem;
 	height: 0.45rem;
-	margin-top: -0.25rem;
+	margin-top: calc(-1 * var(--space-1));
 	border-right: 2px solid currentColor;
 	border-bottom: 2px solid currentColor;
 	transform: rotate(45deg);
@@ -589,7 +552,7 @@ details > summary.cardHead {
 		margin 0.2s ease;
 }
 .earlier[open] > summary::after {
-	margin-top: 0.2rem;
+	margin-top: var(--space-1);
 	transform: rotate(-135deg);
 }
 .earlier .events {
@@ -598,27 +561,27 @@ details > summary.cardHead {
 .weekGroup {
 	display: flex;
 	flex-direction: column;
-	gap: 0.4rem;
+	gap: var(--space-2);
 }
 
 /* The weather: now, the next hours across, then the week. */
 .weatherNow {
 	display: flex;
 	align-items: center;
-	gap: 0.7rem;
+	gap: var(--space-4);
 }
 .weatherIcon {
-	font-size: 2.6rem;
+	font-size: var(--text-3xl);
 }
 .weatherTemp {
-	font-size: 2.6rem;
-	font-weight: 750;
+	font-size: var(--text-3xl);
+	font-weight: var(--weight-heavy);
 	line-height: 1;
 }
 .weatherFacts {
 	display: flex;
 	flex-direction: column;
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 	color: var(--muted);
 }
 .weatherFacts b {
@@ -628,7 +591,7 @@ details > summary.cardHead {
    tapped hour gets a line down through it and its details in a box over the graph. */
 .graph {
 	position: relative;
-	margin-top: 0.2rem;
+	margin-top: var(--space-1);
 }
 .graph svg {
 	display: block;
@@ -665,7 +628,7 @@ details > summary.cardHead {
 }
 .graphHour {
 	fill: var(--muted);
-	font-size: 11px;
+	font-size: var(--text-xs);
 }
 /* The AM or PM after an hour: smaller, on the hour's own bottom line (under the graph, and in its tooltip). */
 .graphAmPm {
@@ -676,8 +639,8 @@ details > summary.cardHead {
 }
 .graphTemp {
 	fill: var(--text);
-	font-size: 12px;
-	font-weight: 700;
+	font-size: var(--text-xs);
+	font-weight: var(--weight-bold);
 }
 .graphNow {
 	fill: var(--accent);
@@ -706,43 +669,40 @@ details > summary.cardHead {
 	width: 150px;
 	display: flex;
 	flex-direction: column;
-	gap: 0.05rem;
-	padding: 0.4rem 0.6rem;
+	gap: 0;
+	padding: var(--space-2) var(--space-3);
 	border-radius: var(--radius-sm);
 	background: var(--surface);
 	border: 1px solid var(--line);
 	box-shadow: var(--shadow-md);
-	font-size: 0.82rem;
+	font-size: var(--text-xs);
 	pointer-events: none;
 }
 .graphHint {
-	margin: 0.1rem 0 0;
+	margin: var(--space-1) 0 0;
 	display: flex;
 	justify-content: center;
 	flex-wrap: wrap;
-	column-gap: 0.9rem;
-	font-size: 0.75rem;
+	column-gap: var(--space-5);
+	font-size: var(--text-xs);
 	color: var(--muted);
 }
 .graphKey {
 	display: inline-flex;
 	align-items: center;
-	gap: 0.3rem;
+	gap: var(--space-2);
 }
 
 /* Opens and closes the next seven days. */
 .weekToggle {
-	composes: textButton from '../ui/Buttons.module.css';
 	align-self: flex-start;
-	margin-top: 0.2rem;
-	min-height: 2.75rem;
 }
 /* The next seven days (Week), a row each: the day, its sky, how warm it feels, and rain and wind when
    worth knowing; under that its low, a bar to its high on one scale for the week, and its high. */
 .week {
 	list-style: none;
-	margin: 0.3rem 0 0;
-	padding: 0.3rem 0.7rem;
+	margin: var(--space-2) 0 0;
+	padding: var(--space-2) var(--space-4);
 	background: var(--bg);
 	border-radius: var(--radius-sm);
 }
@@ -750,9 +710,9 @@ details > summary.cardHead {
 	display: grid;
 	grid-template-columns: 2.2rem minmax(0, 1fr) 2.2rem;
 	align-items: center;
-	column-gap: 0.4rem;
-	row-gap: 0.3rem;
-	padding: 0.4rem 0;
+	column-gap: var(--space-2);
+	row-gap: var(--space-2);
+	padding: var(--space-2) 0;
 	font-variant-numeric: tabular-nums;
 }
 .weekDay + .weekDay {
@@ -762,26 +722,26 @@ details > summary.cardHead {
 	grid-column: 1 / -1;
 	display: flex;
 	align-items: center;
-	gap: 0.4rem;
+	gap: var(--space-2);
 }
 .weekName {
-	font-weight: 650;
+	font-weight: var(--weight-semibold);
 	white-space: nowrap;
 }
 .weekDate {
 	color: var(--muted);
-	font-weight: 500;
+	font-weight: var(--weight-semibold);
 }
 .weekIcon {
-	font-size: 1.3rem;
+	font-size: var(--text-xl);
 	line-height: 1;
 	text-align: center;
 }
 .weekExtra {
 	display: flex;
 	flex-wrap: wrap;
-	column-gap: 0.5rem;
-	font-size: 0.75rem;
+	column-gap: var(--space-3);
+	font-size: var(--text-xs);
 	line-height: 1.2;
 	color: var(--muted);
 }
@@ -791,7 +751,7 @@ details > summary.cardHead {
 /* Rain's likely: picked out. */
 .weekWet {
 	color: var(--text);
-	font-weight: 700;
+	font-weight: var(--weight-bold);
 }
 .weekLow,
 .weekHigh {
@@ -802,13 +762,13 @@ details > summary.cardHead {
 	color: var(--muted);
 }
 .weekHigh {
-	font-weight: 750;
+	font-weight: var(--weight-heavy);
 }
 /* The week's coolest at the left end, its warmest at the right: the day's bar sits where it falls. */
 .weekTrack {
 	position: relative;
 	height: 0.95rem;
-	margin: 0 0.25rem;
+	margin: 0 var(--space-1);
 	border-radius: var(--radius-round);
 	background: var(--surface);
 }
@@ -831,9 +791,9 @@ details > summary.cardHead {
 .specialRow {
 	display: flex;
 	align-items: center;
-	gap: 0.7rem;
+	gap: var(--space-4);
 	width: 100%;
-	padding: 0.45rem 0.7rem;
+	padding: var(--space-2) var(--space-4);
 	border-radius: var(--radius);
 	background: var(--bg);
 	font: inherit;
@@ -843,7 +803,7 @@ details > summary.cardHead {
 }
 /* What's planned on it (reminders, a note, a list), under its date. */
 .specialPlanned {
-	font-size: 0.85rem;
+	font-size: var(--text-sm);
 	color: var(--muted);
 }
 
@@ -851,7 +811,7 @@ details > summary.cardHead {
 .drawerDay {
 	color: var(--muted);
 	text-transform: uppercase;
-	font-size: 0.8rem;
+	font-size: var(--text-xs);
 	letter-spacing: 0.04em;
 }
 .specialToday {
@@ -859,12 +819,12 @@ details > summary.cardHead {
 }
 .specialPicture {
 	flex: none;
-	font-size: 1.6rem;
+	font-size: var(--text-2xl);
 }
 .countdown {
 	flex: none;
-	font-size: 0.85rem;
-	font-weight: 700;
+	font-size: var(--text-sm);
+	font-weight: var(--weight-bold);
 	color: var(--accent);
 	white-space: nowrap;
 }
@@ -874,17 +834,17 @@ details > summary.cardHead {
 	margin: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 0.3rem;
+	gap: var(--space-2);
 }
 .quote p {
 	margin: 0;
-	font-size: 1.15rem;
+	font-size: var(--text-lg);
 	font-style: italic;
 	line-height: 1.4;
 }
 .quote footer {
 	color: var(--muted);
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 }
 .quote footer::before {
 	content: '— ';
@@ -893,14 +853,14 @@ details > summary.cardHead {
 	margin: 0;
 	display: flex;
 	align-items: center;
-	gap: 0.8rem;
-	font-size: 1.15rem;
-	font-weight: 600;
+	gap: var(--space-4);
+	font-size: var(--text-lg);
+	font-weight: var(--weight-semibold);
 	line-height: 1.35;
 }
 .kindPicture {
 	flex: none;
-	font-size: 2.2rem;
+	font-size: var(--text-3xl);
 }
 
 /* The family's photo slideshow (PhotoCard): across the cards, a photo's shape. */
@@ -921,11 +881,5 @@ details > summary.cardHead {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
-	gap: 1.2rem;
-}
-
-/* Finish setting up: Hide, quiet, beside its heading. */
-.hideSetup {
-	composes: quiet from '../ui/Buttons.module.css';
-	font-size: 0.85rem;
+	gap: var(--space-6);
 }
