@@ -41,7 +41,7 @@ export default function NeedsYou({
 	if (needs === 0) return null;
 	return (
 		<section className={s.card}>
-			<h2 className={s.cardHead}>Needs you</h2>
+			<h2 className={s.cardHead}>List items</h2>
 			<ul className={s.needs}>
 				{clashes > 0 && (
 					<li>
