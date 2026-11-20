@@ -23,6 +23,7 @@ Before styling a button, card, field, chip or row of your own, use the shared on
 | --- | --- |
 | `Button` (`Button.tsx`) | words you press. `variant`: `primary` (the one main action), `secondary` (the default), `destructive` (Delete, filled red), `danger` (red words), `link` (Undo, Clear). `size`: `sm` in dense rows, `md`, `lg` for a page's main action and kid mode. `icon` puts a picture before the words. Never submits a form unless `type="submit"`. |
 | `IconButton` (`Button.tsx`) | a picture only (×, ⋯, ✏️), square, named by `label` |
+| `BackButton` (`BackButton.tsx`) | "‹ Today": back to the page a link came from. App shows it by itself (`usePage`'s `follow` and `from`); a link to another page calls `follow`, the nav bar `go`. |
 | `Card`, `SectionHead` (`Card.tsx`) | a box of one thing, with its small capitals `title` and an `action` on the right; `tone` for a note (`info`, `warn`, `good`, `danger`). `SectionHead` heads part of a page or sheet (`level` 2 or 3). |
 | `Field`, `Input`, `TextArea`, `Select` (`Field.tsx`) | a labelled box with a `hint` or an `error` under it; the box inside is tied to them for screen readers by itself |
 | `Chip`, `Tag` (`Chip.tsx`) | a pill to tap, a filter or choice (`pressed` fills it); a small label that isn't pressed (`tone`) |

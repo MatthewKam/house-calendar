@@ -25,6 +25,7 @@ import NavBar, { type Page } from './components/nav/NavBar';
 import LeaveAlerts from './components/calendar/LeaveAlerts';
 import Fab from './components/nav/Fab';
 import { usePage } from './lib/usePage';
+import { BackButton } from './components/ui/BackButton';
 import ListView, { AddToListSheet } from './components/lists/ListView';
 import QuickAdd, { type QuickAction } from './components/nav/QuickAdd';
 import MomentDialog from './components/tasks/MomentDialog';
@@ -99,7 +100,8 @@ export default function App() {
 	const dialog = open?.kind === 'event' ? open : null;
 	const taskDialog = open?.kind === 'task' ? open : null;
 	// Which page fills the main area. Kept in the address (#tasks), so a refresh stays on it.
-	const [page, setPage] = usePage();
+	// The nav bar goes to a page (go); links on a page follow, and the page they open shows Back.
+	const { page, go, follow, from, back } = usePage();
 	const [toast, setToast] = useState<ToastMessage | null>(null);
 
 	const closeToast = useCallback(() => setToast(null), []);
@@ -339,7 +341,7 @@ export default function App() {
 						kind: 'recipe' as const,
 						onPick: () => {
 							setAddingRecipe(true);
-							setPage('recipes');
+							follow('recipes');
 						},
 					},
 				]
@@ -348,7 +350,7 @@ export default function App() {
 			kind: 'photo',
 			files: (files) => {
 				setPickedPhotos(files);
-				setPage('photos');
+				follow('photos');
 			},
 		},
 		// Nearest the thumb.
@@ -373,7 +375,7 @@ export default function App() {
 					}
 					page={page}
 					settingsOpen={open?.kind === 'settings'}
-					onPage={setPage}
+					onPage={go}
 					// Settings is for parents: unlock first if locked.
 					onSettings={() =>
 						setOpen(
@@ -391,6 +393,7 @@ export default function App() {
 					}
 				/>
 				<div className={s.shell}>
+					{from && <BackButton to={from} onBack={back} />}
 					<ErrorBoundary what={PAGE_NAMES[page]} kind="page" resetKey={page}>
 						{page === 'today' ? (
 							<TodayPage
@@ -398,7 +401,7 @@ export default function App() {
 								members={members}
 								me={signedIn?.memberId ?? null}
 								parent={parentLock.parent}
-								onPage={setPage}
+								onPage={follow}
 								onOpenEvent={(event) => openEvent(event, event.allDay ? event.start : dayKey(new Date(event.start)))}
 								onAddSpecial={
 									parentLock.parent ? () => setOpen({ kind: 'event', day: today, special: true }) : undefined
@@ -513,7 +516,7 @@ export default function App() {
 						onClose={close}
 						onNewList={() => {
 							close();
-							setPage('lists');
+							follow('lists');
 						}}
 					/>
 				)}
@@ -545,7 +548,7 @@ export default function App() {
 						onClose={saver.hide}
 						onOpenEvent={(event, day) => {
 							saver.hide();
-							setPage('calendar');
+							follow('calendar');
 							openEvent(event, day);
 						}}
 					/>

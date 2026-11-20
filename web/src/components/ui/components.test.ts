@@ -1,6 +1,7 @@
 import { createElement as h } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import { BackButton } from './BackButton';
 import { Button, IconButton } from './Button';
 import { Card, SectionHead } from './Card';
 import { Chip, Tag } from './Chip';
@@ -80,5 +81,15 @@ describe('Chip, Tag and ListRow', () => {
 		expect(tappable).toContain('<button type="button"');
 		// What's on the right isn't inside the row's button.
 		expect(tappable.indexOf('</button>')).toBeLessThan(tappable.indexOf('x</div>'));
+	});
+});
+
+describe('BackButton', () => {
+	it('says where it goes back to, and keeps its chevron out of what is read', () => {
+		const out = html(h(BackButton, { to: 'today', onBack: () => {} }));
+		expect(out).toContain('<button type="button"');
+		expect(out).toContain('aria-label="Back to Today"');
+		expect(out).toContain('<svg viewBox="0 0 24 24" aria-hidden="true"');
+		expect(out).toContain('<span>Today</span>');
 	});
 });
