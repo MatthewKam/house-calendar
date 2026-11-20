@@ -280,6 +280,10 @@ export default function DesignPage() {
 								<IconButton label="Add" icon="+" variant="primary" />
 								<IconButton label="Add" icon="+" variant="primary" size="lg" />
 							</div>
+							<div className={s.row}>
+								<span className={s.label}>BackButton</span>
+								<BackButton to="today" onBack={() => {}} />
+							</div>
 							<Button variant="primary" block icon="📅">
 								A whole-width button (block)
 							</Button>
