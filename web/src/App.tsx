@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { dayKey, fromDayKey, startOfWeek } from './lib/dates';
 import { useCalendarView } from './lib/useCalendarView';
 import { useToday } from './lib/useToday';
@@ -26,6 +26,7 @@ import LeaveAlerts from './components/calendar/LeaveAlerts';
 import Fab from './components/nav/Fab';
 import { usePage } from './lib/usePage';
 import { BackButton } from './components/ui/BackButton';
+import { useEdgeSwipe } from './lib/useEdgeSwipe';
 import ListView, { AddToListSheet } from './components/lists/ListView';
 import QuickAdd, { type QuickAction } from './components/nav/QuickAdd';
 import MomentDialog from './components/tasks/MomentDialog';
@@ -102,6 +103,9 @@ export default function App() {
 	// Which page fills the main area. Kept in the address (#tasks), so a refresh stays on it.
 	// The nav bar goes to a page (go); links on a page follow, and the page they open shows Back.
 	const { page, go, follow, from, back } = usePage();
+	// On the Home Screen, a swipe from the left edge goes back too (the iPhone app and Safari have their own).
+	const shell = useRef<HTMLDivElement>(null);
+	useEdgeSwipe(shell, from !== null, back);
 	const [toast, setToast] = useState<ToastMessage | null>(null);
 
 	const closeToast = useCallback(() => setToast(null), []);
@@ -392,7 +396,7 @@ export default function App() {
 							: undefined
 					}
 				/>
-				<div className={s.shell}>
+				<div className={s.shell} ref={shell}>
 					{from && <BackButton to={from} onBack={back} />}
 					<ErrorBoundary what={PAGE_NAMES[page]} kind="page" resetKey={page}>
 						{page === 'today' ? (
