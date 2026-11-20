@@ -4,6 +4,7 @@ import type { Member } from '../../lib/types';
 import Sheet from '../ui/Sheet';
 import sheet from '../ui/Sheet.module.css';
 import s from './KidMode.module.css';
+import { Button } from '../ui/Button';
 
 /** Starting kid mode on this device: which kid it opens on (the name at the top switches to the others). */
 export default function KidModeStart({
@@ -54,9 +55,7 @@ export default function KidModeStart({
 				)}
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />
-					<button type="button" className={sheet.secondary} onClick={onClose}>
-						Cancel
-					</button>
+					<Button onClick={onClose}>Cancel</Button>
 				</div>
 			</Sheet>
 		</>
