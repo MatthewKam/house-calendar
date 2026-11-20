@@ -92,22 +92,6 @@
 	flex: 1;
 	border-top: 1px solid var(--line);
 }
-/* Try the demo (SignIn.tsx): as big as the sign-in buttons, quieter. */
-.demo {
-	composes: withIcon from '../ui/Buttons.module.css';
-	justify-content: center;
-	min-height: 2.9rem;
-	border-radius: var(--radius-xl);
-	padding: 0 var(--space-6);
-	font-weight: var(--weight-semibold);
-	font-size: var(--text-md);
-	background: var(--surface);
-	color: var(--text);
-	border: 1px solid var(--line);
-}
-.demo:disabled {
-	opacity: 0.6;
-}
 .link {
 	align-self: center;
 }

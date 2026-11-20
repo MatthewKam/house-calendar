@@ -1,0 +1,21 @@
+{
+	"raw box (Input, Select, TextArea)": {
+		"components/calendar/CalendarPick.tsx": 1,
+		"components/calendar/DayPlans.tsx": 1,
+		"components/calendar/EventDialog.tsx": 4,
+		"components/calendar/Reminders.tsx": 2,
+		"components/recipes/PlanIt.tsx": 2,
+		"components/recipes/RemindMe.tsx": 1
+	},
+	"Sheet's button looks (Button)": {
+		"components/calendar/EventDialog.tsx": 14
+	},
+	"old text buttons and icon spans (Button)": {
+		"components/account/DemoBar.module.css": 1,
+		"components/account/DemoBar.tsx": 2,
+		"components/calendar/EventDialog.module.css": 2,
+		"components/calendar/PeopleFilter.module.css": 1,
+		"components/recipes/RecipeView.tsx": 2,
+		"components/recipes/Recipes.module.css": 1
+	}
+}

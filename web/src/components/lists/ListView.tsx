@@ -427,7 +427,7 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 				>
 					{addIcon ?? '+'}
 				</button>
-				<input
+				<Input
 					value={title}
 					onChange={(e) => setTitle(e.target.value)}
 					placeholder={`Add to ${list.title}`}
