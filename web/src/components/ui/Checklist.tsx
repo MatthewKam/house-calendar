@@ -4,6 +4,7 @@ import type { ChecklistItem } from '../../lib/types';
 import IconPicker from './IconPicker';
 import { PencilIcon } from './icons';
 import s from './Checklist.module.css';
+import { Button } from './Button';
 
 interface Props {
 	/** Its heading ("🎒 What to bring") and, for screen readers, `name`. */
@@ -62,7 +63,7 @@ export default function Checklist({
 					<span className={s.label}>{label}</span>
 					{items.length > 0 && <span className={s.count}>{count(items)}</span>}
 					{!locked && (
-						<button type="button" className={s.edit} onClick={() => setDraft(items)}>
+						<Button size="sm" onClick={() => setDraft(items)}>
 							{items.length ? (
 								<>
 									<PencilIcon /> Edit
@@ -70,7 +71,7 @@ export default function Checklist({
 							) : (
 								'+ Add a list'
 							)}
-						</button>
+						</Button>
 					)}
 				</div>
 				{items.length > 0 && (
@@ -193,15 +194,15 @@ export default function Checklist({
 						onChange={(e) => setTyped(e.target.value)}
 						onKeyDown={onKey}
 					/>
-					<button type="button" className={s.addButton} onClick={add} disabled={!typed.trim()}>
+					<Button onClick={add} disabled={!typed.trim()}>
 						Add
-					</button>
+					</Button>
 				</li>
 			</ul>
 			<div className={s.actions}>
-				<button
-					type="button"
-					className={s.cancel}
+				<Button
+					variant="quiet"
+
 					onClick={() => {
 						setDraft(null);
 						setTyped('');
@@ -209,10 +210,10 @@ export default function Checklist({
 					}}
 				>
 					Cancel
-				</button>
-				<button type="button" className={s.save} onClick={done}>
+				</Button>
+				<Button variant="primary" onClick={done}>
 					Save list
-				</button>
+				</Button>
 			</div>
 		</section>
 	);

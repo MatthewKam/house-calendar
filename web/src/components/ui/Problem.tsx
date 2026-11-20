@@ -1,5 +1,6 @@
 import { problemText } from '../../lib/api';
 import s from './Problem.module.css';
+import { Button } from './Button';
 
 /**
  * Something that went wrong, said plainly, with a way to try again. `kind`: a card's own small box, a
@@ -28,14 +29,14 @@ export default function Problem({
 					🌱
 				</span>
 				{onRetry && (
-					<button type="button" className={s.kidButton} onClick={onRetry}>
+					<Button variant="primary" size="lg" onClick={onRetry}>
 						Let's try again
-					</button>
+					</Button>
 				)}
 				{onLeave && (
-					<button type="button" className={s.retry} onClick={onLeave}>
+					<Button variant="link" size="sm" onClick={onLeave}>
 						Grown-ups: leave kid mode
-					</button>
+					</Button>
 				)}
 			</div>
 		);
@@ -44,9 +45,9 @@ export default function Problem({
 		<div className={`${kind === 'page' ? s.page : s.card} ${className ?? ''}`} role="alert">
 			<p className={s.message}>{message}</p>
 			{onRetry && (
-				<button type="button" className={s.retry} onClick={onRetry}>
+				<Button variant="link" size="sm" onClick={onRetry}>
 					{retryLabel}
-				</button>
+				</Button>
 			)}
 		</div>
 	);

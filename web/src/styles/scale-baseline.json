@@ -20,18 +20,7 @@
 		"components/learn/LearnChomp.module.css": 1,
 		"components/learn/LearnPeekaboo.module.css": 1,
 		"components/learn/LearnPop.module.css": 1,
-		"components/learn/LearnSounds.module.css": 1,
-		"components/ui/Celebration.module.css": 6,
-		"components/ui/Checklist.module.css": 9,
-		"components/ui/IconPicker.module.css": 5,
-		"components/ui/NameChip.module.css": 1,
-		"components/ui/OfflineBar.module.css": 1,
-		"components/ui/PinPad.module.css": 1,
-		"components/ui/Problem.module.css": 2,
-		"components/ui/Sheet.module.css": 2,
-		"components/ui/ShoppingTogether.module.css": 1,
-		"components/ui/ThemedHead.module.css": 1,
-		"components/ui/Toast.module.css": 1
+		"components/learn/LearnSounds.module.css": 1
 	},
 	"weight (--weight-*)": {
 		"components/calendar/CalendarPage.module.css": 1,
@@ -56,15 +45,7 @@
 		"components/learn/LearnLetters.module.css": 1,
 		"components/learn/LearnPeekaboo.module.css": 1,
 		"components/learn/LearnPop.module.css": 1,
-		"components/learn/LearnSounds.module.css": 2,
-		"components/ui/Buttons.module.css": 2,
-		"components/ui/Celebration.module.css": 2,
-		"components/ui/Checklist.module.css": 4,
-		"components/ui/NameChip.module.css": 3,
-		"components/ui/PinPad.module.css": 2,
-		"components/ui/Problem.module.css": 1,
-		"components/ui/Sheet.module.css": 3,
-		"components/ui/Toast.module.css": 1
+		"components/learn/LearnSounds.module.css": 2
 	},
 	"spacing (--space-*)": {
 		"components/calendar/CalendarPage.module.css": 22,
@@ -91,20 +72,7 @@
 		"components/learn/LearnMaze.module.css": 2,
 		"components/learn/LearnPeekaboo.module.css": 2,
 		"components/learn/LearnPop.module.css": 2,
-		"components/learn/LearnSounds.module.css": 1,
-		"components/ui/Buttons.module.css": 2,
-		"components/ui/Celebration.module.css": 4,
-		"components/ui/Checklist.module.css": 16,
-		"components/ui/IconPicker.module.css": 4,
-		"components/ui/NameChip.module.css": 3,
-		"components/ui/OfflineBar.module.css": 2,
-		"components/ui/PinPad.module.css": 10,
-		"components/ui/Problem.module.css": 9,
-		"components/ui/Sheet.module.css": 17,
-		"components/ui/ShoppingTogether.module.css": 2,
-		"components/ui/Skeleton.module.css": 2,
-		"components/ui/ThemedHead.module.css": 2,
-		"components/ui/Toast.module.css": 3
+		"components/learn/LearnSounds.module.css": 1
 	},
 	"colour (--text, --accent, …)": {
 		"components/calendar/DayPanel.module.css": 2,
@@ -119,10 +87,6 @@
 		"components/learn/LearnPeekaboo.module.css": 1,
 		"components/learn/LearnPop.module.css": 5,
 		"components/learn/LearnSounds.module.css": 3,
-		"components/nav/NavBar.module.css": 3,
-		"components/ui/Celebration.module.css": 1,
-		"components/ui/Sheet.module.css": 4,
-		"components/ui/Switch.module.css": 1,
-		"components/ui/Toast.module.css": 2
+		"components/nav/NavBar.module.css": 3
 	}
 }

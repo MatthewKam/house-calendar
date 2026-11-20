@@ -1,8 +1,8 @@
 /* ---- Picking who something is for: outlined in their color, filled when picked ---- */
 .pick {
-	padding: 0 1.1rem;
+	padding: 0 var(--space-5);
 	border: 2px solid var(--c);
-	font-weight: 600;
+	font-weight: var(--weight-semibold);
 }
 .pickOn {
 	background: var(--c);
@@ -22,10 +22,10 @@
 .filter {
 	display: inline-flex;
 	align-items: center;
-	gap: 0.4rem;
-	padding: 0 0.8rem;
+	gap: var(--space-2);
+	padding: 0 var(--space-4);
 	min-width: 0;
-	font-size: 1rem;
+	font-size: var(--text-md);
 	border: 1.5px solid color-mix(in srgb, var(--c) 55%, var(--line));
 	background: linear-gradient(
 		to right,
@@ -43,7 +43,7 @@
 .complete {
 	/* Half-strength color, matching ticked tasks. */
 	background: color-mix(in srgb, var(--c) 50%, var(--surface)) !important;
-	font-weight: 650;
+	font-weight: var(--weight-semibold);
 }
 .complete i {
 	box-shadow: 0 0 0 2px color-mix(in srgb, var(--surface) 80%, transparent);
@@ -51,7 +51,7 @@
 .filterOn {
 	border-color: var(--accent) !important;
 	border-width: 2.5px;
-	font-weight: 650;
+	font-weight: var(--weight-semibold);
 }
 .dimmed {
 	opacity: 0.4;
