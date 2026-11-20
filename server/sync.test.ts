@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { openDb } from './db.ts';
 import { buildApp } from './app.ts';
-import { REFUSED_PATIENCE_MS, syncError, syncOnce, combineStatus } from './sync.ts';
+import { REFUSED_PATIENCE_MS, syncError, syncOnce, combineStatus, createSync } from './sync.ts';
+import { setRefused } from './handover.ts';
 import { CalDavAuthError } from './providers/caldav.ts';
 import type { CalendarSource, RemoteCalendar, RemoteEvent } from './providers/types.ts';
 
@@ -165,5 +166,59 @@ describe('one status for every account', () => {
 		expect(combineStatus([refused('icloud'), refused('icloud')])?.lastError).toBe(
 			"iCloud isn't letting Sprig in right now",
 		);
+	});
+});
+
+describe('a refused password and a phone', () => {
+	const quiet = { info: () => {}, error: () => {} };
+	const refusing: CalendarSource = {
+		id: 'icloud',
+		listCalendars: async () => {
+			throw new CalDavAuthError();
+		},
+		fetchRange: async () => [],
+	};
+	const setup = (phoneSentAgo: number | null) => {
+		const db = openDb(':memory:');
+		db.prepare(`INSERT INTO members (id, name, color, sort_order) VALUES ('matt', 'Matt', '#000000', 0)`).run();
+		if (phoneSentAgo !== null)
+			db.prepare(`INSERT INTO phones (id, member_id, name, last_sync) VALUES ('p1', 'matt', 'iPhone', ?)`).run(
+				new Date(Date.now() - phoneSentAgo).toISOString(),
+			);
+		// Refused since before a restart, for two hours: kept in the database.
+		setRefused(db, 'icloud', Date.now() - 2 * 3_600_000);
+		return db;
+	};
+	const runOnce = async (db: ReturnType<typeof openDb>, source: CalendarSource) => {
+		const sync = createSync(db, source, null, 1e9);
+		sync.start(quiet);
+		await vi.waitFor(() => expect(sync.status.running).toBe(false));
+		sync.stop();
+		return sync.status;
+	};
+
+	it('says the password was refused for over an hour, counting from before a restart', async () => {
+		expect((await runOnce(setup(null), refusing)).lastError).toMatch(/for over an hour/);
+	});
+
+	it("says nothing while a phone's copy has the calendars, until the phone goes quiet for a day", async () => {
+		expect((await runOnce(setup(60_000), refusing)).lastError).toBeNull();
+		expect((await runOnce(setup(2 * 86_400_000), refusing)).lastError).toMatch(/for over an hour/);
+	});
+
+	it('takes its calendars back from the phone once it works again, and forgets it was refused', async () => {
+		const db = setup(60_000);
+		db.prepare(
+			`INSERT INTO calendars (id, provider, source, remote_id, name, account) VALUES ('ph', 'phone', 'phone:p1', 'p1:home', 'Home', 'iCloud')`,
+		).run();
+		db.prepare(
+			`INSERT INTO events (id, calendar_id, title, all_day, start, end, series_id) VALUES ('x', 'ph', 'Swim', 0, '2026-10-06T16:00:00.000Z', '2026-10-06T17:00:00.000Z', 'swim')`,
+		).run();
+		db.prepare(`INSERT INTO event_special (calendar_id, series_key) VALUES ('ph', 'swim')`).run();
+		const working = fakeSource([{ remoteId: 'home', name: 'Home' }], { home: [ev('home/swim.ics', 'Swim')] });
+		expect((await runOnce(db, working)).lastError).toBeNull();
+		expect(db.prepare(`SELECT source FROM calendars WHERE name = 'Home'`).all()).toEqual([{ source: 'icloud' }]);
+		expect(db.prepare(`SELECT series_key FROM event_special`).all()).toEqual([{ series_key: 'home/swim.ics' }]);
+		expect(db.prepare('SELECT * FROM sync_refused').all()).toEqual([]);
 	});
 });

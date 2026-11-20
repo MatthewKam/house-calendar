@@ -4,6 +4,7 @@ import type { CalendarSource, CalendarWriter, RemoteEvent } from './providers/ty
 import { eventId, overlayOutbox, pushOutbox, SEND_AFTER_MS } from './outbox.ts';
 import { applyPeople, assignPending, type Classify } from './people.ts';
 import { CalDavAuthError } from './providers/caldav.ts';
+import { gaveWay, handOver, refusedSince as storedRefusal, setRefused } from './handover.ts';
 import type { SyncStatus } from '../shared/calendars.ts';
 
 /** How far around today synced events are kept. Further out shows only events added on the wall. */
@@ -39,9 +40,9 @@ export async function syncOnce(db: DB, source: CalendarSource, now = new Date())
 	);
 
 	const insertCal = db.prepare(
-		'INSERT INTO calendars (id, provider, source, remote_id, name, color, writable, member_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+		'INSERT INTO calendars (id, provider, source, remote_id, name, color, writable, member_id, account) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
 	);
-	const updateCal = db.prepare('UPDATE calendars SET name = ?, color = ?, writable = ? WHERE id = ?');
+	const updateCal = db.prepare('UPDATE calendars SET name = ?, color = ?, writable = ?, account = ? WHERE id = ?');
 	const clearEvents = db.prepare('DELETE FROM events WHERE calendar_id = ?');
 	// Who each event is for is filled in afterwards by applyPeople().
 	const insertEvent = db.prepare(`
@@ -65,9 +66,10 @@ export async function syncOnce(db: DB, source: CalendarSource, now = new Date())
 					cal.color ?? null,
 					cal.writable === false ? 0 : 1,
 					cal.primary && source.memberId ? source.memberId : null,
+					cal.account ?? null,
 				);
 			} else {
-				updateCal.run(cal.name, cal.color ?? null, cal.writable === false ? 0 : 1, row.id);
+				updateCal.run(cal.name, cal.color ?? null, cal.writable === false ? 0 : 1, cal.account ?? null, row.id);
 			}
 			keep.push(row.id);
 			clearEvents.run(row.id);
@@ -143,6 +145,28 @@ export function syncError(err: unknown, refusedSince: number | null, now = Date.
 	return err instanceof Error ? err.message : String(err);
 }
 
+/** The phones whose calendars a password source's could be: its person's, or everyone's for the household's own. */
+function phonesOf(db: DB, memberId: string | null | undefined) {
+	const rows = memberId
+		? db.prepare('SELECT id FROM phones WHERE member_id = ?').all(memberId)
+		: db.prepare('SELECT id FROM phones').all();
+	return (rows as { id: string }[]).map((r) => r.id);
+}
+
+/**
+ * Whether a refused password's calendars are all on a phone now: it gave way, none of its own are left,
+ * and one of the phones sent its calendars in the last day.
+ */
+function coveredByPhone(db: DB, key: string, memberId: string | null | undefined) {
+	if (!gaveWay(db, key)) return false;
+	if (db.prepare('SELECT 1 FROM calendars WHERE source = ? LIMIT 1').get(key)) return false;
+	const since = new Date(Date.now() - 24 * 3_600_000).toISOString();
+	return phonesOf(db, memberId).some(
+		(id) =>
+			(db.prepare('SELECT last_sync FROM phones WHERE id = ?').get(id) as { last_sync: string }).last_sync >= since,
+	);
+}
+
 /**
  * Live status for the API, plus start() to sync now and then every `intervalMs`. With a classifier,
  * each pass also has Claude pick who new events are for.
@@ -164,8 +188,9 @@ export function createSync(
 		peopleError: null,
 		canWrite: !!writer,
 	};
-	/** When iCloud started refusing the sign-in (null: it isn't). */
-	let refusedSince: number | null = null;
+	const key = source.key ?? source.id;
+	/** When iCloud started refusing the sign-in (null: it isn't); kept through restarts (handover.ts). */
+	let refusedSince: number | null = storedRefusal(db, key);
 	let timer: NodeJS.Timeout | undefined;
 	let soonTimer: NodeJS.Timeout | undefined;
 	let again = false;
@@ -185,12 +210,22 @@ export function createSync(
 			}
 			const result = await syncOnce(db, source);
 			Object.assign(status, result, { lastSuccess: new Date().toISOString(), lastError: null });
+			if (refusedSince !== null) setRefused(db, key, null);
 			refusedSince = null;
+			// Working again: it takes back any calendars a phone's copy took over while it was refused.
+			if (source.id === 'icloud') {
+				const took = phonesOf(db, source.memberId).reduce((n, p) => n + handOver(db, `phone:${p}`, [key]), 0);
+				if (took) log.info({ events: took }, 'iCloud took its calendars back from the phone');
+			}
 			log.info(result, `${source.id} sync done`);
 		} catch (err) {
 			// Refused: since when (kept through other errors in between, until a sync goes through).
-			if (err instanceof CalDavAuthError) refusedSince ??= Date.now();
-			status.lastError = syncError(err, refusedSince);
+			if (err instanceof CalDavAuthError) {
+				refusedSince ??= Date.now();
+				setRefused(db, key, refusedSince);
+			}
+			// Nothing to warn about while a phone's copy has taken its calendars over (handover.ts).
+			status.lastError = coveredByPhone(db, key, source.memberId) ? null : syncError(err, refusedSince);
 			log.error({ err }, `${source.id} sync failed`);
 		} finally {
 			status.running = false;

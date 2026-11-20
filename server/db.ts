@@ -1046,6 +1046,18 @@ const migrations: string[] = [
     last_sync  TEXT NOT NULL
   );
   `,
+	// Since when iCloud has refused a password connection's sign-in (sync.ts), by its source ('icloud' for
+	// the household from before accounts, icloud:<connection> otherwise): kept through restarts, so after
+	// an hour a phone's copy of its calendars can take over (handover.ts).
+	`
+  CREATE TABLE sync_refused (
+    source TEXT PRIMARY KEY,
+    since  TEXT NOT NULL
+  );
+  -- The account a phone's calendar is in on the phone ("iCloud", "Gmail", "On My iPhone"): only its iCloud
+  -- ones are the same as a password's.
+  ALTER TABLE calendars ADD COLUMN account TEXT;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

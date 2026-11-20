@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { DB } from './db.ts';
 import { syncOnce } from './sync.ts';
+import { gaveWay, handOver, passwordSources } from './handover.ts';
 import { schemaOf } from './schemas.ts';
 import type { CalendarSource, RemoteEvent } from './providers/types.ts';
 import { PhoneSync, type Phone, type PhoneEvent } from '../shared/calendars.ts';
@@ -9,8 +10,9 @@ import { PhoneSync, type Phone, type PhoneEvent } from '../shared/calendars.ts';
 // to see its calendars. The phone sends every calendar the person shares, with their events over the sync
 // window, whenever Sprig opens or iOS lets it refresh; each send replaces what that phone sent before,
 // through the same snapshot sync as iCloud (sync.ts). They're read-only here: changing one is done on the
-// phone. Someone who also connects iCloud with a password (always in step) has their phone's iCloud
-// calendars left out, so they don't show twice.
+// phone. Someone who also connects iCloud with a password (always in step, and changes go back to iCloud)
+// has their phone's iCloud calendars left out, so they don't show twice, unless iCloud has refused the
+// password for over an hour: then the phone's copy takes over until it works again (handover.ts).
 
 interface PhoneRow {
 	id: string;
@@ -52,12 +54,15 @@ export function registerPhoneCalendars(app: FastifyInstance, db: DB, opts: { onA
 			if (before && before.member_id !== memberId) {
 				return reply.code(403).send({ error: "That's someone else's phone" });
 			}
-			// With iCloud connected by password too, that copy is the one kept.
-			const viaPassword = db
-				.prepare(`SELECT 1 FROM connections WHERE provider = 'icloud' AND member_id = ?`)
-				.get(memberId);
-			const calendars = req.body.calendars.filter((c) => !(viaPassword && /icloud/i.test(c.account)));
+			// With iCloud connected by password too, that copy is the one kept, while it works. Refused for
+			// over an hour, the phone's copy takes over, with what Sprig keeps about each event (handover.ts).
+			const sources = passwordSources(db, memberId);
+			const refused = sources.filter((s) => gaveWay(db, s));
+			const working = sources.length > refused.length;
+			const calendars = req.body.calendars.filter((c) => !(working && /icloud/i.test(c.account)));
 			const result = await syncOnce(db, phoneSource(id, memberId, calendars, req.body.events));
+			const took = refused.reduce((n, s) => n + handOver(db, s, [sourceKey(id)]), 0);
+			if (took) req.log.info({ events: took }, "a phone took over iCloud's calendars from a refused password");
 			db.prepare(
 				`INSERT INTO phones (id, member_id, name, last_sync) VALUES (?, ?, ?, ?)
          ON CONFLICT(id) DO UPDATE SET name = excluded.name, last_sync = excluded.last_sync`,
@@ -104,6 +109,7 @@ function phoneSource(
 				color: c.color ?? undefined,
 				// Changed on the phone, not here.
 				writable: false,
+				account: c.account,
 			})),
 		fetchRange: async (calendarRemoteId) =>
 			events.filter((e) => remote(e.calendarId) === calendarRemoteId).map(toRemote),
