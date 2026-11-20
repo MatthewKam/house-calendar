@@ -398,6 +398,7 @@
 	border-top: 0.35rem solid var(--c);
 	border-radius: var(--radius);
 	padding: var(--space-5);
+	box-shadow: var(--shadow-md);
 }
 .board .kid .head {
 	flex-wrap: wrap;

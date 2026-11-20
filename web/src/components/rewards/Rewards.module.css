@@ -58,6 +58,7 @@
 	border: 1px solid var(--line);
 	border-top: 0.35rem solid var(--c);
 	border-radius: var(--radius);
+	box-shadow: var(--shadow-md);
 	max-width: 450px;
 }
 .kidHead {
@@ -406,6 +407,7 @@
 	padding: 0;
 	background: none;
 	border: none;
+	box-shadow: none;
 	gap: var(--space-3);
 }
 .big .sub {
