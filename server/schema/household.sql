@@ -1,4 +1,4 @@
--- A household's database (server/db.ts), at version 67. Written by server/schema.test.ts; don't edit by hand.
+-- A household's database (server/db.ts), at version 68. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
@@ -18,7 +18,7 @@ CREATE TABLE "calendars" (
     writable    INTEGER NOT NULL DEFAULT 1,
     source      TEXT,
     visibility  TEXT NOT NULL DEFAULT 'everyone' CHECK (visibility IN ('everyone','busy','private'))
-  );
+  , account TEXT);
 
 CREATE UNIQUE INDEX calendars_remote ON calendars(provider, remote_id) WHERE remote_id IS NOT NULL;
 
@@ -561,6 +561,11 @@ CREATE TABLE special_reminders (
     note         TEXT,
     created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   , amount INTEGER, unit TEXT);
+
+CREATE TABLE sync_refused (
+    source TEXT PRIMARY KEY,
+    since  TEXT NOT NULL
+  );
 
 CREATE TABLE "task_done" (
     task_id    TEXT NOT NULL REFERENCES "tasks"(id) ON DELETE CASCADE,

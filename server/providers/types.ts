@@ -30,6 +30,8 @@ export interface RemoteCalendar {
 	color?: string;
 	/** False for calendars we can only read (shared read-only, subscribed); unknown counts as true. */
 	writable?: boolean;
+	/** The account it's in, where that's not the source itself (a phone's: "iCloud", "On My iPhone"). */
+	account?: string;
 }
 
 /**
