@@ -53,6 +53,8 @@
 .secondary {
 	background: var(--bg);
 	color: var(--text);
+	/* A hairline edge, so it shows on the page's own background too, not only on a card or sheet. */
+	box-shadow: inset 0 0 0 1px var(--line);
 }
 .destructive {
 	background: var(--danger-solid);
@@ -69,6 +71,16 @@
 	min-width: 0;
 	padding: var(--space-1) var(--space-1);
 	color: var(--accent);
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+/* With an icon, only the words are underlined. */
+.link:has(> .icon),
+.quiet:has(> .icon) {
+	text-decoration: none;
+}
+.link > .text,
+.quiet > .text {
 	text-decoration: underline;
 	text-underline-offset: 0.2em;
 }

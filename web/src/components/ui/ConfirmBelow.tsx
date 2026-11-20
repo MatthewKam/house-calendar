@@ -1,4 +1,5 @@
-import s from '../tasks/Goals.module.css';
+import { Button } from './Button';
+import s from './ConfirmBelow.module.css';
 
 /** A confirmation that opens right below the item it's about, in place of a browser pop-up. */
 export default function ConfirmBelow({
@@ -16,13 +17,13 @@ export default function ConfirmBelow({
 }) {
 	return (
 		<div className={s.confirmBelow} role="alert">
-			<span className={s.confirmText}>{text}</span>
-			<button type="button" className={s.confirmCancel} onClick={onCancel}>
+			<span className={s.text}>{text}</span>
+			<Button size="sm" onClick={onCancel}>
 				Cancel
-			</button>
-			<button type="button" className={s.confirmYes} disabled={busy} onClick={onConfirm}>
+			</Button>
+			<Button variant="destructive" size="sm" disabled={busy} onClick={onConfirm}>
 				{confirmLabel}
-			</button>
+			</Button>
 		</div>
 	);
 }

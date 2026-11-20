@@ -1,0 +1,18 @@
+/* Remove? Cancel · Remove, right under the item it's about (ConfirmBelow.tsx). */
+.confirmBelow {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--space-3);
+	margin: var(--space-2) 0 0 var(--space-8);
+	padding: var(--space-3) var(--space-4);
+	border-radius: var(--radius-sm);
+	background: var(--danger-bg);
+	border: 1px solid var(--danger-line);
+}
+.text {
+	flex: 1;
+	min-width: 10rem;
+	font-size: var(--text-sm);
+	color: var(--danger-strong);
+}

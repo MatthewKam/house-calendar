@@ -6,6 +6,7 @@ import { Button, IconButton } from '../ui/Button';
 import { Card, SectionHead } from '../ui/Card';
 import { Chip, Tag } from '../ui/Chip';
 import { Field, Fieldset, Input, Select, TextArea } from '../ui/Field';
+import { Segmented } from '../ui/Segmented';
 import { List, ListRow } from '../ui/ListRow';
 import Switch from '../ui/Switch';
 import { readTokens, type Group, type Token } from './tokens';
@@ -105,6 +106,7 @@ export default function DesignPage() {
 	}, [theme, accent]);
 
 	const [picked, setPicked] = useState<string[]>(['Mia']);
+	const [period, setPeriod] = useState<'week' | 'month'>('week');
 	const [on, setOn] = useState(true);
 	const [title, setTitle] = useState('');
 
@@ -323,6 +325,15 @@ export default function DesignPage() {
 								<Field label="Notes" hint="Optional">
 									<TextArea rows={3} placeholder="Bring a towel" />
 								</Field>
+								<Segmented
+									label="Week or month"
+									value={period}
+									onChange={setPeriod}
+									options={[
+										{ id: 'week', label: 'Week', hint: 'Segmented' },
+										{ id: 'month', label: 'Month' },
+									]}
+								/>
 								<Fieldset label="Who" labelHint="pick more than one" hint="A group of choices: Fieldset">
 									{['Mia', 'Leo'].map((name) => (
 										<Chip

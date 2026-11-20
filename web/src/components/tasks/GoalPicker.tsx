@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useGoalActions, useGoalLibrary } from '../../lib/queries';
 import type { GoalTemplate, Stage } from '../../lib/types';
 import s from './Goals.module.css';
+import { Button } from '../ui/Button';
 
 interface Props {
 	/** The kid's stage, to show goals for their age first; null shows every age. */
@@ -36,22 +37,12 @@ export default function GoalPicker({ stage, picked, onPick }: Props) {
 						hide them.
 					</p>
 					<div className={s.allButtons}>
-						<button
-							type="button"
-							className={s.allButton}
-							disabled={busy || hiddenCount === 0}
-							onClick={() => hideAll.mutate(false)}
-						>
+						<Button size="sm" disabled={busy || hiddenCount === 0} onClick={() => hideAll.mutate(false)}>
 							Show all
-						</button>
-						<button
-							type="button"
-							className={s.allButton}
-							disabled={busy || hiddenCount === library.length}
-							onClick={() => hideAll.mutate(true)}
-						>
+						</Button>
+						<Button size="sm" disabled={busy || hiddenCount === library.length} onClick={() => hideAll.mutate(true)}>
 							Hide all
-						</button>
+						</Button>
 					</div>
 				</>
 			)}
@@ -78,13 +69,13 @@ export default function GoalPicker({ stage, picked, onPick }: Props) {
 			</div>
 			<div className={s.libraryLinks}>
 				{!choosing && stage && (
-					<button type="button" className={s.textButton} onClick={() => setShowAll(!showAll)}>
+					<Button variant="link" size="sm" onClick={() => setShowAll(!showAll)}>
 						{showAll ? 'Just ones for their age' : 'Show goals for every age'}
-					</button>
+					</Button>
 				)}
-				<button type="button" className={s.textButton} onClick={() => setChoosing(!choosing)}>
+				<Button variant="link" size="sm" onClick={() => setChoosing(!choosing)}>
 					{choosing ? 'Done' : `Choose which show${hiddenCount ? ` (${hiddenCount} hidden)` : ''}`}
-				</button>
+				</Button>
 			</div>
 		</div>
 	);

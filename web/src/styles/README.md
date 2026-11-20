@@ -28,6 +28,7 @@ Before styling a button, card, field, chip or row of your own, use the shared on
 | `Field`, `Input`, `TextArea`, `Select` (`Field.tsx`) | a labelled box with a `hint` or an `error` under it; the box inside is tied to them for screen readers by itself |
 | `Fieldset` (`Field.tsx`) | a labelled group of choices (Chips, a person's chips) with a `labelHint` beside the label and a `hint` under them; read out as one group. A `DateInput` inside a `Field` takes its label too. |
 | `Chip`, `Tag` (`Chip.tsx`) | a pill to tap, a filter or choice (`pressed` fills it); a small label that isn't pressed (`tone`) |
+| `Segmented` (`Segmented.tsx`) | two to four choices in one bar, one picked (Task \| Goal, Week \| Month); `tabs` when it switches what's shown under it |
 | `List`, `ListRow` (`ListRow.tsx`) | rows with something on the left (`leading`), a `title` and `detail`, and something on the right (`trailing`: a Switch, a button). `onClick` makes the row tappable; `divided` lines them up with rules between. |
 | `Sheet`, `ConfirmDialog`, `Switch`, `Toast` | dialogs, a question before something can't be undone, on/off, a short note at the bottom |
 

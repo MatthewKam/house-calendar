@@ -10,6 +10,9 @@ import sheet from '../ui/Sheet.module.css';
 import s from './Moments.module.css';
 import g from './Goals.module.css';
 import Sheet from '../ui/Sheet';
+import { Button, IconButton } from '../ui/Button';
+import { Field, Fieldset, Input } from '../ui/Field';
+import { Segmented } from '../ui/Segmented';
 
 /** How far back the history goes. */
 const HISTORY_DAYS = 30;
@@ -47,18 +50,18 @@ export default function MomentDialog({ kids, today, onClose }: Props) {
 			<Sheet label="Caught being good" onClose={onClose}>
 				<div className={sheet.head}>
 					<h2 className={sheet.heading}>✨ Caught being good</h2>
-					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-						×
-					</button>
+					<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 				</div>
-				<div className={s.tabs} role="tablist">
-					<button type="button" role="tab" aria-selected={tab === 'catch'} onClick={() => setTab('catch')}>
-						Catch one
-					</button>
-					<button type="button" role="tab" aria-selected={tab === 'history'} onClick={() => setTab('history')}>
-						History
-					</button>
-				</div>
+				<Segmented
+					tabs
+					label="Catch one or see the history"
+					value={tab}
+					onChange={setTab}
+					options={[
+						{ id: 'catch', label: 'Catch one' },
+						{ id: 'history', label: 'History' },
+					]}
+				/>
 
 				{tab === 'catch' ? (
 					<form
@@ -72,48 +75,47 @@ export default function MomentDialog({ kids, today, onClose }: Props) {
 							);
 						}}
 					>
-						<h3 className={g.subhead}>Who</h3>
-						<div className={s.kids}>
+						<Fieldset label="Who">
 							{kids.map((k) => (
 								<PickChip key={k.id} name={k.name} color={k.color} on={kidId === k.id} onClick={() => setKidId(k.id)} />
 							))}
-						</div>
-						<h3 className={g.subhead}>What for</h3>
-						<div className={s.kinds}>
-							{MOMENT_KINDS.map((k) => (
-								<button
-									key={k.kind}
-									type="button"
-									className={s.kind}
-									aria-pressed={kind === k.kind}
-									onClick={() => setKind(k.kind)}
-								>
-									<span className={s.kindEmoji} aria-hidden="true">
-										{k.emoji}
-									</span>
-									<span>{k.label}</span>
-								</button>
-							))}
-						</div>
-						<h3 className={g.subhead}>Worth</h3>
-						<PointsStepper value={stars} onChange={setStars} />
-						<input
-							className={s.note}
-							placeholder="What did they do? (optional)"
-							aria-label="Note"
-							maxLength={300}
-							value={note}
-							onChange={(e) => setNote(e.target.value)}
-						/>
+						</Fieldset>
+						<Fieldset label="What for">
+							<div className={s.kinds}>
+								{MOMENT_KINDS.map((k) => (
+									<button
+										key={k.kind}
+										type="button"
+										className={s.kind}
+										aria-pressed={kind === k.kind}
+										onClick={() => setKind(k.kind)}
+									>
+										<span className={s.kindEmoji} aria-hidden="true">
+											{k.emoji}
+										</span>
+										<span>{k.label}</span>
+									</button>
+								))}
+							</div>
+						</Fieldset>
+						<Fieldset label="Worth">
+							<PointsStepper value={stars} onChange={setStars} />
+						</Fieldset>
+						<Field label="Note" hint="Optional">
+							<Input
+								placeholder="What did they do?"
+								maxLength={300}
+								value={note}
+								onChange={(e) => setNote(e.target.value)}
+							/>
+						</Field>
 						{add.isError && <p className={s.problem}>{add.error.message}</p>}
 						<div className={sheet.actions}>
 							<span className={sheet.spacer} />
-							<button type="button" className={sheet.secondary} onClick={onClose}>
-								Cancel
-							</button>
-							<button type="submit" className={sheet.primary} disabled={!ready || add.isPending}>
+							<Button onClick={onClose}>Cancel</Button>
+							<Button variant="primary" type="submit" disabled={!ready || add.isPending}>
 								Save 🎉
-							</button>
+							</Button>
 						</div>
 					</form>
 				) : history.length === 0 ? (
@@ -136,9 +138,9 @@ export default function MomentDialog({ kids, today, onClose }: Props) {
 												{mo.note && ` · ${mo.note}`}
 											</span>
 										</span>
-										<button type="button" className={g.textButton} onClick={() => setConfirmId(mo.id)}>
+										<Button variant="quiet" size="sm" onClick={() => setConfirmId(mo.id)}>
 											Remove
-										</button>
+										</Button>
 									</div>
 									{confirmId === mo.id && (
 										<ConfirmBelow

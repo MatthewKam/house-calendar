@@ -7,6 +7,7 @@ import { Card, SectionHead } from './Card';
 import { Chip, Tag } from './Chip';
 import { Field, Fieldset, Input, TextArea } from './Field';
 import { List, ListRow } from './ListRow';
+import { Segmented } from './Segmented';
 
 // The shared components (styles/README.md "Components"): what they put on the page for screen readers
 // and forms, which is easy to lose when a component changes.
@@ -44,9 +45,31 @@ describe('Card and SectionHead', () => {
 	});
 });
 
+describe('Segmented', () => {
+	it('says which one is picked, as a group or as tabs', () => {
+		const options = [
+			{ id: 'week', label: 'Week' },
+			{ id: 'month', label: 'Month' },
+		];
+		const group = html(h(Segmented, { label: 'Period', options, value: 'week', onChange: () => {} }));
+		expect(group).toContain('role="group" aria-label="Period"');
+		expect(group).toMatch(/aria-pressed="true"[^>]*>Week/);
+		const tabs = html(h(Segmented, { label: 'Period', options, value: 'month', onChange: () => {}, tabs: true }));
+		expect(tabs).toContain('role="tablist"');
+		expect(tabs).toMatch(/role="tab" aria-selected="true"[^>]*>Month/);
+	});
+});
+
 describe('Fieldset', () => {
 	it('names its group of choices by its label', () => {
-		const f = html(h(Fieldset, { label: 'Who', labelHint: 'pick more than one', hint: 'Together', children: h(Chip, { pressed: true }, 'Mia') }));
+		const f = html(
+			h(Fieldset, {
+				label: 'Who',
+				labelHint: 'pick more than one',
+				hint: 'Together',
+				children: h(Chip, { pressed: true }, 'Mia'),
+			}),
+		);
 		expect(f).toMatch(/^<fieldset/);
 		expect(f).toMatch(/<legend[^>]*>Who<span[^>]*> · pick more than one<\/span><\/legend>/);
 		expect(f).toContain('aria-pressed="true"');

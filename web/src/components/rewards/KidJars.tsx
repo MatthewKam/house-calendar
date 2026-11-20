@@ -188,7 +188,11 @@ export default function KidJars({ kid, members, today, bucket, jars, onEdit, ask
 									Back to my bucket
 								</Button>
 								{filling.length > 0 && (
-									<Button variant="primary" size={size} onClick={() => grownUp(() => setStage({ from: j, counts: {} }))}>
+									<Button
+										variant="primary"
+										size={size}
+										onClick={() => grownUp(() => setStage({ from: j, counts: {} }))}
+									>
 										Move to another jar
 									</Button>
 								)}

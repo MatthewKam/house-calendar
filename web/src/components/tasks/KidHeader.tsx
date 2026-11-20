@@ -2,6 +2,7 @@ import { percent, type Progress } from '../../lib/tasks';
 import { momentKind } from '../../lib/moments';
 import type { Member, Moment } from '../../lib/types';
 import { StarIcon } from '../ui/icons';
+import { Button } from '../ui/Button';
 import s from './Tasks.module.css';
 import m from './Moments.module.css';
 
@@ -59,7 +60,9 @@ export default function KidHeader({
 				<span className={`${s.progress} ${pct === 100 ? s.allDone : ''}`}>
 					{!p ? 'Nothing required today' : pct === 100 ? 'All done! 🎉' : `${p.done} of ${p.due} today`}
 				</span>
-				<button
+				<Button
+					variant="link"
+					size="sm"
 					className={s.historyLink}
 					aria-expanded={showHistory}
 					onClick={(e) => {
@@ -68,7 +71,7 @@ export default function KidHeader({
 					}}
 				>
 					{showHistory ? '← Today' : 'History'}
-				</button>
+				</Button>
 			</div>
 			<div className={s.starsLine}>
 				<StarIcon className={s.star} />

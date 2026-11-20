@@ -24,6 +24,7 @@ import PottyCard from './PottyCard';
 import panel from '../calendar/DayPanel.module.css';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
+import { Button } from '../ui/Button';
 import s from './Tasks.module.css';
 import { isKid } from '../../lib/people';
 import { useFolded } from '../../lib/useFolded';
@@ -99,9 +100,9 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 				</div>
 				<div className={s.headButtons}>
 					{!locked && kids.length > 0 && (
-						<button className={s.catchButton} onClick={() => setCatching(true)}>
-							✨ Caught being good
-						</button>
+						<Button icon="✨" onClick={() => setCatching(true)}>
+							Caught being good
+						</Button>
 					)}
 				</div>
 			</header>
@@ -185,18 +186,20 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 												/>
 												{!editing && !locked && (
 													<div className={s.addRow}>
-														<button className={s.addText} onClick={() => onAdd(kid.id)}>
-															+ Add task/goal
-														</button>
+														<Button variant="quiet" size="sm" icon="+" onClick={() => onAdd(kid.id)}>
+															Add task/goal
+														</Button>
 														{/* Potty training is for the littlest (under 4); a chart already going stays. */}
 														{kid.stage === 'little' && !potty.some((c) => c.memberId === kid.id) && (
-															<button
-																className={s.addText}
+															<Button
+																variant="quiet"
+																size="sm"
+																icon="🚽"
 																disabled={pottyActions.setOn.isPending}
 																onClick={() => pottyActions.setOn.mutate({ memberId: kid.id, on: true })}
 															>
-																🚽 Start potty chart
-															</button>
+																Start potty chart
+															</Button>
 														)}
 													</div>
 												)}
@@ -213,9 +216,13 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 			{/* Bottom bar: switch on edit mode. */}
 			<div className={s.actions}>
 				{tasks.length > 0 && !locked && (
-					<button className={s.editToggle} aria-pressed={editing} onClick={() => setEditing(!editing)}>
+					<Button
+						variant={editing ? 'primary' : 'secondary'}
+						aria-pressed={editing}
+						onClick={() => setEditing(!editing)}
+					>
 						{editing ? 'Done editing' : 'Edit tasks'}
-					</button>
+					</Button>
 				)}
 			</div>
 
