@@ -463,8 +463,11 @@ export default function RecipeView({
 		<>
 			<Sheet label={r.title} onClose={onClose} className={`${s.view} ${cooking || fullScreen ? sheet.full : ''}`}>
 				<header className={sheet.head}>
-					{back && <BackButton to={back.to} onBack={back.onBack} />}
-					<h2 className={sheet.heading}>{r.title}</h2>
+					{/* "‹ Today" above the name, the name keeping its place on the left. */}
+					<div className={s.titleWithBack}>
+						{back && <BackButton to={back.to} onBack={back.onBack} />}
+						<h2 className={sheet.heading}>{r.title}</h2>
+					</div>
 					<span className={sheet.spacer} />
 					<button type="button" className={s.iconButton} onClick={() => void share()} aria-label="Share the recipe">
 						<svg viewBox="0 0 24 24" aria-hidden="true">
