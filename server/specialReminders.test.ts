@@ -144,6 +144,12 @@ describe('special day reminders', () => {
 		expect(
 			(await call('GET', '/api/special-reminders')).body.map((r: { before: { unit: string } }) => r.before.unit),
 		).toEqual(['day', 'hour']);
+		// An iCloud event's key is long (its calendar's address and the event's id): over 200 is fine.
+		const icloud = `series:https://p123-caldav.icloud.com/123456789/calendars/${'a'.repeat(100)}/:${'b'.repeat(90)}`;
+		expect(icloud.length).toBeGreaterThan(200);
+		const long = await call('POST', '/api/special-reminders', { key: icloud, name: 'Jiu jitsu', before: null });
+		expect(long.status).toBe(201);
+		await call('DELETE', `/api/special-reminders/${long.body.id}`);
 		for (const at of ['2026-11-19T16:01:00Z', '2026-11-20T23:31:00Z', '2026-11-26T16:01:00Z', '2026-11-27T23:31:00Z'])
 			await sendDue(db, pusher, new Date(at));
 		expect(sent.map((a) => [a.title, a.body])).toEqual([

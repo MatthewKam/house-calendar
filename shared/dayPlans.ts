@@ -10,7 +10,8 @@ import { ChecklistInput } from './events.ts';
  * keys, and an event's too: series:<calendar id>:<series> (every time it repeats; CalEvent's planKey).
  */
 export const PLAN_KEY = /^(date:\d{4}-\d{2}-\d{2}|(holiday|birthday|event|series):.+)$/;
-export const PlanKey = z.string().max(200).regex(PLAN_KEY);
+// Room for an iCloud event's key: its calendar's address and the event's id are long (over 200 between them).
+export const PlanKey = z.string().max(1000).regex(PLAN_KEY);
 
 /** One day's key. */
 export const dateKey = (day: string) => `date:${day}`;
