@@ -20,7 +20,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
   && curl -fsSL -o /tmp/litestream.tar.gz "https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM}/litestream-${LITESTREAM}-linux-x86_64.tar.gz" \
   && echo "${LITESTREAM_SHA256}  /tmp/litestream.tar.gz" | sha256sum -c - \
   && tar -xzf /tmp/litestream.tar.gz -C /usr/local/bin litestream && rm /tmp/litestream.tar.gz \
-  && apt-get purge -y curl && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+  && apt-get purge -y curl && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* \
+  && command -v setpriv && id node
+# Owned by root, so the app (run as `node` by deploy/start.sh) can read its code but not change it.
 COPY --from=build /app /app
 ENV NODE_ENV=production
 CMD ["/app/deploy/start.sh"]

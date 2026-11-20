@@ -13,6 +13,14 @@ if [ -f "$DATA_DIR/import.tgz" ]; then
   rm "$DATA_DIR/import.tgz"
 fi
 
+# The app runs as the image's own `node` user, not root: a break-in can't touch the system or other
+# files. The volume comes mounted as root's, so anything on it not yet node's (the first start, an
+# import, files made over `fly ssh`) is handed over, then this script starts again as node.
+if [ "$(id -u)" = 0 ]; then
+  find "$DATA_DIR" ! -user node -exec chown -h node:node {} +
+  exec setpriv --reuid=node --regid=node --init-groups env HOME=/home/node "$0" "$@"
+fi
+
 APP="node --import tsx server/index.ts"
 # With a storage bucket (fly storage create), Litestream copies every database to it as it changes,
 # and runs the app; without one, just the app.
