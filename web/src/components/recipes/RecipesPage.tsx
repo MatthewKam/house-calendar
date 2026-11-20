@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
 import { useBackStep } from '../../lib/useBackStep';
+import { step } from '../../lib/usePage';
 import { useImageDrop } from '../../lib/useFlyerDrop';
 import { useMeals, useMembers, useRecipeReading, useRecipes } from '../../lib/queries';
 import DishIdeas from './DishIdeas';
@@ -131,8 +132,10 @@ export default function RecipesPage({
 			(prep === '' || (prep === 'tonight') === longestPrep(r) < OVERNIGHT),
 	);
 	const opened = recipes.find((r) => r.id === open) ?? null;
-	// An open recipe is a step of its own: Back or a swipe closes it before leaving Recipes.
-	useBackStep(!!opened, () => setOpen(null));
+	// An open recipe is a step of its own: Back or a swipe closes it before leaving Recipes. Not the one a
+	// link brought us here for (a meal on Today): Back from it goes straight back where the link was.
+	const linked = useRef(open !== null && step().from ? open : null);
+	useBackStep(!!opened && opened.id !== linked.current, () => setOpen(null));
 	// Recipes left partway on this device (read again as one closes, or one is cleared).
 	const [, setCleared] = useState(0);
 	const viewing = allProgress().flatMap((p) => {
@@ -374,7 +377,17 @@ export default function RecipesPage({
 					<span className={s.dropBox}>Drop the recipe's pictures</span>
 				</div>
 			)}
-			{opened && <RecipeView recipe={opened} parent={parent} onClose={() => setOpen(null)} />}
+			{opened && (
+				<RecipeView
+					recipe={opened}
+					parent={parent}
+					onClose={() => {
+						// Closed by hand: open again, it's a step like any other.
+						linked.current = null;
+						setOpen(null);
+					}}
+				/>
+			)}
 		</section>
 	);
 }
