@@ -9,6 +9,8 @@ import Problem, { loadProblem } from '../ui/Problem';
 import s from '../account/Account.module.css';
 import panel from './Settings.module.css';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import { Button } from '../ui/Button';
+import { Input, Select } from '../ui/Field';
 
 type Kind = 'guardian' | 'kid' | 'wall';
 const ROLE = { guardian: 'Guardian', kid: 'Kid' };
@@ -116,29 +118,32 @@ export default function HouseholdAccess() {
 						</span>
 						<span className={s.actions}>
 							{p.role !== 'guardian' && !p.account && (
-								<button
-									type="button"
-									className={panel.textLink}
+								<Button
+									variant="link"
+									size="sm"
+
 									onClick={() => invite.mutate({ kind: 'kid', memberId: p.memberId, what: `${p.name}'s device` })}
 								>
 									Add a device
-								</button>
+								</Button>
 							)}
 							{!p.account && (
-								<button
-									type="button"
-									className={panel.textLink}
+								<Button
+									variant="link"
+									size="sm"
+
 									onClick={() =>
 										invite.mutate({ kind: 'guardian', memberId: p.memberId, what: `${p.name} (guardian)` })
 									}
 								>
 									Invite as guardian
-								</button>
+								</Button>
 							)}
 							{me.holder && p.role === 'kid' && p.account && p.membershipId && (
-								<button
-									type="button"
-									className={panel.textLink}
+								<Button
+									variant="link"
+									size="sm"
+
 									onClick={() =>
 										setChanging({
 											id: p.membershipId!,
@@ -150,12 +155,13 @@ export default function HouseholdAccess() {
 									}
 								>
 									Make guardian
-								</button>
+								</Button>
 							)}
 							{me.holder && p.role === 'guardian' && !p.holder && p.memberId !== me.memberId && p.membershipId && (
-								<button
-									type="button"
-									className={panel.textLink}
+								<Button
+									variant="link"
+									size="sm"
+
 									onClick={() =>
 										setChanging(
 											p.coHolder
@@ -177,34 +183,37 @@ export default function HouseholdAccess() {
 									}
 								>
 									{p.coHolder ? 'Stop co-holder' : 'Make co-holder'}
-								</button>
+								</Button>
 							)}
 							{me.holder && p.role === 'guardian' && p.hasPin && p.memberId !== me.memberId && p.membershipId && (
-								<button
-									type="button"
-									className={panel.textLink}
+								<Button
+									variant="link"
+									size="sm"
+
 									onClick={() => setClearing({ id: p.membershipId!, name: p.name })}
 								>
 									Reset PIN
-								</button>
+								</Button>
 							)}
 							{me.holder && p.role === 'guardian' && !p.holder && p.membershipId && (
-								<button
-									type="button"
-									className={panel.textLink}
+								<Button
+									variant="link"
+									size="sm"
+
 									onClick={() => setHanding({ id: p.membershipId!, name: p.name })}
 								>
 									Make account holder
-								</button>
+								</Button>
 							)}
 							{p.membershipId && p.memberId !== me.memberId && (
-								<button
-									type="button"
-									className={panel.textLink}
+								<Button
+									variant="link"
+									size="sm"
+
 									onClick={() => setRemoving({ id: p.membershipId!, name: p.name })}
 								>
 									Remove sign-in
-								</button>
+								</Button>
 							)}
 						</span>
 						{/* Your own PIN, under your name. */}
@@ -227,16 +236,14 @@ export default function HouseholdAccess() {
 			{clearPin.isError && <p className={s.error}>{clearPin.error.message}</p>}
 
 			<form className={s.row} onSubmit={inviteNew}>
-				<input
-					className={s.input}
+				<Input
 					value={newName}
 					onChange={(e) => setNewName(e.target.value)}
 					placeholder="Someone new"
 					aria-label="Name"
 					maxLength={40}
 				/>
-				<select
-					className={s.input}
+				<Select
 					value={newKind}
 					onChange={(e) => setNewKind(e.target.value as Kind)}
 					aria-label="As"
@@ -244,10 +251,10 @@ export default function HouseholdAccess() {
 				>
 					<option value="guardian">Guardian</option>
 					<option value="kid">Kid</option>
-				</select>
-				<button className={s.primary} disabled={!newName.trim() || invite.isPending}>
+				</Select>
+				<Button variant="primary" type="submit" disabled={!newName.trim() || invite.isPending}>
 					Invite
-				</button>
+				</Button>
 			</form>
 
 			<h3 className={s.subhead}>The wall</h3>
@@ -255,15 +262,16 @@ export default function HouseholdAccess() {
 				Get a code, then type it on the wall's screen. The wall asks for a guardian's PIN to open, and again to change
 				things.
 			</p>
-			<button
-				type="button"
-				className={panel.textLink}
+			<Button
+				variant="link"
+				size="sm"
+
 				style={{ alignSelf: 'flex-start' }}
 				disabled={me.guardianPins === 0}
 				onClick={() => invite.mutate({ kind: 'wall', what: 'the wall' })}
 			>
 				Add a wall display
-			</button>
+			</Button>
 			{me.guardianPins === 0 && <p className={s.hint}>A guardian sets their PIN first.</p>}
 
 			{data.invites.length > 0 && (
@@ -277,9 +285,9 @@ export default function HouseholdAccess() {
 									until{' '}
 									{new Date(i.expiresAt).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
 								</span>
-								<button type="button" className={panel.textLink} onClick={() => cancel.mutate(i.id)}>
+								<Button variant="link" size="sm" onClick={() => cancel.mutate(i.id)}>
 									Cancel
-								</button>
+								</Button>
 							</li>
 						))}
 					</ul>
@@ -297,14 +305,14 @@ export default function HouseholdAccess() {
 						</span>
 						<span className={panel.deviceSeen}>{ago(d.lastSeen)}</span>
 						{d.locked && (
-							<button type="button" className={panel.textLink} onClick={() => unlockDevice.mutate(d.id)}>
+							<Button variant="link" size="sm" onClick={() => unlockDevice.mutate(d.id)}>
 								Unlock (too many wrong PINs)
-							</button>
+							</Button>
 						)}
 						{!d.thisDevice && (
-							<button type="button" className={panel.textLink} onClick={() => signOut.mutate(d.id)}>
+							<Button variant="link" size="sm" onClick={() => signOut.mutate(d.id)}>
 								Sign out
-							</button>
+							</Button>
 						)}
 					</li>
 				))}
@@ -399,12 +407,12 @@ export function Issued({
 				{new Date(expiresAt).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
 			</span>
 			<div className={s.row} style={{ justifyContent: 'center' }}>
-				<button type="button" className={s.link} onClick={() => void share()}>
+				<Button variant="link" size="sm" onClick={() => void share()}>
 					{copied ? 'Link copied' : 'Send the link'}
-				</button>
-				<button type="button" className={s.link} onClick={onClose}>
+				</Button>
+				<Button variant="link" size="sm" onClick={onClose}>
 					Done
-				</button>
+				</Button>
 			</div>
 		</div>
 	);
@@ -458,9 +466,9 @@ function MyPin({ hasPin, onSaved }: { hasPin: boolean; onSaved: (s: AuthStatus) 
 		return (
 			<p className={s.hint}>
 				Your PIN is set: it opens the wall and unlocks changes there.{' '}
-				<button type="button" className={panel.textLink} onClick={() => setMode('change')}>
+				<Button variant="link" size="sm" onClick={() => setMode('change')}>
 					Change it
-				</button>
+				</Button>
 			</p>
 		);
 	}
@@ -480,15 +488,15 @@ function MyPin({ hasPin, onSaved }: { hasPin: boolean; onSaved: (s: AuthStatus) 
 					: "Your guardian PIN opens the wall, and unlocks changes there or on a kid's device."}
 			</p>
 			{mode === 'forgot' && !sentTo && (
-				<button type="button" className={s.primary} disabled={forgot.isPending} onClick={() => forgot.mutate()}>
+				<Button variant="primary" disabled={forgot.isPending} onClick={() => forgot.mutate()}>
 					Email me a code
-				</button>
+				</Button>
 			)}
 			{mode === 'forgot' && forgot.isError && <p className={panel.pinError}>{forgot.error.message}</p>}
 			{(mode === 'change' || sentTo) && (
 				<>
 					{mode === 'change' && hasPin && (
-						<input
+						<Input
 							type="password"
 							inputMode="numeric"
 							autoComplete="current-password"
@@ -500,7 +508,7 @@ function MyPin({ hasPin, onSaved }: { hasPin: boolean; onSaved: (s: AuthStatus) 
 						/>
 					)}
 					{mode === 'forgot' && (
-						<input
+						<Input
 							inputMode="numeric"
 							autoComplete="one-time-code"
 							placeholder="Code from the email"
@@ -510,7 +518,7 @@ function MyPin({ hasPin, onSaved }: { hasPin: boolean; onSaved: (s: AuthStatus) 
 							maxLength={7}
 						/>
 					)}
-					<input
+					<Input
 						type="password"
 						inputMode="numeric"
 						autoComplete="new-password"
@@ -520,7 +528,7 @@ function MyPin({ hasPin, onSaved }: { hasPin: boolean; onSaved: (s: AuthStatus) 
 						onChange={(e) => setPin(e.target.value)}
 						maxLength={8}
 					/>
-					<input
+					<Input
 						type="password"
 						inputMode="numeric"
 						autoComplete="new-password"
@@ -536,26 +544,27 @@ function MyPin({ hasPin, onSaved }: { hasPin: boolean; onSaved: (s: AuthStatus) 
 			)}
 			<div className={s.row}>
 				{(mode === 'change' || sentTo) && (
-					<button className={s.primary} disabled={!!problem || save.isPending}>
+					<Button variant="primary" type="submit" disabled={!!problem || save.isPending}>
 						Save PIN
-					</button>
+					</Button>
 				)}
 				{hasPin && mode === 'change' && (
-					<button
-						type="button"
-						className={panel.textLink}
+					<Button
+						variant="link"
+						size="sm"
+
 						onClick={() => {
 							cancel();
 							setMode('forgot');
 						}}
 					>
 						Forgot PIN?
-					</button>
+					</Button>
 				)}
 				{hasPin && (
-					<button type="button" className={panel.textLink} onClick={cancel}>
+					<Button variant="link" size="sm" onClick={cancel}>
 						Cancel
-					</button>
+					</Button>
 				)}
 			</div>
 		</form>

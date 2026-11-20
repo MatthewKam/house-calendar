@@ -17,6 +17,7 @@ import { ago } from '../../lib/dates';
 import type { Member } from '../../lib/types';
 import s from '../account/Account.module.css';
 import panel from './Settings.module.css';
+import { Button } from '../ui/Button';
 
 type Stage =
 	| { at: 'loading' }
@@ -94,9 +95,9 @@ export default function PhoneCalendars({ onShared }: { onShared?: () => void }) 
 		<section className={panel.bare}>
 			{stage.at === 'start' && (
 				<>
-					<button type="button" className={s.primary} disabled={busy} onClick={() => void pick()}>
+					<Button variant="primary" disabled={busy} onClick={() => void pick()}>
 						Use this {/iPad/.test(navigator.userAgent) ? 'iPad' : 'iPhone'}'s calendars
-					</button>
+					</Button>
 					<p className={s.hint}>No password: your phone asks if Sprig may see them, and you pick which to share.</p>
 				</>
 			)}
@@ -128,14 +129,14 @@ export default function PhoneCalendars({ onShared }: { onShared?: () => void }) 
 							</button>
 						))}
 					</div>
-					<button
-						type="button"
-						className={s.primary}
+					<Button
+						variant="primary"
+
 						disabled={busy || stage.picked.size === 0}
 						onClick={() => void share([...stage.picked])}
 					>
 						{busy ? 'Sharing…' : `Share ${stage.picked.size} ${stage.picked.size === 1 ? 'calendar' : 'calendars'}`}
-					</button>
+					</Button>
 				</div>
 			)}
 			{stage.at === 'shared' && (
@@ -147,12 +148,12 @@ export default function PhoneCalendars({ onShared }: { onShared?: () => void }) 
 					</p>
 					{!onShared && (
 						<div className={s.actions}>
-							<button type="button" className={panel.textLink} disabled={busy} onClick={() => void pick(stage.ids)}>
+							<Button variant="link" size="sm" disabled={busy} onClick={() => void pick(stage.ids)}>
 								Change calendars
-							</button>
-							<button type="button" className={panel.textLink} disabled={busy} onClick={() => void stop()}>
+							</Button>
+							<Button variant="link" size="sm" disabled={busy} onClick={() => void stop()}>
 								Stop sharing
-							</button>
+							</Button>
 						</div>
 					)}
 				</>

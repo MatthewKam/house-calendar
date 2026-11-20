@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { useSetSetting, useSettings } from '../../lib/queries';
-import sheet from '../ui/Sheet.module.css';
 import s from './Settings.module.css';
+import { PencilIcon } from '../ui/icons';
+import { Button, IconButton } from '../ui/Button';
+import { Input } from '../ui/Field';
 
 /** Where travel times start from. Saved with Save, so a half-typed address isn't used. */
 export default function HomeAddress() {
@@ -22,7 +24,7 @@ export default function HomeAddress() {
 			<p className={s.hint}>Travel times to events start here.</p>
 			{editing ? (
 				<form className={s.row} onSubmit={save}>
-					<input
+					<Input
 						className={s.name}
 						placeholder="e.g. 1 Main St, Irvine, CA"
 						value={value}
@@ -37,24 +39,20 @@ export default function HomeAddress() {
 							}
 						}}
 					/>
-					<button type="submit" className={sheet.primary} disabled={!value.trim() || value.trim() === saved}>
+					<Button variant="primary" type="submit" disabled={!value.trim() || value.trim() === saved}>
 						Save
-					</button>
-					{saved && (
-						<button type="button" className={sheet.secondary} onClick={() => setDraft(null)}>
-							Cancel
-						</button>
-					)}
+					</Button>
+					{saved && <Button onClick={() => setDraft(null)}>Cancel</Button>}
 				</form>
 			) : (
 				<div className={s.row}>
 					<span className={s.nameText}>{saved}</span>
-					<button type="button" className={s.editButton} aria-label="Edit home address" onClick={() => setDraft(saved)}>
-						<svg viewBox="0 0 24 24" aria-hidden="true">
-							<path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z" />
-							<path d="M13.5 8.5l3 3" />
-						</svg>
-					</button>
+					<IconButton
+						className={s.editButton}
+						label="Edit home address"
+						icon={<PencilIcon />}
+						onClick={() => setDraft(saved)}
+					/>
 				</div>
 			)}
 		</section>

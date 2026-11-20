@@ -3,6 +3,10 @@ import { useScreenSaverSettings } from '../../lib/useScreenSaverSettings';
 import type { ScreenSaverSettings as Settings } from '../../lib/types';
 import { useWakeStatus, type WakeStatus } from '../../lib/useWakeLock';
 import s from './Settings.module.css';
+import { Button } from '../ui/Button';
+import Switch from '../ui/Switch';
+import { Field, Input, Select } from '../ui/Field';
+import { List, ListRow } from '../ui/ListRow';
 
 /** Minutes without a touch before it starts. */
 /** Whether this device's screen is being kept on, in words. */
@@ -56,37 +60,42 @@ export default function ScreenSaverSettings({
 		<section className={bare ? s.bare : s.home}>
 			{!bare && <h3 className={s.section}>Screen saver</h3>}
 			{!switched && (
-				<label className={s.saverRow}>
-					<input type="checkbox" checked={saver.enabled} onChange={(e) => save({ enabled: e.target.checked })} />
-					Show photos when this screen is idle
-				</label>
+				<List>
+					<ListRow
+						title="Show photos when this screen is idle"
+						trailing={
+							<Switch
+								on={saver.enabled}
+								onChange={(on) => save({ enabled: on })}
+								label="Show photos when this screen is idle"
+							/>
+						}
+					/>
+				</List>
 			)}
 			{saver.enabled && (
 				<>
 					<div className={s.saverGrid}>
-						<label>
-							Start after
-							<select value={saver.idleMinutes} onChange={(e) => save({ idleMinutes: Number(e.target.value) })}>
+						<Field label="Start after">
+							<Select value={saver.idleMinutes} onChange={(e) => save({ idleMinutes: Number(e.target.value) })}>
 								{IDLE.map(([m, label]) => (
 									<option key={m} value={m}>
 										{label}
 									</option>
 								))}
-							</select>
-						</label>
-						<label>
-							Each photo for
-							<select value={saver.seconds} onChange={(e) => save({ seconds: Number(e.target.value) })}>
+							</Select>
+						</Field>
+						<Field label="Each photo for">
+							<Select value={saver.seconds} onChange={(e) => save({ seconds: Number(e.target.value) })}>
 								{SECONDS.map(([v, l]) => (
 									<option key={v} value={v}>
 										{l}
 									</option>
 								))}
-							</select>
-						</label>
-						<label>
-							Transition
-							<select
+							</Select>
+						</Field>
+						<Field label="Transition">
+							<Select
 								value={saver.transition}
 								onChange={(e) => save({ transition: e.target.value as Settings['transition'] })}
 							>
@@ -95,39 +104,41 @@ export default function ScreenSaverSettings({
 										{t.label}
 									</option>
 								))}
-							</select>
-						</label>
+							</Select>
+						</Field>
 					</div>
-					<label className={s.saverRow}>
-						<input
-							type="checkbox"
-							checked={saver.showEvents}
-							onChange={(e) => save({ showEvents: e.target.checked })}
+					<List>
+						<ListRow
+							title="Show today's events"
+							detail="Bottom left, under the clock"
+							trailing={
+								<Switch on={saver.showEvents} onChange={(on) => save({ showEvents: on })} label="Show today's events" />
+							}
 						/>
-						Show today's events (bottom left, under the clock)
-					</label>
-					<label className={s.saverRow}>
-						<input type="checkbox" checked={saver.night} onChange={(e) => save({ night: e.target.checked })} />
-						Dim the photos at night (and change them more slowly)
-					</label>
+						<ListRow
+							title="Dim the photos at night"
+							detail="And change them more slowly"
+							trailing={
+								<Switch on={saver.night} onChange={(on) => save({ night: on })} label="Dim the photos at night" />
+							}
+						/>
+					</List>
 					{saver.night && (
 						<div className={s.saverGrid}>
-							<label>
-								From
-								<input
+							<Field label="From">
+								<Input
 									type="time"
 									value={saver.nightFrom}
 									onChange={(e) => e.target.value && save({ nightFrom: e.target.value })}
 								/>
-							</label>
-							<label>
-								Until
-								<input
+							</Field>
+							<Field label="Until">
+								<Input
 									type="time"
 									value={saver.nightTo}
 									onChange={(e) => e.target.value && save({ nightTo: e.target.value })}
 								/>
-							</label>
+							</Field>
 						</div>
 					)}
 					<p className={s.hint}>Pick which photos it shows on the Photos page.</p>
@@ -137,9 +148,9 @@ export default function ScreenSaverSettings({
 							` (${wake.reason || 'no reason given'}). Tap anywhere to try the wake lock again; Low Power Mode stops both.`}
 					</p>
 					{onPreview && (
-						<button type="button" className={s.saverPreview} onClick={onPreview}>
+						<Button variant="link" size="sm" onClick={onPreview}>
 							Play it now
-						</button>
+						</Button>
 					)}
 				</>
 			)}

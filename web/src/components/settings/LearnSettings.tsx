@@ -7,6 +7,7 @@ import type { LearnState, LearnToday, Member } from '../../lib/types';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import s from './Settings.module.css';
+import { Select } from '../ui/Field';
 
 /** The word beside Learning in Settings while it's folded: who has it on. */
 export function learnNote(kids: LearnState[], members: Member[]) {
@@ -122,7 +123,7 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
 									</div>
 									<label className={s.learnTime}>
 										Time a day
-										<select
+										<Select
 											value={k.today.minutesADay ?? ''}
 											disabled={set.isPending}
 											onChange={(e) =>
@@ -137,7 +138,7 @@ export default function LearnSettings({ members, today }: { members: Member[]; t
 													{m === null ? 'No limit' : `${m} minutes`}
 												</option>
 											))}
-										</select>
+										</Select>
 									</label>
 									<p className={s.learnToday}>Today: {todayLine(k.today)}</p>
 									<div className={s.learnTodayButtons}>

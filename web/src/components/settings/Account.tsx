@@ -4,8 +4,8 @@ import { api, type AuthStatus, type SignedIn } from '../../lib/api';
 import Avatar from './Avatar';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import s from '../account/Account.module.css';
-import panel from './Settings.module.css';
-import sheet from '../ui/Sheet.module.css';
+import { Button } from '../ui/Button';
+import { Select } from '../ui/Field';
 
 /** "Nov 12, 10:04 AM". */
 const when = (iso: string) =>
@@ -43,8 +43,7 @@ export function SignedInAs({ status, onClose }: { status: SignedIn; onClose: () 
 				</span>
 			</span>
 			{status.households.length > 1 && (
-				<select
-					className={s.input}
+				<Select
 					value={status.household?.id}
 					aria-label="Household"
 					onChange={(e) => void api.useHousehold(e.target.value).then(restart)}
@@ -54,7 +53,7 @@ export function SignedInAs({ status, onClose }: { status: SignedIn; onClose: () 
 							{h.name}
 						</option>
 					))}
-				</select>
+				</Select>
 			)}
 		</div>
 	);
@@ -68,17 +67,13 @@ export function SignOut({ status, onClose }: { status: SignedIn; onClose: () => 
 	const restart = useRestart(onClose);
 	const [asking, setAsking] = useState(false);
 	if (status.kind === 'wall') {
-		return (
-			<button type="button" className={sheet.secondary} onClick={() => void api.lockWall().then(restart)}>
-				Lock the wall
-			</button>
-		);
+		return <Button onClick={() => void api.lockWall().then(restart)}>Lock the wall</Button>;
 	}
 	return (
 		<>
-			<button type="button" className={sheet.danger} onClick={() => setAsking(true)}>
+			<Button variant="danger" onClick={() => setAsking(true)}>
 				Sign out
-			</button>
+			</Button>
 			{asking && (
 				<ConfirmDialog
 					title="Sign out of this device?"
@@ -115,9 +110,9 @@ export function DeleteAccount({ onClose }: { onClose: () => void }) {
 	return (
 		<>
 			<h3 className={s.subhead}>Your account</h3>
-			<button type="button" className={`${panel.textLink} ${s.deleteAccount}`} onClick={ask}>
+			<Button variant="danger" size="sm" className={s.deleteAccount} onClick={ask}>
 				Delete my account
-			</button>
+			</Button>
 			{error && <p className={s.error}>{error}</p>}
 			{plan && (
 				<ConfirmDialog

@@ -70,3 +70,17 @@
 	align-items: center;
 	gap: var(--space-2);
 }
+
+/* A pick from a list: the same box as the others (Safari draws its own otherwise), with a chevron. */
+select.box {
+	appearance: none;
+	padding-right: calc(var(--space-3) + 1.2em);
+	background-image:
+		linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+		linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+	background-position:
+		calc(100% - var(--space-3) - 0.5em) 55%,
+		calc(100% - var(--space-3) - 0.15em) 55%;
+	background-size: 0.35em 0.35em;
+	background-repeat: no-repeat;
+}

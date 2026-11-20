@@ -7,6 +7,8 @@ import type { Member } from '../../lib/types';
 import s from '../account/Account.module.css';
 import panel from './Settings.module.css';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Field';
 
 /**
  * Settings → Calendars: each person's iCloud Calendar, connected with their Apple ID and an
@@ -62,9 +64,9 @@ export default function ICloudCalendars({ members }: { members: Member[] }) {
 										)}
 									</span>
 								</span>
-								<button type="button" className={panel.textLink} onClick={() => setDisconnecting(c)}>
+								<Button variant="link" size="sm" onClick={() => setDisconnecting(c)}>
 									Disconnect
-								</button>
+								</Button>
 							</li>
 						);
 					})}
@@ -74,9 +76,9 @@ export default function ICloudCalendars({ members }: { members: Member[] }) {
 			{!canConnect ? (
 				<p className={s.hint}>A guardian connects iCloud Calendar from Settings on their phone.</p>
 			) : !open ? (
-				<button type="button" className={s.primary} style={{ alignSelf: 'flex-start' }} onClick={() => setOpen(true)}>
+				<Button variant="primary" style={{ alignSelf: 'flex-start' }} onClick={() => setOpen(true)}>
 					{mine ? 'Connect another iCloud account' : 'Connect my iCloud Calendar'}
-				</button>
+				</Button>
 			) : (
 				<form
 					className={s.card}
@@ -97,8 +99,7 @@ export default function ICloudCalendars({ members }: { members: Member[] }) {
 						<li>Under Sign-In and Security, choose App-Specific Passwords and make one called "Sprig".</li>
 						<li>Type your Apple ID and that password here. Your normal Apple password is never used.</li>
 					</ol>
-					<input
-						className={s.input}
+					<Input
 						inputMode="email"
 						autoCapitalize="none"
 						placeholder="Apple ID"
@@ -109,8 +110,7 @@ export default function ICloudCalendars({ members }: { members: Member[] }) {
 						maxLength={200}
 						required
 					/>
-					<input
-						className={s.input}
+					<Input
 						placeholder="xxxx-xxxx-xxxx-xxxx"
 						aria-label="App-specific password"
 						autoComplete="off"
@@ -123,16 +123,17 @@ export default function ICloudCalendars({ members }: { members: Member[] }) {
 					/>
 					{connect.isError && <p className={s.error}>{connect.error.message}</p>}
 					<div className={s.actions}>
-						<button
+						<Button
+							variant="primary"
 							type="submit"
-							className={s.primary}
+
 							disabled={connect.isPending || !appleId.trim() || !password.trim()}
 						>
 							{connect.isPending ? 'Checking…' : 'Connect'}
-						</button>
-						<button type="button" className={panel.textLink} onClick={() => setOpen(false)}>
+						</Button>
+						<Button variant="link" size="sm" onClick={() => setOpen(false)}>
 							Cancel
-						</button>
+						</Button>
 					</div>
 					<p className={s.hint}>You can change iCloud events here too, and they update on everyone's phones.</p>
 				</form>

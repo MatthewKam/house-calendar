@@ -7,8 +7,11 @@ import type { Member, MemberPatch, Stage } from '../../lib/types';
 import ColorAsked from '../account/ColorAsked';
 import { COMMON_ALLERGIES, allergyEmoji } from '../../lib/allergies';
 import DateInput from '../ui/DateInput';
-import sheet from '../ui/Sheet.module.css';
 import s from './Settings.module.css';
+import { PencilIcon } from '../ui/icons';
+import { Chip } from '../ui/Chip';
+import { Button, IconButton } from '../ui/Button';
+import { Input, Select } from '../ui/Field';
 
 /**
  * Palette shown under a row when its color circle is tapped. Palette taps are final (`done` true);
@@ -136,7 +139,7 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 								)}
 								{isEditing ? (
 									<form className={s.editName} onSubmit={(e) => saveEdit(e, m)}>
-										<input
+										<Input
 											className={s.name}
 											value={editing.name}
 											maxLength={40}
@@ -151,12 +154,10 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 												}
 											}}
 										/>
-										<button type="submit" className={sheet.primary} disabled={!editing.name.trim()}>
+										<Button variant="primary" type="submit" disabled={!editing.name.trim()}>
 											Save
-										</button>
-										<button type="button" className={sheet.secondary} onClick={stopEdit}>
-											Cancel
-										</button>
+										</Button>
+										<Button onClick={stopEdit}>Cancel</Button>
 									</form>
 								) : (
 									<>
@@ -165,17 +166,12 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 											{m.stage && <span className={s.stageTag}>{STAGE_NAMES[m.stage]}</span>}
 											{m.allergies.length > 0 && <span className={s.allergyTag}>⚠ {m.allergies.join(', ')}</span>}
 										</span>
-										<button
-											type="button"
+										<IconButton
 											className={s.editButton}
-											aria-label={`Edit ${m.name}`}
+											label={`Edit ${m.name}`}
+											icon={<PencilIcon />}
 											onClick={() => startEdit(m)}
-										>
-											<svg viewBox="0 0 24 24" aria-hidden="true">
-												<path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z" />
-												<path d="M13.5 8.5l3 3" />
-											</svg>
-										</button>
+										/>
 									</>
 								)}
 							</div>
@@ -184,7 +180,6 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 									<label className={s.detail}>
 										<span>Birthday</span>
 										<DateInput
-											className={s.dateInput}
 											aria-label="Birthday"
 											value={editing.birthdate}
 											max={dayKey(new Date())}
@@ -193,8 +188,7 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 									</label>
 									<label className={s.detail}>
 										<span>Stage</span>
-										<select
-											className={s.dateInput}
+										<Select
 											value={editing.stage ?? ''}
 											onChange={(e) => setEditing({ ...editing, stage: (e.target.value || null) as Stage | null })}
 										>
@@ -204,7 +198,7 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 													{STAGE_NAMES[st]} ({STAGE_AGES[st]})
 												</option>
 											))}
-										</select>
+										</Select>
 									</label>
 								</div>
 							)}
@@ -219,11 +213,10 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 										].map((name) => {
 											const on = editing.allergies.includes(name);
 											return (
-												<button
+												<Chip
 													key={name}
-													type="button"
-													className={s.allergyChip}
-													aria-pressed={on}
+													icon={allergyEmoji(name)}
+													pressed={on}
 													onClick={() =>
 														setEditing({
 															...editing,
@@ -233,13 +226,13 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 														})
 													}
 												>
-													{allergyEmoji(name)} {name}
-												</button>
+													{name}
+												</Chip>
 											);
 										})}
 									</div>
 									<div className={s.row}>
-										<input
+										<Input
 											className={s.name}
 											placeholder="Another one (strawberries)"
 											aria-label="Another allergy"
@@ -255,9 +248,7 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 												setOwnAllergy('');
 											}}
 										/>
-										<button
-											type="button"
-											className={sheet.secondary}
+										<Button
 											disabled={!ownAllergy.trim()}
 											onClick={() => {
 												const a = ownAllergy.trim().toLowerCase();
@@ -267,7 +258,7 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 											}}
 										>
 											Add
-										</button>
+										</Button>
 									</div>
 									<p className={s.hint}>Recipes flag them. A help, not a guarantee: check labels too.</p>
 								</div>

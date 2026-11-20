@@ -4,6 +4,7 @@ import { noiseUrl, play, setRecorded } from '../learn/sound';
 import { ANIMALS } from '../learn/things';
 import { useLearnSounds, useSetLearnSound } from '../../lib/queries';
 import s from './Settings.module.css';
+import { Button } from '../ui/Button';
 
 /** Longest a recording runs before it stops by itself. */
 const MAX_MS = 4000;
@@ -101,14 +102,15 @@ export default function LearnSounds() {
 								{now ? '■' : '●'}
 							</button>
 							{own.has(a.id) && (
-								<button
-									type="button"
-									className={s.textLink}
+								<Button
+									variant="link"
+									size="sm"
+
 									disabled={!!recording || save.isPending}
 									onClick={() => save.mutate({ animal: a.id, audio: null })}
 								>
 									Use built-in
-								</button>
+								</Button>
 							)}
 						</div>
 					);
