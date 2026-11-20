@@ -290,7 +290,6 @@ export default function TaskDialog({
 								</Chip>
 							))}
 							<DateInput
-								className={c.dueDate}
 								value={dueBy}
 								min={TODAY()}
 								aria-label="Due by"

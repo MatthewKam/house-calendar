@@ -4,54 +4,27 @@
 	min-height: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 0.8rem;
+	gap: var(--space-4);
 }
 .pageTitle {
 	margin: 0;
-	font-size: 2rem;
+	font-size: var(--text-2xl);
 }
 .pageHead {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--space-3);
 	flex-wrap: wrap;
 }
-.choose {
-	padding: 0.45rem 0.9rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius-round);
-	background: var(--surface);
-	color: var(--muted);
-}
-.choose[aria-pressed='true'] {
-	background: var(--accent);
-	border-color: var(--accent);
-	color: var(--on-accent);
-}
+
 /* Which lists show: a check per list, tapped on or off. */
 .picker {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.5rem;
+	gap: var(--space-3);
 }
-.pick {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	padding: 0.4rem 0.9rem 0.4rem 0.5rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius-round);
-	background: var(--surface);
-}
-.pick[aria-pressed='false'] {
-	color: var(--muted);
-}
-.pick[aria-pressed='true'] .box {
-	background: var(--accent);
-	border-color: var(--accent);
-	color: var(--on-accent);
-}
+
 .board {
 	flex: 1;
 	min-height: 0;
@@ -60,32 +33,32 @@
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(400px, 450px));
 	align-content: start;
-	gap: 0.75rem;
+	gap: var(--space-4);
 }
 .card {
 	background: var(--surface);
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
-	padding: 0.9rem;
+	padding: var(--space-5);
 	display: flex;
 	flex-direction: column;
-	gap: 0.6rem;
+	gap: var(--space-3);
 }
 .head {
 	display: flex;
 	align-items: baseline;
-	gap: 0.5rem;
+	gap: var(--space-3);
 }
 .head .title {
 	flex: 1;
 }
 .title {
 	margin: 0;
-	font-size: 1.25rem;
+	font-size: var(--text-lg);
 }
 .synced {
 	color: var(--muted);
-	font-size: 0.8rem;
+	font-size: var(--text-xs);
 	white-space: nowrap;
 }
 .items {
@@ -94,7 +67,7 @@
 	padding: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 0.4rem;
+	gap: var(--space-2);
 }
 /* One item: tick circle, icon, name. Tapping the circle or the name ticks it; the icon picks one. */
 /* Each item is a rounded bar in its list's color (--c). */
@@ -103,8 +76,8 @@
 	position: relative;
 	display: flex;
 	align-items: center;
-	gap: 0.15rem;
-	padding: 0.25rem 0.3rem 0.25rem 0.2rem;
+	gap: var(--space-1);
+	padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
 	border-radius: var(--radius);
 	background: color-mix(in srgb, var(--c) var(--pastel), var(--surface));
 	color: var(--text);
@@ -155,7 +128,7 @@
 .swatches {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.4rem;
+	gap: var(--space-2);
 }
 .swatch {
 	width: 2rem;
@@ -173,7 +146,7 @@
 .boxButton {
 	min-width: 0;
 	min-height: 2.6rem;
-	padding: 0 0.3rem 0 0.4rem;
+	padding: 0 var(--space-2) 0 var(--space-2);
 	display: grid;
 	place-items: center;
 }
@@ -186,7 +159,7 @@
 	flex: none;
 	display: grid;
 	place-items: center;
-	font-size: 1.3rem;
+	font-size: var(--text-xl);
 	border-radius: var(--radius-xs);
 }
 
@@ -198,24 +171,24 @@
 .noIcon {
 	color: var(--muted);
 	box-shadow: inset 0 0 0 1px var(--line);
-	font-size: 1.1rem;
-	font-weight: 700;
+	font-size: var(--text-lg);
+	font-weight: var(--weight-bold);
 }
 .item {
 	flex: 1;
 	min-width: 0;
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--space-3);
 	text-align: left;
-	padding: 0.35rem 0.4rem 0.35rem 0.2rem;
+	padding: var(--space-2) var(--space-2) var(--space-2) var(--space-1);
 	border-radius: var(--radius-sm);
-	font-size: 1.05rem;
+	font-size: var(--text-md);
 }
 .pickNote {
 	margin: 0;
 	color: var(--muted);
-	font-size: 0.85rem;
+	font-size: var(--text-sm);
 }
 .box {
 	width: 1.5rem;
@@ -226,8 +199,8 @@
 	background: var(--surface);
 	display: grid;
 	place-items: center;
-	font-size: 0.85rem;
-	font-weight: 800;
+	font-size: var(--text-sm);
+	font-weight: var(--weight-heavy);
 }
 .done .box {
 	background: var(--accent);
@@ -266,24 +239,24 @@
 }
 .pending {
 	color: var(--muted);
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 }
 /* A recipe's lines under its name; the name folds them away and back, with a chevron. */
 .section {
 	display: flex;
 	flex-direction: column;
-	gap: 0.4rem;
+	gap: var(--space-2);
 }
 .sectionHead {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--space-3);
 	min-height: 2.75rem;
-	padding: 0 0.4rem;
+	padding: 0 var(--space-2);
 	background: none;
 	color: var(--text);
 	font: inherit;
-	font-weight: 600;
+	font-weight: var(--weight-semibold);
 	text-align: left;
 }
 .sectionName {
@@ -309,26 +282,26 @@
 }
 .empty {
 	color: var(--muted);
-	padding: 0.3rem 0.4rem;
+	padding: var(--space-2) var(--space-2);
 }
 .add {
 	display: flex;
-	gap: 0.4rem;
+	gap: var(--space-2);
 	margin-top: auto;
 }
 .add input {
 	flex: 1;
 	min-width: 0;
-	padding: 0.5rem 0.7rem;
+	padding: var(--space-3) var(--space-4);
 	border: 1px solid var(--line);
 	border-radius: var(--radius-sm);
 }
 /* Add: the list's color once there's something to add, gray until then. Its text is dark on a light color. */
 .add button {
 	background: var(--c, var(--accent));
-	color: var(--on, #fff);
-	font-weight: 650;
-	padding: 0 1rem;
+	color: var(--on, var(--on-accent));
+	font-weight: var(--weight-semibold);
+	padding: 0 var(--space-5);
 	border-radius: var(--radius-sm);
 }
 .add button:disabled {
@@ -350,7 +323,7 @@
 .error {
 	margin: 0;
 	color: var(--danger);
-	font-size: 0.9rem;
+	font-size: var(--text-sm);
 }
 .setup {
 	flex: 1;
@@ -360,7 +333,7 @@
 	justify-content: center;
 	text-align: center;
 	color: var(--muted);
-	gap: 0.3rem;
+	gap: var(--space-2);
 }
 .setup h2 {
 	margin: 0;
@@ -386,7 +359,7 @@
    clear of the home bar. */
 @media (max-width: 959.98px), (max-height: 500px) {
 	.board {
-		padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+		padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
 	}
 }
 
@@ -401,17 +374,7 @@
 .spacer {
 	flex: 1;
 }
-.more {
-	flex: none;
-	min-width: 2.2rem;
-	min-height: 2.2rem;
-	padding: 0;
-	border-radius: 50%;
-	color: var(--muted);
-	font-size: 1.2rem;
-	font-weight: 800;
-	line-height: 1;
-}
+
 /* ✏️ on each item: its name, icon, when and who. */
 .edit svg {
 	width: 1.15rem;
@@ -425,17 +388,11 @@
 /* The edit sheet: the icon (tap to pick another) and the name. */
 .nameRow {
 	display: flex;
-	gap: 0.5rem;
+	gap: var(--space-3);
 	align-items: center;
 }
 .nameRow input {
 	flex: 1;
-	min-width: 0;
-	font-size: 1.05rem;
-	padding: 0.5rem 0.7rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius-sm);
-	color: var(--text);
 }
 .nameRow .iconAdd {
 	padding: 0;
@@ -445,109 +402,46 @@
 .meta {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.2rem 0.7rem;
-	margin-top: 0.1rem;
-	font-size: 0.82rem;
+	gap: var(--space-1) var(--space-4);
+	margin-top: var(--space-1);
+	font-size: var(--text-xs);
 	color: var(--muted);
 }
 .late {
 	color: var(--danger);
-	font-weight: 700;
+	font-weight: var(--weight-bold);
 }
 .clearDone {
 	align-self: flex-start;
-	min-height: 0;
-	padding: 0.2rem 0.3rem;
-	color: var(--muted);
-	font-weight: 600;
-	font-size: 0.9rem;
 }
-/* A list's ⋯: sort unchecked first, with what it does under it, and its switch. */
-.sortRow {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 1rem;
-}
-.sortRow > span {
-	display: flex;
-	flex-direction: column;
-	gap: 0.15rem;
-	font-weight: 600;
-}
-.sortRow .pickNote {
-	font-weight: normal;
-}
-.nameInput {
-	font-size: 1.1rem;
-	padding: 0.6rem 0.7rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius-sm);
-}
+
 .whenRow {
 	display: flex;
 	flex-wrap: wrap;
-	align-items: flex-end;
-	gap: 0.8rem;
-}
-.whenRow label {
-	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
-	font-size: 0.85rem;
-	color: var(--muted);
-}
-.whenRow input {
-	font-size: 1.05rem;
-	padding: 0.5rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius-sm);
-	color: var(--text);
-}
-.whoRow {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.5rem;
+	align-items: flex-start;
+	gap: var(--space-4);
 }
 
-/* Add to a list (the phone's +): which list, as buttons; and what was just added. */
-.listPicks {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.4rem;
-}
-.listPick {
-	padding: 0 1rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius-round);
-	background: var(--surface);
-	font-weight: 600;
-}
-.listPicked {
-	background: var(--accent);
-	border-color: var(--accent);
-	color: var(--on-accent);
-}
 .added {
 	margin: 0;
 	color: var(--accent);
-	font-weight: 600;
+	font-weight: var(--weight-semibold);
 }
 
 /* Lists loading: two list-shaped blocks side by side where there's room. */
 .loading {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-	gap: 1rem;
-	padding: 0 1rem;
+	gap: var(--space-5);
+	padding: 0 var(--space-5);
 }
 /* Couldn't sync with the family's phones lately: said above the lists. */
 .unsynced {
 	margin: 0;
-	padding: 0.5rem 0.8rem;
+	padding: var(--space-3) var(--space-4);
 	border-radius: var(--radius-sm);
 	border: 1px solid var(--warn-line);
 	background: var(--warn-bg);
 	color: var(--text);
-	font-size: 0.95rem;
+	font-size: var(--text-md);
 }

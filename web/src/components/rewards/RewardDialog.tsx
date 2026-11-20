@@ -144,7 +144,6 @@ export default function RewardDialog({ member, reward, today, onClose }: Props) 
 					</Chip>
 					{deadline !== null && (
 						<DateInput
-							className={r.date}
 							value={deadline}
 							min={today}
 							aria-label="Last day to redeem it"
