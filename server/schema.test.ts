@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type Database from 'better-sqlite3';
 import { openDb } from './db.ts';
@@ -34,5 +37,32 @@ describe('schema', () => {
 		await expect(schema(openAccounts(':memory:'), 'The accounts database (server/accounts.ts)')).toMatchFileSnapshot(
 			'./schema/accounts.sql',
 		);
+	});
+});
+
+describe('upgrades', () => {
+	it('gives calendars.account to a database that took upgrade 68 before it had it', () => {
+		const dir = mkdtempSync(join(tmpdir(), 'sprig-db-'));
+		const file = join(dir, 'calendar.db');
+		// Version 68 as it first was: sync_refused, no account column.
+		const old = openDb(file, 67);
+		old.exec('CREATE TABLE sync_refused (source TEXT PRIMARY KEY, since TEXT NOT NULL)');
+		old.pragma('user_version = 68');
+		old.close();
+		const db = openDb(file);
+		const cols = (db.prepare("SELECT name FROM pragma_table_info('calendars')").all() as { name: string }[]).map(
+			(c) => c.name,
+		);
+		expect(cols).toContain('account');
+		db.close();
+		rmSync(dir, { recursive: true, force: true });
+	});
+
+	it('leaves a new database with the one account column', () => {
+		const db = openDb(':memory:');
+		const n = db.prepare("SELECT count(*) AS n FROM pragma_table_info('calendars') WHERE name = 'account'").get() as {
+			n: number;
+		};
+		expect(n.n).toBe(1);
 	});
 });

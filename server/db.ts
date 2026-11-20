@@ -8,7 +8,10 @@ export type DB = Database.Database;
 const FOREIGN_KEYS_OFF = '-- foreign keys off';
 
 // Each entry runs once, in order. Never edit a shipped migration; add a new one.
-const migrations: string[] = [
+// Each upgrade is SQL, or (when it has to look first) a function that makes the change itself.
+type Migration = string | ((db: DB) => void);
+
+const migrations: Migration[] = [
 	`
   CREATE TABLE members (
     id          TEXT PRIMARY KEY,
@@ -1058,6 +1061,17 @@ const migrations: string[] = [
   -- ones are the same as a password's.
   ALTER TABLE calendars ADD COLUMN account TEXT;
   `,
+	// The upgrade above first came without calendars.account, and databases that took it then (a
+	// developer's, at version 68) never got the column: phone calendars' syncs then failed with "table
+	// calendars has no column named account". Added here when it's missing.
+	(db) => {
+		const has = (
+			db.prepare("SELECT count(*) AS n FROM pragma_table_info('calendars') WHERE name = 'account'").get() as {
+				n: number;
+			}
+		).n;
+		if (!has) db.exec('ALTER TABLE calendars ADD COLUMN account TEXT');
+	},
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */
@@ -1082,11 +1096,13 @@ function migrate(db: DB, upTo: number) {
 	}
 	for (let v = current; v < upTo; v++) {
 		// Foreign keys can only be switched off outside a transaction; they're checked before it commits.
-		const keysOff = migrations[v].startsWith(FOREIGN_KEYS_OFF);
+		const step = migrations[v];
+		const keysOff = typeof step === 'string' && step.startsWith(FOREIGN_KEYS_OFF);
 		if (keysOff) db.pragma('foreign_keys = OFF');
 		try {
 			db.transaction(() => {
-				db.exec(migrations[v]);
+				if (typeof step === 'string') db.exec(step);
+				else step(db);
 				if (keysOff && (db.pragma('foreign_key_check') as unknown[]).length > 0) {
 					throw new Error(`Upgrade ${v + 1} would leave rows pointing at nothing`);
 				}
