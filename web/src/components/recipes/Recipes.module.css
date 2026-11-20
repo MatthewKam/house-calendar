@@ -1868,3 +1868,11 @@ button.ideaSearch {
 	display: inline-flex;
 	gap: 0.15rem;
 }
+
+/* A recipe's name in its top bar, with "‹ Today" above it when a link opened it (RecipeView). */
+.titleWithBack {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	min-width: 0;
+}
