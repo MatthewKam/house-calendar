@@ -8,6 +8,8 @@ import { canFindHere, findHere, setHere, useWeatherHere } from '../../lib/useWea
 import AddressInput from '../calendar/AddressInput';
 import { Loading, Skeleton, SkeletonLines } from '../ui/Skeleton';
 import s from './Today.module.css';
+import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
 
 type Hour = Weather['hours'][number];
 
@@ -55,7 +57,7 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 		return h >= rise && h < set;
 	};
 	return (
-		<section className={s.card} aria-label="Weather">
+		<Card aria-label="Weather">
 			<div className={s.weatherHead}>
 				<h2 className={s.cardHead}>Weather</h2>
 				<PlaceSwitch />
@@ -80,19 +82,24 @@ export default function ForecastCard({ weather: w }: { weather: Weather }) {
 				</span>
 			</div>
 			{w.hours.length > 1 && <HourGraph hours={w.hours} isDay={isDay} />}
-			<button type="button" className={s.weekToggle} aria-expanded={weekOpen} onClick={() => setWeekOpen(!weekOpen)}>
+			<Button
+				variant="link"
+				size="sm"
+				className={s.weekToggle}
+				aria-expanded={weekOpen}
+				onClick={() => setWeekOpen(!weekOpen)}
+			>
 				{weekOpen ? 'Hide next 7 days' : 'See next 7 days'}
-			</button>
+			</Button>
 			{weekOpen && <Week days={w.days.slice(1)} />}
-		</section>
+		</Card>
 	);
 }
 
 /** The weather card while the forecast comes in: its heading, now, and the hours graph, in grey. */
 export function ForecastLoading() {
 	return (
-		<section className={s.card} aria-label="Weather">
-			<h2 className={s.cardHead}>Weather</h2>
+		<Card title="Weather">
 			<Loading label="Loading the weather">
 				<div className={s.weatherNow}>
 					<Skeleton width="3.2rem" height="3.2rem" round />
@@ -101,7 +108,7 @@ export function ForecastLoading() {
 				</div>
 				<Skeleton height="8rem" />
 			</Loading>
-		</section>
+		</Card>
 	);
 }
 
@@ -180,9 +187,9 @@ function PlaceSwitch() {
 			{typing && (
 				<form className={s.placeForm} onSubmit={goPlace}>
 					<AddressInput value={typed} onChange={setTyped} placeholder="A town or address" label="Weather for a place" />
-					<button type="submit" className={s.placeGo} disabled={finding || !typed.trim()}>
+					<Button variant="primary" type="submit" disabled={finding || !typed.trim()}>
 						{finding ? 'Finding…' : 'Show'}
-					</button>
+					</Button>
 				</form>
 			)}
 		</>

@@ -5,6 +5,8 @@ import { Calendar, Invite, Kids, Tasks } from '../account/Setup';
 import Sheet from '../ui/Sheet';
 import s from './Today.module.css';
 import a from '../account/Account.module.css';
+import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
 
 const STEPS = {
 	kids: { icon: '👶', text: 'Add your kids' },
@@ -59,13 +61,14 @@ export default function FinishSetup() {
 	const close = () => setOpen(null);
 
 	return (
-		<section className={s.card} aria-label="Finish setting up">
-			<div className={s.cardTop}>
-				<h2 className={s.cardHead}>Finish setting up</h2>
-				<button type="button" className={s.hideSetup} onClick={hide}>
+		<Card
+			title="Finish setting up"
+			action={
+				<Button variant="quiet" size="sm" onClick={hide}>
 					Hide
-				</button>
-			</div>
+				</Button>
+			}
+		>
 			<ul className={s.needs}>
 				{left.map((step) => (
 					<li key={step}>
@@ -86,6 +89,6 @@ export default function FinishSetup() {
 					</div>
 				</Sheet>
 			)}
-		</section>
+		</Card>
 	);
 }

@@ -36,6 +36,7 @@ import { problemText } from '../../lib/api';
 import Problem, { loadProblem } from '../ui/Problem';
 import ThemedHead from '../ui/ThemedHead';
 import s from './Today.module.css';
+import { Card } from '../ui/Card';
 
 interface Props {
 	today: string;
@@ -285,7 +286,7 @@ export default function TodayPage({
 	// then tomorrow and the rest of the week under it) with the special days under it, the rest down the
 	// left. Otherwise one list.
 	const calendarCard = (
-		<section className={`${s.card} ${s.wide}`} aria-label="Calendar">
+		<Card className={s.wide} aria-label="Calendar">
 			{/* Loading: a few event-shaped rows, so the calendar isn't "nothing today" before it knows. */}
 			{eventsQuery.isError ? (
 				<Problem message={loadProblem('the calendar', eventsQuery.error)} onRetry={() => void eventsQuery.refetch()} />
@@ -299,16 +300,15 @@ export default function TodayPage({
 			) : (
 				<DayCalendar days={calendar} styles={s} stacked={twoColumns} />
 			)}
-		</section>
+		</Card>
 	);
 	const weatherCard = weatherQuery.isError ? (
-		<section className={s.card} aria-label="Weather">
-			<h2 className={s.cardHead}>Weather</h2>
+		<Card title="Weather">
 			<Problem
 				message={problemText(weatherQuery.error, "Couldn't load the weather.")}
 				onRetry={() => void weatherQuery.refetch()}
 			/>
-		</section>
+		</Card>
 	) : weather ? (
 		<ForecastCard weather={weather} />
 	) : weatherQuery.isPending ? (
@@ -318,7 +318,7 @@ export default function TodayPage({
 	const kidsCard = <KidsToday today={today} members={members} parent={parent} onPage={onPage} />;
 	const needsCard = <NeedsYou me={me} onPage={onPage} />;
 	const quoteCard = (
-		<section className={s.card} aria-label="Quote of the day">
+		<Card aria-label="Quote of the day">
 			<ThemedHead themes={quoteThemes} of={QUOTE_THEMES.length}>
 				<h2 className={s.cardHead}>
 					Quote of the day <span className={s.cardHeadSubtext}>({quote.theme.name})</span>
@@ -328,10 +328,10 @@ export default function TodayPage({
 				<p>“{quote.item.text}”</p>
 				<footer>{quote.item.by}</footer>
 			</blockquote>
-		</section>
+		</Card>
 	);
 	const encouragementCard = (
-		<section className={s.card} aria-label="Encouragement">
+		<Card aria-label="Encouragement">
 			<ThemedHead themes={kindThemes} of={ENCOURAGEMENT_THEMES.length}>
 				<h2 className={s.cardHead}>
 					Encouragement <span className={s.cardHeadSubtext}>({kind.theme.name})</span>
@@ -343,7 +343,7 @@ export default function TodayPage({
 				</span>
 				{kind.item.text}
 			</p>
-		</section>
+		</Card>
 	);
 	// The family's slideshow (the screen saver's photos), as on the calendar.
 	const photosCard = <PhotoCard onPlay={onPlaySlideshow} className={`${s.wide} ${s.slideshow}`} />;

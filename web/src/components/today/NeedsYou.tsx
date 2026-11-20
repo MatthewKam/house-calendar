@@ -4,6 +4,7 @@ import ColorAsked from '../account/ColorAsked';
 import { dueLabel, isDue, isLate } from '../../lib/lists';
 import type { Page } from '../nav/NavBar';
 import s from './Today.module.css';
+import { Card } from '../ui/Card';
 
 /**
  * Today's "Needs you": only what's waiting (calendar clashes, rewards to hand over, reminders due,
@@ -40,8 +41,7 @@ export default function NeedsYou({
 	const needs = clashes + toHandOver.length + due.length + lists.length + colors.length;
 	if (needs === 0) return null;
 	return (
-		<section className={s.card}>
-			<h2 className={s.cardHead}>List items</h2>
+		<Card title="List items">
 			<ul className={s.needs}>
 				{clashes > 0 && (
 					<li>
@@ -86,6 +86,6 @@ export default function NeedsYou({
 					</li>
 				))}
 			</ul>
-		</section>
+		</Card>
 	);
 }

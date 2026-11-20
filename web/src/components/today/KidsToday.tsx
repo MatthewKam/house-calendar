@@ -10,6 +10,8 @@ import MomentDialog from '../tasks/MomentDialog';
 import { StarIcon } from '../ui/icons';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import s from './Today.module.css';
+import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
 
 /**
  * Today's "The kids today": each kid's tasks done (a bar in their colour), stickers and stars, and
@@ -46,15 +48,16 @@ export default function KidsToday({
 	if (kids.length === 0) return null;
 	return (
 		<>
-			<section className={s.card}>
-				<div className={s.cardTop}>
-					<h2 className={s.cardHead}>The kids today</h2>
-					{parent && (
-						<button type="button" className={s.catch} onClick={() => setCatching(true)}>
-							✨ Caught being good
-						</button>
-					)}
-				</div>
+			<Card
+				title="The kids today"
+				action={
+					parent && (
+						<Button size="sm" icon="✨" onClick={() => setCatching(true)}>
+							Caught being good
+						</Button>
+					)
+				}
+			>
 				{/* Loading: a bar for each kid, so "No tasks today" doesn't flash first. */}
 				{tasksQuery.isPending ? (
 					<Loading label="Loading the kids' day">
@@ -103,7 +106,7 @@ export default function KidsToday({
 						})}
 					</ul>
 				)}
-			</section>
+			</Card>
 			{catching && <MomentDialog kids={kids} today={today} onClose={() => setCatching(false)} />}
 		</>
 	);
