@@ -937,7 +937,7 @@ function ItemWhenWho({
 					</button>
 				)}
 			</div>
-			<p className={s.pickNote}>With a day, it shows under Needs you on Today when it's due.</p>
+			<p className={s.pickNote}>With a day, it shows under List items on Today when it's due.</p>
 			<div className={s.pickNote}>Who it's for</div>
 			<div className={s.whoRow}>
 				{members.map((m) => (
