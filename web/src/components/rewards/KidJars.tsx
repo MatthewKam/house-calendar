@@ -302,7 +302,6 @@ export default function KidJars({ kid, members, today, bucket, jars, onEdit, ask
 				>
 					<Field label="New deadline" hint="Leave it empty for none">
 						<DateInput
-							className={s.date}
 							value={restoring.deadline}
 							min={today}
 							onChange={(e) => setRestoring({ ...restoring, deadline: e.target.value })}

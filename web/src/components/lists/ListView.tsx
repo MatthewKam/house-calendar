@@ -33,6 +33,10 @@ import Sheet from '../ui/Sheet';
 import Switch from '../ui/Switch';
 import { ShoppingButton, TickedBy } from '../ui/ShoppingTogether';
 import { useFolded } from '../../lib/useFolded';
+import { Button, IconButton } from '../ui/Button';
+import { Chip } from '../ui/Chip';
+import { Field, Fieldset, Input } from '../ui/Field';
+import { List, ListRow } from '../ui/ListRow';
 
 /** Soft colors for a list's rows, light enough for dark text. */
 const LIST_COLORS = ['#f2dcb3', '#ecb0ea', '#c9dcf7', '#cdebd3', '#ddd3f5', '#f8cfb8', '#f6e7a1', '#c3ece4', '#e4e4e4'];
@@ -324,14 +328,14 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 					{/* Who ticked it, in their color. */}
 					{it.done && it.doneBy && <TickedBy by={it.doneBy} members={members} />}
 				</button>
-				<button
-					className={`${s.more} ${s.edit}`}
-					onClick={() => setDetails(it)}
-					aria-label={`Edit ${text}`}
+				<IconButton
+					size="sm"
+					className={s.edit}
+					icon={<PencilIcon />}
+					label={`Edit ${text}`}
 					title={sprig ? 'Name, icon, when, who, or delete' : 'Name or icon'}
-				>
-					<PencilIcon />
-				</button>
+					onClick={() => setDetails(it)}
+				/>
 				{handle && parent && (
 					<span className={s.grip} {...handle}>
 						<GripIcon />
@@ -355,14 +359,12 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 				/>
 				<h2 className={s.title}>{list.title}</h2>
 				{sprig && parent && (
-					<button
-						className={s.more}
-						onClick={() => setSettingUp(true)}
-						aria-label={`Change ${list.title}`}
+					<IconButton
+						icon="⋯"
+						label={`Change ${list.title}`}
 						title="Rename or delete"
-					>
-						⋯
-					</button>
+						onClick={() => setSettingUp(true)}
+					/>
 				)}
 				{sprig && <ShoppingButton shopping={list.shopping} me={me} members={members} onChange={onShopping} />}
 				{last && (
@@ -410,9 +412,9 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 				</ul>
 			)}
 			{sprig && doneCount > 0 && (
-				<button className={s.clearDone} onClick={() => own.clearDone.mutate(list.id)}>
+				<Button variant="link" size="sm" className={s.clearDone} onClick={() => own.clearDone.mutate(list.id)}>
 					Clear {doneCount} done
-				</button>
+				</Button>
 			)}
 			{list.items.length === 0 && <p className={s.empty}>Nothing here.</p>}
 			<form className={s.add} onSubmit={submit} style={{ '--c': color, '--on': textOn(color) } as CSSProperties}>
@@ -459,9 +461,7 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 					<Sheet label="Pick an icon" onClose={() => setPicking(false)}>
 						<header className={sheet.head}>
 							<h2 className={sheet.heading}>Icon for {typed.text || 'the new item'}</h2>
-							<button className={sheet.close} onClick={() => setPicking(false)} aria-label="Close">
-								×
-							</button>
+							<IconButton label="Close" icon="×" className={sheet.close} onClick={() => setPicking(false)} />
 						</header>
 						<IconPicker value={addIcon} onChange={setIcon} featured={iconChoices(typed.text)} />
 						{!sprig && <p className={s.pickNote}>{REMINDERS_ICON_NOTE}</p>}
@@ -498,25 +498,31 @@ export default function ListView() {
 				<h1 className={s.pageTitle}>Lists</h1>
 				<span className={s.spacer} />
 				{parent && (
-					<button className={s.choose} onClick={() => setAdding(true)}>
-						+ New list
-					</button>
+					<Button icon="+" onClick={() => setAdding(true)}>
+						New list
+					</Button>
 				)}
 				{lists.length > 0 && parent && (
-					<button className={s.choose} aria-pressed={choosing} onClick={() => setChoosing(!choosing)}>
+					<Button
+						variant={choosing ? 'primary' : 'secondary'}
+						aria-pressed={choosing}
+						onClick={() => setChoosing(!choosing)}
+					>
 						{choosing ? 'Done' : 'Choose lists'}
-					</button>
+					</Button>
 				)}
 			</header>
 			{choosing && (
 				<div className={s.picker} role="group" aria-label="Lists to show">
 					{lists.map((l) => (
-						<button key={l.title} className={s.pick} aria-pressed={!isHidden(l.title)} onClick={() => toggle(l.title)}>
-							<span className={s.box} aria-hidden="true">
-								{isHidden(l.title) ? '' : '✓'}
-							</span>
+						<Chip
+							key={l.title}
+							icon={isHidden(l.title) ? undefined : '✓'}
+							pressed={!isHidden(l.title)}
+							onClick={() => toggle(l.title)}
+						>
 							{l.title}
-						</button>
+						</Chip>
 					))}
 				</div>
 			)}
@@ -569,9 +575,9 @@ function Lists({ hidden, onNew }: { hidden: (title: string) => boolean; onNew?: 
 				<h2>No lists yet</h2>
 				<p>Make one for groceries, to-dos or packing. Anyone can add to it and tick things off.</p>
 				{onNew && (
-					<button className={s.choose} onClick={onNew}>
-						+ New list
-					</button>
+					<Button variant="primary" icon="+" onClick={onNew}>
+						New list
+					</Button>
 				)}
 				{reminders.data?.enabled && (
 					<p>Your iCloud Reminders lists show up here too, after the Reminders Shortcut runs on an iPhone.</p>
@@ -628,24 +634,22 @@ function NewListSheet({ onClose }: { onClose: () => void }) {
 				}}
 			>
 				<h2 className={sheet.heading}>New list</h2>
-				<input
-					className={s.nameInput}
-					value={title}
-					onChange={(e) => setTitle(e.target.value)}
-					placeholder="Groceries, To do, Packing…"
-					maxLength={100}
-					autoFocus
-					aria-label="List name"
-				/>
+				<Field label="List name">
+					<Input
+						value={title}
+						onChange={(e) => setTitle(e.target.value)}
+						placeholder="Groceries, To do, Packing…"
+						maxLength={100}
+						autoFocus
+					/>
+				</Field>
 				{addList.isError && <p className={s.error}>{addList.error.message}</p>}
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />
-					<button type="button" className={sheet.secondary} onClick={onClose}>
-						Cancel
-					</button>
-					<button type="submit" className={sheet.primary} disabled={!title.trim() || addList.isPending}>
+					<Button onClick={onClose}>Cancel</Button>
+					<Button variant="primary" type="submit" disabled={!title.trim() || addList.isPending}>
 						Make it
-					</button>
+					</Button>
 				</div>
 			</Sheet>
 		</>
@@ -685,54 +689,43 @@ export function AddToListSheet({
 			>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>Add to a list</h2>
-					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-						×
-					</button>
+					<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 				</header>
 				{lists && lists.length === 0 ? (
 					<>
 						<p className={sheet.body}>No lists yet. Make one on the Lists page first: Groceries, To do, Packing…</p>
 						<div className={sheet.actions}>
 							<span className={sheet.spacer} />
-							<button type="button" className={sheet.primary} onClick={onNewList}>
+							<Button variant="primary" onClick={onNewList}>
 								Go to Lists
-							</button>
+							</Button>
 						</div>
 					</>
 				) : (
 					<>
-						<input
-							className={s.nameInput}
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							placeholder="Milk, call the dentist…"
-							maxLength={300}
-							autoFocus
-							aria-label="What to add"
-						/>
-						<div className={s.listPicks} role="radiogroup" aria-label="Which list">
+						<Field label="What to add">
+							<Input
+								value={title}
+								onChange={(e) => setTitle(e.target.value)}
+								placeholder="Milk, call the dentist…"
+								maxLength={300}
+								autoFocus
+							/>
+						</Field>
+						<Fieldset label="Which list">
 							{lists?.map((l) => (
-								<button
-									key={l.id}
-									type="button"
-									role="radio"
-									aria-checked={l.id === chosen?.id}
-									className={`${s.listPick} ${l.id === chosen?.id ? s.listPicked : ''}`}
-									onClick={() => setListId(l.id)}
-								>
+								<Chip key={l.id} pressed={l.id === chosen?.id} onClick={() => setListId(l.id)}>
 									{l.title}
-								</button>
+								</Chip>
 							))}
-						</div>
+						</Fieldset>
 						{added && <p className={s.added}>✓ {added}</p>}
 						<div className={sheet.actions}>
 							<span className={sheet.spacer} />
-							<button type="button" className={sheet.secondary} onClick={onClose}>
-								Done
-							</button>
-							<button type="submit" className={sheet.primary} disabled={!title.trim() || !chosen}>
+							<Button onClick={onClose}>Done</Button>
+							<Button variant="primary" type="submit" disabled={!title.trim() || !chosen}>
 								Add
-							</button>
+							</Button>
 						</div>
 					</>
 				)}
@@ -766,38 +759,31 @@ function ListSheet({ list, onUnsort, onClose }: { list: CardList; onUnsort: () =
 				}}
 			>
 				<h2 className={sheet.heading}>{list.title}</h2>
-				<input
-					className={s.nameInput}
-					value={title}
-					onChange={(e) => setTitle(e.target.value)}
-					maxLength={100}
-					aria-label="List name"
-				/>
-				<div className={s.sortRow}>
-					<span>
-						Sort unchecked first
-						<span className={s.pickNote}>Ticked items move to the bottom. Off, they stay in place.</span>
-					</span>
-					<Switch on={sort} onChange={setSort} label="Sort unchecked first" />
-				</div>
+				<Field label="List name">
+					<Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} />
+				</Field>
+				<List>
+					<ListRow
+						title="Sort unchecked first"
+						detail="Ticked items move to the bottom. Off, they stay in place."
+						trailing={<Switch on={sort} onChange={setSort} label="Sort unchecked first" />}
+					/>
+				</List>
 				{(changeList.error ?? deleteList.error) && (
 					<p className={s.error}>{(changeList.error ?? deleteList.error)!.message}</p>
 				)}
 				<div className={sheet.actions}>
-					<button
-						type="button"
-						className={sheet.danger}
+					<Button
+						variant={deleting ? 'destructive' : 'danger'}
 						onClick={() => (deleting ? deleteList.mutate(list.id, { onSuccess: onClose }) : setDeleting(true))}
 					>
 						{deleting ? `Delete it and its ${list.items.length} items` : 'Delete list'}
-					</button>
+					</Button>
 					<span className={sheet.spacer} />
-					<button type="button" className={sheet.secondary} onClick={onClose}>
-						Cancel
-					</button>
-					<button type="submit" className={sheet.primary} disabled={!title.trim()}>
+					<Button onClick={onClose}>Cancel</Button>
+					<Button variant="primary" type="submit" disabled={!title.trim()}>
 						Save
-					</button>
+					</Button>
 				</div>
 			</Sheet>
 		</>
@@ -843,9 +829,7 @@ function ItemSheet({ item, members, sprig, onRename, onClose }: ItemSheetProps) 
 			<Sheet label={`Edit ${name || 'item'}`} onClose={onClose} className={sheet.confirm}>
 				<div className={sheet.head}>
 					<h2 className={sheet.heading}>Edit item</h2>
-					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-						×
-					</button>
+					<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 				</div>
 				<form className={s.nameRow} onSubmit={save}>
 					<button
@@ -858,7 +842,7 @@ function ItemSheet({ item, members, sprig, onRename, onClose }: ItemSheetProps) 
 					>
 						{icon ?? '+'}
 					</button>
-					<input value={name} onChange={(e) => setName(e.target.value)} maxLength={300} aria-label="Name" />
+					<Input value={name} onChange={(e) => setName(e.target.value)} maxLength={300} aria-label="Name" />
 				</form>
 				{choosingIcon && (
 					<IconPicker
@@ -874,21 +858,18 @@ function ItemSheet({ item, members, sprig, onRename, onClose }: ItemSheetProps) 
 				{sprig && <ItemWhenWho {...{ day, setDay, time, setTime, who, setWho, members }} />}
 				<div className={sheet.actions}>
 					{sprig && (
-						<button
-							type="button"
-							className={sheet.danger}
+						<Button
+							variant={deleting ? 'destructive' : 'danger'}
 							onClick={() => (deleting ? remove.mutate(item.id, { onSuccess: onClose }) : setDeleting(true))}
 						>
 							{deleting ? 'Tap again to delete' : 'Delete'}
-						</button>
+						</Button>
 					)}
 					<span className={sheet.spacer} />
-					<button type="button" className={sheet.secondary} onClick={onClose}>
-						Cancel
-					</button>
-					<button type="button" className={sheet.primary} onClick={() => save()}>
+					<Button onClick={onClose}>Cancel</Button>
+					<Button variant="primary" onClick={() => save()}>
 						Save
-					</button>
+					</Button>
 				</div>
 			</Sheet>
 		</>
@@ -916,30 +897,27 @@ function ItemWhenWho({
 	return (
 		<>
 			<div className={s.whenRow}>
-				<label>
-					Day
+				<Field label="Day">
 					<DateInput value={day} onChange={(e) => setDay(e.target.value)} />
-				</label>
-				<label>
-					Time (optional)
-					<input type="time" step={300} value={time} disabled={!day} onChange={(e) => setTime(e.target.value)} />
-				</label>
+				</Field>
+				<Field label="Time" hint="Optional">
+					<Input type="time" step={300} value={time} disabled={!day} onChange={(e) => setTime(e.target.value)} />
+				</Field>
 				{day && (
-					<button
-						type="button"
-						className={s.clearDone}
+					<Button
+						variant="link"
+						size="sm"
 						onClick={() => {
 							setDay('');
 							setTime('');
 						}}
 					>
 						No date
-					</button>
+					</Button>
 				)}
 			</div>
 			<p className={s.pickNote}>With a day, it shows under List items on Today when it's due.</p>
-			<div className={s.pickNote}>Who it's for</div>
-			<div className={s.whoRow}>
+			<Fieldset label="Who it's for">
 				{members.map((m) => (
 					<PickChip
 						key={m.id}
@@ -949,7 +927,7 @@ function ItemWhenWho({
 						onClick={() => setWho(who === m.id ? null : m.id)}
 					/>
 				))}
-			</div>
+			</Fieldset>
 		</>
 	);
 }
