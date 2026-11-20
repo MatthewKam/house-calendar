@@ -28,6 +28,8 @@ import { usePage } from './lib/usePage';
 import { BackButton } from './components/ui/BackButton';
 import { useEdgeSwipe } from './lib/useEdgeSwipe';
 import { useBackStep } from './lib/useBackStep';
+// Android's Back goes back through the same steps (only there).
+import './lib/androidBack';
 import ListView, { AddToListSheet } from './components/lists/ListView';
 import QuickAdd, { type QuickAction } from './components/nav/QuickAdd';
 import MomentDialog from './components/tasks/MomentDialog';
