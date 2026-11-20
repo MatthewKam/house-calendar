@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useRecipeActions } from '../../lib/queries';
 import type { CookNote, Member, Recipe } from '../../lib/types';
 import ConfirmDialog from '../ui/ConfirmDialog';
-import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
+import { Button } from '../ui/Button';
+import { TextArea } from '../ui/Field';
 
 /** "Nov 14", or "Nov 14, 2025" from another year. */
 function day(at: string) {
@@ -51,7 +52,7 @@ export default function CookNotes({
 				save();
 			}}
 		>
-			<textarea
+			<TextArea
 				className={s.noteBox}
 				rows={3}
 				maxLength={1000}
@@ -62,12 +63,10 @@ export default function CookNotes({
 				onChange={(e) => setText(e.target.value)}
 			/>
 			<span className={s.noteButtons}>
-				<button type="button" className={sheet.secondary} onClick={() => setWriting(null)}>
-					Cancel
-				</button>
-				<button type="submit" className={sheet.primary} disabled={!text.trim()}>
+				<Button onClick={() => setWriting(null)}>Cancel</Button>
+				<Button variant="primary" type="submit" disabled={!text.trim()}>
 					Save
-				</button>
+				</Button>
 			</span>
 		</form>
 	);
@@ -77,9 +76,9 @@ export default function CookNotes({
 			<div className={s.sectionHead}>
 				<h3>Notes from cooking</h3>
 				{parent && writing === null && (
-					<button type="button" className={s.addPhoto} onClick={() => start(null)}>
+					<Button size="sm" onClick={() => start(null)}>
 						＋ Add a note
-					</button>
+					</Button>
 				)}
 			</div>
 			{writing === '' && editor}
@@ -102,12 +101,12 @@ export default function CookNotes({
 									<p className={s.notes}>{n.text}</p>
 									{parent && (
 										<span className={s.noteButtons}>
-											<button type="button" className={s.noteAction} onClick={() => start(n)}>
+											<Button variant="quiet" size="sm" onClick={() => start(n)}>
 												Edit
-											</button>
-											<button type="button" className={s.noteAction} onClick={() => setRemoving(n)}>
+											</Button>
+											<Button variant="quiet" size="sm" onClick={() => setRemoving(n)}>
 												Delete
-											</button>
+											</Button>
 										</span>
 									)}
 								</>

@@ -10,6 +10,8 @@ import Problem from '../ui/Problem';
 import Sheet from '../ui/Sheet';
 import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
+import { Button, IconButton } from '../ui/Button';
+import { Chip } from '../ui/Chip';
 
 /** `hour` o'clock on the day `days` from now. */
 const at = (now: Date, days: number, hour: number) => {
@@ -63,9 +65,7 @@ export default function RemindMe({ recipe: r, onClose }: { recipe: Recipe; onClo
 		>
 			<header className={sheet.head}>
 				<h2 className={sheet.heading}>Remind me</h2>
-				<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-					×
-				</button>
+				<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 			</header>
 			<div className={s.part}>
 				<h3 className={s.planLabel}>To do</h3>
@@ -92,15 +92,14 @@ export default function RemindMe({ recipe: r, onClose }: { recipe: Recipe; onClo
 				<h3 className={s.planLabel}>When</h3>
 				<div className={s.tagChoices}>
 					{times.map((t) => (
-						<button
+						<Chip
 							key={t.label}
-							type="button"
-							className={s.chip}
-							aria-pressed={when === t.at}
+
+							pressed={when === t.at}
 							onClick={() => setWhen(t.at)}
 						>
 							{t.label}
-						</button>
+						</Chip>
 					))}
 					<label className={`${s.chip} ${s.planDate}`} data-on={picked || undefined}>
 						🕰️ {picked ? whenText(when, today) : 'Pick a time'}
@@ -121,13 +120,11 @@ export default function RemindMe({ recipe: r, onClose }: { recipe: Recipe; onClo
 			)}
 			<div className={`${sheet.actions} ${s.planActions}`}>
 				<span className={sheet.spacer} />
-				<button type="button" className={sheet.secondary} onClick={onClose}>
-					{said ? 'Done' : 'Cancel'}
-				</button>
+				<Button onClick={onClose}>{said ? 'Done' : 'Cancel'}</Button>
 				{!said && (
-					<button type="submit" className={sheet.primary} disabled={!chosen.length || remind.isPending}>
+					<Button variant="primary" type="submit" disabled={!chosen.length || remind.isPending}>
 						{remind.isPending ? 'Adding…' : 'Remind me'}
-					</button>
+					</Button>
 				)}
 			</div>
 		</Sheet>

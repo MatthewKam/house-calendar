@@ -53,6 +53,9 @@ import TagPicker from './TagPicker';
 import buttons from '../ui/Buttons.module.css';
 import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
+import { Button, IconButton } from '../ui/Button';
+import { Segmented } from '../ui/Segmented';
+import { Select, TextArea } from '../ui/Field';
 
 /** How many times the recipe: for a smaller meal, or a crowd. */
 const SCALES = [0.5, 1, 2, 4, 6, 8];
@@ -305,19 +308,13 @@ export default function RecipeView({
 		<section className={s.part} aria-label="Ingredients">
 			<div className={s.sectionHead}>
 				<h3>{cooking ? 'Prep and gather' : 'Ingredients'}</h3>
-				<span className={s.select}>
-					<select
-						aria-label="How many times the recipe"
-						value={scale}
-						onChange={(e) => setScale(Number(e.target.value))}
-					>
-						{SCALES.map((x) => (
-							<option key={x} value={x}>
-								{x === 0.5 ? '×½' : `×${x}`}
-							</option>
-						))}
-					</select>
-				</span>
+				<Select aria-label="How many times the recipe" value={scale} onChange={(e) => setScale(Number(e.target.value))}>
+					{SCALES.map((x) => (
+						<option key={x} value={x}>
+							{x === 0.5 ? '×½' : `×${x}`}
+						</option>
+					))}
+				</Select>
 			</div>
 			{!cooking && (
 				<div className={s.shopRow}>
@@ -398,9 +395,9 @@ export default function RecipeView({
 			) : (
 				!cooking &&
 				missing.length > 0 && (
-					<button
-						type="button"
-						className={s.cookButton}
+					<Button
+						size="sm"
+
 						disabled={groceries.isPending}
 						onClick={() =>
 							groceries.mutate(
@@ -415,7 +412,7 @@ export default function RecipeView({
 						}
 					>
 						{groceries.isPending ? 'Sending to Groceries…' : `🛒 Add ${missing.length} missing to Groceries`}
-					</button>
+					</Button>
 				)
 			)}
 		</section>
@@ -447,9 +444,9 @@ export default function RecipeView({
 									</button>
 								))}
 								{parent && (
-									<button type="button" className={s.addPhoto} onClick={() => choosePhotos(n)}>
+									<Button size="sm" onClick={() => choosePhotos(n)}>
 										＋ Photo
-									</button>
+									</Button>
 								)}
 							</div>
 						)}
@@ -475,9 +472,7 @@ export default function RecipeView({
 							<path d="M12 3v12M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1" />
 						</svg>
 					</button>
-					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-						×
-					</button>
+					<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 				</header>
 
 				{/* The top: its photo, and what to know before starting. */}
@@ -536,14 +531,12 @@ export default function RecipeView({
 								</ul>
 								{parent && (
 									<span className={s.aheadButtons}>
-										<button type="button" className={s.aheadButton} onClick={() => setPlanning('new')}>
-											<span className={buttons.buttonIcon}>📅&nbsp;</span>
-											<span className={buttons.buttonText}>Pick a cook day</span>
-										</button>
-										<button type="button" className={s.aheadButton} onClick={() => setReminding(true)}>
-											<span className={buttons.buttonIcon}>⏰&nbsp;</span>
-											<span className={buttons.buttonText}>Just remind me</span>
-										</button>
+										<Button icon="📅" onClick={() => setPlanning('new')}>
+											Pick a cook day
+										</Button>
+										<Button icon="⏰" onClick={() => setReminding(true)}>
+											Just remind me
+										</Button>
 									</span>
 								)}
 							</div>
@@ -556,10 +549,9 @@ export default function RecipeView({
 									</span>
 								))}
 								{parent && (
-									<button type="button" className={s.tagButton} onClick={() => setTagging(true)}>
-										<span className={buttons.buttonIcon}>🏷️&nbsp;</span>
-										<span className={buttons.buttonText}>{r.tags.length ? 'Edit tags' : 'Add tags'}</span>
-									</button>
+									<Button size="sm" icon="🏷️" onClick={() => setTagging(true)}>
+										{r.tags.length ? 'Edit tags' : 'Add tags'}
+									</Button>
 								)}
 							</div>
 						)}
@@ -589,21 +581,20 @@ export default function RecipeView({
 									</button>
 								))}
 								{parent && r.prepAhead.length === 0 && !onToday && (
-									<button
-										type="button"
-										className={s.tagButton}
+									<Button
+										size="sm"
+										icon="🍳"
+
 										disabled={plan.isPending}
 										onClick={() => plan.mutate({ day: today, meal: 'dinner', recipeId: r.id, reminders: [] })}
 									>
-										<span className={buttons.buttonIcon}>🍳&nbsp;</span>
-										<span className={buttons.buttonText}>Cook today</span>
-									</button>
+										Cook today
+									</Button>
 								)}
 								{parent && r.prepAhead.length === 0 && (
-									<button type="button" className={s.tagButton} onClick={() => setPlanning('new')}>
-										<span className={buttons.buttonIcon}>📅&nbsp;</span>
-										<span className={buttons.buttonText}>Pick a cook day</span>
-									</button>
+									<Button size="sm" icon="📅" onClick={() => setPlanning('new')}>
+										Pick a cook day
+									</Button>
 								)}
 							</div>
 						)}
@@ -620,9 +611,10 @@ export default function RecipeView({
 									(!room ? (
 										// Starting one is a grown-up's (cooking needs one); anyone can join one under way.
 										parent && (
-											<button
-												type="button"
-												className={s.tagButton}
+											<Button
+												size="sm"
+												icon="👩‍🍳"
+
 												disabled={cookActions.start.isPending}
 												onClick={() =>
 													cookActions.start.mutate(undefined, {
@@ -633,42 +625,39 @@ export default function RecipeView({
 													})
 												}
 											>
-												<span className={buttons.buttonIcon}>👩‍🍳&nbsp;</span>
-												<span className={buttons.buttonText}>Cook together</span>
-											</button>
+												Cook together
+											</Button>
 										)
 									) : (
 										<>
 											<div className={s.cookTogether}>
 												<span>👩‍🍳 Cooking together until {untilWords(room.until)}</span>
 												{joined ? (
-													<button type="button" className={s.tagButton} onClick={() => void shareLink(room.secret)}>
+													<Button size="sm" onClick={() => void shareLink(room.secret)}>
 														Send the link
-													</button>
+													</Button>
 												) : (
-													<button type="button" className={s.tagButton} onClick={() => setJoined(true)}>
+													<Button size="sm" onClick={() => setJoined(true)}>
 														Join
-													</button>
+													</Button>
 												)}
 												{/* How long it lasts, and ending it: a grown-up's. */}
 												{parent && (
 													<>
-														<span className={s.select}>
-															<select
-																aria-label="How long the link lasts"
-																value=""
-																onChange={(e) => e.target.value && cookActions.length.mutate(Number(e.target.value))}
-															>
-																<option value="">Keep it for…</option>
-																<option value="24">A day from now</option>
-																<option value="48">2 days</option>
-																<option value="72">3 days</option>
-																<option value="168">A week</option>
-															</select>
-														</span>
-														<button type="button" className={s.textLink} onClick={() => setEnding(true)}>
+														<Select
+															aria-label="How long the link lasts"
+															value=""
+															onChange={(e) => e.target.value && cookActions.length.mutate(Number(e.target.value))}
+														>
+															<option value="">Keep it for…</option>
+															<option value="24">A day from now</option>
+															<option value="48">2 days</option>
+															<option value="72">3 days</option>
+															<option value="168">A week</option>
+														</Select>
+														<Button variant="link" size="sm" className={s.textLink} onClick={() => setEnding(true)}>
 															End
-														</button>
+														</Button>
 													</>
 												)}
 											</div>
@@ -682,27 +671,25 @@ export default function RecipeView({
 							<>
 								{/* Someone's cooking it together: joining starts cooking here too. */}
 								{canCookTogether && room && others.some((p) => !p.progress.doneAt) && (
-									<button
-										type="button"
-										className={s.tagButton}
+									<Button
+										size="sm"
+										icon="👩‍🍳"
+
 										onClick={() => {
 											startCooking();
 											setJoined(true);
 										}}
 									>
-										<span className={buttons.buttonIcon}>👩‍🍳&nbsp;</span>
-										<span className={buttons.buttonText}>
-											{others
-												.filter((p) => !p.progress.doneAt)
-												.map((p) => p.name)
-												.join(', ')}{' '}
-											cooking this · Join
-										</span>
-									</button>
+										{others
+											.filter((p) => !p.progress.doneAt)
+											.map((p) => p.name)
+											.join(', ')}{' '}
+										cooking this · Join
+									</Button>
 								)}
-								<button type="button" className={s.startCooking} onClick={startCooking}>
+								<Button variant="primary" size="lg" className={s.startCooking} onClick={startCooking}>
 									Start cooking
-								</button>
+								</Button>
 							</>
 						)}
 						{said && (
@@ -715,19 +702,16 @@ export default function RecipeView({
 
 				{/* Phones: one at a time; bigger screens: side by side. */}
 				{phone && ingredients && steps && (
-					<div className={s.tabs} role="tablist" aria-label="Recipe">
-						<button
-							type="button"
-							role="tab"
-							aria-selected={tab === 'ingredients'}
-							onClick={() => setTab('ingredients')}
-						>
-							Ingredients
-						</button>
-						<button type="button" role="tab" aria-selected={tab === 'steps'} onClick={() => setTab('steps')}>
-							Steps
-						</button>
-					</div>
+					<Segmented
+						tabs
+						label="Recipe"
+						value={tab}
+						onChange={setTab}
+						options={[
+							{ id: 'ingredients', label: 'Ingredients' },
+							{ id: 'steps', label: 'Steps' },
+						]}
+					/>
 				)}
 				<div className={phone ? undefined : s.columns}>
 					{(!phone || tab === 'ingredients' || !steps) && ingredients}
@@ -795,13 +779,15 @@ export default function RecipeView({
 									{r.noCover ? (
 										<span className={s.mainBadge}>★ No main photo</span>
 									) : (
-										<button
-											type="button"
+										<Button
+											variant="link"
+											size="sm"
 											className={s.photoAction}
+
 											onClick={() => setCover.mutate({ id: r.id, imageId: null })}
 										>
 											No main photo
-										</button>
+										</Button>
 									)}
 								</div>
 							)}
@@ -814,13 +800,15 @@ export default function RecipeView({
 										<span className={s.mainBadge}>★ Main photo</span>
 									) : (
 										parent && (
-											<button
-												type="button"
+											<Button
+												variant="link"
+												size="sm"
 												className={s.photoAction}
+
 												onClick={() => setCover.mutate({ id: r.id, imageId: i.id })}
 											>
 												Make main photo
-											</button>
+											</Button>
 										)
 									)}
 								</div>
@@ -853,19 +841,15 @@ export default function RecipeView({
 
 				<div className={sheet.actions}>
 					{parent && (
-						<button type="button" className={sheet.danger} onClick={() => setDeleting(true)}>
+						<Button variant="danger" onClick={() => setDeleting(true)}>
 							Delete
-						</button>
+						</Button>
 					)}
 					<span className={sheet.spacer} />
-					{parent && (
-						<button type="button" className={sheet.secondary} onClick={() => setEditing(true)}>
-							Edit
-						</button>
-					)}
-					<button type="button" className={sheet.primary} onClick={onClose}>
+					{parent && <Button onClick={() => setEditing(true)}>Edit</Button>}
+					<Button variant="primary" onClick={onClose}>
 						Done
-					</button>
+					</Button>
 				</div>
 			</Sheet>
 			{big && (
@@ -909,7 +893,7 @@ export default function RecipeView({
 					You cooked for {minutesText(finished)}. Saved, it goes in this recipe's history: how many times you've made
 					it, and how long it usually takes.
 					{parent && (
-						<textarea
+						<TextArea
 							className={s.noteBox}
 							rows={3}
 							maxLength={1000}

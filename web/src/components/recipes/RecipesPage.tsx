@@ -19,6 +19,9 @@ import RecipePages, { PAGE_SIZE } from './RecipePages';
 import { allProgress, progressText, saveProgress } from '../../lib/recipeProgress';
 import RecipeView from './RecipeView';
 import s from './Recipes.module.css';
+import { Segmented } from '../ui/Segmented';
+import { Select } from '../ui/Field';
+import { Button } from '../ui/Button';
 
 /**
  * The time there is, and which recipes fit it: up to so many minutes, or the long ones (over an hour). A
@@ -160,27 +163,26 @@ export default function RecipesPage({
 				{parent && (
 					<span className={s.headButtons}>
 						{/* Out of ideas: dishes to try (with Claude on the server). */}
-						{reading?.on && (
-							<button type="button" className={s.ideasButton} onClick={() => setIdeas({ kind: '' })}>
-								✨ Dish ideas
-							</button>
-						)}
-						<button type="button" className={s.add} onClick={() => setAdding(true)}>
+						{reading?.on && <Button onClick={() => setIdeas({ kind: '' })}>✨ Dish ideas</Button>}
+						<Button variant="primary" onClick={() => setAdding(true)}>
 							＋ Recipe
-						</button>
+						</Button>
 					</span>
 				)}
 			</header>
 
 			{/* Two tabs: the recipes saved over time, and the days ahead to put them on. */}
-			<div className={`${s.tabs} ${s.pageTabs}`} role="tablist" aria-label="Recipes or plan ahead">
-				<button type="button" role="tab" aria-selected={tab === 'recipes'} onClick={() => pickTab('recipes')}>
-					Recipes
-				</button>
-				<button type="button" role="tab" aria-selected={tab === 'plan'} onClick={() => pickTab('plan')}>
-					Plan ahead
-				</button>
-			</div>
+			<Segmented
+				tabs
+				className={s.pageTabs}
+				label="Recipes or plan ahead"
+				value={tab}
+				onChange={pickTab}
+				options={[
+					{ id: 'recipes', label: 'Recipes' },
+					{ id: 'plan', label: 'Plan ahead' },
+				]}
+			/>
 			{tab === 'plan' ? (
 				<div className={s.scroll}>
 					<PlanAhead
@@ -250,57 +252,50 @@ export default function RecipesPage({
 					{recipes.length > 0 && (
 						// Side by side: the time there is, a kind (a meal, a protein, a type), and the family's tags.
 						<div className={s.filters}>
-							<span className={s.select}>
-								<select
-									aria-label="Time you have"
-									value={time === null ? '' : String(time)}
-									onChange={(e) => setTime(e.target.value ? Number(e.target.value) : null)}
-								>
-									<option value="">Any time</option>
-									{TIMES.map(({ label }, i) => (
-										<option key={label} value={String(i)}>
-											{label}
-										</option>
-									))}
-								</select>
-							</span>
+							<Select
+								aria-label="Time you have"
+								value={time === null ? '' : String(time)}
+								onChange={(e) => setTime(e.target.value ? Number(e.target.value) : null)}
+							>
+								<option value="">Any time</option>
+								{TIMES.map(({ label }, i) => (
+									<option key={label} value={String(i)}>
+										{label}
+									</option>
+								))}
+							</Select>
 
 							{tags.length > 1 && (
-								<span className={`${s.select} ${s.kind}`}>
-									<select aria-label="Kind" value={tag ?? ''} onChange={(e) => setTag(e.target.value || null)}>
-										<option value="">Any kind</option>
-										{tags.map((t) => (
-											<option key={t} value={t}>
-												{t[0].toUpperCase() + t.slice(1)}
-											</option>
-										))}
-									</select>
-								</span>
+								<Select
+									className={s.kind}
+									aria-label="Kind"
+									value={tag ?? ''}
+									onChange={(e) => setTag(e.target.value || null)}
+								>
+									<option value="">Any kind</option>
+									{tags.map((t) => (
+										<option key={t} value={t}>
+											{t[0].toUpperCase() + t.slice(1)}
+										</option>
+									))}
+								</Select>
 							)}
 							{recipes.some((r) => longestPrep(r) >= OVERNIGHT) && (
-								<span className={s.select}>
-									<select aria-label="Prep ahead" value={prep} onChange={(e) => setPrep(e.target.value as Prep)}>
-										<option value="">Any prep</option>
-										<option value="tonight">🍳 Ready tonight</option>
-										<option value="ahead">🌙 Needs prep ahead</option>
-									</select>
-								</span>
+								<Select aria-label="Prep ahead" value={prep} onChange={(e) => setPrep(e.target.value as Prep)}>
+									<option value="">Any prep</option>
+									<option value="tonight">🍳 Ready tonight</option>
+									<option value="ahead">🌙 Needs prep ahead</option>
+								</Select>
 							)}
 							{familyTags.length > 0 && (
-								<span className={s.select}>
-									<select
-										aria-label="Tag"
-										value={familyTag ?? ''}
-										onChange={(e) => setFamilyTag(e.target.value || null)}
-									>
-										<option value="">Any tag</option>
-										{familyTags.map((t) => (
-											<option key={t} value={t}>
-												{tagEmoji(t)} {t}
-											</option>
-										))}
-									</select>
-								</span>
+								<Select aria-label="Tag" value={familyTag ?? ''} onChange={(e) => setFamilyTag(e.target.value || null)}>
+									<option value="">Any tag</option>
+									{familyTags.map((t) => (
+										<option key={t} value={t}>
+											{tagEmoji(t)} {t}
+										</option>
+									))}
+								</Select>
 							)}
 							{/* How the recipes show: cards, a list, or a small picture beside the words. */}
 							<span className={s.views} role="group" aria-label="Show as">
@@ -386,9 +381,7 @@ export default function RecipesPage({
 					recipe={opened}
 					parent={parent}
 					back={
-						opened.id === linked.current?.id
-							? { to: linked.current.from, onBack: () => history.back() }
-							: undefined
+						opened.id === linked.current?.id ? { to: linked.current.from, onBack: () => history.back() } : undefined
 					}
 					onClose={() => {
 						// Closed by hand: opened again, it's a step like any other.

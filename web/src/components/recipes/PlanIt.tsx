@@ -20,6 +20,9 @@ import { useNow } from '../../lib/useNow';
 import Sheet from '../ui/Sheet';
 import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
+import { Button, IconButton } from '../ui/Button';
+import { Chip } from '../ui/Chip';
+import { Input, Select } from '../ui/Field';
 
 /** A step's time changed, or its reminder off; kept per day and meal ("day|meal|step"). */
 type Edits = Record<string, { at?: number; on?: boolean }>;
@@ -71,9 +74,7 @@ export default function PlanIt({
 					<h2 className={sheet.heading}>
 						{mealLabel(meal)}, {dayWord(day, today)}
 					</h2>
-					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-						×
-					</button>
+					<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 				</header>
 				{onNewRecipe && (
 					<button type="button" className={s.planNew} onClick={onNewRecipe}>
@@ -88,7 +89,7 @@ export default function PlanIt({
 				)}
 				{recipes.length > 0 && <h3 className={s.planLabel}>Or one of your recipes</h3>}
 				{recipes.length > 0 && (
-					<input
+					<Input
 						className={s.ideasInput}
 						placeholder="Find a recipe"
 						aria-label="Find a recipe"
@@ -159,28 +160,24 @@ export default function PlanIt({
 		>
 			<header className={sheet.head}>
 				<h2 className={sheet.heading}>{recipe.title}</h2>
-				<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-					×
-				</button>
+				<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 			</header>
 			<div className={s.part}>
 				<span className={s.planHead}>
 					<h3 className={s.planLabel}>Day</h3>
-					<span className={s.select}>
-						<select aria-label="Meal" value={meal} onChange={(e) => setMeal(e.target.value as PlanMeal)}>
-							{MEALS.map((m) => (
-								<option key={m.meal} value={m.meal}>
-									{m.emoji} {m.label}
-								</option>
-							))}
-						</select>
-					</span>
+					<Select aria-label="Meal" value={meal} onChange={(e) => setMeal(e.target.value as PlanMeal)}>
+						{MEALS.map((m) => (
+							<option key={m.meal} value={m.meal}>
+								{m.emoji} {m.label}
+							</option>
+						))}
+					</Select>
 				</span>
 				<div className={s.tagChoices}>
 					{days.map((d) => (
-						<button key={d} type="button" className={s.chip} aria-pressed={day === d} onClick={() => setDay(d)}>
+						<Chip key={d} pressed={day === d} onClick={() => setDay(d)}>
 							{dayWord(d, today)}
-						</button>
+						</Chip>
 					))}
 					{/* Another day: a chip that opens the date picker, saying the day once picked. */}
 					<label className={`${s.chip} ${s.planDate}`} data-on={!days.includes(day) || undefined}>
@@ -206,9 +203,9 @@ export default function PlanIt({
 						{dayWord(day, today).toLowerCase()}’s {meal}.
 					</span>
 					{earliest && earliest !== day && (
-						<button type="button" className={s.noteAction} onClick={() => setDay(earliest)}>
+						<Button variant="quiet" size="sm" onClick={() => setDay(earliest)}>
 							Make it {dayWord(earliest, today)} instead
-						</button>
+						</Button>
 					)}
 				</div>
 			)}
@@ -254,29 +251,23 @@ export default function PlanIt({
 
 			<div className={`${sheet.actions} ${s.planActions}`}>
 				{plan && (
-					<button
-						type="button"
-						className={sheet.danger}
+					<Button
+						variant="danger"
+
 						onClick={() => {
 							unplan.mutate(plan.id);
 							onClose();
 						}}
 					>
 						Take off
-					</button>
+					</Button>
 				)}
-				{plan && onOpenRecipe && (
-					<button type="button" className={sheet.secondary} onClick={() => onOpenRecipe(plan.recipeId)}>
-						Open recipe
-					</button>
-				)}
+				{plan && onOpenRecipe && <Button onClick={() => onOpenRecipe(plan.recipeId)}>Open recipe</Button>}
 				<span className={sheet.spacer} />
-				<button type="button" className={sheet.secondary} onClick={onClose}>
-					Cancel
-				</button>
-				<button type="submit" className={sheet.primary}>
+				<Button onClick={onClose}>Cancel</Button>
+				<Button variant="primary" type="submit">
 					{plan ? 'Move' : 'Plan it'}
-				</button>
+				</Button>
 			</div>
 		</Sheet>
 	);

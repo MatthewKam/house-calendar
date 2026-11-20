@@ -11,6 +11,8 @@ import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem from '../ui/Problem';
 import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
+import { Button, IconButton } from '../ui/Button';
+import { Input, Select } from '../ui/Field';
 
 const TIMES = ['Up to 30 min', 'Up to 1 hr', 'Over 1 hr'];
 /** Kinds to ask for, besides the ones the book has. */
@@ -112,9 +114,7 @@ export default function DishIdeas({
 		<Sheet label="Dish ideas" onClose={onClose} className={s.ideasView}>
 			<header className={sheet.head}>
 				<h2 className={sheet.heading}>Dish ideas</h2>
-				<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-					×
-				</button>
+				<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 			</header>
 			<form
 				className={s.ideasAsk}
@@ -123,27 +123,33 @@ export default function DishIdeas({
 					void think(true);
 				}}
 			>
-				<span className={`${s.select} ${s.ideasPick}`}>
-					<select aria-label="Time you have" value={time} onChange={(e) => setTime(e.target.value)}>
-						<option value="">Any time</option>
-						{TIMES.map((t) => (
-							<option key={t} value={t}>
-								{t}
-							</option>
-						))}
-					</select>
-				</span>
-				<span className={`${s.select} ${s.kind} ${s.ideasPick}`}>
-					<select aria-label="Kind" value={kind} onChange={(e) => setKind(e.target.value)}>
-						<option value="">Any kind</option>
-						{choices.map((k) => (
-							<option key={k} value={k}>
-								{k[0].toUpperCase() + k.slice(1)}
-							</option>
-						))}
-					</select>
-				</span>
-				<input
+				<Select
+					className={s.ideasPick}
+					aria-label="Time you have"
+					value={time}
+					onChange={(e) => setTime(e.target.value)}
+				>
+					<option value="">Any time</option>
+					{TIMES.map((t) => (
+						<option key={t} value={t}>
+							{t}
+						</option>
+					))}
+				</Select>
+				<Select
+					className={`${s.kind} ${s.ideasPick}`}
+					aria-label="Kind"
+					value={kind}
+					onChange={(e) => setKind(e.target.value)}
+				>
+					<option value="">Any kind</option>
+					{choices.map((k) => (
+						<option key={k} value={k}>
+							{k[0].toUpperCase() + k.slice(1)}
+						</option>
+					))}
+				</Select>
+				<Input
 					className={s.ideasInput}
 					placeholder="Anything else? (something with salmon)"
 					aria-label="Anything else"
@@ -151,20 +157,15 @@ export default function DishIdeas({
 					maxLength={200}
 					onChange={(e) => setAsk(e.target.value)}
 				/>
-				<button type="submit" className={sheet.primary} disabled={busy !== null || !online}>
+				<Button variant="primary" type="submit" disabled={busy !== null || !online}>
 					{ideas.length ? 'New ideas' : 'Show ideas'}
-				</button>
+				</Button>
 			</form>
 			{/* Or just one, for the weather. */}
 			<div className={s.surpriseRow}>
-				<button
-					type="button"
-					className={s.surpriseButton}
-					disabled={busy !== null || !online}
-					onClick={() => void surprise()}
-				>
+				<Button disabled={busy !== null || !online} onClick={() => void surprise()}>
 					🎲 {pick ? 'Again' : 'Surprise me'}
-				</button>
+				</Button>
 				<span className={s.hint}>
 					One pick for today
 					{weather ? ` (${sky(weather.code, weather.isDay).icon} ${Math.round(weather.feels)}°)` : ''}, from your
@@ -247,9 +248,7 @@ export default function DishIdeas({
 				<div className={sheet.actions}>
 					<p className={s.hint}>Found one you like? Add it with ＋ Recipe (its link or a screenshot).</p>
 					<span className={sheet.spacer} />
-					<button type="button" className={sheet.secondary} onClick={() => void think(false)}>
-						More ideas
-					</button>
+					<Button onClick={() => void think(false)}>More ideas</Button>
 				</div>
 			)}
 		</Sheet>

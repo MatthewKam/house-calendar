@@ -3,6 +3,9 @@ import { COMMON_TAGS, tagEmoji } from '../../lib/recipes';
 import Sheet from '../ui/Sheet';
 import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
+import { Button, IconButton } from '../ui/Button';
+import { Chip } from '../ui/Chip';
+import { Input } from '../ui/Field';
 
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
@@ -49,22 +52,20 @@ export default function TagPicker({
 		>
 			<header className={sheet.head}>
 				<h2 className={sheet.heading}>Tags</h2>
-				<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-					×
-				</button>
+				<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 			</header>
 			<p className={s.hint}>
 				Tap to add or take off. They show on the recipe's card, and your recipes can be narrowed by them.
 			</p>
 			<div className={s.tagChoices}>
 				{unique.map((t) => (
-					<button key={t} type="button" className={s.chip} aria-pressed={on(t)} onClick={() => toggle(t)}>
+					<Chip key={t} pressed={on(t)} onClick={() => toggle(t)}>
 						<span aria-hidden="true">{tagEmoji(t)}</span> {t}
-					</button>
+					</Chip>
 				))}
 			</div>
 			<div className={s.tagNew}>
-				<input
+				<Input
 					className={s.ideasInput}
 					placeholder="Your own (Pizza Friday)"
 					aria-label="Your own tag"
@@ -72,25 +73,23 @@ export default function TagPicker({
 					value={typed}
 					onChange={(e) => setTyped(e.target.value)}
 				/>
-				<button type="submit" className={sheet.secondary} disabled={!typed.trim()}>
+				<Button type="submit" disabled={!typed.trim()}>
 					Add
-				</button>
+				</Button>
 			</div>
 			<div className={sheet.actions}>
 				<span className={sheet.spacer} />
-				<button type="button" className={sheet.secondary} onClick={onClose}>
-					Cancel
-				</button>
-				<button
-					type="button"
-					className={sheet.primary}
+				<Button onClick={onClose}>Cancel</Button>
+				<Button
+					variant="primary"
+
 					onClick={() => {
 						const t = typed.trim().replace(/\s+/g, ' ');
 						onSave(t && !on(t) ? [...tags, t] : tags);
 					}}
 				>
 					Save
-				</button>
+				</Button>
 			</div>
 		</Sheet>
 	);

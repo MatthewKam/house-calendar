@@ -6,6 +6,8 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 import Sheet from '../ui/Sheet';
 import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
+import { Button, IconButton } from '../ui/Button';
+import { Input, Select } from '../ui/Field';
 
 const WEEKDAYS = Array.from({ length: 7 }, (_, i) =>
 	new Date(2024, 0, 7 + i).toLocaleDateString([], { weekday: 'long' }),
@@ -54,11 +56,9 @@ export default function ThemeForm({
 		>
 			<header className={sheet.head}>
 				<h2 className={sheet.heading}>Themed day</h2>
-				<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-					×
-				</button>
+				<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 			</header>
-			<input
+			<Input
 				className={s.ideasInput}
 				placeholder="Name (Pancake Friday)"
 				aria-label="Name"
@@ -81,26 +81,22 @@ export default function ThemeForm({
 				))}
 			</div>
 			<div className={s.themeWhen}>
-				<span className={s.select}>
-					<select aria-label="Day" value={weekday} onChange={(e) => setWeekday(Number(e.target.value))}>
-						{WEEKDAYS.map((d, i) => (
-							<option key={d} value={i}>
-								Every {d}
-							</option>
-						))}
-					</select>
-				</span>
-				<span className={s.select}>
-					<select aria-label="Meal" value={meal} onChange={(e) => setMeal(e.target.value as PlanMeal)}>
-						{MEALS.map((m) => (
-							<option key={m.meal} value={m.meal}>
-								{m.label}
-							</option>
-						))}
-					</select>
-				</span>
+				<Select aria-label="Day" value={weekday} onChange={(e) => setWeekday(Number(e.target.value))}>
+					{WEEKDAYS.map((d, i) => (
+						<option key={d} value={i}>
+							Every {d}
+						</option>
+					))}
+				</Select>
+				<Select aria-label="Meal" value={meal} onChange={(e) => setMeal(e.target.value as PlanMeal)}>
+					{MEALS.map((m) => (
+						<option key={m.meal} value={m.meal}>
+							{m.label}
+						</option>
+					))}
+				</Select>
 			</div>
-			<input
+			<Input
 				className={s.ideasInput}
 				placeholder="Suggest from (pancakes, pasta, Kid approved)"
 				aria-label="Suggest from"
@@ -117,17 +113,15 @@ export default function ThemeForm({
 			<p className={s.hint}>Each week it suggests one of your recipes that fits, a different one from last week.</p>
 			<div className={`${sheet.actions} ${s.planActions}`}>
 				{theme && (
-					<button type="button" className={sheet.danger} onClick={() => setRemoving(true)}>
+					<Button variant="danger" onClick={() => setRemoving(true)}>
 						Delete
-					</button>
+					</Button>
 				)}
 				<span className={sheet.spacer} />
-				<button type="button" className={sheet.secondary} onClick={onClose}>
-					Cancel
-				</button>
-				<button type="submit" className={sheet.primary} disabled={!ready}>
+				<Button onClick={onClose}>Cancel</Button>
+				<Button variant="primary" type="submit" disabled={!ready}>
 					Save
-				</button>
+				</Button>
 			</div>
 			{removing && theme && (
 				<ConfirmDialog

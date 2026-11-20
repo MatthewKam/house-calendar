@@ -10,6 +10,8 @@ import Problem from '../ui/Problem';
 import RecipeForm from './RecipeForm';
 import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
+import { Button, IconButton } from '../ui/Button';
+import { Input } from '../ui/Field';
 
 /** A recipe from nothing, to type in. */
 const BLANK: RecipeFields = {
@@ -142,9 +144,7 @@ export default function AddRecipe({
 		<Sheet label="Add a recipe" onClose={onClose}>
 			<header className={sheet.head}>
 				<h2 className={sheet.heading}>Add a recipe</h2>
-				<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
-					×
-				</button>
+				<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 			</header>
 			{step.kind === 'reading' ? (
 				<Loading label="Reading the recipe">
@@ -192,7 +192,7 @@ export default function AddRecipe({
 								if (link.trim()) void readLink();
 							}}
 						>
-							<input
+							<Input
 								type="url"
 								inputMode="url"
 								placeholder="Or paste a recipe link"
@@ -200,18 +200,20 @@ export default function AddRecipe({
 								value={link}
 								onChange={(e) => setLink(e.target.value)}
 							/>
-							<button type="submit" className={sheet.primary} disabled={!link.trim() || !online}>
+							<Button variant="primary" type="submit" disabled={!link.trim() || !online}>
 								Read
-							</button>
+							</Button>
 						</form>
 					)}
-					<button
-						type="button"
+					<Button
+						variant="link"
+						size="sm"
 						className={s.textLink}
+
 						onClick={() => setStep({ kind: 'check', recipe: BLANK, pictures: [], cover: null })}
 					>
 						Or type it in
-					</button>
+					</Button>
 					{reading && !reading.on && (
 						<p className={s.hint}>
 							Reading pictures and links needs Claude on the server (ANTHROPIC_API_KEY); for now they're kept as they

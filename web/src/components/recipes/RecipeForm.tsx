@@ -3,6 +3,8 @@ import { ingredientsText, parseIngredients } from '../../lib/recipes';
 import type { Meal, RecipeFields } from '../../lib/types';
 import sheet from '../ui/Sheet.module.css';
 import s from './Recipes.module.css';
+import { Button, IconButton } from '../ui/Button';
+import { Field, Fieldset, Input, Select, TextArea } from '../ui/Field';
 
 const MEALS: Meal[] = ['dinner', 'breakfast', 'lunch', 'side', 'dessert', 'snack'];
 
@@ -80,57 +82,47 @@ export default function RecipeForm({
 		>
 			<header className={sheet.head}>
 				<h2 className={sheet.heading}>{title}</h2>
-				<button type="button" className={sheet.close} onClick={onCancel} aria-label="Close">
-					×
-				</button>
+				<IconButton label="Close" icon="×" className={sheet.close} onClick={onCancel} />
 			</header>
 			{above}
-			<label className={s.field}>
-				<span>Name</span>
-				<input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} required />
-			</label>
+			<Field label="Name">
+				<Input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} required />
+			</Field>
 			<div className={s.fieldRow}>
-				<label className={s.field}>
-					<span>Meal</span>
-					<select value={meal} onChange={(e) => setMeal(e.target.value as Meal)}>
+				<Field label="Meal">
+					<Select value={meal} onChange={(e) => setMeal(e.target.value as Meal)}>
 						{MEALS.map((m) => (
 							<option key={m} value={m}>
 								{m}
 							</option>
 						))}
-					</select>
-				</label>
-				<label className={s.field}>
-					<span>Serves</span>
-					<input inputMode="numeric" value={servings} onChange={(e) => setServings(e.target.value)} />
-				</label>
-				<label className={s.field}>
-					<span>Total min</span>
-					<input inputMode="numeric" value={total} onChange={(e) => setTotal(e.target.value)} />
-				</label>
-				<label className={s.field}>
-					<span>Hands-on min</span>
-					<input inputMode="numeric" value={active} onChange={(e) => setActive(e.target.value)} />
-				</label>
+					</Select>
+				</Field>
+				<Field label="Serves">
+					<Input inputMode="numeric" value={servings} onChange={(e) => setServings(e.target.value)} />
+				</Field>
+				<Field label="Total min">
+					<Input inputMode="numeric" value={total} onChange={(e) => setTotal(e.target.value)} />
+				</Field>
+				<Field label="Hands-on min">
+					<Input inputMode="numeric" value={active} onChange={(e) => setActive(e.target.value)} />
+				</Field>
 			</div>
-			<label className={s.field}>
-				<span>Ingredients, one a line (a heading ends in ":")</span>
-				<textarea rows={8} value={ingredients} onChange={(e) => setIngredients(e.target.value)} />
-			</label>
-			<label className={s.field}>
-				<span>Steps, one a line</span>
-				<textarea rows={8} value={steps} onChange={(e) => setSteps(e.target.value)} />
-			</label>
-			<div className={s.field}>
-				<span>Ahead of time</span>
+			<Field label={`Ingredients, one a line (a heading ends in ":")`}>
+				<TextArea rows={8} value={ingredients} onChange={(e) => setIngredients(e.target.value)} />
+			</Field>
+			<Field label="Steps, one a line">
+				<TextArea rows={8} value={steps} onChange={(e) => setSteps(e.target.value)} />
+			</Field>
+			<Fieldset label="Ahead of time" className={s.ahead}>
 				{ahead.map((a, i) => (
 					<div key={i} className={s.aheadRow}>
-						<input
+						<Input
 							aria-label="What to do ahead"
 							value={a.what}
 							onChange={(e) => setAhead(ahead.map((x, j) => (j === i ? { ...x, what: e.target.value } : x)))}
 						/>
-						<input
+						<Input
 							aria-label="Hours before"
 							inputMode="numeric"
 							className={s.hours}
@@ -142,43 +134,44 @@ export default function RecipeForm({
 							}
 						/>
 						<span className={s.hoursLabel}>hrs before</span>
-						<button type="button" className={s.textLink} onClick={() => setAhead(ahead.filter((_, j) => j !== i))}>
+						<Button
+							variant="link"
+							size="sm"
+							className={s.textLink}
+							onClick={() => setAhead(ahead.filter((_, j) => j !== i))}
+						>
 							Remove
-						</button>
+						</Button>
 					</div>
 				))}
-				<button
-					type="button"
+				<Button
+					variant="link"
+					size="sm"
 					className={s.textLink}
+
 					onClick={() => setAhead([...ahead, { what: '', hoursBefore: 12 }])}
 				>
 					＋ Something to do ahead
-				</button>
-			</div>
-			<label className={s.field}>
-				<span>Notes</span>
-				<textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
-			</label>
-			<label className={s.field}>
-				<span>Protein (commas between)</span>
-				<input value={proteins} onChange={(e) => setProteins(e.target.value)} placeholder="chicken, beans" />
-			</label>
-			<label className={s.field}>
-				<span>Vegetables</span>
-				<input value={vegetables} onChange={(e) => setVegetables(e.target.value)} placeholder="broccoli, carrots" />
-			</label>
-			<label className={s.field}>
-				<span>Type</span>
-				<input value={types} onChange={(e) => setTypes(e.target.value)} placeholder="soup, korean" />
-			</label>
+				</Button>
+			</Fieldset>
+			<Field label="Notes">
+				<TextArea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+			</Field>
+			<Field label="Protein (commas between)">
+				<Input value={proteins} onChange={(e) => setProteins(e.target.value)} placeholder="chicken, beans" />
+			</Field>
+			<Field label="Vegetables">
+				<Input value={vegetables} onChange={(e) => setVegetables(e.target.value)} placeholder="broccoli, carrots" />
+			</Field>
+			<Field label="Type">
+				<Input value={types} onChange={(e) => setTypes(e.target.value)} placeholder="soup, korean" />
+			</Field>
 			<div className={sheet.actions}>
 				<span className={sheet.spacer} />
-				<button type="button" className={sheet.secondary} onClick={onCancel}>
-					Cancel
-				</button>
-				<button type="submit" className={sheet.primary} disabled={!name.trim() || saving}>
+				<Button onClick={onCancel}>Cancel</Button>
+				<Button variant="primary" type="submit" disabled={!name.trim() || saving}>
 					{saving ? 'Saving…' : 'Save recipe'}
-				</button>
+				</Button>
 			</div>
 		</form>
 	);
