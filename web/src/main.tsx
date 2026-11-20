@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { StrictMode, Suspense, lazy } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
@@ -63,13 +63,21 @@ document.addEventListener('visibilitychange', () => document.visibilityState ===
 
 // A Cooking together link (server/cook.ts): its own page, open to anyone with it, no signing in.
 const cookPage = /^\/cook\/([0-9a-f-]{36})\/([A-Za-z0-9_-]{32})\/?$/.exec(location.pathname);
+// The design page (components/design): every shared name and component, at /design. Only while
+// developing: the built app (the site, the phone app) doesn't have it.
+const DesignPage = import.meta.env.DEV ? lazy(() => import('./components/design/DesignPage')) : null;
+const designPage = DesignPage && location.pathname === '/design';
 
 createRoot(document.getElementById('app')!).render(
 	<StrictMode>
 		<QueryClientProvider client={queryClient}>
 			{/* The last resort: anything that breaks and isn't caught nearer shows a message with Reload. */}
 			<ErrorBoundary what="Sprig" kind="app">
-				{cookPage ? (
+				{designPage ? (
+					<Suspense fallback={null}>
+						<DesignPage />
+					</Suspense>
+				) : cookPage ? (
 					<CookAlong household={cookPage[1]} secret={cookPage[2]} />
 				) : (
 					<AuthGate>

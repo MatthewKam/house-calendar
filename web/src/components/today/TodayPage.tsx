@@ -15,7 +15,7 @@ import { ENCOURAGEMENT_THEMES } from '../../lib/grownUpWords';
 import { QUOTE_THEMES } from '../../lib/quotes';
 import { sky } from '../../lib/weather';
 import { useNow } from '../../lib/useNow';
-import { LANDSCAPE_TABLET, useMediaQuery } from '../../lib/useMediaQuery';
+import { LANDSCAPE_TABLET, WIDE, EXTRAWIDE, useMediaQuery } from '../../lib/useMediaQuery';
 import { firstName } from '../../lib/people';
 import { askToOpen, mealAt, mealLabel, plannedOn, zone } from '../../lib/meals';
 import type { CalEvent, Member, PlanMeal, Recipe } from '../../lib/types';
@@ -270,6 +270,7 @@ export default function TodayPage({
 	const kind = pickOfTheDay(kindThemes, today);
 	// A tablet on its side, or anything bigger: the calendar in a column of its own on the right.
 	const twoColumns = useMediaQuery(LANDSCAPE_TABLET);
+	const threeColumns = useMediaQuery(EXTRAWIDE);
 
 	// The cards. A tablet on its side and anything bigger: two columns, the calendar on the right (today,
 	// then tomorrow and the rest of the week under it) with the special days under it, the rest down the
@@ -370,21 +371,38 @@ export default function TodayPage({
 			</header>
 
 			<div className={s.scroll}>
-				{twoColumns ? (
+				{threeColumns ? (
+					<div className={s.threeColumns}>
+						<div className={s.column}>
+							{guard('finishing setting up', <FinishSetup />)}
+							{guard('the calendar', calendarCard)}
+							{guard('the quote', quoteCard)}
+							{guard('the encouragement', encouragementCard)}
+						</div>
+						<div className={s.column}>
+							{guard("the kids' day", kidsCard)}
+							{guard('special days', specialCard)}
+							{guard('Needs you', needsCard)}
+						</div>
+						<div className={s.column}>
+							{guard('the photos', photosCard)}
+							{guard('the weather', weatherCard)}
+						</div>
+					</div>
+				) : twoColumns ? (
 					<div className={s.columns}>
 						<div className={s.column}>
 							{guard('finishing setting up', <FinishSetup />)}
 							{guard('the calendar', calendarCard)}
 							{guard("the kids' day", kidsCard)}
 							{guard('special days', specialCard)}
-
-							{guard('the photos', photosCard)}
 							{guard('the weather', weatherCard)}
 						</div>
 						<div className={s.column}>
 							{guard('the quote', quoteCard)}
 							{guard('the encouragement', encouragementCard)}
 							{guard('Needs you', needsCard)}
+							{guard('the photos', photosCard)}
 						</div>
 					</div>
 				) : (

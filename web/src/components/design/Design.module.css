@@ -1,0 +1,228 @@
+/* The design page (DesignPage.tsx): a bar on top, the sections listed on the left (on a big enough
+   screen), the samples beside them. */
+.page {
+	height: 100%;
+	overflow-y: auto;
+	background: var(--bg);
+	color: var(--text);
+}
+.bar {
+	position: sticky;
+	top: 0;
+	z-index: var(--layer-nav);
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-3);
+	padding: var(--space-3) var(--space-5);
+	padding-top: calc(env(safe-area-inset-top, 0px) + var(--space-3));
+	background: var(--surface);
+	border-bottom: 1px solid var(--line);
+}
+.brand {
+	font-size: var(--text-lg);
+	font-weight: var(--weight-bold);
+}
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2);
+}
+/* An accent to try: a round swatch, ringed when picked. */
+.accent {
+	width: var(--tap-sm);
+	height: var(--tap-sm);
+	min-width: 0;
+	min-height: 0;
+	border-radius: 50%;
+	background: var(--swatch);
+	border: 2px solid var(--surface);
+	box-shadow: 0 0 0 1px var(--line);
+}
+.accent[aria-pressed='true'] {
+	box-shadow: 0 0 0 2px var(--text);
+}
+.layout {
+	display: grid;
+	grid-template-columns: 12rem minmax(0, 1fr);
+	gap: var(--space-7);
+	max-width: 72rem;
+	margin: 0 auto;
+	padding: var(--space-6) var(--space-5) var(--space-8);
+}
+.nav {
+	position: sticky;
+	top: 5rem;
+	align-self: start;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+}
+.nav a {
+	padding: var(--space-1) var(--space-2);
+	border-radius: var(--radius-sm);
+	color: var(--muted);
+	text-decoration: none;
+	font-weight: var(--weight-semibold);
+}
+.nav a:hover {
+	color: var(--text);
+	background: var(--surface);
+}
+@media (max-width: 959.98px) {
+	.layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.nav {
+		display: none;
+	}
+}
+.main {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-8);
+	min-width: 0;
+}
+.lead {
+	margin: 0;
+	color: var(--muted);
+	line-height: var(--leading-relaxed);
+}
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-4);
+	scroll-margin-top: 5rem;
+}
+.intro {
+	margin: 0;
+	color: var(--muted);
+}
+
+/* A name: its code, value now, and what it's for. */
+.name {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+	min-width: 0;
+}
+.name code {
+	font-weight: var(--weight-bold);
+}
+.value {
+	font-size: var(--text-sm);
+	font-family: ui-monospace, monospace;
+	color: var(--muted);
+	overflow-wrap: anywhere;
+}
+.note {
+	font-size: var(--text-sm);
+	color: var(--muted);
+}
+.grid {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+	gap: var(--space-5);
+}
+.stack {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-5);
+}
+.colour,
+.shape {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--space-3);
+}
+.swatch {
+	flex: none;
+	width: var(--tap-lg);
+	height: var(--tap-lg);
+	border-radius: var(--radius-sm);
+	background: var(--swatch);
+	border: 1px solid var(--line);
+}
+.sample {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 18rem);
+	align-items: center;
+	gap: var(--space-5);
+	padding-bottom: var(--space-4);
+	border-bottom: 1px solid var(--line);
+}
+@media (max-width: 700px) {
+	.sample {
+		grid-template-columns: minmax(0, 1fr);
+		gap: var(--space-2);
+	}
+}
+.para {
+	max-width: 30rem;
+}
+.spaceBar {
+	height: var(--space-5);
+	background: var(--accent);
+	border-radius: var(--radius-xs);
+}
+.box {
+	flex: none;
+	width: 4rem;
+	height: 4rem;
+	background: var(--surface);
+	border: 1px solid var(--line);
+}
+.texture {
+	flex: none;
+	width: 8rem;
+	height: 8rem;
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--line);
+	background: var(--surface) var(--texture) repeat;
+}
+.tap {
+	flex: none;
+	border-radius: var(--radius-sm);
+	background: color-mix(in srgb, var(--accent) 20%, transparent);
+	border: 1px dashed var(--accent);
+}
+.row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2);
+}
+.label {
+	width: 7rem;
+	font-size: var(--text-sm);
+	color: var(--muted);
+	font-family: ui-monospace, monospace;
+}
+.cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+	gap: var(--space-5);
+}
+.flat {
+	margin: 0;
+}
+.fields {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+	gap: var(--space-5);
+	align-items: start;
+}
+.dot {
+	width: var(--space-5);
+	height: var(--space-5);
+	border-radius: 50%;
+	background: var(--c);
+}
