@@ -73,9 +73,17 @@ function Section({
 
 /** The background textures in public/textures/ (no screen uses them yet; a feature to pick one comes later). */
 const TEXTURES = [
+	['bark', 'dense sideways grain'],
+	['brushed', 'soft sideways streaks'],
 	['canvas', 'an even grid of fine dots'],
-	['paper', 'scattered speckle'],
-	['linen', 'soft sideways streaks'],
+	['cloud', 'big soft clouds'],
+	['flecks', 'scattered short flecks'],
+	['linen', 'sideways streaks, like linen'],
+	['paper', 'fine speckle, like paper'],
+	['stone', 'scratchy speckle, like stone'],
+	['canvas-soft', 'a fainter canvas'],
+	['linen-soft', 'a fainter linen'],
+	['paper-soft', 'a fainter paper'],
 ] as const;
 
 const v = (name: string, value: string) => ({ [name]: value }) as CSSProperties;
@@ -233,7 +241,7 @@ export default function DesignPage() {
 						<Section
 							id="textures"
 							title="Textures"
-							intro="Tiling backgrounds in public/textures/, nearly white: for light backgrounds. Not on any screen yet."
+							intro="Tiling grain in public/textures/, see-through, over any colour: switch to dark to see them there. Not on any screen yet."
 						>
 							<ul className={s.grid}>
 								{TEXTURES.map(([name, what]) => (

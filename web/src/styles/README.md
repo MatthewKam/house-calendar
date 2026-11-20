@@ -147,7 +147,7 @@ CSS can't use variables in a media query, so write the query out and keep it exa
 
 ## Textures
 
-Tiling background pictures live in `web/public/textures/` (`canvas`, `paper`, `linen`; its README says what each is), loaded as `url('/textures/paper.png')`. They're nearly white, so they suit light backgrounds only; no screen uses them yet.
+Tiling background textures live in `web/public/textures/` (its README lists each). They're see-through grey grain, so lay one over a shared colour and it works in light and dark: `background: var(--surface) url('/textures/paper.png') repeat;`. No screen uses them yet.
 
 ## Kids' screens
 

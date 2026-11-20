@@ -186,7 +186,7 @@
 	height: 8rem;
 	border-radius: var(--radius-sm);
 	border: 1px solid var(--line);
-	background: var(--texture) repeat;
+	background: var(--surface) var(--texture) repeat;
 }
 .tap {
 	flex: none;
