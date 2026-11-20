@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
 import { useBackStep } from '../../lib/useBackStep';
-import { step } from '../../lib/usePage';
+import { dropFrom, step } from '../../lib/usePage';
 import { useImageDrop } from '../../lib/useFlyerDrop';
 import { useMeals, useMembers, useRecipeReading, useRecipes } from '../../lib/queries';
 import DishIdeas from './DishIdeas';
@@ -387,7 +387,9 @@ export default function RecipesPage({
 							: undefined
 					}
 					onClose={() => {
-						// Closed by hand: open again, it's a step like any other.
+						// Closed by hand: Recipes itself offers no ‹ Today (only the recipe did), and opened again
+						// it's a step like any other.
+						if (linked.current) dropFrom();
 						linked.current = null;
 						setOpen(null);
 					}}

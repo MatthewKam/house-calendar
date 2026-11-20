@@ -75,6 +75,16 @@ export const canGoBack = () => readFrom() !== null || (!landing && (step().open?
 /** Whether a screen is open over the page (a recipe, Settings). */
 export const screenOpen = () => (step().open?.length ?? 0) > 0;
 
+/**
+ * This page no longer offers Back to where a link came from (its ‹ Back is gone), though the step stays
+ * in the history: for a page that was only passed through, like Recipes under a meal's recipe.
+ */
+export function dropFrom() {
+	const { from: _from, ...rest } = step();
+	history.replaceState(rest, '', window.location.href);
+	changed();
+}
+
 export interface Pages {
 	/** The page on screen. */
 	page: Page;
