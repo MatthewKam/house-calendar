@@ -13,6 +13,7 @@ import {
 import { pickOfTheDay, useDailyThemes } from '../../lib/dailyThemes';
 import { ENCOURAGEMENT_THEMES } from '../../lib/grownUpWords';
 import { QUOTE_THEMES } from '../../lib/quotes';
+import { timeLineFor } from '../../lib/timeQuotes';
 import { sky } from '../../lib/weather';
 import { useNow } from '../../lib/useNow';
 import { LANDSCAPE_TABLET, EXTRAWIDE, useMediaQuery } from '../../lib/useMediaQuery';
@@ -214,6 +215,7 @@ export default function TodayPage({
 				.map((x) => x.row)}
 		</ul>
 	);
+	const timeLine = timeLineFor(today);
 	const calendar: { label: string; body: ReactNode }[] = [
 		{
 			label: 'Today',
@@ -222,7 +224,11 @@ export default function TodayPage({
 					{todays.length + mealsToday.length === 0 ? (
 						<p className={s.none}>Nothing on the calendar today.</p>
 					) : upNext.length + mealsToday.length === 0 ? (
-						<p className={s.none}>Nothing else today.</p>
+						// The day's events are over: a quote about time, or a dad joke.
+						<blockquote className={s.quote}>
+							<p>{timeLine.by ? `“${timeLine.text}”` : timeLine.text}</p>
+							{timeLine.by && <footer>{timeLine.by}</footer>}
+						</blockquote>
 					) : (
 						list(upNext, true, mealsToday)
 					)}
