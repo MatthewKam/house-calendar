@@ -6,6 +6,7 @@ import type { Member } from '../../lib/types';
 import Sheet from '../ui/Sheet';
 import sheet from '../ui/Sheet.module.css';
 import s from '../settings/Settings.module.css';
+import { IconButton } from '../ui/Button';
 
 /**
  * An older kid's colors, on their own device: the buttons' color here (theirs to pick), and asking for
@@ -21,9 +22,7 @@ export default function KidColors({ kid, onClose }: { kid: Member; onClose: () =
 		<Sheet label="My colors" onClose={onClose}>
 			<header className={sheet.head}>
 				<h2 className={sheet.heading}>My colors</h2>
-				<button className={sheet.close} onClick={onClose} aria-label="Close">
-					×
-				</button>
+				<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
 			</header>
 			<h3 className={s.kidColorsHead}>Buttons</h3>
 			<div className={s.accents} role="radiogroup" aria-label="Button color">

@@ -1,6 +1,7 @@
 import { useAnswerColor, useAuthStatus } from '../../lib/queries';
 import type { Member } from '../../lib/types';
 import s from './ColorAsked.module.css';
+import { Button } from '../ui/Button';
 
 /**
  * A new color asked for someone, waiting for the account holder (server/members.ts): the color now and
@@ -31,12 +32,12 @@ export default function ColorAsked({ member: m }: { member: Member }) {
 			</span>
 			{holder && (
 				<span className={s.answer}>
-					<button type="button" className={s.ok} onClick={() => answer.mutate({ id: m.id, approve: true })}>
+					<Button variant="primary" size="sm" onClick={() => answer.mutate({ id: m.id, approve: true })}>
 						OK
-					</button>
-					<button type="button" className={s.no} onClick={() => answer.mutate({ id: m.id, approve: false })}>
+					</Button>
+					<Button size="sm" onClick={() => answer.mutate({ id: m.id, approve: false })}>
 						No
-					</button>
+					</Button>
 				</span>
 			)}
 		</div>

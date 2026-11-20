@@ -11,6 +11,9 @@ import type { Member } from '../../lib/types';
 import PhoneCalendars from '../settings/PhoneCalendars';
 import { Issued } from '../settings/HouseholdAccess';
 import s from './Account.module.css';
+import { Button } from '../ui/Button';
+import { Chip } from '../ui/Chip';
+import { Input } from '../ui/Field';
 
 const STEPS = ['kids', 'tasks', 'calendar', 'invite'] as const;
 type Step = (typeof STEPS)[number];
@@ -53,13 +56,13 @@ export default function Setup({ status, kind, onDone }: { status: SignedIn; kind
 /** Next when something's been done on a step, Skip when not. */
 function NextButton({ done, onNext, last }: { done: boolean; onNext: () => void; last?: boolean }) {
 	return done ? (
-		<button type="button" className={s.primary} onClick={onNext}>
+		<Button variant="primary" size="lg" block onClick={onNext}>
 			{last ? 'Finish' : 'Next'}
-		</button>
+		</Button>
 	) : (
-		<button type="button" className={s.link} onClick={onNext}>
+		<Button variant="link" className={s.link} onClick={onNext}>
 			Skip for now
-		</button>
+		</Button>
 	);
 }
 
@@ -104,8 +107,7 @@ export function Kids({ kids, last, onNext }: { kids: Member[]; last?: boolean; o
 				</ul>
 			)}
 			<form className={s.card} onSubmit={add}>
-				<input
-					className={s.input}
+				<Input
 					placeholder={kids.length ? 'Another kid' : 'Name'}
 					aria-label="Kid's name"
 					value={name}
@@ -114,8 +116,7 @@ export function Kids({ kids, last, onNext }: { kids: Member[]; last?: boolean; o
 				/>
 				<label className={s.hint}>
 					Birthday
-					<input
-						className={s.input}
+					<Input
 						type="date"
 						aria-label="Birthday"
 						value={birthdate}
@@ -124,9 +125,9 @@ export function Kids({ kids, last, onNext }: { kids: Member[]; last?: boolean; o
 					/>
 				</label>
 				{error && <p className={s.error}>{error}</p>}
-				<button className={s.primary} disabled={busy || !name.trim() || !birthdate}>
+				<Button variant="primary" size="lg" block type="submit" disabled={busy || !name.trim() || !birthdate}>
 					{kids.length ? 'Add another' : 'Add'}
-				</button>
+				</Button>
 			</form>
 			<NextButton done={kids.length > 0} onNext={onNext} last={last} />
 		</>
@@ -174,16 +175,15 @@ export function Tasks({ kids, onNext }: { kids: Member[]; onNext: () => void }) 
 						<h2>{k.name}</h2>
 						<div className={s.choices}>
 							{mine.map((o) => (
-								<button
+								<Chip
 									key={o.key}
-									type="button"
-									className={s.choice}
-									aria-pressed={!left.has(o.key)}
+
+									pressed={!left.has(o.key)}
 									onClick={() => toggle(o.key)}
 								>
 									{o.t.icon} {o.t.title}
 									{o.t.time && <span className={s.choiceNote}> · {o.t.time}</span>}
-								</button>
+								</Chip>
 							))}
 						</div>
 					</section>
@@ -191,13 +191,13 @@ export function Tasks({ kids, onNext }: { kids: Member[]; onNext: () => void }) 
 			})}
 			{error && <p className={s.error}>{error}</p>}
 			{picked.length > 0 && (
-				<button type="button" className={s.primary} disabled={busy} onClick={() => void add()}>
+				<Button variant="primary" size="lg" block disabled={busy} onClick={() => void add()}>
 					Add {picked.length} {picked.length === 1 ? 'task' : 'tasks'}
-				</button>
+				</Button>
 			)}
-			<button type="button" className={s.link} onClick={onNext}>
+			<Button variant="link" className={s.link} onClick={onNext}>
 				Skip for now
-			</button>
+			</Button>
 		</>
 	);
 }
@@ -277,8 +277,7 @@ export function Invite({ household, onNext }: { household: string; onNext: () =>
 				<Issued {...issued} onClose={() => setIssued(null)} />
 			) : (
 				<form className={s.card} onSubmit={invite}>
-					<input
-						className={s.input}
+					<Input
 						placeholder="Their name"
 						aria-label="Their name"
 						value={name}
@@ -286,9 +285,9 @@ export function Invite({ household, onNext }: { household: string; onNext: () =>
 						maxLength={40}
 					/>
 					{error && <p className={s.error}>{error}</p>}
-					<button className={s.primary} disabled={busy || !name.trim()}>
+					<Button variant="primary" size="lg" block type="submit" disabled={busy || !name.trim()}>
 						Get a link
-					</button>
+					</Button>
 				</form>
 			)}
 			<NextButton done={invited} onNext={onNext} last />

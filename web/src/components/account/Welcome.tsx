@@ -6,6 +6,8 @@ import { isApp } from '../../lib/native';
 import JoinForm from './JoinForm';
 import s from './Account.module.css';
 import { familyName, firstName } from '../../lib/people';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Field';
 
 /**
  * Signed in, but in no household yet: start one with just your name (filled in from Apple when it gave one),
@@ -57,16 +59,15 @@ export default function Welcome({ status, onDone }: { status: SignedIn; onDone: 
 								onDone(st);
 							}}
 						/>
-						<button className={s.link} onClick={() => setJoining(false)}>
+						<Button variant="link" className={s.link} type="submit" onClick={() => setJoining(false)}>
 							Start a new family instead
-						</button>
+						</Button>
 					</>
 				) : (
 					<>
 						<p className={s.lead}>Let's set up your family.</p>
 						<form className={s.card} onSubmit={create}>
-							<input
-								className={s.input}
+							<Input
 								placeholder="Your name"
 								aria-label="Your name"
 								autoComplete="name"
@@ -76,8 +77,7 @@ export default function Welcome({ status, onDone }: { status: SignedIn; onDone: 
 								autoFocus={!yourName}
 							/>
 							{naming ? (
-								<input
-									className={s.input}
+								<Input
 									placeholder="Family name, e.g. The Kims"
 									aria-label="Family name"
 									value={name ?? familyName(yourName)}
@@ -89,25 +89,30 @@ export default function Welcome({ status, onDone }: { status: SignedIn; onDone: 
 								household && (
 									<p className={s.hint}>
 										Your family: <strong>{household}</strong>{' '}
-										<button type="button" className={s.inlineLink} onClick={() => setNaming(true)}>
+										<Button variant="link" size="sm" className={s.inlineLink} onClick={() => setNaming(true)}>
 											Change
-										</button>
+										</Button>
 									</p>
 								)
 							)}
 							{error && <p className={s.error}>{error}</p>}
-							<button className={s.primary} disabled={busy || !household || !yourName.trim()}>
+							<Button variant="primary" size="lg" block type="submit" disabled={busy || !household || !yourName.trim()}>
 								Start
-							</button>
+							</Button>
 						</form>
-						<button className={s.link} onClick={() => setJoining(true)}>
+						<Button variant="link" className={s.link} type="submit" onClick={() => setJoining(true)}>
 							Have a code from your family?
-						</button>
+						</Button>
 					</>
 				)}
-				<button className={s.link} onClick={() => void api.signOut().then(() => onDone({ signedIn: false }))}>
+				<Button
+					variant="link"
+					className={s.link}
+					type="submit"
+					onClick={() => void api.signOut().then(() => onDone({ signedIn: false }))}
+				>
 					Sign out{status.user?.email ? ` (${status.user.email})` : ''}
-				</button>
+				</Button>
 			</div>
 		</main>
 	);

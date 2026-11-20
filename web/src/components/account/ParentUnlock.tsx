@@ -3,6 +3,7 @@ import { useParent } from '../../lib/useParent';
 import PinPad, { pinSheet } from '../ui/PinPad';
 import sheet from '../ui/Sheet.module.css';
 import Sheet from '../ui/Sheet';
+import { Button } from '../ui/Button';
 
 /** Unlocks this device for parent changes with any guardian's PIN (then `onDone`, e.g. opening Settings). */
 export default function ParentUnlock({ onClose, onDone }: { onClose: () => void; onDone?: () => void }) {
@@ -40,12 +41,10 @@ export default function ParentUnlock({ onClose, onDone }: { onClose: () => void;
 				/>
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />
-					<button type="button" className={sheet.secondary} onClick={onClose}>
-						Cancel
-					</button>
-					<button type="submit" className={sheet.primary} disabled={!pin || unlock.isPending}>
+					<Button onClick={onClose}>Cancel</Button>
+					<Button variant="primary" type="submit" disabled={!pin || unlock.isPending}>
 						Unlock
-					</button>
+					</Button>
 				</div>
 			</Sheet>
 		</>

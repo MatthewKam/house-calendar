@@ -18,6 +18,7 @@ import type { Member } from '../../lib/types';
 import s from '../account/Account.module.css';
 import panel from './Settings.module.css';
 import { Button } from '../ui/Button';
+import { Chip } from '../ui/Chip';
 
 type Stage =
 	| { at: 'loading' }
@@ -113,11 +114,10 @@ export default function PhoneCalendars({ onShared }: { onShared?: () => void }) 
 					<p className={s.hint}>Everyone in the family sees the events in these.</p>
 					<div className={s.choices}>
 						{stage.list.map((c) => (
-							<button
+							<Chip
 								key={c.id}
-								type="button"
-								className={s.choice}
-								aria-pressed={stage.picked.has(c.id)}
+
+								pressed={stage.picked.has(c.id)}
 								onClick={() => {
 									const picked = new Set(stage.picked);
 									if (!picked.delete(c.id)) picked.add(c.id);
@@ -126,7 +126,7 @@ export default function PhoneCalendars({ onShared }: { onShared?: () => void }) 
 							>
 								{c.name}
 								{c.account && <span className={s.choiceNote}> · {c.account}</span>}
-							</button>
+							</Chip>
 						))}
 					</div>
 					<Button

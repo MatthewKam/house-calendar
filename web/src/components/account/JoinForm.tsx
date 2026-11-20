@@ -2,6 +2,9 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { api, type AuthStatus, type JoinPreview } from '../../lib/api';
 import { clearJoin, pendingJoin } from '../../lib/joinCode';
 import s from './Account.module.css';
+import { Button } from '../ui/Button';
+import { Chip } from '../ui/Chip';
+import { Input } from '../ui/Field';
 
 const KIND = { guardian: 'as a guardian', kid: 'as a kid', wall: 'as the family wall' };
 
@@ -57,7 +60,7 @@ export default function JoinForm({ signedIn, onJoined }: { signedIn: boolean; on
 	return (
 		<form className={s.card} onSubmit={submit}>
 			<h2>Join with a code</h2>
-			<input
+			<Input
 				className={s.code}
 				value={code}
 				onChange={(e) => setCode(e.target.value)}
@@ -79,23 +82,21 @@ export default function JoinForm({ signedIn, onJoined }: { signedIn: boolean; on
 					<p className={s.hint}>Which one is you?</p>
 					<div className={s.choices}>
 						{preview.choose.map((m) => (
-							<button
+							<Chip
 								key={m.id}
-								type="button"
-								className={s.choice}
-								aria-pressed={pick === m.id}
+
+								pressed={pick === m.id}
 								onClick={() => setPick(m.id)}
 							>
 								{m.name}
-							</button>
+							</Chip>
 						))}
-						<button type="button" className={s.choice} aria-pressed={pick === 'new'} onClick={() => setPick('new')}>
+						<Chip pressed={pick === 'new'} onClick={() => setPick('new')}>
 							Someone new
-						</button>
+						</Chip>
 					</div>
 					{pick === 'new' && (
-						<input
-							className={s.input}
+						<Input
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 							placeholder="Your name"
@@ -113,9 +114,9 @@ export default function JoinForm({ signedIn, onJoined }: { signedIn: boolean; on
 			)}
 			{error && <p className={s.error}>{error}</p>}
 			{!needsAccount && (
-				<button className={s.primary} disabled={!preview || !picked || busy}>
+				<Button variant="primary" size="lg" block type="submit" disabled={!preview || !picked || busy}>
 					{preview ? `Join ${preview.household}` : 'Join'}
-				</button>
+				</Button>
 			)}
 		</form>
 	);

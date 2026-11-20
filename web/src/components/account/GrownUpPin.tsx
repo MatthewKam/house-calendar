@@ -4,6 +4,7 @@ import { api } from '../../lib/api';
 import PinPad, { pinSheet } from '../ui/PinPad';
 import Sheet from '../ui/Sheet';
 import sheet from '../ui/Sheet.module.css';
+import { Button } from '../ui/Button';
 
 /**
  * A guardian's PIN, for something a kid can't do on their own: to leave kid mode, put stars in jars,
@@ -55,12 +56,10 @@ export default function GrownUpPin({
 				/>
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />
-					<button type="button" className={sheet.secondary} onClick={onClose}>
-						Cancel
-					</button>
-					<button type="submit" className={sheet.primary} disabled={!pin || check.isPending}>
+					<Button onClick={onClose}>Cancel</Button>
+					<Button variant="primary" type="submit" disabled={!pin || check.isPending}>
 						{okLabel}
-					</button>
+					</Button>
 				</div>
 			</Sheet>
 		</>
