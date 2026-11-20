@@ -5,6 +5,7 @@ import { PickChip } from '../ui/NameChip';
 import sheet from '../ui/Sheet.module.css';
 import s from './Rewards.module.css';
 import Sheet from '../ui/Sheet';
+import { Button, IconButton } from '../ui/Button';
 
 interface Props {
 	jar: { id: string; title: string };
@@ -47,31 +48,19 @@ export default function TakeBackDialog({ jar, kids, onClose }: Props) {
 				)}
 				<div className={sheet.body}>They go back to {kid.name}'s bucket.</div>
 				<div className={s.stager}>
-					<button type="button" className={s.step} disabled={n <= 1} aria-label="One fewer" onClick={() => setN(n - 1)}>
-						−
-					</button>
+					<IconButton variant="secondary" label="One fewer" icon="−" disabled={n <= 1} onClick={() => setN(n - 1)} />
 					<span className={s.staged}>
 						{n} of {max} ⭐
 					</span>
-					<button
-						type="button"
-						className={s.step}
-						disabled={n >= max}
-						aria-label="One more"
-						onClick={() => setN(n + 1)}
-					>
-						+
-					</button>
+					<IconButton variant="secondary" label="One more" icon="+" disabled={n >= max} onClick={() => setN(n + 1)} />
 				</div>
 				{takeBack.isError && <div className={s.problem}>{takeBack.error.message}</div>}
 				<div className={sheet.actions}>
 					<span className={sheet.spacer} />
-					<button type="button" className={sheet.secondary} onClick={onClose}>
-						Cancel
-					</button>
-					<button type="submit" className={sheet.primary} disabled={takeBack.isPending}>
+					<Button onClick={onClose}>Cancel</Button>
+					<Button variant="primary" type="submit" disabled={takeBack.isPending}>
 						Take back
-					</button>
+					</Button>
 				</div>
 			</Sheet>
 		</>

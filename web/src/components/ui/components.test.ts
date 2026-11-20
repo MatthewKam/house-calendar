@@ -5,7 +5,7 @@ import { BackButton } from './BackButton';
 import { Button, IconButton } from './Button';
 import { Card, SectionHead } from './Card';
 import { Chip, Tag } from './Chip';
-import { Field, Input, TextArea } from './Field';
+import { Field, Fieldset, Input, TextArea } from './Field';
 import { List, ListRow } from './ListRow';
 
 // The shared components (styles/README.md "Components"): what they put on the page for screen readers
@@ -41,6 +41,16 @@ describe('Card and SectionHead', () => {
 	it('keeps headings in order', () => {
 		expect(html(h(SectionHead, { children: 'Groceries' }))).toContain('<h2');
 		expect(html(h(SectionHead, { level: 3, children: 'This week' }))).toContain('<h3');
+	});
+});
+
+describe('Fieldset', () => {
+	it('names its group of choices by its label', () => {
+		const f = html(h(Fieldset, { label: 'Who', labelHint: 'pick more than one', hint: 'Together', children: h(Chip, { pressed: true }, 'Mia') }));
+		expect(f).toMatch(/^<fieldset/);
+		expect(f).toMatch(/<legend[^>]*>Who<span[^>]*> · pick more than one<\/span><\/legend>/);
+		expect(f).toContain('aria-pressed="true"');
+		expect(f).toContain('>Together</p>');
 	});
 });
 

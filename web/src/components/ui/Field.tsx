@@ -50,8 +50,8 @@ export function Field({ label, hint, error, children, className }: FieldProps) {
 	);
 }
 
-/** What an input inside a Field takes from it (its own props win). */
-function useField() {
+/** What an input inside a Field takes from it (its own props win). A box of its own (DateInput) uses it too. */
+export function useField() {
 	const f = useContext(FieldContext);
 	return f ? { id: f.id, 'aria-describedby': f.describedBy, 'aria-invalid': f.invalid || undefined } : {};
 }
@@ -72,4 +72,33 @@ export function TextArea({ className, ...rest }: TextareaHTMLAttributes<HTMLText
 export function Select({ className, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {
 	const field = useField();
 	return <select className={[s.box, className].filter(Boolean).join(' ')} {...field} {...rest} />;
+}
+
+interface FieldsetProps {
+	/** What the choices are for ("Who", "Deadline"), above them. */
+	label: ReactNode;
+	/** A quieter word beside the label ("pick more than one to earn it together"). */
+	labelHint?: ReactNode;
+	/** A word on the choice made, under them. */
+	hint?: ReactNode;
+	/** Chips, or a few small controls, in a row that wraps. */
+	children: ReactNode;
+	className?: string;
+}
+
+/**
+ * A labelled group of choices: chips to pick from (Who, Deadline, Times of day), where Field is for one
+ * box. Read out as a group named by its label.
+ */
+export function Fieldset({ label, labelHint, hint, children, className }: FieldsetProps) {
+	return (
+		<fieldset className={[s.fieldset, className].filter(Boolean).join(' ')}>
+			<legend className={s.label}>
+				{label}
+				{labelHint && <span className={s.labelHint}> · {labelHint}</span>}
+			</legend>
+			<div className={s.choices}>{children}</div>
+			{hint && <p className={s.hint}>{hint}</p>}
+		</fieldset>
+	);
 }

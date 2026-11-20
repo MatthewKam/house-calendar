@@ -9,6 +9,8 @@ import Fab from '../nav/Fab';
 import { useParent } from '../../lib/useParent';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
+import { Button } from '../ui/Button';
+import { SectionHead } from '../ui/Card';
 import s from './Rewards.module.css';
 
 interface Props {
@@ -91,7 +93,7 @@ export default function RewardsPage({ today, members }: Props) {
 					</div>
 				)}
 
-				<h2 className={s.section}>Earned 🎉</h2>
+				<SectionHead>Earned 🎉</SectionHead>
 				{waiting.length === 0 ? (
 					<p className={s.none}>Full jars wait here to be redeemed.</p>
 				) : (
@@ -104,19 +106,19 @@ export default function RewardsPage({ today, members }: Props) {
 									filled {shortDay(w.earnedDay)} · {w.stars} ⭐
 								</span>
 								{Object.values(w.memberStars).some((n) => n > 0) && (
-									<button className={s.takeBack} onClick={() => setTakingBack(w)}>
+									<Button variant="quiet" size="sm" onClick={() => setTakingBack(w)}>
 										Take back
-									</button>
+									</Button>
 								)}
-								<button className={s.redeem} disabled={redeem.isPending} onClick={() => redeem.mutate(w.id)}>
+								<Button variant="primary" size="sm" disabled={redeem.isPending} onClick={() => redeem.mutate(w.id)}>
 									Redeem
-								</button>
+								</Button>
 							</li>
 						))}
 					</ul>
 				)}
 
-				<h2 className={s.section}>Redeemed</h2>
+				<SectionHead>Redeemed</SectionHead>
 				{done.length === 0 ? (
 					<p className={s.none}>Rewards show up here once they're redeemed.</p>
 				) : (
@@ -137,13 +139,14 @@ export default function RewardsPage({ today, members }: Props) {
 														<b className={s.redeemedAt}>Redeemed {dayAndTime(w.givenAt)}</b> · filled{' '}
 														{shortDay(w.earnedDay)}
 													</span>
-													<button
-														className={s.undo}
+													<Button
+														variant="quiet"
+														size="sm"
 														onClick={() => undoRedeem.mutate(w.id)}
 														title="Not redeemed after all"
 													>
 														Undo
-													</button>
+													</Button>
 												</>
 											) : (
 												<span className={s.givenDates}>missed its deadline, {shortDay(w.missedOn!)}</span>
@@ -154,9 +157,9 @@ export default function RewardsPage({ today, members }: Props) {
 							</div>
 						))}
 						{done.length > 12 && (
-							<button className={s.more} onClick={() => setShowAll(!showAll)}>
+							<Button variant="link" size="sm" className={s.more} onClick={() => setShowAll(!showAll)}>
 								{showAll ? 'Show fewer' : `Show all ${done.length}`}
-							</button>
+							</Button>
 						)}
 					</>
 				)}

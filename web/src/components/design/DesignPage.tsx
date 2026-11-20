@@ -5,7 +5,7 @@ import { BackButton } from '../ui/BackButton';
 import { Button, IconButton } from '../ui/Button';
 import { Card, SectionHead } from '../ui/Card';
 import { Chip, Tag } from '../ui/Chip';
-import { Field, Input, Select, TextArea } from '../ui/Field';
+import { Field, Fieldset, Input, Select, TextArea } from '../ui/Field';
 import { List, ListRow } from '../ui/ListRow';
 import Switch from '../ui/Switch';
 import { readTokens, type Group, type Token } from './tokens';
@@ -258,7 +258,7 @@ export default function DesignPage() {
 						</Section>
 
 						<Section id="buttons" title="Buttons" intro="One look per job. Kid mode's are size lg.">
-							{(['primary', 'secondary', 'destructive', 'danger', 'link'] as const).map((variant) => (
+							{(['primary', 'secondary', 'destructive', 'danger', 'link', 'quiet'] as const).map((variant) => (
 								<div key={variant} className={s.row}>
 									<span className={s.label}>{variant}</span>
 									<Button variant={variant} size="sm">
@@ -323,6 +323,19 @@ export default function DesignPage() {
 								<Field label="Notes" hint="Optional">
 									<TextArea rows={3} placeholder="Bring a towel" />
 								</Field>
+								<Fieldset label="Who" labelHint="pick more than one" hint="A group of choices: Fieldset">
+									{['Mia', 'Leo'].map((name) => (
+										<Chip
+											key={name}
+											pressed={picked.includes(name)}
+											onClick={() =>
+												setPicked(picked.includes(name) ? picked.filter((p) => p !== name) : [...picked, name])
+											}
+										>
+											{name}
+										</Chip>
+									))}
+								</Fieldset>
 							</div>
 						</Section>
 

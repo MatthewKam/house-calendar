@@ -1,5 +1,6 @@
 import { useRef, type InputHTMLAttributes } from 'react';
 import d from './DateInput.module.css';
+import { useField } from './Field';
 
 /**
  * A date field with its calendar button beside it, not inside. Password managers (LastPass,
@@ -8,6 +9,8 @@ import d from './DateInput.module.css';
  */
 export default function DateInput(props: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>) {
 	const input = useRef<HTMLInputElement>(null);
+	// Inside a Field: tied to its label and hint.
+	const field = useField();
 	function pick() {
 		const el = input.current;
 		if (!el) return;
@@ -28,6 +31,7 @@ export default function DateInput(props: Omit<InputHTMLAttributes<HTMLInputEleme
 				data-1p-ignore="true"
 				data-bwignore="true"
 				data-form-type="other"
+				{...field}
 				{...props}
 				className={`${d.input} ${props.className ?? ''}`}
 			/>

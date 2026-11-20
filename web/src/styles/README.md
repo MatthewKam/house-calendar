@@ -21,11 +21,12 @@ Before styling a button, card, field, chip or row of your own, use the shared on
 
 | Component | For |
 | --- | --- |
-| `Button` (`Button.tsx`) | words you press. `variant`: `primary` (the one main action), `secondary` (the default), `destructive` (Delete, filled red), `danger` (red words), `link` (Undo, Clear). `size`: `sm` in dense rows, `md`, `lg` for a page's main action and kid mode. `icon` puts a picture before the words. Never submits a form unless `type="submit"`. |
+| `Button` (`Button.tsx`) | words you press. `variant`: `primary` (the one main action), `secondary` (the default), `destructive` (Delete, filled red), `danger` (red words), `link` (accent words: Show all, Use a different email), `quiet` (grey words beside another button: Cancel beside Done, Undo, Take back). `size`: `sm` in dense rows, `md`, `lg` for a page's main action and kid mode. `icon` puts a picture before the words. Never submits a form unless `type="submit"`. |
 | `IconButton` (`Button.tsx`) | a picture only (×, ⋯, ✏️), square, named by `label` |
 | `BackButton` (`BackButton.tsx`) | "‹ Today": back to the page a link came from. App shows it by itself (`usePage`'s `follow` and `from`); a link to another page calls `follow`, the nav bar `go`. |
 | `Card`, `SectionHead` (`Card.tsx`) | a box of one thing, with its small capitals `title` and an `action` on the right; `tone` for a note (`info`, `warn`, `good`, `danger`). `SectionHead` heads part of a page or sheet (`level` 2 or 3). |
 | `Field`, `Input`, `TextArea`, `Select` (`Field.tsx`) | a labelled box with a `hint` or an `error` under it; the box inside is tied to them for screen readers by itself |
+| `Fieldset` (`Field.tsx`) | a labelled group of choices (Chips, a person's chips) with a `labelHint` beside the label and a `hint` under them; read out as one group. A `DateInput` inside a `Field` takes its label too. |
 | `Chip`, `Tag` (`Chip.tsx`) | a pill to tap, a filter or choice (`pressed` fills it); a small label that isn't pressed (`tone`) |
 | `List`, `ListRow` (`ListRow.tsx`) | rows with something on the left (`leading`), a `title` and `detail`, and something on the right (`trailing`: a Switch, a button). `onClick` makes the row tappable; `divided` lines them up with rules between. |
 | `Sheet`, `ConfirmDialog`, `Switch`, `Toast` | dialogs, a question before something can't be undone, on/off, a short note at the bottom |
@@ -46,6 +47,7 @@ Use the colour names, never hex values, for anything on the page. Each one has a
 | `--danger-solid`, `--on-danger` | a filled button for something that can't be undone (Delete), and the text on it |
 | `--danger`, `--warn`, `--good`, `--soon` | something wrong, a heads-up, done, a due date. Each has `-bg` and `-line` for a box in that tone |
 | `--info-bg`, `--today`, `--float` | a note to know, today's cell, dark pills over the page (toasts) |
+| `--star` | a star's gold: stars earned, reward jars |
 
 **A person's colour** comes in as a variable set on the element (`style={{ '--c': member.color }}`) and is used as `var(--c)`, mixed with `color-mix()` for lighter or darker shades. Learn's games use `--pc` the same way for a game piece.
 
