@@ -1,4 +1,5 @@
 import { askToOpen, mealLabel, plannedOn, themesOn } from '../../lib/meals';
+import { follow } from '../../lib/usePage';
 import { useMeals, useRecipes } from '../../lib/queries';
 import s from './DayMeals.module.css';
 
@@ -26,7 +27,8 @@ export default function DayMeals({ day }: { day: string }) {
 							// Not the day itself (that opens the day panel).
 							e.stopPropagation();
 							askToOpen(m.recipe.id);
-							window.location.hash = 'recipes';
+							// A link: the recipe shows ‹ Calendar (or ‹ Today) to come back.
+							follow('recipes');
 						}}
 					>
 						<span aria-hidden="true">🍽️</span> {mealLabel(m.meal)}: {m.recipe.title}
