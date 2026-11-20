@@ -58,6 +58,7 @@
 	border: 1px solid var(--line);
 	border-top: 0.35rem solid var(--c);
 	border-radius: var(--radius);
+	box-shadow: var(--shadow-md);
 	max-width: 450px;
 }
 .kidHead {
@@ -141,6 +142,7 @@
 	background: var(--bg);
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
+	box-shadow: var(--shadow-sm);
 }
 .rowMain {
 	flex: 1;
@@ -171,7 +173,9 @@
 }
 .picked {
 	border-style: solid;
-	box-shadow: 0 0 0 2px var(--c);
+	box-shadow:
+		0 0 0 2px var(--c),
+		var(--shadow-sm);
 }
 /* The pencil, right after the jar's name: a full-size press that doesn't make the line taller. */
 .edit {
@@ -348,6 +352,7 @@
 	background: var(--surface);
 	border: 1px solid var(--line);
 	border-radius: var(--radius-sm);
+	box-shadow: var(--shadow-sm);
 }
 /* Full, waiting to be redeemed: gold. */
 .givenList li.earned {
@@ -406,6 +411,7 @@
 	padding: 0;
 	background: none;
 	border: none;
+	box-shadow: none;
 	gap: var(--space-3);
 }
 .big .sub {

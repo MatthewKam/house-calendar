@@ -39,6 +39,7 @@
 	background: var(--surface);
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
+	box-shadow: var(--shadow-md);
 	padding: var(--space-5);
 	display: flex;
 	flex-direction: column;
@@ -81,6 +82,7 @@
 	border-radius: var(--radius);
 	background: color-mix(in srgb, var(--c) var(--pastel), var(--surface));
 	color: var(--text);
+	box-shadow: var(--shadow-sm);
 }
 .row:hover {
 	filter: brightness(0.97);

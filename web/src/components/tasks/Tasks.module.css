@@ -110,6 +110,7 @@
 	border-radius: var(--radius);
 	background: color-mix(in srgb, var(--c) 10%, var(--surface));
 	border: 2px solid color-mix(in srgb, var(--c) 35%, var(--surface));
+	box-shadow: var(--shadow-sm);
 }
 .ticked {
 	background: color-mix(in srgb, var(--c) 50%, var(--surface));
@@ -398,6 +399,7 @@
 	border-top: 0.35rem solid var(--c);
 	border-radius: var(--radius);
 	padding: var(--space-5);
+	box-shadow: var(--shadow-md);
 }
 .board .kid .head {
 	flex-wrap: wrap;
