@@ -24,10 +24,15 @@
 	min-height: 0;
 	overflow: hidden;
 	cursor: pointer;
+	box-shadow: var(--shadow-md);
+}
+.pastDay {
+	box-shadow: none;
 }
 .outside {
 	background: transparent;
 	border: 1px solid var(--line);
+	box-shadow: none;
 }
 .outside .num {
 	color: var(--muted);

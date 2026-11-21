@@ -48,6 +48,7 @@ export default function MonthView({ days, month, today, selected, events, member
 							day.getMonth() !== month && s.outside,
 							key === today && s.today,
 							key === selected && s.selected,
+							key < today && s.pastDay,
 						]
 							.filter(Boolean)
 							.join(' ')}

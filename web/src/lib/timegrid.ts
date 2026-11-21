@@ -83,3 +83,53 @@ export function timeOn(ev: CalEvent, day: Date) {
 	if (endsAfter) return `from ${timeLabel(ev.start)}`;
 	return rangeLabel(ev.start, ev.end);
 }
+
+/**
+ * Held in the strip across the top of the week, as one bar over the days it covers: an all-day event,
+ * or a timed one that lasts a day or more (camping Friday 3 PM to Sunday 11 AM). Shorter ones that cross
+ * midnight stay in the hours, as a block on each day.
+ */
+export const inStrip = (ev: CalEvent) => ev.allDay || Date.parse(ev.end) - Date.parse(ev.start) >= 24 * HOUR;
+
+export interface Bar {
+	ev: CalEvent;
+	/** The first day it covers and the one after its last, as columns of the week (0 to 7). */
+	from: number;
+	to: number;
+	/** Its row in the strip, so bars that share a day stack. */
+	row: number;
+	/** It began before the week, or goes on past it (an arrow says so). */
+	before: boolean;
+	after: boolean;
+}
+
+/** The strip's bars for these days: each over its days, cut at the week's edges, stacked without overlapping. */
+export function weekBars(events: CalEvent[], days: Date[]): Bar[] {
+	const first = days[0].getTime();
+	const end = addDays(days[days.length - 1], 1).getTime();
+	/** Which column a moment (or an all-day date) falls in; days are midnight to midnight. */
+	const col = (t: number) => days.findIndex((d, i) => t >= d.getTime() && t < addDays(days[i], 1).getTime());
+	const bars = events
+		.filter(inStrip)
+		.map((ev) => {
+			const start = ev.allDay ? new Date(`${ev.start}T00:00:00`).getTime() : Date.parse(ev.start);
+			// All-day ends are exclusive dates; a timed one ends in the day its end falls in.
+			const stop = ev.allDay ? new Date(`${ev.end}T00:00:00`).getTime() : Date.parse(ev.end);
+			if (stop <= first || start >= end) return null;
+			const from = start < first ? 0 : col(start);
+			// Up to the day its last moment falls in (an end at midnight belongs to the day before).
+			const to = stop > end ? days.length : col(stop - 1) + 1;
+			return { ev, from, to, row: 0, before: start < first, after: stop > end };
+		})
+		.filter((b): b is Bar => b !== null && b.from >= 0 && b.to > b.from)
+		// Earliest first, then the longest, so long bars keep the top rows.
+		.sort((a, b) => a.from - b.from || b.to - b.from - (a.to - a.from) || a.ev.title.localeCompare(b.ev.title));
+	const rows: number[][] = [];
+	for (const b of bars) {
+		let r = 0;
+		while ((rows[r] ?? []).some((taken) => taken >= b.from && taken < b.to)) r++;
+		rows[r] = [...(rows[r] ?? []), ...Array.from({ length: b.to - b.from }, (_, i) => b.from + i)];
+		b.row = r;
+	}
+	return bars;
+}
