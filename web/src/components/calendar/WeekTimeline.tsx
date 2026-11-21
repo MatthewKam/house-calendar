@@ -38,6 +38,7 @@ function HourName({ h }: { h: number }) {
 export default function WeekTimeline({ days, today, selected, events, members, onSelect, onOpen }: Props) {
 	const now = useNow();
 	const bars = weekBars(events, days);
+	const rows = bars.reduce((n, b) => Math.max(n, b.row + 1), 0);
 	// Each day is a list: its bars, then its meals right under them (not under the week's tallest stack).
 	const barsOn = (col: number) =>
 		bars.filter((b) => b.from <= col && col < b.to).reduce((n, b) => Math.max(n, b.row + 1), 0);
@@ -84,7 +85,9 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 			</div>
 
 			{/* Whole days: a bar over every day an event covers, then each day's meals. */}
-			<div className={s.strip}>
+			{/* Bar rows are the bars' own height, so they stack tight on every day; a day's meals run from under its
+			    bars into the last row, which grows for the tallest. */}
+			<div className={s.strip} style={{ gridTemplateRows: rows ? `repeat(${rows}, var(--bar)) auto` : 'auto' }}>
 				<span className={s.stripLabel}>all-day</span>
 				{bars.map((b) => {
 					const paint = eventPaint(b.ev, members);
@@ -120,7 +123,7 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 					);
 				})}
 				{days.map((day, i) => (
-					<div key={dayKey(day)} className={s.meals} style={{ gridColumn: i + 2, gridRow: barsOn(i) + 1 }}>
+					<div key={dayKey(day)} className={s.meals} style={{ gridColumn: i + 2, gridRow: `${barsOn(i) + 1} / -1` }}>
 						<DayMeals day={dayKey(day)} />
 					</div>
 				))}
