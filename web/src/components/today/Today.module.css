@@ -83,7 +83,7 @@
 	flex-direction: column;
 	gap: var(--space-5);
 }
-/* The smaller cards between the calendar and the photos, in two columns that each stack on their own (no
+/* The cards under the calendar, the photos too, in two columns that each stack on their own (no
    gaps under a short card): one after the other on a phone; side by side on a tablet either way up (from
    800px wide: an iPad mini upright keeps one roomy column) or a phone on its side. From 1601px TodayPage
    lays out three columns of its own. */
@@ -866,7 +866,7 @@ details > summary.cardHead {
 	font-size: var(--text-3xl);
 }
 
-/* The family's photo slideshow (PhotoCard): across the cards, a photo's shape. */
+/* The family's photo slideshow (PhotoCard): a card as wide as its column, a photo's shape. */
 .slideshow.slideshow {
 	flex: none;
 	width: 100%;

@@ -432,9 +432,9 @@ export default function TodayPage({
 								{guard('the weather', weatherCard)}
 								{guard('the quote', quoteCard)}
 								{guard('the encouragement', encouragementCard)}
+								{guard('the photos', photosCard)}
 							</div>
 						</div>
-						{guard('the photos', photosCard)}
 					</div>
 				)}
 			</div>
