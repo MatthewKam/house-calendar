@@ -80,7 +80,8 @@
 	grid-template-columns: var(--gutter) repeat(7, minmax(0, 1fr));
 	align-items: start;
 	gap: var(--space-1) 0;
-	padding-block: var(--space-2);
+	padding-block-start: var(--space-2);
+	padding-block-end: var(--space-1);
 	border-bottom: 1px solid var(--line);
 	/* Each day's column has the same line on its left as the hours below. */
 	background: linear-gradient(to right, var(--line) 1px, transparent 1px) var(--gutter) 0 /
@@ -154,8 +155,7 @@
 	position: relative;
 	height: calc(24 * var(--hour));
 }
-.hour,
-.nowPill {
+.hour {
 	position: absolute;
 	left: 0;
 	width: calc(var(--gutter) - var(--space-2));
@@ -246,7 +246,7 @@
 	filter: saturate(0.4);
 }
 
-/* ---- The time now: a red line across today with a dot at its start, and the time in the margin ---- */
+/* ---- The time now: a red line across today with a dot at its start (the clock up top says the time) ---- */
 .now {
 	position: absolute;
 	z-index: 2;
@@ -267,14 +267,4 @@
 	border-radius: 50%;
 	background: var(--now);
 	translate: 0 -50%;
-}
-.nowPill {
-	z-index: 2;
-	text-align: center;
-	border-radius: var(--radius-round);
-	background: var(--now);
-	color: var(--on-danger);
-	font-size: var(--text-xs);
-	font-weight: var(--weight-bold);
-	font-variant-numeric: tabular-nums;
 }

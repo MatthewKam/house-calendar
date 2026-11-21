@@ -131,19 +131,12 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 
 			<div ref={scroller} className={s.scroll}>
 				<div className={s.hours}>
-					{/* The hour labels in the margin (the time-now pill takes the place of one it would cover). */}
-					{Array.from({ length: 23 }, (_, i) => i + 1)
-						.filter((h) => todayCol < 0 || Math.abs(h - nowHours) > 0.3)
-						.map((h) => (
-							<span key={h} data-hour={h} className={s.hour} style={{ top: `${(h / 24) * 100}%` }}>
-								<HourName h={h} />
-							</span>
-						))}
-					{todayCol >= 0 && (
-						<span className={s.nowPill} style={{ top: `${(nowHours / 24) * 100}%` }}>
-							{timeLabel(now).replace(/\s?[AP]M$/i, '')}
+					{/* The hour labels in the margin. */}
+					{Array.from({ length: 23 }, (_, i) => i + 1).map((h) => (
+						<span key={h} data-hour={h} className={s.hour} style={{ top: `${(h / 24) * 100}%` }}>
+							<HourName h={h} />
 						</span>
-					)}
+					))}
 					<div className={s.columns}>
 						{days.map((day, i) => {
 							const key = dayKey(day);
