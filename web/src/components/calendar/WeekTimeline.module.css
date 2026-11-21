@@ -4,7 +4,9 @@
 	--gutter: 3.6rem;
 	--hour: 3.2rem;
 	--bar: 1.9rem;
-	flex: 1;
+	/* As tall as what's in it (it ends at midnight's line), shrinking to fit the page when that's shorter
+	   (the hours then scroll); never stretched past the last hour. */
+	flex: 0 1 auto;
 	min-height: 0;
 	min-width: 0;
 	display: flex;
@@ -253,8 +255,13 @@
 	overflow-wrap: anywhere;
 }
 .time {
+	max-width: 100%;
 	font-size: var(--text-xs);
 	color: var(--muted);
+	/* One line, cut short in a narrow column, so it never pushes the title out of a short block. */
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 @container (max-height: 2.6rem) {
 	.title {

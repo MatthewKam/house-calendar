@@ -6,6 +6,13 @@
 	gap: 1rem;
 	flex-wrap: wrap;
 }
+.header,
+.monthHeaderTitle,
+.body {
+	width: 100%;
+	max-width: max(56rem, 80%);
+	margin: 0 auto;
+}
 .group {
 	display: flex;
 	align-items: center;
