@@ -55,12 +55,7 @@
 .body .week {
 	box-shadow: var(--shadow-md);
 }
-.banner {
-	background: var(--danger-bg);
-	color: var(--danger-strong);
-	padding: 0.6rem 1rem;
-	border-radius: var(--radius);
-}
+
 /* Month name on the left, name filters on the right. */
 .monthHeaderTitle {
 	display: flex;

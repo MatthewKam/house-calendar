@@ -47,10 +47,3 @@
 	background: var(--surface);
 	border: 1px solid var(--line);
 }
-/* Edits stuck waiting (offline, or iCloud refusing). */
-.waiting {
-	color: var(--warn);
-	background: var(--warn-bg);
-	padding: 0.5rem 1rem;
-	border-radius: var(--radius);
-}

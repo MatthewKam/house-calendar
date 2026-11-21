@@ -2,6 +2,7 @@ import { useOutbox, useResolveConflict } from '../../lib/queries';
 import { fromDayKey, timeLabel } from '../../lib/dates';
 import type { EventDetails } from '../../lib/types';
 import s from './OutboxNotices.module.css';
+import { Notice } from '../ui/Notice';
 
 /** "Tue, Oct 6, 9:00 AM – 10:00 AM", or the days of an all-day event. */
 function when(d: EventDetails) {
@@ -96,10 +97,12 @@ export default function OutboxNotices() {
 				</div>
 			))}
 			{outbox.pending > 0 && outbox.lastError && (
-				<div className={s.waiting}>
-					↻ {outbox.pending === 1 ? '1 change is' : `${outbox.pending} changes are`} waiting to be sent to iCloud (
-					{outbox.lastError}). It'll keep trying.
-				</div>
+				<Notice
+					tone="warn"
+					icon="↻"
+					title={`${outbox.pending === 1 ? '1 change' : `${outbox.pending} changes`} waiting for iCloud`}
+					details={`${outbox.lastError.replace(/\.?$/, '.')} It'll keep trying.`}
+				/>
 			)}
 		</>
 	);

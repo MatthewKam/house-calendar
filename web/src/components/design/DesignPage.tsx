@@ -7,6 +7,7 @@ import { Card, SectionHead } from '../ui/Card';
 import { Chip, Tag } from '../ui/Chip';
 import { Field, Fieldset, Input, Select, TextArea } from '../ui/Field';
 import { Segmented } from '../ui/Segmented';
+import { Notice } from '../ui/Notice';
 import { List, ListRow } from '../ui/ListRow';
 import Switch from '../ui/Switch';
 import { readTokens, type Group, type Token } from './tokens';
@@ -30,6 +31,7 @@ const SECTIONS = [
 	['buttons', 'Buttons'],
 	['cards', 'Cards'],
 	['fields', 'Fields'],
+	['notices', 'Notices'],
 	['chips', 'Chips and tags'],
 	['rows', 'Lists'],
 ] as const;
@@ -348,6 +350,17 @@ export default function DesignPage() {
 									))}
 								</Fieldset>
 							</div>
+						</Section>
+
+						<Section id="notices" title="Notices" intro="One line across the top of a page; tap for the rest.">
+							<Notice
+								tone="danger"
+								icon="⚠️"
+								title="Calendar sync failed"
+								details="iCloud has refused the Apple ID or app-specific password for over an hour. Make a new app-specific password at account.apple.com."
+							/>
+							<Notice tone="warn" icon="↻" title="1 change waiting for iCloud" details="It'll keep trying." />
+							<Notice tone="info" title="Something to know" />
 						</Section>
 
 						<Section id="chips" title="Chips and tags" intro="Tap the chips: picked ones fill.">

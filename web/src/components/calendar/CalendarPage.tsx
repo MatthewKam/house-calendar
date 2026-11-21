@@ -11,6 +11,7 @@ import DayPanel from './DayPanel';
 import MonthView from './MonthView';
 import NowLine from './NowLine';
 import OutboxNotices from './OutboxNotices';
+import { Notice } from '../ui/Notice';
 import PeopleFilter, { eventShown } from './PeopleFilter';
 import WeatherCard from './WeatherCard';
 import WeekView from './WeekView';
@@ -131,13 +132,20 @@ export default function CalendarPage({
 			</header>
 
 			{eventsQuery.isError && (
-				<div className={s.banner}>Can't reach the calendar service ({eventsQuery.error.message})</div>
+				<Notice tone="danger" icon="⚠️" title="Can't reach the calendar" details={eventsQuery.error.message} />
 			)}
 			{sync?.lastError && (
-				<div className={s.banner}>Calendar sync failed: {sync.lastError}. Showing what was last synced.</div>
+				<Notice
+					tone="danger"
+					icon="⚠️"
+					title="Calendar sync failed"
+					details={`${sync.lastError.replace(/\.?$/, '.')} Showing what was last synced.`}
+				/>
 			)}
 			<OutboxNotices />
-			{sync?.peopleError && <div className={s.banner}>Couldn't sort new events by person: {sync.peopleError}</div>}
+			{sync?.peopleError && (
+				<Notice tone="warn" title="Couldn't sort new events by person" details={sync.peopleError} />
+			)}
 
 			<div className={s.body}>
 				{/* Wait for the saved view so the page doesn't flash Week before Month; until then, and

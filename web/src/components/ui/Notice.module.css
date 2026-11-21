@@ -1,0 +1,63 @@
+/* A one-line note (Notice.tsx): small text in a tone, the rest a tap away. */
+.notice {
+	border: 1px solid;
+	border-radius: var(--radius-sm);
+	font-size: var(--text-sm);
+	line-height: var(--leading-tight);
+}
+.head {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	min-height: var(--tap-sm);
+	padding: var(--space-1) var(--space-3);
+	list-style: none;
+	cursor: default;
+}
+summary.head {
+	cursor: pointer;
+}
+summary.head::-webkit-details-marker {
+	display: none;
+}
+.icon {
+	flex: none;
+}
+.title {
+	flex: 1;
+	min-width: 0;
+	font-weight: var(--weight-semibold);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.more {
+	flex: none;
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+	opacity: 0.8;
+}
+.notice[open] .more {
+	display: none;
+}
+.details {
+	margin: 0;
+	padding: 0 var(--space-3) var(--space-2);
+	line-height: var(--leading-relaxed);
+}
+
+.info {
+	background: var(--info-bg);
+	border-color: var(--line);
+	color: var(--text);
+}
+.warn {
+	background: var(--warn-bg);
+	border-color: var(--warn-line);
+	color: var(--warn);
+}
+.danger {
+	background: var(--danger-bg);
+	border-color: var(--danger-line);
+	color: var(--danger-strong);
+}
