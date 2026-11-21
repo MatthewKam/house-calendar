@@ -14,7 +14,7 @@
 		"components/calendar/OutboxNotices.module.css": 1,
 		"components/calendar/PeopleFilter.module.css": 1,
 		"components/calendar/WeatherCard.module.css": 12,
-		"components/calendar/WeekView.module.css": 5,
+		"components/calendar/WeekView.module.css": 4,
 		"components/learn/Learn.module.css": 14,
 		"components/learn/LearnAdding.module.css": 2,
 		"components/learn/LearnChomp.module.css": 1,
