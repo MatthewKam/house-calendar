@@ -8,6 +8,11 @@
 	flex-direction: column;
 	gap: var(--space-4);
 }
+@media screen and (min-width: 1400px) {
+	.page {
+		gap: var(--space-8);
+	}
+}
 .head {
 	display: flex;
 	align-items: center;

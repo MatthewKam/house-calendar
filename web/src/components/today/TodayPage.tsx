@@ -298,7 +298,7 @@ export default function TodayPage({
 					<Skeleton height="3.6rem" />
 				</Loading>
 			) : (
-				<DayCalendar days={calendar} styles={s} stacked={twoColumns} />
+				<DayCalendar days={calendar} styles={s} stacked={twoColumns || threeColumns} />
 			)}
 		</Card>
 	);
