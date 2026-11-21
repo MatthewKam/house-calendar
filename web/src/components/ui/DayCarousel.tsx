@@ -30,10 +30,13 @@ export function DayCalendar({
 	days,
 	styles: s,
 	stacked = false,
+	three = true,
 }: {
 	days: CalendarDay[];
 	styles: CalendarStyles;
 	stacked?: boolean;
+	/** All three side by side when there's room (wider than 1400px); false keeps the first and a carousel. */
+	three?: boolean;
 }) {
 	const sideBySide = useMediaQuery(SIDE_BY_SIDE);
 	const allThree = useMediaQuery(ALL_THREE);
@@ -51,7 +54,7 @@ export function DayCalendar({
 			</div>
 		);
 	}
-	if (allThree) return <div className={s.calendar}>{days.map(day)}</div>;
+	if (allThree && three) return <div className={s.calendar}>{days.map(day)}</div>;
 	if (sideBySide) {
 		return (
 			<div className={s.calendar}>
