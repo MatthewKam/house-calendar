@@ -39,7 +39,7 @@
 }
 /* Today: a light tint of the accent; its number in a raised circle. */
 .today {
-	background-color: color-mix(in srgb, var(--accent) 8%, transparent);
+	border: 1px solid var(--accent);
 }
 .today .num {
 	align-self: flex-start;

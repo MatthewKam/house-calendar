@@ -191,7 +191,6 @@ export default function CalendarPage({
 					/>
 				)}
 			</div>
-			{view === 'week' && !narrow && !settings.isPending && cards}
 		</>
 	);
 }

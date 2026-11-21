@@ -1,5 +1,5 @@
 /* Shared modal sheet styles. */
-/* Above the day panel (z-index 10-11), which can open these sheets. */
+/* Above the day panel (--layer-panel), which can open these sheets. */
 .scrim {
 	position: fixed;
 	inset: 0;

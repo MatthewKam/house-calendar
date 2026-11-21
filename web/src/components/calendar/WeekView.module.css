@@ -20,14 +20,14 @@
 }
 .day:first-child {
 	border-left: none;
-	border-radius: var(--radius) 0 0 var(--radius);
+	border-radius: var(--radius-xs) 0 0 var(--radius-xs);
 }
 .day:nth-child(7) {
-	border-radius: 0 var(--radius) var(--radius) 0;
+	border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
 }
 /* Today: a light tint of the accent. */
 .today {
-	background-color: color-mix(in srgb, var(--accent) 8%, transparent);
+	border: 1px solid var(--accent);
 }
 
 .today.day .num {
