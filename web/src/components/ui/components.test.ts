@@ -8,6 +8,7 @@ import { Chip, Tag } from './Chip';
 import { Field, Fieldset, Input, TextArea } from './Field';
 import { List, ListRow } from './ListRow';
 import { Segmented } from './Segmented';
+import { Notice } from './Notice';
 
 // The shared components (styles/README.md "Components"): what they put on the page for screen readers
 // and forms, which is easy to lose when a component changes.
@@ -42,6 +43,19 @@ describe('Card and SectionHead', () => {
 	it('keeps headings in order', () => {
 		expect(html(h(SectionHead, { children: 'Groceries' }))).toContain('<h2');
 		expect(html(h(SectionHead, { level: 3, children: 'This week' }))).toContain('<h3');
+	});
+});
+
+describe('Notice', () => {
+	it('is one line, read out as a status, with the rest a tap away', () => {
+		const n = html(
+			h(Notice, { tone: 'danger', title: 'Calendar sync failed', details: 'iCloud refused the password' }),
+		);
+		expect(n).toMatch(/^<details[^>]*role="status"/);
+		expect(n).toContain('<summary');
+		expect(n).toContain('Calendar sync failed');
+		expect(n).toContain('iCloud refused the password');
+		expect(html(h(Notice, { title: 'Saved' }))).toMatch(/^<div[^>]*role="status"/);
 	});
 });
 

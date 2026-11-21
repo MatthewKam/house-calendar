@@ -30,6 +30,7 @@ Before styling a button, card, field, chip or row of your own, use the shared on
 | `Chip`, `Tag` (`Chip.tsx`) | a pill to tap, a filter or choice (`pressed` fills it); a small label that isn't pressed (`tone`) |
 | `Segmented` (`Segmented.tsx`) | two to four choices in one bar, one picked (Task \| Goal, Week \| Month); `tabs` when it switches what's shown under it |
 | `List`, `ListRow` (`ListRow.tsx`) | rows with something on the left (`leading`), a `title` and `detail`, and something on the right (`trailing`: a Switch, a button). `onClick` makes the row tappable; `divided` lines them up with rules between. |
+| `Notice` (`Notice.tsx`) | a one-line note across the top of a page (sync failed, changes waiting) in a `tone` (`info`, `warn`, `danger`), small; `details` opens on a tap with the reason and what to do |
 | `Sheet`, `ConfirmDialog`, `Switch`, `Toast` | dialogs, a question before something can't be undone, on/off, a short note at the bottom |
 
 **See them all:** while developing (`npm run dev`), open `/design`: every shared name and component, live in light or dark and each accent. It reads the names from `app.css` itself, so it never falls behind. The built app doesn't have it.

@@ -48,7 +48,7 @@
 		"components/learn/LearnSounds.module.css": 2
 	},
 	"spacing (--space-*)": {
-		"components/calendar/CalendarPage.module.css": 22,
+		"components/calendar/CalendarPage.module.css": 21,
 		"components/calendar/DailyCards.module.css": 3,
 		"components/calendar/DayMeals.module.css": 3,
 		"components/calendar/DayPanel.module.css": 9,
@@ -59,7 +59,7 @@
 		"components/calendar/LeaveAlerts.module.css": 4,
 		"components/calendar/MonthView.module.css": 11,
 		"components/calendar/NowLine.module.css": 2,
-		"components/calendar/OutboxNotices.module.css": 6,
+		"components/calendar/OutboxNotices.module.css": 5,
 		"components/calendar/PeopleFilter.module.css": 7,
 		"components/calendar/WeatherCard.module.css": 13,
 		"components/calendar/WeekView.module.css": 12,
