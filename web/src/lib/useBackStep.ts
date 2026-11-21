@@ -43,11 +43,7 @@ export function useBackStep(open: boolean, close: () => void) {
 		if (!key.current || !inStack(key.current)) {
 			const mine = Math.random().toString(36).slice(2);
 			const s = step();
-			history.pushState(
-				{ ...s, depth: (s.depth ?? 0) + 1, open: [...(s.open ?? []), mine] },
-				'',
-				window.location.href,
-			);
+			history.pushState({ ...s, depth: (s.depth ?? 0) + 1, open: [...(s.open ?? []), mine] }, '', window.location.href);
 			key.current = mine;
 		}
 		const mine = key.current;

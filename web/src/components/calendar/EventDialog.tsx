@@ -17,6 +17,9 @@ import { CalendarPick, useNewEventCalendar } from './CalendarPick';
 import { isKid, firstName } from '../../lib/people';
 import Sheet from '../ui/Sheet';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import Switch from '../ui/Switch';
+import { Input } from '../ui/Field';
+import { List, ListRow } from '../ui/ListRow';
 
 interface Props {
 	day: string;
@@ -148,7 +151,10 @@ function SyncedEvent({
 		? fromDayKey(event.end) > addDays(fromDayKey(event.start), 1)
 			? `${longDate(fromDayKey(event.start))} – ${longDate(addDays(fromDayKey(event.end), -1))}`
 			: `${longDate(fromDayKey(event.start))}, all day`
-		: `${longDate(new Date(event.start))}, ${timeLabel(event.start)} – ${timeLabel(event.end)}`;
+		: dayKey(new Date(event.start)) === dayKey(new Date(event.end))
+			? `${longDate(new Date(event.start))}, ${timeLabel(event.start)} – ${timeLabel(event.end)}`
+			: // Over several days: when it starts and when it ends, each with its day.
+				`${longDate(new Date(event.start))}, ${timeLabel(event.start)} – ${longDate(new Date(event.end))}, ${timeLabel(event.end)}`;
 	return (
 		<>
 			<Sheet label={event.title} onClose={onClose} className={sheet.drawer}>
@@ -277,9 +283,19 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
 		event ? event.memberIds : newSpecial ? [] : members.slice(0, 1).map((m) => m.id),
 	);
 	const [allDay, setAllDay] = useState(event?.allDay ?? !!newSpecial);
-	const [date, setDate] = useState(firstDate);
-	// All-day end is stored exclusive; the form shows the inclusive last day.
-	const [lastDate, setLastDate] = useState(event?.allDay ? dayKey(addDays(fromDayKey(event.end), -1)) : firstDate);
+	const [date, setDateOnly] = useState(firstDate);
+	// The day it ends: for an all-day event the last day it's on (stored exclusive, shown inclusive), for a
+	// timed one the day of its end time. Several days apart for something that spans them.
+	const [lastDate, setLastDate] = useState(
+		event ? (event.allDay ? dayKey(addDays(fromDayKey(event.end), -1)) : dayKey(new Date(event.end))) : firstDate,
+	);
+	/** A new start day carries the end along with it, so the event keeps its length. */
+	const setDate = (next: string) => {
+		if (!next) return;
+		const moved = Math.round((fromDayKey(next).getTime() - fromDayKey(date).getTime()) / 86_400_000);
+		setDateOnly(next);
+		setLastDate(dayKey(addDays(fromDayKey(lastDate), moved)));
+	};
 	const [startTime, setStartTime] = useState(event && !event.allDay ? hhmm(event.start) : '09:00');
 	const [endTime, setEndTime] = useState(event && !event.allDay ? hhmm(event.end) : '10:00');
 	const [location, setLocation] = useState(event?.location ?? '');
@@ -301,9 +317,9 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
 	const problem = !title.trim()
 		? 'Add a title'
 		: allDay && lastDate < date
-			? 'Last day is before the first day'
-			: !allDay && endTime <= startTime
-				? 'End time is before the start'
+			? 'It ends before it starts'
+			: !allDay && toInstant(lastDate, endTime) <= toInstant(date, startTime)
+				? 'It ends before it starts'
 				: null;
 
 	function submit(e: FormEvent) {
@@ -341,7 +357,7 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
 					memberIds,
 					allDay,
 					start: toInstant(date, startTime),
-					end: toInstant(date, endTime),
+					end: toInstant(lastDate, endTime),
 					location: place,
 					...where,
 				};
@@ -418,26 +434,36 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
 					</div>
 				)}
 
-				<label className={s.toggle}>
-					<input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} /> All day
-				</label>
-				<div className={s.row}>
-					<label>
-						{allDay ? 'From' : 'Date'} <DateInput value={date} onChange={(e) => setDate(e.target.value)} />
-					</label>
-					{allDay ? (
-						<label>
-							To <DateInput value={lastDate} min={date} onChange={(e) => setLastDate(e.target.value)} />
-						</label>
-					) : (
-						<>
-							<label>
-								Start <input type="time" step={300} value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-							</label>
-							<label>
-								End <input type="time" step={300} value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-							</label>
-						</>
+				<List>
+					<ListRow title="All day" trailing={<Switch on={allDay} onChange={setAllDay} label="All day" />} />
+				</List>
+				<div className={`${s.when} ${allDay ? s.whenDays : ''}`}>
+					<span className={s.whenLabel}>Starts</span>
+					<DateInput value={date} aria-label="Starts" onChange={(e) => setDate(e.target.value)} />
+					{!allDay && (
+						<Input
+							type="time"
+							step={300}
+							aria-label="Start time"
+							value={startTime}
+							onChange={(e) => setStartTime(e.target.value)}
+						/>
+					)}
+					<span className={s.whenLabel}>Ends</span>
+					<DateInput
+						value={lastDate}
+						min={date}
+						aria-label="Ends"
+						onChange={(e) => e.target.value && setLastDate(e.target.value)}
+					/>
+					{!allDay && (
+						<Input
+							type="time"
+							step={300}
+							aria-label="End time"
+							value={endTime}
+							onChange={(e) => setEndTime(e.target.value)}
+						/>
 					)}
 				</div>
 

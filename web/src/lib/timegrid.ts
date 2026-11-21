@@ -1,4 +1,4 @@
-import { addDays } from './dates';
+import { addDays, rangeLabel, timeLabel } from './dates';
 import { eventsOn } from './events';
 import type { CalEvent } from './types';
 
@@ -69,4 +69,17 @@ export function placeDay(events: CalEvent[], day: Date, from: number, to: number
 	}
 	close();
 	return out;
+}
+
+/**
+ * A timed event's time on one day: its hours, or for one over several days "from 3:00 PM" on its first,
+ * "all day" in between, and "until 11:00 AM" on its last.
+ */
+export function timeOn(ev: CalEvent, day: Date) {
+	const startsBefore = Date.parse(ev.start) < day.getTime();
+	const endsAfter = Date.parse(ev.end) > addDays(day, 1).getTime();
+	if (startsBefore && endsAfter) return 'all day';
+	if (startsBefore) return `until ${timeLabel(ev.end)}`;
+	if (endsAfter) return `from ${timeLabel(ev.start)}`;
+	return rangeLabel(ev.start, ev.end);
 }
