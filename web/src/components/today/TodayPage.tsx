@@ -16,7 +16,7 @@ import { QUOTE_THEMES } from '../../lib/quotes';
 import { timeLineFor } from '../../lib/timeQuotes';
 import { sky } from '../../lib/weather';
 import { useNow } from '../../lib/useNow';
-import { LANDSCAPE_TABLET, EXTRAWIDE, useMediaQuery } from '../../lib/useMediaQuery';
+import { LANDSCAPE_TABLET, EXTRAWIDE, WIDE, useMediaQuery } from '../../lib/useMediaQuery';
 import { firstName } from '../../lib/people';
 import { askToOpen, mealAt, mealLabel, plannedOn, zone } from '../../lib/meals';
 import type { CalEvent, Member, PlanMeal, Recipe } from '../../lib/types';
@@ -281,6 +281,9 @@ export default function TodayPage({
 	// A tablet on its side, or anything bigger: the calendar in a column of its own on the right.
 	const twoColumns = useMediaQuery(LANDSCAPE_TABLET);
 	const threeColumns = useMediaQuery(EXTRAWIDE);
+	// From 1401px the calendar would put its three days side by side; it keeps them in two rows instead
+	// (today, then tomorrow and the rest of the week under it), as on every other screen.
+	const wide = useMediaQuery(WIDE);
 
 	// The cards. A tablet on its side and anything bigger: two columns, the calendar on the right (today,
 	// then tomorrow and the rest of the week under it) with the special days under it, the rest down the
@@ -298,7 +301,7 @@ export default function TodayPage({
 					<Skeleton height="3.6rem" />
 				</Loading>
 			) : (
-				<DayCalendar days={calendar} styles={s} stacked={twoColumns || threeColumns} />
+				<DayCalendar days={calendar} styles={s} stacked={twoColumns || wide} />
 			)}
 		</Card>
 	);
