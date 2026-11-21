@@ -289,7 +289,7 @@ export default function TodayPage({
 	// then tomorrow and the rest of the week under it) with the special days under it, the rest down the
 	// left. Otherwise one list.
 	const calendarCard = (
-		<Card className={s.wide} aria-label="Calendar">
+		<Card aria-label="Calendar">
 			{/* Loading: a few event-shaped rows, so the calendar isn't "nothing today" before it knows. */}
 			{eventsQuery.isError ? (
 				<Problem message={loadProblem('the calendar', eventsQuery.error)} onRetry={() => void eventsQuery.refetch()} />
@@ -349,7 +349,7 @@ export default function TodayPage({
 		</Card>
 	);
 	// The family's slideshow (the screen saver's photos), as on the calendar.
-	const photosCard = <PhotoCard onPlay={onPlaySlideshow} className={`${s.wide} ${s.slideshow}`} />;
+	const photosCard = <PhotoCard onPlay={onPlaySlideshow} className={s.slideshow} />;
 
 	// Each card to itself: one that breaks says so, and the rest of Today carries on.
 	const guard = (what: string, card: ReactNode) => <ErrorBoundary what={what}>{card}</ErrorBoundary>;
@@ -421,14 +421,20 @@ export default function TodayPage({
 					<div className={s.cards}>
 						{guard('finishing setting up', <FinishSetup />)}
 						{guard('the calendar', calendarCard)}
-						{guard("the kids' day", kidsCard)}
-						{guard('List items', needsCard)}
-						{guard('special days', specialCard)}
+						{/* The smaller cards in columns that each stack on their own (no gaps under a short card). */}
+						<div className={s.flow}>
+							<div className={s.column}>
+								{guard("the kids' day", kidsCard)}
+								{guard('List items', needsCard)}
+								{guard('special days', specialCard)}
+							</div>
+							<div className={s.column}>
+								{guard('the weather', weatherCard)}
+								{guard('the quote', quoteCard)}
+								{guard('the encouragement', encouragementCard)}
+							</div>
+						</div>
 						{guard('the photos', photosCard)}
-						{guard('the quote', quoteCard)}
-						{guard('the encouragement', encouragementCard)}
-
-						{guard('the weather', weatherCard)}
 					</div>
 				)}
 			</div>
