@@ -36,8 +36,8 @@
 	--top-room: calc(env(safe-area-inset-top, 0px) + 1.75rem);
 	/* Layers, bottom to top: what sits over what across the app. Within one thing, small numbers (0 to 5)
 	   order its own parts; something just over its partner (a sheet over its backdrop) is + 1. */
-	--layer-panel: 10; /* the day panel beside the calendar */
-	--layer-fab: 12; /* the round + button */
+	--layer-fab: 10; /* the round + button */
+	--layer-panel: 11; /* the day panel beside the calendar: over the + button (it has its own Add event) */
 	--layer-nav: 13; /* the phone bar and its More sheet */
 	--layer-menu: 15; /* menus over the page (More, quick add), and a Learn game, full screen */
 	--layer-sheet: 20; /* dialogs (Sheet), kid mode's name menu, the photo viewer */

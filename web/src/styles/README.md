@@ -139,7 +139,7 @@ How big a thing you press is, at least: its height, and its width when it's squa
 
 ## Layers
 
-What sits over what is named by role, bottom to top: `--layer-panel`, `--layer-fab`, `--layer-nav`, `--layer-menu`, `--layer-sheet`, `--layer-saver`, `--layer-alert`, `--layer-toast`, `--layer-celebration`, `--layer-photo`. Use the role, not a number. Inside one component, small numbers (0 to 5) order its own parts.
+What sits over what is named by role, bottom to top: `--layer-fab`, `--layer-panel`, `--layer-nav`, `--layer-menu`, `--layer-sheet`, `--layer-saver`, `--layer-alert`, `--layer-toast`, `--layer-celebration`, `--layer-photo`. Use the role, not a number. Inside one component, small numbers (0 to 5) order its own parts.
 
 ## Screen sizes
 
