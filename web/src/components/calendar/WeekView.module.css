@@ -28,6 +28,7 @@
 /* Today: a light tint of the accent. */
 .today {
 	border: 1px solid var(--accent);
+	border-top: 3px solid var(--accent);
 }
 
 .today.day .num {

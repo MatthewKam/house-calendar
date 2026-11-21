@@ -2,7 +2,7 @@
 	"raw box (Input, Select, TextArea)": {
 		"components/calendar/CalendarPick.tsx": 1,
 		"components/calendar/DayPlans.tsx": 1,
-		"components/calendar/EventDialog.tsx": 4,
+		"components/calendar/EventDialog.tsx": 2,
 		"components/calendar/Reminders.tsx": 2,
 		"components/recipes/PlanIt.tsx": 2,
 		"components/recipes/RemindMe.tsx": 1

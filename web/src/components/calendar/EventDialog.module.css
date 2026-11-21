@@ -38,26 +38,7 @@
 	color: var(--muted);
 	font-size: 0.9rem;
 }
-.row {
-	display: flex;
-	gap: 1rem;
-	flex-wrap: wrap;
-	align-items: center;
-}
-.row label {
-	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
-	font-size: 0.85rem;
-	color: var(--muted);
-}
-.row input {
-	font-size: 1.1rem;
-	padding: 0.5rem;
-	border: 1px solid var(--line);
-	border-radius: var(--radius-sm);
-	color: var(--text);
-}
+
 .problem {
 	color: var(--danger);
 	font-size: 0.95rem;
@@ -285,4 +266,21 @@
 	margin-top: -0.4rem;
 	color: var(--muted);
 	font-size: 0.9rem;
+}
+/* Starts and Ends: the label, the day, and (not all day) the time, lined up in two rows. */
+.when {
+	display: grid;
+	grid-template-columns: auto auto auto;
+	justify-content: start;
+	align-items: center;
+	gap: var(--space-3);
+}
+.whenLabel {
+	font-size: var(--text-sm);
+	font-weight: var(--weight-semibold);
+	color: var(--muted);
+}
+/* All day: no times, just the two days. */
+.whenDays {
+	grid-template-columns: auto auto;
 }

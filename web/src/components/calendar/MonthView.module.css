@@ -40,6 +40,7 @@
 /* Today: a light tint of the accent; its number in a raised circle. */
 .today {
 	border: 1px solid var(--accent);
+	border-top: 3px solid var(--accent);
 }
 .today .num {
 	align-self: flex-start;
