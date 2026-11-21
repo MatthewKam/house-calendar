@@ -77,10 +77,14 @@
 	position: relative;
 	display: grid;
 	grid-template-columns: var(--gutter) repeat(7, minmax(0, 1fr));
-	grid-template-rows: repeat(var(--rows), auto) auto;
+	grid-auto-rows: auto;
+	align-items: start;
 	gap: var(--space-1) 0;
 	padding-block: var(--space-2);
 	border-bottom: 1px solid var(--line);
+	/* Each day's column has the same line on its left as the hours below. */
+	background: linear-gradient(to right, var(--line) 1px, transparent 1px) var(--gutter) 0 /
+		calc((100% - var(--gutter)) / 7) 100% repeat-x;
 	max-height: 35%;
 	overflow-y: auto;
 }
