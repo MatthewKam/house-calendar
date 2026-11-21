@@ -76,7 +76,6 @@
 	},
 	"colour (--text, --accent, …)": {
 		"components/calendar/DayPanel.module.css": 2,
-		"components/calendar/DayTimeline.module.css": 4,
 		"components/calendar/LeaveAlerts.module.css": 3,
 		"components/calendar/OutboxNotices.module.css": 1,
 		"components/calendar/WeatherCard.module.css": 7,

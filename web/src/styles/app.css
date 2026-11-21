@@ -209,6 +209,8 @@ input {
 	--info-bg: #eef6ff;
 	/* a star's gold (stars earned, reward jars), the same in light and dark */
 	--star: #e3a008;
+	/* the time now on a timeline: its line, dot and pill (the day panel, the week) */
+	--now: #e5484d;
 	/* Dark pills over the page: toasts, time-to-leave alerts. */
 	--float: #1d1f23;
 	/* How much of a picked pastel (a list's color) shows: all of it on light, a hint of it on dark. */

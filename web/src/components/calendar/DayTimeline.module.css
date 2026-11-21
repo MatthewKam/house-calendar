@@ -148,7 +148,7 @@
 	right: 0;
 	height: 2px;
 	margin-top: -1px;
-	background: #e5484d;
+	background: var(--now);
 	pointer-events: none;
 }
 .now::before {
@@ -159,7 +159,7 @@
 	width: 0.6rem;
 	height: 0.6rem;
 	border-radius: 50%;
-	background: #e5484d;
+	background: var(--now);
 	translate: 0 -50%;
 }
 .nowPill {
@@ -170,8 +170,8 @@
 	translate: 0 -50%;
 	text-align: center;
 	border-radius: var(--radius-round);
-	background: #e5484d;
-	color: #fff;
+	background: var(--now);
+	color: var(--on-danger);
 	font-size: 0.75rem;
 	font-weight: 700;
 	font-variant-numeric: tabular-nums;

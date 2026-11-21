@@ -14,6 +14,7 @@ import OutboxNotices from './OutboxNotices';
 import PeopleFilter, { eventShown } from './PeopleFilter';
 import WeatherCard from './WeatherCard';
 import WeekView from './WeekView';
+import WeekTimeline from './WeekTimeline';
 import s from './CalendarPage.module.css';
 
 const VIEWS: [View, string][] = [
@@ -160,6 +161,17 @@ export default function CalendarPage({
 					<MonthView
 						days={days}
 						month={cursor.getMonth()}
+						today={today}
+						selected={selected}
+						events={events}
+						members={members}
+						onSelect={setSelected}
+						onOpen={onOpen}
+					/>
+				) : view === 'week' && !narrow ? (
+					// Wide screens: the week by the hour. Narrower ones keep the list (seven hour columns get too thin).
+					<WeekTimeline
+						days={days}
 						today={today}
 						selected={selected}
 						events={events}

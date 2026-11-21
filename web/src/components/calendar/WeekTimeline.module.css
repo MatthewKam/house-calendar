@@ -1,0 +1,276 @@
+/* The week by the hour (WeekTimeline.tsx): the days' names, a strip of whole-day events and meals,
+   then 24 hours that scroll. A margin on the left holds the hours; every part keeps the same columns. */
+.week {
+	--gutter: 3.6rem;
+	--hour: 3.2rem;
+	flex: 1;
+	min-height: 0;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-md);
+	overflow: hidden;
+}
+/* The parts above the hours leave room for the hours' scrollbar, so the columns line up. */
+.head,
+.strip,
+.scroll {
+	scrollbar-gutter: stable;
+}
+.head,
+.strip {
+	overflow-y: hidden;
+}
+
+/* ---- The days' names ---- */
+.head {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	padding-left: var(--gutter);
+	border-bottom: 1px solid var(--line);
+}
+.dayName {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-2);
+	min-height: var(--tap-lg);
+	padding: var(--space-2);
+	border-radius: 0;
+	background: none;
+	color: var(--text);
+}
+.dow {
+	font-size: var(--text-sm);
+	font-weight: var(--weight-semibold);
+	color: var(--muted);
+	text-transform: uppercase;
+}
+.num {
+	display: grid;
+	place-items: center;
+	min-width: 2.2rem;
+	height: 2.2rem;
+	padding: 0 var(--space-1);
+	border-radius: var(--radius-round);
+	font-size: var(--text-xl);
+	font-weight: var(--weight-bold);
+	font-variant-numeric: tabular-nums;
+}
+.today .num {
+	background: var(--accent);
+	color: var(--on-accent);
+}
+.today .dow {
+	color: var(--accent);
+}
+/* The day open in the day panel. */
+.selected {
+	box-shadow: inset 0 -3px 0 var(--accent);
+}
+
+/* ---- Whole days: bars over the days each event covers, then the meals ---- */
+.strip {
+	position: relative;
+	display: grid;
+	grid-template-columns: var(--gutter) repeat(7, minmax(0, 1fr));
+	grid-template-rows: repeat(var(--rows), auto) auto;
+	gap: var(--space-1) 0;
+	padding-block: var(--space-2);
+	border-bottom: 1px solid var(--line);
+	max-height: 35%;
+	overflow-y: auto;
+}
+.stripLabel {
+	grid-column: 1;
+	grid-row: 1;
+	padding-right: var(--space-3);
+	text-align: right;
+	font-size: var(--text-xs);
+	color: var(--muted);
+	align-self: center;
+}
+.bar {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	min-height: 0;
+	height: 1.9rem;
+	margin: 0 var(--space-1);
+	padding: 0 var(--space-3) 0 var(--space-4);
+	border-radius: var(--radius-xs);
+	font-size: var(--text-sm);
+	font-weight: var(--weight-semibold);
+	text-align: left;
+	white-space: nowrap;
+	background:
+		var(--stripe) left / 0.3rem 100% no-repeat,
+		var(--solid);
+}
+/* ‹ it began before this week, › it goes on past it. */
+.bar {
+	gap: var(--space-2);
+}
+.arrow {
+	flex: none;
+	font-size: var(--text-lg);
+	line-height: 1;
+}
+.barTitle {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+/* Began before this week, or goes on past it: square on that side, the arrow inside. */
+.before {
+	margin-left: 0;
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+}
+.after {
+	margin-right: 0;
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+.meals {
+	min-width: 0;
+	padding: 0 var(--space-1);
+}
+
+/* ---- 24 hours, a line on each; the labels sit in the margin ---- */
+.scroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+}
+.hours {
+	position: relative;
+	height: calc(24 * var(--hour));
+}
+.hour,
+.nowPill {
+	position: absolute;
+	left: 0;
+	width: calc(var(--gutter) - var(--space-2));
+	translate: 0 -50%;
+	white-space: nowrap;
+}
+.hour {
+	text-align: right;
+	font-size: var(--text-sm);
+	font-weight: var(--weight-semibold);
+	color: var(--muted);
+}
+.hour small {
+	font-size: 0.7em;
+	font-weight: var(--weight-regular);
+}
+.columns {
+	position: absolute;
+	inset: 0 0 0 var(--gutter);
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	background: repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px var(--hour));
+}
+.column {
+	position: relative;
+	border-left: 1px solid var(--line);
+	cursor: pointer;
+}
+.todayColumn {
+	background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+
+/* An event: a block from its start to its end, showing what fits. */
+.event {
+	container-type: size;
+	position: absolute;
+	min-width: 0;
+	min-height: 0;
+	padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+	border-radius: var(--radius-xs);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	overflow: hidden;
+	text-align: left;
+	line-height: var(--leading-tight);
+	box-shadow: 0 0 0 1px var(--surface);
+	background:
+		var(--stripe) left / 0.3rem 100% no-repeat,
+		var(--tint);
+}
+.event:active {
+	transform: none;
+}
+.title {
+	font-size: var(--text-sm);
+	font-weight: var(--weight-semibold);
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+}
+.time {
+	font-size: var(--text-xs);
+	color: var(--muted);
+}
+@container (max-height: 2.6rem) {
+	.title {
+		-webkit-line-clamp: 1;
+	}
+}
+/* Under 45 minutes: the name, and the time beside it if there's room. */
+.short {
+	flex-direction: row;
+	align-items: center;
+	gap: var(--space-2);
+	padding-block: 0;
+	white-space: nowrap;
+}
+.short .title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+/* Over: faded back, so what's still to come stands out. */
+.past {
+	opacity: 0.45;
+	filter: saturate(0.4);
+}
+
+/* ---- The time now: a red line across today with a dot at its start, and the time in the margin ---- */
+.now {
+	position: absolute;
+	z-index: 2;
+	left: 0;
+	right: 0;
+	height: 2px;
+	margin-top: -1px; /* own: centres the 2px line on its minute */
+	background: var(--now);
+	pointer-events: none;
+}
+.now::before {
+	content: '';
+	position: absolute;
+	left: -0.3rem;
+	top: 50%;
+	width: 0.6rem;
+	height: 0.6rem;
+	border-radius: 50%;
+	background: var(--now);
+	translate: 0 -50%;
+}
+.nowPill {
+	z-index: 2;
+	text-align: center;
+	border-radius: var(--radius-round);
+	background: var(--now);
+	color: var(--on-danger);
+	font-size: var(--text-xs);
+	font-weight: var(--weight-bold);
+	font-variant-numeric: tabular-nums;
+}
