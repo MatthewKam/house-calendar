@@ -44,6 +44,8 @@ export function eventPaint(ev: CalEvent, members: Member[]) {
 			'--stripe': split('to bottom', (c) => c),
 			'--tint': split('to right', tint(14)),
 			'--tint35': split('to right', tint(35)),
+			// Full strength, side by side: a thin bar for the event (the condensed month).
+			'--bar': split('to right', (c) => c),
 			'--solid': agree ? split('to right', (c) => c) : split('to right', tint(55, 'white')),
 		} as CSSProperties,
 	};

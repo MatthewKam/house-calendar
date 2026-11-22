@@ -20,6 +20,7 @@
  *   Phone              (max-width: 700px)                               the bar along the bottom
  *   Phone on its side  (orientation: landscape) and (max-height: 500px) the bar down the left, little height
  *   Narrow             (max-width: 959.98px)                            phones and tablets upright
+ *   Compact calendar   (max-width: 1039.98px)                           the calendar's condensed month and week
  *   Tablet             (min-width: 744px) and (min-height: 600px)       an iPad either way up, and bigger
  *   Wide               (min-width: 1401px)                              a big screen
  *   Touch              (pointer: coarse)                                phones and tablets, any size

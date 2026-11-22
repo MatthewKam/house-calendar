@@ -1,12 +1,15 @@
 import type { CSSProperties } from 'react';
 import { dayKey, timeLabel } from '../../lib/dates';
 import { eventPaint, eventsOn, isOver } from '../../lib/events';
+import { COMPACT_CALENDAR, PHONE, useMediaQuery } from '../../lib/useMediaQuery';
 import { useNow } from '../../lib/useNow';
 import type { CalEvent, Member } from '../../lib/types';
 import s from './MonthView.module.css';
 
 /** Events listed per cell before collapsing the rest into "+N more". */
 const MAX_SHOWN = 3;
+/** Bars in a condensed cell before the rest become "+N". */
+const MAX_BARS = 5;
 
 interface Props {
 	/** Whole weeks covering the month, from monthGridDays(). */
@@ -25,12 +28,16 @@ interface Props {
 export default function MonthView({ days, month, today, selected, events, members, onSelect, onOpen }: Props) {
 	// Events that have ended fade back (checked every minute).
 	const now = useNow();
+	// Below 1040px: a bar for each event instead of its name; tapping the day opens it in the panel.
+	const compact = useMediaQuery(COMPACT_CALENDAR);
+	// Phones: the days' first letters (S M T…), as there's no room for their short names.
+	const phone = useMediaQuery(PHONE);
 
 	return (
-		<div className={s.month} style={{ '--rows': days.length / 7 } as CSSProperties}>
+		<div className={`${s.month} ${compact ? s.compact : ''}`} style={{ '--rows': days.length / 7 } as CSSProperties}>
 			{days.slice(0, 7).map((d) => (
 				<div key={d.getDay()} className={s.dow}>
-					{d.toLocaleDateString([], { weekday: 'short' })}
+					{d.toLocaleDateString([], { weekday: phone ? 'narrow' : 'short' })}
 				</div>
 			))}
 			{days.map((day) => {
@@ -56,27 +63,40 @@ export default function MonthView({ days, month, today, selected, events, member
 						onKeyDown={(e) => e.key === 'Enter' && onSelect(key)}
 					>
 						<span className={s.num}>{day.getDate()}</span>
-						<ul className={s.list}>
-							{list.slice(0, extra > 0 ? MAX_SHOWN - 1 : MAX_SHOWN).map((ev) => (
-								<li key={ev.id}>
-									<button
-										className={`${s.ev} ${ev.allDay ? s.allday : ''} ${isOver(ev, now) ? s.past : ''}`}
+						{compact ? (
+							<ul className={s.bars} aria-label={`${list.length} events`}>
+								{list.slice(0, list.length > MAX_BARS ? MAX_BARS - 1 : MAX_BARS).map((ev) => (
+									<li
+										key={ev.id}
+										className={`${s.bar} ${isOver(ev, now) ? s.barOver : ''}`}
 										style={eventPaint(ev, members).vars}
-										data-busy={ev.busy || undefined}
-										onClick={(e) => {
-											e.stopPropagation();
-											onOpen(ev, key);
-										}}
-									>
-										{!ev.allDay && Date.parse(ev.start) >= day.getTime() && (
-											<span className={s.time}>{timeLabel(ev.start)}</span>
-										)}
-										<span className={s.title}>{ev.title}</span>
-									</button>
-								</li>
-							))}
-							{extra > 0 && <li className={s.more}>+{extra + 1} more</li>}
-						</ul>
+									/>
+								))}
+								{list.length > MAX_BARS && <li className={s.barMore}>+{list.length - MAX_BARS + 1}</li>}
+							</ul>
+						) : (
+							<ul className={s.list}>
+								{list.slice(0, extra > 0 ? MAX_SHOWN - 1 : MAX_SHOWN).map((ev) => (
+									<li key={ev.id}>
+										<button
+											className={`${s.ev} ${ev.allDay ? s.allday : ''} ${isOver(ev, now) ? s.past : ''}`}
+											style={eventPaint(ev, members).vars}
+											data-busy={ev.busy || undefined}
+											onClick={(e) => {
+												e.stopPropagation();
+												onOpen(ev, key);
+											}}
+										>
+											{!ev.allDay && Date.parse(ev.start) >= day.getTime() && (
+												<span className={s.time}>{timeLabel(ev.start)}</span>
+											)}
+											<span className={s.title}>{ev.title}</span>
+										</button>
+									</li>
+								))}
+								{extra > 0 && <li className={s.more}>+{extra + 1} more</li>}
+							</ul>
+						)}
 					</section>
 				);
 			})}

@@ -8,6 +8,8 @@ export const PHONE = '(max-width: 700px)';
 export const PHONE_SIDEWAYS = '(orientation: landscape) and (max-height: 500px)';
 /** Phones and tablets upright: no room for the week's cards beside the calendar. */
 export const NARROW = '(max-width: 959.98px)';
+/** Below 1040px: the calendar's condensed month (bars for events) and its week of days side by side. */
+export const COMPACT_CALENDAR = '(max-width: 1039.98px)';
 /** An iPad either way up, and bigger. */
 export const TABLET = '(min-width: 744px) and (min-height: 600px)';
 /** A big screen. */

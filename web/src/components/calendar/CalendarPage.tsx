@@ -2,7 +2,7 @@ import { useRangeEvents, useSettings, useSyncStatus } from '../../lib/queries';
 import type { taskProgress } from '../../lib/tasks';
 import type { CalEvent, Member, Task } from '../../lib/types';
 import type { useCalendarView, View } from '../../lib/useCalendarView';
-import { NARROW, PHONE, useMediaQuery } from '../../lib/useMediaQuery';
+import { NARROW, useMediaQuery } from '../../lib/useMediaQuery';
 import PhotoCard from '../photos/PhotoCard';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
@@ -61,11 +61,8 @@ export default function CalendarPage({
 	const settings = useSettings();
 	const eventsQuery = useRangeEvents(days[0], days.length);
 	const sync = useSyncStatus().data;
-	// Phones show Month as the same day-by-day list as Week, just for every day of the month.
-	const phone = useMediaQuery(PHONE);
 	// Below 960px the week is one scrolling list of days, and the weather scrolls at its end.
 	const narrow = useMediaQuery(NARROW);
-	const listDays = view === 'month' && phone ? days.filter((d) => d.getMonth() === cursor.getMonth()) : days;
 	const shown = eventShown(focus);
 	const events = (eventsQuery.data ?? []).filter(shown);
 
@@ -159,13 +156,14 @@ export default function CalendarPage({
 				) : settings.isPending || eventsQuery.isPending ? (
 					<Loading
 						label="Loading the calendar"
-						className={phone || view === 'week' ? s.calendarLoading : s.calendarLoadingMonth}
+						className={view === 'week' ? s.calendarLoading : s.calendarLoadingMonth}
 					>
-						{Array.from({ length: phone || view === 'week' ? 7 : 35 }, (_, i) => (
-							<Skeleton key={i} height={phone || view === 'week' ? '4rem' : '5.5rem'} />
+						{Array.from({ length: view === 'week' ? 7 : 35 }, (_, i) => (
+							<Skeleton key={i} height={view === 'week' ? '4rem' : '5.5rem'} />
 						))}
 					</Loading>
-				) : view === 'month' && !phone ? (
+				) : view === 'month' ? (
+					// Every size: the month grid (condensed below 1040px: a bar for each event).
 					<MonthView
 						days={days}
 						month={cursor.getMonth()}
@@ -189,7 +187,7 @@ export default function CalendarPage({
 					/>
 				) : (
 					<WeekView
-						days={listDays}
+						days={days}
 						today={today}
 						selected={selected}
 						events={events}

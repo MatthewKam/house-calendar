@@ -146,13 +146,14 @@ What sits over what is named by role, bottom to top: `--layer-fab`, `--layer-pan
 
 ## Screen sizes
 
-The same six everywhere, listed at the top of `app.css` and named in code in `lib/useMediaQuery.ts`:
+The same seven everywhere, listed at the top of `app.css` and named in code in `lib/useMediaQuery.ts`:
 
 | Name | Query |
 | --- | --- |
 | Phone | `(max-width: 700px)` |
 | Phone on its side | `(orientation: landscape) and (max-height: 500px)` |
 | Narrow | `(max-width: 959.98px)` |
+| Compact calendar (the condensed month, the week's days side by side) | `(max-width: 1039.98px)` |
 | Tablet | `(min-width: 744px) and (min-height: 600px)` |
 | Wide | `(min-width: 1401px)` |
 | Touch (phones and tablets, any size) | `(pointer: coarse)` |
