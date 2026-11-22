@@ -363,7 +363,7 @@ export default function TodayPage({
 						{meMember ? `, ${firstName(meMember.name)}` : ''}
 					</h1>
 					<div className={s.date}>
-						{longDate(now)} · <span className={s.nowrap}>{timeLabel(now)}</span>
+						<span className={s.nowrap}>{timeLabel(now)}</span> · {longDate(now)}
 					</div>
 				</div>
 				{weatherQuery.isPending && (
