@@ -279,7 +279,11 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 								]
 									.filter(Boolean)
 									.join(' ')}
-								onClick={() => i !== mainIndex && onMain(key)}
+								onClick={() => {
+									if (i !== mainIndex) onMain(key);
+									// Open on a phone: tapping the middle day's names (not an event) folds them again.
+									else if (foldable && expanded) setExpanded(false);
+								}}
 							>
 								<h3 className={s.title}>
 									<span className={s.weekday}>{day.toLocaleDateString([], { weekday: 'long' })}</span>
