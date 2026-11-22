@@ -308,10 +308,30 @@
 	}
 }
 
-/* A phone on its side: no room for the cards (the names over the hours show the days and dates), so
-   the hours keep what height there is. */
+/* A phone on its side: slimmer cards (the day and date on one line, the dots under them), so the
+   hours keep room to scroll. */
 @media (orientation: landscape) and (max-height: 500px) {
 	.cards {
-		display: none;
+		gap: var(--space-2);
+	}
+	.card {
+		display: grid;
+		grid-template-columns: auto auto;
+		justify-content: center;
+		align-items: center;
+		gap: var(--space-1) var(--space-2);
+		padding: var(--space-1);
+	}
+	.cardDow,
+	.cardNum {
+		font-size: var(--text-md);
+	}
+	.cardNum {
+		min-width: 1.6rem;
+		height: 1.6rem;
+	}
+	.dots {
+		grid-column: 1 / -1;
+		justify-content: center;
 	}
 }
