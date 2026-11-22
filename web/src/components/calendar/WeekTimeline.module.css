@@ -113,6 +113,14 @@
 }
 /* Today's column in the strip: the accent on both sides, from the strip's top to its bottom (out over its
    padding), behind the bars. */
+/* A day that's over, in the strip: the same grey, from the strip's top to its bottom, behind the bars. */
+.stripPast {
+	grid-row: 1 / -1;
+	align-self: stretch;
+	margin-block: calc(-1 * var(--space-2)) calc(-1 * var(--space-1));
+	background: var(--past-tint);
+	pointer-events: none;
+}
 .stripToday {
 	grid-row: 1 / -1;
 	align-self: stretch;
@@ -219,6 +227,11 @@
 	position: relative;
 	border-left: 1px solid var(--line);
 	cursor: pointer;
+}
+/* A day that's over: a see-through grey over its name and its column (the hour lines show through). */
+.pastName,
+.pastColumn {
+	background: var(--past-tint);
 }
 .todayColumn {
 	border: 1px solid var(--accent);

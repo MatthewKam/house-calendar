@@ -47,7 +47,7 @@ export default function WeekView({ days, today, selected, events, members, onSel
 					<section
 						key={key}
 						data-day={key}
-						className={`${s.day} ${key === today ? s.today : ''} ${key === selected ? s.selected : ''}`}
+						className={`${s.day} ${key === today ? s.today : ''} ${key < today ? s.pastDay : ''} ${key === selected ? s.selected : ''}`}
 						onClick={() => onSelect(key)}
 						role="button"
 						tabIndex={0}

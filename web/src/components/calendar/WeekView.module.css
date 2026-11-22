@@ -18,6 +18,10 @@
 	position: relative;
 	cursor: pointer;
 }
+/* A day that's over: a see-through grey over it. */
+.pastDay {
+	background: linear-gradient(var(--past-tint), var(--past-tint)), var(--surface);
+}
 .day:first-child {
 	border-left: none;
 	border-radius: var(--radius-xs) 0 0 var(--radius-xs);

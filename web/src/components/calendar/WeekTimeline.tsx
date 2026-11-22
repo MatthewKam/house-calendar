@@ -73,7 +73,7 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 						<button
 							key={key}
 							type="button"
-							className={`${s.dayName} ${key === today ? s.today : ''} ${key === selected ? s.selected : ''}`}
+							className={`${s.dayName} ${key === today ? s.today : ''} ${key < today ? s.pastName : ''} ${key === selected ? s.selected : ''}`}
 							onClick={() => onSelect(key)}
 							aria-label={day.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
 						>
@@ -90,6 +90,12 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 			<div className={s.strip} style={{ gridTemplateRows: rows ? `repeat(${rows}, var(--bar)) auto` : 'auto' }}>
 				{/* Today's column, outlined in the accent like its name above and its hours below. */}
 				{todayCol >= 0 && <span className={s.stripToday} style={{ gridColumn: todayCol + 2 }} aria-hidden="true" />}
+				{/* Days that are over, tinted in the strip like their names and hours. */}
+				{days.map((day, i) =>
+					dayKey(day) < today ? (
+						<span key={dayKey(day)} className={s.stripPast} style={{ gridColumn: i + 2 }} aria-hidden="true" />
+					) : null,
+				)}
 				<span className={s.stripLabel}>all-day</span>
 				{bars.map((b) => {
 					const paint = eventPaint(b.ev, members);
@@ -145,7 +151,7 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 							return (
 								<div
 									key={key}
-									className={`${s.column} ${key === today ? s.todayColumn : ''}`}
+									className={`${s.column} ${key === today ? s.todayColumn : ''} ${key < today ? s.pastColumn : ''}`}
 									onClick={() => onSelect(key)}
 								>
 									{placeDay(inHours, day, 0, 24).map((p) => {
