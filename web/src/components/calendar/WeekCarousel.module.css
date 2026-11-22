@@ -114,6 +114,13 @@
 	scroll-snap-type: x mandatory;
 	scroll-padding-left: var(--gutter);
 	scrollbar-width: none;
+	/* A finger scrolls the hours only up and down, so a swipe that strays can't slide the days; a
+	   sideways swipe is WeekCarousel.tsx's own (it springs back unless it's meant). */
+	touch-action: pan-y;
+}
+/* While a finger drags the days, they follow it freely; letting go glides to a day. */
+.dragging {
+	scroll-snap-type: none;
 }
 .track::-webkit-scrollbar {
 	display: none;
