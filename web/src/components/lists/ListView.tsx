@@ -218,6 +218,9 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 		(name) => ({ name, items: open.filter((it) => it.section === name) }),
 	);
 	const folds = useFolded(`sprig:list-sections-folded:${list.id}`);
+	// The whole list folded to its name and how many are left, on this device.
+	const listFolds = useFolded('sprig:lists-folded');
+	const listFolded = listFolds.isFolded(list.id);
 	// Dragged within a part: those items take the front of the order, the rest keep theirs.
 	const reorder = (part: CardItem[], ids: string[]) => {
 		const keys = ids.map((id) => keyOf(part.find((it) => it.id === id)!.title));
@@ -357,7 +360,17 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 					aria-label={`Color for ${list.title}`}
 					title="Change the color"
 				/>
-				<h2 className={s.title}>{list.title}</h2>
+				<h2 className={s.title}>
+					<button
+						className={s.titleButton}
+						aria-expanded={!listFolded}
+						title={listFolded ? `Open ${list.title}` : `Fold ${list.title}`}
+						onClick={() => listFolds.fold([list.id], !listFolded)}
+					>
+						{list.title}
+						{listFolded && <span className={s.titleCount}>{open.length}</span>}
+					</button>
+				</h2>
 				{sprig && parent && (
 					<IconButton
 						icon="⋯"
@@ -373,72 +386,76 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 					</span>
 				)}
 			</header>
-			{choosingColor && (
-				<div className={s.swatches} role="radiogroup" aria-label={`Color for ${list.title}`}>
-					{LIST_COLORS.map((c) => (
+			{!listFolded && (
+				<>
+					{choosingColor && (
+						<div className={s.swatches} role="radiogroup" aria-label={`Color for ${list.title}`}>
+							{LIST_COLORS.map((c) => (
+								<button
+									key={c}
+									role="radio"
+									aria-checked={c === color}
+									className={`${s.swatch} ${c === color ? s.swatchOn : ''}`}
+									style={{ background: c }}
+									onClick={() => {
+										onColor(c);
+										setChoosingColor(false);
+									}}
+									aria-label={c}
+								/>
+							))}
+						</div>
+					)}
+					{sortable(loose)}
+					{sections.map(({ name, items }) => {
+						const folded = folds.isFolded(name);
+						return (
+							<div key={name} className={s.section}>
+								<button className={s.sectionHead} aria-expanded={!folded} onClick={() => folds.fold([name], !folded)}>
+									<span className={s.sectionName}>{name}</span>
+									<span className={s.sectionCount}>{items.length}</span>
+								</button>
+								{!folded && sortable(items)}
+							</div>
+						);
+					})}
+					{done.length > 0 && (
+						<ul className={s.items}>
+							{done.map((it) => (
+								<li key={it.id}>{row(it)}</li>
+							))}
+						</ul>
+					)}
+					{sprig && doneCount > 0 && (
+						<Button variant="link" size="sm" className={s.clearDone} onClick={() => own.clearDone.mutate(list.id)}>
+							Clear {doneCount} done
+						</Button>
+					)}
+					{list.items.length === 0 && <p className={s.empty}>Nothing here.</p>}
+					<form className={s.add} onSubmit={submit} style={{ '--c': color, '--on': textOn(color) } as CSSProperties}>
 						<button
-							key={c}
-							role="radio"
-							aria-checked={c === color}
-							className={`${s.swatch} ${c === color ? s.swatchOn : ''}`}
-							style={{ background: c }}
-							onClick={() => {
-								onColor(c);
-								setChoosingColor(false);
-							}}
-							aria-label={c}
-						/>
-					))}
-				</div>
-			)}
-			{sortable(loose)}
-			{sections.map(({ name, items }) => {
-				const folded = folds.isFolded(name);
-				return (
-					<div key={name} className={s.section}>
-						<button className={s.sectionHead} aria-expanded={!folded} onClick={() => folds.fold([name], !folded)}>
-							<span className={s.sectionName}>{name}</span>
-							<span className={s.sectionCount}>{items.length}</span>
+							type="button"
+							className={`${s.iconSpot} ${s.iconAdd} ${newIcon === undefined && !typed.icon && addIcon ? s.suggested : ''} ${!addIcon ? s.noIcon : ''}`}
+							onClick={() => setPicking(true)}
+							aria-label="Icon for the new item"
+							title={addIcon ? 'Change the icon' : 'Add an icon'}
+						>
+							{addIcon ?? '+'}
 						</button>
-						{!folded && sortable(items)}
-					</div>
-				);
-			})}
-			{done.length > 0 && (
-				<ul className={s.items}>
-					{done.map((it) => (
-						<li key={it.id}>{row(it)}</li>
-					))}
-				</ul>
+						<Input
+							value={title}
+							onChange={(e) => setTitle(e.target.value)}
+							placeholder={`Add to ${list.title}`}
+							maxLength={300}
+							aria-label={`Add to ${list.title}`}
+						/>
+						<button type="submit" disabled={!title.trim() || add.isPending}>
+							Add
+						</button>
+					</form>
+					{problem && <p className={s.error}>Couldn't save: {problem.message}</p>}
+				</>
 			)}
-			{sprig && doneCount > 0 && (
-				<Button variant="link" size="sm" className={s.clearDone} onClick={() => own.clearDone.mutate(list.id)}>
-					Clear {doneCount} done
-				</Button>
-			)}
-			{list.items.length === 0 && <p className={s.empty}>Nothing here.</p>}
-			<form className={s.add} onSubmit={submit} style={{ '--c': color, '--on': textOn(color) } as CSSProperties}>
-				<button
-					type="button"
-					className={`${s.iconSpot} ${s.iconAdd} ${newIcon === undefined && !typed.icon && addIcon ? s.suggested : ''} ${!addIcon ? s.noIcon : ''}`}
-					onClick={() => setPicking(true)}
-					aria-label="Icon for the new item"
-					title={addIcon ? 'Change the icon' : 'Add an icon'}
-				>
-					{addIcon ?? '+'}
-				</button>
-				<Input
-					value={title}
-					onChange={(e) => setTitle(e.target.value)}
-					placeholder={`Add to ${list.title}`}
-					maxLength={300}
-					aria-label={`Add to ${list.title}`}
-				/>
-				<button type="submit" disabled={!title.trim() || add.isPending}>
-					Add
-				</button>
-			</form>
-			{problem && <p className={s.error}>Couldn't save: {problem.message}</p>}
 			{details && (
 				<ItemSheet
 					item={details}

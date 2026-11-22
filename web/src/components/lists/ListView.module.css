@@ -57,6 +57,38 @@
 	margin: 0;
 	font-size: var(--text-lg);
 }
+/* The list's name: tap to fold the list away (it shows how many are left) or open it again. */
+.titleButton {
+	display: inline-flex;
+	align-items: baseline;
+	gap: var(--space-2);
+	padding: 0;
+	min-height: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+}
+.titleButton::after {
+	content: '';
+	align-self: center;
+	width: 0.45rem;
+	height: 0.45rem;
+	margin-left: var(--space-1);
+	border-right: 2px solid var(--muted);
+	border-bottom: 2px solid var(--muted);
+	rotate: 45deg;
+	translate: 0 -0.15rem;
+	transition: rotate 0.2s;
+}
+.titleButton[aria-expanded='false']::after {
+	rotate: -45deg;
+	translate: 0;
+}
+.titleCount {
+	color: var(--muted);
+	font-weight: normal;
+}
 .synced {
 	color: var(--muted);
 	font-size: var(--text-xs);
