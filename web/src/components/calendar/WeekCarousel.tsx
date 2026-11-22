@@ -148,7 +148,7 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 				<div ref={track} className={s.track} onScroll={onScroll}>
 					{/* Row 1: the days' names, with their whole-day events and meals; they stay at the top. */}
 					<span className={s.corner}>
-						{phone && (
+						{phone ? (
 							<button
 								type="button"
 								className={s.fold}
@@ -156,8 +156,11 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 								aria-label={expanded ? 'Fold all-day events' : 'Show all-day events'}
 								onClick={() => setExpanded(!expanded)}
 							>
-								{expanded ? '▴' : '▾'}
+								<span className={s.allDayLabel}>all-day</span>
+								<span aria-hidden="true">{expanded ? '▴' : '▾'}</span>
 							</button>
+						) : (
+							<span className={s.allDayLabel}>all-day</span>
 						)}
 					</span>
 					<span className={s.pad} />
