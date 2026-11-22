@@ -23,6 +23,17 @@
 	border-radius: var(--radius);
 	box-shadow: -0.5rem 0 2rem rgb(0 0 0 / 0.15);
 }
+/* Phones: the whole screen, like the event drawer (under the status bar, down to the bottom edge). */
+@media (max-width: 700px) {
+	.panel {
+		inset: env(safe-area-inset-top, 0px) 0 0 0;
+		width: auto;
+		border: 0;
+		border-radius: 0;
+		box-shadow: none;
+		padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+	}
+}
 .head {
 	display: flex;
 	justify-content: space-between;
