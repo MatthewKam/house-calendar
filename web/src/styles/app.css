@@ -214,6 +214,8 @@ input {
 	--now: #e5484d;
 	/* a day that's over, on the calendar: a see-through grey over what's under it (light or dark) */
 	--past-tint: color-mix(in srgb, var(--text) 5%, transparent);
+	/* the lines between days that are over: darker than --line, so they still show through --past-tint */
+	--past-line: color-mix(in srgb, var(--line), var(--text) 18%);
 	/* Dark pills over the page: toasts, time-to-leave alerts. */
 	--float: #1d1f23;
 	/* How much of a picked pastel (a list's color) shows: all of it on light, a hint of it on dark. */

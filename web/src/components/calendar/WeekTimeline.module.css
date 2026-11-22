@@ -232,6 +232,7 @@
 .pastName,
 .pastColumn {
 	background: var(--past-tint);
+	border-left-color: var(--past-line);
 }
 .todayColumn {
 	border: 1px solid var(--accent);

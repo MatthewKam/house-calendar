@@ -61,6 +61,7 @@ Use the colour names, never hex values, for anything on the page. Each one has a
 | `--star` | a star's gold: stars earned, reward jars |
 | `--now` | the time now on a timeline (the day panel, the week): its red line, dot and pill |
 | `--past-tint` | a day that's over on the calendar: a see-through grey laid over the day (the month, and the week's columns and list) |
+| `--past-line` | the line between days that are over (it still shows through `--past-tint`) |
 
 **A person's colour** comes in as a variable set on the element (`style={{ '--c': member.color }}`) and is used as `var(--c)`, mixed with `color-mix()` for lighter or darker shades. Learn's games use `--pc` the same way for a game piece.
 

@@ -189,6 +189,7 @@
 }
 .namePast {
 	background: linear-gradient(var(--past-tint), var(--past-tint)), var(--surface);
+	border-left-color: var(--past-line);
 }
 .namePast .weekday {
 	color: var(--muted);
@@ -283,6 +284,7 @@
 }
 .columnPast {
 	background: linear-gradient(var(--past-tint), var(--past-tint)), var(--lines);
+	border-left-color: var(--past-line);
 }
 
 /* Phones: the cards closer together, their days one letter. */
