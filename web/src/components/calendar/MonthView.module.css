@@ -26,8 +26,10 @@
 	cursor: pointer;
 	box-shadow: var(--shadow-md);
 }
+/* A day that's over: flat, with a see-through grey over it (like the week's). */
 .pastDay {
 	box-shadow: none;
+	background: linear-gradient(var(--past-tint), var(--past-tint)), var(--surface);
 }
 .outside {
 	background: transparent;
