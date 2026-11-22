@@ -66,16 +66,22 @@
 	.date {
 		font-size: var(--text-sm);
 	}
-	/* Phones: the header runs edge to edge over the cards, which scroll right up to it. */
+}
+/* Phones, upright or on their side: the header runs edge to edge over the cards, which scroll right up to it. */
+@media (max-width: 700px), (orientation: landscape) and (max-height: 500px) {
 	.page {
 		gap: 0;
 	}
 	.head {
 		position: relative;
 		z-index: 1;
-		margin-inline: calc(-1 * var(--space-4));
+		/* Out to the page's edges (App.module.css's .shell padding: wider on a bigger phone on its side,
+		   and room for the notch on the right). */
+		--side: var(--space-6);
+		margin-left: calc(-1 * var(--side));
+		margin-right: calc(-1 * max(var(--side), var(--inset-right)));
 		width: auto;
-		padding: 0 var(--space-4) var(--space-3);
+		padding: 0 max(var(--side), var(--inset-right)) var(--space-3) var(--side);
 		background: var(--bg);
 		transition: box-shadow 0.2s ease;
 	}
@@ -107,6 +113,11 @@
 	}
 	.scrolled .headFeels {
 		display: none;
+	}
+}
+@media (max-width: 700px) {
+	.head {
+		--side: var(--space-4);
 	}
 }
 .scroll {
