@@ -71,6 +71,12 @@ export default function CalendarPage({
 			? monthName(view === 'month' ? cursor : days[0])
 			: `${monthName(days[0])} – ${monthName(days[6])}`;
 	const unit = view === 'month' ? 'month' : 'week';
+	// The week's dates; shorter on phones (Nov 22–28), where the month's name is just above.
+	const range = !phone
+		? `${fmt(days[0])} – ${fmt(days[6])}`
+		: days[0].getMonth() === days[6].getMonth()
+			? `${fmt(days[0])}–${days[6].getDate()}`
+			: `${fmt(days[0])}–${fmt(days[6])}`;
 
 	return (
 		<>
@@ -81,8 +87,10 @@ export default function CalendarPage({
 					</h1>
 					<NowLine />
 				</div>
-				{/* Beside the month; on phones, just the filter button after Month and Week. */}
-				{!phone && <PeopleFilter members={members} tasks={tasks} progress={progress} focus={focus} onFocus={onFocus} />}
+				{/* Beside the month; below 1040px, just the filter button, after the dates. */}
+				{!compact && (
+					<PeopleFilter members={members} tasks={tasks} progress={progress} focus={focus} onFocus={onFocus} />
+				)}
 			</div>
 			<header className={s.header}>
 				<div className={s.group}>
@@ -98,9 +106,6 @@ export default function CalendarPage({
 							</button>
 						))}
 					</div>
-					{phone && (
-						<PeopleFilter members={members} tasks={tasks} progress={progress} focus={focus} onFocus={onFocus} folded />
-					)}
 					{/* ‹ Today › and the dates move to the next line together when there's no room. */}
 					<div className={s.stepper}>
 						<button className={s.pill} onClick={() => step(-1)} aria-label={`Previous ${unit}`}>
@@ -112,7 +117,20 @@ export default function CalendarPage({
 						<button className={s.pill} onClick={() => step(1)} aria-label={`Next ${unit}`}>
 							›
 						</button>
-						<h1 className={s.title}>{view === 'month' ? cursor.getFullYear() : `${fmt(days[0])} – ${fmt(days[6])}`}</h1>
+						{/* The dates, then (below 1040px) the filter button; they move to the next line together. */}
+						<span className={s.dates}>
+							<h1 className={s.title}>{view === 'month' ? cursor.getFullYear() : range}</h1>
+							{compact && (
+								<PeopleFilter
+									members={members}
+									tasks={tasks}
+									progress={progress}
+									focus={focus}
+									onFocus={onFocus}
+									folded
+								/>
+							)}
+						</span>
 					</div>
 				</div>
 			</header>

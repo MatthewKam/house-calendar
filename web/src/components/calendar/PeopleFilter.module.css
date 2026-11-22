@@ -20,7 +20,7 @@
 .clearFilter:hover {
 	color: var(--text);
 }
-/* Folded: just the filter button, in the row with Month and Week. */
+/* Folded: just the filter button, after the dates. */
 .folded {
 	margin-left: 0;
 }
