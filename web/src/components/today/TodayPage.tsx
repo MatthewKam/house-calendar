@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode } from 'react';
+import { type CSSProperties, type ReactNode, useState } from 'react';
 import { addDays, dayKey, fromDayKey, timeLabel, longDate } from '../../lib/dates';
 import {
 	useEventWeather,
@@ -281,6 +281,9 @@ export default function TodayPage({
 	// A tablet on its side, or anything bigger: the calendar in a column of its own on the right.
 	const twoColumns = useMediaQuery(LANDSCAPE_TABLET);
 	const threeColumns = useMediaQuery(EXTRAWIDE);
+	// The cards scrolled down: on phones the header slims to the date, time and weather, with a shadow
+	// over the cards (Today.module.css's .scrolled).
+	const [scrolled, setScrolled] = useState(false);
 
 	// The cards. A tablet on its side and anything bigger: two columns, the calendar on the right (today,
 	// then tomorrow and the rest of the week under it) with the special days under it, the rest down the
@@ -353,7 +356,7 @@ export default function TodayPage({
 
 	return (
 		<section className={s.page} aria-label="Today">
-			<header className={s.head}>
+			<header className={`${s.head} ${scrolled ? s.scrolled : ''}`}>
 				<div className={s.headText}>
 					<h1 className={s.hello}>
 						{greeting(now)}
@@ -379,7 +382,7 @@ export default function TodayPage({
 				)}
 			</header>
 
-			<div className={s.scroll}>
+			<div className={s.scroll} onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 8)}>
 				{threeColumns ? (
 					<div className={s.threeColumns}>
 						<div className={s.column}>

@@ -89,6 +89,7 @@ A circle is `50%`. A corner that should grow with its text uses `em`.
 | `--shadow-lg` | floating over the page: menus, the + button, a dragged row |
 | `--shadow-xl` | dialogs, alerts and cheers |
 | `--shadow-gutter` | the hour names on the left of a timeline, over the days sliding under them (the week on a phone) |
+| `--shadow-bar` | along the bottom of a header the page scrolls under (Today on a phone, once its cards scroll) |
 
 Three kinds are written where they're used, because their colour is set on the element and a shared name can't pick it up:
 
