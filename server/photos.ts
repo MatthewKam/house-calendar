@@ -133,7 +133,10 @@ export function registerPhotos(app: FastifyInstance, db: DB, dir: string) {
 		for (const r of gone) removePhoto(r.id);
 	}
 	sweepFlyers();
-	setInterval(sweepFlyers, 6 * 3_600_000).unref();
+	const sweeping = setInterval(sweepFlyers, 6 * 3_600_000);
+	sweeping.unref();
+	// A home that's closed (deleted, or the server stopping) has its database shut: stop sweeping it.
+	app.addHook('onClose', async () => clearInterval(sweeping));
 
 	// flyer: a photo of a flyer, kept for its events but not shown in the album or screen saver.
 	app.post<{ Querystring: z.infer<typeof PhotoUpload> }>(
