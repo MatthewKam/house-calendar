@@ -98,6 +98,21 @@
 	gap: 0.75rem;
 	align-items: stretch;
 }
+
+@media (max-width: 1500px) {
+	.header,
+	.monthHeaderTitle,
+	.body {
+		max-width: max(56rem, 90%);
+	}
+}
+@media (max-width: 1400px) {
+	.header,
+	.monthHeaderTitle,
+	.body {
+		max-width: max(56rem, 100%);
+	}
+}
 @media (max-width: 959.98px) {
 	.cards,
 	.cardsDaily {

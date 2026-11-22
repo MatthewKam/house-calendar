@@ -183,6 +183,12 @@
 	}
 }
 
+@media (max-width: 800px) {
+	.cell {
+		border-radius: var(--radius-sm);
+	}
+}
+
 /* Phones on their side: the page runs to the bottom edge, so the grid keeps a little room above the home bar. */
 @media (max-width: 959.98px), (max-height: 500px) {
 	.month {
