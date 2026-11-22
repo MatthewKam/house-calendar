@@ -18,7 +18,7 @@ export const eventShown = (focus: string[]) => (ev: CalEvent) =>
 /**
  * The calendar's name filters. People with tasks are always shown, each filling with their colour as they
  * finish today's tasks; the rest (and Everyone) are behind the filter button, except whoever is picked
- * right now. Clear shows every event again.
+ * right now. Clear shows every event again. Folded (phones), every name is behind the filter button.
  */
 export default function PeopleFilter({
 	members,
@@ -26,6 +26,7 @@ export default function PeopleFilter({
 	progress,
 	focus,
 	onFocus,
+	folded = false,
 }: {
 	members: Member[];
 	tasks: Task[];
@@ -33,17 +34,23 @@ export default function PeopleFilter({
 	progress: ReturnType<typeof taskProgress>;
 	focus: string[];
 	onFocus: (focus: string[]) => void;
+	/** Only the filter button, with every name in its pop-up (and Clear at the pop-up's top). */
+	folded?: boolean;
 }) {
 	// The pop-up of names that aren't shown (people without tasks, and Everyone).
 	const [moreOpen, setMoreOpen] = useState(false);
 	const everyone = { id: EVERYONE, name: 'Everyone', color: UNASSIGNED };
 	const withTasks = members.filter((m) => tasksFor(tasks, m.id).length > 0);
 	// Until anyone has tasks, show everybody.
-	const shownPeople = withTasks.length ? [...withTasks] : [...members, everyone];
-	const morePeople = withTasks.length ? [...members.filter((m) => !withTasks.includes(m)), everyone] : [];
-	// Picks from the pop-up show too, so it's clear the calendar is filtered.
+	const shownPeople = folded ? [] : withTasks.length ? [...withTasks] : [...members, everyone];
+	const morePeople = folded
+		? [...members, everyone]
+		: withTasks.length
+			? [...members.filter((m) => !withTasks.includes(m)), everyone]
+			: [];
+	// Picks from the pop-up show too, so it's clear the calendar is filtered (folded, the button is ringed).
 	const hiddenPicked = morePeople.filter((m) => focus.includes(m.id));
-	shownPeople.push(...hiddenPicked);
+	if (!folded) shownPeople.push(...hiddenPicked);
 
 	const whoButton = (m: { id: string; name: string; color: string }) => {
 		const p = progress.get(m.id);
@@ -63,8 +70,8 @@ export default function PeopleFilter({
 	};
 
 	return (
-		<div className={s.people}>
-			{focus.length > 0 && (
+		<div className={`${s.people} ${folded ? s.folded : ''}`}>
+			{focus.length > 0 && !folded && (
 				<button className={s.clearFilter} onClick={() => onFocus([])}>
 					Clear
 				</button>
@@ -86,7 +93,14 @@ export default function PeopleFilter({
 					{moreOpen && (
 						<>
 							<div className={s.moreScrim} onClick={() => setMoreOpen(false)} role="presentation" />
-							<div className={s.morePanel}>{morePeople.map(whoButton)}</div>
+							<div className={s.morePanel}>
+								{folded && focus.length > 0 && (
+									<button className={`${s.clearFilter} ${s.clearInPanel}`} onClick={() => onFocus([])}>
+										Clear
+									</button>
+								)}
+								{morePeople.map(whoButton)}
+							</div>
 						</>
 					)}
 				</div>

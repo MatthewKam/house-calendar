@@ -3,7 +3,7 @@ import { useRangeEvents, useSettings, useSyncStatus } from '../../lib/queries';
 import type { taskProgress } from '../../lib/tasks';
 import type { CalEvent, Member, Task } from '../../lib/types';
 import type { useCalendarView, View } from '../../lib/useCalendarView';
-import { COMPACT_CALENDAR, useMediaQuery } from '../../lib/useMediaQuery';
+import { COMPACT_CALENDAR, PHONE, useMediaQuery } from '../../lib/useMediaQuery';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import DayPanel from './DayPanel';
@@ -56,6 +56,7 @@ export default function CalendarPage({
 	const { view, changeView, cursor, selected, setSelected, days, main, setMain, step, goToday } = calendar;
 	// Below 1040px the week is its days side by side, one in the middle (WeekCarousel); no day panel.
 	const compact = useMediaQuery(COMPACT_CALENDAR);
+	const phone = useMediaQuery(PHONE);
 	const carousel = view === 'week' && compact;
 	const settings = useSettings();
 	// The carousel also shows the day before the week and the day after it.
@@ -80,8 +81,8 @@ export default function CalendarPage({
 					</h1>
 					<NowLine />
 				</div>
-				{/* Beside the month; on phones, under the time and weather. */}
-				<PeopleFilter members={members} tasks={tasks} progress={progress} focus={focus} onFocus={onFocus} />
+				{/* Beside the month; on phones, just the filter button after Month and Week. */}
+				{!phone && <PeopleFilter members={members} tasks={tasks} progress={progress} focus={focus} onFocus={onFocus} />}
 			</div>
 			<header className={s.header}>
 				<div className={s.group}>
@@ -97,6 +98,9 @@ export default function CalendarPage({
 							</button>
 						))}
 					</div>
+					{phone && (
+						<PeopleFilter members={members} tasks={tasks} progress={progress} focus={focus} onFocus={onFocus} folded />
+					)}
 					{/* ‹ Today › and the dates move to the next line together when there's no room. */}
 					<div className={s.stepper}>
 						<button className={s.pill} onClick={() => step(-1)} aria-label={`Previous ${unit}`}>

@@ -20,6 +20,19 @@
 .clearFilter:hover {
 	color: var(--text);
 }
+/* Folded: just the filter button, in the row with Month and Week. */
+.folded {
+	margin-left: 0;
+}
+/* Clear (with .clearFilter's look), at the top of a folded pop-up. */
+.morePanel .clearInPanel {
+	position: static;
+	margin: 0;
+	align-self: flex-end;
+	min-height: 0;
+	padding: var(--space-1) var(--space-2);
+	font-size: var(--text-sm);
+}
 /* The filter button and its pop-up of the other names. */
 .moreWrap {
 	position: relative;
@@ -85,6 +98,9 @@
 		flex-basis: 100%;
 		justify-content: flex-start;
 		margin-left: 0;
+	}
+	.folded {
+		flex-basis: auto;
 	}
 	/* The names start at the left here, so the pop-up opens rightward from its button. */
 	.morePanel {
