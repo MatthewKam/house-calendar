@@ -3,7 +3,7 @@ import { addDays, dayKey, timeLabel } from '../../lib/dates';
 import { eventPaint, eventsOn, isOver } from '../../lib/events';
 import { UNASSIGNED } from '../../lib/color';
 import { inStrip, placeDay } from '../../lib/timegrid';
-import { PHONE, useMediaQuery } from '../../lib/useMediaQuery';
+import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
 import { useNow } from '../../lib/useNow';
 import type { CalEvent, Member } from '../../lib/types';
 import DayMeals from './DayMeals';
@@ -38,10 +38,11 @@ interface Props {
 export default function WeekCarousel({ days, today, main, events, members, onMain, onOpen }: Props) {
 	const now = useNow();
 	const phone = useMediaQuery(PHONE);
-	// Phones: whole-day events fold to a thin bar each (meals hidden) under the days' names, to leave room
+	// Phones (upright or on their side): whole-day events fold to a thin bar each (meals hidden) under the days' names, to leave room
 	// for the hours; the corner button opens them all.
+	const foldable = useMediaQuery(PHONE_SIDEWAYS) || phone;
 	const [expanded, setExpanded] = useState(false);
-	const folded = phone && !expanded;
+	const folded = foldable && !expanded;
 	// The week with a day either side, so the first and last days can sit in the middle too.
 	const all = useMemo(() => [addDays(days[0], -1), ...days, addDays(days[6], 1)], [days]);
 	const keys = all.map(dayKey);
@@ -148,7 +149,7 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 				<div ref={track} className={s.track} onScroll={onScroll}>
 					{/* Row 1: the days' names, with their whole-day events and meals; they stay at the top. */}
 					<span className={s.corner}>
-						{phone ? (
+						{foldable ? (
 							<button
 								type="button"
 								className={s.fold}

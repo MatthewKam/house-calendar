@@ -309,3 +309,11 @@
 		border-radius: var(--radius-sm);
 	}
 }
+
+/* A phone on its side: no room for the cards (the names over the hours show the days and dates), so
+   the hours keep what height there is. */
+@media (orientation: landscape) and (max-height: 500px) {
+	.cards {
+		display: none;
+	}
+}
