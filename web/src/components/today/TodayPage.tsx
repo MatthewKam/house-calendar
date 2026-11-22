@@ -426,10 +426,10 @@ export default function TodayPage({
 								{guard('special days', specialCard)}
 							</div>
 							<div className={s.column}>
-								{guard('the weather', weatherCard)}
 								{guard('the quote', quoteCard)}
 								{guard('the encouragement', encouragementCard)}
 								{guard('the photos', photosCard)}
+								{guard('the weather', weatherCard)}
 							</div>
 						</div>
 					</div>
