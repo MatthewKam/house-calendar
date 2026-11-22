@@ -3,6 +3,7 @@ import { api } from '../../lib/api';
 import { useAlertActions, useAlerts } from '../../lib/queries';
 import type { CalEvent, Trip } from '../../lib/types';
 import { timeLabel } from '../../lib/dates';
+import { Button } from '../ui/Button';
 import s from './EventDialog.module.css';
 
 /** Miles where people drive in miles, kilometres elsewhere. */
@@ -10,6 +11,16 @@ const distance = (meters: number) =>
 	/^en-(US|GB|LR|MM)$/i.test(navigator.language)
 		? `${(meters / 1609.34).toFixed(meters < 16093 ? 1 : 0)} mi`
 		: `${(meters / 1000).toFixed(meters < 10000 ? 1 : 0)} km`;
+
+/** The map apps an address opens in, for directions there. */
+const mapApps = (address: string) => {
+	const q = encodeURIComponent(address);
+	return [
+		['Apple Maps', `https://maps.apple.com/?daddr=${q}`],
+		['Google Maps', `https://www.google.com/maps/dir/?api=1&destination=${q}`],
+		['Waze', `https://waze.com/ul?q=${q}&navigate=yes`],
+	] as const;
+};
 
 /** The event's address and, on request, the drive time from home and when to leave. */
 export default function TravelInfo({
@@ -25,6 +36,8 @@ export default function TravelInfo({
 	const [trip, setTrip] = useState<Trip | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
+	// The map apps to pick from, for directions.
+	const [choosingMap, setChoosingMap] = useState(false);
 	// The request in flight, so it can be cancelled (or given up on) without waiting.
 	const inFlight = useRef<AbortController | null>(null);
 	useEffect(() => () => inFlight.current?.abort(), []);
@@ -54,20 +67,45 @@ export default function TravelInfo({
 	return (
 		<div className={s.travel}>
 			{showAddress && (
-				<div className={s.address}>
-					<span aria-hidden="true">📍</span> {event.location}
-				</div>
+				<Button
+					variant="link"
+					size="sm"
+					icon="📍"
+					className={s.addressLink}
+					aria-expanded={choosingMap}
+					onClick={() => setChoosingMap(!choosingMap)}
+				>
+					{event.location}
+				</Button>
 			)}
-			{!trip && (
-				<div className={s.travelRow}>
+			<div className={s.travelRow}>
+				<button
+					type="button"
+					className={s.travelButton}
+					aria-expanded={choosingMap}
+					onClick={() => setChoosingMap(!choosingMap)}
+				>
+					🗺️ Directions
+				</button>
+				{!trip && (
 					<button type="button" className={s.travelButton} onClick={check} disabled={loading}>
 						🚗 {loading ? 'Checking traffic…' : error ? 'Try again' : 'Travel time'}
 					</button>
-					{loading && (
-						<button type="button" className={s.travelCancel} onClick={() => inFlight.current?.abort('cancel')}>
-							Cancel
+				)}
+				{loading && (
+					<button type="button" className={s.travelCancel} onClick={() => inFlight.current?.abort('cancel')}>
+						Cancel
+					</button>
+				)}
+			</div>
+			{/* Directions there in whichever map app the phone has. */}
+			{choosingMap && (
+				<div className={s.remind}>
+					{mapApps(event.location).map(([name, href]) => (
+						<button key={name} type="button" className={s.chip} onClick={() => window.open(href, '_blank', 'noopener')}>
+							{name}
 						</button>
-					)}
+					))}
 				</div>
 			)}
 			{trip && (

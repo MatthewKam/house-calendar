@@ -159,6 +159,11 @@
 .address {
 	color: var(--muted);
 }
+/* The address, tappable for directions in a map app (a link Button). */
+.addressLink {
+	align-self: flex-start;
+	text-align: left;
+}
 .travelButton {
 	align-self: flex-start;
 	padding: 0 1rem;
