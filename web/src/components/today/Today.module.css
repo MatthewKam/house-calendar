@@ -83,7 +83,9 @@
 		width: auto;
 		padding: 0 max(var(--side), var(--inset-right)) var(--space-3) var(--side);
 		background: var(--bg);
-		transition: box-shadow 0.2s ease;
+		transition:
+			box-shadow 0.2s ease,
+			margin-top 0.2s ease;
 	}
 	.hello {
 		max-height: 3rem;
@@ -103,6 +105,15 @@
 	.scrolled .hello {
 		max-height: 0;
 		opacity: 0;
+	}
+	/* Up into the room over the page (keeping clear of the status bar), and the time to the fore. */
+	.scrolled {
+		margin-top: calc(-1 * var(--space-4));
+	}
+	.scrolled .time {
+		font-size: var(--text-lg);
+		font-weight: var(--weight-bold);
+		color: var(--text);
 	}
 	.scrolled .headIcon {
 		grid-row: auto;
