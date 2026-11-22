@@ -70,7 +70,8 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 	}, [view]);
 
 	return (
-		<Sheet label="Settings" onClose={onClose}>
+		// Phones: the whole screen, like a page of its own.
+		<Sheet label="Settings" onClose={onClose} className={phone ? sheet.full : undefined}>
 			<header className={sheet.head} ref={top}>
 				{view === null ? (
 					<h2 className={sheet.heading}>Settings</h2>
