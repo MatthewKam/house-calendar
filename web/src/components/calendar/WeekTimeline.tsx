@@ -1,7 +1,7 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { dayKey, timeLabel } from '../../lib/dates';
 import { eventPaint, isOver } from '../../lib/events';
-import { inStrip, placeDay, weekBars } from '../../lib/timegrid';
+import { inStrip, placeDay, weekBars, type Placed } from '../../lib/timegrid';
 import { useNow } from '../../lib/useNow';
 import type { CalEvent, Member } from '../../lib/types';
 import DayMeals from './DayMeals';
@@ -19,7 +19,7 @@ interface Props {
 }
 
 /** "8 AM" with a small "AM", and "Noon". */
-function HourName({ h }: { h: number }) {
+export function HourName({ h }: { h: number }) {
 	if (h === 12) return <>Noon</>;
 	const [n, ampm] = new Date(2000, 0, 1, h).toLocaleTimeString([], { hour: 'numeric' }).split(' ');
 	return (
@@ -154,41 +154,9 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 									className={`${s.column} ${key === today ? s.todayColumn : ''} ${key < today ? s.pastColumn : ''}`}
 									onClick={() => onSelect(key)}
 								>
-									{placeDay(inHours, day, 0, 24).map((p) => {
-										const short = p.hours < 0.75;
-										const starts = Date.parse(p.ev.start) >= day.getTime();
-										return (
-											<button
-												key={p.ev.id}
-												type="button"
-												className={`${s.event} ${short ? s.short : ''} ${isOver(p.ev, now) ? s.past : ''}`}
-												style={
-													{
-														...eventPaint(p.ev, members).vars,
-														top: `${p.top * 100}%`,
-														height: `${p.height * 100}%`,
-														left: `calc(${(p.col / p.cols) * 100}% + 1px)`,
-														width: `calc(${100 / p.cols}% - 3px)`,
-													} as CSSProperties
-												}
-												data-busy={p.ev.busy || undefined}
-												onClick={(e) => {
-													e.stopPropagation();
-													onOpen(p.ev, key);
-												}}
-												title={`${p.ev.title}, ${timeLabel(p.ev.start)} – ${timeLabel(p.ev.end)}`}
-											>
-												<span className={s.title}>{p.ev.title}</span>
-												<span className={s.time}>
-													{short
-														? timeLabel(starts ? p.ev.start : p.ev.end)
-														: starts
-															? `${timeLabel(p.ev.start)} – ${timeLabel(p.ev.end)}`
-															: `until ${timeLabel(p.ev.end)}`}
-												</span>
-											</button>
-										);
-									})}
+									{placeDay(inHours, day, 0, 24).map((p) => (
+										<TimedEvent key={p.ev.id} placed={p} day={day} now={now} members={members} onOpen={onOpen} />
+									))}
 									{/* The time now, in today's column, moving down every minute. */}
 									{i === todayCol && (
 										<div
@@ -204,5 +172,56 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 				</div>
 			</div>
 		</div>
+	);
+}
+
+/**
+ * An event in a day's hours: a block from its start to its end, its name and as much of its time as
+ * fits; faded once it's over. Positioned by placeDay() inside its day's column (here and WeekCarousel).
+ */
+export function TimedEvent({
+	placed: p,
+	day,
+	now,
+	members,
+	onOpen,
+}: {
+	placed: Placed;
+	day: Date;
+	now: Date;
+	members: Member[];
+	onOpen: (event: CalEvent, day: string) => void;
+}) {
+	const short = p.hours < 0.75;
+	const starts = Date.parse(p.ev.start) >= day.getTime();
+	return (
+		<button
+			type="button"
+			className={`${s.event} ${short ? s.short : ''} ${isOver(p.ev, now) ? s.past : ''}`}
+			style={
+				{
+					...eventPaint(p.ev, members).vars,
+					top: `${p.top * 100}%`,
+					height: `${p.height * 100}%`,
+					left: `calc(${(p.col / p.cols) * 100}% + 1px)`,
+					width: `calc(${100 / p.cols}% - 3px)`,
+				} as CSSProperties
+			}
+			data-busy={p.ev.busy || undefined}
+			onClick={(e) => {
+				e.stopPropagation();
+				onOpen(p.ev, dayKey(day));
+			}}
+			title={`${p.ev.title}, ${timeLabel(p.ev.start)} – ${timeLabel(p.ev.end)}`}
+		>
+			<span className={s.title}>{p.ev.title}</span>
+			<span className={s.time}>
+				{short
+					? timeLabel(starts ? p.ev.start : p.ev.end)
+					: starts
+						? `${timeLabel(p.ev.start)} – ${timeLabel(p.ev.end)}`
+						: `until ${timeLabel(p.ev.end)}`}
+			</span>
+		</button>
 	);
 }

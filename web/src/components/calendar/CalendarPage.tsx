@@ -1,20 +1,18 @@
+import { addDays } from '../../lib/dates';
 import { useRangeEvents, useSettings, useSyncStatus } from '../../lib/queries';
 import type { taskProgress } from '../../lib/tasks';
 import type { CalEvent, Member, Task } from '../../lib/types';
 import type { useCalendarView, View } from '../../lib/useCalendarView';
-import { NARROW, useMediaQuery } from '../../lib/useMediaQuery';
-import PhotoCard from '../photos/PhotoCard';
+import { COMPACT_CALENDAR, useMediaQuery } from '../../lib/useMediaQuery';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
-import DailyCards from './DailyCards';
 import DayPanel from './DayPanel';
 import MonthView from './MonthView';
 import NowLine from './NowLine';
 import OutboxNotices from './OutboxNotices';
 import { Notice } from '../ui/Notice';
 import PeopleFilter, { eventShown } from './PeopleFilter';
-import WeatherCard from './WeatherCard';
-import WeekView from './WeekView';
+import WeekCarousel from './WeekCarousel';
 import WeekTimeline from './WeekTimeline';
 import s from './CalendarPage.module.css';
 
@@ -41,7 +39,6 @@ export default function CalendarPage({
 	calendar,
 	onAdd,
 	onOpen,
-	onPlaySlideshow,
 }: {
 	today: string;
 	members: Member[];
@@ -55,14 +52,15 @@ export default function CalendarPage({
 	/** Adding an event (missing while the parent lock is on). */
 	onAdd?: (day: string) => void;
 	onOpen: (event: CalEvent, day: string) => void;
-	onPlaySlideshow: () => void;
 }) {
-	const { view, changeView, cursor, selected, setSelected, days, step, goToday } = calendar;
+	const { view, changeView, cursor, selected, setSelected, days, main, setMain, step, goToday } = calendar;
+	// Below 1040px the week is its days side by side, one in the middle (WeekCarousel); no day panel.
+	const compact = useMediaQuery(COMPACT_CALENDAR);
+	const carousel = view === 'week' && compact;
 	const settings = useSettings();
-	const eventsQuery = useRangeEvents(days[0], days.length);
+	// The carousel also shows the day before the week and the day after it.
+	const eventsQuery = useRangeEvents(carousel ? addDays(days[0], -1) : days[0], carousel ? 9 : days.length);
 	const sync = useSyncStatus().data;
-	// Below 960px the week is one scrolling list of days, and the weather scrolls at its end.
-	const narrow = useMediaQuery(NARROW);
 	const shown = eventShown(focus);
 	const events = (eventsQuery.data ?? []).filter(shown);
 
@@ -72,19 +70,6 @@ export default function CalendarPage({
 			? monthName(view === 'month' ? cursor : days[0])
 			: `${monthName(days[0])} – ${monthName(days[6])}`;
 	const unit = view === 'month' ? 'month' : 'week';
-
-	// Under the week: the photo slideshow, beside the weather with the day's joke and quote beneath it.
-	const cards = (
-		<div className={s.cards}>
-			<PhotoCard onPlay={onPlaySlideshow} />
-			<div className={s.cardsSide}>
-				<WeatherCard />
-				<div className={s.cardsDaily}>
-					<DailyCards today={today} />
-				</div>
-			</div>
-		</div>
-	);
 
 	return (
 		<>
@@ -174,8 +159,18 @@ export default function CalendarPage({
 						onSelect={setSelected}
 						onOpen={onOpen}
 					/>
-				) : view === 'week' && !narrow ? (
-					// Wide screens: the week by the hour. Narrower ones keep the list (seven hour columns get too thin).
+				) : carousel ? (
+					<WeekCarousel
+						days={days}
+						today={today}
+						main={main}
+						events={events}
+						members={members}
+						onMain={setMain}
+						onOpen={onOpen}
+					/>
+				) : (
+					// 1040px and up: the week by the hour, seven days side by side.
 					<WeekTimeline
 						days={days}
 						today={today}
@@ -185,19 +180,8 @@ export default function CalendarPage({
 						onSelect={setSelected}
 						onOpen={onOpen}
 					/>
-				) : (
-					<WeekView
-						days={days}
-						today={today}
-						selected={selected}
-						events={events}
-						members={members}
-						onSelect={setSelected}
-						onOpen={onOpen}
-						footer={view === 'week' && narrow ? cards : undefined}
-					/>
 				)}
-				{selected && (
+				{selected && !carousel && (
 					<DayPanel
 						shown={shown}
 						day={selected}

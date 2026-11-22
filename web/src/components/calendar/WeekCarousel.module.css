@@ -1,0 +1,257 @@
+/* The week below 1040px (WeekCarousel.tsx): the days as cards, then the days by the hour side by side,
+   one in the middle and the ones either side peeking in. Event blocks, hour names and the time now are
+   WeekTimeline.module.css's. */
+.carousel {
+	flex: 1;
+	min-width: 0;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-4);
+}
+
+/* ---- The week's days as cards ---- */
+.cards {
+	flex: none;
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	gap: var(--space-3);
+}
+.card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--space-1);
+	min-width: 0;
+	padding: var(--space-3) var(--space-1) var(--space-2);
+	border-radius: var(--radius);
+	background: var(--surface);
+	box-shadow: var(--shadow-md);
+	color: var(--text);
+}
+.cardDow {
+	font-size: var(--text-lg);
+	font-weight: var(--weight-bold);
+}
+.cardNum {
+	display: grid;
+	place-items: center;
+	min-width: 1.9rem;
+	height: 1.9rem;
+	border-radius: var(--radius-round);
+	font-size: var(--text-lg);
+	font-weight: var(--weight-bold);
+	font-variant-numeric: tabular-nums;
+}
+.dots {
+	display: flex;
+	gap: var(--space-1);
+	min-height: 0.4rem;
+}
+.dot {
+	width: 0.4rem;
+	height: 0.4rem;
+	border-radius: var(--radius-round);
+}
+/* Over: flat, the see-through grey over it, its name quieter. */
+.cardPast {
+	box-shadow: none;
+	background: linear-gradient(var(--past-tint), var(--past-tint)), var(--surface);
+}
+.cardPast .cardDow {
+	color: var(--muted);
+}
+.cardToday .cardNum {
+	background: var(--accent);
+	color: var(--on-accent);
+}
+/* The day in the middle below. */
+.cardMain {
+	box-shadow:
+		inset 0 0 0 1px var(--accent),
+		var(--shadow-md);
+}
+.cardPast.cardMain {
+	box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+/* ---- The days by the hour ---- */
+.frame {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	background: var(--surface);
+	border-radius: var(--radius-xs);
+	box-shadow: var(--shadow-md);
+	overflow: hidden;
+	/* The days' widths follow the frame's (container units below). */
+	container-type: inline-size;
+}
+.track {
+	--gutter: 3.6rem;
+	--hour: 3.2rem;
+	/* A day's width: three side by side on a wide frame; narrower, the middle one takes more and the
+	   ones either side peek in. */
+	--day: calc((100cqw - var(--gutter)) / 3);
+	/* Room before the first day and after the last, so they can sit in the middle too. */
+	--pad: calc((100cqw - var(--gutter) - var(--day)) / 2);
+	/* A line at the end of each hour. */
+	--lines: repeating-linear-gradient(
+		to bottom,
+		transparent 0 calc(var(--hour) - 1px),
+		var(--line) calc(var(--hour) - 1px) var(--hour)
+	);
+	flex: 1;
+	min-width: 0;
+	display: grid;
+	grid-template-columns: var(--gutter) var(--pad) repeat(9, var(--day)) var(--pad);
+	grid-template-rows: auto auto;
+	overflow: auto;
+	overscroll-behavior-x: contain;
+	/* One day at a time, snapped to the middle of the room right of the hours. */
+	scroll-snap-type: x mandatory;
+	scroll-padding-left: var(--gutter);
+	scrollbar-width: none;
+}
+.track::-webkit-scrollbar {
+	display: none;
+}
+@container (max-width: 760px) {
+	.track {
+		--day: calc((100cqw - var(--gutter)) / 2);
+	}
+}
+@container (max-width: 480px) {
+	.track {
+		--gutter: 3rem;
+		--day: calc((100cqw - var(--gutter)) * 0.64);
+	}
+}
+
+/* Row 1: the names stay at the top as the hours scroll; the corner stays put both ways. */
+.corner,
+.name,
+.pad:not(.hours) {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	background: var(--surface);
+	border-bottom: 1px solid var(--line);
+}
+.corner {
+	left: 0;
+	z-index: 3;
+}
+.name {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+	min-width: 0;
+	padding: var(--space-3) var(--space-3) var(--space-2);
+	border-left: 1px solid var(--line);
+	scroll-snap-align: center;
+	scroll-snap-stop: always;
+}
+.title {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	min-width: 0;
+	margin: 0;
+	font-size: var(--text-lg);
+	font-weight: var(--weight-bold);
+	white-space: nowrap;
+}
+.weekday {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.num {
+	flex: none;
+	display: grid;
+	place-items: center;
+	min-width: 1.9rem;
+	height: 1.9rem;
+	border-radius: var(--radius-round);
+	font-size: var(--text-xl);
+	font-variant-numeric: tabular-nums;
+}
+.nameToday {
+	border: 1px solid var(--accent);
+	border-top-width: 3px;
+	border-bottom-color: var(--line);
+}
+.nameToday .num {
+	background: var(--accent);
+	color: var(--on-accent);
+	font-size: var(--text-lg);
+}
+.namePast {
+	background: linear-gradient(var(--past-tint), var(--past-tint)), var(--surface);
+}
+.namePast .weekday {
+	color: var(--muted);
+}
+/* A day either side: tap it to put it in the middle. */
+.side {
+	cursor: pointer;
+}
+/* A day before the middle one peeks in from the left: its name sits at its right edge, so it shows. */
+.before {
+	align-items: flex-end;
+}
+.before .title {
+	justify-content: flex-end;
+}
+/* A whole-day event under its day's name. */
+.allDay {
+	min-width: 0;
+	padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+	border-radius: var(--radius-xs);
+	font-size: var(--text-sm);
+	font-weight: var(--weight-semibold);
+	text-align: left;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	background:
+		var(--stripe) left / 0.3rem 100% no-repeat,
+		var(--tint35);
+}
+
+/* Row 2: 24 hours. The hour names stay at the left as the days slide under them. */
+.hours {
+	position: relative;
+	height: calc(24 * var(--hour));
+	background: var(--lines);
+}
+.gutter {
+	position: sticky;
+	left: 0;
+	z-index: 1;
+	height: calc(24 * var(--hour));
+	background: var(--surface);
+}
+.column {
+	border-left: 1px solid var(--line);
+}
+.columnToday {
+	border-inline: 1px solid var(--accent);
+}
+.columnPast {
+	background: linear-gradient(var(--past-tint), var(--past-tint)), var(--lines);
+}
+
+/* Phones: the cards closer together, their days one letter. */
+@media (max-width: 700px) {
+	.cards {
+		gap: var(--space-2);
+	}
+	.card {
+		padding-inline: 0;
+	}
+	.cardNum {
+		min-width: 1.7rem;
+		height: 1.7rem;
+	}
+}

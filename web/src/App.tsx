@@ -449,7 +449,6 @@ export default function App() {
 								calendar={calendar}
 								onAdd={parentLock.parent ? (day) => setOpen({ kind: 'event', day }) : undefined}
 								onOpen={openEvent}
-								onPlaySlideshow={saver.show}
 							/>
 						)}
 					</ErrorBoundary>
