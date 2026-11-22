@@ -8,8 +8,6 @@ import s from './MonthView.module.css';
 
 /** Events listed per cell before collapsing the rest into "+N more". */
 const MAX_SHOWN = 3;
-/** Bars in a condensed cell before the rest become "+N". */
-const MAX_BARS = 5;
 
 interface Props {
 	/** Whole weeks covering the month, from monthGridDays(). */
@@ -65,14 +63,13 @@ export default function MonthView({ days, month, today, selected, events, member
 						<span className={s.num}>{day.getDate()}</span>
 						{compact ? (
 							<ul className={s.bars} aria-label={`${list.length} events`}>
-								{list.slice(0, list.length > MAX_BARS ? MAX_BARS - 1 : MAX_BARS).map((ev) => (
+								{list.map((ev) => (
 									<li
 										key={ev.id}
 										className={`${s.bar} ${isOver(ev, now) ? s.barOver : ''}`}
 										style={eventPaint(ev, members).vars}
 									/>
 								))}
-								{list.length > MAX_BARS && <li className={s.barMore}>+{list.length - MAX_BARS + 1}</li>}
 							</ul>
 						) : (
 							<ul className={s.list}>

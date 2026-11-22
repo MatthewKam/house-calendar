@@ -149,7 +149,7 @@
 	gap: var(--space-1);
 	min-height: 0;
 }
-/* One event: a thin line in its people's colours. */
+/* One event: a thin line (every one shows; the cell clips any that don't fit) in its people's colours. */
 .bar {
 	height: 3px; /* own: a hairline-thick bar, as thin as a line yet still seen */
 	border-radius: var(--radius-round);
@@ -158,12 +158,6 @@
 /* Over: faded back a little, like the full month's events. */
 .barOver {
 	opacity: 0.45;
-}
-.barMore {
-	font-size: var(--text-xs);
-	font-weight: var(--weight-semibold);
-	color: var(--muted);
-	line-height: 1;
 }
 
 /* Phones: closer together, and smaller dates so today's circle fits a narrow day. */
