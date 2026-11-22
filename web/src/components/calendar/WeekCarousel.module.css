@@ -134,13 +134,14 @@
 .pad:not(.hours) {
 	position: sticky;
 	top: 0;
-	z-index: 2;
+	/* Over the hours as they scroll under, the time now's line too (WeekTimeline's .now is 2). */
+	z-index: 3;
 	background: var(--surface);
 	border-bottom: 1px solid var(--line);
 }
 .corner {
 	left: 0;
-	z-index: 3;
+	z-index: 4;
 }
 .name {
 	display: flex;
@@ -219,6 +220,39 @@
 		var(--tint35);
 }
 
+/* Phones: the corner button that folds and opens the whole-day events. */
+.corner {
+	/* At the top, level with the days' names, so it stays put as the names grow or shrink. */
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding-top: var(--space-1);
+}
+.fold {
+	display: grid;
+	place-items: center;
+	width: var(--tap);
+	height: var(--tap);
+	border-radius: var(--radius-round);
+	color: var(--muted);
+	font-size: var(--text-lg);
+}
+/* Folded whole-day events: a thin bar each, in their people's colours. */
+.foldedBars {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+	min-height: 0;
+}
+.foldedBar {
+	height: 3px; /* own: a hairline-thick bar, like the condensed month's */
+	border-radius: var(--radius-round);
+	background: var(--bar);
+}
+.foldedOver {
+	opacity: 0.45;
+}
+
 /* Row 2: 24 hours. The hour names stay at the left as the days slide under them. */
 .hours {
 	position: relative;
@@ -228,7 +262,7 @@
 .gutter {
 	position: sticky;
 	left: 0;
-	z-index: 1;
+	z-index: 2;
 	height: calc(24 * var(--hour));
 	background: var(--surface);
 }

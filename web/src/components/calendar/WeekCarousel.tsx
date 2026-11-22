@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { addDays, dayKey, timeLabel } from '../../lib/dates';
 import { eventPaint, eventsOn, isOver } from '../../lib/events';
 import { UNASSIGNED } from '../../lib/color';
@@ -38,6 +38,10 @@ interface Props {
 export default function WeekCarousel({ days, today, main, events, members, onMain, onOpen }: Props) {
 	const now = useNow();
 	const phone = useMediaQuery(PHONE);
+	// Phones: whole-day events fold to a thin bar each (meals hidden) under the days' names, to leave room
+	// for the hours; the corner button opens them all.
+	const [expanded, setExpanded] = useState(false);
+	const folded = phone && !expanded;
 	// The week with a day either side, so the first and last days can sit in the middle too.
 	const all = useMemo(() => [addDays(days[0], -1), ...days, addDays(days[6], 1)], [days]);
 	const keys = all.map(dayKey);
@@ -72,6 +76,12 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 		observer.observe(el);
 		return () => observer.disconnect();
 	}, []);
+
+	// Folding or opening the whole-day events changes the names' height, and the browser can snap to
+	// another day; keep the middle one in the middle.
+	useLayoutEffect(() => {
+		track.current?.scrollTo({ left: mainRef.current * dayWidth() });
+	}, [expanded]);
 
 	// Opens with the time now (or 8 AM) a quarter of the way down, once the text-size setting has settled.
 	useEffect(() => {
@@ -137,7 +147,19 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			<div className={s.frame}>
 				<div ref={track} className={s.track} onScroll={onScroll}>
 					{/* Row 1: the days' names, with their whole-day events and meals; they stay at the top. */}
-					<span className={s.corner} />
+					<span className={s.corner}>
+						{phone && (
+							<button
+								type="button"
+								className={s.fold}
+								aria-expanded={expanded}
+								aria-label={expanded ? 'Fold all-day events' : 'Show all-day events'}
+								onClick={() => setExpanded(!expanded)}
+							>
+								{expanded ? '▴' : '▾'}
+							</button>
+						)}
+					</span>
 					<span className={s.pad} />
 					{all.map((day, i) => {
 						const key = dayKey(day);
@@ -159,25 +181,49 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 									<span className={s.weekday}>{day.toLocaleDateString([], { weekday: 'long' })}</span>
 									<span className={s.num}>{day.getDate()}</span>
 								</h3>
-								{eventsOn(events, day)
-									.filter(inStrip)
-									.map((ev) => (
-										<button
-											key={ev.id}
-											type="button"
-											className={`${s.allDay} ${isOver(ev, now) ? t.past : ''}`}
-											style={eventPaint(ev, members).vars}
-											data-busy={ev.busy || undefined}
-											onClick={(e) => {
-												e.stopPropagation();
-												onOpen(ev, key);
-											}}
-											title={ev.allDay ? ev.title : `${ev.title}, from ${timeLabel(ev.start)}`}
-										>
-											{ev.title}
-										</button>
-									))}
-								<DayMeals day={key} />
+								{folded ? (
+									// Folded: a bar in its people's colours for each; tap to open them all.
+									<span
+										className={s.foldedBars}
+										onClick={(e) => {
+											if (i !== mainIndex) return;
+											e.stopPropagation();
+											setExpanded(true);
+										}}
+									>
+										{eventsOn(events, day)
+											.filter(inStrip)
+											.map((ev) => (
+												<span
+													key={ev.id}
+													className={`${s.foldedBar} ${isOver(ev, now) ? s.foldedOver : ''}`}
+													style={eventPaint(ev, members).vars}
+												/>
+											))}
+									</span>
+								) : (
+									<>
+										{eventsOn(events, day)
+											.filter(inStrip)
+											.map((ev) => (
+												<button
+													key={ev.id}
+													type="button"
+													className={`${s.allDay} ${isOver(ev, now) ? t.past : ''}`}
+													style={eventPaint(ev, members).vars}
+													data-busy={ev.busy || undefined}
+													onClick={(e) => {
+														e.stopPropagation();
+														onOpen(ev, key);
+													}}
+													title={ev.allDay ? ev.title : `${ev.title}, from ${timeLabel(ev.start)}`}
+												>
+													{ev.title}
+												</button>
+											))}
+										<DayMeals day={key} />
+									</>
+								)}
 							</div>
 						);
 					})}
