@@ -328,6 +328,7 @@
 		align-items: center;
 		gap: var(--space-1) var(--space-2);
 		padding: var(--space-1);
+		padding-bottom: var(--space-2);
 	}
 	.cardDow,
 	.cardNum {
@@ -340,5 +341,8 @@
 	.dots {
 		grid-column: 1 / -1;
 		justify-content: center;
+	}
+	.carousel {
+		gap: var(--space-3);
 	}
 }
