@@ -53,7 +53,7 @@ export default function CalendarPage({
 	onAdd?: (day: string) => void;
 	onOpen: (event: CalEvent, day: string) => void;
 }) {
-	const { view, changeView, cursor, selected, setSelected, days, main, setMain, step, goToday } = calendar;
+	const { view, changeView, cursor, selected, setSelected, days, main, setMain, step, goToday, todayAt } = calendar;
 	// Below 1040px the week is its days side by side, one in the middle (WeekCarousel); no day panel.
 	const compact = useMediaQuery(COMPACT_CALENDAR);
 	const phone = useMediaQuery(PHONE);
@@ -190,6 +190,7 @@ export default function CalendarPage({
 						members={members}
 						onMain={setMain}
 						onOpen={onOpen}
+						todayAt={todayAt}
 					/>
 				) : (
 					// 1040px and up: the week by the hour, seven days side by side.
@@ -201,6 +202,7 @@ export default function CalendarPage({
 						members={members}
 						onSelect={setSelected}
 						onOpen={onOpen}
+						todayAt={todayAt}
 					/>
 				)}
 				{selected && !carousel && (

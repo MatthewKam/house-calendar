@@ -22,6 +22,8 @@ export function useCalendarView(today: string) {
 	// Below 1040px the week shows a day in the middle with the days either side; it opens on today.
 	const compact = useMediaQuery(COMPACT_CALENDAR);
 	const [main, setMain] = useState(today);
+	// When Today was last tapped: the week brings the time now to its middle.
+	const [todayAt, setTodayAt] = useState(0);
 	const days = useMemo(
 		() =>
 			view === 'month' ? monthGridDays(cursor) : Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(cursor), i)),
@@ -47,6 +49,8 @@ export function useCalendarView(today: string) {
 		selected,
 		setSelected,
 		days,
+		/** When Today was last tapped (0 before): the week's hours glide to the time now. */
+		todayAt,
 		/** The day in the middle of the week's days side by side (below 1040px). */
 		main: mainDay,
 		/** Puts a day in the middle, moving to its week when it's in the next or last one. */
@@ -62,6 +66,7 @@ export function useCalendarView(today: string) {
 		goToday: () => {
 			setCursor(new Date());
 			setMain(today);
+			setTodayAt(Date.now());
 			if (selected) setSelected(today);
 		},
 		changeView: (next: View) => {

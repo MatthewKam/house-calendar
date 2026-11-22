@@ -30,6 +30,8 @@ interface Props {
 	/** Puts a day in the middle (the day before or after the week moves to that week). */
 	onMain: (day: string) => void;
 	onOpen: (event: CalEvent, day: string) => void;
+	/** When Today was last tapped: today glides to the middle, and the time now to the middle of its hours. */
+	todayAt?: number;
 }
 
 /**
@@ -39,7 +41,7 @@ interface Props {
  * side day or a card to put it in the middle; swiping past the week's end moves into the next or last
  * week. Tapping an event opens it.
  */
-export default function WeekCarousel({ days, today, main, events, members, onMain, onOpen }: Props) {
+export default function WeekCarousel({ days, today, main, events, members, onMain, onOpen, todayAt = 0 }: Props) {
 	const now = useNow();
 	const phone = useMediaQuery(PHONE);
 	// Phones (upright or on their side): whole-day events fold to a thin bar each (meals hidden) under the days' names, to leave room
@@ -98,6 +100,22 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 		});
 		return () => cancelAnimationFrame(frame);
 	}, []);
+
+	// Today tapped: one glide that puts today in the middle and the time now halfway down the hours
+	// that show under the days' names.
+	useEffect(() => {
+		if (!todayAt) return;
+		const frame = requestAnimationFrame(() => {
+			const el = track.current;
+			const line = el?.querySelector<HTMLElement>(`.${t.now}`);
+			const names = el?.querySelector<HTMLElement>(`.${s.name}`)?.offsetHeight ?? 0;
+			if (!el || !line) return;
+			const middle = names + (el.clientHeight - names) / 2;
+			const top = el.scrollTop + line.getBoundingClientRect().top - el.getBoundingClientRect().top - middle;
+			el.scrollTo({ left: mainRef.current * dayWidth(), top, behavior: 'smooth' });
+		});
+		return () => cancelAnimationFrame(frame);
+	}, [todayAt]);
 
 	// After a swipe settles (snapped to a day), that day is the middle one.
 	const settle = useRef<number | undefined>(undefined);

@@ -16,6 +16,8 @@ interface Props {
 	members: Member[];
 	onSelect: (day: string) => void;
 	onOpen: (event: CalEvent, day: string) => void;
+	/** When Today was last tapped: the hours glide to put the time now in the middle. */
+	todayAt?: number;
 }
 
 /** "8 AM" with a small "AM", and "Noon". */
@@ -35,7 +37,7 @@ export function HourName({ h }: { h: number }) {
  * then 24 hours that scroll together, each event a block from its start to its end. Today's column has
  * the time now. Tapping a day's name opens it in the day panel; tapping an event opens it.
  */
-export default function WeekTimeline({ days, today, selected, events, members, onSelect, onOpen }: Props) {
+export default function WeekTimeline({ days, today, selected, events, members, onSelect, onOpen, todayAt = 0 }: Props) {
 	const now = useNow();
 	const bars = weekBars(events, days);
 	const rows = bars.reduce((n, b) => Math.max(n, b.row + 1), 0);
@@ -62,6 +64,20 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 		return () => cancelAnimationFrame(frame);
 		// Only when the week changes, not every minute.
 	}, [first]);
+
+	// Today tapped: the time now glides to the middle of the hours.
+	useEffect(() => {
+		if (!todayAt) return;
+		const frame = requestAnimationFrame(() => {
+			const el = scroller.current;
+			const line = el?.querySelector<HTMLElement>(`.${s.now}`);
+			if (!el || !line) return;
+			const top =
+				el.scrollTop + line.getBoundingClientRect().top - el.getBoundingClientRect().top - el.clientHeight / 2;
+			el.scrollTo({ top, behavior: 'smooth' });
+		});
+		return () => cancelAnimationFrame(frame);
+	}, [todayAt]);
 
 	return (
 		<div className={s.week}>
