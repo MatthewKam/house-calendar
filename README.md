@@ -2,322 +2,104 @@
 
 ![Sprig](web/public/wordmark.svg)
 
-A family app: kids' tasks, stars and rewards first, with a shared family calendar on everyone's phone and the wall. Each family signs in with Apple, Google or email, with
-guardian and kid roles.
+**A family app that grows with your kids.** Kids' tasks, stars and reward jars come first. Around them sit the
+things a family shares: one calendar, lists, dinners and photos. It runs on each person's phone, a tablet in the
+kitchen, or a screen on the wall.
 
-**Status:** shows and edits iCloud calendars next to events added on the display, with Reminders lists, kids'
-tasks and reward jars, a photo album and screen saver. Everything lives in a SQLite file on this machine. Google
-sync and the Raspberry Pi setup come next (see "What's next").
+- **Try it:** [sprig-family.com](https://sprig-family.com) → **Try the demo** opens a made-up family to play with, no
+  sign-up needed.
+- **iPhone and iPad:** the app is in TestFlight now, on its way to the App Store.
+- **No ads, ever.** Families sign in with Apple, Google or an email code, with roles for grown-ups and kids.
 
-![The week view, with photos, weather and the day's joke and quote](docs/media/calendar-week.jpg)
+![Today on a computer: what's up next, the kids' day, list items and the weather](docs/media/today.jpg)
 
-## See it in action
+_Everything shown here is the demo's made-up Rivera family: Alex and Sam, Mia (4) and Leo (2)._
 
-The people, events and photos below are made up for the demo.
+## Made for little kids first
+
+Designed for ages 2 to 6: pictures over words, big buttons, and nothing to get wrong.
+
+### Tasks, stars and Hooray
+
+Each kid has a morning, anytime and evening routine with a picture for every task. Finishing the day's tasks fills
+the screen with confetti. **Goals** (helping set the table, feeding the cat) earn stars any day they're done, and
+grown-ups can **catch a kid being good** for a sticker and stars. There's a potty chart, too.
+
+![Ticking off Leo's tasks until the Hooray](docs/media/tasks.gif)
+
+### Reward jars
+
+Kids put their stars into jars that a grown-up sets up, alone or filled together with a brother or sister. A full
+jar is earned, then redeemed, and the history keeps every one.
+
+![Reward jars for Mia and Leo](docs/media/rewards.jpg)
+
+### Kid mode
+
+Any device can become one kid's own screen: their day as big pictures, their tasks as picture tiles, and their jars.
+Leaving it needs a grown-up's PIN.
+
+## The family's week
 
 ### Calendar
 
-Week, day and month views; tap an event to see it, filter by person, and add events with address
-suggestions and drive times. After a while idle, the screen saver takes over.
+The week by the hour, with today outlined and the time now marked. Events show in each person's colour, split when
+they're shared. Things that take a whole day sit in a strip at the top (Grandma's weekend is one bar across three
+days), and the strip folds away on busy weeks. **iCloud** and **Google** calendars sync in. An event with an address
+gets the drive time and a **Leave by** alert, and Sprig's own events can carry a "what to bring" checklist and the
+weather where they are.
 
-![Calendar walkthrough](docs/media/calendar.gif)
+![The week by the hour](docs/media/calendar-week.jpg)
 
-### Tasks
+Month shows the whole month at a glance, with one switch between them.
 
-Tasks and goals for each kid. Tasks (daily ones and chores) are required, and finishing the day's tasks gets a
-Hooray. Goals earn stars any day they're done, up to five at a time. Parents catch kids being good for stickers and
-stars. Each kid has a History, and parents can add, edit and reorder tasks and goals, including one-time ones.
+![The month](docs/media/calendar-month.jpg)
 
-![Tasks walkthrough](docs/media/tasks.gif)
+On a phone the week is a carousel, one day in the middle and the days either side peeking in. A swipe keeps to one
+direction: up and down scrolls the hours, sideways moves a day, and a nudge springs back.
 
-### Rewards
+<img src="docs/media/week-phone.gif" alt="Swiping through the week on a phone" width="300">
 
-Kids put their stars into reward jars. A full jar is earned and then redeemed, and parents can edit jars or
-make new ones.
+### Lists
 
-![Rewards walkthrough](docs/media/rewards.gif)
+The family's own lists (groceries, to-dos, packing), each in its own colour, with an icon picked for common items.
+Anyone adds and ticks. An item can have a day and who it's for, and then it reminds them. **Shopping together** lets
+two people shop the same list at once, each tick marked in the colour of who ticked it. iCloud **Reminders** lists
+can show here too.
 
-### Photos
+![Groceries and Target lists](docs/media/lists.jpg)
 
-The family album: browse photos, pick the ones the screen saver shows, and flip through them on the calendar.
+### Recipes and dinners
 
-![Photos walkthrough](docs/media/photos.gif)
+Keep the family's recipes, plan dinners ahead, and see tonight's on Today and the calendar. A recipe sends whatever
+you're missing to Groceries in one tap, cooks along step by step, and keeps everyone's ratings and notes for next
+time.
 
-### Screenshots
+![Opening a recipe and sending its ingredients to Groceries](docs/media/recipe.gif)
 
-|                                                                                                             |                                                                                   |
-| ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| ![Week](docs/media/calendar-week.jpg) **Week**                                                              | ![Month](docs/media/calendar-month.jpg) **Month**                                 |
-| ![Day](docs/media/calendar-day.jpg) **Day**                                                                 | ![Lists](docs/media/lists.jpg) **Lists** (shared Reminders lists)                 |
-| ![Tasks](docs/media/tasks.jpg) **Tasks**                                                                    | ![Rewards](docs/media/rewards.jpg) **Rewards**: jars filling, earned and redeemed |
-| ![Settings](docs/media/settings.jpg) **Settings**                                                           | ![Locked](docs/media/locked.jpg) **Parent lock**: view-only until unlocked        |
-| ![Screen saver](docs/media/screen-saver.jpg) **Screen saver**: photos, the time, weather and today's events |                                                                                   |
+![Recipes, with what's cooking today](docs/media/recipes.jpg)
 
-## Run it on your computer
+### And more
 
-Needs [Node.js 22 or newer](https://nodejs.org).
+- **Today:** each grown-up's day at a glance: what's next, the kids' progress, lists that need them, the weather, and
+  a quote and some encouragement.
+- **Say it or snap it:** say "remind me to call the dentist Friday at 10, and add milk to Groceries", or take a photo
+  of a school flyer, and Sprig turns it into events, list items and tasks to check before adding.
+- **Photos and the screen saver:** a family album that plays on the wall (or a tablet) when no one's using it.
+- **The wall:** a big shared screen that anyone can look at; changes need a grown-up's PIN.
+- **Privacy per event:** an event can be for everyone, show as just **Busy**, or stay **Private**.
+- **Light and dark**, following the device or picked in Settings.
 
-```sh
-npm install
-npm run dev
-```
+![The week in dark mode](docs/media/calendar-week-dark.jpg)
 
-Open http://localhost:5173. The API runs on port 3000; the page reloads as you edit code.
+### On a phone
 
-`npm run dev` uses the real `data/` folder and syncs your real iCloud and Reminders, so changes made while testing
-reach your calendar. `npm run dev:test` is the same with its own `data-test/` folder (start over by deleting it) and
-iCloud and Reminders syncing off.
+| | | | |
+| :-: | :-: | :-: | :-: |
+| <img src="docs/media/phone-today.jpg" alt="Today" width="190"> | <img src="docs/media/phone-week.jpg" alt="The week" width="190"> | <img src="docs/media/phone-tasks.jpg" alt="Tasks" width="190"> | <img src="docs/media/phone-lists.jpg" alt="Lists" width="190"> |
+| **Today** | **Week** | **Tasks** | **Lists** |
 
-To run it the way the wall display will (one process, built UI):
-
-```sh
-npm run build
-npm start          # http://localhost:3000
-```
-
-Data lives in `data/`: `accounts.db` for sign-ins, and each household's database and photos in `data/households/`. Delete the folder to start over.
-
-Working on the code? See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Accounts and households
-
-Each family is a **household**; one server holds many. People sign in with **Apple**, **Google** or a **code
-sent by email** (no passwords), and each has a role:
-
-- **Guardians** (parents) start the household, invite each other, and can change anything from their own phone.
-  Each sets a **guardian PIN** in Settings → People and sign-in.
-- **Kids**: an older kid with their own phone and account is invited like a guardian, as a kid. A younger kid's
-  device (an iPad, say) is added with a code and needs no account.
-- **The wall** is added with a code (Settings → **Add a wall display**, then type the code on the wall). It opens
-  with **any guardian's PIN**, and the same PIN unlocks it for changes. **Lock the wall** in Settings sends it back
-  to the PIN screen.
-
-Codes look like `K7QP-3MXD`, work once, and last 7 days (15 minutes for the wall). **Send the link** shares a link
-that opens the app with the code filled in. Settings lists who signs in and how, unused codes, and every signed-in
-device, with **Sign out** for each.
-
-**Your household from before accounts** (`data/calendar.db`) is kept, with everything in it. Until a guardian
-claims it, the server logs a line on each start: `Claim your household: … enter ABCD-EFGH`. Sign in, tap **Join
-with a code**, enter it and pick who you are; then invite your co-parent and add the wall from Settings. The old
-family PIN and master PIN are no longer used. The iCloud and Reminders setup in `.env` stays with this household.
-
-To turn on the sign-in buttons, fill in `.env` (see `.env.example`):
-
-- **Google:** in [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials, create an
-  **OAuth client ID** of type *Web application*, with your site's address (and `http://localhost:5173` while
-  developing) under **Authorized JavaScript origins**. Put it in `GOOGLE_CLIENT_ID`.
-- **Apple:** needs an Apple Developer account and an HTTPS address. Create a **Services ID** with Sign in with Apple
-  turned on, your domain, and `https://<your domain>/` as the return URL. Put it in `APPLE_SERVICE_ID`.
-- **Email:** a [Resend](https://resend.com) key in `RESEND_API_KEY` and a sender in `EMAIL_FROM`. While developing,
-  codes are printed in the server's log instead.
-
-Accounts live in `data/accounts.db`; each new household gets `data/households/<id>/` (its database and photos).
-
-**Who's signed in** shows at the bottom of the left bar: the person's initial in their color (or a screen, on
-the wall). Tap it to see the account and household, switch households, sign out, or lock the wall. When the wall
-or a kid's device is unlocked, the lock shows whose PIN opened it.
-
-## Google Calendar
-
-Each person connects their own: on their phone, **Settings → Calendars → Connect my Google Calendar**. Google
-asks them to let the app see their calendars, then sends them back. Every calendar in that account shows up (the
-person's own main calendar is linked to them; shared ones go **By event**), synced every 5 minutes. A calendar
-two people both have (one shared between parents, say) shows once. Google events are view-only on the wall for
-now: change them in Google Calendar. **Disconnect** removes the account's calendars and tells Google to drop
-the app's access.
-
-Setting it up (once, for the server), in the same Google Cloud project as Google sign-in:
-
-1. **APIs & Services → Library**: enable the **Google Calendar API**.
-2. **OAuth consent screen**: add the scope `.../auth/calendar.readonly`. While the app is in *Testing*, add each
-   person's Gmail address under **Test users** (up to 100). Opening it to everyone needs Google's verification.
-3. **Credentials**, on the Web client used for sign-in: add `http://localhost:5173/api/account/google/callback`
-   (and later `https://<your domain>/api/account/google/callback`) under **Authorized redirect URIs**.
-4. Put the client's secret in `GOOGLE_CLIENT_SECRET` and restart.
-
-Refresh tokens are stored encrypted (`server/secrets.ts`), with the key in `SECRET_KEY` or `data/secret.key`.
-
-## Hosting (Fly.io)
-
-One small always-on server with a disk, about $5–7 a month: a 1 GB server, a 3 GB disk, and a storage bucket
-for backups. The app is at `https://<app>.fly.dev` (a custom domain can be added later).
-
-| File                      | What it does                                                                                    |
-| ------------------------- | ----------------------------------------------------------------------------------------------- |
-| `Dockerfile`              | Builds the app and the web UI, and adds Litestream. Fly builds it, so Docker isn't needed here. |
-| `fly.toml`                | The server: always on, 1 GB, the disk at `/data` (snapshotted daily, kept 14 days), `/health`.  |
-| `deploy/start.sh`         | Starts it: imports uploaded data if there is any, then runs the app under Litestream.           |
-| `deploy/litestream.yml`   | Backs up every database in `/data` (new households too) to the bucket as it changes.            |
-| `deploy/set-secrets.sh`   | Sends the needed `.env` settings (and the token key) to Fly as secrets.                         |
-| `deploy/upload-data.sh`   | Copies this machine's data (accounts, households, photos) up, replacing what's there.           |
-
-Once, to set it up:
-
-```sh
-brew install flyctl && fly auth login
-fly launch --no-deploy --copy-config --name <app>   # picks the nearest region
-fly volumes create household_data --size 3 --yes
-fly storage create --name <app>-backups --yes       # the backup bucket; sets its keys as secrets
-deploy/set-secrets.sh
-fly deploy
-deploy/upload-data.sh                               # stop `npm run dev` first
-```
-
-After that, `fly deploy` ships each change. `fly logs` shows the server's log (sign-in codes too, until email is
-set up), and the Fly dashboard shows memory, CPU and the bill.
-
-- **Moving over:** once the data is uploaded, use the hosted app, not `npm run dev` on the same data: both would
-  sync iCloud and send the wall's edits. The Mac Reminders sync (`REMINDERS_MAC`) doesn't run on the server; the
-  iPhone Shortcut does, now from anywhere, at `https://<app>.fly.dev`.
-- **Domain:** sprig-family.com (GoDaddy) points at the app: `fly certs add` for it and `www`, then GoDaddy's DNS
-  gets the A and AAAA records Fly lists. Run `PUBLIC_URL=https://sprig-family.com deploy/set-secrets.sh` so the
-  address stays the domain.
-- **Email:** sign-in codes go out through [Resend](https://resend.com), from `EMAIL_FROM` with `RESEND_API_KEY` (a
-  sending-only key) in `.env`; the domain's records are in GoDaddy's DNS.
-- **Google:** add `https://<app>.fly.dev` under Authorized JavaScript origins and
-  `https://<app>.fly.dev/api/account/google/callback` under redirect URIs.
-- **Restoring a backup:** `fly ssh console`, then `litestream restore -config /app/deploy/litestream.yml <path>`
-  for a database. Photos are covered by the disk snapshots (`fly volumes snapshots list`).
-
-## Connect iCloud
-
-Each person connects their own iCloud Calendar in the app. Nothing goes in `.env`.
-
-1. At [account.apple.com](https://account.apple.com) → Sign-In and Security → **App-Specific Passwords**,
-   create one called "Sprig". Your normal Apple password is never used, and you can revoke this one anytime.
-2. In Settings → **Calendars**, tap **Connect my iCloud Calendar** and enter your Apple ID and that password. It's
-   checked with iCloud first, then stored encrypted (like Google's tokens, with `SECRET_KEY`).
-3. It syncs right away and every 5 minutes after, from 3 months back to 13 months ahead. **Disconnect** removes its
-   calendars from the app.
-
-Connecting needs a guardian: from their own phone, or on the wall or a kid's device after a guardian's PIN. The
-household from before accounts can still use `ICLOUD_APPLE_ID` and `ICLOUD_APP_PASSWORD` in `.env`.
-
-Tap an iCloud event to see it, edit it or delete it (see "Using it"). In that view you can also pick **who it's for**. The pick is kept on this display, covers every repeat of the event, and
-survives future syncs.
-
-**Calendars:** in Settings, link each iCloud calendar to a person (all its events become theirs) or leave it on
-**By event**, and untick **Show** to keep a calendar off the wall. Who an event is for is decided in this order:
-your pick on the event, then the calendar's person, then Claude's pick from the title.
-
-**Sort by person automatically (optional):** add `ANTHROPIC_API_KEY` to `.env` and restart. After each sync, Claude
-reads the titles of events nobody has assigned yet (and your family's names) and picks who each is for, e.g.
-"Sam - swim class" goes to Sam and "Riley & Sam dentist" to both. Your own picks always win. Event titles and family names are sent to the
-Anthropic API.
-If syncing fails (wrong password, no internet), a banner says so and the last synced copy stays on screen.
-
-## Connect Reminders
-
-iCloud Reminders have no API a Raspberry Pi can use (Apple moved them off CalDAV in iOS 13), so each iPhone syncs them with a Shortcut. Each phone sends its lists to the wall; items added or ticked off on the wall wait (marked ↻) until a phone that has that list runs the Shortcut and applies them. Lists shared between you show up from either phone; private lists come from their owner's phone only.
-
-1. `.env` needs `REMINDERS_TOKEN` (any long random text) and the server must be reachable on your Wi-Fi:`HOST=0.0.0.0`. Restart after changing either.
-2. On each iPhone, make a Shortcut called "Sync wall lists". Use the Pi's address, the token, and a name
-   for the phone (e.g. `Alex`):
-   1. **Get Contents of URL** `http://<pi-address>:3000/api/reminders/phone/pending?device=Alex`,
-      header `Authorization` = `Bearer <token>`. Get the dictionary value `changes`.
-   2. **Repeat with Each** change: if `op` is `add`, add a reminder titled `title` to the list named `list`;
-      if `complete` or `uncomplete`, find the reminder in `list` with that `title` and set it completed or not.
-      Add each change's `id` to a list variable `applied`.
-   3. **Find Reminders** that are not completed, plus ones completed in the last day. For each, make a
-      dictionary `{ list: <List name>, title: <Title>, done: <Is Completed>, due: <Due Date> }` and add it to
-      a list variable `items`.
-   4. **Get Contents of URL** `http://<pi-address>:3000/api/reminders/phone/sync`, method POST, same
-      header, JSON body `{ device: "Alex", items: <items>, applied: <applied> }`.
-3. Automations (Shortcuts > Automation, set to run immediately): **App > Reminders > Is Closed**, so changes
-   reach the wall as soon as you leave Reminders, plus a few **Time of Day** runs so wall changes reach your
-   phone even when you don't open Reminders.
-
-The Shortcut only works while the phone is on your home Wi-Fi; runs elsewhere just fail quietly.
-
-**On a Mac (before the Pi):** the server can sync this Mac's Reminders itself, with no Shortcut. Put
-`REMINDERS_MAC=1` in `.env` (plus `REMINDERS_TOKEN`) and restart. It reads every list, empty and shared ones
-included, every `REMINDERS_MINUTES` (default 5), and sends wall changes to Reminders a few seconds after
-they're made. The first run, macOS asks to let the app running the server control Reminders; allow it.
-Lists can be hidden from the wall with **Choose lists** on the Lists page.
-
-## Travel times
-
-Events with an address (iCloud's location, or the **Address** field on events added here) get a **Travel time**
-button: the drive from home with predicted traffic, and when to leave to be there 10 minutes early (for parking and walking in). From there,
-**Remind me** sets a "time to leave" alert on the wall (at leave time, or 10 or 15 minutes before), with a chime.
-Traffic is checked again about 30 minutes before leaving, and the alert moves if the drive got longer.
-
-1. In [Google Cloud Console](https://console.cloud.google.com), create a project, enable the **Routes API**, and
-   turn on billing (Google's monthly free credit covers a family's use many times over).
-2. Create an API key under **APIs & Services → Credentials** and restrict it to the Routes API.
-3. Put it after `GOOGLE_MAPS_API_KEY=` in `.env` and restart. Set your home address in **Settings**.
-
-Each tap asks Google twice (to match traffic to when you'd leave); answers are reused for 10 minutes. Alerts show on
-the wall, and on the phones of who the event is for (everyone's grown-ups when it's for anyone or a kid) if they have
-**Alerts** on (see "Alerts on phones").
-
-## On phones (home-screen app)
-
-The app installs on iPhones and Android phones as a home-screen app: full screen, with its own icon, and it opens even
-without a connection (showing what it last loaded). Data always comes from the wall's server.
-
-1. The phone has to reach the server. At home, put `HOST=0.0.0.0` in `.env` on the machine running it and restart.
-   Away from home, use [Tailscale](https://tailscale.com) (free for a family): install it on the server machine and
-   each phone, and the phones can reach it from anywhere, privately.
-2. On the phone, open the server's address in Safari and tap **Share → Add to Home Screen**. While developing on
-   the Mac (`npm run dev`) that's `http://<mac's address>:5173` (the page server follows `HOST` too); on the Pi
-   (`npm start`), `http://<pi's address>:3000`.
-
-Sign in as described in "Accounts and households".
-For the offline start and alerts, iPhones need the address to be HTTPS. With MagicDNS and HTTPS
-certificates turned on in the Tailscale admin, run `tailscale serve --bg 5173` on the Mac while developing (`--bg 3000`
-on the Pi): the app is then at `https://<machine>.<tailnet>.ts.net`, for your Tailscale devices only. Add it to the
-home screen from that address; it works at home and away.
-
-### Alerts on phones
-
-In **Settings → Alerts**, a grown-up turns on **Alerts on this device**. Sprig then alerts that phone when a reminder
-on its lists comes due (at its time, or 8 AM on the phone's clock for a reminder with only a day), and when it's time
-to leave for an event. Reminders go to who they're for; ones for anyone, or for a kid, go to every grown-up with
-alerts on. Each comes once (again if it's moved or unticked), and nothing older than 12 hours is sent. Tapping an
-alert opens Sprig on Lists (or Today). Kids' devices and the wall don't get alerts.
-
-- On iPhone and iPad (iOS 16.4 or later), alerts need Sprig added to the Home Screen and opened from there, over
-  HTTPS (above). Android and desktop browsers need HTTPS too (`localhost` is fine on a computer).
-- Alerts need the built app (`npm start`), since `npm run dev` doesn't run the service worker.
-- The server's push keys are made in `data/vapid.json` on first start; keep it with the data. When hosting, set
-  `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (`npx web-push generate-vapid-keys`) and `VAPID_SUBJECT` (an https URL or
-  `mailto:`) in `.env` instead.
-- The iPhone app gets its alerts through Apple instead (`server/apns.ts`): set `APNS_KEY` (the `.p8` from Apple
-  Developer → Keys, with Apple Push Notifications service), `APNS_KEY_ID` and `APNS_TEAM_ID`. Without them the
-  app's switch says alerts are coming soon. A build run from Xcode uses Apple's sandbox, TestFlight and the App
-  Store the real service; the app tells the server which. Settings → Notifications → Send a test alert sends one
-  to this device right away.
-
-## The iPhone and iPad app
-
-The same pages, shipped inside a native app made with [Capacitor](https://capacitorjs.com) (`ios/`, set up in
-`capacitor.config.ts`). It calls sprig-family.com for everything, signed in with a token kept in the phone's Keychain
-rather than a cookie (`web/src/lib/native.ts`); pictures carry a media key that opens only them
-(`server/hosted/session.ts`). Needs Xcode; no CocoaPods (the plugins come as Swift packages).
-
-- `npm run ios` builds the pages, copies them into the app and opens Xcode: pick a simulator or your iPhone and press
-  Run. After changing the pages, `npm run ios:sync` copies them in again.
-- To try it against a server on your Mac instead (`npm run dev:test`, say), build with
-  `VITE_APP_SERVER=http://localhost:3000 npm run ios:sync`. The simulator reaches `localhost`; a real iPhone needs the
-  Mac's address.
-- The server only accepts the app's calls from its own origins (`capacitor://localhost`, and `https://localhost` for
-  Android later), and only with a token.
-- Sign in with Apple uses the iPhone's own sheet (`ios/App/App/SignInWithApple.swift`, a plugin inside the app), not
-  the web pop-up. Its token is for the app's id, `com.sprigfamily.app`, which the server accepts through `APPLE_APP_IDS`.
-  The app is signed by team `9B83U78PDK`, whose App ID needs Sign in with Apple ticked. In the simulator, sign in to
-  an Apple Account in its Settings first.
-- Links that open a new tab (a recipe's page, say) open in a Safari sheet over the app instead (`linksInSheet`).
-  Connecting Google Calendar does too, with a one-time link from `POST /api/account/google/link`, since the sheet
-  has no cookie and Google won't sign in inside the app (`server/hosted/google.ts`).
-- Web alerts can't work in the app, so Settings says they're coming; the app's own alerts are a later step.
-- `npm run ios:testflight` (`deploy/testflight.sh`) builds the app for the App Store and uploads it to TestFlight,
-  once Xcode is signed in to the Apple Developer account. What's left before App Review, the listing and the
-  privacy answers are in `docs/app-store.md`. Reviewers sign in as `REVIEW_EMAIL` with the fixed `REVIEW_CODE`.
-- The icon and launch screen come from `web/public/icon.svg` and `wordmark.svg`; the camera, microphone, speech and
-  location messages iPhone shows are in `ios/App/App/Info.plist`.
-
-## Using it
+## How it works, in detail
 
 - **Parent lock:** a guardian signed in on their own phone can change anything. The wall and kids' devices start
   **locked**: events, tasks, jars, photos, lists and the calendar can be looked at, and kids can still tick tasks,
@@ -331,7 +113,9 @@ rather than a cookie (`web/src/lib/native.ts`); pictures carry a media key that 
   address, and tomorrow's first event. **The kids today** shows each kid's tasks, stickers and stars (tap to go to
   Tasks), with **✨ Caught being good**. **Needs you** appears when something's waiting: a calendar change that
   clashes, a reward to hand over, or items on a list. The rest of the family's day is folded at the bottom.
-- **Month / Week:** switch views at the top left. ‹ › move by a month or a week.
+- **Week / Month:** the switch at the top left. ‹ › move by a week or a month. Below 1040px wide the week is a
+  carousel: the week's days as cards, then the days by the hour with one in the middle; swipe or tap a card to move.
+  **all-day** folds whole-day events to a thin bar each, on any size (phones start folded).
 - **Lists:** the **Lists** page in the left bar (address ends in `#lists`) has the family's own lists, kept in
   Sprig (**+ New list**: groceries, to-dos, packing), and your iCloud Reminders if they're connected (see "Connect
   Reminders"). Anyone adds items and ticks them off. On Sprig's lists a parent's **⋯** on an item gives it a day
@@ -349,7 +133,7 @@ rather than a cookie (`web/src/lib/native.ts`); pictures carry a media key that 
   has a quote and some **encouragement** too. Quotes and encouragement come in themes (Kindness, Humor & Wit, Hard
   days, ...), all on to begin with (the parenting ones only with kids at home); **Settings → Daily cards** switches
   them off, each grown-up for their own Today and once for the calendar and wall. The ⓘ on a card lists its themes.
-- **Day:** tap any day to see it in a panel on the right. Close it with ×.
+- **Day:** on wider screens, tap any day to see it in a panel on the right. Close it with ×.
 - **Round + buttons:** Calendar, Tasks, Rewards and Photos each have one at the bottom right (add an event, a task, a
   reward jar, or upload photos). A task or jar started there has no one picked yet; each kid's task card has its own
   **+ Add a task**.
@@ -411,12 +195,6 @@ rather than a cookie (`web/src/lib/native.ts`); pictures carry a media key that 
   (tap again to untick), stars and stickers; and **Rewards**, their jars. Putting stars in jars asks for a guardian's PIN first. **All kids** switches between them on a shared tablet. To leave, hold the exit
   button in the corner for two seconds and type a guardian's PIN. A kid's own device (added by code) is always in kid mode;
   the PIN unlocks the whole app until it locks again.
-- **Learn:** turn it on per kid in **Settings → Learning**, and kid mode gets a **Learn** tab with one short activity
-  a day: big pictures, no wrong answers, no sound. Little (2–3): **Who says that?** (animal sounds) and **picture
-  stories** with a question for the grown-up to ask. Early (4–6): **counting**, **letters**, **feelings** and
-  **patterns**, taking turns. Finishing earns 1 star a day (from Early); playing again is free play. Everyone starts
-  at level 1. From age 3 a guardian can turn on **Can level up**; then each skill moves up by itself after 3 days of
-  getting it all right (counting → adding, letters → which letter starts a word, patterns → ABB and ABC).
 - **Potty chart:** **🚽 Start potty chart** under a kid's tasks. The card has a big row for each step (said I need
   to go, sat on the potty, went pee or poop, wiped and flushed, washed hands). Tap the glowing spot after a row's last
   sticker to add one (the pee or poop row asks which, with two big pictures; tap both for both); tap a new sticker again to take it off; stickers already saved do nothing. Each
@@ -468,7 +246,283 @@ rather than a cookie (`web/src/lib/native.ts`); pictures carry a media key that 
   Removing a person keeps their events, shown in gray.
 - **Text size:** in Settings, adjust for the screen (15.6" vs 21.5").
 
-## How it's built
+## For developers
+
+Sprig is a web app (a PWA) with an iPhone and iPad app around the same pages. The rest of this page is for
+running it, hosting it, and working on the code; see also [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Run it on your computer
+
+Needs [Node.js 22 or newer](https://nodejs.org).
+
+```sh
+npm install
+npm run dev
+```
+
+Open http://localhost:5173. The API runs on port 3000; the page reloads as you edit code.
+
+`npm run dev` uses the real `data/` folder and syncs your real iCloud and Reminders, so changes made while testing
+reach your calendar. `npm run dev:test` is the same with its own `data-test/` folder (start over by deleting it) and
+iCloud and Reminders syncing off.
+
+To run it the way the wall display will (one process, built UI):
+
+```sh
+npm run build
+npm start          # http://localhost:3000
+```
+
+Data lives in `data/`: `accounts.db` for sign-ins, and each household's database and photos in `data/households/`. Delete the folder to start over.
+
+Working on the code? See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Accounts and households
+
+Each family is a **household**; one server holds many. People sign in with **Apple**, **Google** or a **code
+sent by email** (no passwords), and each has a role:
+
+- **Guardians** (parents) start the household, invite each other, and can change anything from their own phone.
+  Each sets a **guardian PIN** in Settings → People and sign-in.
+- **Kids**: an older kid with their own phone and account is invited like a guardian, as a kid. A younger kid's
+  device (an iPad, say) is added with a code and needs no account.
+- **The wall** is added with a code (Settings → **Add a wall display**, then type the code on the wall). It opens
+  with **any guardian's PIN**, and the same PIN unlocks it for changes. **Lock the wall** in Settings sends it back
+  to the PIN screen.
+
+Codes look like `K7QP-3MXD`, work once, and last 7 days (15 minutes for the wall). **Send the link** shares a link
+that opens the app with the code filled in. Settings lists who signs in and how, unused codes, and every signed-in
+device, with **Sign out** for each.
+
+**Your household from before accounts** (`data/calendar.db`) is kept, with everything in it. Until a guardian
+claims it, the server logs a line on each start: `Claim your household: … enter ABCD-EFGH`. Sign in, tap **Join
+with a code**, enter it and pick who you are; then invite your co-parent and add the wall from Settings. The old
+family PIN and master PIN are no longer used. The iCloud and Reminders setup in `.env` stays with this household.
+
+To turn on the sign-in buttons, fill in `.env` (see `.env.example`):
+
+- **Google:** in [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials, create an
+  **OAuth client ID** of type *Web application*, with your site's address (and `http://localhost:5173` while
+  developing) under **Authorized JavaScript origins**. Put it in `GOOGLE_CLIENT_ID`.
+- **Apple:** needs an Apple Developer account and an HTTPS address. Create a **Services ID** with Sign in with Apple
+  turned on, your domain, and `https://<your domain>/` as the return URL. Put it in `APPLE_SERVICE_ID`.
+- **Email:** a [Resend](https://resend.com) key in `RESEND_API_KEY` and a sender in `EMAIL_FROM`. While developing,
+  codes are printed in the server's log instead.
+
+Accounts live in `data/accounts.db`; each new household gets `data/households/<id>/` (its database and photos).
+
+**Who's signed in** shows at the bottom of the left bar: the person's initial in their color (or a screen, on
+the wall). Tap it to see the account and household, switch households, sign out, or lock the wall. When the wall
+or a kid's device is unlocked, the lock shows whose PIN opened it.
+
+### Google Calendar
+
+Each person connects their own: on their phone, **Settings → Calendars → Connect my Google Calendar**. Google
+asks them to let the app see their calendars, then sends them back. Every calendar in that account shows up (the
+person's own main calendar is linked to them; shared ones go **By event**), synced every 5 minutes. A calendar
+two people both have (one shared between parents, say) shows once. Google events are view-only on the wall for
+now: change them in Google Calendar. **Disconnect** removes the account's calendars and tells Google to drop
+the app's access.
+
+Setting it up (once, for the server), in the same Google Cloud project as Google sign-in:
+
+1. **APIs & Services → Library**: enable the **Google Calendar API**.
+2. **OAuth consent screen**: add the scope `.../auth/calendar.readonly`. While the app is in *Testing*, add each
+   person's Gmail address under **Test users** (up to 100). Opening it to everyone needs Google's verification.
+3. **Credentials**, on the Web client used for sign-in: add `http://localhost:5173/api/account/google/callback`
+   (and later `https://<your domain>/api/account/google/callback`) under **Authorized redirect URIs**.
+4. Put the client's secret in `GOOGLE_CLIENT_SECRET` and restart.
+
+Refresh tokens are stored encrypted (`server/secrets.ts`), with the key in `SECRET_KEY` or `data/secret.key`.
+
+### Hosting (Fly.io)
+
+One small always-on server with a disk, about $5–7 a month: a 1 GB server, a 3 GB disk, and a storage bucket
+for backups. The app is at `https://<app>.fly.dev` (a custom domain can be added later).
+
+| File                      | What it does                                                                                    |
+| ------------------------- | ----------------------------------------------------------------------------------------------- |
+| `Dockerfile`              | Builds the app and the web UI, and adds Litestream. Fly builds it, so Docker isn't needed here. |
+| `fly.toml`                | The server: always on, 1 GB, the disk at `/data` (snapshotted daily, kept 14 days), `/health`.  |
+| `deploy/start.sh`         | Starts it: imports uploaded data if there is any, then runs the app under Litestream.           |
+| `deploy/litestream.yml`   | Backs up every database in `/data` (new households too) to the bucket as it changes.            |
+| `deploy/set-secrets.sh`   | Sends the needed `.env` settings (and the token key) to Fly as secrets.                         |
+| `deploy/upload-data.sh`   | Copies this machine's data (accounts, households, photos) up, replacing what's there.           |
+
+Once, to set it up:
+
+```sh
+brew install flyctl && fly auth login
+fly launch --no-deploy --copy-config --name <app>   # picks the nearest region
+fly volumes create household_data --size 3 --yes
+fly storage create --name <app>-backups --yes       # the backup bucket; sets its keys as secrets
+deploy/set-secrets.sh
+fly deploy
+deploy/upload-data.sh                               # stop `npm run dev` first
+```
+
+After that, `fly deploy` ships each change. `fly logs` shows the server's log (sign-in codes too, until email is
+set up), and the Fly dashboard shows memory, CPU and the bill.
+
+- **Moving over:** once the data is uploaded, use the hosted app, not `npm run dev` on the same data: both would
+  sync iCloud and send the wall's edits. The Mac Reminders sync (`REMINDERS_MAC`) doesn't run on the server; the
+  iPhone Shortcut does, now from anywhere, at `https://<app>.fly.dev`.
+- **Domain:** sprig-family.com (GoDaddy) points at the app: `fly certs add` for it and `www`, then GoDaddy's DNS
+  gets the A and AAAA records Fly lists. Run `PUBLIC_URL=https://sprig-family.com deploy/set-secrets.sh` so the
+  address stays the domain.
+- **Email:** sign-in codes go out through [Resend](https://resend.com), from `EMAIL_FROM` with `RESEND_API_KEY` (a
+  sending-only key) in `.env`; the domain's records are in GoDaddy's DNS.
+- **Google:** add `https://<app>.fly.dev` under Authorized JavaScript origins and
+  `https://<app>.fly.dev/api/account/google/callback` under redirect URIs.
+- **Restoring a backup:** `fly ssh console`, then `litestream restore -config /app/deploy/litestream.yml <path>`
+  for a database. Photos are covered by the disk snapshots (`fly volumes snapshots list`).
+
+### Connect iCloud
+
+Each person connects their own iCloud Calendar in the app. Nothing goes in `.env`.
+
+1. At [account.apple.com](https://account.apple.com) → Sign-In and Security → **App-Specific Passwords**,
+   create one called "Sprig". Your normal Apple password is never used, and you can revoke this one anytime.
+2. In Settings → **Calendars**, tap **Connect my iCloud Calendar** and enter your Apple ID and that password. It's
+   checked with iCloud first, then stored encrypted (like Google's tokens, with `SECRET_KEY`).
+3. It syncs right away and every 5 minutes after, from 3 months back to 13 months ahead. **Disconnect** removes its
+   calendars from the app.
+
+Connecting needs a guardian: from their own phone, or on the wall or a kid's device after a guardian's PIN. The
+household from before accounts can still use `ICLOUD_APPLE_ID` and `ICLOUD_APP_PASSWORD` in `.env`.
+
+Tap an iCloud event to see it, edit it or delete it (see "Using it"). In that view you can also pick **who it's for**. The pick is kept on this display, covers every repeat of the event, and
+survives future syncs.
+
+**Calendars:** in Settings, link each iCloud calendar to a person (all its events become theirs) or leave it on
+**By event**, and untick **Show** to keep a calendar off the wall. Who an event is for is decided in this order:
+your pick on the event, then the calendar's person, then Claude's pick from the title.
+
+**Sort by person automatically (optional):** add `ANTHROPIC_API_KEY` to `.env` and restart. After each sync, Claude
+reads the titles of events nobody has assigned yet (and your family's names) and picks who each is for, e.g.
+"Sam - swim class" goes to Sam and "Riley & Sam dentist" to both. Your own picks always win. Event titles and family names are sent to the
+Anthropic API.
+If syncing fails (wrong password, no internet), a banner says so and the last synced copy stays on screen.
+
+### Connect Reminders
+
+iCloud Reminders have no API a server can use (Apple moved them off CalDAV in iOS 13), so each iPhone syncs them with a Shortcut. Each phone sends its lists to the wall; items added or ticked off on the wall wait (marked ↻) until a phone that has that list runs the Shortcut and applies them. Lists shared between you show up from either phone; private lists come from their owner's phone only.
+
+1. `.env` needs `REMINDERS_TOKEN` (any long random text) and the server must be reachable on your Wi-Fi:`HOST=0.0.0.0`. Restart after changing either.
+2. On each iPhone, make a Shortcut called "Sync wall lists". Use the server's address, the token, and a name
+   for the phone (e.g. `Alex`):
+   1. **Get Contents of URL** `https://<server-address>/api/reminders/phone/pending?device=Alex`,
+      header `Authorization` = `Bearer <token>`. Get the dictionary value `changes`.
+   2. **Repeat with Each** change: if `op` is `add`, add a reminder titled `title` to the list named `list`;
+      if `complete` or `uncomplete`, find the reminder in `list` with that `title` and set it completed or not.
+      Add each change's `id` to a list variable `applied`.
+   3. **Find Reminders** that are not completed, plus ones completed in the last day. For each, make a
+      dictionary `{ list: <List name>, title: <Title>, done: <Is Completed>, due: <Due Date> }` and add it to
+      a list variable `items`.
+   4. **Get Contents of URL** `https://<server-address>/api/reminders/phone/sync`, method POST, same
+      header, JSON body `{ device: "Alex", items: <items>, applied: <applied> }`.
+3. Automations (Shortcuts > Automation, set to run immediately): **App > Reminders > Is Closed**, so changes
+   reach the wall as soon as you leave Reminders, plus a few **Time of Day** runs so wall changes reach your
+   phone even when you don't open Reminders.
+
+The Shortcut only works while the phone is on your home Wi-Fi; runs elsewhere just fail quietly.
+
+**On a Mac:** the server can sync this Mac's Reminders itself, with no Shortcut. Put
+`REMINDERS_MAC=1` in `.env` (plus `REMINDERS_TOKEN`) and restart. It reads every list, empty and shared ones
+included, every `REMINDERS_MINUTES` (default 5), and sends wall changes to Reminders a few seconds after
+they're made. The first run, macOS asks to let the app running the server control Reminders; allow it.
+Lists can be hidden from the wall with **Choose lists** on the Lists page.
+
+### Travel times
+
+Events with an address (iCloud's location, or the **Address** field on events added here) get a **Travel time**
+button: the drive from home with predicted traffic, and when to leave to be there 10 minutes early (for parking and walking in). From there,
+**Remind me** sets a "time to leave" alert on the wall (at leave time, or 10 or 15 minutes before), with a chime.
+Traffic is checked again about 30 minutes before leaving, and the alert moves if the drive got longer.
+
+1. In [Google Cloud Console](https://console.cloud.google.com), create a project, enable the **Routes API**, and
+   turn on billing (Google's monthly free credit covers a family's use many times over).
+2. Create an API key under **APIs & Services → Credentials** and restrict it to the Routes API.
+3. Put it after `GOOGLE_MAPS_API_KEY=` in `.env` and restart. Set your home address in **Settings**.
+
+Each tap asks Google twice (to match traffic to when you'd leave); answers are reused for 10 minutes. Alerts show on
+the wall, and on the phones of who the event is for (everyone's grown-ups when it's for anyone or a kid) if they have
+**Alerts** on (see "Alerts on phones").
+
+### On phones (home-screen app)
+
+The app installs on iPhones and Android phones as a home-screen app: full screen, with its own icon, and it opens even
+without a connection (showing what it last loaded). Data always comes from the wall's server.
+
+1. The phone has to reach the server. At home, put `HOST=0.0.0.0` in `.env` on the machine running it and restart.
+   Away from home, use [Tailscale](https://tailscale.com) (free for a family): install it on the server machine and
+   each phone, and the phones can reach it from anywhere, privately.
+2. On the phone, open the server's address in Safari and tap **Share → Add to Home Screen**. While developing on
+   the Mac (`npm run dev`) that's `http://<mac's address>:5173` (the page server follows `HOST` too); on a home
+   server (`npm start`), `http://<its address>:3000`.
+
+Sign in as described in "Accounts and households".
+For the offline start and alerts, iPhones need the address to be HTTPS. With MagicDNS and HTTPS
+certificates turned on in the Tailscale admin, run `tailscale serve --bg 5173` on the Mac while developing (`--bg 3000`
+on a home server): the app is then at `https://<machine>.<tailnet>.ts.net`, for your Tailscale devices only. Add it to the
+home screen from that address; it works at home and away.
+
+#### Alerts on phones
+
+In **Settings → Alerts**, a grown-up turns on **Alerts on this device**. Sprig then alerts that phone when a reminder
+on its lists comes due (at its time, or 8 AM on the phone's clock for a reminder with only a day), and when it's time
+to leave for an event. Reminders go to who they're for; ones for anyone, or for a kid, go to every grown-up with
+alerts on. Each comes once (again if it's moved or unticked), and nothing older than 12 hours is sent. Tapping an
+alert opens Sprig on Lists (or Today). Kids' devices and the wall don't get alerts.
+
+- On iPhone and iPad (iOS 16.4 or later), alerts need Sprig added to the Home Screen and opened from there, over
+  HTTPS (above). Android and desktop browsers need HTTPS too (`localhost` is fine on a computer).
+- Alerts need the built app (`npm start`), since `npm run dev` doesn't run the service worker.
+- The server's push keys are made in `data/vapid.json` on first start; keep it with the data. When hosting, set
+  `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (`npx web-push generate-vapid-keys`) and `VAPID_SUBJECT` (an https URL or
+  `mailto:`) in `.env` instead.
+- The iPhone app gets its alerts through Apple instead (`server/apns.ts`): set `APNS_KEY` (the `.p8` from Apple
+  Developer → Keys, with Apple Push Notifications service), `APNS_KEY_ID` and `APNS_TEAM_ID`. Without them the
+  app's switch says alerts are coming soon. A build run from Xcode uses Apple's sandbox, TestFlight and the App
+  Store the real service; the app tells the server which. Settings → Notifications → Send a test alert sends one
+  to this device right away.
+
+### The iPhone and iPad app
+
+The same pages, shipped inside a native app made with [Capacitor](https://capacitorjs.com) (`ios/`, set up in
+`capacitor.config.ts`). It calls sprig-family.com for everything, signed in with a token kept in the phone's Keychain
+rather than a cookie (`web/src/lib/native.ts`); pictures carry a media key that opens only them
+(`server/hosted/session.ts`). Needs Xcode; no CocoaPods (the plugins come as Swift packages).
+
+- `npm run ios` builds the pages, copies them into the app and opens Xcode: pick a simulator or your iPhone and press
+  Run. After changing the pages, `npm run ios:sync` copies them in again.
+- To try it against a server on your Mac instead (`npm run dev:test`, say), build with
+  `VITE_APP_SERVER=http://localhost:3000 npm run ios:sync`. The simulator reaches `localhost`; a real iPhone needs the
+  Mac's address.
+- The server only accepts the app's calls from its own origins (`capacitor://localhost`, and `https://localhost` for
+  Android later), and only with a token.
+- Sign in with Apple uses the iPhone's own sheet (`ios/App/App/SignInWithApple.swift`, a plugin inside the app), not
+  the web pop-up. Its token is for the app's id, `com.sprigfamily.app`, which the server accepts through `APPLE_APP_IDS`.
+  The app is signed by team `9B83U78PDK`, whose App ID needs Sign in with Apple ticked. In the simulator, sign in to
+  an Apple Account in its Settings first.
+- Links that open a new tab (a recipe's page, say) open in a Safari sheet over the app instead (`linksInSheet`).
+  Connecting Google Calendar does too, with a one-time link from `POST /api/account/google/link`, since the sheet
+  has no cookie and Google won't sign in inside the app (`server/hosted/google.ts`).
+- Web alerts can't work in the app; it gets its own through Apple (see "Alerts on phones").
+- `npm run ios:testflight` (`deploy/testflight.sh`) builds the app for the App Store and uploads it to TestFlight,
+  once Xcode is signed in to the Apple Developer account. What's left before App Review, the listing and the
+  privacy answers are in `docs/app-store.md`. Reviewers sign in as `REVIEW_EMAIL` with the fixed `REVIEW_CODE`.
+- The icon and launch screen come from `web/public/icon.svg` and `wordmark.svg`; the camera, microphone, speech and
+  location messages iPhone shows are in `ios/App/App/Info.plist`.
+
+### The demo family
+
+The Rivera family (`server/demo.ts`) fills both the site's **Try the demo** (`server/hosted/demo.ts`, a fresh
+family for each visitor, gone after a day) and App Review's account (`npx tsx scripts/demo-household.ts --fresh`).
+It's filled through the app's own API around today's date, so it always fits what the app expects. The screenshots
+and GIFs in `docs/media/` are taken from it.
+
+### How it's built
 
 | Part          | Where                                 | Notes                                                                                                                                                          |
 | ------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
