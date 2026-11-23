@@ -222,6 +222,10 @@ input {
 	--float: #1d1f23;
 	/* How much of a picked pastel (a list's color) shows: all of it on light, a hint of it on dark. */
 	--pastel: 100%;
+	/* Sprig's sprout drawn on the page (ui/Sprout.tsx): green on light, the app icon's white and mint on dark. */
+	--sprout-stem: #146c43;
+	--sprout-leaf: #4cc38a;
+	--sprout-leaf-2: #22a06b;
 }
 [data-theme='dark'] {
 	color-scheme: dark;
@@ -251,6 +255,9 @@ input {
 	--info-bg: #1b2738;
 	--float: #3a3d44;
 	--pastel: 28%;
+	--sprout-stem: #fff;
+	--sprout-leaf: #fff;
+	--sprout-leaf-2: #d1fadf;
 }
 
 /* Someone else's Busy time (server/privacy.ts): just the time, faded and striped, and it doesn't open. */

@@ -5,6 +5,7 @@ import { inStrip, placeDay, weekBars, type Placed } from '../../lib/timegrid';
 import { useAllDayFolded } from '../../lib/useFolded';
 import { useNow } from '../../lib/useNow';
 import type { CalEvent, Member } from '../../lib/types';
+import Sprout from '../ui/Sprout';
 import DayMeals from './DayMeals';
 import s from './WeekTimeline.module.css';
 
@@ -87,7 +88,7 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 			{/* The days' names: today's number in the accent, the one open in the panel ringed. */}
 			<div className={s.head}>
 				{/* Sprig's sprout in the corner above "all-day". */}
-				<img src="/sprout.svg" alt="" className={s.logo} />
+				<Sprout className={s.logo} />
 				{days.map((day) => {
 					const key = dayKey(day);
 					return (

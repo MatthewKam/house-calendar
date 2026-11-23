@@ -50,8 +50,8 @@
 .logo {
 	position: absolute;
 	inset: 0 auto 0 0;
-	width: 2.2rem; /* own: as big as a date's circle */
-	margin: auto calc((var(--gutter) - 2.2rem) / 2); /* own: centred in the margin */
+	width: 1.5rem; /* own: as big as a date's circle */
+	margin: auto calc((var(--gutter) - 1.5rem) / 2); /* own: centred in the margin */
 }
 .dayName {
 	display: flex;

@@ -7,6 +7,7 @@ import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
 import { useAllDayFolded } from '../../lib/useFolded';
 import { useNow } from '../../lib/useNow';
 import type { CalEvent, Member } from '../../lib/types';
+import Sprout from '../ui/Sprout';
 import DayMeals from './DayMeals';
 import { HourName, TimedEvent } from './WeekTimeline';
 import t from './WeekTimeline.module.css';
@@ -238,7 +239,7 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 
 			<div className={s.frame}>
 				{/* Sprig's sprout in the corner above "all-day" (outside the days, which slide under the corner). */}
-				<img src="/sprout.svg" alt="" className={s.logo} />
+				<Sprout className={s.logo} />
 				<div
 					ref={track}
 					className={`${s.track} ${dragging ? s.dragging : ''}`}

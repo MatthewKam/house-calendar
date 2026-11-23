@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 8 84 86">
-  <!-- The Sprig sprout on its own (docs/brand/sprig/sprout-mark.svg) with the app icon's orange dot: for a white space, like the week's corner. -->
-  <path d="M50 90C50 74 50 62 50 50" stroke="#146C43" stroke-width="7" stroke-linecap="round" fill="none"/>
-  <path d="M50 54C33 56 18 45 16 28C33 26 48 36 50 54Z" fill="#4CC38A"/>
-  <path d="M50 46C55 27 70 15 88 16C88 35 73 47 50 46Z" fill="#22A06B"/>
-  <circle cx="82.5" cy="19.5" r="8.3" fill="#F97316"/>
-</svg>

@@ -54,6 +54,7 @@ Use the colour names, never hex values, for anything on the page. Each one has a
 | --- | --- |
 | `--bg`, `--surface` | the page behind everything; cards, sheets and bars |
 | `--text`, `--muted`, `--line` | text, quieter text, borders and dividers |
+| `--sprout-stem`, `--sprout-leaf`, `--sprout-leaf-2` | Sprig's sprout drawn on the page (`ui/Sprout.tsx`): green on light, white and mint on dark (its dot stays orange) |
 | `--accent`, `--on-accent` | buttons and highlights, and the text on them (each device picks its accent: `lib/accent.ts`) |
 | `--danger-solid`, `--on-danger` | a filled button for something that can't be undone (Delete), and the text on it |
 | `--danger`, `--warn`, `--good`, `--soon` | something wrong, a heads-up, done, a due date. Each has `-bg` and `-line` for a box in that tone |
