@@ -44,25 +44,35 @@
 /* Week or Month (CalendarPage.tsx): a switch in the accent with the view's name in it, its knob on the
    right for Week and on the left for Month. */
 .viewSwitch {
+	/* Slimmer than the buttons beside it, the same on every screen; a bigger area to tap than it looks. */
+	--switch: 2.2rem; /* own: a switch, smaller than a button */
+	position: relative;
 	flex: none;
 	display: flex;
 	align-items: center;
 	gap: var(--space-2);
-	padding: 0 var(--space-1) 0 var(--space-4);
+	height: var(--switch);
+	min-height: 0;
+	padding: 0 var(--space-1) 0 var(--space-3);
 	border-radius: var(--radius-round);
 	background: var(--accent);
 	color: var(--on-accent);
-	font-size: var(--text-md);
+	font-size: var(--text-sm);
 	font-weight: var(--weight-semibold);
+}
+.viewSwitch::before {
+	content: '';
+	position: absolute;
+	inset: calc((var(--switch) - var(--tap)) / 2) 0;
 }
 .viewMonth {
 	flex-direction: row-reverse;
-	padding: 0 var(--space-4) 0 var(--space-1);
+	padding: 0 var(--space-3) 0 var(--space-1);
 }
 .viewKnob {
 	flex: none;
 	/* As tall as the switch, less the same gap as at its side. */
-	--knob: calc(var(--tap) - 2 * var(--space-1));
+	--knob: calc(var(--switch) - 2 * var(--space-1));
 	width: var(--knob);
 	height: var(--knob);
 	border-radius: var(--radius-round);
@@ -169,18 +179,9 @@
 		font-size: 1.1rem;
 		white-space: nowrap;
 	}
-	.pill,
-	.viewSwitch {
-		font-size: 1rem;
-	}
 	.pill {
 		padding: 0 var(--space-4);
-	}
-	.viewSwitch {
-		padding: 0 var(--space-1) 0 var(--space-3);
-	}
-	.viewMonth {
-		padding: 0 var(--space-3) 0 var(--space-1);
+		font-size: 1rem;
 	}
 }
 
@@ -202,12 +203,7 @@
 		margin: 0;
 		font-size: 1.4rem;
 	}
-	/* The slimmer switch's knob. */
-	.viewKnob {
-		--knob: calc(2.2rem - 2 * var(--space-1));
-	}
-	.pill,
-	.viewSwitch {
+	.pill {
 		min-height: 2.2rem;
 		padding: 0 0.75rem;
 		font-size: 1rem;
