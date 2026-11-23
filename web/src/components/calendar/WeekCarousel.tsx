@@ -20,6 +20,8 @@ const MAX_DOTS = 5;
 const DECIDE = 8;
 /** How far a trackpad's sideways swipe goes (px) to move a day. */
 const WHEEL_STEP = 60;
+/** How long (ms) with no wheel before a trackpad's swipe counts as over, and the next can move a day. */
+const WHEEL_QUIET = 150;
 /** How far a day must be dragged (a share of its width) to move on to the next one. */
 const MOVE_ON = 0.3;
 /** A swipe this fast (px per ms) moves a day however short it is. */
@@ -263,20 +265,26 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			d = null;
 			if (was?.way === 'sideways') springBack();
 		};
-		// A trackpad's sideways swipe (or a mouse's sideways wheel): a day at a time.
+		// A trackpad's sideways swipe (or a mouse's sideways wheel): one day per swipe. A trackpad keeps
+		// sending the swipe's coasting for a second or more after the fingers lift, so once a day has moved,
+		// nothing more moves until the swipe has stopped (no wheel for WHEEL_QUIET ms).
 		let wheeled = 0;
-		let resting = false;
+		let moved = false;
+		let quiet = 0;
 		const wheel = (e: WheelEvent) => {
+			window.clearTimeout(quiet);
+			quiet = window.setTimeout(() => {
+				moved = false;
+				wheeled = 0;
+			}, WHEEL_QUIET);
 			if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
 			e.preventDefault();
-			if (resting) return;
+			if (moved) return;
 			wheeled += e.deltaX;
 			if (Math.abs(wheeled) < WHEEL_STEP) return;
 			const { keys, onMain } = latest.current;
 			const i = Math.min(keys.length - 1, Math.max(0, mainRef.current + Math.sign(wheeled)));
-			wheeled = 0;
-			resting = true;
-			window.setTimeout(() => (resting = false), 450);
+			moved = true;
 			if (i !== mainRef.current) onMain(keys[i]);
 		};
 		el.addEventListener('touchstart', start, { passive: true });
@@ -292,6 +300,7 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			el.removeEventListener('touchend', end);
 			el.removeEventListener('touchcancel', cancel);
 			el.removeEventListener('wheel', wheel);
+			window.clearTimeout(quiet);
 		};
 		// Once: the current main day, days and onMain come through refs.
 	}, []);
