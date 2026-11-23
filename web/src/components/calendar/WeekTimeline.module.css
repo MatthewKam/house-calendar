@@ -53,6 +53,8 @@
 	padding: var(--space-2) var(--space-3);
 	/* The same line on its left as the day's column below; it runs on into the strip. */
 	border-left: 1px solid var(--line);
+	/* A line under the date, over its whole-day events. */
+	border-bottom: 1px solid var(--line);
 	border-radius: 0;
 	background: var(--surface);
 	color: var(--text);
@@ -63,7 +65,7 @@
 }
 .dayName.today {
 	border: 1px solid var(--accent);
-	border-bottom: 0;
+	border-bottom-color: var(--line);
 }
 /* Today on the week's last day: its corner follows the calendar's rounded edge. */
 .dayName.today:last-child {
@@ -107,7 +109,8 @@
 	grid-template-columns: var(--gutter) repeat(7, minmax(0, 1fr));
 	align-items: start;
 	gap: var(--space-1) 0;
-	padding-block-end: var(--space-1);
+	/* Room under the dates' line before the first bar. */
+	padding-block: var(--space-2) var(--space-1);
 	border-bottom: 1px solid var(--line);
 	/* Each day's column has the same line on its left as the hours below. */
 	background: linear-gradient(to right, var(--line) 1px, transparent 1px) var(--gutter) 0 /
@@ -213,6 +216,8 @@
 	font-size: var(--text-sm);
 	font-weight: var(--weight-semibold);
 	color: var(--muted);
+	/* Quieter still: the events are what matter. */
+	opacity: 0.7;
 }
 .hour small {
 	font-size: 0.7em;
