@@ -157,7 +157,7 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 	// snaps), so a swipe can't fight the browser. A finger's swipe keeps to one way, picked in its first
 	// DECIDE px: mostly up or down, and the browser scrolls the hours as usual; mostly sideways, and the days
 	// follow the finger while the hours are held (the touch's moves are cancelled, so iOS doesn't scroll
-	// them). Letting go moves on a day if it went MOVE_ON of one or was flicked (more, for a long drag),
+	// them). Letting go moves on a day if it went MOVE_ON of one or was flicked (never more than one day, however hard),
 	// else springs back to the middle day; so does a touch the browser takes over. Touch events, not pointer
 	// events: only they can stop iOS's own scroll once a swipe turns out to be sideways.
 	const dragged = useRef(false);
@@ -234,7 +234,9 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			d.v = 0.6 * d.v + 0.4 * ((t.clientX - d.lastX) / dt);
 			d.lastX = t.clientX;
 			d.t = e.timeStamp;
-			el.scrollLeft = d.left - dx;
+			// The days follow the finger, but no further than a day either way.
+			const w = dayWidth();
+			el.scrollLeft = d.left - Math.max(-w, Math.min(w, dx));
 			if (el.scrollTop !== d.top) el.scrollTop = d.top;
 		};
 		const end = () => {
@@ -247,9 +249,9 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			const dx = was.left - el.scrollLeft; // + is a swipe to the right (back a day)
 			// A flick goes the way the finger was moving at the end.
 			const flick = Math.abs(was.v) > FLICK ? Math.sign(was.v) : 0;
-			let steps = Math.round(Math.abs(dx) / w);
-			if (steps === 0 && (Math.abs(dx) > w * MOVE_ON || (flick && flick === Math.sign(dx)))) steps = 1;
-			const i = Math.min(keys.length - 1, Math.max(0, main - Math.sign(dx) * steps));
+			// One day at most, however far or hard the swipe.
+			const step = Math.abs(dx) > w * MOVE_ON || (flick && flick === Math.sign(dx)) ? 1 : 0;
+			const i = Math.min(keys.length - 1, Math.max(0, main - Math.sign(dx) * step));
 			if (i === main) return springBack();
 			// On from where the finger left it now, so nothing puts it back on the old day meanwhile.
 			glideTo(i * w);
