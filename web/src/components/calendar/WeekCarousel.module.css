@@ -79,6 +79,7 @@
 
 /* ---- The days by the hour ---- */
 .frame {
+	position: relative;
 	flex: 1;
 	min-height: 0;
 	display: flex;
@@ -150,6 +151,23 @@
 	.track {
 		--gutter: 3rem;
 		--day: calc((100cqw - var(--gutter)) * 0.64);
+	}
+}
+
+/* Sprig's sprout in the corner cut out above "all-day" (.track's --notch: its top padding, a date's
+   circle and the gap under it), in the middle of the hours' margin. Its own sizes, as the frame is the
+   container .track's sizes follow. */
+.logo {
+	--gutter: 3.6rem;
+	position: absolute;
+	z-index: 1;
+	top: calc((var(--space-3) + 1.9rem + var(--space-1) - 1.9rem) / 2);
+	left: calc((var(--gutter) - 1.9rem) / 2);
+	width: 1.9rem; /* own: as big as a date's circle */
+}
+@container (max-width: 480px) {
+	.logo {
+		--gutter: 3rem;
 	}
 }
 

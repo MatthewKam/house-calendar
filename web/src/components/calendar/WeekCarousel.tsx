@@ -237,6 +237,8 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			</div>
 
 			<div className={s.frame}>
+				{/* Sprig's sprout in the corner cut out above "all-day" (outside the days, which slide under it). */}
+				<img src="/favicon.svg" alt="" className={s.logo} />
 				<div
 					ref={track}
 					className={`${s.track} ${dragging ? s.dragging : ''}`}
