@@ -512,6 +512,11 @@ rather than a cookie (`web/src/lib/native.ts`); pictures carry a media key that 
 - `npm run ios:testflight` (`deploy/testflight.sh`) builds the app for the App Store and uploads it to TestFlight,
   once Xcode is signed in to the Apple Developer account. What's left before App Review, the listing and the
   privacy answers are in `docs/app-store.md`. Reviewers sign in as `REVIEW_EMAIL` with the fixed `REVIEW_CODE`.
+- **Face ID instead of the PIN** (`ios/App/App/FaceIdPin.swift`, `web/src/lib/useFaceIdPin.ts`): on a grown-up's
+  own iPhone or iPad, Settings → Users → **Use Face ID instead of my PIN** keeps their PIN in the Keychain behind
+  Face ID (or Touch ID), tied to the faces enrolled now and kept on this device only. Leaving kid mode, stars in jars
+  and unlocking then ask for Face ID and send that PIN; the server still checks it, and a PIN it turns down is
+  forgotten. Never offered on a kid's device or the wall.
 - The icon and launch screen come from `web/public/icon.svg` and `wordmark.svg`; the camera, microphone, speech and
   location messages iPhone shows are in `ios/App/App/Info.plist`.
 

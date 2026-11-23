@@ -80,6 +80,8 @@
 	<array>
 		<string>com.sprigfamily.app.calendars</string>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Sprig uses Face ID instead of your guardian PIN, when you turn it on in Settings.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Sprig uses the camera when you snap a flyer or add a family photo.</string>
 	<key>NSMicrophoneUsageDescription</key>

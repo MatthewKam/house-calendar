@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useParent } from '../../lib/useParent';
+import { usePinByFace } from '../../lib/useFaceIdPin';
 import PinPad, { pinSheet } from '../ui/PinPad';
 import sheet from '../ui/Sheet.module.css';
 import Sheet from '../ui/Sheet';
@@ -10,9 +11,13 @@ export default function ParentUnlock({ onClose, onDone }: { onClose: () => void;
 	const { unlock } = useParent();
 	const [pin, setPin] = useState('');
 
-	function submit(e?: FormEvent, typed = pin) {
+	// On a grown-up's own iPhone with Face ID turned on (wall mode, say): their face instead.
+	const byFace = usePinByFace((saved) => submit(undefined, saved, true));
+
+	function submit(e?: FormEvent, typed = pin, face = false) {
 		e?.preventDefault();
 		if (!typed || unlock.isPending) return;
+		if (!face) byFace?.typed();
 		// Awaited rather than mutate's callbacks, which are dropped if the dialog re-renders from new while
 		// the PIN is checked (it stayed open, with the button off, on phones).
 		unlock.mutateAsync({ pin: typed }).then(
@@ -20,7 +25,10 @@ export default function ParentUnlock({ onClose, onDone }: { onClose: () => void;
 				onClose();
 				onDone?.();
 			},
-			() => setPin(''),
+			() => {
+				setPin('');
+				byFace?.wrong();
+			},
 		);
 	}
 
@@ -40,6 +48,7 @@ export default function ParentUnlock({ onClose, onDone }: { onClose: () => void;
 					done="Unlock"
 				/>
 				<div className={sheet.actions}>
+					{byFace && <Button onClick={byFace.ask}>Use {byFace.name}</Button>}
 					<span className={sheet.spacer} />
 					<Button onClick={onClose}>Cancel</Button>
 					<Button variant="primary" type="submit" disabled={!pin || unlock.isPending}>

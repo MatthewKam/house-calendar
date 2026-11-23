@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import { usePinByFace } from '../../lib/useFaceIdPin';
 import PinPad, { pinSheet } from '../ui/PinPad';
 import Sheet from '../ui/Sheet';
 import sheet from '../ui/Sheet.module.css';
@@ -34,12 +35,19 @@ export default function GrownUpPin({
 		meta: { inline: true },
 	});
 
-	function submit(e?: FormEvent, typed = pin) {
+	// On a grown-up's own iPhone with Face ID turned on: their face instead (asked as the sheet opens).
+	const byFace = usePinByFace((saved) => submit(undefined, saved, true));
+
+	function submit(e?: FormEvent, typed = pin, face = false) {
 		e?.preventDefault();
 		if (!typed || check.isPending) return;
+		if (!face) byFace?.typed();
 		// Awaited rather than mutate's callbacks, which are dropped if the dialog re-renders from new while
 		// the PIN is checked (it stayed open, with the button off, on phones).
-		check.mutateAsync(typed).then(onOk, () => setPin(''));
+		check.mutateAsync(typed).then(onOk, () => {
+			setPin('');
+			byFace?.wrong();
+		});
 	}
 
 	return (
@@ -55,6 +63,7 @@ export default function GrownUpPin({
 					done={okLabel}
 				/>
 				<div className={sheet.actions}>
+					{byFace && <Button onClick={byFace.ask}>Use {byFace.name}</Button>}
 					<span className={sheet.spacer} />
 					<Button onClick={onClose}>Cancel</Button>
 					<Button variant="primary" type="submit" disabled={!pin || check.isPending}>

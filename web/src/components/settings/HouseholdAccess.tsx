@@ -4,6 +4,8 @@ import { api, type AuthStatus } from '../../lib/api';
 import { useAuthStatus } from '../../lib/queries';
 import { ago } from '../../lib/dates';
 import { joinLink } from '../../lib/joinCode';
+import { useFaceIdPin } from '../../lib/useFaceIdPin';
+import { SwitchRow } from './parts';
 import { Loading, Skeleton, SkeletonLines } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import s from '../account/Account.module.css';
@@ -418,6 +420,72 @@ export function Issued({
 	);
 }
 
+/**
+ * In the iPhone and iPad app: Face ID (or Touch ID) instead of typing this guardian's PIN on this device, for
+ * leaving kid mode, stars in jars and unlocking (lib/useFaceIdPin.ts). Turning it on takes the PIN once.
+ */
+function FaceIdInstead() {
+	const face = useFaceIdPin();
+	const [asking, setAsking] = useState(false);
+	const [pin, setPin] = useState('');
+	const turnOn = useMutation({
+		mutationFn: async () => {
+			await api.checkPin(pin);
+			await face.save(pin);
+		},
+		onSuccess: () => {
+			setAsking(false);
+			setPin('');
+		},
+	});
+	if (face.kind === 'none') return null;
+	const title = `Use ${face.name} instead of my PIN`;
+	return (
+		<SwitchRow
+			title={title}
+			on={face.saved || asking}
+			onChange={(on) => {
+				setPin('');
+				turnOn.reset();
+				if (on) setAsking(true);
+				else {
+					setAsking(false);
+					void face.forget();
+				}
+			}}
+			hint={`On this device only: leaving kid mode, putting stars in jars and unlocking ask for ${face.name}, with your PIN kept behind it. Typing the PIN still works.`}
+		>
+			{asking && !face.saved && (
+				<form
+					className={panel.pinForm}
+					onSubmit={(e) => {
+						e.preventDefault();
+						if (/^\d{4,8}$/.test(pin)) turnOn.mutate();
+					}}
+				>
+					<p className={s.hint}>Your PIN, once, to keep it behind {face.name} on this device.</p>
+					<Input
+						type="password"
+						inputMode="numeric"
+						autoComplete="current-password"
+						placeholder="Your PIN"
+						aria-label="Your PIN"
+						value={pin}
+						onChange={(e) => setPin(e.target.value)}
+						maxLength={8}
+					/>
+					{turnOn.isError && <p className={panel.pinError}>{turnOn.error.message}</p>}
+					<div className={s.row}>
+						<Button variant="primary" type="submit" disabled={!/^\d{4,8}$/.test(pin) || turnOn.isPending}>
+							Turn on
+						</Button>
+					</div>
+				</form>
+			)}
+		</SwitchRow>
+	);
+}
+
 /** This guardian's PIN: opens the wall and unlocks it (or a kid's device) for changes. */
 function MyPin({ hasPin, onSaved }: { hasPin: boolean; onSaved: (s: AuthStatus) => void }) {
 	// Showing the PIN set; changing it (current PIN, then the new one twice); or, forgotten, a code by email.
@@ -436,9 +504,14 @@ function MyPin({ hasPin, onSaved }: { hasPin: boolean; onSaved: (s: AuthStatus) 
 		setAgain('');
 		setSentTo(null);
 	};
+	// Face ID standing in for the PIN on this iPhone keeps up with a new PIN.
+	const face = useFaceIdPin();
 	const save = useMutation({
 		mutationFn: () => (mode === 'forgot' ? api.resetPin(code, pin) : api.setMyPin(pin, hasPin ? current : undefined)),
-		onSuccess: done,
+		onSuccess: (st) => {
+			if (face.saved) void face.save(pin);
+			done(st);
+		},
 	});
 	const forgot = useMutation({ mutationFn: api.forgotPin, onSuccess: (r) => setSentTo(r.sentTo) });
 	const problem =
@@ -464,12 +537,15 @@ function MyPin({ hasPin, onSaved }: { hasPin: boolean; onSaved: (s: AuthStatus) 
 
 	if (mode === 'set') {
 		return (
-			<p className={s.hint}>
-				Your PIN is set: it opens the wall and unlocks changes there.{' '}
-				<Button variant="link" size="sm" onClick={() => setMode('change')}>
-					Change it
-				</Button>
-			</p>
+			<>
+				<p className={s.hint}>
+					Your PIN is set: it opens the wall and unlocks changes there.{' '}
+					<Button variant="link" size="sm" onClick={() => setMode('change')}>
+						Change it
+					</Button>
+				</p>
+				<FaceIdInstead />
+			</>
 		);
 	}
 	return (

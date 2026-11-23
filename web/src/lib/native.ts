@@ -190,3 +190,34 @@ export async function syncPhoneCalendars() {
 
 /** Stops sharing from this phone. */
 export const stopPhoneCalendars = () => PhoneCalendars.stop();
+
+// A grown-up's PIN kept on their own iPhone or iPad behind Face ID (ios/App/App/FaceIdPin.swift), so the PIN
+// sheets can ask for a face instead (useFaceIdPin.ts). The server still checks the PIN.
+export type Biometry = 'faceID' | 'touchID' | 'none';
+const FaceIdPin = registerPlugin<{
+	kind(): Promise<{ kind: Biometry }>;
+	has(o: { account: string }): Promise<{ has: boolean }>;
+	save(o: { account: string; pin: string }): Promise<void>;
+	read(o: { account: string; reason: string }): Promise<{ pin: string }>;
+	remove(o: { account: string }): Promise<void>;
+}>('FaceIdPin');
+
+/** Face ID, Touch ID or none on this device (none on the website, or with neither set up). */
+export async function biometry(): Promise<Biometry> {
+	if (!isApp) return 'none';
+	try {
+		return (await FaceIdPin.kind()).kind;
+	} catch {
+		return 'none';
+	}
+}
+/** What to call it: "Face ID" or "Touch ID". */
+export const biometryName = (kind: Biometry) => (kind === 'touchID' ? 'Touch ID' : 'Face ID');
+/** One saved PIN per grown-up signed in on this device. */
+const pinAccount = (memberId: string) => `pin.${memberId}`;
+export const hasFacePin = async (memberId: string) => (await FaceIdPin.has({ account: pinAccount(memberId) })).has;
+export const saveFacePin = (memberId: string, pin: string) => FaceIdPin.save({ account: pinAccount(memberId), pin });
+export const forgetFacePin = (memberId: string) => FaceIdPin.remove({ account: pinAccount(memberId) });
+/** The saved PIN after Face ID; throws (code "canceled" or "missing") when there's none to give. */
+export const readFacePin = async (memberId: string, reason: string) =>
+	(await FaceIdPin.read({ account: pinAccount(memberId), reason })).pin;

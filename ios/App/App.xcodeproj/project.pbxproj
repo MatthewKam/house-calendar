@@ -19,6 +19,7 @@
 		9582B6912FE993B00072D4E8 /* SignInWithApple.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6902FE993B00072D4E8 /* SignInWithApple.swift */; };
 		9582B6A12FE993B00072D4E8 /* Alerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6A02FE993B00072D4E8 /* Alerts.swift */; };
 		9582B6A32FE993B00072D4E8 /* PhoneCalendars.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6A22FE993B00072D4E8 /* PhoneCalendars.swift */; };
+		9582B6A52FE993B00072D4E8 /* FaceIdPin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6A42FE993B00072D4E8 /* FaceIdPin.swift */; };
 		9582B6942FE993B00072D4E8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9582B6932FE993B00072D4E8 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
@@ -36,6 +37,7 @@
 		9582B6902FE993B00072D4E8 /* SignInWithApple.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInWithApple.swift; sourceTree = "<group>"; };
 		9582B6A02FE993B00072D4E8 /* Alerts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alerts.swift; sourceTree = "<group>"; };
 		9582B6A22FE993B00072D4E8 /* PhoneCalendars.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneCalendars.swift; sourceTree = "<group>"; };
+		9582B6A42FE993B00072D4E8 /* FaceIdPin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceIdPin.swift; sourceTree = "<group>"; };
 		9582B6922FE993B00072D4E8 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		9582B6932FE993B00072D4E8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
@@ -77,6 +79,7 @@
 				9582B6902FE993B00072D4E8 /* SignInWithApple.swift */,
 				9582B6A02FE993B00072D4E8 /* Alerts.swift */,
 				9582B6A22FE993B00072D4E8 /* PhoneCalendars.swift */,
+				9582B6A42FE993B00072D4E8 /* FaceIdPin.swift */,
 				9582B6922FE993B00072D4E8 /* App.entitlements */,
 				9582B6932FE993B00072D4E8 /* PrivacyInfo.xcprivacy */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
@@ -178,6 +181,7 @@
 				9582B6912FE993B00072D4E8 /* SignInWithApple.swift in Sources */,
 				9582B6A12FE993B00072D4E8 /* Alerts.swift in Sources */,
 				9582B6A32FE993B00072D4E8 /* PhoneCalendars.swift in Sources */,
+				9582B6A52FE993B00072D4E8 /* FaceIdPin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

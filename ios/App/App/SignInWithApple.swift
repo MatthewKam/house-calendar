@@ -11,6 +11,7 @@ class AppViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(SignInWithApplePlugin())
         bridge?.registerPluginInstance(AppAlertsPlugin())
         bridge?.registerPluginInstance(PhoneCalendarsPlugin())
+        bridge?.registerPluginInstance(FaceIdPinPlugin())
         // Swipe from the left edge to go back, as in Safari: back through the steps the pages keep in
         // their history (a link from one page to another, web/src/lib/usePage.ts), with the page before
         // sliding in under the finger.
