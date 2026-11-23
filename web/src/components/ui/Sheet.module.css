@@ -152,6 +152,19 @@
 	padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
 	animation: drawerIn 0.2s ease-out;
 }
+/* Phones, upright or on their side: a drawer is the whole screen, like a page of its own (the clock's
+   area a border in its colour, as .full). */
+@media (max-width: 700px), (orientation: landscape) and (max-height: 500px) {
+	.drawer {
+		left: 0;
+		top: 0;
+		width: auto;
+		border-radius: 0;
+		border-top: env(safe-area-inset-top, 0px) solid var(--surface);
+		padding-left: calc(var(--space-6) + var(--inset-left));
+		box-shadow: none;
+	}
+}
 @media (prefers-reduced-motion: reduce) {
 	.drawer {
 		animation: none;
