@@ -113,9 +113,10 @@
 	grid-template-columns: var(--gutter) var(--pad) repeat(9, var(--day)) var(--pad);
 	grid-template-rows: auto auto;
 	/* The hours scroll up and down; the days move sideways only by WeekCarousel.tsx's hand (a swipe, a
-	   tap, the cards), so no snapping or sideways scroll of the browser's own fights a finger. */
-	overflow-x: hidden;
-	overflow-y: auto;
+	   tap, the cards), so no snapping or sideways scroll of the browser's own fights a finger. Sideways
+	   is auto, not hidden: iOS puts a hidden way's scroll back to the start while scrolling the other. */
+	overflow: auto;
+	overscroll-behavior-x: none;
 	scrollbar-width: none;
 	/* The browser may only scroll up and down; a sideways swipe is WeekCarousel.tsx's. */
 	touch-action: pan-y;

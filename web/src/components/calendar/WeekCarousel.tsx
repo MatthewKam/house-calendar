@@ -155,6 +155,15 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			t: number;
 			v: number;
 		} | null = null;
+		// Scrolling up and down (a finger's, with its glide after, or a wheel's), the days stay on the middle
+		// one: anything that moves them meanwhile is put back. Until the next touch, click or sideways wheel.
+		let holding = false;
+		const hold = () => {
+			if (!holding) return;
+			const left = mainRef.current * dayWidth();
+			if (Math.abs(el.scrollLeft - left) > 1) el.scrollLeft = left;
+		};
+		const letGo = () => (holding = false);
 		const springBack = () => el.scrollTo({ left: mainRef.current * dayWidth(), behavior: 'smooth' });
 		const start = (e: TouchEvent) => {
 			if (e.touches.length !== 1) {
@@ -185,6 +194,7 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 				// Up and down (or iOS has already started scrolling): the browser's, and the days stay put.
 				if (Math.abs(dy) >= Math.abs(dx) || !e.cancelable) {
 					d.way = 'down';
+					holding = true;
 					return;
 				}
 				d.way = 'sideways';
@@ -226,7 +236,11 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 		let wheeled = 0;
 		let resting = false;
 		const wheel = (e: WheelEvent) => {
-			if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+			if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) {
+				holding = true;
+				return;
+			}
+			holding = false;
 			e.preventDefault();
 			if (resting) return;
 			wheeled += e.deltaX;
@@ -243,7 +257,13 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 		el.addEventListener('touchend', end);
 		el.addEventListener('touchcancel', cancel);
 		el.addEventListener('wheel', wheel, { passive: false });
+		el.addEventListener('scroll', hold, { passive: true });
+		window.addEventListener('touchstart', letGo, { capture: true, passive: true });
+		window.addEventListener('pointerdown', letGo, { capture: true });
 		return () => {
+			el.removeEventListener('scroll', hold);
+			window.removeEventListener('touchstart', letGo, { capture: true });
+			window.removeEventListener('pointerdown', letGo, { capture: true });
 			el.removeEventListener('touchstart', start);
 			el.removeEventListener('touchmove', move);
 			el.removeEventListener('touchend', end);
