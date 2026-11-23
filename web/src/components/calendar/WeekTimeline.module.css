@@ -13,10 +13,10 @@
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
-	background: var(--surface);
-	border: 1px solid var(--line);
+	/* Each part paints its own background, so the corner above "all-day" is cut out: the days' names rise
+	   above it. The shadow follows that shape. */
 	border-radius: var(--radius-xs);
-	box-shadow: var(--shadow-md);
+	filter: var(--shadow-shape);
 	overflow: hidden;
 }
 /* No scrollbars: the hours (and a tall strip) still scroll by touch, trackpad or wheel. With none, every
@@ -54,8 +54,12 @@
 	/* The same line on its left as the day's column below; it runs on into the strip. */
 	border-left: 1px solid var(--line);
 	border-radius: 0;
-	background: none;
+	background: var(--surface);
 	color: var(--text);
+}
+/* The first name's top-left corner rounds off over the cut-out corner. */
+.dayName:first-child {
+	border-top-left-radius: var(--radius-xs);
 }
 .dayName.today {
 	border: 1px solid var(--accent);
@@ -107,7 +111,9 @@
 	border-bottom: 1px solid var(--line);
 	/* Each day's column has the same line on its left as the hours below. */
 	background: linear-gradient(to right, var(--line) 1px, transparent 1px) var(--gutter) 0 /
-		calc((100% - var(--gutter)) / 7) 100% repeat-x;
+		calc((100% - var(--gutter)) / 7) 100% repeat-x,
+		var(--surface);
+	border-top-left-radius: var(--radius-xs);
 	max-height: 35%;
 	overflow-y: auto;
 }
@@ -189,6 +195,7 @@
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
+	background: var(--surface);
 }
 .hours {
 	position: relative;
@@ -233,6 +240,10 @@
 .pastColumn {
 	background: var(--past-tint);
 	border-left-color: var(--past-line);
+}
+/* Its name over the white, as the names paint their own. */
+.dayName.pastName {
+	background: linear-gradient(var(--past-tint), var(--past-tint)), var(--surface);
 }
 .todayColumn {
 	border: 1px solid var(--accent);

@@ -82,9 +82,9 @@
 	flex: 1;
 	min-height: 0;
 	display: flex;
-	background: var(--surface);
 	border-radius: var(--radius-xs);
-	box-shadow: var(--shadow-md);
+	/* The shadow follows the days' shape, the corner above "all-day" cut out (.track). */
+	filter: var(--shadow-shape);
 	overflow: hidden;
 	/* The days' widths follow the frame's (container units below). */
 	container-type: inline-size;
@@ -97,6 +97,10 @@
 	--day: calc((100cqw - var(--gutter)) / 3);
 	/* Room before the first day and after the last, so they can sit in the middle too. */
 	--pad: calc((100cqw - var(--gutter) - var(--day)) / 2);
+	/* The corner above "all-day" is cut out, down to where the days' whole-day events start (under their
+	   names: the name's top padding and its date's circle), its edges rounded. */
+	--notch: calc(var(--space-3) + 1.9rem + var(--space-1));
+	--round: var(--radius-xs);
 	/* A line at the end of each hour. */
 	--lines: repeating-linear-gradient(
 		to bottom,
@@ -117,6 +121,18 @@
 	/* A finger scrolls the hours only up and down, so a swipe that strays can't slide the days; a
 	   sideways swipe is WeekCarousel.tsx's own (it springs back unless it's meant). */
 	touch-action: pan-y;
+	background: var(--surface);
+	/* Shown: below the notch, right of it, and two rounded corners (where the corner starts, and where the
+	   days rise beside it). */
+	mask:
+		linear-gradient(#000 0 0) 0 calc(var(--notch) + var(--round)) / 100% 100% no-repeat,
+		linear-gradient(#000 0 0) var(--round) var(--notch) / 100% 100% no-repeat,
+		linear-gradient(#000 0 0) calc(var(--gutter) + var(--round)) 0 / 100% 100% no-repeat,
+		linear-gradient(#000 0 0) var(--gutter) var(--round) / 100% 100% no-repeat,
+		radial-gradient(closest-side, #000 98%, transparent) 0 var(--notch) / calc(2 * var(--round))
+			calc(2 * var(--round)) no-repeat,
+		radial-gradient(closest-side, #000 98%, transparent) var(--gutter) 0 / calc(2 * var(--round))
+			calc(2 * var(--round)) no-repeat;
 }
 /* While a finger drags the days, they follow it freely; letting go glides to a day. */
 .dragging {
@@ -234,7 +250,8 @@
 	display: flex;
 	align-items: flex-start;
 	justify-content: center;
-	padding-top: var(--space-1);
+	/* Under the notch (.track), where the days' whole-day events start. */
+	padding-top: calc(var(--notch) + var(--space-1));
 	box-shadow: 3.5px 0 3px -2px rgba(0, 0, 0, 0.25); /* own: the corner's shadow on its right side only */
 }
 .fold {
