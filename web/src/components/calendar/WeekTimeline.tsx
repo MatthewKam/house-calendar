@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { dayKey, timeLabel } from '../../lib/dates';
 import { eventPaint, isOver } from '../../lib/events';
 import { inStrip, placeDay, weekBars, type Placed } from '../../lib/timegrid';
@@ -43,6 +43,8 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 	const now = useNow();
 	// The whole-day events can fold to a thin bar each (meals hidden), for a week with a lot of them.
 	const [folded, setFolded] = useAllDayFolded();
+	// The hours scrolled under the strip: a shadow under it.
+	const [scrolled, setScrolled] = useState(false);
 	const bars = weekBars(events, days);
 	const rows = bars.reduce((n, b) => Math.max(n, b.row + 1), 0);
 	// Each day is a list: its bars, then its meals right under them (not under the week's tallest stack).
@@ -111,7 +113,7 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 			    bars into the last row, which grows for the tallest. */}
 			{/* Folded: a thin bar each, still over the days it covers; tapping anywhere opens them again. */}
 			<div
-				className={`${s.strip} ${folded ? s.stripFolded : ''}`}
+				className={`${s.strip} ${folded ? s.stripFolded : ''} ${scrolled ? s.scrolled : ''}`}
 				style={{
 					gridTemplateRows: rows
 						? `repeat(${rows}, ${folded ? 'var(--bar-folded)' : 'var(--bar-height)'}) auto`
@@ -190,7 +192,7 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 					))}
 			</div>
 
-			<div ref={scroller} className={s.scroll}>
+			<div ref={scroller} className={s.scroll} onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 0)}>
 				<div className={s.hours}>
 					{/* The hour labels in the margin. */}
 					{Array.from({ length: 23 }, (_, i) => i + 1).map((h) => (

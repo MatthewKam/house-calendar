@@ -125,6 +125,11 @@
 	max-height: 35%;
 	overflow-y: auto;
 }
+/* The hours scrolled under it: a shadow along its bottom, over them. */
+.strip.scrolled {
+	z-index: 3;
+	box-shadow: var(--shadow-bar);
+}
 /* Today's column in the strip: the accent on both sides, from the strip's top to its bottom (out over its
    padding), behind the bars. */
 /* A day that's over, in the strip: the same grey, from the strip's top to its bottom, behind the bars. */

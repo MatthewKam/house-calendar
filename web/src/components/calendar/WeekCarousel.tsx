@@ -125,7 +125,10 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 
 	// After a swipe settles (snapped to a day), that day is the middle one.
 	const settle = useRef<number | undefined>(undefined);
+	// The hours scrolled under the days' names: a shadow under them.
+	const [scrolled, setScrolled] = useState(false);
 	const onScroll = () => {
+		setScrolled((track.current?.scrollTop ?? 0) > 0);
 		window.clearTimeout(settle.current);
 		settle.current = window.setTimeout(() => {
 			const el = track.current;
@@ -242,7 +245,7 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 				<Sprout className={s.logo} />
 				<div
 					ref={track}
-					className={`${s.track} ${dragging ? s.dragging : ''}`}
+					className={`${s.track} ${dragging ? s.dragging : ''} ${scrolled ? s.scrolled : ''}`}
 					onScroll={onScroll}
 					onPointerDown={onPointerDown}
 					onPointerMove={onPointerMove}
