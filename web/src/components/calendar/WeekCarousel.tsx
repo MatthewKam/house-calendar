@@ -70,6 +70,20 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 	const track = useRef<HTMLDivElement>(null);
 	// A day's width (all are the same); the track's left scroll for day i is i of them.
 	const dayWidth = () => track.current?.querySelector<HTMLElement>(`.${s.name}`)?.offsetWidth || 1;
+	// Sprig's own glide to a day: while it runs, the days may sit anywhere between where they were and
+	// there (everywhere else they're held on the middle day, below).
+	const glide = useRef<{ from: number; to: number; until: number } | null>(null);
+	const glideTo = (left: number, top?: number) => {
+		const el = track.current;
+		if (!el) return;
+		glide.current = { from: el.scrollLeft, to: left, until: performance.now() + 1000 };
+		el.scrollTo({ left, top, behavior: 'smooth' });
+	};
+	// Straight there, ending any glide.
+	const jumpTo = (left: number) => {
+		glide.current = null;
+		track.current?.scrollTo({ left });
+	};
 
 	// Put the middle day in the middle: gliding there within the week, at once when the week changed
 	// (its days have moved under the same scroll).
@@ -81,7 +95,9 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 		const sameWeek = shownWeek.current === week;
 		shownWeek.current = week;
 		const left = mainIndex * dayWidth();
-		if (Math.abs(el.scrollLeft - left) > 1) el.scrollTo({ left, behavior: sameWeek ? 'smooth' : 'auto' });
+		if (Math.abs(el.scrollLeft - left) <= 1) return;
+		if (sameWeek) glideTo(left);
+		else jumpTo(left);
 	}, [mainIndex, week]);
 
 	// Stay on the middle day when the screen changes size (the days change width).
@@ -90,14 +106,14 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 	useEffect(() => {
 		const el = track.current;
 		if (!el) return;
-		const observer = new ResizeObserver(() => el.scrollTo({ left: mainRef.current * dayWidth() }));
+		const observer = new ResizeObserver(() => jumpTo(mainRef.current * dayWidth()));
 		observer.observe(el);
 		return () => observer.disconnect();
 	}, []);
 
 	// Folding or opening the whole-day events changes the names' height; keep the middle day in the middle.
 	useLayoutEffect(() => {
-		track.current?.scrollTo({ left: mainRef.current * dayWidth() });
+		jumpTo(mainRef.current * dayWidth());
 	}, [expanded]);
 
 	// Opens with the time now (or 8 AM) a quarter of the way down, once the text-size setting has settled.
@@ -122,7 +138,7 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			if (!el || !line) return;
 			const middle = names + (el.clientHeight - names) / 2;
 			const top = el.scrollTop + line.getBoundingClientRect().top - el.getBoundingClientRect().top - middle;
-			el.scrollTo({ left: mainRef.current * dayWidth(), top, behavior: 'smooth' });
+			glideTo(mainRef.current * dayWidth(), top);
 		});
 		return () => cancelAnimationFrame(frame);
 	}, [todayAt]);
@@ -155,16 +171,22 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			t: number;
 			v: number;
 		} | null = null;
-		// Scrolling up and down (a finger's, with its glide after, or a wheel's), the days stay on the middle
-		// one: anything that moves them meanwhile is put back. Until the next touch, click or sideways wheel.
-		let holding = false;
+		// The days stay on the middle one: anything else that moves them (iOS puts them back to the first day
+		// while the hours scroll, with or without a finger on them) is put back at once. Only a finger's
+		// sideways swipe, and Sprig's own glide to a day, move them.
 		const hold = () => {
-			if (!holding) return;
+			if (d?.way === 'sideways') return;
 			const left = mainRef.current * dayWidth();
+			const g = glide.current;
+			if (g) {
+				const done = performance.now() > g.until || Math.abs(el.scrollLeft - g.to) <= 1;
+				if (done) glide.current = null;
+				const between = el.scrollLeft >= Math.min(g.from, g.to) - 1 && el.scrollLeft <= Math.max(g.from, g.to) + 1;
+				if (!done && between) return;
+			}
 			if (Math.abs(el.scrollLeft - left) > 1) el.scrollLeft = left;
 		};
-		const letGo = () => (holding = false);
-		const springBack = () => el.scrollTo({ left: mainRef.current * dayWidth(), behavior: 'smooth' });
+		const springBack = () => glideTo(mainRef.current * dayWidth());
 		const start = (e: TouchEvent) => {
 			if (e.touches.length !== 1) {
 				if (d?.way === 'sideways') springBack();
@@ -194,7 +216,6 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 				// Up and down (or iOS has already started scrolling): the browser's, and the days stay put.
 				if (Math.abs(dy) >= Math.abs(dx) || !e.cancelable) {
 					d.way = 'down';
-					holding = true;
 					return;
 				}
 				d.way = 'sideways';
@@ -223,8 +244,10 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			let steps = Math.round(Math.abs(dx) / w);
 			if (steps === 0 && (Math.abs(dx) > w * MOVE_ON || (flick && flick === Math.sign(dx)))) steps = 1;
 			const i = Math.min(keys.length - 1, Math.max(0, main - Math.sign(dx) * steps));
-			if (i === main) springBack();
-			else onMain(keys[i]);
+			if (i === main) return springBack();
+			// On from where the finger left it now, so nothing puts it back on the old day meanwhile.
+			glideTo(i * w);
+			onMain(keys[i]);
 		};
 		// The browser took the touch: back to the middle day, never on to another.
 		const cancel = () => {
@@ -236,11 +259,7 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 		let wheeled = 0;
 		let resting = false;
 		const wheel = (e: WheelEvent) => {
-			if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) {
-				holding = true;
-				return;
-			}
-			holding = false;
+			if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
 			e.preventDefault();
 			if (resting) return;
 			wheeled += e.deltaX;
@@ -258,12 +277,8 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 		el.addEventListener('touchcancel', cancel);
 		el.addEventListener('wheel', wheel, { passive: false });
 		el.addEventListener('scroll', hold, { passive: true });
-		window.addEventListener('touchstart', letGo, { capture: true, passive: true });
-		window.addEventListener('pointerdown', letGo, { capture: true });
 		return () => {
 			el.removeEventListener('scroll', hold);
-			window.removeEventListener('touchstart', letGo, { capture: true });
-			window.removeEventListener('pointerdown', letGo, { capture: true });
 			el.removeEventListener('touchstart', start);
 			el.removeEventListener('touchmove', move);
 			el.removeEventListener('touchend', end);
@@ -343,12 +358,7 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 						return (
 							<div
 								key={key}
-								className={[
-									s.name,
-									key === today && s.nameToday,
-									key < today && s.namePast,
-									i !== mainIndex && s.side,
-								]
+								className={[s.name, key === today && s.nameToday, key < today && s.namePast, i !== mainIndex && s.side]
 									.filter(Boolean)
 									.join(' ')}
 								onClick={() => {

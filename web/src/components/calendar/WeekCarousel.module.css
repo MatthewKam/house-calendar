@@ -84,7 +84,7 @@
 	min-height: 0;
 	display: flex;
 	background: var(--surface);
-	border-radius: var(--radius-xs);
+	border-radius: var(--radius-lg);
 	box-shadow: var(--shadow-md);
 	overflow: hidden;
 	/* The days' widths follow the frame's (container units below). */
