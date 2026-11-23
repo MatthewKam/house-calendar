@@ -11,6 +11,7 @@ import Sprout from '../ui/Sprout';
 import DayMeals from './DayMeals';
 import { HourName, TimedEvent } from './WeekTimeline';
 import t from './WeekTimeline.module.css';
+import { wheelSwipe } from '../../lib/wheelSwipe';
 import s from './WeekCarousel.module.css';
 
 /** Dots on a day's card, one per person with something that day, before the rest are left off. */
@@ -18,10 +19,6 @@ const MAX_DOTS = 5;
 /** How far (px) a finger goes before its swipe picks a way: up and down (the hours scroll) or sideways
  *  (the days move), and keeps to it until it lets go. Early, so iOS hasn't started scrolling yet. */
 const DECIDE = 8;
-/** How far a trackpad's sideways swipe goes (px) to move a day. */
-const WHEEL_STEP = 60;
-/** How long (ms) with no wheel before a trackpad's swipe counts as over, and the next can move a day. */
-const WHEEL_QUIET = 150;
 /** How far a day must be dragged (a share of its width) to move on to the next one. */
 const MOVE_ON = 0.3;
 /** A swipe this fast (px per ms) moves a day however short it is. */
@@ -265,26 +262,16 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			d = null;
 			if (was?.way === 'sideways') springBack();
 		};
-		// A trackpad's sideways swipe (or a mouse's sideways wheel): one day per swipe. A trackpad keeps
-		// sending the swipe's coasting for a second or more after the fingers lift, so once a day has moved,
-		// nothing more moves until the swipe has stopped (no wheel for WHEEL_QUIET ms).
-		let wheeled = 0;
-		let moved = false;
-		let quiet = 0;
+		// A trackpad's sideways swipe (or a mouse's sideways wheel): one day per swipe, however long it
+		// coasts, and quick swipes in a row a day each (lib/wheelSwipe.ts tells them apart).
+		const swipes = wheelSwipe();
 		const wheel = (e: WheelEvent) => {
-			window.clearTimeout(quiet);
-			quiet = window.setTimeout(() => {
-				moved = false;
-				wheeled = 0;
-			}, WHEEL_QUIET);
 			if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
 			e.preventDefault();
-			if (moved) return;
-			wheeled += e.deltaX;
-			if (Math.abs(wheeled) < WHEEL_STEP) return;
+			const step = swipes.push(e.deltaX, e.timeStamp);
+			if (!step) return;
 			const { keys, onMain } = latest.current;
-			const i = Math.min(keys.length - 1, Math.max(0, mainRef.current + Math.sign(wheeled)));
-			moved = true;
+			const i = Math.min(keys.length - 1, Math.max(0, mainRef.current + step));
 			if (i !== mainRef.current) onMain(keys[i]);
 		};
 		el.addEventListener('touchstart', start, { passive: true });
@@ -300,7 +287,6 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			el.removeEventListener('touchend', end);
 			el.removeEventListener('touchcancel', cancel);
 			el.removeEventListener('wheel', wheel);
-			window.clearTimeout(quiet);
 		};
 		// Once: the current main day, days and onMain come through refs.
 	}, []);
