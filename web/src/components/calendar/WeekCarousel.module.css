@@ -242,11 +242,6 @@
 .side {
 	cursor: pointer;
 }
-/* A day before the middle one peeks in from the left: its name sits at its right edge, so it shows
-   (its whole-day events keep the day's full width). */
-.before .title {
-	justify-content: flex-end;
-}
 /* A whole-day event under its day's name. */
 .allDay {
 	min-width: 0;

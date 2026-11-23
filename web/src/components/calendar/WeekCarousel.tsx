@@ -348,7 +348,6 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 									key === today && s.nameToday,
 									key < today && s.namePast,
 									i !== mainIndex && s.side,
-									i < mainIndex && s.before,
 								]
 									.filter(Boolean)
 									.join(' ')}
