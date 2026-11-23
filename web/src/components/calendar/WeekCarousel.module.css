@@ -70,19 +70,25 @@
 /* The day in the middle below. */
 .cardMain {
 	box-shadow:
-		inset 0 0 0 1px var(--accent),
+		inset 0 0 0 2px var(--accent),
 		var(--shadow-md);
 }
 .cardPast.cardMain {
-	box-shadow: inset 0 0 0 1px var(--accent);
+	box-shadow: inset 0 0 0 2px var(--accent);
 }
 /* Today: a green border with a thicker top, like today on the month (drawn inside, so the card keeps its
    size), selected or not. */
-.cardToday,
-.cardToday.cardMain {
+.cardToday {
 	box-shadow:
 		inset 0 3px 0 var(--accent),
 		inset 0 0 0 1px var(--accent),
+		var(--shadow-md);
+}
+/* Today, and the day in the middle: the middle day's thicker ring, with today's thicker top. */
+.cardToday.cardMain {
+	box-shadow:
+		inset 0 3px 0 var(--accent),
+		inset 0 0 0 2px var(--accent),
 		var(--shadow-md);
 }
 
