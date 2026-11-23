@@ -129,8 +129,36 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 						Have a code? Set up a kid's device or the wall
 					</Button>
 				)}
+				{!isApp && <GetTheApp />}
 			</div>
 		</main>
+	);
+}
+
+/** Sprig in the App Store (its Apple ID in App Store Connect). */
+const APP_STORE = 'https://apps.apple.com/app/id6835357587';
+
+/**
+ * The website's way to the App Store app: Apple's badge on an iPhone or iPad, and on a computer the badge
+ * with a QR code to scan with the phone. Not on Android, or inside the app.
+ */
+function GetTheApp() {
+	const ua = navigator.userAgent;
+	if (/Android/i.test(ua)) return null;
+	// iPadOS asks for the desktop site, so it says Macintosh; it's the one with a touch screen.
+	const apple = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+	return (
+		<div className={s.getApp}>
+			<a href={APP_STORE} target="_blank" rel="noopener noreferrer">
+				<img src="/app-store-badge.svg" alt="Download on the App Store" className={s.badge} />
+			</a>
+			{!apple && (
+				<>
+					<img src="/app-store-qr.svg" alt="" className={s.qr} />
+					<p className={s.hint}>Or scan with your iPhone's camera.</p>
+				</>
+			)}
+		</div>
 	);
 }
 

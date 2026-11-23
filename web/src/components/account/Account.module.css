@@ -99,6 +99,24 @@
 .inlineLink {
 	font-size: inherit;
 }
+/* The App Store app (SignIn.tsx GetTheApp): Apple's badge, and the QR code on a computer. */
+.getApp {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--space-3);
+	margin-top: var(--space-5);
+}
+.badge {
+	display: block;
+	height: 2.75rem; /* own: Apple's badge, at least 40px tall as their guidelines ask */
+}
+.qr {
+	width: 7rem; /* own: big enough for a phone's camera across a desk */
+	padding: var(--space-2);
+	border-radius: var(--radius-sm);
+	background: #fff; /* own: a QR code reads dark on white, in dark mode too */
+}
 .hint {
 	margin: 0;
 	color: var(--muted);
