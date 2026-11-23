@@ -66,12 +66,13 @@ export default function CalendarPage({
 			? monthName(view === 'month' ? cursor : days[0])
 			: `${monthName(days[0])} – ${monthName(days[6])}`;
 	const unit = view === 'month' ? 'month' : 'week';
-	// The week's dates; shorter on phones (Nov 22–28), where the month's name is just above.
+	// The week's dates; just the days on phones (22–28, or 29 – 5 into the next month), where the month's
+	// name is just above, so the switch, ‹ Today ›, the dates and the filter fit on one line.
 	const range = !phone
 		? `${fmt(days[0])} – ${fmt(days[6])}`
 		: days[0].getMonth() === days[6].getMonth()
-			? `${fmt(days[0])}–${days[6].getDate()}`
-			: `${fmt(days[0])}–${fmt(days[6])}`;
+			? `${days[0].getDate()}–${days[6].getDate()}`
+			: `${days[0].getDate()} – ${days[6].getDate()}`;
 
 	return (
 		<>
