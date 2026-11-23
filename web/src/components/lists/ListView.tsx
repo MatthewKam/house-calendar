@@ -412,7 +412,8 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 							))}
 						</div>
 					)}
-					{sortable(loose)}
+					{/* Items under no recipe (none when every item came from one: no empty list, no extra gap). */}
+					{loose.length > 0 && sortable(loose)}
 					{sections.map(({ name, items }) => {
 						const folded = folds.isFolded(name);
 						return (
