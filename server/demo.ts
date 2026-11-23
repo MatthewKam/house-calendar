@@ -74,7 +74,13 @@ export async function fillDemo(call: Call, alexId: string, zone: string) {
 		],
 	});
 	await timed('Dentist', 3, 9, 0, 30, [mia.id, alexId], { location: '450 Sutter St, San Francisco' });
-	await timed('Grandma visits', 4, 15, 0, 180, []);
+	// Whole days: Grandma staying over the weekend (one bar across the days), and a day at preschool.
+	await event({ title: 'Grandma staying with us', allDay: true, start: day(4), end: day(7), memberIds: [] });
+	await event({ title: 'Pajama day at preschool', allDay: true, start: day(1), end: day(2), memberIds: [mia.id] });
+	await event({ title: 'Recycling pickup', allDay: true, start: day(3), end: day(4), memberIds: [] });
+	await timed('Pick up Grandma at the airport', 4, 15, 0, 60, [alexId], {
+		location: 'San Francisco International Airport',
+	});
 	const party = await event({
 		title: "Noah's birthday party",
 		allDay: true,
@@ -237,6 +243,12 @@ export async function fillDemo(call: Call, alexId: string, zone: string) {
 	const groceries = lists.find((l) => l.title === 'Groceries')!;
 	for (const title of ['Milk', 'Bananas', 'Bread', 'Yogurt', 'Apples', 'Diapers']) {
 		await call('POST', `/api/lists/${groceries.id}/items`, { title });
+	}
+	// A second list, so each list's colour shows (on Lists, and Today's Needs you).
+	const all = await call<{ id: string; title: string }[]>('POST', '/api/lists', { title: 'Target' });
+	const target = all.find((l) => l.title === 'Target')!;
+	for (const title of ['Birthday card for Noah', 'Sunscreen', 'Batteries']) {
+		await call('POST', `/api/lists/${target.id}/items`, { title });
 	}
 	return today;
 }
