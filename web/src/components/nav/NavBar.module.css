@@ -169,8 +169,9 @@
 	margin: var(--space-2) 0;
 }
 
-/* A phone on its side: the same bar and More, down the left edge. */
-@media (orientation: landscape) and (max-height: 500px) {
+/* A phone on its side (or a short computer window): the same bar and More, down the left edge. */
+@media (orientation: landscape) and (max-height: 500px),
+	(orientation: landscape) and (pointer: fine) and (max-height: 649.98px) {
 	.bar {
 		order: 0;
 		height: 100%;

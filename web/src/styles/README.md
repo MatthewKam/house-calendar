@@ -150,12 +150,13 @@ What sits over what is named by role, bottom to top: `--layer-fab`, `--layer-nav
 
 ## Screen sizes
 
-The same seven everywhere, listed at the top of `app.css` and named in code in `lib/useMediaQuery.ts`:
+The same eight everywhere, listed at the top of `app.css` and named in code in `lib/useMediaQuery.ts`:
 
 | Name | Query |
 | --- | --- |
 | Phone | `(max-width: 700px)` |
 | Phone on its side | `(orientation: landscape) and (max-height: 500px)` |
+| Short desktop (a computer window under 650px tall: the phone-on-its-side bar, only for the nav) | `(orientation: landscape) and (pointer: fine) and (max-height: 649.98px)` |
 | Narrow | `(max-width: 959.98px)` |
 | Compact calendar (the condensed month, the week's days side by side) | `(max-width: 1039.98px)` |
 | Tablet | `(min-width: 744px) and (min-height: 600px)` |

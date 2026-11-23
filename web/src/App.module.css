@@ -43,8 +43,9 @@
 	}
 }
 
-/* ---- A phone on its side ---- */
-@media (orientation: landscape) and (max-height: 500px) {
+/* ---- A phone on its side (and a short computer window, which gets the same bar) ---- */
+@media (orientation: landscape) and (max-height: 500px),
+	(orientation: landscape) and (pointer: fine) and (max-height: 649.98px) {
 	/* The nav down the left and the page beside it, even on a small phone (under 700px wide, which
 	   would otherwise stack them and leave the page below the nav). */
 	.app {

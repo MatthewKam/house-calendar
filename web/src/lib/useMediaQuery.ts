@@ -6,6 +6,8 @@ import { useSyncExternalStore } from 'react';
 export const PHONE = '(max-width: 700px)';
 /** A phone on its side: too wide for PHONE, too short for the tablet bar. */
 export const PHONE_SIDEWAYS = '(orientation: landscape) and (max-height: 500px)';
+/** A short computer window (a mouse, under 650px tall): the phone-on-its-side bar down the left. */
+export const SHORT_DESKTOP = '(orientation: landscape) and (pointer: fine) and (max-height: 649.98px)';
 /** Phones and tablets upright: no room for the week's cards beside the calendar. */
 export const NARROW = '(max-width: 959.98px)';
 /** Below 1040px: the calendar's condensed month (bars for events) and its week of days side by side. */

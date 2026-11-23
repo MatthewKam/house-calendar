@@ -50,7 +50,7 @@ import { taskProgress } from './lib/tasks';
 import Celebration from './components/ui/Celebration';
 import Toast, { type ToastMessage } from './components/ui/Toast';
 import OfflineBar from './components/ui/OfflineBar';
-import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from './lib/useMediaQuery';
+import { PHONE, PHONE_SIDEWAYS, SHORT_DESKTOP, useMediaQuery } from './lib/useMediaQuery';
 import { useFlyerDrop } from './lib/useFlyerDrop';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import s from './App.module.css';
@@ -140,9 +140,11 @@ export default function App() {
 	// The month or week on screen, the day open in the panel, and moving between them.
 	const calendar = useCalendarView(today);
 	const { newEventDay } = calendar;
-	// The phone's bar (and its +): along the bottom, or down the left with the phone on its side.
+	// The phone's bar (and its +): along the bottom, or down the left with the phone on its side or in a
+	// short computer window.
 	const phone = useMediaQuery(PHONE);
-	const phoneBar = useMediaQuery(PHONE_SIDEWAYS) || phone;
+	const shortDesktop = useMediaQuery(SHORT_DESKTOP);
+	const phoneBar = useMediaQuery(PHONE_SIDEWAYS) || shortDesktop || phone;
 	// A removed person can't stay picked.
 	const stale = members.length > 0 ? focus.filter((f) => f !== EVERYONE && !members.some((m) => m.id === f)) : [];
 	if (stale.length) setFocus(focus.filter((f) => !stale.includes(f)));
