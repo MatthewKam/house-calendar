@@ -26,3 +26,23 @@ export const isDue = (due: string, now = new Date()) =>
 /** Late: a day before today, or a time already gone. */
 export const isLate = (due: string, now = new Date()) =>
 	isDay(due) ? due < dayKey(now) : Date.parse(due) < now.getTime();
+
+/** The colors a list can be (Lists, ListView.tsx's swatches). */
+export const LIST_COLORS = [
+	'#f2dcb3',
+	'#ecb0ea',
+	'#c9dcf7',
+	'#cdebd3',
+	'#ddd3f5',
+	'#f8cfb8',
+	'#f6e7a1',
+	'#c3ece4',
+	'#e4e4e4',
+];
+
+/**
+ * A list's color: the one picked for it (the listColors setting, by name), else the next in turn by its
+ * place among all the lists (Sprig's, then Reminders'), as Lists and Today both show it.
+ */
+export const listColor = (title: string, index: number, picked: Record<string, string> = {}) =>
+	picked[title.toLowerCase()] ?? LIST_COLORS[index % LIST_COLORS.length];

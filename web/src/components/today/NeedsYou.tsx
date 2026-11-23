@@ -1,7 +1,16 @@
+import type { CSSProperties } from 'react';
 import { useNow } from '../../lib/useNow';
-import { useAuthStatus, useLists, useMembers, useOutbox, useReminders, useRewardHistory } from '../../lib/queries';
+import {
+	useAuthStatus,
+	useLists,
+	useMembers,
+	useOutbox,
+	useReminders,
+	useRewardHistory,
+	useSettings,
+} from '../../lib/queries';
 import ColorAsked from '../account/ColorAsked';
-import { dueLabel, isDue, isLate } from '../../lib/lists';
+import { dueLabel, isDue, isLate, listColor } from '../../lib/lists';
 import type { Page } from '../nav/NavBar';
 import s from './Today.module.css';
 import { Card } from '../ui/Card';
@@ -27,10 +36,13 @@ export default function NeedsYou({
 	const due = own.flatMap((l) =>
 		l.items.filter((i) => !i.done && i.due && isDue(i.due, now) && (!me || !i.memberId || i.memberId === me)),
 	);
+	// Each list in its own color, as on Lists.
+	const picked = (useSettings().data?.listColors as Record<string, string> | undefined) ?? {};
 	const lists = [...own, ...(useReminders().data?.lists ?? [])]
-		.map((l) => ({
+		.map((l, i) => ({
 			title: l.title,
 			open: l.items.filter((i) => !i.done).length,
+			color: listColor(l.title, i, picked),
 		}))
 		.filter((l) => l.open > 0);
 	const clashes = outbox?.conflicts.length ?? 0;
@@ -79,7 +91,12 @@ export default function NeedsYou({
 				))}
 				{lists.map((l) => (
 					<li key={l.title}>
-						<button type="button" className={s.need} onClick={() => onPage('lists')}>
+						<button
+							type="button"
+							className={`${s.need} ${s.needList}`}
+							style={{ '--c': l.color } as CSSProperties}
+							onClick={() => onPage('lists')}
+						>
 							<span aria-hidden="true">📝</span>
 							{l.title}: {l.open} {l.open === 1 ? 'item' : 'items'}
 						</button>

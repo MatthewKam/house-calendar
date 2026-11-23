@@ -15,7 +15,7 @@ import {
 } from '../../lib/queries';
 import type { Member, ReminderList } from '../../lib/types';
 import { dayKey, hhmm, timeLabel, toInstant } from '../../lib/dates';
-import { dueLabel, isDay, isLate } from '../../lib/lists';
+import { dueLabel, isDay, isLate, LIST_COLORS, listColor } from '../../lib/lists';
 import { PickChip } from '../ui/NameChip';
 import DateInput from '../ui/DateInput';
 import { GROCERY_ICONS, splitIcon, suggestIcon } from '../../lib/emoji';
@@ -38,7 +38,6 @@ import { Field, Fieldset, Input } from '../ui/Field';
 import { List, ListRow } from '../ui/ListRow';
 
 /** Soft colors for a list's rows, light enough for dark text. */
-const LIST_COLORS = ['#f2dcb3', '#ecb0ea', '#c9dcf7', '#cdebd3', '#ddd3f5', '#f8cfb8', '#f6e7a1', '#c3ece4', '#e4e4e4'];
 
 /** An item's place in the saved order: its name without the icon, ignoring case. */
 const keyOf = (title: string) => splitIcon(title).text.trim().toLowerCase();
@@ -622,7 +621,7 @@ function Lists({ hidden, onNew }: { hidden: (title: string) => boolean; onNew?: 
 					me={me}
 					onShopping={(on) => shopping.mutate({ id: l.id, on })}
 					// Until one is picked, each list gets the next color in turn.
-					color={colors[l.title.toLowerCase()] ?? LIST_COLORS[all.indexOf(l) % LIST_COLORS.length]}
+					color={listColor(l.title, all.indexOf(l), colors)}
 					onColor={(c) => setSetting.mutate({ key: 'listColors', value: { ...colors, [l.title.toLowerCase()]: c } })}
 					order={orders[l.title.toLowerCase()] ?? []}
 					onReorder={(order) =>

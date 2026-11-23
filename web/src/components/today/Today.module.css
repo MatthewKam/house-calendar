@@ -421,6 +421,10 @@ details > summary.cardHead {
 }
 
 /* Needs you. */
+/* A list with things left: in the list's color (--c), as its items are on Lists. */
+.need.needList {
+	background: color-mix(in srgb, var(--c) var(--pastel), var(--surface));
+}
 .need {
 	width: 100%;
 	display: flex;
