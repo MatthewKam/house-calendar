@@ -112,19 +112,13 @@
 	display: grid;
 	grid-template-columns: var(--gutter) var(--pad) repeat(9, var(--day)) var(--pad);
 	grid-template-rows: auto auto;
-	overflow: auto;
-	overscroll-behavior-x: contain;
-	/* One day at a time, snapped to the middle of the room right of the hours. */
-	scroll-snap-type: x mandatory;
-	scroll-padding-left: var(--gutter);
+	/* The hours scroll up and down; the days move sideways only by WeekCarousel.tsx's hand (a swipe, a
+	   tap, the cards), so no snapping or sideways scroll of the browser's own fights a finger. */
+	overflow-x: hidden;
+	overflow-y: auto;
 	scrollbar-width: none;
-	/* A finger scrolls the hours only up and down, so a swipe that strays can't slide the days; a
-	   sideways swipe is WeekCarousel.tsx's own (it springs back unless it's meant). */
+	/* The browser may only scroll up and down; a sideways swipe is WeekCarousel.tsx's. */
 	touch-action: pan-y;
-}
-/* While a finger drags the days, they follow it freely; letting go glides to a day. */
-.dragging {
-	scroll-snap-type: none;
 }
 .track::-webkit-scrollbar {
 	display: none;
@@ -191,8 +185,6 @@
 	min-width: 0;
 	padding: var(--space-3) var(--space-3) var(--space-2);
 	border-left: 1px solid var(--line);
-	scroll-snap-align: center;
-	scroll-snap-stop: always;
 }
 .title {
 	display: flex;

@@ -16,8 +16,10 @@ import s from './WeekCarousel.module.css';
 /** Dots on a day's card, one per person with something that day, before the rest are left off. */
 const MAX_DOTS = 5;
 /** How far (px) a finger goes before its swipe picks a way: up and down (the hours scroll) or sideways
- *  (the days move), and keeps to it until it lets go. */
-const STICK = 12;
+ *  (the days move), and keeps to it until it lets go. Early, so iOS hasn't started scrolling yet. */
+const DECIDE = 8;
+/** How far a trackpad's sideways swipe goes (px) to move a day. */
+const WHEEL_STEP = 60;
 /** How far a day must be dragged (a share of its width) to move on to the next one. */
 const MOVE_ON = 0.3;
 /** A swipe this fast (px per ms) moves a day however short it is. */
@@ -93,8 +95,7 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 		return () => observer.disconnect();
 	}, []);
 
-	// Folding or opening the whole-day events changes the names' height, and the browser can snap to
-	// another day; keep the middle one in the middle.
+	// Folding or opening the whole-day events changes the names' height; keep the middle day in the middle.
 	useLayoutEffect(() => {
 		track.current?.scrollTo({ left: mainRef.current * dayWidth() });
 	}, [expanded]);
@@ -126,111 +127,131 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 		return () => cancelAnimationFrame(frame);
 	}, [todayAt]);
 
-	// After a swipe settles (snapped to a day), that day is the middle one.
-	const settle = useRef<number | undefined>(undefined);
 	// The hours scrolled under the days' names: a shadow under them.
 	const [scrolled, setScrolled] = useState(false);
-	const onScroll = () => {
-		setScrolled((track.current?.scrollTop ?? 0) > 0);
-		window.clearTimeout(settle.current);
-		settle.current = window.setTimeout(() => {
-			const el = track.current;
-			if (!el) return;
-			const i = Math.min(keys.length - 1, Math.max(0, Math.round(el.scrollLeft / dayWidth())));
-			if (keys[i] !== main) onMain(keys[i]);
-		}, 120);
-	};
-	useEffect(() => () => window.clearTimeout(settle.current), []);
+	const onScroll = () => setScrolled((track.current?.scrollTop ?? 0) > 0);
 
-	// A finger's swipe keeps to one way, picked when it has gone STICK px: mostly up or down, and only the
-	// hours scroll (the browser's own scroll; .track's touch-action lets it scroll no other way); mostly
-	// sideways, and only the days move, following the finger. Letting go moves on a day if it went
-	// MOVE_ON of one or was flicked (more, for a long drag), else springs back to the middle day. If the
-	// browser takes the touch over (pointercancel), the days spring back too.
-	const drag = useRef<{
-		id: number;
-		x: number;
-		y: number;
-		left: number;
-		/** The hours' scroll when it began: held there while the days move. */
-		top: number;
-		/** null until it's picked a way. */
-		way: 'sideways' | 'down' | null;
-		lastX: number;
-		t: number;
-		v: number;
-	} | null>(null);
+	// The days move sideways only by Sprig's own hand (.track doesn't scroll sideways by itself, and nothing
+	// snaps), so a swipe can't fight the browser. A finger's swipe keeps to one way, picked in its first
+	// DECIDE px: mostly up or down, and the browser scrolls the hours as usual; mostly sideways, and the days
+	// follow the finger while the hours are held (the touch's moves are cancelled, so iOS doesn't scroll
+	// them). Letting go moves on a day if it went MOVE_ON of one or was flicked (more, for a long drag),
+	// else springs back to the middle day; so does a touch the browser takes over. Touch events, not pointer
+	// events: only they can stop iOS's own scroll once a swipe turns out to be sideways.
 	const dragged = useRef(false);
-	const [dragging, setDragging] = useState(false);
-	const springBack = () => track.current?.scrollTo({ left: mainIndex * dayWidth(), behavior: 'smooth' });
-	const onPointerDown = (e: React.PointerEvent) => {
-		if (e.pointerType !== 'touch' || !track.current) return;
-		dragged.current = false;
-		drag.current = {
-			id: e.pointerId,
-			x: e.clientX,
-			y: e.clientY,
-			left: track.current.scrollLeft,
-			top: track.current.scrollTop,
-			way: null,
-			lastX: e.clientX,
-			t: e.timeStamp,
-			v: 0,
-		};
-	};
-	const onPointerMove = (e: React.PointerEvent) => {
-		const d = drag.current;
+	const latest = useRef({ keys, onMain });
+	latest.current = { keys, onMain };
+	useEffect(() => {
 		const el = track.current;
-		if (!d || !el || d.id !== e.pointerId || d.way === 'down') return;
-		const dx = e.clientX - d.x;
-		if (!d.way) {
-			const dy = e.clientY - d.y;
-			if (Math.hypot(dx, dy) < STICK) return;
-			// Up and down: leave it to the browser, and the days stay put.
-			if (Math.abs(dy) >= Math.abs(dx)) {
-				d.way = 'down';
+		if (!el) return;
+		let d: {
+			x: number;
+			y: number;
+			left: number;
+			top: number;
+			/** null until it's picked a way. */
+			way: 'sideways' | 'down' | null;
+			lastX: number;
+			t: number;
+			v: number;
+		} | null = null;
+		const springBack = () => el.scrollTo({ left: mainRef.current * dayWidth(), behavior: 'smooth' });
+		const start = (e: TouchEvent) => {
+			if (e.touches.length !== 1) {
+				if (d?.way === 'sideways') springBack();
+				d = null;
 				return;
 			}
-			d.way = 'sideways';
-			dragged.current = true;
-			el.setPointerCapture(e.pointerId);
-			setDragging(true);
-		}
-		// Speed (px per ms), smoothed, for a flick.
-		const dt = Math.max(1, e.timeStamp - d.t);
-		d.v = 0.6 * d.v + 0.4 * ((e.clientX - d.lastX) / dt);
-		d.lastX = e.clientX;
-		d.t = e.timeStamp;
-		el.scrollLeft = d.left - dx;
-		// Straight sideways: the hours don't drift up or down.
-		if (el.scrollTop !== d.top) el.scrollTop = d.top;
-	};
-	const onPointerUp = (e: React.PointerEvent) => {
-		const d = drag.current;
-		const el = track.current;
-		if (!d || d.id !== e.pointerId) return;
-		drag.current = null;
-		if (d.way !== 'sideways' || !el) return;
-		setDragging(false);
-		const w = dayWidth();
-		const dx = d.left - el.scrollLeft; // + is a swipe to the right (back a day)
-		// A flick goes the way the finger was moving at the end.
-		const flick = Math.abs(d.v) > FLICK ? Math.sign(d.v) : 0;
-		let steps = Math.round(Math.abs(dx) / w);
-		if (steps === 0 && (Math.abs(dx) > w * MOVE_ON || (flick && flick === Math.sign(dx)))) steps = 1;
-		const i = Math.min(keys.length - 1, Math.max(0, mainIndex - Math.sign(dx) * steps));
-		if (i === mainIndex) springBack();
-		else onMain(keys[i]);
-	};
-	// The browser took the touch (or it was lost): back to the middle day, never on to another.
-	const onPointerCancel = (e: React.PointerEvent) => {
-		const d = drag.current;
-		if (!d || d.id !== e.pointerId) return;
-		drag.current = null;
-		if (d.way !== 'sideways') return;
-		setDragging(false);
-		springBack();
-	};
+			const t = e.touches[0];
+			dragged.current = false;
+			d = {
+				x: t.clientX,
+				y: t.clientY,
+				left: el.scrollLeft,
+				top: el.scrollTop,
+				way: null,
+				lastX: t.clientX,
+				t: e.timeStamp,
+				v: 0,
+			};
+		};
+		const move = (e: TouchEvent) => {
+			if (!d || d.way === 'down') return;
+			const t = e.touches[0];
+			const dx = t.clientX - d.x;
+			if (!d.way) {
+				const dy = t.clientY - d.y;
+				if (Math.hypot(dx, dy) < DECIDE) return;
+				// Up and down (or iOS has already started scrolling): the browser's, and the days stay put.
+				if (Math.abs(dy) >= Math.abs(dx) || !e.cancelable) {
+					d.way = 'down';
+					return;
+				}
+				d.way = 'sideways';
+				dragged.current = true;
+			}
+			// Sideways: no scrolling up or down while the days move.
+			if (e.cancelable) e.preventDefault();
+			// Speed (px per ms), smoothed, for a flick.
+			const dt = Math.max(1, e.timeStamp - d.t);
+			d.v = 0.6 * d.v + 0.4 * ((t.clientX - d.lastX) / dt);
+			d.lastX = t.clientX;
+			d.t = e.timeStamp;
+			el.scrollLeft = d.left - dx;
+			if (el.scrollTop !== d.top) el.scrollTop = d.top;
+		};
+		const end = () => {
+			const was = d;
+			d = null;
+			if (was?.way !== 'sideways') return;
+			const { keys, onMain } = latest.current;
+			const w = dayWidth();
+			const main = mainRef.current;
+			const dx = was.left - el.scrollLeft; // + is a swipe to the right (back a day)
+			// A flick goes the way the finger was moving at the end.
+			const flick = Math.abs(was.v) > FLICK ? Math.sign(was.v) : 0;
+			let steps = Math.round(Math.abs(dx) / w);
+			if (steps === 0 && (Math.abs(dx) > w * MOVE_ON || (flick && flick === Math.sign(dx)))) steps = 1;
+			const i = Math.min(keys.length - 1, Math.max(0, main - Math.sign(dx) * steps));
+			if (i === main) springBack();
+			else onMain(keys[i]);
+		};
+		// The browser took the touch: back to the middle day, never on to another.
+		const cancel = () => {
+			const was = d;
+			d = null;
+			if (was?.way === 'sideways') springBack();
+		};
+		// A trackpad's sideways swipe (or a mouse's sideways wheel): a day at a time.
+		let wheeled = 0;
+		let resting = false;
+		const wheel = (e: WheelEvent) => {
+			if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+			e.preventDefault();
+			if (resting) return;
+			wheeled += e.deltaX;
+			if (Math.abs(wheeled) < WHEEL_STEP) return;
+			const { keys, onMain } = latest.current;
+			const i = Math.min(keys.length - 1, Math.max(0, mainRef.current + Math.sign(wheeled)));
+			wheeled = 0;
+			resting = true;
+			window.setTimeout(() => (resting = false), 450);
+			if (i !== mainRef.current) onMain(keys[i]);
+		};
+		el.addEventListener('touchstart', start, { passive: true });
+		el.addEventListener('touchmove', move, { passive: false });
+		el.addEventListener('touchend', end);
+		el.addEventListener('touchcancel', cancel);
+		el.addEventListener('wheel', wheel, { passive: false });
+		return () => {
+			el.removeEventListener('touchstart', start);
+			el.removeEventListener('touchmove', move);
+			el.removeEventListener('touchend', end);
+			el.removeEventListener('touchcancel', cancel);
+			el.removeEventListener('wheel', wheel);
+		};
+		// Once: the current main day, days and onMain come through refs.
+	}, []);
 
 	return (
 		<div className={s.carousel}>
@@ -274,12 +295,8 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 				<Sprout className={s.logo} />
 				<div
 					ref={track}
-					className={`${s.track} ${dragging ? s.dragging : ''} ${scrolled ? s.scrolled : ''}`}
+					className={`${s.track} ${scrolled ? s.scrolled : ''}`}
 					onScroll={onScroll}
-					onPointerDown={onPointerDown}
-					onPointerMove={onPointerMove}
-					onPointerUp={onPointerUp}
-					onPointerCancel={onPointerCancel}
 					// A swipe isn't a tap on what it started on.
 					onClickCapture={(e) => {
 						if (!dragged.current) return;
