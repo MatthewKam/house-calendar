@@ -347,7 +347,7 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 	}
 
 	return (
-		<section className={s.card} ref={card}>
+		<section className={`${s.card} ${listFolded ? s.cardFolded : ''}`} ref={card}>
 			<header className={s.head}>
 				<button
 					className={s.colorDot}

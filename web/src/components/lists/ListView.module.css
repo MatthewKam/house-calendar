@@ -45,6 +45,10 @@
 	flex-direction: column;
 	gap: var(--space-3);
 }
+/* Folded: just its header, not stretched to the height of the lists beside it. */
+.cardFolded {
+	align-self: start;
+}
 .head {
 	display: flex;
 	align-items: baseline;
@@ -80,6 +84,10 @@
 	rotate: 45deg;
 	translate: 0 -0.15rem;
 	transition: rotate 0.2s;
+}
+.titleButton:focus-visible {
+	outline-offset: var(--space-1);
+	border-radius: var(--radius-xs);
 }
 .titleButton[aria-expanded='false']::after {
 	rotate: -45deg;
