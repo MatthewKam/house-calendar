@@ -35,7 +35,19 @@ public class FaceIdPinPlugin: CAPPlugin, CAPBridgedPlugin {
         let ready = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
         // Known after asking, even when nothing's enrolled yet.
         let kind = context.biometryType == .faceID ? "faceID" : context.biometryType == .touchID ? "touchID" : "none"
-        call.resolve(["kind": kind, "ready": ready])
+        // Why it isn't ready: no face enrolled, turned off for Sprig (or not available), locked out after
+        // too many tries, or no passcode on the device.
+        var why = ""
+        if let code = error.map({ LAError.Code(rawValue: $0.code) }) {
+            switch code {
+            case .biometryNotEnrolled: why = "notEnrolled"
+            case .biometryNotAvailable: why = "notAllowed"
+            case .biometryLockout: why = "lockedOut"
+            case .passcodeNotSet: why = "noPasscode"
+            default: why = "other \(error?.code ?? 0)"
+            }
+        }
+        call.resolve(["kind": kind, "ready": ready, "why": why])
     }
 
     /// Whether a PIN is saved for `account`, without asking for Face ID.

@@ -21,19 +21,21 @@ export function useFaceIdPin() {
 		refetchOnMount: 'always',
 		refetchOnWindowFocus: 'always',
 		queryFn: async () => {
-			const { kind, ready } = await biometry();
-			return { kind, ready, saved: ready && !!me && (await hasFacePin(me)) };
+			const { kind, ready, why } = await biometry();
+			return { kind, ready, why: why ?? '', saved: ready && !!me && (await hasFacePin(me)) };
 		},
 	});
 	const kind = (me && state.data?.kind) || 'none';
 	const ready = kind !== 'none' && !!state.data?.ready;
 	const saved = ready && !!state.data?.saved;
-	const set = (on: boolean) => qc.setQueryData(key, { kind, ready, saved: on });
+	const set = (on: boolean) => qc.setQueryData(key, { ...state.data, kind, ready, saved: on });
 	return {
 		/** Face ID, Touch ID, or none (the website, a device with neither, or not this grown-up's own). */
 		kind,
 		/** Set up with a face enrolled, and allowed for Sprig. */
 		ready,
+		/** When it isn't: notEnrolled, notAllowed, lockedOut or noPasscode (iOS's reason). */
+		why: state.data?.why ?? '',
 		/** "Face ID" or "Touch ID". */
 		name: biometryName(kind),
 		saved,

@@ -440,10 +440,16 @@ function FaceIdInstead() {
 	});
 	if (face.kind === 'none') return null;
 	if (!face.ready) {
+		const fix: Record<string, string> = {
+			notEnrolled: `set up ${face.name} in this device's Settings → ${face.name} & Passcode`,
+			notAllowed: `allow it for Sprig in this device's Settings → Sprig → ${face.name}`,
+			lockedOut: `unlock this device with its passcode once (${face.name} is locked after too many tries)`,
+			noPasscode: `set a passcode in this device's Settings → ${face.name} & Passcode`,
+		};
 		return (
 			<p className={s.hint}>
-				{face.name} could stand in for your PIN here, once it's set up in this device's Settings ({face.name} &amp;
-				Passcode) and allowed for Sprig.
+				{face.name} can stand in for your PIN here: {fix[face.why] ?? `check ${face.name} in this device's Settings`},
+				then come back.
 			</p>
 		);
 	}
