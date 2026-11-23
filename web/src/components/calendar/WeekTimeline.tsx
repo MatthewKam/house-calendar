@@ -86,8 +86,8 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 		<div className={s.week}>
 			{/* The days' names: today's number in the accent, the one open in the panel ringed. */}
 			<div className={s.head}>
-				{/* Sprig's sprout in the corner cut out above "all-day". */}
-				<img src="/favicon.svg" alt="" className={s.logo} />
+				{/* Sprig's sprout in the corner above "all-day". */}
+				<img src="/sprout.svg" alt="" className={s.logo} />
 				{days.map((day) => {
 					const key = dayKey(day);
 					return (
