@@ -60,8 +60,10 @@
 }
 .viewKnob {
 	flex: none;
-	width: 1.9rem; /* own: a switch's knob, a little smaller than the button is tall */
-	height: 1.9rem;
+	/* As tall as the switch, less the same gap as at its side. */
+	--knob: calc(var(--tap) - 2 * var(--space-1));
+	width: var(--knob);
+	height: var(--knob);
 	border-radius: var(--radius-round);
 	background: #fff; /* own: the knob is white in light and dark, like ui/Switch's */
 	box-shadow: 0 1px 3px rgb(0 0 0 / 0.25); /* own: a switch knob, as iOS draws it */
@@ -181,6 +183,10 @@
 	.monthTitle {
 		margin: 0;
 		font-size: 1.4rem;
+	}
+	/* The slimmer switch's knob. */
+	.viewKnob {
+		--knob: calc(2.2rem - 2 * var(--space-1));
 	}
 	.pill,
 	.viewSwitch {
