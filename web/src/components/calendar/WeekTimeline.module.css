@@ -3,7 +3,7 @@
 .week {
 	--gutter: 3.6rem;
 	--hour: 3.2rem;
-	--bar: 1.9rem;
+	--bar-height: 1.9rem;
 	/* As wide as the page, and as tall as what's in it (it ends at midnight's line): not stretched to the
 	   page's height, but no taller than it either (the hours then scroll). */
 	flex: 1;
@@ -142,7 +142,7 @@
 	align-items: center;
 	min-width: 0;
 	min-height: 0;
-	height: var(--bar);
+	height: var(--bar-height);
 	margin: 0 var(--space-1);
 	padding: 0 var(--space-3) 0 var(--space-4);
 	border-radius: var(--radius-xs);

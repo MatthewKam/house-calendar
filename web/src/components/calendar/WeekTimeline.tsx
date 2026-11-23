@@ -103,7 +103,7 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 			{/* Whole days: a bar over every day an event covers, then each day's meals. */}
 			{/* Bar rows are the bars' own height, so they stack tight on every day; a day's meals run from under its
 			    bars into the last row, which grows for the tallest. */}
-			<div className={s.strip} style={{ gridTemplateRows: rows ? `repeat(${rows}, var(--bar)) auto` : 'auto' }}>
+			<div className={s.strip} style={{ gridTemplateRows: rows ? `repeat(${rows}, var(--bar-height)) auto` : 'auto' }}>
 				{/* Today's column, outlined in the accent like its name above and its hours below. */}
 				{todayCol >= 0 && <span className={s.stripToday} style={{ gridColumn: todayCol + 2 }} aria-hidden="true" />}
 				{/* Days that are over, tinted in the strip like their names and hours. */}
