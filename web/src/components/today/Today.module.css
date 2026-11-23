@@ -71,13 +71,13 @@
 @media (max-width: 700px), (orientation: landscape) and (max-height: 500px) {
 	.page {
 		gap: 0;
+		/* The page's edges (App.module.css's .shell padding: wider on a bigger phone on its side, and room
+		   for the notch on the right): the header and the cards' scroll reach out to them. */
+		--side: var(--space-6);
 	}
 	.head {
 		position: relative;
 		z-index: 1;
-		/* Out to the page's edges (App.module.css's .shell padding: wider on a bigger phone on its side,
-		   and room for the notch on the right). */
-		--side: var(--space-6);
 		margin-left: calc(-1 * var(--side));
 		margin-right: calc(-1 * max(var(--side), var(--inset-right)));
 		width: auto;
@@ -94,8 +94,11 @@
 			max-height 0.2s ease,
 			opacity 0.2s ease;
 	}
+	/* Out to the edges too, with the cards padded back in, so their shadows aren't cut off at the sides. */
 	.scroll {
-		padding-top: var(--space-3);
+		margin-left: calc(-1 * var(--side));
+		margin-right: calc(-1 * max(var(--side), var(--inset-right)));
+		padding: var(--space-3) max(var(--side), var(--inset-right)) var(--space-5) var(--side);
 	}
 	/* Scrolled: thinner (the date, time and weather only), with a shadow along its bottom. */
 	.scrolled {
@@ -127,7 +130,7 @@
 	}
 }
 @media (max-width: 700px) {
-	.head {
+	.page {
 		--side: var(--space-4);
 	}
 }
