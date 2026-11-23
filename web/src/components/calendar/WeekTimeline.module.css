@@ -45,6 +45,8 @@
 	display: grid;
 	grid-template-columns: repeat(7, minmax(0, 1fr));
 	padding-left: var(--gutter);
+	/* The line under the dates runs on under the logo, over "all-day". */
+	background: linear-gradient(var(--line), var(--line)) 0 100% / var(--gutter) 1px no-repeat;
 }
 /* Sprig's sprout, in the middle of the corner beside the names. */
 .logo {
