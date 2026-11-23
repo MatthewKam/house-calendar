@@ -195,20 +195,20 @@ export const stopPhoneCalendars = () => PhoneCalendars.stop();
 // sheets can ask for a face instead (useFaceIdPin.ts). The server still checks the PIN.
 export type Biometry = 'faceID' | 'touchID' | 'none';
 const FaceIdPin = registerPlugin<{
-	kind(): Promise<{ kind: Biometry }>;
+	kind(): Promise<{ kind: Biometry; ready: boolean }>;
 	has(o: { account: string }): Promise<{ has: boolean }>;
 	save(o: { account: string; pin: string }): Promise<void>;
 	read(o: { account: string; reason: string }): Promise<{ pin: string }>;
 	remove(o: { account: string }): Promise<void>;
 }>('FaceIdPin');
 
-/** Face ID, Touch ID or none on this device (none on the website, or with neither set up). */
-export async function biometry(): Promise<Biometry> {
-	if (!isApp) return 'none';
+/** Face ID, Touch ID or none on this device (none on the website), and whether it's set up and allowed. */
+export async function biometry(): Promise<{ kind: Biometry; ready: boolean }> {
+	if (!isApp) return { kind: 'none', ready: false };
 	try {
-		return (await FaceIdPin.kind()).kind;
+		return await FaceIdPin.kind();
 	} catch {
-		return 'none';
+		return { kind: 'none', ready: false };
 	}
 }
 /** What to call it: "Face ID" or "Touch ID". */

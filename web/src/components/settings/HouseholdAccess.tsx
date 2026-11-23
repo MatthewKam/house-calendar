@@ -439,6 +439,14 @@ function FaceIdInstead() {
 		},
 	});
 	if (face.kind === 'none') return null;
+	if (!face.ready) {
+		return (
+			<p className={s.hint}>
+				{face.name} could stand in for your PIN here, once it's set up in this device's Settings ({face.name} &amp;
+				Passcode) and allowed for Sprig.
+			</p>
+		);
+	}
 	const title = `Use ${face.name} instead of my PIN`;
 	return (
 		<SwitchRow

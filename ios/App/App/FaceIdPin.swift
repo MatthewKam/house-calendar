@@ -27,18 +27,15 @@ public class FaceIdPinPlugin: CAPPlugin, CAPBridgedPlugin {
         [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: account]
     }
 
-    /// faceID, touchID, or none (no Face ID on this device, or none set up).
+    /// faceID, touchID, or none (this device has neither), and whether it's ready: set up, with a face (or
+    /// finger) enrolled, and allowed for Sprig.
     @objc func kind(_ call: CAPPluginCall) {
         let context = LAContext()
         var error: NSError?
-        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
-            return call.resolve(["kind": "none"])
-        }
-        switch context.biometryType {
-        case .faceID: call.resolve(["kind": "faceID"])
-        case .touchID: call.resolve(["kind": "touchID"])
-        default: call.resolve(["kind": "none"])
-        }
+        let ready = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
+        // Known after asking, even when nothing's enrolled yet.
+        let kind = context.biometryType == .faceID ? "faceID" : context.biometryType == .touchID ? "touchID" : "none"
+        call.resolve(["kind": kind, "ready": ready])
     }
 
     /// Whether a PIN is saved for `account`, without asking for Face ID.

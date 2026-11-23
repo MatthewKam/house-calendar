@@ -16,17 +16,24 @@ export function useFaceIdPin() {
 	const state = useQuery({
 		queryKey: key,
 		enabled: !!me,
-		staleTime: Infinity,
+		// Asked again whenever it's shown and when Sprig comes back: Face ID may have been set up (or turned
+		// off for Sprig) in the iPhone's Settings meanwhile.
+		refetchOnMount: 'always',
+		refetchOnWindowFocus: 'always',
 		queryFn: async () => {
-			const kind = await biometry();
-			return { kind, saved: kind !== 'none' && !!me && (await hasFacePin(me)) };
+			const { kind, ready } = await biometry();
+			return { kind, ready, saved: ready && !!me && (await hasFacePin(me)) };
 		},
 	});
 	const kind = (me && state.data?.kind) || 'none';
-	const saved = kind !== 'none' && !!state.data?.saved;
-	const set = (on: boolean) => qc.setQueryData(key, { kind, saved: on });
+	const ready = kind !== 'none' && !!state.data?.ready;
+	const saved = ready && !!state.data?.saved;
+	const set = (on: boolean) => qc.setQueryData(key, { kind, ready, saved: on });
 	return {
+		/** Face ID, Touch ID, or none (the website, a device with neither, or not this grown-up's own). */
 		kind,
+		/** Set up with a face enrolled, and allowed for Sprig. */
+		ready,
 		/** "Face ID" or "Touch ID". */
 		name: biometryName(kind),
 		saved,
