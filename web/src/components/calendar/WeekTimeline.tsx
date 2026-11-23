@@ -2,6 +2,7 @@ import { useEffect, useRef, type CSSProperties } from 'react';
 import { dayKey, timeLabel } from '../../lib/dates';
 import { eventPaint, isOver } from '../../lib/events';
 import { inStrip, placeDay, weekBars, type Placed } from '../../lib/timegrid';
+import { useAllDayFolded } from '../../lib/useFolded';
 import { useNow } from '../../lib/useNow';
 import type { CalEvent, Member } from '../../lib/types';
 import DayMeals from './DayMeals';
@@ -39,6 +40,8 @@ export function HourName({ h }: { h: number }) {
  */
 export default function WeekTimeline({ days, today, selected, events, members, onSelect, onOpen, todayAt = 0 }: Props) {
 	const now = useNow();
+	// The whole-day events can fold to a thin bar each (meals hidden), for a week with a lot of them.
+	const [folded, setFolded] = useAllDayFolded();
 	const bars = weekBars(events, days);
 	const rows = bars.reduce((n, b) => Math.max(n, b.row + 1), 0);
 	// Each day is a list: its bars, then its meals right under them (not under the week's tallest stack).
@@ -103,7 +106,16 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 			{/* Whole days: a bar over every day an event covers, then each day's meals. */}
 			{/* Bar rows are the bars' own height, so they stack tight on every day; a day's meals run from under its
 			    bars into the last row, which grows for the tallest. */}
-			<div className={s.strip} style={{ gridTemplateRows: rows ? `repeat(${rows}, var(--bar-height)) auto` : 'auto' }}>
+			{/* Folded: a thin bar each, still over the days it covers; tapping anywhere opens them again. */}
+			<div
+				className={`${s.strip} ${folded ? s.stripFolded : ''}`}
+				style={{
+					gridTemplateRows: rows
+						? `repeat(${rows}, ${folded ? 'var(--bar-folded)' : 'var(--bar-height)'}) auto`
+						: 'auto',
+				}}
+				onClick={folded ? () => setFolded(false) : undefined}
+			>
 				{/* Today's column, outlined in the accent like its name above and its hours below. */}
 				{todayCol >= 0 && <span className={s.stripToday} style={{ gridColumn: todayCol + 2 }} aria-hidden="true" />}
 				{/* Days that are over, tinted in the strip like their names and hours. */}
@@ -112,9 +124,31 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 						<span key={dayKey(day)} className={s.stripPast} style={{ gridColumn: i + 2 }} aria-hidden="true" />
 					) : null,
 				)}
-				<span className={s.stripLabel}>all-day</span>
+				<button
+					type="button"
+					className={s.stripLabel}
+					aria-expanded={!folded}
+					aria-label={folded ? 'Show all-day events' : 'Fold all-day events'}
+					onClick={(e) => {
+						e.stopPropagation();
+						setFolded(!folded);
+					}}
+				>
+					all-day
+					<span aria-hidden="true">{folded ? '▾' : '▴'}</span>
+				</button>
 				{bars.map((b) => {
 					const paint = eventPaint(b.ev, members);
+					if (folded)
+						return (
+							<span
+								key={b.ev.id}
+								className={`${s.foldedBar} ${isOver(b.ev, now) ? s.past : ''}`}
+								style={
+									{ ...paint.vars, gridColumn: `${b.from + 2} / ${b.to + 2}`, gridRow: b.row + 1 } as CSSProperties
+								}
+							/>
+						);
 					return (
 						<button
 							key={b.ev.id}
@@ -145,11 +179,12 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 						</button>
 					);
 				})}
-				{days.map((day, i) => (
-					<div key={dayKey(day)} className={s.meals} style={{ gridColumn: i + 2, gridRow: `${barsOn(i) + 1} / -1` }}>
-						<DayMeals day={dayKey(day)} />
-					</div>
-				))}
+				{!folded &&
+					days.map((day, i) => (
+						<div key={dayKey(day)} className={s.meals} style={{ gridColumn: i + 2, gridRow: `${barsOn(i) + 1} / -1` }}>
+							<DayMeals day={dayKey(day)} />
+						</div>
+					))}
 			</div>
 
 			<div ref={scroller} className={s.scroll}>

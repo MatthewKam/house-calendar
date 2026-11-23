@@ -4,6 +4,7 @@ import { eventPaint, eventsOn, isOver } from '../../lib/events';
 import { UNASSIGNED } from '../../lib/color';
 import { inStrip, placeDay } from '../../lib/timegrid';
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
+import { useAllDayFolded } from '../../lib/useFolded';
 import { useNow } from '../../lib/useNow';
 import type { CalEvent, Member } from '../../lib/types';
 import DayMeals from './DayMeals';
@@ -44,11 +45,15 @@ interface Props {
 export default function WeekCarousel({ days, today, main, events, members, onMain, onOpen, todayAt = 0 }: Props) {
 	const now = useNow();
 	const phone = useMediaQuery(PHONE);
-	// Phones (upright or on their side): whole-day events fold to a thin bar each (meals hidden) under the days' names, to leave room
-	// for the hours; the corner button opens them all.
-	const foldable = useMediaQuery(PHONE_SIDEWAYS) || phone;
-	const [expanded, setExpanded] = useState(false);
-	const folded = foldable && !expanded;
+	// Whole-day events fold to a thin bar each (meals hidden) under the days' names; the corner button opens
+	// or folds them all. Phones (upright or on their side) start folded each time, to leave room for the
+	// hours; bigger screens keep what was picked last (shared with the wide week).
+	const small = useMediaQuery(PHONE_SIDEWAYS) || phone;
+	const [phoneOpen, setPhoneOpen] = useState(false);
+	const [keptFolded, setKeptFolded] = useAllDayFolded();
+	const expanded = small ? phoneOpen : !keptFolded;
+	const setExpanded = (open: boolean) => (small ? setPhoneOpen(open) : setKeptFolded(!open));
+	const folded = !expanded;
 	// The week with a day either side, so the first and last days can sit in the middle too.
 	const all = useMemo(() => [addDays(days[0], -1), ...days, addDays(days[6], 1)], [days]);
 	const keys = all.map(dayKey);
@@ -249,20 +254,16 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 				>
 					{/* Row 1: the days' names, with their whole-day events and meals; they stay at the top. */}
 					<span className={s.corner}>
-						{foldable ? (
-							<button
-								type="button"
-								className={s.fold}
-								aria-expanded={expanded}
-								aria-label={expanded ? 'Fold all-day events' : 'Show all-day events'}
-								onClick={() => setExpanded(!expanded)}
-							>
-								<span className={s.allDayLabel}>all-day</span>
-								<span aria-hidden="true">{expanded ? '▴' : '▾'}</span>
-							</button>
-						) : (
+						<button
+							type="button"
+							className={s.fold}
+							aria-expanded={expanded}
+							aria-label={expanded ? 'Fold all-day events' : 'Show all-day events'}
+							onClick={() => setExpanded(!expanded)}
+						>
 							<span className={s.allDayLabel}>all-day</span>
-						)}
+							<span aria-hidden="true">{expanded ? '▴' : '▾'}</span>
+						</button>
 					</span>
 					<span className={s.pad} />
 					{all.map((day, i) => {
@@ -282,7 +283,7 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 								onClick={() => {
 									if (i !== mainIndex) onMain(key);
 									// Open on a phone: tapping the middle day's names (not an event) folds them again.
-									else if (foldable && expanded) setExpanded(false);
+									else if (small && expanded) setExpanded(false);
 								}}
 							>
 								<h3 className={s.title}>

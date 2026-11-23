@@ -25,3 +25,10 @@ export function useFolded(storageKey: string) {
 	};
 	return { isFolded: (id: string) => folded.includes(id), fold };
 }
+
+/** The week's whole-day events folded to thin bars, or open: kept on this device (the wide week and the
+ *  tablet carousel share it; phones always start folded). */
+export function useAllDayFolded() {
+	const folds = useFolded('sprig:week-all-day-folded');
+	return [folds.isFolded('week'), (on: boolean) => folds.fold(['week'], on)] as const;
+}
