@@ -349,34 +349,37 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 	return (
 		<section className={`${s.card} ${listFolded ? s.cardFolded : ''}`} ref={card}>
 			<header className={s.head}>
-				<button
-					className={s.colorDot}
-					style={{ background: color }}
-					aria-expanded={choosingColor}
-					disabled={!parent}
-					onClick={() => setChoosingColor(!choosingColor)}
-					aria-label={`Color for ${list.title}`}
-					title="Change the color"
-				/>
-				<h2 className={s.title}>
+				{/* The dot, name and ⋯ stay together; Shopping together goes under them when a long name needs the room. */}
+				<div className={s.titleRow}>
 					<button
-						className={s.titleButton}
-						aria-expanded={!listFolded}
-						title={listFolded ? `Open ${list.title}` : `Fold ${list.title}`}
-						onClick={() => listFolds.fold([list.id], !listFolded)}
-					>
-						{list.title}
-						{listFolded && <span className={s.titleCount}>{open.length}</span>}
-					</button>
-				</h2>
-				{sprig && parent && (
-					<IconButton
-						icon="⋯"
-						label={`Change ${list.title}`}
-						title="Rename or delete"
-						onClick={() => setSettingUp(true)}
+						className={s.colorDot}
+						style={{ background: color }}
+						aria-expanded={choosingColor}
+						disabled={!parent}
+						onClick={() => setChoosingColor(!choosingColor)}
+						aria-label={`Color for ${list.title}`}
+						title="Change the color"
 					/>
-				)}
+					<h2 className={s.title}>
+						<button
+							className={s.titleButton}
+							aria-expanded={!listFolded}
+							title={listFolded ? `Open ${list.title}` : `Fold ${list.title}`}
+							onClick={() => listFolds.fold([list.id], !listFolded)}
+						>
+							{list.title}
+							{listFolded && <span className={s.titleCount}>{open.length}</span>}
+						</button>
+					</h2>
+					{sprig && parent && (
+						<IconButton
+							icon="⋯"
+							label={`Change ${list.title}`}
+							title="Rename or delete"
+							onClick={() => setSettingUp(true)}
+						/>
+					)}
+				</div>
 				{sprig && <ShoppingButton shopping={list.shopping} me={me} members={members} onChange={onShopping} />}
 				{last && (
 					<span className={s.synced} title={list.syncedBy.map((d) => `${d.device}: ${ago(d.at)}`).join('\n')}>

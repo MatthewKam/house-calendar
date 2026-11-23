@@ -49,13 +49,25 @@
 .cardFolded {
 	align-self: start;
 }
+/* The list's header: the dot, name and ⋯ on one line, then Shopping together (or when it last synced)
+   beside them when there's room, or on a line of its own under a long name. */
 .head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2) var(--space-3);
+}
+.titleRow {
+	/* As wide as the name in one line; past that, the next button wraps and the name wraps in here. */
+	flex: 1 1 auto;
+	min-width: 0;
 	display: flex;
 	align-items: baseline;
 	gap: var(--space-3);
 }
-.head .title {
+.titleRow .title {
 	flex: 1;
+	min-width: 0;
 }
 .title {
 	margin: 0;
