@@ -9,7 +9,14 @@ export default defineConfig(({ mode }) => {
 		root: 'web',
 		plugins: [react()],
 		// Tailscale addresses (*.ts.net) are allowed, so phones away from home can open it too.
-		server: { port: 5173, host, allowedHosts: ['.ts.net'], proxy: { '/api': 'http://127.0.0.1:3000' } },
+		// The server sees the page's own address (not 127.0.0.1:3000), so the links it makes, like Google's
+		// return address (http://localhost:5173/api/account/google/callback), point back at this page.
+		server: {
+			port: 5173,
+			host,
+			allowedHosts: ['.ts.net'],
+			proxy: { '/api': { target: 'http://127.0.0.1:3000', changeOrigin: false } },
+		},
 		build: { outDir: 'dist', emptyOutDir: true },
 		test: { root: '.', include: ['server/**/*.test.ts', 'web/src/**/*.test.ts'], env: { NODE_ENV: 'test' } },
 	} as any;
