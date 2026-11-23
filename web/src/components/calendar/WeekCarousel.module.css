@@ -76,6 +76,15 @@
 .cardPast.cardMain {
 	box-shadow: inset 0 0 0 1px var(--accent);
 }
+/* Today: a green border with a thicker top, like today on the month (drawn inside, so the card keeps its
+   size), selected or not. */
+.cardToday,
+.cardToday.cardMain {
+	box-shadow:
+		inset 0 3px 0 var(--accent),
+		inset 0 0 0 1px var(--accent),
+		var(--shadow-md);
+}
 
 /* ---- The days by the hour ---- */
 .frame {
