@@ -49,7 +49,7 @@
 .cardFolded {
 	align-self: start;
 }
-/* The list's header: the dot, name and ⋯ on one line, then Shopping together (or when it last synced)
+/* The list's header: the dot, name and ⋯ on one line, then when it last synced (Reminders lists)
    beside them when there's room, or on a line of its own under a long name. */
 .head {
 	display: flex;
@@ -68,6 +68,10 @@
 .titleRow .title {
 	flex: 1;
 	min-width: 0;
+}
+/* Shopping together: on a line of its own under the list's name (hidden while the list is folded). */
+.shopping {
+	display: flex;
 }
 .title {
 	margin: 0;

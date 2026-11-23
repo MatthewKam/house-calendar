@@ -349,7 +349,7 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 	return (
 		<section className={`${s.card} ${listFolded ? s.cardFolded : ''}`} ref={card}>
 			<header className={s.head}>
-				{/* The dot, name and ⋯ stay together; Shopping together goes under them when a long name needs the room. */}
+				{/* The dot, name and ⋯ stay together; when it last synced goes under them if a long name needs the room. */}
 				<div className={s.titleRow}>
 					<button
 						className={s.colorDot}
@@ -380,7 +380,6 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 						/>
 					)}
 				</div>
-				{sprig && <ShoppingButton shopping={list.shopping} me={me} members={members} onChange={onShopping} />}
 				{last && (
 					<span className={s.synced} title={list.syncedBy.map((d) => `${d.device}: ${ago(d.at)}`).join('\n')}>
 						{last.device} · {ago(last.at)}
@@ -389,6 +388,12 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 			</header>
 			{!listFolded && (
 				<>
+					{/* Under the name, and folded away with the list. */}
+					{sprig && (
+						<div className={s.shopping}>
+							<ShoppingButton shopping={list.shopping} me={me} members={members} onChange={onShopping} />
+						</div>
+					)}
 					{choosingColor && (
 						<div className={s.swatches} role="radiogroup" aria-label={`Color for ${list.title}`}>
 							{LIST_COLORS.map((c) => (
