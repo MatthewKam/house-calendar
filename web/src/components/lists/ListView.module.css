@@ -328,9 +328,10 @@
 	min-width: 0;
 }
 /* Add: the list's color once there's something to add, gray until then. Its text is dark on a light color. */
+/* Add: the app's accent on every list (not the list's colour). */
 .add button {
-	background: var(--c, var(--accent));
-	color: var(--on, var(--on-accent));
+	background: var(--accent);
+	color: var(--on-accent);
 	font-weight: var(--weight-semibold);
 	padding: 0 var(--space-5);
 	border-radius: var(--radius-sm);

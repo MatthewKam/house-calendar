@@ -28,7 +28,6 @@ import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import s from './ListView.module.css';
 import { useParent } from '../../lib/useParent';
-import { textOn } from '../../lib/color';
 import Sheet from '../ui/Sheet';
 import Switch from '../ui/Switch';
 import { ShoppingButton, TickedBy } from '../ui/ShoppingTogether';
@@ -432,7 +431,7 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 						</Button>
 					)}
 					{list.items.length === 0 && <p className={s.empty}>Nothing here.</p>}
-					<form className={s.add} onSubmit={submit} style={{ '--c': color, '--on': textOn(color) } as CSSProperties}>
+					<form className={s.add} onSubmit={submit}>
 						<button
 							type="button"
 							className={`${s.iconSpot} ${s.iconAdd} ${newIcon === undefined && !typed.icon && addIcon ? s.suggested : ''} ${!addIcon ? s.noIcon : ''}`}
