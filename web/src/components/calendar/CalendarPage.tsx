@@ -2,7 +2,7 @@ import { addDays } from '../../lib/dates';
 import { useRangeEvents, useSettings, useSyncStatus } from '../../lib/queries';
 import type { taskProgress } from '../../lib/tasks';
 import type { CalEvent, Member, Task } from '../../lib/types';
-import type { useCalendarView, View } from '../../lib/useCalendarView';
+import type { useCalendarView } from '../../lib/useCalendarView';
 import { COMPACT_CALENDAR, PHONE, useMediaQuery } from '../../lib/useMediaQuery';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
@@ -15,11 +15,6 @@ import PeopleFilter, { eventShown } from './PeopleFilter';
 import WeekCarousel from './WeekCarousel';
 import WeekTimeline from './WeekTimeline';
 import s from './CalendarPage.module.css';
-
-const VIEWS: [View, string][] = [
-	['month', 'Month'],
-	['week', 'Week'],
-];
 
 const fmt = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'numeric' });
 const monthName = (d: Date) => d.toLocaleDateString([], { month: 'long' });
@@ -94,18 +89,18 @@ export default function CalendarPage({
 			</div>
 			<header className={s.header}>
 				<div className={s.group}>
-					<div className={s.segmented} role="group" aria-label="View">
-						{VIEWS.map(([v, label]) => (
-							<button
-								key={v}
-								className={view === v ? s.on : ''}
-								aria-pressed={view === v}
-								onClick={() => changeView(v)}
-							>
-								{label}
-							</button>
-						))}
-					</div>
+					{/* Week or Month: one switch, its knob on the side away from the view's name. */}
+					<button
+						type="button"
+						role="switch"
+						aria-checked={view === 'week'}
+						aria-label="Week view"
+						className={`${s.viewSwitch} ${view === 'month' ? s.viewMonth : ''}`}
+						onClick={() => changeView(view === 'week' ? 'month' : 'week')}
+					>
+						<span className={s.viewName}>{view === 'week' ? 'Week' : 'Month'}</span>
+						<span className={s.viewKnob} aria-hidden="true" />
+					</button>
 					{/* ‹ Today › and the dates move to the next line together when there's no room. */}
 					<div className={s.stepper}>
 						<button className={s.pill} onClick={() => step(-1)} aria-label={`Previous ${unit}`}>
