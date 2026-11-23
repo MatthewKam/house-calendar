@@ -349,35 +349,37 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 	return (
 		<section className={`${s.card} ${listFolded ? s.cardFolded : ''}`} ref={card}>
 			<header className={s.head}>
-				<button
-					className={s.colorDot}
-					style={{ background: color }}
-					aria-expanded={choosingColor}
-					disabled={!parent}
-					onClick={() => setChoosingColor(!choosingColor)}
-					aria-label={`Color for ${list.title}`}
-					title="Change the color"
-				/>
-				<h2 className={s.title}>
+				{/* The dot, name and ⋯ stay together; when it last synced goes under them if a long name needs the room. */}
+				<div className={s.titleRow}>
 					<button
-						className={s.titleButton}
-						aria-expanded={!listFolded}
-						title={listFolded ? `Open ${list.title}` : `Fold ${list.title}`}
-						onClick={() => listFolds.fold([list.id], !listFolded)}
-					>
-						{list.title}
-						{listFolded && <span className={s.titleCount}>{open.length}</span>}
-					</button>
-				</h2>
-				{sprig && parent && (
-					<IconButton
-						icon="⋯"
-						label={`Change ${list.title}`}
-						title="Rename or delete"
-						onClick={() => setSettingUp(true)}
+						className={s.colorDot}
+						style={{ background: color }}
+						aria-expanded={choosingColor}
+						disabled={!parent}
+						onClick={() => setChoosingColor(!choosingColor)}
+						aria-label={`Color for ${list.title}`}
+						title="Change the color"
 					/>
-				)}
-				{sprig && <ShoppingButton shopping={list.shopping} me={me} members={members} onChange={onShopping} />}
+					<h2 className={s.title}>
+						<button
+							className={s.titleButton}
+							aria-expanded={!listFolded}
+							title={listFolded ? `Open ${list.title}` : `Fold ${list.title}`}
+							onClick={() => listFolds.fold([list.id], !listFolded)}
+						>
+							{list.title}
+							{listFolded && <span className={s.titleCount}>{open.length}</span>}
+						</button>
+					</h2>
+					{sprig && parent && (
+						<IconButton
+							icon="⋯"
+							label={`Change ${list.title}`}
+							title="Rename or delete"
+							onClick={() => setSettingUp(true)}
+						/>
+					)}
+				</div>
 				{last && (
 					<span className={s.synced} title={list.syncedBy.map((d) => `${d.device}: ${ago(d.at)}`).join('\n')}>
 						{last.device} · {ago(last.at)}
@@ -386,6 +388,12 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 			</header>
 			{!listFolded && (
 				<>
+					{/* Under the name, and folded away with the list. */}
+					{sprig && (
+						<div className={s.shopping}>
+							<ShoppingButton shopping={list.shopping} me={me} members={members} onChange={onShopping} />
+						</div>
+					)}
 					{choosingColor && (
 						<div className={s.swatches} role="radiogroup" aria-label={`Color for ${list.title}`}>
 							{LIST_COLORS.map((c) => (
