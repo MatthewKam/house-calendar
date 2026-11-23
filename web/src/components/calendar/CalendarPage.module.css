@@ -185,10 +185,12 @@
 	}
 }
 
-/* ---- A phone on its side, and a short computer window ---- */
-/* Little height: the month's name, the time and weather, and the name filters share one row. */
+/* ---- A phone on its side, a short computer window, and the compact calendar ---- */
+/* Little height (or width): the month's name, the time and weather, and the name filters share one
+   row; the time and weather drop under the name only when they don't fit beside it. */
 @media (orientation: landscape) and (max-height: 500px),
-	(orientation: landscape) and (pointer: fine) and (max-height: 649.98px) {
+	(orientation: landscape) and (pointer: fine) and (max-height: 649.98px),
+	(max-width: 1039.98px) {
 	.monthHeaderTitle {
 		flex-wrap: nowrap;
 	}
