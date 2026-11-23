@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { addDays, dayKey } from './dates';
-import { textOn, UNASSIGNED } from './color';
+import { UNASSIGNED } from './color';
 import type { CalEvent, Member } from './types';
 
 /** Events that overlap the given local day. */
@@ -16,11 +16,9 @@ export function eventsOn(events: CalEvent[], day: Date) {
 /**
  * How to color an event, split evenly between everyone it's for (gray for everyone):
  *   --stripe  the left bar, one band per person, top to bottom
- *   --tint    light background, one section per person, left to right (timed events)
+ *   --tint    light background, one section per person, left to right (timed events, and all-day ones
+ *             in Week and the day panel)
  *   --tint35  a stronger tint, same split (all-day events in Month)
- *   --solid   full-color background, same split (all-day events in Week and the day panel)
- * `text` is the text color for --solid: white or black to suit the colors, or black on lighter
- * tints when the colors would need different ones.
  */
 export function eventPaint(ev: CalEvent, members: Member[]) {
 	const people = members.filter((m) => ev.memberIds.includes(m.id));
@@ -28,17 +26,11 @@ export function eventPaint(ev: CalEvent, members: Member[]) {
 	const step = 100 / colors.length;
 	const split = (dir: string, paint: (c: string) => string) =>
 		`linear-gradient(${dir}, ${colors.map((c, i) => `${paint(c)} ${i * step}% ${(i + 1) * step}%`).join(', ')})`;
-	// Light tints over the page's surface (dark ones in dark mode, under light text); the half-strength
-	// --solid stays over white, under black text.
-	const tint =
-		(pct: number, over = 'var(--surface)') =>
-		(c: string) =>
-			`color-mix(in srgb, ${c} ${pct}%, ${over})`;
-	const agree = new Set(colors.map(textOn)).size === 1;
+	// Light tints over the page's surface (dark ones in dark mode, under light text).
+	const tint = (pct: number) => (c: string) => `color-mix(in srgb, ${c} ${pct}%, var(--surface))`;
 	return {
 		color: colors[0],
 		people,
-		text: agree ? textOn(colors[0]) : '#111',
 		vars: {
 			'--c': colors[0],
 			'--stripe': split('to bottom', (c) => c),
@@ -46,7 +38,6 @@ export function eventPaint(ev: CalEvent, members: Member[]) {
 			'--tint35': split('to right', tint(35)),
 			// Full strength, side by side: a thin bar for the event (the condensed month).
 			'--bar': split('to right', (c) => c),
-			'--solid': agree ? split('to right', (c) => c) : split('to right', tint(55, 'white')),
 		} as CSSProperties,
 	};
 }

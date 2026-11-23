@@ -67,7 +67,7 @@ export default function DayTimeline({ day, today, events, members, onOpen }: Pro
 							<li key={ev.id}>
 								<button
 									className={s.allDayEvent}
-									style={{ ...paint.vars, color: paint.text } as CSSProperties}
+									style={paint.vars}
 									data-busy={ev.busy || undefined}
 									onClick={() => onOpen(ev)}
 								>

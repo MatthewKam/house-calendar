@@ -41,7 +41,7 @@
 	text-overflow: ellipsis;
 	background:
 		var(--stripe) left / 0.3rem 100% no-repeat,
-		var(--solid);
+		var(--tint);
 }
 
 /* 24 hours, a line on each; the labels sit in the margin on the left. */

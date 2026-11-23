@@ -152,7 +152,7 @@
 	white-space: nowrap;
 	background:
 		var(--stripe) left / 0.3rem 100% no-repeat,
-		var(--solid);
+		var(--tint);
 }
 /* ‹ it began before this week, › it goes on past it. */
 .bar {

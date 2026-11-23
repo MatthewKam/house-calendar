@@ -123,7 +123,6 @@ export default function WeekTimeline({ days, today, selected, events, members, o
 							style={
 								{
 									...paint.vars,
-									color: paint.text,
 									gridColumn: `${b.from + 2} / ${b.to + 2}`,
 									gridRow: b.row + 1,
 								} as CSSProperties
