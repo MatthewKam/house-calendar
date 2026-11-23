@@ -3,7 +3,9 @@ import { api } from '../../lib/api';
 import { useAlertActions, useAlerts } from '../../lib/queries';
 import type { CalEvent, Trip } from '../../lib/types';
 import { timeLabel } from '../../lib/dates';
-import { Button } from '../ui/Button';
+import { Button, IconButton } from '../ui/Button';
+import { CopyIcon } from '../ui/icons';
+import { TOUCH, useMediaQuery } from '../../lib/useMediaQuery';
 import s from './EventDialog.module.css';
 
 /** Miles where people drive in miles, kilometres elsewhere. */
@@ -12,38 +14,43 @@ const distance = (meters: number) =>
 		? `${(meters / 1609.34).toFixed(meters < 16093 ? 1 : 0)} mi`
 		: `${(meters / 1000).toFixed(meters < 10000 ? 1 : 0)} km`;
 
-/** The map apps an address opens in, for directions there. */
-const mapApps = (address: string) => {
-	const q = encodeURIComponent(address);
-	return [
-		['Apple Maps', `https://maps.apple.com/?daddr=${q}`],
-		['Google Maps', `https://www.google.com/maps/dir/?api=1&destination=${q}`],
-		['Waze', `https://waze.com/ul?q=${q}&navigate=yes`],
-	] as const;
-};
+/** An address in Google Maps, filled in (on an iPhone, its app when it's there). */
+const mapsLink = (address: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
 /** The event's address and, on request, the drive time from home and when to leave. */
 export default function TravelInfo({
 	event,
-	showAddress = true,
 	locked,
 }: {
 	event: CalEvent;
-	showAddress?: boolean;
 	/** The parent lock is on: the drive shows, but reminders can't be set or cancelled. */
 	locked?: boolean;
 }) {
 	const [trip, setTrip] = useState<Trip | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
-	// The map apps to pick from, for directions.
-	const [choosingMap, setChoosingMap] = useState(false);
+	// A phone: directions go through its share sheet (Google Maps, Waze, Messages… whatever it has).
+	const touch = useMediaQuery(TOUCH);
+	const [copied, setCopied] = useState(false);
 	// The request in flight, so it can be cancelled (or given up on) without waiting.
 	const inFlight = useRef<AbortController | null>(null);
 	useEffect(() => () => inFlight.current?.abort(), []);
 	const alert = (useAlerts().data ?? []).find((a) => a.eventId === event.id);
 	const { add, cancel } = useAlertActions();
 	if (!event.location) return null;
+	const where = event.location;
+	const link = mapsLink(where);
+
+	function directions() {
+		if (touch && navigator.share) void navigator.share({ title: where, url: link }).catch(() => {});
+		else window.open(link, '_blank', 'noopener');
+	}
+	function copy() {
+		void navigator.clipboard.writeText(link).then(() => {
+			setCopied(true);
+			setTimeout(() => setCopied(false), 1500);
+		});
+	}
 
 	async function check() {
 		const ctrl = new AbortController();
@@ -66,27 +73,19 @@ export default function TravelInfo({
 
 	return (
 		<div className={s.travel}>
-			{showAddress && (
-				<Button
-					variant="link"
-					size="sm"
-					icon="📍"
-					className={s.addressLink}
-					aria-expanded={choosingMap}
-					onClick={() => setChoosingMap(!choosingMap)}
-				>
-					{event.location}
+			{/* The address: tap for it in Google Maps (a phone's share sheet), copy the link to send it on. */}
+			<div className={s.addressRow}>
+				<Button variant="link" size="sm" icon="📍" className={s.addressLink} onClick={directions}>
+					{where}
 				</Button>
-			)}
+				<IconButton
+					size="sm"
+					icon={copied ? '✓' : <CopyIcon />}
+					label={copied ? 'Copied' : 'Copy the Google Maps link'}
+					onClick={copy}
+				/>
+			</div>
 			<div className={s.travelRow}>
-				<button
-					type="button"
-					className={s.travelButton}
-					aria-expanded={choosingMap}
-					onClick={() => setChoosingMap(!choosingMap)}
-				>
-					🗺️ Directions
-				</button>
 				{!trip && (
 					<button type="button" className={s.travelButton} onClick={check} disabled={loading}>
 						🚗 {loading ? 'Checking traffic…' : error ? 'Try again' : 'Travel time'}
@@ -98,16 +97,6 @@ export default function TravelInfo({
 					</button>
 				)}
 			</div>
-			{/* Directions there in whichever map app the phone has. */}
-			{choosingMap && (
-				<div className={s.remind}>
-					{mapApps(event.location).map(([name, href]) => (
-						<button key={name} type="button" className={s.chip} onClick={() => window.open(href, '_blank', 'noopener')}>
-							{name}
-						</button>
-					))}
-				</div>
-			)}
 			{trip && (
 				<div className={`${s.trip} ${trip.late ? s.tripLate : ''}`}>
 					<strong>{trip.minutes} min drive</strong> · {distance(trip.meters)}

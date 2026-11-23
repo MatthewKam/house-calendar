@@ -409,8 +409,8 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
 				<CalendarPick target={target} className={s.calendarPick} />
 
 				<AddressInput value={location} onChange={setLocation} />
-				{/* Travel time for the saved address (the field above already shows it). */}
-				{event?.location && event.location === location.trim() && <TravelInfo event={event} showAddress={false} />}
+				{/* The saved address as a link for directions, and its travel time. */}
+				{event?.location && event.location === location.trim() && <TravelInfo event={event} />}
 				{event?.location && event.location === location.trim() && <EventForecast event={event} />}
 
 				<textarea

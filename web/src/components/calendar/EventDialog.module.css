@@ -159,6 +159,13 @@
 .address {
 	color: var(--muted);
 }
+/* The address (a link for directions) with its copy button right after it. */
+.addressRow {
+	display: flex;
+	align-items: center;
+	gap: var(--space-1);
+	min-width: 0;
+}
 /* The address, tappable for directions in a map app (a link Button). */
 .addressLink {
 	align-self: flex-start;
