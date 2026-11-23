@@ -100,13 +100,19 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 		else jumpTo(left);
 	}, [mainIndex, week]);
 
-	// Stay on the middle day when the screen changes size (the days change width).
+	// Stay on the middle day when the screen changes width (the days change width). Only the width: a
+	// change of height (Safari's address bar shrinking as the page scrolls) mustn't cut a glide short.
 	const mainRef = useRef(mainIndex);
 	mainRef.current = mainIndex;
 	useEffect(() => {
 		const el = track.current;
 		if (!el) return;
-		const observer = new ResizeObserver(() => jumpTo(mainRef.current * dayWidth()));
+		let width = el.clientWidth;
+		const observer = new ResizeObserver(() => {
+			if (el.clientWidth === width) return;
+			width = el.clientWidth;
+			jumpTo(mainRef.current * dayWidth());
+		});
 		observer.observe(el);
 		return () => observer.disconnect();
 	}, []);
