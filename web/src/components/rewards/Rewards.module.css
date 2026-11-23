@@ -71,6 +71,56 @@
 	font-size: var(--text-xl);
 	font-weight: var(--weight-bold);
 }
+/* The Rewards page: a tap on a kid's header folds their card away (or opens it again), like Tasks.
+   The name is the button, with a chevron. */
+.foldable {
+	cursor: pointer;
+}
+.foldName,
+.foldHead {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+	min-width: 0;
+	min-height: 2.75rem;
+	padding: 0;
+	background: none;
+	color: inherit;
+	font-family: inherit;
+	text-align: left;
+}
+/* Earned and Redeemed: the heading's own size and weight. (A kid's name keeps .kidName's.) */
+.foldHead {
+	font: inherit;
+}
+.foldName::after,
+.foldHead::after {
+	content: '';
+	width: 0.5rem;
+	height: 0.5rem;
+	margin-left: var(--space-1);
+	border-right: 2px solid var(--muted);
+	border-bottom: 2px solid var(--muted);
+	rotate: 45deg;
+	translate: 0 -0.15rem;
+	transition: rotate 0.2s;
+}
+.foldName[aria-expanded='false']::after,
+.foldHead[aria-expanded='false']::after {
+	rotate: -45deg;
+	translate: 0;
+}
+.foldName:focus-visible,
+.foldHead:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: var(--space-1);
+	border-radius: var(--radius-xs);
+}
+/* Folded Earned or Redeemed: how many are in it. */
+.foldCount {
+	color: var(--muted);
+	font-weight: normal;
+}
 /* The bucket: stars still to put in jars. */
 .bucket {
 	flex: 1;

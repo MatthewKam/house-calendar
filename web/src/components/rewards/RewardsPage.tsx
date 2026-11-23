@@ -12,10 +12,33 @@ import Problem, { loadProblem } from '../ui/Problem';
 import { Button } from '../ui/Button';
 import { SectionHead } from '../ui/Card';
 import s from './Rewards.module.css';
+import { useFolded } from '../../lib/useFolded';
 
 interface Props {
 	today: string;
 	members: Member[];
+}
+
+/** Earned's or Redeemed's heading: a tap folds what's under it away (showing how many) or opens it. */
+function FoldHead({
+	title,
+	count,
+	folded,
+	onFold,
+}: {
+	title: string;
+	count: number;
+	folded: boolean;
+	onFold: () => void;
+}) {
+	return (
+		<SectionHead>
+			<button type="button" className={s.foldHead} aria-expanded={!folded} onClick={onFold}>
+				{title}
+				{folded && <span className={s.foldCount}>{count}</span>}
+			</button>
+		</SectionHead>
+	);
 }
 
 const monthOf = (d: string) => toDate(d).toLocaleDateString([], { month: 'long', year: 'numeric' });
@@ -33,6 +56,8 @@ export default function RewardsPage({ today, members }: Props) {
 	// Making and changing jars needs a parent (the lock in the left bar); using them doesn't.
 	const { parent } = useParent();
 	const [showAll, setShowAll] = useState(false);
+	// What's folded away, kept on this device: each kid's card (by id), 'earned' and 'redeemed'.
+	const folds = useFolded('sprig:reward-sections-folded');
 
 	const starsOf = (id: string) => buckets.find((b) => b.memberId === id)?.stars ?? 0;
 	const waiting = history.filter((w) => !w.givenAt && !w.missedOn);
@@ -88,13 +113,20 @@ export default function RewardsPage({ today, members }: Props) {
 								bucket={starsOf(kid.id)}
 								jars={jars.filter((j) => j.status !== 'earned' && j.memberIds.includes(kid.id))}
 								onEdit={parent ? (reward) => setSheet({ reward }) : undefined}
+								folded={folds.isFolded(kid.id)}
+								onFold={(on) => folds.fold([kid.id], on)}
 							/>
 						))}
 					</div>
 				)}
 
-				<SectionHead>Earned 🎉</SectionHead>
-				{waiting.length === 0 ? (
+				<FoldHead
+					title="Earned 🎉"
+					count={waiting.length}
+					folded={folds.isFolded('earned')}
+					onFold={() => folds.fold(['earned'], !folds.isFolded('earned'))}
+				/>
+				{folds.isFolded('earned') ? null : waiting.length === 0 ? (
 					<p className={s.none}>Full jars wait here to be redeemed.</p>
 				) : (
 					<ul className={s.givenList}>
@@ -118,8 +150,13 @@ export default function RewardsPage({ today, members }: Props) {
 					</ul>
 				)}
 
-				<SectionHead>Redeemed</SectionHead>
-				{done.length === 0 ? (
+				<FoldHead
+					title="Redeemed"
+					count={done.length}
+					folded={folds.isFolded('redeemed')}
+					onFold={() => folds.fold(['redeemed'], !folds.isFolded('redeemed'))}
+				/>
+				{folds.isFolded('redeemed') ? null : done.length === 0 ? (
 					<p className={s.none}>Rewards show up here once they're redeemed.</p>
 				) : (
 					<>

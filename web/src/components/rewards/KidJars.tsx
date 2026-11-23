@@ -24,6 +24,10 @@ interface Props {
 	askFirst?: (then: () => void) => void;
 	/** Kid mode: jars as big tiles like the tasks above, without the name (it's at the top). */
 	big?: boolean;
+	/** Folded away to just its header (the Rewards page; a tap on the header folds or opens it). */
+	folded?: boolean;
+	/** Folds or opens the card; without it the card doesn't fold (kid mode). */
+	onFold?: (folded: boolean) => void;
 }
 
 /**
@@ -50,7 +54,18 @@ const stars = (n: number) => `${n} ${n === 1 ? 'star' : 'stars'}`;
  * full ones waiting to be redeemed. "Use stars" places stars by the jars (tap a jar, − to take one
  * back), then asks before they go in for good.
  */
-export default function KidJars({ kid, members, today, bucket, jars, onEdit, askFirst, big }: Props) {
+export default function KidJars({
+	kid,
+	members,
+	today,
+	bucket,
+	jars,
+	onEdit,
+	askFirst,
+	big,
+	folded = false,
+	onFold,
+}: Props) {
 	const { place, restore, remove } = useRewardActions();
 	const [stage, setStage] = useState<Stage | null>(null);
 	const [confirming, setConfirming] = useState(false);
@@ -123,8 +138,21 @@ export default function KidJars({ kid, members, today, bucket, jars, onEdit, ask
 			style={{ '--c': kid.color } as CSSProperties}
 			aria-label={kid.name}
 		>
-			<header className={s.kidHead}>
-				<span className={s.kidName}>{kid.name}</span>
+			{/* A tap anywhere on the header (but its other buttons) folds the card away or opens it, like Tasks. */}
+			<header
+				className={`${s.kidHead} ${onFold && !stage ? s.foldable : ''}`}
+				onClick={(e) => {
+					const button = (e.target as HTMLElement).closest('button');
+					if (onFold && !stage && (!button || button.dataset.fold !== undefined)) onFold(!folded);
+				}}
+			>
+				{onFold && !stage ? (
+					<button type="button" data-fold className={`${s.kidName} ${s.foldName}`} aria-expanded={!folded}>
+						{kid.name}
+					</button>
+				) : (
+					<span className={s.kidName}>{kid.name}</span>
+				)}
 				<span className={s.bucket}>
 					<StarIcon className={s.star} />
 					<b>{stage && !stage.from ? left : bucket}</b>{' '}
@@ -142,13 +170,22 @@ export default function KidJars({ kid, members, today, bucket, jars, onEdit, ask
 				) : (
 					filling.length > 0 &&
 					bucket > 0 && (
-						<Button variant="primary" size={size} onClick={() => grownUp(() => setStage({ counts: {} }))}>
+						<Button
+							variant="primary"
+							size={size}
+							onClick={() =>
+								grownUp(() => {
+									onFold?.(false);
+									setStage({ counts: {} });
+								})
+							}
+						>
 							Use stars
 						</Button>
 					)
 				)}
 			</header>
-			{stage && (
+			{!folded && stage && (
 				<p className={s.stageHint}>
 					{stage.from
 						? `Moving ${stars(budget)} from ${stage.from.title}. Tap a jar to put one in; any left go back to your bucket.`
@@ -157,120 +194,125 @@ export default function KidJars({ kid, members, today, bucket, jars, onEdit, ask
 			)}
 
 			{/* Jars past their deadline: the kid moves their stars out, then a parent adds it back or removes it. */}
-			{missed.map((j) => {
-				const n = mine(j);
-				const others = members.filter((m) => m.id !== kid.id && (j.memberStars[m.id] ?? 0) > 0).map((m) => m.name);
-				return (
-					<div key={j.id} className={s.missed}>
-						<span className={s.missedText}>
-							⏰ <b>{j.title}</b> missed its deadline ({shortDay(j.deadline!)}).{' '}
-							{n > 0
-								? `${stars(n)} of yours are in it.`
-								: others.length
-									? `Waiting for ${listOf(others)} to move their stars.`
-									: "It's empty: waiting for a parent."}
-						</span>
-						{n > 0 && !stage && (
-							<span className={s.missedActions}>
-								<Button
-									variant="quiet"
-									onClick={() =>
-										grownUp(() =>
-											place.mutate({
-												memberId: kid.id,
-												today,
-												from: j.id,
-												places: [],
-											}),
-										)
-									}
-								>
-									Back to my bucket
-								</Button>
-								{filling.length > 0 && (
+			{!folded &&
+				missed.map((j) => {
+					const n = mine(j);
+					const others = members.filter((m) => m.id !== kid.id && (j.memberStars[m.id] ?? 0) > 0).map((m) => m.name);
+					return (
+						<div key={j.id} className={s.missed}>
+							<span className={s.missedText}>
+								⏰ <b>{j.title}</b> missed its deadline ({shortDay(j.deadline!)}).{' '}
+								{n > 0
+									? `${stars(n)} of yours are in it.`
+									: others.length
+										? `Waiting for ${listOf(others)} to move their stars.`
+										: "It's empty: waiting for a parent."}
+							</span>
+							{n > 0 && !stage && (
+								<span className={s.missedActions}>
 									<Button
-										variant="primary"
-										size={size}
-										onClick={() => grownUp(() => setStage({ from: j, counts: {} }))}
+										variant="quiet"
+										onClick={() =>
+											grownUp(() =>
+												place.mutate({
+													memberId: kid.id,
+													today,
+													from: j.id,
+													places: [],
+												}),
+											)
+										}
 									>
-										Move to another jar
+										Back to my bucket
 									</Button>
-								)}
-							</span>
-						)}
-						{j.stars === 0 && onEdit && (
-							<span className={s.missedActions}>
-								<Button variant="quiet" onClick={() => setRemoving(j)}>
-									Remove
-								</Button>
-								<Button variant="primary" onClick={() => setRestoring({ jar: j, deadline: '' })}>
-									Add back
-								</Button>
-							</span>
-						)}
-					</div>
-				);
-			})}
-
-			<h3 className={s.sub}>Jars</h3>
-			{filling.length === 0 ? (
-				<p className={s.none}>No jars to fill yet.</p>
-			) : (
-				<ul className={s.list}>
-					{filling.map((j) => (
-						<li
-							key={j.id}
-							data-jar={j.id}
-							className={`${s.row} ${stage ? s.picking : ''} ${count(j) ? s.picked : ''}`}
-							// While placing stars, tapping a jar puts one more by it.
-							onClick={() => addStar(j)}
-						>
-							<div className={s.rowMain}>
-								<span className={s.rowTitle}>
-									{j.title}
-									{!stage && onEdit && (
-										<IconButton
-											size="sm"
-											className={s.edit}
-											label={`Change ${j.title}`}
-											icon={<PencilIcon />}
-											onClick={() => onEdit?.(j)}
-										/>
+									{filling.length > 0 && (
+										<Button
+											variant="primary"
+											size={size}
+											onClick={() => grownUp(() => setStage({ from: j, counts: {} }))}
+										>
+											Move to another jar
+										</Button>
 									)}
 								</span>
-								<span className={s.rowSub}>{subtitle(j)}</span>
-								<JarProgress r={j} members={members} adding={stage ? { kid, n: landed(j) } : undefined} />
-							</div>
-							{stage ? (
-								<div className={s.stager}>
-									<IconButton
-										variant="secondary"
-										size={size}
-										icon="−"
-										disabled={!count(j)}
-										label={`Take a star back from ${j.title}`}
-										onClick={(e) => {
-											e.stopPropagation();
-											bump(j, -1);
-										}}
-									/>
-									<span className={s.staged}>{count(j) ? `+${count(j)}` : room(j) > 0 ? '' : 'Full'}</span>
-									<IconButton
-										variant="secondary"
-										size={size}
-										icon="+"
-										disabled={!canAdd(j)}
-										label={`Put a star in ${j.title}`}
-										onClick={(e) => {
-											e.stopPropagation();
-											addStar(j);
-										}}
-									/>
-								</div>
-							) : null}
-						</li>
-					))}
-				</ul>
+							)}
+							{j.stars === 0 && onEdit && (
+								<span className={s.missedActions}>
+									<Button variant="quiet" onClick={() => setRemoving(j)}>
+										Remove
+									</Button>
+									<Button variant="primary" onClick={() => setRestoring({ jar: j, deadline: '' })}>
+										Add back
+									</Button>
+								</span>
+							)}
+						</div>
+					);
+				})}
+
+			{!folded && (
+				<>
+					<h3 className={s.sub}>Jars</h3>
+					{filling.length === 0 ? (
+						<p className={s.none}>No jars to fill yet.</p>
+					) : (
+						<ul className={s.list}>
+							{filling.map((j) => (
+								<li
+									key={j.id}
+									data-jar={j.id}
+									className={`${s.row} ${stage ? s.picking : ''} ${count(j) ? s.picked : ''}`}
+									// While placing stars, tapping a jar puts one more by it.
+									onClick={() => addStar(j)}
+								>
+									<div className={s.rowMain}>
+										<span className={s.rowTitle}>
+											{j.title}
+											{!stage && onEdit && (
+												<IconButton
+													size="sm"
+													className={s.edit}
+													label={`Change ${j.title}`}
+													icon={<PencilIcon />}
+													onClick={() => onEdit?.(j)}
+												/>
+											)}
+										</span>
+										<span className={s.rowSub}>{subtitle(j)}</span>
+										<JarProgress r={j} members={members} adding={stage ? { kid, n: landed(j) } : undefined} />
+									</div>
+									{stage ? (
+										<div className={s.stager}>
+											<IconButton
+												variant="secondary"
+												size={size}
+												icon="−"
+												disabled={!count(j)}
+												label={`Take a star back from ${j.title}`}
+												onClick={(e) => {
+													e.stopPropagation();
+													bump(j, -1);
+												}}
+											/>
+											<span className={s.staged}>{count(j) ? `+${count(j)}` : room(j) > 0 ? '' : 'Full'}</span>
+											<IconButton
+												variant="secondary"
+												size={size}
+												icon="+"
+												disabled={!canAdd(j)}
+												label={`Put a star in ${j.title}`}
+												onClick={(e) => {
+													e.stopPropagation();
+													addStar(j);
+												}}
+											/>
+										</div>
+									) : null}
+								</li>
+							))}
+						</ul>
+					)}
+				</>
 			)}
 
 			{confirming && stage && (
