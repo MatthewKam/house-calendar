@@ -149,9 +149,9 @@
 	position: absolute;
 	/* Over the corner (4), which the days slide under. */
 	z-index: 5;
-	top: calc((var(--space-3) + 1.9rem + var(--space-1) - 1.9rem) / 2);
-	left: calc((var(--gutter) - 1.9rem) / 2);
-	width: 1.9rem; /* own: as big as a date's circle */
+	top: calc((var(--space-5) + 1.3rem + var(--space-1) - 1.3rem) / 2);
+	left: calc((var(--gutter) - 1.3rem) / 2);
+	width: 1.3rem; /* own: as big as a date's circle */
 }
 @container (max-width: 480px) {
 	.logo {
@@ -205,7 +205,9 @@
 	margin-inline: calc(-1 * var(--space-3));
 	padding: 0 var(--space-3) var(--space-1);
 	border-bottom: 1px solid var(--line);
-	height: calc(1.9rem + var(--space-1) + 1px); /* own: the date's circle, the gap and the line, so the line meets the corner on every screen */
+	height: calc(
+		1.9rem + var(--space-1) + 1px
+	); /* own: the date's circle, the gap and the line, so the line meets the corner on every screen */
 	font-size: var(--text-lg);
 	font-weight: var(--weight-bold);
 	white-space: nowrap;
