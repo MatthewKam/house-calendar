@@ -8,7 +8,7 @@ kitchen, or a screen on the wall.
 
 - **Try it:** [sprig-family.com](https://sprig-family.com) → **Try the demo** opens a made-up family to play with, no
   sign-up needed.
-- **iPhone and iPad:** the app is in TestFlight now, on its way to the App Store.
+- **iPhone and iPad:** Sprig is on the App Store.
 - **No ads, ever.** Families sign in with Apple, Google or an email code, with roles for grown-ups and kids.
 
 ![Today on a computer: what's up next, the kids' day, list items and the weather](docs/media/today.jpg)
