@@ -185,10 +185,10 @@
 	}
 }
 
-/* ---- A phone on its side ---- */
-/* Little height: the month's name, the time and weather, and the name filters share one row, the
-   buttons are slimmer, and the calendar scrolls rather than squash its days. */
-@media (orientation: landscape) and (max-height: 500px) {
+/* ---- A phone on its side, and a short computer window ---- */
+/* Little height: the month's name, the time and weather, and the name filters share one row. */
+@media (orientation: landscape) and (max-height: 500px),
+	(orientation: landscape) and (pointer: fine) and (max-height: 649.98px) {
 	.monthHeaderTitle {
 		flex-wrap: nowrap;
 	}
@@ -199,6 +199,14 @@
 		gap: 0 1rem;
 		min-width: 0;
 	}
+	.monthTitle {
+		margin: 0;
+	}
+}
+
+/* ---- A phone on its side ---- */
+/* ...and the buttons are slimmer, and the calendar scrolls rather than squash its days. */
+@media (orientation: landscape) and (max-height: 500px) {
 	.monthTitle {
 		margin: 0;
 		font-size: 1.4rem;
