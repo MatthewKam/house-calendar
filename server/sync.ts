@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
 import type { CalendarSource, CalendarWriter, RemoteEvent } from './providers/types.ts';
+import { icalStore } from './providers/icalStore.ts';
 import { eventId, overlayOutbox, pushOutbox, SEND_AFTER_MS } from './outbox.ts';
 import { applyPeople, assignPending, type Classify } from './people.ts';
 import { CalDavAuthError } from './providers/caldav.ts';
@@ -177,7 +178,8 @@ export function createSync(
 	classify: Classify | null,
 	intervalMs = 5 * 60_000,
 ) {
-	const writer = source.getEvent && source.writeEvent ? (source as CalendarWriter) : null;
+	// Where the wall's edits go: the service's own store (Google), or iCloud's resources; null: read only.
+	const writer = source.store ?? (source.getEvent && source.writeEvent ? icalStore(source as CalendarWriter) : null);
 	const status: SyncStatus = {
 		provider: source.id,
 		running: false,
@@ -206,7 +208,7 @@ export function createSync(
 			// Edits from the wall go first, so the snapshot that follows includes them.
 			if (writer) {
 				const sent = await pushOutbox(db, writer, new Date(), source.key ?? source.id);
-				if (sent.sent || sent.conflicts || sent.failed) log.info(sent, 'sent wall edits to iCloud');
+				if (sent.sent || sent.conflicts || sent.failed) log.info(sent, `sent wall edits to ${source.id}`);
 			}
 			const result = await syncOnce(db, source);
 			Object.assign(status, result, { lastSuccess: new Date().toISOString(), lastError: null });

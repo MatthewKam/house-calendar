@@ -1,5 +1,7 @@
-// Contract every calendar backend implements. iCloud (CalDAV) reads and writes today; Google
-// (Calendar API v3) slots in here later.
+import type { Details, SeriesChanges } from './icalEdit.ts';
+
+// Contract every calendar backend implements. iCloud (CalDAV) and Google (Calendar API v3) read and
+// write; a phone's calendars are read only.
 
 /**
  * One occurrence of an event. Repeating events arrive already expanded, one RemoteEvent per
@@ -47,11 +49,36 @@ export interface CalendarSource {
 	listCalendars(): Promise<RemoteCalendar[]>;
 	/** Every occurrence overlapping [from, to). */
 	fetchRange(calendarRemoteId: string, from: Date, to: Date): Promise<RemoteEvent[]>;
+	/** Where the wall's edits go, for a service that takes them in its own terms (Google). */
+	readonly store?: EventStore;
 }
 
 /**
- * Write side, for edits made on the wall: one event resource (its URL is the part of a remoteId
- * before '#') read and written whole, the way CalDAV works.
+ * Write side, for edits made on the wall, in a calendar service's own terms (outbox.ts sends through
+ * it). Each write is guarded by the `version` it was read at: false means it changed there since, so
+ * read it again. `calendar` is the calendar's remoteId; `remoteId` and `seriesId` are as synced.
+ * iCloud's comes from its CalendarWriter (icalStore.ts); Google's is its API (google.ts).
+ */
+export interface EventStore {
+	/** Makes a new event under the remoteId the outbox gave it; done already if it's there. */
+	create(calendar: string, remoteId: string, details: Details): Promise<void>;
+	/** One occurrence as it is there now (details null when it no longer shows); null when it's gone. */
+	read(calendar: string, remoteId: string): Promise<{ details: Details | null; version: unknown } | null>;
+	update(calendar: string, remoteId: string, version: unknown, changes: Partial<Details>): Promise<boolean>;
+	/** Deletes one occurrence (or the whole event, when it doesn't repeat). */
+	remove(calendar: string, remoteId: string, version: unknown): Promise<boolean>;
+	/** A repeating event's own title and address; null when it's gone. */
+	readSeries(
+		calendar: string,
+		seriesId: string,
+	): Promise<{ details: { title: string; location: string | null } | null; version: unknown } | null>;
+	updateSeries(calendar: string, seriesId: string, version: unknown, changes: SeriesChanges): Promise<boolean>;
+	removeSeries(calendar: string, seriesId: string, version: unknown): Promise<boolean>;
+}
+
+/**
+ * iCloud's write side: one event resource (its URL is the part of a remoteId before '#') read and
+ * written whole, the way CalDAV works.
  */
 export interface CalendarWriter {
 	/** The resource as it is now; null when it's been deleted. */
