@@ -1,15 +1,18 @@
-import { useState, type FormEvent } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState, type FormEvent } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type SignedIn } from '../../lib/api';
 import { isApp } from '../../lib/native';
 import type { SetupKind } from '../../lib/setup';
-import { keys, useMembers } from '../../lib/queries';
+import { keys, useAuthStatus, useMembers } from '../../lib/queries';
 import { PALETTE } from '../../lib/color';
 import { isKid } from '../../lib/people';
 import { starterTasks, type StarterTask } from '../../lib/tasks';
 import type { Member } from '../../lib/types';
 import PhoneCalendars from '../settings/PhoneCalendars';
+import GoogleCalendars from '../settings/GoogleCalendars';
+import ICloudCalendars from '../settings/ICloudCalendars';
 import { Issued } from '../settings/HouseholdAccess';
+import { GetTheApp } from './SignIn';
 import s from './Account.module.css';
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/Chip';
@@ -32,7 +35,15 @@ export default function Setup({ status, kind, onDone }: { status: SignedIn; kind
 			// Starter tasks only make sense once there's a kid to give them to.
 			(x !== 'tasks' || kids.length > 0),
 	);
-	const [step, setStep] = useState<Step>(steps[0]);
+	// Back from Google's pages (…/?calendar=connected, or what went wrong): straight back to the calendar step.
+	const [googleResult] = useState(() => new URLSearchParams(window.location.search).get('calendar'));
+	useEffect(() => {
+		if (!googleResult) return;
+		const url = new URL(window.location.href);
+		url.searchParams.delete('calendar');
+		history.replaceState(null, '', url.pathname + url.search + url.hash);
+	}, [googleResult]);
+	const [step, setStep] = useState<Step>(googleResult && steps.includes('calendar') ? 'calendar' : steps[0]);
 	const at = steps.indexOf(step);
 	const next = () => (at + 1 < steps.length ? setStep(steps[at + 1]) : onDone());
 
@@ -46,7 +57,14 @@ export default function Setup({ status, kind, onDone }: { status: SignedIn; kind
 				</ol>
 				{step === 'kids' && <Kids kids={kids} onNext={next} />}
 				{step === 'tasks' && <Tasks kids={kids} onNext={next} />}
-				{step === 'calendar' && <Calendar joined={kind === 'joined'} onNext={next} last={at === steps.length - 1} />}
+				{step === 'calendar' && (
+					<Calendar
+						joined={kind === 'joined'}
+						onNext={next}
+						last={at === steps.length - 1}
+						googleResult={googleResult}
+					/>
+				)}
 				{step === 'invite' && <Invite household={status.household?.name ?? 'your family'} onNext={next} />}
 			</div>
 		</main>
@@ -215,11 +233,29 @@ const taskFor = (memberId: string, t: StarterTask) => ({
 });
 
 /**
- * Your calendars: on the iPhone, its own calendars in a tap (no password). On a computer, a pointer to the app;
- * iCloud by password is in Settings → Calendars for anyone who wants it.
+ * Your calendars, connected right here: on the iPhone its own calendars in a tap (no password); everywhere
+ * Google (Google's pages, then back) and iCloud (an app-specific password), as in Settings → Calendars. On
+ * the website, the App Store for the phone's own calendars. Next once something of yours is connected.
  */
-export function Calendar({ joined, last, onNext }: { joined: boolean; last: boolean; onNext: () => void }) {
+export function Calendar({
+	joined,
+	last,
+	onNext,
+	googleResult,
+}: {
+	joined: boolean;
+	last: boolean;
+	onNext: () => void;
+	/** Back from Google: 'connected', or what went wrong. */
+	googleResult?: string | null;
+}) {
 	const [shared, setShared] = useState(false);
+	const members = useMembers().data ?? [];
+	const status = useAuthStatus().data;
+	const me = status?.signedIn ? status.memberId : null;
+	const connections = useQuery({ queryKey: ['connections'], queryFn: api.connections }).data;
+	const connected =
+		!!me && [...(connections?.google ?? []), ...(connections?.icloud ?? [])].some((c) => c.memberId === me);
 	return (
 		<>
 			<h1 className={s.title}>Your calendar</h1>
@@ -227,15 +263,39 @@ export function Calendar({ joined, last, onNext }: { joined: boolean; last: bool
 				{joined ? 'Share your calendar with the family too, ' : 'Bring in your calendar, '}so everyone's events are in
 				one place.
 			</p>
-			{isApp ? (
-				<PhoneCalendars onShared={() => setShared(true)} />
-			) : (
-				<p className={s.hint}>
-					Open Sprig on your iPhone to share its calendars in one tap. On a computer, iCloud can be connected in
-					Settings → Calendars.
+			{googleResult && (
+				<p className={googleResult === 'connected' ? s.hint : s.error} role="status">
+					{googleResult === 'connected'
+						? 'Google Calendar connected. Its events will show in a moment.'
+						: `Google Calendar: ${googleResult}`}
 				</p>
 			)}
-			<NextButton done={shared} onNext={onNext} last={last} />
+			{isApp && (
+				<>
+					<h2 className={s.subhead}>This iPhone's calendars</h2>
+					<PhoneCalendars onShared={() => setShared(true)} />
+				</>
+			)}
+			{connections?.google && (
+				<>
+					<h2 className={s.subhead}>Google Calendar</h2>
+					<GoogleCalendars members={members} />
+				</>
+			)}
+			{connections?.icloud && (
+				<>
+					<h2 className={s.subhead}>iCloud Calendar</h2>
+					<ICloudCalendars members={members} />
+				</>
+			)}
+			{!isApp && (
+				<>
+					<h2 className={s.subhead}>Your iPhone's calendars</h2>
+					<p className={s.hint}>In the Sprig app, share your iPhone's calendars in one tap, with no password.</p>
+					<GetTheApp />
+				</>
+			)}
+			<NextButton done={shared || connected} onNext={onNext} last={last} />
 		</>
 	);
 }

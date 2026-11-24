@@ -142,7 +142,7 @@ const APP_STORE = 'https://apps.apple.com/app/id6835357587';
  * The website's way to the App Store app: Apple's badge on an iPhone or iPad, and on a computer the badge
  * with a QR code to scan with the phone. Not on Android, or inside the app.
  */
-function GetTheApp() {
+export function GetTheApp() {
 	const ua = navigator.userAgent;
 	if (/Android/i.test(ua)) return null;
 	// iPadOS asks for the desktop site, so it says Macintosh; it's the one with a touch screen.
