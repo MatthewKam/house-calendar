@@ -100,17 +100,33 @@ export default function ICloudCalendars({
 					}}
 				>
 					<h2>Connect iCloud Calendar</h2>
+					<p className={s.hint}>
+						Apple asks for a password made just for Sprig, so your own Apple password never leaves Apple. It takes about
+						a minute:
+					</p>
 					<ol className={s.hint} style={{ margin: 0, paddingLeft: '1.2rem' }}>
 						<li>
 							Open{' '}
 							<a href="https://account.apple.com" target="_blank" rel="noreferrer">
 								account.apple.com
 							</a>{' '}
-							and sign in.
+							(a new tab) and sign in with your Apple ID.
 						</li>
-						<li>Under Sign-In and Security, choose App-Specific Passwords and make one called "Sprig".</li>
-						<li>Type your Apple ID and that password here. Your normal Apple password is never used.</li>
+						<li>
+							Under <b>Sign-In and Security</b>, choose <b>App-Specific Passwords</b>.
+						</li>
+						<li>
+							Choose <b>Generate an app-specific password</b>, name it "Sprig", and type your Apple password when it
+							asks.
+						</li>
+						<li>Apple shows a password like abcd-efgh-ijkl-mnop. Copy it, come back here and paste it below.</li>
 					</ol>
+					<p className={s.hint}>
+						Don't see App-Specific Passwords? Your Apple ID needs two-factor authentication turned on first.{' '}
+						<a href="https://support.apple.com/en-us/102654" target="_blank" rel="noreferrer">
+							Apple's help
+						</a>
+					</p>
 					<Input
 						inputMode="email"
 						autoCapitalize="none"
@@ -123,7 +139,7 @@ export default function ICloudCalendars({
 						required
 					/>
 					<Input
-						placeholder="xxxx-xxxx-xxxx-xxxx"
+						placeholder="App-specific password (abcd-efgh-ijkl-mnop)"
 						aria-label="App-specific password"
 						autoComplete="off"
 						autoCapitalize="none"
