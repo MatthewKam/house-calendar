@@ -10,9 +10,9 @@ import type { CalEvent, Member } from '../../lib/types';
 import Sprout from '../ui/Sprout';
 import DayMeals from './DayMeals';
 import { HourName, TimedEvent } from './WeekTimeline';
-import t from './WeekTimeline.module.css';
+import t from './styles/WeekTimeline.module.css';
 import { wheelSwipe } from '../../lib/wheelSwipe';
-import s from './WeekCarousel.module.css';
+import s from './styles/WeekCarousel.module.css';
 
 /** Dots on a day's card, one per person with something that day, before the rest are left off. */
 const MAX_DOTS = 5;

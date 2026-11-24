@@ -14,7 +14,7 @@ import { Notice } from '../ui/Notice';
 import PeopleFilter, { eventShown } from './PeopleFilter';
 import WeekCarousel from './WeekCarousel';
 import WeekTimeline from './WeekTimeline';
-import s from './CalendarPage.module.css';
+import s from './styles/CalendarPage.module.css';
 
 const fmt = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'numeric' });
 const monthName = (d: Date) => d.toLocaleDateString([], { month: 'long' });

@@ -6,7 +6,7 @@ import { timeLabel } from '../../lib/dates';
 import { Button, IconButton } from '../ui/Button';
 import { CopyIcon } from '../ui/icons';
 import { TOUCH, useMediaQuery } from '../../lib/useMediaQuery';
-import s from './EventDialog.module.css';
+import s from './styles/EventDialog.module.css';
 
 /** Miles where people drive in miles, kilometres elsewhere. */
 const distance = (meters: number) =>

@@ -4,7 +4,7 @@ import { useDaily } from '../../lib/queries';
 import { QUOTE_THEMES } from '../../lib/quotes';
 import { Loading, SkeletonLines } from '../ui/Skeleton';
 import ThemedHead from '../ui/ThemedHead';
-import s from './DailyCards.module.css';
+import s from './styles/DailyCards.module.css';
 
 /**
  * Two small cards beside the weather: a dad joke (tap for the answer) and a quote. The joke comes once a

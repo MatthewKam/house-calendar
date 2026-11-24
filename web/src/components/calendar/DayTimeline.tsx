@@ -4,7 +4,7 @@ import { eventPaint, eventsOn, isOver } from '../../lib/events';
 import { allDayOn, placeDay } from '../../lib/timegrid';
 import { useNow } from '../../lib/useNow';
 import type { CalEvent, Member } from '../../lib/types';
-import s from './DayTimeline.module.css';
+import s from './styles/DayTimeline.module.css';
 
 interface Props {
 	day: Date;

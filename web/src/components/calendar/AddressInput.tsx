@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api';
-import s from './EventDialog.module.css';
+import s from './styles/EventDialog.module.css';
 
 type Place = Awaited<ReturnType<typeof api.places>>[number];
 

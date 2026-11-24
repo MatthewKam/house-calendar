@@ -1,7 +1,7 @@
 import { askToOpen, mealLabel, plannedOn, themesOn } from '../../lib/meals';
 import { follow } from '../../lib/usePage';
 import { useMeals, useRecipes } from '../../lib/queries';
-import s from './DayMeals.module.css';
+import s from './styles/DayMeals.module.css';
 
 /**
  * A day's meals on the calendar (Plan ahead): "🍽️ Dinner: Korean beef", above its events, not one of them

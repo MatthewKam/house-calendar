@@ -21,7 +21,7 @@ import TaskHistory from './TaskHistory';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import MomentDialog from './MomentDialog';
 import PottyCard from './PottyCard';
-import panel from '../calendar/DayPanel.module.css';
+import panel from '../calendar/styles/DayPanel.module.css';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import { Button } from '../ui/Button';

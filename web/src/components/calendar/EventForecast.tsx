@@ -2,7 +2,7 @@ import { fromDayKey } from '../../lib/dates';
 import { useEventWeather } from '../../lib/queries';
 import { sky } from '../../lib/weather';
 import type { CalEvent, EventWeather, Wear } from '../../lib/types';
-import s from './EventForecast.module.css';
+import s from './styles/EventForecast.module.css';
 
 /** What to pack for the weather there (the same rules as What to wear). */
 export function packFor(wear: Wear) {

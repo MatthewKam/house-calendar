@@ -4,7 +4,7 @@ import { dayKey } from '../../lib/dates';
 import { useChangeSpecialReminders, usePlansAccess, useSpecialReminders } from '../../lib/queries';
 import type { CalEvent } from '../../lib/types';
 import { usePush } from '../../lib/usePush';
-import s from './DayPlans.module.css';
+import s from './styles/DayPlans.module.css';
 
 interface Props {
 	planKey: string;

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAlertActions, useAlerts } from '../../lib/queries';
 import { timeLabel } from '../../lib/dates';
-import s from './LeaveAlerts.module.css';
+import s from './styles/LeaveAlerts.module.css';
 
 /** A soft two-note chime. Browsers may block sound until someone has touched the page; that's fine. */
 function chime() {

@@ -13,8 +13,8 @@
 	"old text buttons and icon spans (Button)": {
 		"components/account/DemoBar.module.css": 1,
 		"components/account/DemoBar.tsx": 2,
-		"components/calendar/EventDialog.module.css": 2,
-		"components/calendar/PeopleFilter.module.css": 1,
+		"components/calendar/styles/EventDialog.module.css": 2,
+		"components/calendar/styles/PeopleFilter.module.css": 1,
 		"components/recipes/RecipeView.tsx": 2,
 		"components/recipes/Recipes.module.css": 1
 	}

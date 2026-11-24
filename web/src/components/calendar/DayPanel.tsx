@@ -8,7 +8,7 @@ import type { CalEvent, Member } from '../../lib/types';
 import DayMeals from './DayMeals';
 import DayPlans from './DayPlans';
 import DayTimeline from './DayTimeline';
-import s from './DayPanel.module.css';
+import s from './styles/DayPanel.module.css';
 
 interface Props {
 	day: string;

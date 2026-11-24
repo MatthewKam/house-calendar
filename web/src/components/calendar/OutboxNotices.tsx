@@ -1,7 +1,7 @@
 import { useOutbox, useResolveConflict } from '../../lib/queries';
 import { fromDayKey, timeLabel } from '../../lib/dates';
 import type { EventDetails } from '../../lib/types';
-import s from './OutboxNotices.module.css';
+import s from './styles/OutboxNotices.module.css';
 import { Notice } from '../ui/Notice';
 
 /** "Tue, Oct 6, 9:00 AM – 10:00 AM", or the days of an all-day event. */

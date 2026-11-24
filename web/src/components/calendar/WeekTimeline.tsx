@@ -7,7 +7,7 @@ import { useNow } from '../../lib/useNow';
 import type { CalEvent, Member } from '../../lib/types';
 import Sprout from '../ui/Sprout';
 import DayMeals from './DayMeals';
-import s from './WeekTimeline.module.css';
+import s from './styles/WeekTimeline.module.css';
 
 interface Props {
 	days: Date[];

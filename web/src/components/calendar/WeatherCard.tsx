@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { useWeather } from '../../lib/queries';
 import { fromDayKey, timeLabel } from '../../lib/dates';
 import { sky } from '../../lib/weather';
-import s from './WeatherCard.module.css';
+import s from './styles/WeatherCard.module.css';
 
 /** Which painted sky goes behind the current conditions. */
 function scene(code: number, isDay: boolean) {

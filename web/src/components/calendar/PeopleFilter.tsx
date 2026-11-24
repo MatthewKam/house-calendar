@@ -3,7 +3,7 @@ import { UNASSIGNED } from '../../lib/color';
 import { percent, tasksFor, type taskProgress } from '../../lib/tasks';
 import type { CalEvent, Member, Task } from '../../lib/types';
 import { FilterChip } from '../ui/NameChip';
-import s from './PeopleFilter.module.css';
+import s from './styles/PeopleFilter.module.css';
 
 /** The filter for events that aren't for anyone in particular. */
 export const EVERYONE = 'everyone';

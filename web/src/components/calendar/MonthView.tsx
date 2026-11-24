@@ -4,7 +4,7 @@ import { eventPaint, eventsOn, isOver } from '../../lib/events';
 import { COMPACT_CALENDAR, PHONE, useMediaQuery } from '../../lib/useMediaQuery';
 import { useNow } from '../../lib/useNow';
 import type { CalEvent, Member } from '../../lib/types';
-import s from './MonthView.module.css';
+import s from './styles/MonthView.module.css';
 
 /** Events listed per cell before collapsing the rest into "+N more". */
 const MAX_SHOWN = 3;

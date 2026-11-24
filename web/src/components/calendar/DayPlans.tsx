@@ -6,7 +6,7 @@ import type { SpecialDay } from '../../lib/specialDays';
 import type { ChecklistItem } from '../../lib/types';
 import Checklist from '../ui/Checklist';
 import Reminders from './Reminders';
-import s from './DayPlans.module.css';
+import s from './styles/DayPlans.module.css';
 
 /** Pictures to start a day's list from: a party, a trip, a holiday. */
 const PLAN_ICONS = ['🎂', '🎈', '🕯️', '🎁', '💐', '🎉', '🍰', '🥤', '🍕', '🧁', '🎀', '💌', '🧺', '🧳', '🎟️', '📸'];
