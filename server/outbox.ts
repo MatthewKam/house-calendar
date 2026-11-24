@@ -1,22 +1,14 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
-import type { CalendarWriter } from './providers/types.ts';
-import {
-	currentDetails,
-	deleteOccurrence,
-	editEvent,
-	editSeries,
-	newEvent,
-	seriesDetails,
-	type Details,
-	type SeriesChanges,
-} from './providers/icalEdit.ts';
+import type { CalendarWriter, EventStore } from './providers/types.ts';
+import type { Details, SeriesChanges } from './providers/icalEdit.ts';
+import { icalStore } from './providers/icalStore.ts';
 import type { OutboxStatus } from '../shared/events.ts';
 
-// Edits to iCloud events made on the wall. Each is saved here and shown on the wall at once, then
-// sent to iCloud after the Undo window, before each sync. If iCloud can't be reached the edit waits
-// and is tried again. If the same details were changed on another device meanwhile, nothing is sent
-// and the wall asks which version to keep.
+// Edits to synced events (iCloud, Google) made on the wall. Each is saved here and shown on the wall
+// at once, then sent to the calendar service after the Undo window, before each sync. If it can't be
+// reached the edit waits and is tried again. If the same details were changed on another device
+// meanwhile, nothing is sent and the wall asks which version to keep.
 
 /** Same remote occurrence, same local id, so React keys and an open editor survive a resync. */
 export const eventId = (calendarId: string, remoteId: string) =>
@@ -85,11 +77,18 @@ const find = (db: DB, calendarId: string, remoteId: string) =>
 		OutboxRow | undefined;
 
 /**
- * Adds a new event to an iCloud calendar: shown on the wall at once, created in iCloud after the
- * Undo window. Its id is the one the sync will give it, so it stays the same event after that.
+ * Adds a new event to an iCloud or Google calendar: shown on the wall at once, made there after the
+ * Undo window. Its id is the one the sync will give it, so it stays the same event after that: iCloud's
+ * is its resource's URL; Google's an id Sprig picks (letters a–v and digits, which a UUID's hex is).
  */
 export function queueCreate(db: DB, calendar: { id: string; remote_id: string }, details: Details, now = new Date()) {
-	const href = new URL(`${randomUUID().toUpperCase()}.ics`, calendar.remote_id).href;
+	const provider = (
+		db.prepare('SELECT provider FROM calendars WHERE id = ?').get(calendar.id) as { provider: string } | undefined
+	)?.provider;
+	const href =
+		provider === 'google'
+			? randomUUID().replaceAll('-', '')
+			: new URL(`${randomUUID().toUpperCase()}.ics`, calendar.remote_id).href;
 	db.transaction(() => {
 		db.prepare(
 			`INSERT INTO event_outbox (calendar_id, remote_id, op, changes, before, send_after) VALUES (?, ?, 'create', ?, 'null', ?)`,
@@ -325,46 +324,44 @@ export function overlayOutbox(db: DB) {
 }
 
 /**
- * Sends waiting edits whose Undo window has passed. Each is checked against iCloud's current
- * version first: if the details being changed were changed there too, it becomes a conflict.
+ * Sends waiting edits whose Undo window has passed, through the calendar service's EventStore (or an
+ * iCloud CalendarWriter). Each is checked against the service's current version first: if the details
+ * being changed were changed there too, it becomes a conflict.
  */
-export async function pushOutbox(db: DB, writer: CalendarWriter, now = new Date(), source?: string) {
+export async function pushOutbox(db: DB, to: EventStore | CalendarWriter, now = new Date(), source?: string) {
+	const store = 'writeEvent' in to ? icalStore(to) : to;
 	// With several accounts, each sends only the edits to its own calendars.
 	const rows = db
 		.prepare(
-			`SELECT * FROM event_outbox WHERE state = 'pending' AND send_after <= ?
-    AND (? IS NULL OR calendar_id IN (SELECT id FROM calendars WHERE source = ?)) ORDER BY id`,
+			`SELECT o.*, COALESCE(c.remote_id, '') AS calendar_remote FROM event_outbox o
+    LEFT JOIN calendars c ON c.id = o.calendar_id
+    WHERE o.state = 'pending' AND o.send_after <= ?
+    AND (? IS NULL OR o.calendar_id IN (SELECT id FROM calendars WHERE source = ?)) ORDER BY o.id`,
 		)
-		.all(now.toISOString(), source ?? null, source ?? null) as OutboxRow[];
+		.all(now.toISOString(), source ?? null, source ?? null) as (OutboxRow & { calendar_remote: string })[];
 	const done = db.prepare('DELETE FROM event_outbox WHERE id = ?');
 	const result = { sent: 0, conflicts: 0, failed: 0 };
 	for (const r of rows) {
-		const href = r.remote_id.split('#')[0];
+		const cal = r.calendar_remote;
 		try {
-			// iCloud can change between reading and writing; then read it again (twice at most).
+			// It can change there between reading and writing; then read it again (twice at most).
 			let outcome: 'sent' | 'conflict' | 'retry' = 'retry';
 			for (let tries = 0; tries < 2 && outcome === 'retry'; tries++) {
 				if (r.op === 'create') {
-					// False means it's there already (sent before, but the reply was lost): done either way.
-					const uid = href
-						.split('/')
-						.pop()!
-						.replace(/\.ics$/, '');
-					await writer.writeEvent(href, '', newEvent(uid, JSON.parse(r.changes) as Details));
+					await store.create(cal, r.remote_id, JSON.parse(r.changes) as Details);
 					outcome = 'sent';
 					continue;
 				}
-				const res = await writer.getEvent(href);
 				if (isSeries(r)) {
-					outcome = await pushSeries(db, writer, r, res);
+					outcome = await pushSeries(db, store, cal, r);
 					continue;
 				}
-				const theirs = res ? currentDetails(res.data, href, r.remote_id) : null;
+				const there = await store.read(cal, r.remote_id);
+				const theirs = there?.details ?? null;
 				if (r.op === 'delete') {
 					// Already gone there: nothing to do.
-					if (!res || !theirs) outcome = 'sent';
-					else if (await writer.writeEvent(href, res.etag, deleteOccurrence(res.data, href, r.remote_id)))
-						outcome = 'sent';
+					if (!there || !theirs) outcome = 'sent';
+					else if (await store.remove(cal, r.remote_id, there.version)) outcome = 'sent';
 					continue;
 				}
 				const changes = JSON.parse(r.changes) as Partial<Details>;
@@ -377,7 +374,7 @@ export async function pushOutbox(db: DB, writer: CalendarWriter, now = new Date(
 						r.id,
 					);
 					outcome = 'conflict';
-				} else if (await writer.writeEvent(href, res!.etag, editEvent(res!.data, href, r.remote_id, changes))) {
+				} else if (await store.update(cal, r.remote_id, there!.version, changes)) {
 					outcome = 'sent';
 				}
 			}
@@ -387,7 +384,7 @@ export async function pushOutbox(db: DB, writer: CalendarWriter, now = new Date(
 			} else if (outcome === 'conflict') {
 				result.conflicts++;
 			} else {
-				throw new Error('It kept changing in iCloud while saving');
+				throw new Error('It kept changing in the calendar while saving');
 			}
 		} catch (err) {
 			db.prepare('UPDATE event_outbox SET attempts = attempts + 1, error = ? WHERE id = ?').run(
@@ -403,12 +400,13 @@ export async function pushOutbox(db: DB, writer: CalendarWriter, now = new Date(
 /** Sends a change to every day of a repeating event (or deletes it all), unless its title or address changed there too. */
 async function pushSeries(
 	db: DB,
-	writer: CalendarWriter,
+	store: EventStore,
+	cal: string,
 	r: OutboxRow,
-	res: { data: string; etag: string } | null,
 ): Promise<'sent' | 'conflict' | 'retry'> {
-	if (r.op === 'delete') return !res || (await writer.writeEvent(r.remote_id, res.etag, null)) ? 'sent' : 'retry';
-	const theirs = res ? seriesDetails(res.data) : null;
+	const res = await store.readSeries(cal, r.remote_id);
+	if (r.op === 'delete') return !res || (await store.removeSeries(cal, r.remote_id, res.version)) ? 'sent' : 'retry';
+	const theirs = res?.details ?? null;
 	const before = JSON.parse(r.before) as { title: string; location: string | null };
 	const changes = JSON.parse(r.changes) as Series;
 	const clash =
@@ -423,7 +421,7 @@ async function pushSeries(
 		return 'conflict';
 	}
 	const { series: _s, ...edit } = changes;
-	return (await writer.writeEvent(r.remote_id, res!.etag, editSeries(res!.data, edit))) ? 'sent' : 'retry';
+	return (await store.updateSeries(cal, r.remote_id, res!.version, edit)) ? 'sent' : 'retry';
 }
 
 /**

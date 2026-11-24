@@ -90,7 +90,7 @@ export function useSaveEvent() {
 			]);
 		},
 		onError: putBack(qc),
-		// An iCloud event's edit also changes what's waiting to be sent.
+		// An iCloud or Google event's edit also changes what's waiting to be sent.
 		onSettled: () =>
 			Promise.all([qc.invalidateQueries({ queryKey: keys.events }), qc.invalidateQueries({ queryKey: ['outbox'] })]),
 	});
@@ -233,7 +233,7 @@ export function useDeleteEvent() {
 				},
 			]),
 		onError: putBack(qc),
-		// An iCloud event's edit also changes what's waiting to be sent.
+		// An iCloud or Google event's edit also changes what's waiting to be sent.
 		onSettled: () =>
 			Promise.all([qc.invalidateQueries({ queryKey: keys.events }), qc.invalidateQueries({ queryKey: ['outbox'] })]),
 	});

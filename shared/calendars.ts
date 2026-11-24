@@ -72,6 +72,9 @@ export const Connection = z.object({
 	lastSuccess: z.string().nullable(),
 	lastError: z.string().nullable(),
 	calendars: z.int(),
+	/** Synced, but none of its calendars can be changed from the wall (a Google account connected before
+	 * Sprig asked to change events: connecting it again fixes that). */
+	readOnly: z.boolean().optional(),
 });
 /** Every calendar account (GET /api/connections); null where that kind is off. */
 export const Connections = z.object({

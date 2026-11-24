@@ -43,7 +43,10 @@ export default function GoogleCalendars({ members }: { members: Member[] }) {
 	// The server has no Google client set up.
 	if (list === undefined || list === null) return null;
 	const ownAccount = status?.signedIn && status.kind === 'user' && !status.wallMode;
-	const mine = list.some((c) => c.memberId === (status?.signedIn ? status.memberId : null));
+	const myId = status?.signedIn ? status.memberId : null;
+	const mine = list.some((c) => c.memberId === myId);
+	// Mine, but connected before Sprig could change events: connecting it again (same account) fixes it.
+	const mineReadOnly = list.some((c) => c.memberId === myId && c.readOnly);
 
 	return (
 		<section className={panel.bare}>
@@ -66,6 +69,11 @@ export default function GoogleCalendars({ members }: { members: Member[] }) {
 											'Syncing…'
 										)}
 									</span>
+									{c.readOnly && (
+										<span className={s.how}>
+											Read only: connected before Sprig could make changes. Connect it again to change events here.
+										</span>
+									)}
 								</span>
 								<Button variant="link" size="sm" onClick={() => setDisconnecting(c)}>
 									Disconnect
@@ -90,7 +98,11 @@ export default function GoogleCalendars({ members }: { members: Member[] }) {
 						);
 					}}
 				>
-					{mine ? 'Connect another Google account' : 'Connect my Google Calendar'}
+					{mineReadOnly
+						? 'Connect again to make changes'
+						: mine
+							? 'Connect another Google account'
+							: 'Connect my Google Calendar'}
 				</Button>
 			) : ownAccount ? (
 				// A full page visit: Google's pages, then back to the app.
@@ -99,12 +111,16 @@ export default function GoogleCalendars({ members }: { members: Member[] }) {
 					href="/api/account/google/connect"
 					style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
 				>
-					{mine ? 'Connect another Google account' : 'Connect my Google Calendar'}
+					{mineReadOnly
+						? 'Connect again to make changes'
+						: mine
+							? 'Connect another Google account'
+							: 'Connect my Google Calendar'}
 				</a>
 			) : (
 				<p className={s.hint}>Each person connects their own Google Calendar from Settings on their phone.</p>
 			)}
-			<p className={s.hint}>Google events show here; change them in Google Calendar.</p>
+			<p className={s.hint}>Google events show here, and changes made here go back to Google Calendar.</p>
 			{disconnecting && (
 				<ConfirmDialog
 					title={`Disconnect ${disconnecting.account}?`}
