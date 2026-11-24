@@ -334,6 +334,14 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
 				})
 			: null;
 		const user = row && { name: row.name, email: row.email };
+		// How they sign in (Apple, Google, an emailed code): the setup's calendar step starts with that service's.
+		const signIns = s.user_id
+			? (
+					accounts
+						.prepare('SELECT DISTINCT provider FROM identities WHERE user_id = ? ORDER BY provider')
+						.all(s.user_id) as { provider: 'apple' | 'google' | 'email' }[]
+				).map((r) => r.provider)
+			: [];
 		const theirs = s.user_id
 			? (accounts
 					.prepare(
@@ -370,6 +378,7 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
 			signedIn: true as const,
 			kind: s.kind,
 			user,
+			signIns,
 			household: c.household && { id: c.household.id, name: c.household.name },
 			households: theirs,
 			role: c.role,

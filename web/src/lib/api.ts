@@ -198,6 +198,8 @@ export type AuthStatus =
 			/** Someone's account, a kid's device added by code, or the wall. */
 			kind: 'user' | 'device' | 'wall';
 			user: { name: string; email: string | null } | null;
+			/** How this person signs in (none for a kid's device or the wall). */
+			signIns?: ('apple' | 'google' | 'email')[];
 			household: { id: string; name: string } | null;
 			households: { id: string; name: string; role: Role }[];
 			role: Role | null;

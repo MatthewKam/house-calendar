@@ -209,6 +209,8 @@ describe('signing in', () => {
 		const b = device();
 		const res = await b.post('/api/account/signin/google', { idToken: 'pat.fake-token' });
 		expect(res.body).toMatchObject({ household: { name: 'Pats' }, role: 'guardian' });
+		// Both ways in are theirs (the setup's calendar step starts with the service they sign in with).
+		expect(res.body.signIns).toEqual(['email', 'google']);
 	});
 });
 

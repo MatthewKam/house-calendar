@@ -14,14 +14,25 @@ import { Input } from '../ui/Field';
  * Settings → Calendars: each person's iCloud Calendar, connected with their Apple ID and an
  * app-specific password (their normal Apple password is never asked for). Events sync both ways.
  */
-export default function ICloudCalendars({ members }: { members: Member[] }) {
+export default function ICloudCalendars({
+	members,
+	startOpen = false,
+	appleId: knownAppleId = '',
+}: {
+	members: Member[];
+	/** Show the steps and the form at once (the setup, after signing in with Apple), until they connect. */
+	startOpen?: boolean;
+	/** Their Apple ID, when it's known. */
+	appleId?: string;
+}) {
 	const qc = useQueryClient();
 	const status = useAuthStatus().data;
 	// The account being disconnected, while that's asked.
 	const [disconnecting, setDisconnecting] = useState<{ id: string; account: string } | null>(null);
 	const list = useQuery({ queryKey: ['connections'], queryFn: api.connections, refetchInterval: 30_000 }).data?.icloud;
-	const [open, setOpen] = useState(false);
-	const [appleId, setAppleId] = useState('');
+	// Null: as `startOpen` says, until they open or close it.
+	const [opened, setOpen] = useState<boolean | null>(null);
+	const [appleId, setAppleId] = useState(knownAppleId);
 	const [password, setPassword] = useState('');
 	const refresh = () => {
 		void qc.invalidateQueries({ queryKey: ['connections'] });
@@ -31,7 +42,7 @@ export default function ICloudCalendars({ members }: { members: Member[] }) {
 		mutationFn: api.connectICloud,
 		onSuccess: () => {
 			setOpen(false);
-			setAppleId('');
+			setAppleId(knownAppleId);
 			setPassword('');
 		},
 		onSettled: refresh,
@@ -41,6 +52,7 @@ export default function ICloudCalendars({ members }: { members: Member[] }) {
 	// Connecting is a parent change: from a guardian's phone, or a wall or kid's device unlocked with a PIN.
 	const canConnect = status?.signedIn ? status.parent : true;
 	const mine = list.some((c) => c.memberId === (status?.signedIn ? status.memberId : null));
+	const open = opened ?? (startOpen && !mine);
 
 	return (
 		<section className={panel.bare}>

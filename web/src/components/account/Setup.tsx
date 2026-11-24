@@ -256,6 +256,27 @@ export function Calendar({
 	const connections = useQuery({ queryKey: ['connections'], queryFn: api.connections }).data;
 	const connected =
 		!!me && [...(connections?.google ?? []), ...(connections?.icloud ?? [])].some((c) => c.memberId === me);
+	// Signed in with Apple: iCloud's steps come first, already open, with their Apple ID (unless Apple hides it).
+	// Signed in with Google: Google first.
+	const signIns = (status?.signedIn && status.signIns) || [];
+	const apple = signIns.includes('apple');
+	const email = status?.signedIn ? (status.user?.email ?? '') : '';
+	const google = connections?.google && (
+		<>
+			<h2 className={s.subhead}>Google Calendar</h2>
+			<GoogleCalendars members={members} />
+		</>
+	);
+	const icloud = connections?.icloud && (
+		<>
+			<h2 className={s.subhead}>iCloud Calendar</h2>
+			<ICloudCalendars
+				members={members}
+				startOpen={apple}
+				appleId={apple && !email.endsWith('@privaterelay.appleid.com') ? email : ''}
+			/>
+		</>
+	);
 	return (
 		<>
 			<h1 className={s.title}>Your calendar</h1>
@@ -276,16 +297,15 @@ export function Calendar({
 					<PhoneCalendars onShared={() => setShared(true)} />
 				</>
 			)}
-			{connections?.google && (
+			{apple ? (
 				<>
-					<h2 className={s.subhead}>Google Calendar</h2>
-					<GoogleCalendars members={members} />
+					{icloud}
+					{google}
 				</>
-			)}
-			{connections?.icloud && (
+			) : (
 				<>
-					<h2 className={s.subhead}>iCloud Calendar</h2>
-					<ICloudCalendars members={members} />
+					{google}
+					{icloud}
 				</>
 			)}
 			{!isApp && (
