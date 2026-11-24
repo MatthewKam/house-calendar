@@ -110,7 +110,10 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 			<div className={s.column}>
 				<img src="/wordmark.svg" alt="Sprig" className={s.wordmark} />
 				<h1 className={s.title}>Welcome</h1>
-				<p className={s.lead}>Your family's calendar, tasks and rewards, on everyone's phone and the wall.</p>
+				<p className={s.lead}>
+					Your family's calendar, tasks and rewards, on everyone's phone and the wall. Bring in your Google or iCloud
+					calendars and everyone's events are in one place.
+				</p>
 				{config?.apple && (
 					<button className={s.apple} onClick={() => void apple()}>
 						Continue with Apple
@@ -130,6 +133,9 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 					</Button>
 				)}
 				{!isApp && <GetTheApp />}
+				<footer className={s.footer}>
+					<a href="/privacy">Privacy</a> · <a href="/support">Support</a>
+				</footer>
 			</div>
 		</main>
 	);

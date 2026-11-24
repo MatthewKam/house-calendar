@@ -117,6 +117,16 @@
 	border-radius: var(--radius-sm);
 	background: #fff; /* own: a QR code reads dark on white, in dark mode too */
 }
+/* The sign-in screen's links to the privacy and support pages (Google and Apple look for them). */
+.footer {
+	margin-top: var(--space-5);
+	text-align: center;
+	color: var(--muted);
+	font-size: var(--text-sm);
+}
+.footer a {
+	color: inherit;
+}
 .hint {
 	margin: 0;
 	color: var(--muted);
