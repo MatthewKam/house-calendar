@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { openDb } from '../db.ts';
 import { buildApp } from '../app.ts';
 import { syncOnce } from '../sync.ts';
-import { GoogleSource, toRemoteEvent, type GoogleOAuth } from './google.ts';
+import { GoogleSource, googleOAuth, SCOPES, toRemoteEvent, type GoogleOAuth } from './google.ts';
 import { googleCalendars } from '../googleSync.ts';
 import { sealer } from '../secrets.ts';
 import { randomBytes } from 'node:crypto';
@@ -173,5 +173,48 @@ describe('Google connections', () => {
 		expect(db.prepare(`SELECT COUNT(*) n FROM calendars WHERE provider = 'google'`).get()).toEqual({ n: 0 });
 		expect(db.prepare(`SELECT COUNT(*) n FROM events`).get()).toEqual({ n: 0 });
 		google.stop();
+	});
+});
+
+const idToken = (email: string) => `x.${Buffer.from(JSON.stringify({ email })).toString('base64url')}.y`;
+
+/** A fetch that answers Google's token endpoint with `body`. */
+const tokenReply = (body: Record<string, unknown>) =>
+	(async () => new Response(JSON.stringify(body), { status: 200 })) as unknown as typeof fetch;
+
+describe('Google sign-in', () => {
+	it('asks for exactly the registered scopes, offline, with the consent screen', () => {
+		const url = new URL(googleOAuth('id', 'secret').authUrl('https://sprig-family.com/cb', 'st'));
+		const q = url.searchParams;
+		expect(q.get('scope')?.split(' ')).toEqual([
+			'openid',
+			'https://www.googleapis.com/auth/userinfo.email',
+			'https://www.googleapis.com/auth/calendar.events',
+			'https://www.googleapis.com/auth/calendar.calendarlist.readonly',
+		]);
+		expect(SCOPES).not.toContain('https://www.googleapis.com/auth/calendar.readonly');
+		expect(q.get('access_type')).toBe('offline');
+		expect(q.get('prompt')).toBe('consent');
+		expect(q.has('include_granted_scopes')).toBe(false);
+	});
+
+	it('takes the refresh token when both calendar scopes were allowed', async () => {
+		const oauth = googleOAuth(
+			'id',
+			'secret',
+			tokenReply({ refresh_token: 'rt', scope: SCOPES.join(' '), id_token: idToken('Pat@Gmail.com') }),
+		);
+		expect(await oauth.exchange('code', 'https://sprig-family.com/cb')).toEqual({
+			refreshToken: 'rt',
+			account: 'pat@gmail.com',
+		});
+	});
+
+	it('turns it down when a calendar box was unticked', async () => {
+		const scope = SCOPES.filter((s) => !s.endsWith('calendar.events')).join(' ');
+		const oauth = googleOAuth('id', 'secret', tokenReply({ refresh_token: 'rt', scope, id_token: idToken('a@b.c') }));
+		await expect(oauth.exchange('code', 'https://sprig-family.com/cb')).rejects.toThrow(
+			'Calendar access was not allowed',
+		);
 	});
 });

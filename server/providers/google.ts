@@ -1,14 +1,19 @@
 import type { CalendarSource, RemoteCalendar, RemoteEvent } from './types.ts';
 
 // Google Calendar, connected by each person with their own Google account (OAuth): Google asks
-// them once to let the app see their calendars, and the server keeps a refresh token to sync with.
-// Read-only for now; events are changed in Google Calendar itself.
+// them once to let the app see and change their calendars' events, and the server keeps a refresh
+// token to sync with. Sprig only reads them so far (writing back to Google comes next).
 
 const AUTH = 'https://accounts.google.com/o/oauth2/v2/auth';
 const TOKEN = 'https://oauth2.googleapis.com/token';
 const REVOKE = 'https://oauth2.googleapis.com/revoke';
 const API = 'https://www.googleapis.com/calendar/v3';
-const SCOPES = ['openid', 'email', 'https://www.googleapis.com/auth/calendar.readonly'];
+/** Exactly the scopes registered for Sprig in Google Cloud (Data Access); change both together. */
+const CALENDAR_SCOPES = [
+	'https://www.googleapis.com/auth/calendar.events', // read and change events (not calendars' settings)
+	'https://www.googleapis.com/auth/calendar.calendarlist.readonly', // which calendars they have
+];
+export const SCOPES = ['openid', 'https://www.googleapis.com/auth/userinfo.email', ...CALENDAR_SCOPES];
 
 export interface GoogleOAuth {
 	/** Where to send the person to allow access; Google comes back to `redirectUri` with a code. */
@@ -44,14 +49,16 @@ export function googleOAuth(clientId: string, clientSecret: string, fetchImpl: t
 				// offline + consent: a refresh token every time, so syncing keeps working.
 				access_type: 'offline',
 				prompt: 'consent',
-				include_granted_scopes: 'true',
+				// No include_granted_scopes: the grant is exactly SCOPES, not ones an older version asked for.
 				...(loginHint ? { login_hint: loginHint } : {}),
 			})}`;
 		},
 		async exchange(code, redirectUri) {
 			const json = await post({ code, redirect_uri: redirectUri, grant_type: 'authorization_code' });
 			if (typeof json.refresh_token !== 'string') throw new Error('Google gave no refresh token');
-			if (typeof json.scope === 'string' && !json.scope.includes('calendar'))
+			// Google lets people untick each calendar box on its consent screen: both are needed.
+			const granted = typeof json.scope === 'string' ? json.scope.split(' ') : null;
+			if (granted && !CALENDAR_SCOPES.every((s) => granted.includes(s)))
 				throw new Error('Calendar access was not allowed');
 			// Straight from Google's token endpoint over HTTPS, so the ID token needn't be checked again.
 			const claims = JSON.parse(Buffer.from(String(json.id_token).split('.')[1] ?? '', 'base64url').toString() || '{}');
