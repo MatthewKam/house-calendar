@@ -3,7 +3,7 @@ import { categoryLabel } from '../../lib/tasks';
 import type { Task } from '../../lib/types';
 import { StarIcon } from '../ui/icons';
 import { Tag } from '../ui/Chip';
-import s from './Tasks.module.css';
+import s from './styles/Tasks.module.css';
 
 /** A task's icon (if any) and title. */
 export function TaskName({ task }: { task: Task }) {

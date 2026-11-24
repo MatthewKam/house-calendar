@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import s from './QuickAdd.module.css';
+import s from './styles/QuickAdd.module.css';
 
 type QuickKind = 'event' | 'list' | 'good' | 'task' | 'recipe' | 'photo' | 'snap' | 'say';
 /** The ones that open the phone's picker (Snap: the camera) and get what was picked. */

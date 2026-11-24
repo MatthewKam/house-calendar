@@ -20,8 +20,8 @@ import { DayCalendar } from '../ui/DayCarousel';
 import TodayAnimal from './TodayAnimal';
 import { bringPicture } from '../calendar/EventChecklist';
 import { Loading, Skeleton } from '../ui/Skeleton';
-import s from './KidMode.module.css';
-import g from './KidToday.module.css';
+import s from './styles/KidMode.module.css';
+import g from './styles/KidToday.module.css';
 import { isKid } from '../../lib/people';
 
 /** How many days ahead a kid sees: today, tomorrow, and later this week. */

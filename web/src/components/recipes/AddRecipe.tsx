@@ -8,7 +8,7 @@ import Sheet from '../ui/Sheet';
 import { Loading, Skeleton, SkeletonLines } from '../ui/Skeleton';
 import Problem from '../ui/Problem';
 import RecipeForm from './RecipeForm';
-import sheet from '../ui/Sheet.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
 import s from './Recipes.module.css';
 import { Button, IconButton } from '../ui/Button';
 import { Input } from '../ui/Field';

@@ -10,7 +10,7 @@ import { useLists } from '../../lib/queries';
 import type { Member, Proposal } from '../../lib/types';
 import DateInput from '../ui/DateInput';
 import { CalendarPick, useNewEventCalendar } from '../calendar/CalendarPick';
-import sheet from '../ui/Sheet.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
 import s from './Capture.module.css';
 import { isKid, firstName } from '../../lib/people';
 import Sheet from '../ui/Sheet';

@@ -4,7 +4,7 @@ import { useMealActions } from '../../lib/queries';
 import type { MealTheme, PlanMeal } from '../../lib/types';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import Sheet from '../ui/Sheet';
-import sheet from '../ui/Sheet.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
 import s from './Recipes.module.css';
 import { Button, IconButton } from '../ui/Button';
 import { Input, Select } from '../ui/Field';

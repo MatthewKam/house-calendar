@@ -6,7 +6,7 @@ import { isNight, TRANSITIONS } from '../../lib/screensaver';
 import type { CalEvent, Photo, ScreenSaverSettings } from '../../lib/types';
 import { preload, slideSeconds } from '../../lib/photos';
 import { dayKey, driveLabel, fromDayKey, timeLabel, longDate } from '../../lib/dates';
-import s from './ScreenSaver.module.css';
+import s from './styles/ScreenSaver.module.css';
 import { shuffle } from '../../lib/random';
 
 type Effect = Exclude<ScreenSaverSettings['transition'], 'mix'> | 'slideBack';

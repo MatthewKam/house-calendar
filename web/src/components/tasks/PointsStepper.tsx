@@ -1,4 +1,4 @@
-import s from './Goals.module.css';
+import s from './styles/Goals.module.css';
 import { IconButton } from '../ui/Button';
 
 /** − 1 ★ +: how many stars something is worth. 0 shows as a sticker (a cheer, nothing to save). */

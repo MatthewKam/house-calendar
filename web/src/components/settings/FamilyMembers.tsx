@@ -7,7 +7,7 @@ import type { Member, MemberPatch, Stage } from '../../lib/types';
 import ColorAsked from '../account/ColorAsked';
 import { COMMON_ALLERGIES, allergyEmoji } from '../../lib/allergies';
 import DateInput from '../ui/DateInput';
-import s from './Settings.module.css';
+import s from './styles/Settings.module.css';
 import { PencilIcon } from '../ui/icons';
 import { Chip } from '../ui/Chip';
 import { Button, IconButton } from '../ui/Button';

@@ -25,7 +25,7 @@ import panel from '../calendar/styles/DayPanel.module.css';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import { Button } from '../ui/Button';
-import s from './Tasks.module.css';
+import s from './styles/Tasks.module.css';
 import { isKid } from '../../lib/people';
 import { useFolded } from '../../lib/useFolded';
 

@@ -5,7 +5,7 @@ import { useScreenSaverSettings } from '../../lib/useScreenSaverSettings';
 import { preload, slideSeconds } from '../../lib/photos';
 import type { Photo } from '../../lib/types';
 import { Loading, Skeleton } from '../ui/Skeleton';
-import s from './PhotoCard.module.css';
+import s from './styles/PhotoCard.module.css';
 import { shuffle } from '../../lib/random';
 
 /** A swipe: at least this far sideways, and more sideways than up or down. */

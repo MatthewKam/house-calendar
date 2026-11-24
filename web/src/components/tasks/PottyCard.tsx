@@ -7,8 +7,8 @@ import { textOn } from '../../lib/color';
 import Celebration from '../ui/Celebration';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import { StarIcon } from '../ui/icons';
-import sheet from '../ui/Sheet.module.css';
-import s from './Potty.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
+import s from './styles/Potty.module.css';
 import Sheet from '../ui/Sheet';
 import { Button, IconButton } from '../ui/Button';
 

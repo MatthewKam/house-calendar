@@ -21,7 +21,7 @@ const BASELINE = join(import.meta.dirname, 'usage-baseline.json');
 
 /** Every .tsx and .css in web/src but the shared components themselves: its path and text. */
 const files = (readdirSync(src, { recursive: true }) as string[])
-	.filter((f) => /\.(tsx|css)$/.test(f) && !f.startsWith(join('components', 'ui', 'Buttons.module.css')))
+	.filter((f) => /\.(tsx|css)$/.test(f) && !f.startsWith(join('components', 'ui', 'styles', 'Buttons.module.css')))
 	.filter((f) => !/components[/\\]ui[/\\](Button|Field|Chip|Card|ListRow|Segmented|DateInput)\./.test(f))
 	.filter((f) => !f.startsWith(join('components', 'design')))
 	.sort()

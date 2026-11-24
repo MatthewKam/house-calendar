@@ -7,7 +7,7 @@ import {
 	type SelectHTMLAttributes,
 	type TextareaHTMLAttributes,
 } from 'react';
-import s from './Field.module.css';
+import s from './styles/Field.module.css';
 
 // A form's fields: Field is the label, the hint under it and what's wrong; inside it goes one Input,
 // TextArea or Select, which Field ties to its label, hint and error (for screen readers) by itself.

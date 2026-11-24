@@ -8,7 +8,7 @@ import Setup from './Setup';
 import { finishSetup, setupPending } from '../../lib/setup';
 import SignIn from './SignIn';
 import Welcome from './Welcome';
-import a from './Account.module.css';
+import a from './styles/Account.module.css';
 
 /**
  * Shows the app once this device is in a household; before that, signing in, then starting or

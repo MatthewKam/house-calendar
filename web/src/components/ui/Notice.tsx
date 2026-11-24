@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import s from './Notice.module.css';
+import s from './styles/Notice.module.css';
 
 type Tone = 'info' | 'warn' | 'danger';
 

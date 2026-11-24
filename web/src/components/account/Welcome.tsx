@@ -4,7 +4,7 @@ import { pendingJoin } from '../../lib/joinCode';
 import { startSetup } from '../../lib/setup';
 import { isApp } from '../../lib/native';
 import JoinForm from './JoinForm';
-import s from './Account.module.css';
+import s from './styles/Account.module.css';
 import { familyName, firstName } from '../../lib/people';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Field';

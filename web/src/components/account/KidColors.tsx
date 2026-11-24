@@ -4,8 +4,8 @@ import { PALETTE } from '../../lib/color';
 import { useAuthStatus, useSetMemberColor } from '../../lib/queries';
 import type { Member } from '../../lib/types';
 import Sheet from '../ui/Sheet';
-import sheet from '../ui/Sheet.module.css';
-import s from '../settings/Settings.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
+import s from '../settings/styles/Settings.module.css';
 import { IconButton } from '../ui/Button';
 
 /**

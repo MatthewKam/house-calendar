@@ -1,6 +1,6 @@
 import { useAnswerColor, useAuthStatus } from '../../lib/queries';
 import type { Member } from '../../lib/types';
-import s from './ColorAsked.module.css';
+import s from './styles/ColorAsked.module.css';
 import { Button } from '../ui/Button';
 
 /**

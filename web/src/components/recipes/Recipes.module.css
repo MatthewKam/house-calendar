@@ -1035,7 +1035,7 @@ button.ideaSearch {
 }
 /* On a recipe: when it's planned. */
 .planned {
-	composes: withIcon from '../ui/Buttons.module.css';
+	composes: withIcon from '../ui/styles/Buttons.module.css';
 	padding: var(--space-1) var(--space-4);
 	min-height: 2rem;
 	border-radius: var(--radius-round);

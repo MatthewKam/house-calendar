@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useParent } from '../../lib/useParent';
 import { usePinByFace } from '../../lib/useFaceIdPin';
 import PinPad, { pinSheet } from '../ui/PinPad';
-import sheet from '../ui/Sheet.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
 import Sheet from '../ui/Sheet';
 import { Button } from '../ui/Button';
 

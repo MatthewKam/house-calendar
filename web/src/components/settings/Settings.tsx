@@ -21,8 +21,8 @@ import { isApp } from '../../lib/native';
 import LearnSettings, { LearnAbout, learnNote } from './LearnSettings';
 import ScreenSettings from './ScreenSettings';
 import { Group, InfoButton, Section, SettingsView } from './parts';
-import sheet from '../ui/Sheet.module.css';
-import s from './Settings.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
+import s from './styles/Settings.module.css';
 import { LEARN_ON } from '../../lib/features';
 import { Button, IconButton } from '../ui/Button';
 

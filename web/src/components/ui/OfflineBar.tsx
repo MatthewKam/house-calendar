@@ -1,6 +1,6 @@
 import { useMutationState } from '@tanstack/react-query';
 import { useGettingThrough, useOnline } from '../../lib/useOnline';
-import s from './OfflineBar.module.css';
+import s from './styles/OfflineBar.module.css';
 
 /**
  * Offline, or a signal too weak to get through: a small note at the top of every screen, so nothing just

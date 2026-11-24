@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
-import s from './NavBar.module.css';
+import s from './styles/NavBar.module.css';
 
 export type Page = 'calendar' | 'today' | 'tasks' | 'rewards' | 'lists' | 'photos' | 'recipes';
 

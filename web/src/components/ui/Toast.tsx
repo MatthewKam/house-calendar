@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import s from './Toast.module.css';
+import s from './styles/Toast.module.css';
 
 export interface ToastMessage {
 	text: string;

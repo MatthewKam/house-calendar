@@ -1,5 +1,5 @@
 import { problemText } from '../../lib/api';
-import s from './Problem.module.css';
+import s from './styles/Problem.module.css';
 import { Button } from './Button';
 
 /**

@@ -1,5 +1,5 @@
 import type { Page } from '../nav/NavBar';
-import s from './BackButton.module.css';
+import s from './styles/BackButton.module.css';
 
 /** Each page's name on its Back button. */
 const NAMES: Record<Page, string> = {

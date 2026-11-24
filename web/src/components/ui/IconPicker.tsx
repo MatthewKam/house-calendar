@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ALL_EMOJI, searchEmoji } from '../../lib/emoji';
-import s from './IconPicker.module.css';
+import s from './styles/IconPicker.module.css';
 import { Button } from './Button';
 import { Input } from './Field';
 

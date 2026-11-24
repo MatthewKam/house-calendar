@@ -4,7 +4,7 @@ import { api, type AuthStatus } from '../../lib/api';
 import { appleSignIn, isApp } from '../../lib/native';
 import { pendingJoin } from '../../lib/joinCode';
 import JoinForm from './JoinForm';
-import s from './Account.module.css';
+import s from './styles/Account.module.css';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Field';
 

@@ -1,5 +1,5 @@
 import type { Member } from '../../lib/types';
-import s from './ShoppingTogether.module.css';
+import s from './styles/ShoppingTogether.module.css';
 
 // Shopping together (server/shopping.ts), on a list or a recipe: the button that turns it on (and
 // says who else is shopping), and the dot beside something ticked, in the colour of who ticked it.

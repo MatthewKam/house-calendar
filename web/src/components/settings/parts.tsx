@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import Switch from '../ui/Switch';
 import ErrorBoundary from '../ui/ErrorBoundary';
-import s from './Settings.module.css';
+import s from './styles/Settings.module.css';
 
 // The pieces Settings is built from: its groups (each a view of its own), the parts folded inside them,
 // the parts that are on or off, and the ⓘ beside a title.

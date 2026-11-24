@@ -3,7 +3,7 @@ import { ENCOURAGEMENT_THEMES } from '../../lib/grownUpWords';
 import { QUOTE_THEMES } from '../../lib/quotes';
 import Switch from '../ui/Switch';
 import { Section } from './parts';
-import s from './Settings.module.css';
+import s from './styles/Settings.module.css';
 
 /** "All on", "9 of 13 on", or (none on, so the card uses the usual ones) "None on". */
 const onNote = (count: number, off: string[]) => {

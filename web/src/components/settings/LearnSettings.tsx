@@ -6,7 +6,7 @@ import { useChangeLearnDay, useLearn, useSetLearn } from '../../lib/queries';
 import type { LearnState, LearnToday, Member } from '../../lib/types';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
-import s from './Settings.module.css';
+import s from './styles/Settings.module.css';
 import { Select } from '../ui/Field';
 
 /** The word beside Learning in Settings while it's folded: who has it on. */

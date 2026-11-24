@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import s from './Skeleton.module.css';
+import s from './styles/Skeleton.module.css';
 
 // Loading: grey shapes where something is on its way, so a page never looks empty or broken while its
 // data comes in. Read out once as "Loading" (the shapes themselves are hidden from screen readers).

@@ -1,4 +1,4 @@
-import s from './Switch.module.css';
+import s from './styles/Switch.module.css';
 
 /** An on/off switch: a pill with a knob, the accent when on. `label` is read out (the row shows its own title). */
 export default function Switch({

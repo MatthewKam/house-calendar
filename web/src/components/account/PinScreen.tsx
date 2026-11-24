@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import s from './PinScreen.module.css';
+import s from './styles/PinScreen.module.css';
 import { Button } from '../ui/Button';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];

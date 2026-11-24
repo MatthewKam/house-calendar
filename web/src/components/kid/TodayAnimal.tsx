@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { noise } from '../learn/sound';
-import g from './TodayAnimal.module.css';
+import g from './styles/TodayAnimal.module.css';
 
 /**
  * The animals that can sit on a little one's Today: each one's noise (an animal in Learn's sounds) and

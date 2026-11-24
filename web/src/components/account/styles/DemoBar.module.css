@@ -2,7 +2,7 @@
    sheets and menus. Centered by its margins, not a transform: a pressed button's own (app.css) would
    replace it, and the pill would jump out from under the finger. */
 .bar {
-	composes: withIcon from '../ui/Buttons.module.css';
+	composes: withIcon from '../../ui/styles/Buttons.module.css';
 	position: fixed;
 	inset-inline: 0;
 	margin-inline: auto;

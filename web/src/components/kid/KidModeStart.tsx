@@ -2,8 +2,8 @@ import type { CSSProperties } from 'react';
 import { textOn } from '../../lib/color';
 import type { Member } from '../../lib/types';
 import Sheet from '../ui/Sheet';
-import sheet from '../ui/Sheet.module.css';
-import s from './KidMode.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
+import s from './styles/KidMode.module.css';
 import { Button } from '../ui/Button';
 
 /** Starting kid mode on this device: which kid it opens on (the name at the top switches to the others). */

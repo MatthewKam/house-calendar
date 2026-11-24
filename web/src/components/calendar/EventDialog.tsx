@@ -10,7 +10,7 @@ import { EventReminders } from './Reminders';
 import EventForecast from './EventForecast';
 import AddressInput from './AddressInput';
 import { PickChip } from '../ui/NameChip';
-import sheet from '../ui/Sheet.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
 import s from './styles/EventDialog.module.css';
 import DateInput from '../ui/DateInput';
 import { CalendarPick, useNewEventCalendar } from './CalendarPick';

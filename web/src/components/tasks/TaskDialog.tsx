@@ -8,11 +8,11 @@ import type { Task, TaskCategory, TaskInput, TaskTime, Member, MomentKind } from
 import ConfirmDialog from '../ui/ConfirmDialog';
 import GoalPicker from './GoalPicker';
 import PointsStepper from './PointsStepper';
-import g from './Goals.module.css';
+import g from './styles/Goals.module.css';
 import IconPicker from '../ui/IconPicker';
 import { PickChip } from '../ui/NameChip';
-import sheet from '../ui/Sheet.module.css';
-import c from './Tasks.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
+import c from './styles/Tasks.module.css';
 import DateInput from '../ui/DateInput';
 import Sheet from '../ui/Sheet';
 import { Button, IconButton } from '../ui/Button';

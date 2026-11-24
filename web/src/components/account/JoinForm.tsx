@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, type AuthStatus, type JoinPreview } from '../../lib/api';
 import { clearJoin, pendingJoin } from '../../lib/joinCode';
-import s from './Account.module.css';
+import s from './styles/Account.module.css';
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/Chip';
 import { Input } from '../ui/Field';

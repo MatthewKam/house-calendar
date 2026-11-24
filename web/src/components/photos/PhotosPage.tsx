@@ -7,10 +7,10 @@ import { useParent } from '../../lib/useParent';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import Fab from '../nav/Fab';
 import ScreenSaverSettings from '../settings/ScreenSaverSettings';
-import sheet from '../ui/Sheet.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
-import s from './Photos.module.css';
+import s from './styles/Photos.module.css';
 import Sheet from '../ui/Sheet';
 import { Button, IconButton } from '../ui/Button';
 

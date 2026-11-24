@@ -5,7 +5,7 @@ import { useTempUnit } from '../../lib/units';
 import { useThemeSetting, type Theme } from '../../lib/useTheme';
 import { useUiScale } from '../../lib/useUiScale';
 import { Section } from './parts';
-import s from './Settings.module.css';
+import s from './styles/Settings.module.css';
 import { Segmented } from '../ui/Segmented';
 
 const THEMES: [Theme, string][] = [

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGoalActions, useGoalLibrary } from '../../lib/queries';
 import type { GoalTemplate, Stage } from '../../lib/types';
-import s from './Goals.module.css';
+import s from './styles/Goals.module.css';
 import { Button } from '../ui/Button';
 
 interface Props {

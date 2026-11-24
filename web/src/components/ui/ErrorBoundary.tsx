@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import Problem from './Problem';
-import s from './Problem.module.css';
+import s from './styles/Problem.module.css';
 
 /**
  * Keeps a part of the app to itself when it breaks: instead of the whole app going blank, just this part

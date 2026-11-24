@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useSetSetting, useSettings } from '../../lib/queries';
-import s from './Settings.module.css';
+import s from './styles/Settings.module.css';
 import { PencilIcon } from '../ui/icons';
 import { Button, IconButton } from '../ui/Button';
 import { Input } from '../ui/Field';

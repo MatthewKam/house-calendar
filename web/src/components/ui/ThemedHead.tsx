@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import s from './ThemedHead.module.css';
+import s from './styles/ThemedHead.module.css';
 
 /**
  * A daily card's heading with an ⓘ at the end of the row: tapped, it lists the themes the card picks from

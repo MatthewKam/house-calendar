@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useRewardActions } from '../../lib/queries';
 import type { Member } from '../../lib/types';
 import { PickChip } from '../ui/NameChip';
-import sheet from '../ui/Sheet.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
 import s from './Rewards.module.css';
 import Sheet from '../ui/Sheet';
 import { Button, IconButton } from '../ui/Button';

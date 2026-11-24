@@ -1,5 +1,5 @@
 import { useRef, type InputHTMLAttributes } from 'react';
-import d from './DateInput.module.css';
+import d from './styles/DateInput.module.css';
 import { useField } from './Field';
 
 /**

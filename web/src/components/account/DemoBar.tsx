@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { api } from '../../lib/api';
 import Sheet from '../ui/Sheet';
-import buttons from '../ui/Buttons.module.css';
-import a from './Account.module.css';
-import s from './DemoBar.module.css';
+import buttons from '../ui/styles/Buttons.module.css';
+import a from './styles/Account.module.css';
+import s from './styles/DemoBar.module.css';
 import { Button } from '../ui/Button';
 
 /** "in about 5 hours", "within the hour": how long until the demo is deleted. */

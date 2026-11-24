@@ -20,7 +20,7 @@ html button:where(.quiet) {
 }
 
 /* A button with an icon before its words, 4px apart, anywhere in the app: the button's own class
-   composes withIcon (composes: withIcon from "../ui/Buttons.module.css"), and inside it the icon and
+   composes withIcon (composes: withIcon from "./Buttons.module.css"), and inside it the icon and
    the words each have a span: <span className={buttons.buttonIcon}>📅&nbsp;</span>
    <span className={buttons.buttonText}>Pick a cook day</span>. */
 html button:where(.withIcon) {

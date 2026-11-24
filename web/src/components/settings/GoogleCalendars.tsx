@@ -5,8 +5,8 @@ import { isApp, onSheetClosed, openInSheet } from '../../lib/native';
 import { useAuthStatus } from '../../lib/queries';
 import { ago } from '../../lib/dates';
 import type { Member } from '../../lib/types';
-import s from '../account/Account.module.css';
-import panel from './Settings.module.css';
+import s from '../account/styles/Account.module.css';
+import panel from './styles/Settings.module.css';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import { Button } from '../ui/Button';
 

@@ -3,7 +3,7 @@ import { suggestIcon } from '../../lib/emoji';
 import type { ChecklistItem } from '../../lib/types';
 import IconPicker from './IconPicker';
 import { PencilIcon } from './icons';
-import s from './Checklist.module.css';
+import s from './styles/Checklist.module.css';
 import { Button } from './Button';
 import { Input } from './Field';
 

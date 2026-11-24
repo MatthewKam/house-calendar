@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuthStatus } from '../../lib/queries';
-import s from './PinPad.module.css';
+import s from './styles/PinPad.module.css';
 
 /** For the dialog the pad is in: on a phone on its side, the words and buttons go beside the pad. */
 export const pinSheet = s.sheet;

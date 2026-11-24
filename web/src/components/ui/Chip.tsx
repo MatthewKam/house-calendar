@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import s from './Chip.module.css';
+import s from './styles/Chip.module.css';
 
 interface ChipProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-pressed'> {
 	/** Picked: filled with the accent. Leave it out for a chip that just does something when tapped. */

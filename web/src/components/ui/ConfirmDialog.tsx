@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import sheet from './Sheet.module.css';
+import sheet from './styles/Sheet.module.css';
 import Sheet from './Sheet';
 import { Button } from './Button';
 

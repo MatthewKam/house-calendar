@@ -5,7 +5,7 @@ import SortableList from '../ui/SortableList';
 import { TaskName, TaskTags, TaskTick } from './TaskBits';
 import { GripIcon, PencilIcon, TrashIcon } from '../ui/icons';
 import { IconButton } from '../ui/Button';
-import s from './Tasks.module.css';
+import s from './styles/Tasks.module.css';
 
 interface Props {
 	kid: Member;

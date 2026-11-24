@@ -13,7 +13,7 @@ import GoogleCalendars from '../settings/GoogleCalendars';
 import ICloudCalendars from '../settings/ICloudCalendars';
 import { Issued } from '../settings/HouseholdAccess';
 import { GetTheApp } from './SignIn';
-import s from './Account.module.css';
+import s from './styles/Account.module.css';
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/Chip';
 import { Input } from '../ui/Field';

@@ -9,7 +9,7 @@ How Sprig's CSS is put together, and which shared names to use. The names all li
 
 ## Where styles go
 
-- Each component's CSS module sits beside it, in its feature's folder: `components/tasks/TasksPage.tsx` uses `components/tasks/Tasks.module.css`. Components of one feature can share a module. Building blocks used everywhere (`Sheet`, `Toast`, `Switch`, and `Buttons.module.css` to `composes:` from) are in `components/ui/`.
+- Each component's CSS module lives in its feature's folder. A folder with one stylesheet keeps it beside the components (`components/today/Today.module.css`); a folder with more than one keeps them all in a `styles/` folder inside it (`components/tasks/TasksPage.tsx` uses `components/tasks/styles/Tasks.module.css`). Adding a second stylesheet to a folder moves both into `styles/`. Components of one feature can share a module. Building blocks used everywhere (`Sheet`, `Toast`, `Switch`, and `Buttons.module.css` to `composes:` from) are in `components/ui/`, their stylesheets in `components/ui/styles/`.
 - A button with an icon before its words: `<Button icon="📅">Pick a cook day</Button>` (the icon and words 4px apart). Older code composes `withIcon` from `Buttons.module.css` with `buttons.buttonIcon` and `buttons.buttonText` spans; use `Button` for anything new.
 - This folder holds only what's global: `app.css`, this guide, and `scale.test.ts`.
 - `app.css` holds only what's global: the shared names below, the page's base (`button`, `input`, the body) and a few app-wide attributes (`[data-theme]`, `[data-busy]`).

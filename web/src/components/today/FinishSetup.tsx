@@ -4,7 +4,7 @@ import { isKid } from '../../lib/people';
 import { Calendar, Invite, Kids, Tasks } from '../account/Setup';
 import Sheet from '../ui/Sheet';
 import s from './Today.module.css';
-import a from '../account/Account.module.css';
+import a from '../account/styles/Account.module.css';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 

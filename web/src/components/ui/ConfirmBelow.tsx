@@ -1,5 +1,5 @@
 import { Button } from './Button';
-import s from './ConfirmBelow.module.css';
+import s from './styles/ConfirmBelow.module.css';
 
 /** A confirmation that opens right below the item it's about, in place of a browser pop-up. */
 export default function ConfirmBelow({

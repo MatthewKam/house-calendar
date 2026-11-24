@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import s from './Button.module.css';
+import s from './styles/Button.module.css';
 
 // Sprig's buttons: one look per job, the same everywhere. A sheet's Save is `primary`, its Cancel
 // `secondary`; Delete in a confirm is `destructive`, a quieter red word is `danger`; Undo, Clear and

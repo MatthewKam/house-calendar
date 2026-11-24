@@ -7,7 +7,7 @@ import { TaskName, TaskTick } from './TaskBits';
 import { StarIcon } from '../ui/icons';
 import { IconButton } from '../ui/Button';
 import { Segmented } from '../ui/Segmented';
-import s from './Tasks.module.css';
+import s from './styles/Tasks.module.css';
 
 type Period = 'week' | 'month';
 

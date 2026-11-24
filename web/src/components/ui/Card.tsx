@@ -1,5 +1,5 @@
 import { useId, type HTMLAttributes, type ReactNode } from 'react';
-import s from './Card.module.css';
+import s from './styles/Card.module.css';
 
 type Tone = 'plain' | 'info' | 'warn' | 'good' | 'danger';
 

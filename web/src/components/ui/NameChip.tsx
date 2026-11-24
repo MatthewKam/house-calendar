@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { textOn } from '../../lib/color';
-import s from './NameChip.module.css';
+import s from './styles/NameChip.module.css';
 
 /**
  * A person to pick (who an event, task or reward is for): outlined in their color, filled when picked.

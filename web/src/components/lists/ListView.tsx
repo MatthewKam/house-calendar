@@ -22,7 +22,7 @@ import { GROCERY_ICONS, splitIcon, suggestIcon } from '../../lib/emoji';
 import IconPicker from '../ui/IconPicker';
 import SortableList, { type HandleProps } from '../ui/SortableList';
 import { GripIcon, PencilIcon } from '../ui/icons';
-import sheet from '../ui/Sheet.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
 import { ago } from '../../lib/dates';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';

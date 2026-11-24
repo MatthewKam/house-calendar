@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { api, type AuthStatus, type SignedIn } from '../../lib/api';
 import Avatar from './Avatar';
 import ConfirmDialog from '../ui/ConfirmDialog';
-import s from '../account/Account.module.css';
+import s from '../account/styles/Account.module.css';
 import { Button } from '../ui/Button';
 import { Select } from '../ui/Field';
 

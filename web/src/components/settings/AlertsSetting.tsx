@@ -1,6 +1,6 @@
 import { isApp } from '../../lib/native';
 import type { PushState, usePush } from '../../lib/usePush';
-import s from './Settings.module.css';
+import s from './styles/Settings.module.css';
 import { Button } from '../ui/Button';
 import Switch from '../ui/Switch';
 import { List, ListRow } from '../ui/ListRow';

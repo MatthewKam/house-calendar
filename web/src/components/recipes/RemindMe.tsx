@@ -8,7 +8,7 @@ import { useNow } from '../../lib/useNow';
 import { problemText } from '../../lib/api';
 import Problem from '../ui/Problem';
 import Sheet from '../ui/Sheet';
-import sheet from '../ui/Sheet.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
 import s from './Recipes.module.css';
 import { Button, IconButton } from '../ui/Button';
 import { Chip } from '../ui/Chip';

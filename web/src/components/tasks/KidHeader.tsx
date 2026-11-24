@@ -3,8 +3,8 @@ import { momentKind } from '../../lib/moments';
 import type { Member, Moment } from '../../lib/types';
 import { StarIcon } from '../ui/icons';
 import { Button } from '../ui/Button';
-import s from './Tasks.module.css';
-import m from './Moments.module.css';
+import s from './styles/Tasks.module.css';
+import m from './styles/Moments.module.css';
 
 interface Props {
 	kid: Member;

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { Cheer } from '../../lib/useCheer';
-import s from './Celebration.module.css';
+import s from './styles/Celebration.module.css';
 
 const COLORS = ['#f6c445', '#ef6f6c', '#4ea8de', '#5cc28a', '#b48ae6', '#f59e4c', '#ff8fc7'];
 

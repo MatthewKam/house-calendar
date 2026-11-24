@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import s from './Segmented.module.css';
+import s from './styles/Segmented.module.css';
 
 interface Option<T extends string> {
 	id: T;

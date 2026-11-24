@@ -4,7 +4,7 @@ import type { Member, Reward, TeamMode } from '../../lib/types';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import TakeBackDialog from './TakeBackDialog';
 import { PickChip } from '../ui/NameChip';
-import sheet from '../ui/Sheet.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
 import r from './Rewards.module.css';
 import DateInput from '../ui/DateInput';
 import Sheet from '../ui/Sheet';

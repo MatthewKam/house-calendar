@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { ingredientsText, parseIngredients } from '../../lib/recipes';
 import type { Meal, RecipeFields } from '../../lib/types';
-import sheet from '../ui/Sheet.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
 import s from './Recipes.module.css';
 import { Button, IconButton } from '../ui/Button';
 import { Field, Fieldset, Input, Select, TextArea } from '../ui/Field';

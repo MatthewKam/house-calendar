@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import s from './ListRow.module.css';
+import s from './styles/ListRow.module.css';
 
 /** A list of rows (ListRow), `--space-2` apart. `divided` draws a line between them instead. */
 export function List({

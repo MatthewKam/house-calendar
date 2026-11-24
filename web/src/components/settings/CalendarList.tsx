@@ -1,7 +1,7 @@
 import { useCalendars, useUpdateCalendar } from '../../lib/queries';
 import { UNASSIGNED } from '../../lib/color';
 import type { Member, Visibility } from '../../lib/types';
-import s from './CalendarList.module.css';
+import s from './styles/CalendarList.module.css';
 import { Select } from '../ui/Field';
 
 /** Synced calendars: whose each one is, who sees its events, and whether it shows on the wall. */

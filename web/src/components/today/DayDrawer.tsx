@@ -2,7 +2,7 @@ import { fromDayKey } from '../../lib/dates';
 import type { SpecialDay } from '../../lib/specialDays';
 import DayPlans from '../calendar/DayPlans';
 import Sheet from '../ui/Sheet';
-import sheet from '../ui/Sheet.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
 import s from './Today.module.css';
 import { IconButton } from '../ui/Button';
 

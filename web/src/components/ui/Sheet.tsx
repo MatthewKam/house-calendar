@@ -1,5 +1,5 @@
 import { useEffect, useRef, type FormEvent, type ReactNode } from 'react';
-import sheet from './Sheet.module.css';
+import sheet from './styles/Sheet.module.css';
 
 /** The open sheets, oldest first: Escape closes only the top one (a confirm over a dialog). */
 const open: symbol[] = [];

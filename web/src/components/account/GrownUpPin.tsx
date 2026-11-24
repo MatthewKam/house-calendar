@@ -4,7 +4,7 @@ import { api } from '../../lib/api';
 import { usePinByFace } from '../../lib/useFaceIdPin';
 import PinPad, { pinSheet } from '../ui/PinPad';
 import Sheet from '../ui/Sheet';
-import sheet from '../ui/Sheet.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
 import { Button } from '../ui/Button';
 
 /**

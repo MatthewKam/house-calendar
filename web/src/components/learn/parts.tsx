@@ -8,8 +8,8 @@ import {
 	type CSSProperties,
 	type ReactNode,
 } from 'react';
-import s from './Learn.module.css';
-import sheet from '../ui/Sheet.module.css';
+import s from './styles/Learn.module.css';
+import sheet from '../ui/styles/Sheet.module.css';
 import Sheet from '../ui/Sheet';
 import { Button } from '../ui/Button';
 

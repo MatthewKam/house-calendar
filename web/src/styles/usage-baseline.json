@@ -11,7 +11,7 @@
 		"components/calendar/EventDialog.tsx": 14
 	},
 	"old text buttons and icon spans (Button)": {
-		"components/account/DemoBar.module.css": 1,
+		"components/account/styles/DemoBar.module.css": 1,
 		"components/account/DemoBar.tsx": 2,
 		"components/calendar/styles/EventDialog.module.css": 2,
 		"components/calendar/styles/PeopleFilter.module.css": 1,

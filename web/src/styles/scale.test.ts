@@ -19,7 +19,7 @@ const sheets = (readdirSync(src, { recursive: true }) as string[])
 	.sort()
 	.map((f) => [f, readFileSync(join(src, f), 'utf8')] as const);
 
-/** Each declaration of `property` (by regex) that isn't marked as its own: "components/tasks/Tasks.module.css:12  value". */
+/** Each declaration of `property` (by regex) that isn't marked as its own: "components/tasks/styles/Tasks.module.css:12  value". */
 function unscaled(property: RegExp, raw: (value: string) => boolean) {
 	const found: string[] = [];
 	for (const [file, text] of sheets) {

@@ -34,7 +34,7 @@ import { RewardsIcon, TasksIcon, TodayIcon } from '../nav/NavBar';
 import PottyCard from '../tasks/PottyCard';
 import { StarIcon } from '../ui/icons';
 import ErrorBoundary from '../ui/ErrorBoundary';
-import s from './KidMode.module.css';
+import s from './styles/KidMode.module.css';
 import { firstName } from '../../lib/people';
 import GrownUpPin from '../account/GrownUpPin';
 import { LEARN_ON } from '../../lib/features';
