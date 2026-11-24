@@ -8,7 +8,8 @@ export interface ToastMessage {
 
 export default function Toast({ message, onDone }: { message: ToastMessage; onDone: () => void }) {
 	useEffect(() => {
-		const t = setTimeout(onDone, 10_000);
+		// The Undo window: synced calendar changes are sent once it has passed (server/outbox.ts SEND_AFTER_MS).
+		const t = setTimeout(onDone, 5_000);
 		return () => clearTimeout(t);
 	}, [message, onDone]);
 

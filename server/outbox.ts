@@ -14,8 +14,8 @@ import type { OutboxStatus } from '../shared/events.ts';
 export const eventId = (calendarId: string, remoteId: string) =>
 	createHash('sha256').update(`${calendarId}\n${remoteId}`).digest('hex').slice(0, 32);
 
-/** Changes aren't sent until the wall's 10-second Undo has passed. */
-export const SEND_AFTER_MS = 12_000;
+/** Changes aren't sent until the 5-second Undo has passed (with a little to spare). */
+export const SEND_AFTER_MS = 7_000;
 
 interface OutboxRow {
 	id: number;
