@@ -129,13 +129,6 @@
 	.header,
 	.monthHeaderTitle,
 	.body {
-		max-width: max(56rem, 90%);
-	}
-}
-@media (max-width: 1400px) {
-	.header,
-	.monthHeaderTitle,
-	.body {
 		max-width: max(56rem, 100%);
 	}
 }
