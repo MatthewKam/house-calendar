@@ -34,7 +34,7 @@ interface Props {
 }
 
 /**
- * Settings: who's signed in at the top, then a row for each group (Family, Learning, Appearance, Daily cards,
+ * Settings: who's signed in at the top, then a row for each group (Family, Calendars, Learning, Appearance, Daily cards,
  * Screen, Notifications, Users), each opening as a view of its own with a back arrow; Sign out at the bottom.
  * Changes save as they're made. Each group's parts are in this folder; parts.tsx has the pieces they're
  * built from (Group, Section, SwitchRow, the ⓘ).
@@ -45,7 +45,8 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 	// For the folded sections' summaries.
 	const settings = useSettings().data;
 	const homeAddress = ((settings?.homeAddress as string | undefined) ?? '').trim();
-	const hasCalendars = (useCalendars().data ?? []).length > 0;
+	const calendarCount = (useCalendars().data ?? []).length;
+	const hasCalendars = calendarCount > 0;
 	const push = usePush();
 	// Both asked every time (hooks can't be skipped).
 	const upright = useMediaQuery(PHONE);
@@ -102,7 +103,11 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 					<Section title="Home address" note={homeAddress || 'Not set'}>
 						<HomeAddress />
 					</Section>
-					<Section title="Calendars">
+				</Group>
+
+				{/* Its own group: the phone's, iCloud's and Google's calendars, and whose each one is. */}
+				<Group title="Calendars" note={calendarsNote(calendarCount)}>
+					<div className={s.foldBody}>
 						<PhoneCalendars />
 						<SharingPhones members={members} />
 						{isApp && (
@@ -113,7 +118,7 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 						<ICloudCalendars members={members} />
 						<GoogleCalendars members={members} />
 						{hasCalendars && <CalendarList members={members} />}
-					</Section>
+					</div>
 				</Group>
 
 				{/* A big one: its own group, not folded inside Family. Hidden while Learn is off (lib/features.ts). */}
@@ -181,4 +186,10 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 			</div>
 		</Sheet>
 	);
+}
+
+/** The word beside Calendars in Settings while it's folded: how many are connected. */
+function calendarsNote(count: number): string {
+	if (count === 0) return 'None yet';
+	return count === 1 ? '1 calendar' : `${count} calendars`;
 }

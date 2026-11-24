@@ -22,7 +22,7 @@ export const SettingsView = createContext<{ view: string | null; open: (title: s
 });
 
 /**
- * A group of Settings (Family, Learning, Appearance, Screen, Notifications, Users): in the list, a row (with a word on
+ * A group of Settings (Family, Calendars, Learning, Appearance, Screen, Notifications, Users): in the list, a row (with a word on
  * how it's set, for one that's a single thing); tapped, the sheet shows just it (a back arrow to the list).
  */
 export function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
