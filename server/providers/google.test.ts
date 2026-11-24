@@ -164,6 +164,8 @@ describe('Google connections', () => {
 				memberId: 'alex',
 				calendars: 1,
 				lastError: null,
+				// Its token can't change events (connected before Sprig asked to): Settings says to connect again.
+				readOnly: true,
 			}),
 		);
 		expect(db.prepare(`SELECT title FROM events`).all()).toEqual([{ title: 'Dentist' }]);

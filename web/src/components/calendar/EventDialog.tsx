@@ -130,6 +130,9 @@ function SyncedEvent({
 	onEdit?: () => void;
 	locked?: boolean;
 }) {
+	// Where it comes from (and where changes go).
+	const google = useCalendars().data?.find((c) => c.id === event.calendarId)?.provider === 'google';
+	const service = google ? 'Google Calendar' : 'iCloud';
 	const setPeople = useSetPeople();
 	const setVisibility = useSetVisibility();
 	// Who it's for and who sees it are locked until Edit; Save applies them to every repeat of this event.
@@ -203,17 +206,18 @@ function SyncedEvent({
 				{setPeople.isError && <div className={s.problem}>Couldn't save: {setPeople.error.message}</div>}
 				{setVisibility.isError && <div className={s.problem}>Couldn't save: {setVisibility.error.message}</div>}
 				{event.syncState !== 'synced' && (
-					<p className={s.pendingNote}>↻ Your change is waiting to be sent to iCloud.</p>
+					<p className={s.pendingNote}>↻ Your change is waiting to be sent to {service}.</p>
 				)}
 				{locked ? (
 					<p className={s.note}>Locked: a parent can unlock (the lock in the left bar) to change it.</p>
 				) : (
 					<p className={s.note}>
-						From {event.calendarId.startsWith('google') ? 'Google' : 'iCloud'}. Who it's for and who sees it are kept
-						here and apply every time it repeats.
+						From {service}. Who it's for and who sees it are kept here and apply every time it repeats.
 						{onEdit
-							? ' Changes to the event itself are sent to iCloud.'
-							: ' To change the event itself, use Calendar on your iPhone or Mac.'}
+							? ` Changes to the event itself are sent to ${service}.`
+							: google
+								? ' To change the event itself, use Google Calendar.'
+								: ' To change the event itself, use Calendar on your iPhone or Mac.'}
 					</p>
 				)}
 				<div className={sheet.actions}>
@@ -254,7 +258,7 @@ function specialFor(members: Member[], memberIds: string[]) {
 
 export default function EventDialog(props: Props) {
 	const [editing, setEditing] = useState(false);
-	// Synced events are changed here only in calendars that take changes (iCloud's; Google's are changed in Google).
+	// Synced events are changed here only in calendars that take changes (iCloud's, and Google's the person can change).
 	const calendar = useCalendars().data?.find((c) => c.id === props.event?.calendarId);
 	// Locked: any event is just shown. Otherwise an iCloud event is shown first, with Edit.
 	if (props.event && (props.locked || (props.event.calendarId !== 'local' && !editing))) {
@@ -338,7 +342,7 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
 		// A new event says it's special when it's made; an existing one changes it on its own.
 		if (!event && special) where.special = true;
 		if (event && special !== event.special) setSpecial.mutate({ id: event.id, special });
-		// Notes (an iCloud event's go to iCloud too), only when changed; the flyer, when taken off.
+		// Notes (an iCloud or Google event's go there too), only when changed; the flyer, when taken off.
 		const nextNotes = notes.trim() || null;
 		if (!event || nextNotes !== (event.notes ?? null)) where.notes = nextNotes;
 		if (!keepPhoto) where.photoId = null;

@@ -122,8 +122,12 @@ export function calendarConnections(
 			return true;
 		},
 		list(): Connection[] {
+			const changeable = db.prepare(
+				`SELECT COUNT(*) AS n, COALESCE(SUM(writable), 0) AS w FROM calendars WHERE source = ?`,
+			);
 			return rows().map((r) => {
 				const st = syncs.get(r.id)?.status;
+				const cals = changeable.get(`${provider}:${r.id}`) as { n: number; w: number };
 				return {
 					id: r.id,
 					account: r.account,
@@ -132,6 +136,7 @@ export function calendarConnections(
 					lastSuccess: st?.lastSuccess ?? null,
 					lastError: st?.lastError ?? null,
 					calendars: st?.calendars ?? 0,
+					readOnly: cals.n > 0 && cals.w === 0,
 				};
 			});
 		},

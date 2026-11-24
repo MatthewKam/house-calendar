@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useCalendars, useSetSetting, useSettings, useSyncStatus } from '../../lib/queries';
 
 /**
- * Where a new event goes: an iCloud calendar (sent there, so it reaches the phones) or this wall only.
+ * Where a new event goes: an iCloud or Google calendar (sent there, so it reaches the phones) or this wall only.
  * The last choice is remembered for next time, for every way of adding one (the event form, Snap a
  * flyer, Say it). `enabled`: false for an existing event, which stays where it is.
  */
@@ -34,7 +34,7 @@ export function useNewEventCalendar(enabled = true) {
 	};
 }
 
-/** The calendar a new event goes to, as a select; nothing when there's no iCloud calendar to pick. */
+/** The calendar a new event goes to, as a select; nothing when there's no iCloud or Google calendar to pick. */
 export function CalendarPick({
 	target,
 	className,
@@ -49,7 +49,7 @@ export function CalendarPick({
 			<select value={target.chosen} onChange={(e) => target.pick(e.target.value)}>
 				{target.options.map((c) => (
 					<option key={c.id} value={c.id}>
-						{target.label(c)} (iCloud)
+						{target.label(c)} ({c.provider === 'google' ? 'Google' : 'iCloud'})
 					</option>
 				))}
 				<option value="local">This wall only</option>
