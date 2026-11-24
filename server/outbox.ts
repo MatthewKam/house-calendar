@@ -77,11 +77,18 @@ const find = (db: DB, calendarId: string, remoteId: string) =>
 		OutboxRow | undefined;
 
 /**
- * Adds a new event to an iCloud calendar: shown on the wall at once, created in iCloud after the
- * Undo window. Its id is the one the sync will give it, so it stays the same event after that.
+ * Adds a new event to an iCloud or Google calendar: shown on the wall at once, made there after the
+ * Undo window. Its id is the one the sync will give it, so it stays the same event after that: iCloud's
+ * is its resource's URL; Google's an id Sprig picks (letters a–v and digits, which a UUID's hex is).
  */
 export function queueCreate(db: DB, calendar: { id: string; remote_id: string }, details: Details, now = new Date()) {
-	const href = new URL(`${randomUUID().toUpperCase()}.ics`, calendar.remote_id).href;
+	const provider = (
+		db.prepare('SELECT provider FROM calendars WHERE id = ?').get(calendar.id) as { provider: string } | undefined
+	)?.provider;
+	const href =
+		provider === 'google'
+			? randomUUID().replaceAll('-', '')
+			: new URL(`${randomUUID().toUpperCase()}.ics`, calendar.remote_id).href;
 	db.transaction(() => {
 		db.prepare(
 			`INSERT INTO event_outbox (calendar_id, remote_id, op, changes, before, send_after) VALUES (?, ?, 'create', ?, 'null', ?)`,

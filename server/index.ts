@@ -110,11 +110,12 @@ const households = householdRegistry((h) => {
 			void google?.assignPeople();
 			void icloud?.assignPeople();
 		},
-		// Any household can connect iCloud, so edits to its calendars can always be sent back.
+		// Any household can connect iCloud or Google, so edits to its calendars can always be sent back.
 		syncedEdits: {
 			soon: () => {
 				if (sync?.canWrite) sync.soon();
 				icloud?.soon();
+				google?.soon();
 			},
 		},
 		remindersToken: legacy ? env.REMINDERS_TOKEN || undefined : undefined,
