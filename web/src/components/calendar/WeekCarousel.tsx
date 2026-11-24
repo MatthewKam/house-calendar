@@ -43,7 +43,8 @@ interface Props {
 /**
  * The week below 1040px: a card for each of its days (a dot for each person with something on it), then
  * the days by the hour side by side, one in the middle with the days before and after it either side
- * (the narrower the screen, the more the middle one takes and the less of them peeks in). Swipe or tap a
+ * (the narrower the screen, the more the middle one takes and the less of them peeks in; under 500px it
+ * takes the whole width, the others out of sight). Swipe or tap a
  * side day or a card to put it in the middle; swiping past the week's end moves into the next or last
  * week. Tapping an event opens it.
  */

@@ -150,6 +150,14 @@
 		--day: calc((100cqw - var(--gutter)) * 0.64);
 	}
 }
+/* A screen under 500px (a size of its own: a small phone): the middle day takes the whole frame, none
+   peeking in either side. A swipe still slides the next day in, a day at a time. */
+@media (max-width: 499.98px) {
+	.track {
+		--gutter: 3rem;
+		--day: calc(100cqw - var(--gutter));
+	}
+}
 
 /* Sprig's sprout in the corner above "all-day" (.track's --notch: its top padding, a date's
    circle and the gap under it), in the middle of the hours' margin. Its own sizes, as the frame is the
