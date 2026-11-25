@@ -6,22 +6,33 @@
 	min-height: 0;
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-4);
+	/* The page's edges (App.module.css's .shell padding, and room for the notch on the right): the header
+	   and the cards' scroll reach out to them. */
+	--side: var(--space-6);
+	--side-right: max(var(--side), var(--inset-right));
+	/* As wide as the cards. */
+	--content: min(100%, max(56rem, 80%));
 }
-@media screen and (min-width: 1400px) {
-	.page {
-		gap: var(--space-8);
-	}
-}
+/* The header runs edge to edge over the cards, which scroll right up to it; its words stay over the cards.
+   Scrolled, it has a shadow along its bottom (none at the top). */
 .head {
+	position: relative;
+	z-index: 1;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--space-4);
-	/* As wide as the cards, over them. */
-	width: 100%;
-	max-width: max(56rem, 80%);
-	margin-inline: auto;
+	margin-left: calc(-1 * var(--side));
+	margin-right: calc(-1 * var(--side-right));
+	padding: 0 calc(var(--side-right) + (100% - var(--content)) / 2) var(--space-3)
+		calc(var(--side) + (100% - var(--content)) / 2);
+	background: var(--bg);
+	transition:
+		box-shadow 0.2s ease,
+		margin-top 0.2s ease;
+}
+.scrolled {
+	box-shadow: var(--shadow-bar);
 }
 .headText {
 	display: flex;
@@ -67,26 +78,8 @@
 		font-size: var(--text-sm);
 	}
 }
-/* Phones, upright or on their side: the header runs edge to edge over the cards, which scroll right up to it. */
+/* Phones, upright or on their side: scrolled, the header slims down. */
 @media (max-width: 700px), (orientation: landscape) and (max-height: 500px) {
-	.page {
-		gap: 0;
-		/* The page's edges (App.module.css's .shell padding: wider on a bigger phone on its side, and room
-		   for the notch on the right): the header and the cards' scroll reach out to them. */
-		--side: var(--space-6);
-	}
-	.head {
-		position: relative;
-		z-index: 1;
-		margin-left: calc(-1 * var(--side));
-		margin-right: calc(-1 * max(var(--side), var(--inset-right)));
-		width: auto;
-		padding: 0 max(var(--side), var(--inset-right)) var(--space-3) var(--side);
-		background: var(--bg);
-		transition:
-			box-shadow 0.2s ease,
-			margin-top 0.2s ease;
-	}
 	.hello {
 		max-height: 3rem;
 		overflow: hidden;
@@ -94,15 +87,8 @@
 			max-height 0.2s ease,
 			opacity 0.2s ease;
 	}
-	/* Out to the edges too, with the cards padded back in, so their shadows aren't cut off at the sides. */
-	.scroll {
-		margin-left: calc(-1 * var(--side));
-		margin-right: calc(-1 * max(var(--side), var(--inset-right)));
-		padding: var(--space-3) max(var(--side), var(--inset-right)) var(--space-5) var(--side);
-	}
-	/* Scrolled: thinner (the date, time and weather only), with a shadow along its bottom. */
+	/* Scrolled: thinner (the date, time and weather only). */
 	.scrolled {
-		box-shadow: var(--shadow-bar);
 		padding-bottom: var(--space-2);
 	}
 	.scrolled .hello {
@@ -134,13 +120,16 @@
 		--side: var(--space-4);
 	}
 }
+/* Out to the edges too, with the cards padded back in, so their shadows aren't cut off at the sides. */
 .scroll {
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
-	padding-bottom: var(--space-5);
+	margin-left: calc(-1 * var(--side));
+	margin-right: calc(-1 * var(--side-right));
+	padding: var(--space-3) var(--side-right) var(--space-5) var(--side);
 }
 .cards {
 	width: 100%;
