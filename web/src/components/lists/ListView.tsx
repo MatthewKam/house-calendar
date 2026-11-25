@@ -348,7 +348,16 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 
 	return (
 		<section className={`${s.card} ${listFolded ? s.cardFolded : ''}`} ref={card}>
-			<header className={s.head}>
+			{/* A tap anywhere on the header folds or opens the list, but for its other buttons (the dot, ⋯).
+			    The name stays a button, so a keyboard or screen reader reaches it; its click lands here too. */}
+			<header
+				className={s.head}
+				onClick={(e) => {
+					const hit = (e.target as Element).closest('button, a, input');
+					if (hit && !hit.classList.contains(s.titleButton)) return;
+					listFolds.fold([list.id], !listFolded);
+				}}
+			>
 				{/* The dot, name and ⋯ stay together; when it last synced goes under them if a long name needs the room. */}
 				<div className={s.titleRow}>
 					<button
@@ -365,7 +374,6 @@ function ListCard({ list, members, me, onShopping, color, onColor, order, onReor
 							className={s.titleButton}
 							aria-expanded={!listFolded}
 							title={listFolded ? `Open ${list.title}` : `Fold ${list.title}`}
-							onClick={() => listFolds.fold([list.id], !listFolded)}
 						>
 							{list.title}
 							{listFolded && <span className={s.titleCount}>{open.length}</span>}
