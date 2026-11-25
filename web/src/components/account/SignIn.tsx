@@ -67,12 +67,15 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 					client_id: clientId,
 					callback: (r) => api.signInWith('google', r.credential).then(done.current, (e: Error) => setError(e.message)),
 				});
+				// Google's own button, as wide as Apple's (Google allows 200 to 400 pixels), and its black one
+				// in dark mode so it doesn't glare.
+				const dark = document.documentElement.dataset.theme === 'dark';
 				window.google.accounts.id.renderButton(googleEl.current, {
-					theme: 'outline',
+					theme: dark ? 'filled_black' : 'outline',
 					size: 'large',
 					shape: 'pill',
 					text: 'continue_with',
-					width: 320,
+					width: Math.max(200, Math.min(400, Math.round(googleEl.current.clientWidth))),
 				});
 			},
 			() => setError("Couldn't load Google sign-in"),

@@ -78,6 +78,9 @@
 	display: flex;
 	justify-content: center;
 	min-height: 2.75rem;
+	/* Google's button is in a frame of its own that's always light: on a dark page the browser would
+	   paint that frame white unless the area around it says it's light too. */
+	color-scheme: light;
 }
 .or {
 	display: flex;
