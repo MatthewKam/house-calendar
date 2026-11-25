@@ -93,17 +93,22 @@
 	text-align: left;
 }
 .titleButton::after {
+	--chevron: 0.45rem;
 	content: '';
 	align-self: center;
-	width: 0.45rem;
-	height: 0.45rem;
+	width: var(--chevron);
+	height: var(--chevron);
 	margin-left: var(--space-1);
 	border-right: 2px solid var(--muted);
 	border-bottom: 2px solid var(--muted);
-	/* Up while the list is open, down while it's folded (like the sign-in screen's What Sprig does). */
+	/* Up while the list is open, down while it's folded (like the sign-in screen's What Sprig does).
+	   The arrow fills only half its turned box, so it moves back by √2⁄4 of its size to sit level with
+	   the words. */
 	rotate: 225deg;
-	translate: 0 0.15rem;
-	transition: rotate 0.2s;
+	translate: 0 calc(0.3536 * var(--chevron));
+	transition:
+		rotate 0.2s,
+		translate 0.2s;
 }
 .titleButton:focus-visible {
 	outline: 2px solid var(--accent);
@@ -112,7 +117,7 @@
 }
 .titleButton[aria-expanded='false']::after {
 	rotate: 45deg;
-	translate: 0 -0.15rem;
+	translate: 0 calc(-0.3536 * var(--chevron));
 }
 .titleCount {
 	color: var(--muted);
@@ -330,19 +335,25 @@
 	font-weight: normal;
 }
 .sectionHead::after {
+	--chevron: 0.5rem;
 	content: '';
 	flex: none;
-	width: 0.5rem;
-	height: 0.5rem;
+	width: var(--chevron);
+	height: var(--chevron);
 	margin-left: auto;
 	border-right: 2px solid var(--muted);
 	border-bottom: 2px solid var(--muted);
-	/* Up while the section is open, down while it's folded, like the list's name. */
+	/* Up while the section is open, down while it's folded, like the list's name, and level with the
+	   words the same way. */
 	rotate: 225deg;
-	transition: rotate 0.2s;
+	translate: 0 calc(0.3536 * var(--chevron));
+	transition:
+		rotate 0.2s,
+		translate 0.2s;
 }
 .sectionHead[aria-expanded='false']::after {
 	rotate: 45deg;
+	translate: 0 calc(-0.3536 * var(--chevron));
 }
 .empty {
 	color: var(--muted);
