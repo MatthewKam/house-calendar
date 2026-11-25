@@ -105,6 +105,7 @@ const households = householdRegistry((h) => {
 			remove: (id) => icloud?.remove(id) ?? Promise.resolve(false),
 			connect: (c) => icloud!.connect(c),
 		},
+		syncNow: () => Promise.all([sync?.now(), google?.now(), icloud?.now()]).then(() => {}),
 		onAssignmentsChanged: () => {
 			void sync?.assignPeople();
 			void google?.assignPeople();

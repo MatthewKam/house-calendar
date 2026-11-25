@@ -7,7 +7,7 @@ import ErrorBoundary from './components/ui/ErrorBoundary';
 import './styles/app.css';
 import { guardTouch } from './lib/touchGuard';
 import { keys } from './lib/queries';
-import { problemText } from './lib/api';
+import { api, problemText } from './lib/api';
 import { isApp, linksInSheet, openTappedAlerts, loadSession, syncPhoneCalendars } from './lib/native';
 import CookAlong from './components/recipes/CookAlong';
 
@@ -63,6 +63,23 @@ document.addEventListener('visibilitychange', () => document.visibilityState ===
 
 // A Cooking together link (server/cook.ts): its own page, open to anyone with it, no signing in.
 const cookPage = /^\/cook\/([0-9a-f-]{36})\/([A-Za-z0-9_-]{32})\/?$/.exec(location.pathname);
+
+// Google and iCloud are read again each time Sprig opens or comes back into view, so a change made in
+// their own apps shows straight away rather than at the next 5-minute pass (the server keeps it to one
+// every 30 seconds). Not on a Cooking together page, which has no sign-in.
+const syncAccounts = () =>
+	void api.syncNow().then(
+		() => {
+			void queryClient.invalidateQueries({ queryKey: keys.events });
+			void queryClient.invalidateQueries({ queryKey: keys.calendars });
+			void queryClient.invalidateQueries({ queryKey: keys.sync });
+		},
+		() => {},
+	);
+if (!cookPage) {
+	syncAccounts();
+	document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && syncAccounts());
+}
 // The design page (components/design): every shared name and component, at /design. Only while
 // developing: the built app (the site, the phone app) doesn't have it.
 const DesignPage = import.meta.env.DEV ? lazy(() => import('./components/design/DesignPage')) : null;

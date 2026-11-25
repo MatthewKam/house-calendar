@@ -496,6 +496,8 @@ export const api = {
 		call<CalEvent>('PUT', `/api/events/${id}/checklist/${itemId}`, { done }),
 
 	sync: () => call<SyncStatus | null>('GET', '/api/sync'),
+	/** Reads Google and iCloud now (at most every 30 seconds); answers when that's done. */
+	syncNow: () => call<{ ok: true }>('POST', '/api/sync'),
 	calendars: () => call<SyncedCalendar[]>('GET', '/api/calendars'),
 	updateCalendar: (id: string, patch: CalendarPatch) => call<SyncedCalendar>('PATCH', `/api/calendars/${id}`, patch),
 

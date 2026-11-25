@@ -142,6 +142,8 @@ export function calendarConnections(
 		},
 		statuses: () => [...syncs.values()].map((s) => s.status),
 		assignPeople: () => Promise.all([...syncs.values()].map((s) => s.assignPeople())),
+		/** Syncs every account now (those that haven't in the last little while); resolves when done. */
+		now: () => Promise.all([...syncs.values()].map((s) => s.now())).then(() => {}),
 		/** Sends new edits to the accounts that take them, once their Undo window has passed. */
 		soon() {
 			for (const s of syncs.values()) if (s.canWrite) s.soon();

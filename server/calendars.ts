@@ -30,6 +30,8 @@ export interface CalendarOptions {
 	};
 	/** Present when new events can be added to synced calendars (iCloud). */
 	syncedEdits?: { soon: () => void };
+	/** Someone opened Sprig: sync the calendar accounts now (each at most every 30 seconds). */
+	syncNow?: () => Promise<void>;
 	/** A calendar link changed, so Claude can sort what is now unassigned. */
 	onAssignmentsChanged?: () => void;
 }
@@ -103,6 +105,13 @@ export function registerCalendars(app: FastifyInstance, db: DB, opts: CalendarOp
 
 	// ---- Calendar sync status (null when no account is set up) --------------
 	app.get('/api/sync', async () => (typeof opts.sync === 'function' ? opts.sync() : opts.sync) ?? null);
+	// Opening Sprig (or coming back to it) reads Google and iCloud now, so a change made there shows
+	// without waiting for the next 5-minute pass. Answers once that's done, or after 10 seconds anyway.
+	app.post('/api/sync', async () => {
+		const done = opts.syncNow?.().catch(() => {});
+		await Promise.race([done, new Promise((r) => setTimeout(r, 10_000).unref())]);
+		return { ok: true };
+	});
 
 	// ---- Calendar connections: Google (connecting is on the front server: /api/account/google/connect)
 	// and iCloud (connected here).

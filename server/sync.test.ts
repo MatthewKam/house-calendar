@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { openDb } from './db.ts';
 import { buildApp } from './app.ts';
-import { REFUSED_PATIENCE_MS, syncError, syncOnce, combineStatus, createSync } from './sync.ts';
+import { REFUSED_PATIENCE_MS, OPEN_GAP_MS, syncError, syncOnce, combineStatus, createSync } from './sync.ts';
 import { setRefused } from './handover.ts';
 import { CalDavAuthError } from './providers/caldav.ts';
 import type { CalendarSource, RemoteCalendar, RemoteEvent } from './providers/types.ts';
@@ -220,5 +220,42 @@ describe('a refused password and a phone', () => {
 		expect(db.prepare(`SELECT source FROM calendars WHERE name = 'Home'`).all()).toEqual([{ source: 'icloud' }]);
 		expect(db.prepare(`SELECT series_key FROM event_special`).all()).toEqual([{ series_key: 'home/swim.ics' }]);
 		expect(db.prepare('SELECT * FROM sync_refused').all()).toEqual([]);
+	});
+});
+
+describe('opening Sprig', () => {
+	it('syncs now, but not again within 30 seconds', async () => {
+		const db = openDb(':memory:');
+		let reads = 0;
+		const source: CalendarSource = {
+			id: 'google',
+			listCalendars: async () => {
+				reads++;
+				return [{ remoteId: 'home', name: 'Home' }];
+			},
+			fetchRange: async () => [],
+		};
+		const sync = createSync(db, source, null, 1e9);
+		vi.useFakeTimers({ toFake: ['Date'] });
+		try {
+			await sync.now();
+			expect(reads).toBe(1);
+			// Another device opens it a moment later: the pass that just ran is recent enough.
+			expect(sync.now()).toBeNull();
+			vi.setSystemTime(Date.now() + OPEN_GAP_MS + 1);
+			await sync.now();
+			expect(reads).toBe(2);
+		} finally {
+			vi.useRealTimers();
+			sync.stop();
+		}
+	});
+
+	it('is asked for by the app, which hears back once the accounts are read', async () => {
+		let asked = 0;
+		const app = buildApp(openDb(':memory:'), { syncNow: async () => void asked++ });
+		const res = await app.inject({ method: 'POST', url: '/api/sync' });
+		expect(res.statusCode).toBe(200);
+		expect(asked).toBe(1);
 	});
 });

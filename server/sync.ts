@@ -135,6 +135,8 @@ interface Log {
  * it's more likely iCloud having trouble (it refuses then too), and the banner says so.
  */
 export const REFUSED_PATIENCE_MS = 60 * 60_000;
+/** Opening Sprig syncs at most this often (each device opening it would otherwise ask again). */
+export const OPEN_GAP_MS = 30_000;
 const REFUSED_FOR_NOW = "iCloud isn't letting Sprig in right now; trying again every few minutes";
 const REFUSED_FOR_GOOD =
 	'iCloud has refused the Apple ID or app-specific password for over an hour. Make a new app-specific password at account.apple.com';
@@ -196,6 +198,8 @@ export function createSync(
 	let timer: NodeJS.Timeout | undefined;
 	let soonTimer: NodeJS.Timeout | undefined;
 	let again = false;
+	/** When the last pass started (0: none yet). */
+	let lastRun = 0;
 	let log: Log = console as unknown as Log;
 
 	async function run() {
@@ -204,6 +208,7 @@ export function createSync(
 			return;
 		}
 		status.running = true;
+		lastRun = Date.now();
 		try {
 			// Edits from the wall go first, so the snapshot that follows includes them.
 			if (writer) {
@@ -273,6 +278,15 @@ export function createSync(
 			clearTimeout(soonTimer);
 			soonTimer = setTimeout(() => void run(), SEND_AFTER_MS + 1_000);
 			soonTimer.unref?.();
+		},
+		/**
+		 * Someone opened Sprig: sync now, unless a pass started in the last `minGapMs` (or is running),
+		 * so changes made in the calendar's own app show without waiting for the next interval.
+		 * Resolves when it's done; null when it didn't start one.
+		 */
+		now(minGapMs = OPEN_GAP_MS): Promise<void> | null {
+			if (status.running || Date.now() - lastRun < minGapMs) return null;
+			return run();
 		},
 		stop: () => {
 			clearInterval(timer);
