@@ -1,3 +1,77 @@
+/* Settings, a page of its own (Settings.tsx): the heading, then on a phone the list of groups or one
+   of them in a card; anything bigger, the list in a card on the left and the group in one beside it. */
+.page {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-4);
+}
+.pageHead {
+	display: flex;
+	align-items: center;
+	min-height: 2.75rem;
+}
+.pageTitle {
+	margin: 0;
+	font-size: var(--text-2xl);
+}
+/* A card that scrolls on its own, with room at the end for the home bar on a phone. */
+.scroll {
+	min-height: 0;
+	overflow-y: auto;
+	padding: var(--space-2) var(--space-5) var(--space-5);
+	background: var(--surface);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-md);
+}
+.page > .scroll {
+	flex: 1;
+	margin-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+}
+/* A phone on its side: too short for a box of its own under the heading, so the whole page scrolls. */
+@media (orientation: landscape) and (max-height: 500px) {
+	.page {
+		overflow-y: auto;
+	}
+	.page > .scroll {
+		flex: none;
+		overflow-y: visible;
+	}
+}
+.columns {
+	flex: 1;
+	min-height: 0;
+	display: grid;
+	/* The list a third of the way across (narrower on a small tablet upright), the group the rest. */
+	grid-template-columns: clamp(15rem, 32%, 22rem) minmax(0, 1fr);
+	align-items: start;
+	gap: var(--space-5);
+	padding-bottom: var(--space-2);
+}
+.columns > .scroll {
+	max-height: 100%;
+}
+.viewColumn {
+	max-width: 44rem;
+}
+/* The group's name over its settings, beside the list. */
+.viewHeading {
+	margin: 0;
+	padding: var(--space-3) 0;
+	font-size: var(--text-xl);
+}
+/* The rows' lines: the first under who's signed in, the last over how to reach us. */
+.groupRows {
+	display: flex;
+	flex-direction: column;
+	margin-top: var(--space-3);
+}
+.signOut {
+	display: flex;
+	padding-top: var(--space-5);
+}
+
 .section {
 	margin: 0;
 	font-size: var(--text-md);
@@ -16,6 +90,8 @@
 	font-size: var(--text-sm);
 }
 .help a {
+	color: var(--accent);
+	font-weight: var(--weight-semibold);
 	overflow-wrap: anywhere;
 }
 .error {
@@ -277,6 +353,19 @@
 	font-size: var(--text-lg);
 	font-weight: var(--weight-semibold);
 	cursor: pointer;
+}
+/* The group showing beside the list: in the accent, on a tint of it. */
+.groupRow[aria-current='page'] {
+	margin-inline: calc(-1 * var(--space-3));
+	padding-inline: var(--space-3);
+	width: calc(100% + 2 * var(--space-3));
+	border-radius: var(--radius-sm);
+	border-top-color: transparent;
+	background: color-mix(in srgb, var(--accent) 12%, transparent);
+	color: var(--accent);
+}
+.groupRow[aria-current='page'] + .groupRow {
+	border-top-color: transparent;
 }
 /* A chevron: tap to go in. */
 .groupRow::after {

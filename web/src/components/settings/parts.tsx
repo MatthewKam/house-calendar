@@ -15,21 +15,31 @@ export function InfoButton({ about, open, onToggle }: { about: string; open: boo
 	);
 }
 
-/** Which group of Settings is showing (its title), or null for the list of them. */
-export const SettingsView = createContext<{ view: string | null; open: (title: string) => void }>({
+/**
+ * Which group of Settings is showing (its title; null: none), and whether this copy of the groups is the
+ * list of their rows (`rows`) or the settings of the one showing.
+ */
+export const SettingsView = createContext<{ view: string | null; open: (title: string) => void; rows: boolean }>({
 	view: null,
 	open: () => {},
+	rows: true,
 });
 
 /**
- * A group of Settings (Family, Calendars, Learning, Appearance, Screen, Notifications, Users): in the list, a row (with a word on
- * how it's set, for one that's a single thing); tapped, the sheet shows just it (a back arrow to the list).
+ * A group of Settings (Family, Calendars, Learning, Appearance, Screen, Notifications, Users): in the list, a row
+ * (with a word on how it's set, for one that's a single thing; marked while it's the one showing beside the
+ * list); in the view, its settings while it's the one picked.
  */
 export function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
-	const { view, open } = useContext(SettingsView);
-	if (view === null) {
+	const { view, open, rows } = useContext(SettingsView);
+	if (rows) {
 		return (
-			<button type="button" className={s.groupRow} onClick={() => open(title)}>
+			<button
+				type="button"
+				className={s.groupRow}
+				aria-current={view === title ? 'page' : undefined}
+				onClick={() => open(title)}
+			>
 				<span>{title}</span>
 				{note && <span className={s.foldNote}>{note}</span>}
 			</button>

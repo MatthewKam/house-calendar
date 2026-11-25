@@ -27,7 +27,6 @@ import Fab from './components/nav/Fab';
 import { usePage } from './lib/usePage';
 import { BackButton } from './components/ui/BackButton';
 import { useEdgeSwipe } from './lib/useEdgeSwipe';
-import { useBackStep } from './lib/useBackStep';
 // Android's Back goes back through the same steps (only there).
 import './lib/androidBack';
 import ListView, { AddToListSheet } from './components/lists/ListView';
@@ -76,7 +75,6 @@ type Open =
 	| { kind: 'task'; blank?: boolean; task?: Task; memberId?: string; goal?: boolean }
 	/** A guardian's PIN, then `then` (e.g. opening Settings). */
 	| { kind: 'unlock'; then?: () => void }
-	| { kind: 'settings' }
 	| { kind: 'kidModeStart' }
 	| { kind: 'kidModeLeave' }
 	/** The phone's +: Add to a list, Caught being good. */
@@ -94,6 +92,7 @@ const PAGE_NAMES: Record<Page, string> = {
 	rewards: 'Rewards',
 	photos: 'Photos',
 	recipes: 'Recipes',
+	settings: 'Settings',
 };
 
 export default function App() {
@@ -102,8 +101,6 @@ export default function App() {
 	const [focus, setFocus] = useState<string[]>([]);
 	const [open, setOpen] = useState<Open | null>(null);
 	const close = () => setOpen(null);
-	// Settings is a step of its own: Back or a swipe closes it.
-	useBackStep(open?.kind === 'settings', close);
 	const dialog = open?.kind === 'event' ? open : null;
 	const taskDialog = open?.kind === 'task' ? open : null;
 	// Which page fills the main area. Kept in the address (#tasks), so a refresh stays on it.
@@ -144,6 +141,8 @@ export default function App() {
 	// The phone's bar (and its +): along the bottom, or down the left with the phone on its side or in a
 	// short computer window.
 	const phone = useMediaQuery(PHONE);
+	// Where leaving Settings goes (after starting kid mode or wall mode, say): the page the app opens on.
+	const home: Page = phone ? 'today' : 'calendar';
 	const shortDesktop = useMediaQuery(SHORT_DESKTOP);
 	const phoneBar = useMediaQuery(PHONE_SIDEWAYS) || shortDesktop || phone;
 	// A removed person can't stay picked.
@@ -159,6 +158,12 @@ export default function App() {
 	// Who's signed in here, shown at the bottom of the bar.
 	const auth = useAuthStatus().data;
 	const signedIn = auth?.signedIn ? auth : null;
+	// Settings is for grown-ups: on it with the device locked (it locked itself, or a refresh on
+	// #settings), off to the first page.
+	const settingsLocked = page === 'settings' && !!auth && !parentLock.parent;
+	useEffect(() => {
+		if (settingsLocked) go(home);
+	}, [settingsLocked, go, home]);
 	// Kid mode: turned on for this device by a parent, or a kid's own device (added by code) while it's locked.
 	const [kidModeFor, setKidMode] = useKidMode();
 	const kids = members.filter(isKid);
@@ -398,13 +403,10 @@ export default function App() {
 							: undefined
 					}
 					page={page}
-					settingsOpen={open?.kind === 'settings'}
 					onPage={go}
 					// Settings is for parents: unlock first if locked.
 					onSettings={() =>
-						setOpen(
-							parentLock.parent ? { kind: 'settings' } : { kind: 'unlock', then: () => setOpen({ kind: 'settings' }) },
-						)
+						parentLock.parent ? go('settings') : setOpen({ kind: 'unlock', then: () => go('settings') })
 					}
 					lock={
 						parentLock.lockable
@@ -445,6 +447,20 @@ export default function App() {
 							<ListView />
 						) : page === 'rewards' ? (
 							<RewardsPage today={today} members={members} />
+						) : page === 'settings' ? (
+							// For grown-ups only: locked (or it locks itself while open), the app's first page instead.
+							parentLock.parent && (
+								<Suspense fallback={null}>
+									<Settings
+										members={members}
+										// Kid mode starts from Settings (Screen); a kid's own device is in it already.
+										onKidMode={
+											kids.length && signedIn?.role !== 'kid' ? () => setOpen({ kind: 'kidModeStart' }) : undefined
+										}
+										onLeave={() => go(home)}
+									/>
+								</Suspense>
+							)
 						) : page === 'recipes' ? (
 							<Suspense fallback={null}>
 								<RecipesPage parent={parentLock.parent} addNow={addingRecipe} onAdding={() => setAddingRecipe(false)} />
@@ -518,22 +534,12 @@ export default function App() {
 						needsPin={!!signedIn && signedIn.guardianPins === 0}
 						onPick={(id) => {
 							close();
+							if (page === 'settings') go(home);
 							setKidMode(id);
 						}}
 						onClose={close}
 					/>
 				)}
-				{open?.kind === 'settings' && (
-					<Suspense fallback={null}>
-						<Settings
-							members={members}
-							// Kid mode starts from Settings (Screen); a kid's own device is in it already.
-							onKidMode={kids.length && signedIn?.role !== 'kid' ? () => setOpen({ kind: 'kidModeStart' }) : undefined}
-							onClose={close}
-						/>
-					</Suspense>
-				)}
-
 				{open?.kind === 'list' && (
 					<AddToListSheet
 						onClose={close}

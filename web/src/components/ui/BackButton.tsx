@@ -10,6 +10,7 @@ const NAMES: Record<Page, string> = {
 	lists: 'Lists',
 	photos: 'Photos',
 	recipes: 'Recipes',
+	settings: 'Settings',
 };
 
 /**

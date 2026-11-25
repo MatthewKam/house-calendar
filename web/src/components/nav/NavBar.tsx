@@ -1,12 +1,12 @@
 import { useRef, useState, type ReactNode } from 'react';
 import s from './styles/NavBar.module.css';
 
-export type Page = 'calendar' | 'today' | 'tasks' | 'rewards' | 'lists' | 'photos' | 'recipes';
+export type Page = 'calendar' | 'today' | 'tasks' | 'rewards' | 'lists' | 'photos' | 'recipes' | 'settings';
 
 interface Props {
 	page: Page;
-	settingsOpen: boolean;
 	onPage: (page: Page) => void;
+	/** Settings, a page of its own (asking a guardian's PIN first on a locked device). */
 	onSettings: () => void;
 	/** The parent lock, on the wall and kids' devices; tapping it unlocks (a guardian's PIN) or locks again. `by`: whose PIN. */
 	lock?: { parent: boolean; by: string | null; onTap: () => void };
@@ -101,9 +101,9 @@ const SettingsIcon = () => (
  * Bar down the left edge: the Today, Calendar, Tasks, Lists, Rewards and Photos pages, Say it and Snap
  * (grown-ups), and the parent lock and Settings at the bottom (kid mode starts from Settings, Screen).
  */
-export default function NavBar({ page, settingsOpen, onPage, onSettings, lock, phone, center, capture }: Props) {
+export default function NavBar({ page, onPage, onSettings, lock, phone, center, capture }: Props) {
 	const snap = useRef<HTMLInputElement>(null);
-	if (phone) return <BottomBar {...{ page, settingsOpen, onPage, onSettings, lock, center }} />;
+	if (phone) return <BottomBar {...{ page, onPage, onSettings, lock, center }} />;
 	const item = (p: Page, label: string, icon: ReactNode) => (
 		<button
 			className={`${s.item} ${page === p ? s.on : ''}`}
@@ -161,8 +161,8 @@ export default function NavBar({ page, settingsOpen, onPage, onSettings, lock, p
 				</button>
 			)}
 			<button
-				className={`${s.item} ${settingsOpen ? s.on : ''}`}
-				aria-pressed={settingsOpen}
+				className={`${s.item} ${page === 'settings' ? s.on : ''}`}
+				aria-current={page === 'settings' ? 'page' : undefined}
 				onClick={onSettings}
 				aria-label="Settings"
 			>
@@ -185,7 +185,7 @@ const MORE: [Page, string, () => ReactNode][] = [
  * Phones: Today, Calendar ("Cal"), the quick-add button, Tasks and More along the bottom, in thumb's reach.
  * More holds the other pages, who's signed in, the parent lock and Settings.
  */
-function BottomBar({ page, settingsOpen, onPage, onSettings, lock, center }: Omit<Props, 'phone'>) {
+function BottomBar({ page, onPage, onSettings, lock, center }: Omit<Props, 'phone'>) {
 	const [more, setMore] = useState(false);
 	const inMore = MORE.some(([p]) => p === page);
 	// `short`: a shorter name to show (the full one still read out).
@@ -213,7 +213,7 @@ function BottomBar({ page, settingsOpen, onPage, onSettings, lock, center }: Omi
 				<div className={s.center}>{center}</div>
 				{tab('tasks', 'Tasks', <TasksIcon />)}
 				<button
-					className={`${s.tab} ${inMore || more || settingsOpen ? s.tabOn : ''}`}
+					className={`${s.tab} ${inMore || more || page === 'settings' ? s.tabOn : ''}`}
 					aria-expanded={more}
 					onClick={() => setMore(!more)}
 				>
@@ -240,7 +240,11 @@ function BottomBar({ page, settingsOpen, onPage, onSettings, lock, center }: Omi
 									: 'Locked: unlock for grown-ups'}
 							</button>
 						)}
-						<button className={s.moreItem} onClick={then(onSettings)}>
+						<button
+							className={`${s.moreItem} ${page === 'settings' ? s.moreOn : ''}`}
+							aria-current={page === 'settings' ? 'page' : undefined}
+							onClick={then(onSettings)}
+						>
 							<SettingsIcon />
 							Settings
 						</button>

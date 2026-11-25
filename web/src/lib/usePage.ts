@@ -3,7 +3,7 @@ import type { Page } from '../components/nav/NavBar';
 import { PHONE } from './useMediaQuery';
 
 /** Pages that live in the address after "#"; the calendar is the plain address. */
-const PAGES: Page[] = ['calendar', 'today', 'tasks', 'rewards', 'lists', 'photos', 'recipes'];
+const PAGES: Page[] = ['calendar', 'today', 'tasks', 'rewards', 'lists', 'photos', 'recipes', 'settings'];
 
 /**
  * Whether the nav bar's pages are steps to go back through (Back, a swipe, the browser's Back). Now they
@@ -22,6 +22,8 @@ export interface Step {
 	open?: string[];
 	/** The page's own ‹ Back is hidden (a screen over it shows it instead: hideBack). */
 	quiet?: boolean;
+	/** A group of Settings opened from its list on a phone (#settings/users): Back goes to the list. */
+	group?: boolean;
 }
 export const step = (): Step => (history.state as Step | null) ?? {};
 
@@ -34,9 +36,11 @@ let landing: Page | null = null;
 /** True while the nav bar is going back past the steps to its page (open screens close by themselves). */
 export const leaving = () => landing !== null;
 
+/** The address after "#": the page, then (Settings) a part of it: #settings/users. */
+const hashParts = () => window.location.hash.slice(1).split('/');
 const read = (): Page => {
 	if (landing) return landing;
-	const hash = window.location.hash.slice(1) as Page;
+	const hash = hashParts()[0] as Page;
 	return PAGES.includes(hash) ? hash : 'calendar';
 };
 const address = (page: Page) =>
@@ -84,7 +88,7 @@ const readFrom = (): Page | null =>
 	openHere().length || step().quiet ? null : linkFrom();
 
 /** Whether there's a step to go back to: a link from another page, or a screen open over this one. */
-export const canGoBack = () => linkFrom() !== null || (!landing && openHere().length > 0);
+export const canGoBack = () => linkFrom() !== null || (!landing && (openHere().length > 0 || !!step().group));
 /** Whether a screen is open over the page (a recipe, Settings). */
 export const screenOpen = () => openHere().length > 0;
 
@@ -154,4 +158,41 @@ export function usePage(): Pages {
 	}, []);
 	const back = useCallback(() => history.back(), []);
 	return { page, go, follow, from, back };
+}
+
+/** The group of Settings in the address (#settings/users: "users"), or null for none. */
+const readGroup = (): string | null => (read() === 'settings' ? (hashParts()[1] ?? null) || null : null);
+const settingsAddress = (group: string | null) =>
+	window.location.pathname + window.location.search + (group ? `#settings/${group}` : '#settings');
+
+export interface SettingsGroup {
+	/** The group in the address ("users"), or null for the list of groups. */
+	group: string | null;
+	/**
+	 * Show a group. `step`: one to go back through (a phone, from the list of groups to one); otherwise
+	 * in place of the one showing (a bigger screen, where the list stays beside it).
+	 */
+	open: (group: string, step: boolean) => void;
+	/** Back to the list of groups (a phone's ‹ Settings): the step back, or in place if there's none. */
+	close: () => void;
+}
+
+/** Settings' groups, each with an address of its own (#settings/users), so a link or a refresh opens it. */
+export function useSettingsGroup(): SettingsGroup {
+	const group = useSyncExternalStore(subscribe, readGroup);
+	const open = useCallback((next: string, asStep: boolean) => {
+		if (next === readGroup()) return;
+		if (asStep && !step().group) {
+			history.pushState({ depth: (step().depth ?? 0) + 1, group: true }, '', settingsAddress(next));
+		} else {
+			history.replaceState(step(), '', settingsAddress(next));
+		}
+		changed();
+	}, []);
+	const close = useCallback(() => {
+		if (step().group) return history.back();
+		history.replaceState(step(), '', settingsAddress(null));
+		changed();
+	}, []);
+	return { group, open, close };
 }
