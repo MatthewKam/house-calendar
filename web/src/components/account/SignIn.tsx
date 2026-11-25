@@ -133,11 +133,42 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 					</Button>
 				)}
 				{!isApp && <GetTheApp />}
+				{!isApp && <About />}
 				<footer className={s.footer}>
 					<a href="/privacy">Privacy</a> · <a href="/support">Support</a>
 				</footer>
 			</div>
 		</main>
+	);
+}
+
+/**
+ * What Sprig is, for someone arriving at the website signed out (Google's and Apple's reviewers among
+ * them): what it does, and why it asks for calendar access.
+ */
+function About() {
+	return (
+		<section className={s.about} aria-labelledby="about-sprig">
+			<h2 id="about-sprig" className={s.subhead}>
+				What Sprig does
+			</h2>
+			<ul>
+				<li>
+					<b>One family calendar</b> on everyone's phone and a screen at home. Connect Google Calendar or iCloud and
+					everyone's events show in one place; an event added or changed in Sprig goes back to that calendar.
+				</li>
+				<li>
+					<b>Kids' tasks, stars and rewards,</b> made for little ones: pictures over words, big buttons, nothing to
+					fail.
+				</li>
+				<li>
+					<b>Shared lists, meals and recipes</b> for the whole family.
+				</li>
+				<li>
+					<b>No ads, ever.</b> Your family's information is never sold or used to track you.
+				</li>
+			</ul>
+		</section>
 	);
 }
 

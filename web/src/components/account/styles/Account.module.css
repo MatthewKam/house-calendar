@@ -117,6 +117,24 @@
 	border-radius: var(--radius-sm);
 	background: #fff; /* own: a QR code reads dark on white, in dark mode too */
 }
+/* The website's sign-in screen: what Sprig is, for someone who doesn't know yet. */
+.about {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+	margin-top: var(--space-5);
+	padding-top: var(--space-5);
+	border-top: 1px solid var(--line);
+	font-size: var(--text-sm);
+}
+.about ul {
+	margin: 0;
+	padding-left: var(--space-5);
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+}
+
 /* The sign-in screen's links to the privacy and support pages (Google and Apple look for them). */
 .footer {
 	margin-top: var(--space-5);
