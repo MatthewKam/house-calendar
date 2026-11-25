@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import { startOver } from '../../lib/queries';
 import { useScreenSaverSettings } from '../../lib/useScreenSaverSettings';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import ScreenSaverSettings from './ScreenSaverSettings';
@@ -39,8 +40,7 @@ export default function ScreenSettings({
 	const qc = useQueryClient();
 	const switchWallMode = (on: boolean) =>
 		void api.setWallMode(on).then((st) => {
-			qc.clear();
-			qc.setQueryData(['auth'], st);
+			startOver(qc, st);
 			onClose();
 		});
 

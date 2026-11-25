@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, type AuthStatus, type SignedIn } from '../../lib/api';
+import { startOver } from '../../lib/queries';
 import Avatar from './Avatar';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import s from '../account/styles/Account.module.css';
@@ -15,8 +16,7 @@ const when = (iso: string) =>
 function useRestart(onClose: () => void) {
 	const qc = useQueryClient();
 	return (next: AuthStatus) => {
-		qc.clear();
-		qc.setQueryData(['auth'], next);
+		startOver(qc, next);
 		onClose();
 	};
 }

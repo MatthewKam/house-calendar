@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, type AuthStatus } from '../../lib/api';
-import { keys, useAuthStatus } from '../../lib/queries';
+import { keys, startOver, useAuthStatus } from '../../lib/queries';
 import DemoBar from './DemoBar';
 import PinScreen from './PinScreen';
 import Setup from './Setup';
@@ -28,10 +28,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 	}, [qc]);
 
 	// Everything is fetched again now that this device may see something else.
-	const update = (s: AuthStatus) => {
-		qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'auth' && q.queryKey[0] !== 'account-config' });
-		qc.setQueryData(['auth'], s);
-	};
+	const update = (s: AuthStatus) => startOver(qc, s);
 
 	// Checking who this is: Sprig's name, gently pulsing, so the first moment isn't a blank page.
 	if (status.isPending) {

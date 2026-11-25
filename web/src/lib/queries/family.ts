@@ -1,7 +1,7 @@
 // The family and the app: people, sign-in, calendars and their sync, and settings.
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '../api';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { api, type AuthStatus } from '../api';
 import type { Member, SyncedCalendar, MemberPatch } from '../types';
 import { showNow, putBack, REFRESH_MS, keys } from './shared';
 
@@ -15,6 +15,16 @@ export function useMembers() {
  */
 export function useAuthStatus() {
 	return useQuery({ queryKey: keys.auth, queryFn: api.authStatus, retry: 1 });
+}
+
+/**
+ * This device is now someone else, or no one (signed out, another household, wall mode): everything
+ * loaded for before goes, and the sign-in status is the new one. The status is set, not wiped: the
+ * screens watching it (AuthGate) then show the sign-in screen, the PIN screen or the app straight away.
+ */
+export function startOver(qc: QueryClient, status: AuthStatus) {
+	qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'auth' && q.queryKey[0] !== 'account-config' });
+	qc.setQueryData(keys.auth, status);
 }
 
 /** iCloud sync status; null when no account is set up. */
