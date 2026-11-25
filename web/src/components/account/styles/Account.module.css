@@ -160,6 +160,13 @@ button.rounded {
 .aboutHead {
 	composes: foldHead from '../../settings/styles/Settings.module.css';
 }
+/* Its arrow points down while it's closed and up once it's open (Settings' points right, then down). */
+summary.aboutHead::after {
+	rotate: 45deg;
+}
+details.about[open] > summary.aboutHead::after {
+	rotate: 225deg;
+}
 .about ul {
 	margin: 0 0 var(--space-4);
 	padding-left: var(--space-5);
