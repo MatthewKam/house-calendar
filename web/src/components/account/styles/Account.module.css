@@ -153,16 +153,15 @@ button.rounded {
 }
 /* The website's sign-in screen: what Sprig is, for someone who doesn't know yet. */
 .about {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-3);
+	composes: fold from '../../settings/styles/Settings.module.css';
 	margin-top: var(--space-5);
-	padding-top: var(--space-5);
-	border-top: 1px solid var(--line);
 	font-size: var(--text-sm);
 }
+.aboutHead {
+	composes: foldHead from '../../settings/styles/Settings.module.css';
+}
 .about ul {
-	margin: 0;
+	margin: 0 0 var(--space-4);
 	padding-left: var(--space-5);
 	display: flex;
 	flex-direction: column;

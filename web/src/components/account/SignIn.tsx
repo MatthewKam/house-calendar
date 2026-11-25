@@ -196,10 +196,9 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
  */
 function About() {
 	return (
-		<section className={s.about} aria-labelledby="about-sprig">
-			<h2 id="about-sprig" className={s.subhead}>
-				What Sprig does
-			</h2>
+		// Folded until opened, so the sign-in stays the first thing on screen (Settings' fold, chevron and all).
+		<details className={s.about}>
+			<summary className={s.aboutHead}>What Sprig does</summary>
 			<ul>
 				<li>
 					<b>One family calendar</b> on everyone's phone and a screen at home. Connect Google Calendar or iCloud and
@@ -216,7 +215,7 @@ function About() {
 					<b>No ads, ever.</b> Your family's information is never sold or used to track you.
 				</li>
 			</ul>
-		</section>
+		</details>
 	);
 }
 
