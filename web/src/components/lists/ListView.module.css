@@ -337,11 +337,12 @@
 	margin-left: auto;
 	border-right: 2px solid var(--muted);
 	border-bottom: 2px solid var(--muted);
-	rotate: 45deg;
+	/* Up while the section is open, down while it's folded, like the list's name. */
+	rotate: 225deg;
 	transition: rotate 0.2s;
 }
 .sectionHead[aria-expanded='false']::after {
-	rotate: -45deg;
+	rotate: 45deg;
 }
 .empty {
 	color: var(--muted);
