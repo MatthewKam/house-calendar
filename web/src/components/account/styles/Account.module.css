@@ -68,6 +68,10 @@
 	color: var(--on-accent);
 	border: none;
 }
+/* The sign-in screen's other buttons (email, demo) take the same rounded corners as Apple's and Google's. */
+button.rounded {
+	border-radius: var(--radius-lg);
+}
 .primary:disabled {
 	opacity: 0.4;
 }
