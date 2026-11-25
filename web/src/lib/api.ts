@@ -231,6 +231,8 @@ export type AuthStatus =
 export type SignedIn = Extract<AuthStatus, { signedIn: true }>;
 interface AccountConfig {
 	google: string | null;
+	/** Sprig's own Google button (the server swaps Google's code); else Google's ready-made one. */
+	googleButton?: boolean;
 	apple: string | null;
 	email: boolean;
 	/** "Try the demo" (server/hosted/demo.ts). */
@@ -279,6 +281,8 @@ export const api = {
 	accountConfig: () => call<AccountConfig>('GET', '/api/account/config'),
 	signInWith: (provider: 'google' | 'apple', idToken: string, name?: string) =>
 		call<AuthStatus>('POST', `/api/account/signin/${provider}`, { idToken, ...(name ? { name } : {}) }),
+	/** Sprig's own Google button: the one-time code Google's sign-in window gave the page. */
+	signInWithGoogleCode: (code: string) => call<AuthStatus>('POST', '/api/account/signin/google/code', { code }),
 	emailCode: (email: string) => call<{ sent: true }>('POST', '/api/account/email/start', { email }),
 	verifyEmail: (email: string, code: string) => call<AuthStatus>('POST', '/api/account/email/verify', { email, code }),
 	signOut: () => call<void>('POST', '/api/account/signout').then(forgetSession),

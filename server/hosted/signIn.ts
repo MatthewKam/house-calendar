@@ -62,6 +62,8 @@ export function signInRoutes(
 
 	app.get('/api/account/config', async () => ({
 		google: opts.google?.clientId ?? null,
+		// Sprig's own Google button (it needs the code swapped here); else Google's ready-made one.
+		googleButton: !!opts.google?.signInCode,
 		apple: opts.apple?.clientId ?? null,
 		email: !!opts.sendCode,
 		// The site's demo (hosted/demo.ts).
@@ -97,6 +99,33 @@ export function signInRoutes(
 			// Apple sends the name to the page only on the first sign-in.
 			if (!id.name && req.body.name) id = { ...id, name: req.body.name };
 			return signInUser(req, reply, userFor(req.params.provider, id));
+		},
+	);
+
+	// Sprig's own Google button: Google's sign-in window gave the page a one-time code.
+	app.post<{ Body: { code: string } }>(
+		'/api/account/signin/google/code',
+		{
+			schema: {
+				body: {
+					type: 'object',
+					required: ['code'],
+					additionalProperties: false,
+					properties: { code: { type: 'string', minLength: 10, maxLength: 2048 } },
+				},
+			},
+		},
+		async (req, reply) => {
+			const google = opts.google;
+			if (!google?.signInCode) return reply.code(400).send({ error: 'That way of signing in is off' });
+			let id: Identity;
+			try {
+				id = await google.verify(await google.signInCode(req.body.code));
+			} catch (err) {
+				req.log.warn({ err }, 'Google sign-in code refused');
+				return reply.code(401).send({ error: 'That sign-in didn’t work. Try again.' });
+			}
+			return signInUser(req, reply, userFor('google', id));
 		},
 	);
 

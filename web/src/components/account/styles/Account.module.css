@@ -57,8 +57,9 @@
 /* A link that looks like the main button (Connect Google), and Apple's own button: the shared large
    button's size and corners. */
 .primary,
-.apple {
-	min-height: var(--tap-lg);
+.apple,
+.googleButton {
+	min-height: var(--tap);
 	border-radius: var(--radius-lg);
 	padding: 0 var(--space-6);
 	font-weight: var(--weight-semibold);
@@ -73,6 +74,30 @@
 .apple {
 	background: #000; /* own: Apple's sign-in button is black */
 	color: #fff; /* own: Apple's sign-in button is black */
+}
+/* Sprig's own Google button: the same size as Apple's, light grey, Google's "G" in a white circle. */
+.googleButton {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #ececec; /* own: Google allows a light grey sign-in button */
+	color: #1f1f1f; /* own: Google's text colour on it */
+}
+.googleMark {
+	position: absolute;
+	left: var(--space-2);
+	top: var(--space-2);
+	bottom: var(--space-2);
+	aspect-ratio: 1;
+	display: grid;
+	place-items: center;
+	border-radius: var(--radius-round);
+	background: #fff; /* own: the white circle behind Google's "G" */
+}
+.googleMark svg {
+	width: 55%;
+	height: 55%;
 }
 .google {
 	display: flex;

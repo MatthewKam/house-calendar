@@ -12,7 +12,7 @@ import { fromStored, openAccounts, relativizePaths, type HouseholdRow } from './
 import { householdRegistry } from './households.ts';
 import { adoptLegacy, buildServer } from './hosted.ts';
 import { oneHop } from './hosted/session.ts';
-import { appleVerifier, googleVerifier, resendSender, type SendCode } from './identity.ts';
+import { appleVerifier, googleSignInCode, googleVerifier, resendSender, type SendCode } from './identity.ts';
 import { googleOAuth } from './providers/google.ts';
 import { googleCalendars } from './googleSync.ts';
 import { icloudCalendars } from './icloudSync.ts';
@@ -196,6 +196,9 @@ const server = buildServer(accounts, households, {
 		? {
 				clientId: env.GOOGLE_CLIENT_ID,
 				verify: googleVerifier([env.GOOGLE_CLIENT_ID, ...list(env.GOOGLE_APP_CLIENT_IDS)]),
+				signInCode: env.GOOGLE_CLIENT_SECRET
+					? googleSignInCode(env.GOOGLE_CLIENT_ID, env.GOOGLE_CLIENT_SECRET)
+					: undefined,
 			}
 		: undefined,
 	apple: env.APPLE_SERVICE_ID

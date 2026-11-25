@@ -34,8 +34,11 @@ export interface ServerOptions {
 	/** Where new households' databases and photos go (data/households/<id>/). */
 	dataDir: string;
 	webDist?: string;
-	/** Sign in with Google: the web page's client id, and the check for its tokens. */
-	google?: { clientId: string; verify: VerifyToken };
+	/**
+	 * Sign in with Google: the web page's client id, the check for its tokens, and (with the client
+	 * secret) the swap of a sign-in window's one-time code for a token, for Sprig's own button.
+	 */
+	google?: { clientId: string; verify: VerifyToken; signInCode?: (code: string) => Promise<string> };
 	/** Sign in with Apple: the web Services ID, and the check for its tokens. */
 	apple?: { clientId: string; verify: VerifyToken };
 	/** Emails sign-in codes; without it, email sign-in is off. */

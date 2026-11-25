@@ -87,6 +87,11 @@ beforeEach(async () => {
 		google: {
 			clientId: 'web',
 			verify: async (t) => ({ subject: `g-${t}`, email: `${t.split('.')[0]}@gmail.com`, name: 'Pat Google' }),
+			// Google swaps the sign-in window's code for the token its ready-made button would give.
+			signInCode: async (code) => {
+				if (code !== 'pat-code-from-google') throw new Error('invalid_grant');
+				return 'pat.fake-token';
+			},
 		},
 	});
 	await server.app.ready();
@@ -211,6 +216,17 @@ describe('signing in', () => {
 		expect(res.body).toMatchObject({ household: { name: 'Pats' }, role: 'guardian' });
 		// Both ways in are theirs (the setup's calendar step starts with the service they sign in with).
 		expect(res.body.signIns).toEqual(['email', 'google']);
+	});
+
+	it("signs in with Sprig's own Google button (a code from Google's window), and refuses a bad code", async () => {
+		const a = device();
+		await a.signIn('pat@gmail.com');
+		await a.post('/api/account/households', { name: 'Pats', yourName: 'Pat' });
+		const b = device();
+		expect((await b.post('/api/account/signin/google/code', { code: 'not-a-real-code' })).status).toBe(401);
+		const res = await b.post('/api/account/signin/google/code', { code: 'pat-code-from-google' });
+		expect(res.body).toMatchObject({ household: { name: 'Pats' }, role: 'guardian' });
+		expect((await b.get('/api/account/config')).body).toMatchObject({ googleButton: true });
 	});
 });
 

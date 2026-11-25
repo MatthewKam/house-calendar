@@ -67,3 +67,28 @@ export function resendSender(apiKey: string, from: string, site: string): SendCo
 		if (!res.ok) throw new Error(`Email failed: ${res.status} ${await res.text()}`);
 	};
 }
+
+/**
+ * Sign-in with Sprig's own Google button: Google's sign-in window gives the page a one-time code
+ * (its popup way, so the redirect is "postmessage"), which the server swaps for the person's ID token.
+ * The token is then checked like the ready-made button's.
+ */
+export function googleSignInCode(clientId: string, secret: string) {
+	return async (code: string): Promise<string> => {
+		const res = await fetch('https://oauth2.googleapis.com/token', {
+			method: 'POST',
+			headers: { 'content-type': 'application/x-www-form-urlencoded' },
+			body: new URLSearchParams({
+				code,
+				client_id: clientId,
+				client_secret: secret,
+				redirect_uri: 'postmessage',
+				grant_type: 'authorization_code',
+			}),
+			signal: AbortSignal.timeout(15_000),
+		});
+		const json = (await res.json().catch(() => ({}))) as { id_token?: string; error?: string };
+		if (!res.ok || !json.id_token) throw new Error(`Google refused the sign-in code: ${json.error ?? res.status}`);
+		return json.id_token;
+	};
+}

@@ -17,6 +17,15 @@ declare global {
 					initialize(o: { client_id: string; callback: (r: { credential: string }) => void }): void;
 					renderButton(el: HTMLElement, o: Record<string, unknown>): void;
 				};
+				oauth2: {
+					initCodeClient(o: {
+						client_id: string;
+						scope: string;
+						ux_mode: 'popup';
+						callback: (r: { code?: string; error?: string }) => void;
+						error_callback?: (e: { type: string }) => void;
+					}): { requestCode(): void };
+				};
 			};
 		};
 		AppleID?: {
@@ -54,6 +63,8 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 	// An invite link for a kid's device or the wall goes straight to the code.
 	const [showCode, setShowCode] = useState(!!pendingJoin());
 	const googleEl = useRef<HTMLDivElement>(null);
+	// Sprig's own Google button opens Google's sign-in window with this (made once Google's script is in).
+	const googleCode = useRef<{ requestCode(): void } | null>(null);
 	const done = useRef(onSignedIn);
 	done.current = onSignedIn;
 
@@ -62,7 +73,23 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 		if (!clientId) return;
 		loadScript('https://accounts.google.com/gsi/client').then(
 			() => {
-				if (!window.google || !googleEl.current) return;
+				if (!window.google) return;
+				if (config?.googleButton) {
+					googleCode.current = window.google.accounts.oauth2.initCodeClient({
+						client_id: clientId,
+						scope: 'openid email profile',
+						ux_mode: 'popup',
+						callback: (r) => {
+							if (!r.code)
+								return setError(r.error === 'access_denied' ? null : "Google sign-in didn't work. Try again.");
+							api.signInWithGoogleCode(r.code).then(done.current, (e: Error) => setError(e.message));
+						},
+						// Closing Google's window is just changing your mind.
+						error_callback: () => {},
+					});
+					return;
+				}
+				if (!googleEl.current) return;
 				window.google.accounts.id.initialize({
 					client_id: clientId,
 					callback: (r) => api.signInWith('google', r.credential).then(done.current, (e: Error) => setError(e.message)),
@@ -80,7 +107,7 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 			},
 			() => setError("Couldn't load Google sign-in"),
 		);
-	}, [config?.google]);
+	}, [config?.google, config?.googleButton]);
 
 	useEffect(() => {
 		const clientId = config?.apple;
@@ -122,7 +149,25 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 						Continue with Apple
 					</button>
 				)}
-				{config?.google && <div ref={googleEl} className={s.google} />}
+				{config?.google &&
+					(config.googleButton ? (
+						<button
+							type="button"
+							className={s.googleButton}
+							onClick={() => {
+								setError(null);
+								if (googleCode.current) googleCode.current.requestCode();
+								else setError('Google sign-in is still loading. Try again in a moment.');
+							}}
+						>
+							<span className={s.googleMark} aria-hidden="true">
+								<GoogleG />
+							</span>
+							<span>Continue with Google</span>
+						</button>
+					) : (
+						<div ref={googleEl} className={s.google} />
+					))}
 				{config?.email && <EmailSignIn onSignedIn={onSignedIn} />}
 				{error && <p className={s.error}>{error}</p>}
 				<div className={s.or}>or</div>
@@ -172,6 +217,30 @@ function About() {
 				</li>
 			</ul>
 		</section>
+	);
+}
+
+/** Google's "G", in its own colours (Google's sign-in button rules ask for it as is). */
+function GoogleG() {
+	return (
+		<svg viewBox="0 0 48 48">
+			<path
+				fill="#EA4335"
+				d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+			/>
+			<path
+				fill="#4285F4"
+				d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+			/>
+			<path
+				fill="#FBBC05"
+				d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+			/>
+			<path
+				fill="#34A853"
+				d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+			/>
+		</svg>
 	);
 }
 
