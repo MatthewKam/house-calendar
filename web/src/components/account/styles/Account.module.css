@@ -122,6 +122,8 @@
 }
 .link {
 	align-self: center;
+	display: flex;
+	flex-direction: column;
 }
 /* A text button inside a line of text ("Your family: The Kams Change"). */
 .inlineLink {
