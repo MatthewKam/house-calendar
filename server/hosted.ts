@@ -19,6 +19,7 @@ import {
 	type ServerOptions,
 } from './hosted/session.ts';
 import { signInRoutes } from './hosted/signIn.ts';
+import { passkeyRoutes } from './hosted/passkeys.ts';
 import { householdRoutes } from './hosted/household.ts';
 import { unlockRoutes } from './hosted/unlock.ts';
 import { pinRoutes } from './hosted/pin.ts';
@@ -195,7 +196,8 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 		rootHandler!(req, res);
 	}
 
-	signInRoutes(app, accounts, x, opts);
+	const { signInUser } = signInRoutes(app, accounts, x, opts);
+	passkeyRoutes(app, accounts, x, opts, signInUser);
 	app.get('/api/auth/status', async (req) => x.status(req));
 	householdRoutes(app, accounts, x);
 	unlockRoutes(app, accounts, x);

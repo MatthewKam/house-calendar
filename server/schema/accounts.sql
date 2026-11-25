@@ -1,4 +1,4 @@
--- The accounts database (server/accounts.ts), at version 9. Written by server/schema.test.ts; don't edit by hand.
+-- The accounts database (server/accounts.ts), at version 10. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE email_codes (
     email       TEXT PRIMARY KEY,
@@ -56,6 +56,20 @@ CREATE TABLE memberships (
   );
 
 CREATE UNIQUE INDEX memberships_user ON memberships(household_id, user_id) WHERE user_id IS NOT NULL;
+
+CREATE TABLE passkeys (
+    id          TEXT PRIMARY KEY,
+    user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    public_key  BLOB NOT NULL,
+    counter     INTEGER NOT NULL DEFAULT 0,
+    transports  TEXT,
+    provider    TEXT,
+    device      TEXT,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    last_used   TEXT
+  );
+
+CREATE INDEX passkeys_user ON passkeys(user_id);
 
 CREATE TABLE pin_resets (
     membership_id TEXT PRIMARY KEY REFERENCES memberships(id) ON DELETE CASCADE,

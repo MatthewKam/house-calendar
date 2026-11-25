@@ -1,4 +1,10 @@
 import type {
+	AuthenticationResponseJSON,
+	PublicKeyCredentialCreationOptionsJSON,
+	PublicKeyCredentialRequestOptionsJSON,
+	RegistrationResponseJSON,
+} from '@simplewebauthn/browser';
+import type {
 	CalEvent,
 	EventWeather,
 	LeaveAlert,
@@ -237,6 +243,18 @@ interface AccountConfig {
 	email: boolean;
 	/** "Try the demo" (server/hosted/demo.ts). */
 	demo?: boolean;
+	/** Signing in with a passkey (server/hosted/passkeys.ts). */
+	passkeys?: boolean;
+}
+/** A saved passkey (server/hosted/passkeys.ts). */
+export interface Passkey {
+	id: string;
+	/** Who keeps it ("iCloud Keychain"), when known. */
+	provider: string | null;
+	/** The device it was saved on ("iPhone · Safari"). */
+	device: string | null;
+	createdAt: string;
+	lastUsed: string | null;
 }
 export interface JoinPreview {
 	kind: 'guardian' | 'kid' | 'wall';
@@ -281,6 +299,21 @@ export const api = {
 	accountConfig: () => call<AccountConfig>('GET', '/api/account/config'),
 	signInWith: (provider: 'google' | 'apple', idToken: string, name?: string) =>
 		call<AuthStatus>('POST', `/api/account/signin/${provider}`, { idToken, ...(name ? { name } : {}) }),
+	/** Passkeys: this person's, saving one (options, then the device's answer), removing one. */
+	passkeys: () => call<Passkey[]>('GET', '/api/account/passkeys'),
+	passkeySaveOptions: () =>
+		call<PublicKeyCredentialCreationOptionsJSON>('POST', '/api/account/passkeys/register/options'),
+	passkeySave: (response: RegistrationResponseJSON) =>
+		call<Passkey>('POST', '/api/account/passkeys/register/verify', { response }),
+	removePasskey: (id: string) => call<void>('DELETE', `/api/account/passkeys/${encodeURIComponent(id)}`),
+	/** Signing in with a passkey: a one-time challenge, then the device's signed answer. */
+	passkeySignInOptions: () =>
+		call<{ id: string; options: PublicKeyCredentialRequestOptionsJSON }>(
+			'POST',
+			'/api/account/passkeys/signin/options',
+		),
+	passkeySignIn: (id: string, response: AuthenticationResponseJSON) =>
+		call<AuthStatus>('POST', '/api/account/passkeys/signin/verify', { id, response }),
 	/** Sprig's own Google button: the one-time code Google's sign-in window gave the page. */
 	signInWithGoogleCode: (code: string) => call<AuthStatus>('POST', '/api/account/signin/google/code', { code }),
 	emailCode: (email: string) => call<{ sent: true }>('POST', '/api/account/email/start', { email }),

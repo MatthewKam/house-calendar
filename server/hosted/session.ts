@@ -53,6 +53,11 @@ export interface ServerOptions {
 	/** The app's address as people reach it (https://…), for Google to come back to; else from each request. */
 	publicUrl?: string;
 	/**
+	 * Passkeys: the site they belong to (its domain) and the pages that may use them. Without
+	 * `origins`, a page on this computer (http://localhost:…) may, for developing.
+	 */
+	passkeys?: { rpID: string; origins?: string[] };
+	/**
 	 * Which proxies' X-Forwarded-For to believe (for each device's address, which limits wrong codes):
 	 * the host's load balancer when hosted (1: the one hop in front, so the address it adds is the one believed),
 	 * else only tailscale serve on this machine.

@@ -138,6 +138,23 @@ const migrations: string[] = [
 	`
   ALTER TABLE users ADD COLUMN demo_until TEXT;
   `,
+	// Passkeys (hosted/passkeys.ts): Face ID, Touch ID or a phone's screen lock instead of a code. The
+	// device keeps the private key; this is its public half, and the count it signs with (a copied key
+	// would fall behind).
+	`
+  CREATE TABLE passkeys (
+    id          TEXT PRIMARY KEY,
+    user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    public_key  BLOB NOT NULL,
+    counter     INTEGER NOT NULL DEFAULT 0,
+    transports  TEXT,
+    provider    TEXT,
+    device      TEXT,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    last_used   TEXT
+  );
+  CREATE INDEX passkeys_user ON passkeys(user_id);
+  `,
 ];
 
 export function openAccounts(file: string): AccountsDB {

@@ -54,6 +54,7 @@ import { PHONE, PHONE_SIDEWAYS, SHORT_DESKTOP, useMediaQuery } from './lib/useMe
 import { useFlyerDrop } from './lib/useFlyerDrop';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import s from './App.module.css';
+import PasskeyOffer from './components/account/PasskeyOffer';
 
 // Loaded when first opened, so a phone opening the calendar doesn't download them: kid mode (with
 // Learn's games), Photos, the screen saver and Settings. Each is shown inside <Suspense fallback={null}>.
@@ -581,6 +582,8 @@ export default function App() {
 			<LeaveAlerts />
 			{/* No connection: said at the top of every page (not in kid mode: nothing for them to do about it). */}
 			<OfflineBar />
+			{/* Just signed in on the website: offer a passkey for next time. */}
+			<PasskeyOffer />
 
 			{toast && <Toast message={toast} onDone={closeToast} />}
 		</>

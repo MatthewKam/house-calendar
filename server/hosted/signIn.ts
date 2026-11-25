@@ -66,6 +66,8 @@ export function signInRoutes(
 		googleButton: !!opts.google?.signInCode,
 		apple: opts.apple?.clientId ?? null,
 		email: !!opts.sendCode,
+		// Signing in with a passkey (hosted/passkeys.ts).
+		passkeys: !!opts.passkeys,
 		// The site's demo (hosted/demo.ts).
 		demo: true,
 	}));
@@ -205,4 +207,6 @@ export function signInRoutes(
 		reply.header('set-cookie', `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`);
 		return reply.code(204).send();
 	});
+
+	return { signInUser };
 }

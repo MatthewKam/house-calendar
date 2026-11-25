@@ -7,6 +7,7 @@ import { usePush } from '../../lib/usePush';
 import type { Member } from '../../lib/types';
 import Sheet from '../ui/Sheet';
 import { DeleteAccount, SignedInAs, SignOut } from './Account';
+import Passkeys from './Passkeys';
 import AlertsSetting, { ALERTS_NOTE } from './AlertsSetting';
 import AppearanceSettings from './AppearanceSettings';
 import CalendarList from './CalendarList';
@@ -171,6 +172,7 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 					<div className={s.foldBody}>
 						<HouseholdAccess />
 						{/* Someone's own account (not a kid's device, the wall, or wall mode). */}
+						{auth?.signedIn && auth.kind === 'user' && !auth.wallMode && !auth.demo && <Passkeys />}
 						{auth?.signedIn && auth.kind === 'user' && !auth.wallMode && <DeleteAccount onClose={onClose} />}
 					</div>
 				</Group>

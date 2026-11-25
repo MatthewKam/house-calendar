@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api, type AuthStatus } from '../../lib/api';
 import { appleSignIn, isApp } from '../../lib/native';
 import { pendingJoin } from '../../lib/joinCode';
+import { notChosen, offerPasskeyNext, passkeysWork, prepareSignIn, signInFromAutofill } from '../../lib/passkeys';
 import JoinForm from './JoinForm';
 import s from './styles/Account.module.css';
 import { Button } from '../ui/Button';
@@ -65,8 +66,53 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 	const googleEl = useRef<HTMLDivElement>(null);
 	// Sprig's own Google button opens Google's sign-in window with this (made once Google's script is in).
 	const googleCode = useRef<{ requestCode(): void } | null>(null);
-	const done = useRef(onSignedIn);
-	done.current = onSignedIn;
+	// Signed in with a code, Apple or Google: the app offers a passkey for next time (PasskeyOffer).
+	const signedIn = (st: AuthStatus) => {
+		offerPasskeyNext();
+		onSignedIn(st);
+	};
+	const done = useRef(signedIn);
+	done.current = signedIn;
+	// Signing in with a passkey: ready before the tap (Safari only shows its sheet straight from one).
+	const passkeyReady = useRef<(() => Promise<AuthStatus>) | null>(null);
+	const passkeyOn = !!config?.passkeys && passkeysWork();
+	useEffect(() => {
+		if (!passkeyOn) return;
+		let live = true;
+		const ready = () =>
+			prepareSignIn().then(
+				(go) => void (live && (passkeyReady.current = go)),
+				() => {},
+			);
+		void ready();
+		// Refreshed before the server's one-time challenge runs out (5 minutes).
+		const t = setInterval(ready, 4 * 60_000);
+		// And the device may offer its passkeys as the email box is tapped.
+		signInFromAutofill().then(
+			(st) => live && onSignedIn(st),
+			() => {},
+		);
+		return () => {
+			live = false;
+			clearInterval(t);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [passkeyOn]);
+
+	function passkey() {
+		setError(null);
+		const go = passkeyReady.current;
+		if (!go) return setError('Passkeys are still getting ready. Try again in a moment.');
+		passkeyReady.current = null;
+		go()
+			.then(onSignedIn, (e: Error) => !notChosen(e) && setError(e.message))
+			.finally(() =>
+				prepareSignIn().then(
+					(g) => (passkeyReady.current = g),
+					() => {},
+				),
+			);
+	}
 
 	useEffect(() => {
 		const clientId = config?.google;
@@ -122,12 +168,12 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 		try {
 			if (isApp) {
 				const r = await appleSignIn();
-				return onSignedIn(await api.signInWith('apple', r.idToken, r.name || undefined));
+				return signedIn(await api.signInWith('apple', r.idToken, r.name || undefined));
 			}
 			const r = await window.AppleID!.auth.signIn();
 			// Apple gives the name only the first time someone signs in.
 			const name = [r.user?.name?.firstName, r.user?.name?.lastName].filter(Boolean).join(' ');
-			onSignedIn(await api.signInWith('apple', r.authorization.id_token, name || undefined));
+			signedIn(await api.signInWith('apple', r.authorization.id_token, name || undefined));
 		} catch (e) {
 			// Closing Apple's pop-up (or the iPhone's sheet) isn't an error worth showing.
 			const msg = e instanceof Error ? e.message : (e as { error?: string })?.error;
@@ -168,7 +214,12 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 					) : (
 						<div ref={googleEl} className={s.google} />
 					))}
-				{config?.email && <EmailSignIn onSignedIn={onSignedIn} />}
+				{passkeyOn && (
+					<Button block icon="🔑" className={s.rounded} onClick={passkey}>
+						Sign in with a passkey
+					</Button>
+				)}
+				{config?.email && <EmailSignIn onSignedIn={signedIn} />}
 				{error && <p className={s.error}>{error}</p>}
 				<div className={s.or}>or</div>
 				{/* On the website: a made-up family to look around first (not in the App Store app). */}
@@ -328,7 +379,7 @@ function EmailSignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => void }) {
 			{!sent ? (
 				<Input
 					type="email"
-					autoComplete="email"
+					autoComplete="username webauthn"
 					placeholder="Email"
 					aria-label="Email"
 					value={email}

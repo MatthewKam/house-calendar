@@ -212,6 +212,10 @@ const server = buildServer(accounts, households, {
 			: undefined,
 	googleCalendar: oauth,
 	publicUrl: env.PUBLIC_URL || undefined,
+	// Passkeys belong to the site's own domain; while developing, to localhost.
+	passkeys: env.PUBLIC_URL
+		? { rpID: new URL(env.PUBLIC_URL).hostname, origins: [new URL(env.PUBLIC_URL).origin] }
+		: { rpID: 'localhost' },
 	// Hosted behind the host's HTTPS proxy: TRUST_PROXY=1, believing only the address that proxy adds (the
 	// last in X-Forwarded-For). Believing them all would let anyone claim any address and dodge the limits.
 	trustProxy: env.TRUST_PROXY === '1' ? oneHop : 'loopback',

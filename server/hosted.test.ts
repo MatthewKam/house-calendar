@@ -9,6 +9,8 @@ import { openAccounts, type AccountsDB } from './accounts.ts';
 import { householdRegistry } from './households.ts';
 import { adoptLegacy, buildServer } from './hosted.ts';
 import { oneHop } from './hosted/session.ts';
+import { createHash, generateKeyPairSync, randomBytes, sign } from 'node:crypto';
+import { isoCBOR } from '@simplewebauthn/server/helpers';
 
 // Accounts, households and the guardian PIN, through the front server.
 let dir: string;
@@ -74,6 +76,7 @@ beforeEach(async () => {
 		logger: false,
 		sendCode: async (email, code) => void codes.set(email, code),
 		review: { email: 'review@sprig-family.com', code: '246810' },
+		passkeys: { rpID: 'sprig.test', origins: ['https://sprig.test'] },
 		googleCalendar: {
 			authUrl: (redirect, state, hint) =>
 				`https://google.test/auth?${new URLSearchParams({ redirect, state, hint: hint ?? '' })}`,
@@ -1171,5 +1174,155 @@ describe('what browsers are told', () => {
 		expect(csp).toContain("frame-ancestors 'none'");
 		expect(csp).toContain("object-src 'none'");
 		expect(csp).not.toMatch(/script-src[^;]*'unsafe-inline'/);
+	});
+});
+
+/**
+ * A pretend phone with a passkey: a real P-256 key pair, answering the way a device does (its
+ * signatures checked by the real library), so a test can save one and sign in with it.
+ */
+function phoneWithPasskey(rpID = 'sprig.test', origin = 'https://sprig.test') {
+	const { privateKey, publicKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
+	const jwk = publicKey.export({ format: 'jwk' });
+	const credentialId = randomBytes(16);
+	const id = credentialId.toString('base64url');
+	const b64 = (b: Uint8Array) => Buffer.from(b).toString('base64url');
+	const rpIdHash = createHash('sha256').update(rpID).digest();
+	const u32 = (n: number) => Buffer.from([n >>> 24, (n >>> 16) & 255, (n >>> 8) & 255, n & 255]);
+	const clientData = (type: string, challenge: string) =>
+		Buffer.from(JSON.stringify({ type, challenge, origin, crossOrigin: false }));
+	let counter = 0;
+	let userHandle = '';
+	return {
+		id,
+		/** Answers "save a passkey" (options from /register/options). */
+		save(options: { challenge: string; user: { id: string } }) {
+			userHandle = options.user.id;
+			const cose = new Map<number, number | Uint8Array>([
+				[1, 2],
+				[3, -7],
+				[-1, 1],
+				[-2, new Uint8Array(Buffer.from(jwk.x!, 'base64url'))],
+				[-3, new Uint8Array(Buffer.from(jwk.y!, 'base64url'))],
+			]);
+			// Flags: user present, user verified, a new key follows.
+			const authData = Buffer.concat([
+				rpIdHash,
+				Buffer.from([0x45]),
+				u32(counter),
+				Buffer.alloc(16),
+				Buffer.from([0, credentialId.length]),
+				credentialId,
+				Buffer.from(isoCBOR.encode(cose)),
+			]);
+			const attestation = isoCBOR.encode(
+				new Map<string, unknown>([
+					['fmt', 'none'],
+					['attStmt', new Map()],
+					['authData', new Uint8Array(authData)],
+				]) as never,
+			);
+			return {
+				id,
+				rawId: id,
+				type: 'public-key',
+				clientExtensionResults: {},
+				response: {
+					clientDataJSON: b64(clientData('webauthn.create', options.challenge)),
+					attestationObject: b64(attestation),
+					transports: ['internal'],
+				},
+			};
+		},
+		/** Answers "sign in" (options from /signin/options), counting up as a device does. */
+		signIn(options: { challenge: string }, { as = id, count = ++counter } = {}) {
+			const authData = Buffer.concat([rpIdHash, Buffer.from([0x05]), u32(count)]);
+			const data = clientData('webauthn.get', options.challenge);
+			const signature = sign(
+				'sha256',
+				Buffer.concat([authData, createHash('sha256').update(data).digest()]),
+				privateKey,
+			);
+			return {
+				id: as,
+				rawId: as,
+				type: 'public-key',
+				clientExtensionResults: {},
+				response: {
+					clientDataJSON: b64(data),
+					authenticatorData: b64(authData),
+					signature: b64(signature),
+					userHandle,
+				},
+			};
+		},
+	};
+}
+
+describe('passkeys', () => {
+	async function saved() {
+		const pat = device();
+		await pat.signIn('pat@example.com');
+		await pat.post('/api/account/households', { name: 'Pats', yourName: 'Pat' });
+		const phone = phoneWithPasskey();
+		const options = (await pat.post('/api/account/passkeys/register/options')).body;
+		const res = await pat.post('/api/account/passkeys/register/verify', { response: phone.save(options) });
+		return { pat, phone, res };
+	}
+	const signInWith = async (phone: ReturnType<typeof phoneWithPasskey>, how?: { as?: string; count?: number }) => {
+		const d = device();
+		const { id, options } = (await d.post('/api/account/passkeys/signin/options')).body;
+		return {
+			d,
+			res: await d.post('/api/account/passkeys/signin/verify', { id, response: phone.signIn(options, how) }),
+		};
+	};
+
+	it('saves one for a signed-in person and lists it', async () => {
+		const { pat, phone, res } = await saved();
+		expect(res.status).toBe(200);
+		expect(res.body).toMatchObject({ id: phone.id, lastUsed: null });
+		expect((await pat.get('/api/account/passkeys')).body).toHaveLength(1);
+		expect((await device().post('/api/account/passkeys/register/options')).status).toBe(401);
+		expect((await pat.get('/api/account/config')).body).toMatchObject({ passkeys: true });
+	});
+
+	it('signs in with it, signed out, into their household', async () => {
+		const { phone } = await saved();
+		const { d, res } = await signInWith(phone);
+		expect(res.status).toBe(200);
+		expect(res.body).toMatchObject({ household: { name: 'Pats' }, role: 'guardian' });
+		expect((await d.get('/api/members')).status).toBe(200);
+	});
+
+	it("refuses a passkey Sprig doesn't know, a copied one that falls behind, and a used challenge", async () => {
+		const { phone } = await saved();
+		expect((await signInWith(phoneWithPasskey())).res.status).toBe(401);
+		expect((await signInWith(phone)).res.status).toBe(200);
+		// A copy of the key still counting from before: its count isn't ahead of the last one seen.
+		expect((await signInWith(phone, { count: 1 })).res.status).toBe(401);
+		// The same challenge twice.
+		const d = device();
+		const { id, options } = (await d.post('/api/account/passkeys/signin/options')).body;
+		expect((await d.post('/api/account/passkeys/signin/verify', { id, response: phone.signIn(options) })).status).toBe(
+			200,
+		);
+		expect((await d.post('/api/account/passkeys/signin/verify', { id, response: phone.signIn(options) })).status).toBe(
+			400,
+		);
+	});
+
+	it('removes one, after which it no longer signs in', async () => {
+		const { pat, phone } = await saved();
+		expect((await device().del(`/api/account/passkeys/${phone.id}`)).status).toBe(401);
+		expect((await pat.del(`/api/account/passkeys/${phone.id}`)).status).toBe(204);
+		expect((await pat.get('/api/account/passkeys')).body).toEqual([]);
+		expect((await signInWith(phone)).res.status).toBe(401);
+	});
+
+	it("isn't offered to the demo", async () => {
+		const visitor = device();
+		await visitor.post('/api/account/demo');
+		expect((await visitor.post('/api/account/passkeys/register/options')).status).toBe(403);
 	});
 });
