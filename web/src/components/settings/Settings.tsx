@@ -176,6 +176,13 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 						{auth?.signedIn && auth.kind === 'user' && !auth.wallMode && <DeleteAccount onClose={onClose} />}
 					</div>
 				</Group>
+
+				{/* How to reach us, under the groups (not on a kid's device: a tap there would start an email). */}
+				{view === null && auth?.signedIn && auth.kind !== 'device' && (
+					<p className={s.help}>
+						Questions, a problem or an idea? Email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+					</p>
+				)}
 			</SettingsView.Provider>
 
 			{/* Signing out (or locking the wall) last, away from everything else. */}
@@ -189,6 +196,9 @@ export default function Settings({ members, onClose, onKidMode }: Props) {
 		</Sheet>
 	);
 }
+
+/** Where help questions go (forwarded to the family's inbox). */
+const SUPPORT_EMAIL = 'hello@sprig-family.com';
 
 /** The word beside Calendars in Settings while it's folded: how many are connected. */
 function calendarsNote(count: number): string {
