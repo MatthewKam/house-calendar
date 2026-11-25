@@ -237,7 +237,19 @@ export default function App() {
 	function save(input: EventInput) {
 		const id = dialog?.event?.id;
 		close();
-		saveEvent.mutate({ id, input });
+		saveEvent.mutate(
+			{ id, input },
+			{
+				// A new event can be taken back: Undo deletes it (from iCloud or Google too, straight away).
+				onSuccess: (added) => {
+					if (id || !added) return;
+					setToast({
+						text: `Added “${added.title}”`,
+						undo: () => deleteEvent.mutate({ id: added.id, scope: added.repeats ? 'all' : 'one', undo: true }),
+					});
+				},
+			},
+		);
 	}
 
 	function saveTaskInput(input: TaskInput) {

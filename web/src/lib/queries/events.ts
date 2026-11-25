@@ -210,7 +210,8 @@ export function useResolveConflict() {
 export function useDeleteEvent() {
 	const qc = useQueryClient();
 	return useMutation({
-		mutationFn: ({ id, scope }: { id: string; scope?: 'one' | 'all' }) => api.removeEvent(id, scope),
+		mutationFn: ({ id, scope, undo }: { id: string; scope?: 'one' | 'all'; undo?: boolean }) =>
+			api.removeEvent(id, scope, undo),
 		onMutate: ({ id, scope }) =>
 			showNow(qc, [
 				{

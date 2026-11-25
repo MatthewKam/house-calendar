@@ -4,7 +4,7 @@ import fastifyStatic from '@fastify/static';
 import { existsSync } from 'node:fs';
 import type { DB } from './db.ts';
 import { registerMembers } from './members.ts';
-import { registerCalendars, type CalendarOptions } from './calendars.ts';
+import { registerCalendars, type CalendarOptions, type SyncedEdits } from './calendars.ts';
 import { registerPhoneCalendars } from './phoneCalendars.ts';
 import { registerTasks } from './tasks.ts';
 import { registerRewards } from './rewards.ts';
@@ -54,7 +54,7 @@ export function buildApp(
 		 * Edits to synced events: present when they can be sent to iCloud; soon() sends a new edit after
 		 * the Undo window. Without it, synced events are read-only.
 		 */
-		syncedEdits?: { soon: () => void };
+		syncedEdits?: SyncedEdits;
 		/** Where album photos are stored; without it, the album is off. */
 		photosDir?: string;
 		/** How the daily joke, quote and events are fetched (replaced in tests). */

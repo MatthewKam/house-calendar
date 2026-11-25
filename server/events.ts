@@ -1,3 +1,4 @@
+import type { SyncedEdits } from './calendars.ts';
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
@@ -176,7 +177,7 @@ const GOOGLE_READ_ONLY = 'This event comes from Google Calendar. Change it there
  * Event routes. `syncedEdits` is present when changes to synced events can be sent to iCloud (soon()
  * sends a new edit after the Undo window); without it, synced events are read-only.
  */
-export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soon: () => void }) {
+export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: SyncedEdits) {
 	// ---- Events ------------------------------------------------------------
 	const getEvent = (id: string) => toEvent(db.prepare(`${EVENT_SELECT} WHERE e.id = ?`).get(id) as EventRow);
 	const knownPhoto = (id?: string | null) => !id || !!db.prepare('SELECT 1 FROM photos WHERE id = ?').get(id);
@@ -244,7 +245,8 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
 			if (req.body.visibility) setVisibility(db, id, req.body.visibility);
 			if (req.body.special) setSpecial(db, id, true);
 			if (ev.photoId) setFlyer(db, id, ev.photoId);
-			syncedEdits.soon();
+			// Sent straight away: there's nothing in the calendar to lose, and Undo deletes it straight away too.
+			(syncedEdits.now ?? syncedEdits.soon)();
 			reply.code(201);
 			return getEvent(id);
 		}
@@ -388,12 +390,14 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
 		},
 	);
 
-	// ?scope=all deletes every day of a repeating iCloud event.
-	app.delete<{ Params: { id: string }; Querystring: { scope?: 'one' | 'all' } }>(
+	// ?scope=all deletes every day of a repeating iCloud event. ?undo=1 is Undo for an event just
+	// added: sent straight away, as adding it was.
+	app.delete<{ Params: { id: string }; Querystring: { scope?: 'one' | 'all'; undo?: string } }>(
 		'/api/events/:id',
 		async (req, reply) => {
 			const row = db.prepare('SELECT * FROM events WHERE id = ?').get(req.params.id) as EventRow | undefined;
 			if (!row) return reply.code(404).send({ error: 'Event not found' });
+			const undo = req.query.undo === '1';
 			if (row.calendar_id !== 'local') {
 				if (googleReadOnly(row.calendar_id)) return reply.code(409).send({ error: GOOGLE_READ_ONLY });
 				if (!syncedEdits) return reply.code(409).send({ error: READ_ONLY });
@@ -401,14 +405,17 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: { soo
 				if (req.query.scope === 'all' && row.remote_id?.includes('#')) {
 					queueSeries(db, row, 'delete', {});
 				} else {
+					const wait = undo ? 0 : undefined;
 					db.transaction(() => {
-						queueEdit(db, row, 'delete', {});
+						queueEdit(db, row, 'delete', {}, new Date(), wait);
 						// Other iCloud copies of it go too (Undo brings them back with it).
 						for (const c of copiesOf(row))
-							if (c.calendar_id !== 'local' && writable(c.calendar_id)) queueEdit(db, c, 'delete', {});
+							if (c.calendar_id !== 'local' && writable(c.calendar_id))
+								queueEdit(db, c, 'delete', {}, new Date(), wait);
 					})();
 				}
-				syncedEdits.soon();
+				if (undo) (syncedEdits.now ?? syncedEdits.soon)();
+				else syncedEdits.soon();
 				return reply.code(204).send();
 			}
 			db.transaction(() => {

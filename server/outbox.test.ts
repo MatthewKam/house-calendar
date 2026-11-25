@@ -365,6 +365,76 @@ describe('adding iCloud events from the wall', () => {
 	});
 });
 
+describe('adding an event and taking it back', () => {
+	const add = (app: Awaited<ReturnType<typeof setup>>['app'], cal: string, title: string) =>
+		app
+			.inject({
+				method: 'POST',
+				url: '/api/events',
+				payload: {
+					title,
+					allDay: false,
+					start: '2026-10-09T01:00:00.000Z',
+					end: '2026-10-09T02:00:00.000Z',
+					calendarId: cal,
+				},
+			})
+			.then((r) => r.json() as { id: string });
+	const inCloud = (cloud: ReturnType<typeof fakeICloud>, title: string) =>
+		[...cloud.store.values()].some((r) => r.data.includes(`SUMMARY:${title}`));
+
+	it('sends a new event straight away, and its Undo straight away too', async () => {
+		const { app, cloud, db, resync } = await setup();
+		const cal = (db.prepare(`SELECT id FROM calendars`).get() as { id: string }).id;
+		const made = await add(app, cal, 'Swim');
+		// No waiting for the Undo window.
+		expect(await pushOutbox(db, cloud.source, new Date())).toMatchObject({ sent: 1 });
+		expect(inCloud(cloud, 'Swim')).toBe(true);
+		await resync();
+		await app.inject({ method: 'DELETE', url: `/api/events/${made.id}?undo=1` });
+		expect(await pushOutbox(db, cloud.source, new Date())).toMatchObject({ sent: 1 });
+		expect(inCloud(cloud, 'Swim')).toBe(false);
+	});
+
+	it('still deletes it when Undo comes while it is on its way', async () => {
+		const { app, cloud, db } = await setup();
+		const cal = (db.prepare(`SELECT id FROM calendars`).get() as { id: string }).id;
+		const made = await add(app, cal, 'Swim');
+		// Undo pressed while the new event is being written.
+		const write = cloud.source.writeEvent;
+		cloud.source.writeEvent = async (href, etag, data) => {
+			const ok = await write(href, etag, data);
+			cloud.source.writeEvent = write;
+			await app.inject({ method: 'DELETE', url: `/api/events/${made.id}?undo=1` });
+			return ok;
+		};
+		await pushOutbox(db, cloud.source, new Date());
+		expect(inCloud(cloud, 'Swim')).toBe(true);
+		// The delete is still waiting, and goes next.
+		expect(await pushOutbox(db, cloud.source, new Date())).toMatchObject({ sent: 1 });
+		expect(inCloud(cloud, 'Swim')).toBe(false);
+	});
+
+	it('keeps a change made while it is on its way', async () => {
+		const { app, cloud, db } = await setup();
+		const cal = (db.prepare(`SELECT id FROM calendars`).get() as { id: string }).id;
+		const made = await add(app, cal, 'Swim');
+		const write = cloud.source.writeEvent;
+		cloud.source.writeEvent = async (href, etag, data) => {
+			const ok = await write(href, etag, data);
+			cloud.source.writeEvent = write;
+			await app.inject({ method: 'PATCH', url: `/api/events/${made.id}`, payload: { title: 'Swim lesson' } });
+			return ok;
+		};
+		await pushOutbox(db, cloud.source, new Date());
+		expect(await pushOutbox(db, cloud.source, new Date(Date.now() + SEND_AFTER_MS + 1000))).toMatchObject({
+			sent: 1,
+			conflicts: 0,
+		});
+		expect(inCloud(cloud, 'Swim lesson')).toBe(true);
+	});
+});
+
 describe('repeating events and copies', () => {
 	it('changes every day of a repeating event when asked, and deletes all of it with Undo', async () => {
 		const { app, cloud, events, send, resync } = await setup();

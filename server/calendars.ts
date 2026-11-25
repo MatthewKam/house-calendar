@@ -16,6 +16,12 @@ import { localDay } from './stages.ts';
 // Synced calendars (who each is for, whether it shows, who sees its events), how syncing is going,
 // and the calendar accounts behind them: Google (connected on the front server) and iCloud (here).
 
+/** Sends wall edits to iCloud and Google: after the Undo window (soon), or straight away (now). */
+export interface SyncedEdits {
+	soon: () => void;
+	now?: () => void;
+}
+
 export interface CalendarOptions {
 	/** Calendar sync status: one, or worked out on each call when accounts come and go. */
 	sync?: SyncStatus | (() => SyncStatus | null);
@@ -29,7 +35,7 @@ export interface CalendarOptions {
 		connect(c: { memberId: string | null; appleId: string; password: string }): Promise<void>;
 	};
 	/** Present when new events can be added to synced calendars (iCloud). */
-	syncedEdits?: { soon: () => void };
+	syncedEdits?: SyncedEdits;
 	/** Someone opened Sprig: sync the calendar accounts now (each at most every 30 seconds). */
 	syncNow?: () => Promise<void>;
 	/** A calendar link changed, so Claude can sort what is now unassigned. */

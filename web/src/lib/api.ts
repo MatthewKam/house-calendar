@@ -478,8 +478,9 @@ export const api = {
 		call<LeaveAlert>('POST', '/api/alerts', { eventId, minutesBefore }),
 	dismissAlert: (id: string) => call<void>('POST', `/api/alerts/${id}/dismiss`),
 	cancelAlert: (id: string) => call<void>('DELETE', `/api/alerts/${id}`),
-	removeEvent: (id: string, scope: 'one' | 'all' = 'one') =>
-		call<void>('DELETE', `/api/events/${id}${scope === 'all' ? '?scope=all' : ''}`),
+	/** `undo`: taking back an event just added, sent to iCloud or Google straight away. */
+	removeEvent: (id: string, scope: 'one' | 'all' = 'one', undo = false) =>
+		call<void>('DELETE', `/api/events/${id}${scope === 'all' ? '?scope=all' : undo ? '?undo=1' : ''}`),
 	restoreEvent: (id: string) => call<CalEvent>('POST', `/api/events/${id}/restore`),
 	outbox: () => call<OutboxStatus>('GET', '/api/outbox'),
 	resolveConflict: (id: number, keep: 'mine' | 'theirs') =>

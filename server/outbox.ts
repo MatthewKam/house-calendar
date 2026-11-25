@@ -77,8 +77,8 @@ const find = (db: DB, calendarId: string, remoteId: string) =>
 		OutboxRow | undefined;
 
 /**
- * Adds a new event to an iCloud or Google calendar: shown on the wall at once, made there after the
- * Undo window. Its id is the one the sync will give it, so it stays the same event after that: iCloud's
+ * Adds a new event to an iCloud or Google calendar: shown on the wall at once and sent straight away
+ * (Undo deletes it there, also straight away). Its id is the one the sync will give it, so it stays the same event after that: iCloud's
  * is its resource's URL; Google's an id Sprig picks (letters a–v and digits, which a UUID's hex is).
  */
 export function queueCreate(db: DB, calendar: { id: string; remote_id: string }, details: Details, now = new Date()) {
@@ -92,7 +92,7 @@ export function queueCreate(db: DB, calendar: { id: string; remote_id: string },
 	db.transaction(() => {
 		db.prepare(
 			`INSERT INTO event_outbox (calendar_id, remote_id, op, changes, before, send_after) VALUES (?, ?, 'create', ?, 'null', ?)`,
-		).run(calendar.id, href, JSON.stringify(details), new Date(now.getTime() + SEND_AFTER_MS).toISOString());
+		).run(calendar.id, href, JSON.stringify(details), now.toISOString());
 		overlayOutbox(db);
 	})();
 	return eventId(calendar.id, href);
@@ -108,9 +108,11 @@ export function queueEdit(
 	op: 'update' | 'delete',
 	changes: Partial<Details>,
 	now = new Date(),
+	/** How long Undo has; 0 sends it straight away (undoing a new event). */
+	waitMs = SEND_AFTER_MS,
 ) {
 	if (!row.remote_id) throw new Error('Not a synced event');
-	const sendAfter = new Date(now.getTime() + SEND_AFTER_MS).toISOString();
+	const sendAfter = new Date(now.getTime() + waitMs).toISOString();
 	db.transaction(() => {
 		const old = find(db, row.calendar_id, row.remote_id!);
 		const merged = { ...(old ? JSON.parse(old.changes) : {}), ...changes };
@@ -340,6 +342,10 @@ export async function pushOutbox(db: DB, to: EventStore | CalendarWriter, now = 
 		)
 		.all(now.toISOString(), source ?? null, source ?? null) as (OutboxRow & { calendar_remote: string })[];
 	const done = db.prepare('DELETE FROM event_outbox WHERE id = ?');
+	// A new event is sent straight away, so it can be undone or changed while it's on its way: then the
+	// row has changed and stays, as a delete (or the change) of the event that's there now.
+	const created = db.prepare(`DELETE FROM event_outbox WHERE id = ? AND op = 'create' AND changes = ?`);
+	const nowThere = db.prepare(`UPDATE event_outbox SET op = 'update', before = ? WHERE id = ? AND op = 'create'`);
 	const result = { sent: 0, conflicts: 0, failed: 0 };
 	for (const r of rows) {
 		const cal = r.calendar_remote;
@@ -379,7 +385,8 @@ export async function pushOutbox(db: DB, to: EventStore | CalendarWriter, now = 
 				}
 			}
 			if (outcome === 'sent') {
-				done.run(r.id);
+				if (r.op !== 'create') done.run(r.id);
+				else if (!created.run(r.id, r.changes).changes) nowThere.run(r.changes, r.id);
 				result.sent++;
 			} else if (outcome === 'conflict') {
 				result.conflicts++;

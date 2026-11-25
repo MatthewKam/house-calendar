@@ -118,6 +118,11 @@ const households = householdRegistry((h) => {
 				icloud?.soon();
 				google?.soon();
 			},
+			now: () => {
+				if (sync?.canWrite) sync.sendNow();
+				icloud?.sendNow();
+				google?.sendNow();
+			},
 		},
 		remindersToken: legacy ? env.REMINDERS_TOKEN || undefined : undefined,
 		onRemindersChanged: () => reminders?.soon(),

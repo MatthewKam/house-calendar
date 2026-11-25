@@ -273,6 +273,8 @@ export function createSync(
 		},
 		/** Whether edits made on the wall can be sent to this calendar service. */
 		canWrite: !!writer,
+		/** Sends what's waiting now (a new event, or undoing one), then syncs. */
+		sendNow: () => void run(),
 		/** Sends a new wall edit (and syncs) once its Undo window has passed. */
 		soon() {
 			clearTimeout(soonTimer);
