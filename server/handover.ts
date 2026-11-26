@@ -105,6 +105,22 @@ export function matchSeries(db: DB, from: string, to: string): [string, string][
 /** Moves what Sprig keeps about each matched event, and the calendar's own settings, from one copy to the other. */
 export function moveEventThings(db: DB, from: string, to: string) {
 	const pairs = matchSeries(db, from, to);
+	db.transaction(() => {
+		moveSeries(db, from, to, pairs);
+		// The calendar's own settings: hidden or not, who sees it, whose it is.
+		db.prepare(
+			`UPDATE calendars SET hidden = f.hidden, visibility = f.visibility, member_id = COALESCE(f.member_id, calendars.member_id)
+         FROM (SELECT hidden, visibility, member_id FROM calendars WHERE id = ?) f WHERE calendars.id = ?`,
+		).run(from, to);
+	})();
+	return pairs.length;
+}
+
+/**
+ * Moves what Sprig keeps about events (who they're for, who sees them, special, flyer, what to bring,
+ * day notes and reminders) from series a in calendar `from` to series b in `to`, for each [a, b].
+ */
+export function moveSeries(db: DB, from: string, to: string, pairs: [string, string][]) {
 	const per = (table: string, col: string) =>
 		db.prepare(
 			`UPDATE OR IGNORE ${table} SET calendar_id = @to, ${col} = @b WHERE calendar_id = @from AND ${col} = @a`,
@@ -125,22 +141,14 @@ export function moveEventThings(db: DB, from: string, to: string) {
 		'UPDATE day_list SET key = @n WHERE key = @o AND NOT EXISTS (SELECT 1 FROM day_list WHERE key = @n)',
 	);
 	const reminders = db.prepare('UPDATE special_reminders SET key = @n WHERE key = @o');
-	db.transaction(() => {
-		for (const [a, b] of pairs) {
-			for (const t of tables) t.run({ from, to, a, b });
-			checklist.run({ from, to, a, b });
-			const keys = { o: `series:${from}:${a}`, n: `series:${to}:${b}` };
-			notes.run(keys);
-			list.run(keys);
-			reminders.run(keys);
-		}
-		// The calendar's own settings: hidden or not, who sees it, whose it is.
-		db.prepare(
-			`UPDATE calendars SET hidden = f.hidden, visibility = f.visibility, member_id = COALESCE(f.member_id, calendars.member_id)
-         FROM (SELECT hidden, visibility, member_id FROM calendars WHERE id = ?) f WHERE calendars.id = ?`,
-		).run(from, to);
-	})();
-	return pairs.length;
+	for (const [a, b] of pairs) {
+		for (const t of tables) t.run({ from, to, a, b });
+		checklist.run({ from, to, a, b });
+		const keys = { o: `series:${from}:${a}`, n: `series:${to}:${b}` };
+		notes.run(keys);
+		list.run(keys);
+		reminders.run(keys);
+	}
 }
 
 /**

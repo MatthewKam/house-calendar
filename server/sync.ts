@@ -77,10 +77,14 @@ export async function syncOnce(db: DB, source: CalendarSource, now = new Date())
 			for (const ev of list) insertEvent.run(toRow(row.id, ev));
 			events += list.length;
 		}
-		// Calendars deleted (or unshared) in the account go away here, taking their events with them.
-		db.prepare(`DELETE FROM calendars WHERE source = ? AND id NOT IN (SELECT value FROM json_each(?))`).run(
-			key,
-			JSON.stringify(keep),
+		// Calendars deleted (or unshared) in the account go away here, taking their events and waiting edits with them.
+		const gone = { key, keep: JSON.stringify(keep) };
+		db.prepare(
+			`DELETE FROM event_outbox WHERE calendar_id IN
+      (SELECT id FROM calendars WHERE source = @key AND id NOT IN (SELECT value FROM json_each(@keep)))`,
+		).run(gone);
+		db.prepare(`DELETE FROM calendars WHERE source = @key AND id NOT IN (SELECT value FROM json_each(@keep))`).run(
+			gone,
 		);
 		applyPeople(db);
 		// Edits made on the wall that iCloud doesn't have yet stay on screen.

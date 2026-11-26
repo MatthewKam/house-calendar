@@ -172,6 +172,8 @@ function validateTimes(ev: Pick<EventFields, 'allDay' | 'start' | 'end'>): strin
 // Synced events can be changed here only when the calendar service takes edits (iCloud and Google do).
 const READ_ONLY = 'This event comes from iCloud. Change it on your iPhone or Mac.';
 const GOOGLE_READ_ONLY = 'This event comes from Google Calendar. Change it there.';
+const PHONE_READ_ONLY =
+	"This event comes from a phone that can't take changes from Sprig yet. Change it on that phone.";
 
 /**
  * Event routes. `syncedEdits` is present when changes to synced events can be sent to iCloud (soon()
@@ -290,6 +292,11 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: Synce
 	/** A Google calendar Sprig can't change (shared read-only, or connected before it could): changed in Google. */
 	const googleReadOnly = (calendarId: string) =>
 		!!db.prepare(`SELECT 1 FROM calendars WHERE id = ? AND provider = 'google' AND writable = 0`).get(calendarId);
+	/** Why a calendar that can't take changes can't: a phone's (an older build), or iCloud's. */
+	const readOnlyWhy = (calendarId: string) =>
+		db.prepare(`SELECT 1 FROM calendars WHERE id = ? AND provider = 'phone'`).get(calendarId)
+			? PHONE_READ_ONLY
+			: READ_ONLY;
 	const writable = (calendarId: string) =>
 		!!syncedEdits && !!db.prepare('SELECT 1 FROM calendars WHERE id = ? AND writable = 1').get(calendarId);
 	type Details = { title: string; allDay: boolean; start: string; end: string; location?: string | null };
@@ -328,6 +335,13 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: Synce
 			const next = details(ev);
 			// Notes are the opened event's own (not its copies'): changed only when they're being set.
 			const notesChange = req.body.notes === undefined ? {} : { notes: ev.notes ?? null };
+			// A calendar that can't take changes (a phone on an older build, a shared one): only who it's for and the flyer.
+			if (
+				row.calendar_id !== 'local' &&
+				!writable(row.calendar_id) &&
+				Object.keys(diff({ ...rowDetails(row), notes: row.notes }, { ...next, ...notesChange })).length
+			)
+				return reply.code(409).send({ error: readOnlyWhy(row.calendar_id) });
 			if (row.calendar_id !== 'local' && req.body.scope === 'all' && row.remote_id?.includes('#')) {
 				// Every day of a repeating event: a new title or address, and the same move for every day.
 				const was = rowDetails(row);
@@ -401,6 +415,7 @@ export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: Synce
 			if (row.calendar_id !== 'local') {
 				if (googleReadOnly(row.calendar_id)) return reply.code(409).send({ error: GOOGLE_READ_ONLY });
 				if (!syncedEdits) return reply.code(409).send({ error: READ_ONLY });
+				if (!writable(row.calendar_id)) return reply.code(409).send({ error: readOnlyWhy(row.calendar_id) });
 				// Hidden here now; deleted in iCloud after the Undo window.
 				if (req.query.scope === 'all' && row.remote_id?.includes('#')) {
 					queueSeries(db, row, 'delete', {});

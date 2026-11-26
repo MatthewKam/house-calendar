@@ -115,6 +115,11 @@ export const PhoneCalendar = z.strictObject({
 	account: z.string().max(200),
 	/** The phone's default calendar for new events: it's linked to the person, as an iCloud account's main one is. */
 	primary: z.boolean(),
+	/**
+	 * The phone saves changes made in Sprig to it (EventKit; newer app builds). Left out: read-only, changed on
+	 * the phone only.
+	 */
+	writable: z.boolean().optional(),
 });
 /** A phone's calendars and their events (PUT /api/phone-calendars/:phone): the whole window, every time. */
 export const PhoneSync = z.strictObject({
@@ -122,6 +127,47 @@ export const PhoneSync = z.strictObject({
 	name: z.string().min(1).max(100),
 	calendars: z.array(PhoneCalendar).max(100),
 	events: z.array(PhoneEvent).max(20_000),
+});
+/**
+ * A change made in Sprig for the phone to save with EventKit, handed back when it sends its calendars. The
+ * server has already checked it against what the phone sent: the details it changes weren't changed there.
+ */
+export interface PhoneEdit {
+	id: number;
+	/** create: a new event in calendarId. update or delete: eventId (one day), or with series, every day. */
+	op: 'create' | 'update' | 'delete';
+	/** The phone's calendar (PhoneCalendar.id). */
+	calendarId: string;
+	/** One day: the phone's id for it (PhoneEvent.id). series: the event's own id (before "#"). create: null. */
+	eventId: string | null;
+	series: boolean;
+	/**
+	 * create: every detail (title, allDay, start, end, location, notes). update: only those changed. series:
+	 * title, location, shiftMs (move every day's start by this much) and durationMs (make every day this long).
+	 * Timed starts and ends are instants; all-day ones YYYY-MM-DD, the end the day after the last.
+	 */
+	changes: Record<string, unknown>;
+	/**
+	 * Sent back with the result as it came. The phone keeps what it saved (id and version) until the result is
+	 * taken, so an edit handed out again (the result never arrived) isn't saved twice.
+	 */
+	version: string;
+}
+/** What the phone did with each edit (POST /api/phone-calendars/:phone/edits). */
+export const PhoneEditResults = z.strictObject({
+	results: z
+		.array(
+			z.strictObject({
+				id: z.int(),
+				version: z.string().max(20_000),
+				saved: z.boolean(),
+				/** A new event: the phone's id for it, as PhoneEvent.id would give it. */
+				eventId: z.string().min(1).max(400).optional(),
+				/** Why it couldn't be saved. */
+				error: z.string().max(500).optional(),
+			}),
+		)
+		.max(500),
 });
 /** A phone sending its calendars (GET /api/phone-calendars). */
 export const Phone = z.object({
@@ -142,4 +188,5 @@ export type Connections = z.infer<typeof Connections>;
 export type PhoneEvent = z.infer<typeof PhoneEvent>;
 export type PhoneCalendar = z.infer<typeof PhoneCalendar>;
 export type PhoneSync = z.infer<typeof PhoneSync>;
+export type PhoneEditResults = z.infer<typeof PhoneEditResults>;
 export type Phone = z.infer<typeof Phone>;

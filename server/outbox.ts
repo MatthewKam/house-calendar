@@ -14,10 +14,13 @@ import type { OutboxStatus } from '../shared/events.ts';
 export const eventId = (calendarId: string, remoteId: string) =>
 	createHash('sha256').update(`${calendarId}\n${remoteId}`).digest('hex').slice(0, 32);
 
+/** The start of a new phone event's stand-in id, until the phone has saved it under its own. */
+export const NEW_ON_PHONE = 'sprig-new:';
+
 /** Changes aren't sent until the 5-second Undo has passed (with a little to spare). */
 export const SEND_AFTER_MS = 7_000;
 
-interface OutboxRow {
+export interface OutboxRow {
 	id: number;
 	calendar_id: string;
 	remote_id: string;
@@ -44,7 +47,7 @@ interface SyncedRow {
 	notes?: string | null;
 }
 
-const detailsOf = (r: SyncedRow): Details => ({
+export const detailsOf = (r: SyncedRow): Details => ({
 	title: r.title,
 	allDay: r.all_day === 1,
 	start: r.start,
@@ -54,7 +57,7 @@ const detailsOf = (r: SyncedRow): Details => ({
 });
 
 /** Equal as the wall shows them: instants compared as times, so "…00Z" and "….000Z" match. */
-function same(key: keyof Details, a: Details, b: Details) {
+export function same(key: keyof Details, a: Details, b: Details) {
 	if ((key === 'start' || key === 'end') && !a.allDay && !b.allDay) return Date.parse(a[key]) === Date.parse(b[key]);
 	return (a[key] ?? null) === (b[key] ?? null);
 }
@@ -72,14 +75,41 @@ export function diff(from: Details, to: Details): Partial<Details> {
 	return out;
 }
 
+/** Whether the details an edit changes were changed in the calendar too since it was made (or it's gone there). */
+export function changedThere(r: OutboxRow, theirs: Details | null) {
+	const changes = JSON.parse(r.changes) as Partial<Details>;
+	const before = JSON.parse(r.before) as Details;
+	return !theirs || (Object.keys(changes) as (keyof Details)[]).some((k) => !same(k, theirs, before));
+}
+
+/** Whether a change to every day of a repeating event clashes with its title or address there now (or it's gone). */
+export function seriesClash(r: OutboxRow, theirs: { title: string; location: string | null } | null) {
+	const before = JSON.parse(r.before) as { title: string; location: string | null };
+	const changes = JSON.parse(r.changes) as Series;
+	return (
+		!theirs ||
+		(changes.title !== undefined && theirs.title !== before.title) ||
+		(changes.location !== undefined && (theirs.location ?? null) !== (before.location ?? null))
+	);
+}
+
+/** Holds an edit until someone picks which version to keep. `theirs`: how it is there now (null: gone). */
+export function markConflict(db: DB, id: number, theirs: unknown) {
+	db.prepare(`UPDATE event_outbox SET state = 'conflict', theirs = ?, error = NULL WHERE id = ?`).run(
+		theirs ? JSON.stringify(theirs) : null,
+		id,
+	);
+}
+
 const find = (db: DB, calendarId: string, remoteId: string) =>
 	db.prepare('SELECT * FROM event_outbox WHERE calendar_id = ? AND remote_id = ?').get(calendarId, remoteId) as
 		OutboxRow | undefined;
 
 /**
- * Adds a new event to an iCloud or Google calendar: shown on the wall at once and sent straight away
+ * Adds a new event to an iCloud, Google or phone calendar: shown on the wall at once and sent straight away
  * (Undo deletes it there, also straight away). Its id is the one the sync will give it, so it stays the same event after that: iCloud's
- * is its resource's URL; Google's an id Sprig picks (letters a–v and digits, which a UUID's hex is).
+ * is its resource's URL; Google's an id Sprig picks (letters a–v and digits, which a UUID's hex is). A phone
+ * picks its own when it saves it, so until then it has a stand-in (phoneOutbox.ts swaps it).
  */
 export function queueCreate(db: DB, calendar: { id: string; remote_id: string }, details: Details, now = new Date()) {
 	const provider = (
@@ -88,7 +118,9 @@ export function queueCreate(db: DB, calendar: { id: string; remote_id: string },
 	const href =
 		provider === 'google'
 			? randomUUID().replaceAll('-', '')
-			: new URL(`${randomUUID().toUpperCase()}.ics`, calendar.remote_id).href;
+			: provider === 'phone'
+				? `${NEW_ON_PHONE}${randomUUID()}`
+				: new URL(`${randomUUID().toUpperCase()}.ics`, calendar.remote_id).href;
 	db.transaction(() => {
 		db.prepare(
 			`INSERT INTO event_outbox (calendar_id, remote_id, op, changes, before, send_after) VALUES (?, ?, 'create', ?, 'null', ?)`,
@@ -134,7 +166,7 @@ export function queueEdit(
 
 /** Changes to every day of a repeating event are kept under the series' id (its resource URL). */
 type Series = SeriesChanges & { series: true };
-const isSeries = (r: OutboxRow) => (JSON.parse(r.changes) as { series?: boolean }).series === true;
+export const isSeries = (r: OutboxRow) => (JSON.parse(r.changes) as { series?: boolean }).series === true;
 
 /**
  * Saves a change to every day of a repeating event (or deleting all of it) and shows it at once.
@@ -370,17 +402,10 @@ export async function pushOutbox(db: DB, to: EventStore | CalendarWriter, now = 
 					else if (await store.remove(cal, r.remote_id, there.version)) outcome = 'sent';
 					continue;
 				}
-				const changes = JSON.parse(r.changes) as Partial<Details>;
-				const before = JSON.parse(r.before) as Details;
-				const changedThere =
-					!theirs || (Object.keys(changes) as (keyof Details)[]).some((k) => !same(k, theirs, before));
-				if (changedThere) {
-					db.prepare(`UPDATE event_outbox SET state = 'conflict', theirs = ?, error = NULL WHERE id = ?`).run(
-						theirs ? JSON.stringify(theirs) : null,
-						r.id,
-					);
+				if (changedThere(r, theirs)) {
+					markConflict(db, r.id, theirs);
 					outcome = 'conflict';
-				} else if (await store.update(cal, r.remote_id, there!.version, changes)) {
+				} else if (await store.update(cal, r.remote_id, there!.version, JSON.parse(r.changes) as Partial<Details>)) {
 					outcome = 'sent';
 				}
 			}
@@ -414,20 +439,11 @@ async function pushSeries(
 	const res = await store.readSeries(cal, r.remote_id);
 	if (r.op === 'delete') return !res || (await store.removeSeries(cal, r.remote_id, res.version)) ? 'sent' : 'retry';
 	const theirs = res?.details ?? null;
-	const before = JSON.parse(r.before) as { title: string; location: string | null };
-	const changes = JSON.parse(r.changes) as Series;
-	const clash =
-		!theirs ||
-		(changes.title !== undefined && theirs.title !== before.title) ||
-		(changes.location !== undefined && (theirs.location ?? null) !== (before.location ?? null));
-	if (clash) {
-		db.prepare(`UPDATE event_outbox SET state = 'conflict', theirs = ?, error = NULL WHERE id = ?`).run(
-			theirs ? JSON.stringify(theirs) : null,
-			r.id,
-		);
+	if (seriesClash(r, theirs)) {
+		markConflict(db, r.id, theirs);
 		return 'conflict';
 	}
-	const { series: _s, ...edit } = changes;
+	const { series: _s, ...edit } = JSON.parse(r.changes) as Series;
 	return (await store.updateSeries(cal, r.remote_id, res!.version, edit)) ? 'sent' : 'retry';
 }
 
@@ -441,8 +457,15 @@ export function outboxStatus(
 ): OutboxStatus {
 	const rows = db.prepare('SELECT * FROM event_outbox ORDER BY id').all() as OutboxRow[];
 	const pending = rows.filter((r) => r.state === 'pending');
+	const phones = db
+		.prepare(
+			`SELECT DISTINCT p.name FROM event_outbox o JOIN calendars c ON c.id = o.calendar_id
+    JOIN phones p ON c.source = 'phone:' || p.id WHERE o.state = 'pending' ORDER BY p.name`,
+		)
+		.all() as { name: string }[];
 	return {
 		pending: pending.length,
+		waitingOn: phones.map((p) => p.name),
 		// The newest problem sending, if edits are stuck (offline, or iCloud refusing).
 		lastError: pending.filter((r) => r.error).at(-1)?.error ?? null,
 		conflicts: rows
