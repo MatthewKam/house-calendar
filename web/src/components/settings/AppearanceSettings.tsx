@@ -3,7 +3,7 @@ import { ACCENTS, accentOf, useAccentSetting } from '../../lib/accent';
 import { useAuthStatus, useSetSetting, useSettings } from '../../lib/queries';
 import { useTempUnit } from '../../lib/units';
 import { useThemeSetting, type Theme } from '../../lib/useTheme';
-import { useUiScale } from '../../lib/useUiScale';
+import { UI_SCALES, useUiScale } from '../../lib/useUiScale';
 import { Section } from './parts';
 import s from './styles/Settings.module.css';
 import { Segmented } from '../ui/Segmented';
@@ -26,7 +26,7 @@ export default function AppearanceSettings() {
 	const [theme, setTheme] = useThemeSetting();
 	const [accent, setAccent] = useAccentSetting();
 	const [unit, setUnit] = useTempUnit();
-	const [uiScale, setUiScale] = useUiScale(settings?.uiScale);
+	const [uiScale, setUiScale] = useUiScale();
 	const wall = auth?.signedIn && auth.role === 'wall' ? auth : null;
 	const holder = !!auth?.signedIn && auth.holder && auth.role === 'guardian';
 
@@ -72,6 +72,7 @@ export default function AppearanceSettings() {
 				<Segmented
 					label="Light or dark"
 					value={theme}
+					className={s.lightOrDark}
 					onChange={setTheme}
 					options={THEMES.map(([id, label]) => ({ id, label }))}
 				/>
@@ -91,19 +92,13 @@ export default function AppearanceSettings() {
 				<p className={s.themeNote}>The weather on this device. Wind goes with it: mph with °F, km/h with °C.</p>
 			</Section>
 
-			<Section title="Text size" note={`${Math.round(uiScale * 100)}%`}>
-				<label className={s.scale}>
-					<input
-						type="range"
-						min={0.8}
-						max={1.6}
-						step={0.05}
-						value={uiScale}
-						aria-label="Text size"
-						onChange={(e) => setUiScale(Number(e.target.value))}
-					/>
-					<span>{Math.round(uiScale * 100)}%</span>
-				</label>
+			<Section title="Text size" note={UI_SCALES.find((z) => Number(z.id) === uiScale)!.label}>
+				<Segmented
+					label="Text size"
+					value={String(uiScale)}
+					onChange={(id) => setUiScale(Number(id))}
+					options={[...UI_SCALES]}
+				/>
 			</Section>
 		</>
 	);

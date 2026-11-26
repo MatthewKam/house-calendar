@@ -7,6 +7,7 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 import { Button } from '../ui/Button';
 import s from '../account/styles/Account.module.css';
 import panel from './styles/Settings.module.css';
+import { Section } from './parts';
 
 /** "iCloud Keychain · iPhone · Safari": who keeps it and where it was saved. */
 const named = (p: Passkey) => [p.provider, p.device].filter(Boolean).join(' · ') || 'Passkey';
@@ -44,40 +45,45 @@ export default function Passkeys() {
 	if (!works || !list.isSuccess) return null;
 	return (
 		<>
-			<h3 className={s.subhead}>Passkeys</h3>
-			<p className={s.hint}>Sign in with Face ID, Touch ID or your screen lock instead of an emailed code.</p>
-			{list.data.length > 0 && (
-				<ul className={panel.devices}>
-					{list.data.map((p) => (
-						<li key={p.id}>
-							<span>{named(p)}</span>
-							<span className={panel.deviceSeen}>{p.lastUsed ? `used ${ago(p.lastUsed)}` : 'not used yet'}</span>
-							<Button variant="link" size="sm" onClick={() => setRemoving(p)}>
-								Remove
-							</Button>
-						</li>
-					))}
-				</ul>
-			)}
-			<Button
-				size="sm"
-				style={{ alignSelf: 'flex-start' }}
-				disabled={!save}
-				onClick={() => {
-					if (!save) return;
-					setError(null);
-					setSave(null);
-					save()
-						.then(
-							() => qc.invalidateQueries({ queryKey: ['passkeys'] }),
-							(e: Error) => !notChosen(e) && setError(e.message),
-						)
-						.finally(() => setReady((n) => n + 1));
-				}}
+			<Section
+				title="Passkeys"
+				note={!list.data.length ? 'None yet' : list.data.length === 1 ? '1 passkey' : `${list.data.length} passkeys`}
+				folded
 			>
-				Save a passkey on this device
-			</Button>
-			{error && <p className={s.error}>{error}</p>}
+				<p className={s.hint}>Sign in with Face ID, Touch ID or your screen lock instead of an emailed code.</p>
+				{list.data.length > 0 && (
+					<ul className={panel.devices}>
+						{list.data.map((p) => (
+							<li key={p.id}>
+								<span>{named(p)}</span>
+								<span className={panel.deviceSeen}>{p.lastUsed ? `used ${ago(p.lastUsed)}` : 'not used yet'}</span>
+								<Button variant="link" size="sm" onClick={() => setRemoving(p)}>
+									Remove
+								</Button>
+							</li>
+						))}
+					</ul>
+				)}
+				<Button
+					size="sm"
+					style={{ alignSelf: 'flex-start', backgroundColor: 'var(--surface)' }}
+					disabled={!save}
+					onClick={() => {
+						if (!save) return;
+						setError(null);
+						setSave(null);
+						save()
+							.then(
+								() => qc.invalidateQueries({ queryKey: ['passkeys'] }),
+								(e: Error) => !notChosen(e) && setError(e.message),
+							)
+							.finally(() => setReady((n) => n + 1));
+					}}
+				>
+					Save a passkey on this device
+				</Button>
+				{error && <p className={s.error}>{error}</p>}
+			</Section>
 			{removing && (
 				<ConfirmDialog
 					title={`Remove ${named(removing)}?`}

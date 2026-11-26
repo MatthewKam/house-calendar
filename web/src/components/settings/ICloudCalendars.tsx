@@ -88,7 +88,7 @@ export default function ICloudCalendars({
 			{!canConnect ? (
 				<p className={s.hint}>A guardian connects iCloud Calendar from Settings on their phone.</p>
 			) : !open ? (
-				<Button variant="primary" style={{ alignSelf: 'flex-start' }} onClick={() => setOpen(true)}>
+				<Button variant={mine ? 'quiet' : 'primary'} style={{ alignSelf: 'flex-start' }} onClick={() => setOpen(true)}>
 					{mine ? 'Connect another iCloud account' : 'Connect my iCloud Calendar'}
 				</Button>
 			) : (

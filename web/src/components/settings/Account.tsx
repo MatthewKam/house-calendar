@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { api, type AuthStatus, type SignedIn } from '../../lib/api';
 import { startOver } from '../../lib/queries';
 import Avatar from './Avatar';
+import { Section } from './parts';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import s from '../account/styles/Account.module.css';
 import { Button } from '../ui/Button';
@@ -37,8 +38,8 @@ export function SignedInAs({ status, onClose }: { status: SignedIn; onClose: () 
 					{status.me?.name ?? 'The wall'}
 					{status.household && ` · ${status.household.name}`}
 				</strong>
-				{email && <span className={s.how}>{email}</span>}
-				<span className={s.how}>
+				{email && <span className={s.email}>{email}</span>}
+				<span className={`${s.how} ${s.log}`}>
 					{status.kind === 'user' ? 'Signed in' : 'Added'} on this device {when(status.signedInAt)}
 				</span>
 			</span>
@@ -71,7 +72,7 @@ export function SignOut({ status, onClose }: { status: SignedIn; onClose: () => 
 	}
 	return (
 		<>
-			<Button variant="danger" onClick={() => setAsking(true)}>
+			<Button variant="danger" onClick={() => setAsking(true)} className={s.signOut}>
 				Sign out
 			</Button>
 			{asking && (
@@ -109,11 +110,12 @@ export function DeleteAccount({ onClose }: { onClose: () => void }) {
 	const left = plan?.filter((p) => !p.deleted).map((p) => p.household) ?? [];
 	return (
 		<>
-			<h3 className={s.subhead}>Your account</h3>
-			<Button variant="danger" size="sm" className={s.deleteAccount} onClick={ask}>
-				Delete my account
-			</Button>
-			{error && <p className={s.error}>{error}</p>}
+			<Section title="Your account" folded>
+				<Button variant="danger" size="sm" className={s.deleteAccount} onClick={ask}>
+					Delete my account
+				</Button>
+				{error && <p className={s.error}>{error}</p>}
+			</Section>
 			{plan && (
 				<ConfirmDialog
 					title="Delete your account?"

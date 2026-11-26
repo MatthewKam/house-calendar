@@ -5,7 +5,7 @@ import { useAuthStatus } from '../../lib/queries';
 import { ago } from '../../lib/dates';
 import { joinLink } from '../../lib/joinCode';
 import { useFaceIdPin } from '../../lib/useFaceIdPin';
-import { SwitchRow } from './parts';
+import { Section, SwitchRow } from './parts';
 import { Loading, Skeleton, SkeletonLines } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import s from '../account/styles/Account.module.css';
@@ -84,203 +84,32 @@ export default function HouseholdAccess() {
 	if (!me) return null;
 	if (householdQuery.isError) {
 		return (
-			<Problem message={loadProblem('users', householdQuery.error)} onRetry={() => void householdQuery.refetch()} />
+			<div className={panel.foldBody}>
+				<Problem message={loadProblem('users', householdQuery.error)} onRetry={() => void householdQuery.refetch()} />
+			</div>
 		);
 	}
 	// Loading who's in the household: rows in their shape.
 	if (!data) {
 		return (
-			<Loading label="Loading users">
-				<SkeletonLines count={2} />
-				<Skeleton height="2.6rem" />
-				<Skeleton height="2.6rem" />
-			</Loading>
+			<div className={panel.foldBody}>
+				<Loading label="Loading users">
+					<SkeletonLines count={2} />
+					<Skeleton height="2.6rem" />
+					<Skeleton height="2.6rem" />
+				</Loading>
+			</div>
 		);
 	}
-	return (
-		<section className={panel.bare}>
-			{issued && <Issued {...issued} onClose={() => setIssued(null)} />}
-			{invite.isError && <p className={s.error}>{invite.error.message}</p>}
-
-			<h3 className={s.subhead}>People</h3>
-			<ul className={s.people}>
-				{data.people.map((p) => (
-					<li key={p.memberId} className={s.person}>
-						<span className={s.dot} style={{ background: p.color }} />
-						<span className={s.who}>
-							<span>
-								{p.name}
-								{p.memberId === me.memberId && <strong> (you)</strong>}
-							</span>
-							<span className={s.how}>
-								{p.role
-									? `${p.holder ? 'Account holder' : p.coHolder ? 'Co-holder' : ROLE[p.role]} · ${p.account ? `signs in with ${signsInWith(p.email)}` : 'signs in on devices added by code'}${p.role === 'guardian' && !p.hasPin ? ' · no PIN yet' : ''}`
-									: "Doesn't sign in"}
-							</span>
-						</span>
-						<span className={s.actions}>
-							{p.role !== 'guardian' && !p.account && (
-								<Button
-									variant="link"
-									size="sm"
-
-									onClick={() => invite.mutate({ kind: 'kid', memberId: p.memberId, what: `${p.name}'s device` })}
-								>
-									Add a device
-								</Button>
-							)}
-							{!p.account && (
-								<Button
-									variant="link"
-									size="sm"
-
-									onClick={() =>
-										invite.mutate({ kind: 'guardian', memberId: p.memberId, what: `${p.name} (guardian)` })
-									}
-								>
-									Invite as guardian
-								</Button>
-							)}
-							{me.holder && p.role === 'kid' && p.account && p.membershipId && (
-								<Button
-									variant="link"
-									size="sm"
-
-									onClick={() =>
-										setChanging({
-											id: p.membershipId!,
-											change: { role: 'guardian' },
-											title: `Make ${p.name} a guardian?`,
-											label: 'Make guardian',
-											body: "They'll manage the family like you do, and set a PIN of their own for the wall and kids' devices.",
-										})
-									}
-								>
-									Make guardian
-								</Button>
-							)}
-							{me.holder && p.role === 'guardian' && !p.holder && p.memberId !== me.memberId && p.membershipId && (
-								<Button
-									variant="link"
-									size="sm"
-
-									onClick={() =>
-										setChanging(
-											p.coHolder
-												? {
-														id: p.membershipId!,
-														change: { coHolder: false },
-														title: `Stop sharing the account with ${p.name}?`,
-														label: 'Stop sharing',
-														body: "They stay a guardian, but new colors and other guardians' PINs go back to the account holder.",
-													}
-												: {
-														id: p.membershipId!,
-														change: { coHolder: true },
-														title: `Make ${p.name} a co-holder?`,
-														label: 'Make co-holder',
-														body: "They'll do everything the account holder does: OK new colors, reset guardians' PINs, and keep the household if the holder deletes their account. The wall keeps the holder's accent color.",
-													},
-										)
-									}
-								>
-									{p.coHolder ? 'Stop co-holder' : 'Make co-holder'}
-								</Button>
-							)}
-							{me.holder && p.role === 'guardian' && p.hasPin && p.memberId !== me.memberId && p.membershipId && (
-								<Button
-									variant="link"
-									size="sm"
-
-									onClick={() => setClearing({ id: p.membershipId!, name: p.name })}
-								>
-									Reset PIN
-								</Button>
-							)}
-							{me.holder && p.role === 'guardian' && !p.holder && p.membershipId && (
-								<Button
-									variant="link"
-									size="sm"
-
-									onClick={() => setHanding({ id: p.membershipId!, name: p.name })}
-								>
-									Make account holder
-								</Button>
-							)}
-							{p.membershipId && p.memberId !== me.memberId && (
-								<Button
-									variant="link"
-									size="sm"
-
-									onClick={() => setRemoving({ id: p.membershipId!, name: p.name })}
-								>
-									Remove sign-in
-								</Button>
-							)}
-						</span>
-						{/* Your own PIN, under your name. */}
-						{p.memberId === me.memberId && me.role === 'guardian' && me.kind === 'user' && (
-							<div className={panel.myPin}>
-								<MyPin hasPin={me.hasPin} onSaved={(st) => qc.setQueryData(['auth'], st)} />
-							</div>
-						)}
-					</li>
-				))}
-			</ul>
-			<p className={s.hint}>
-				A code is for joining once. After that, anyone with their own account just signs in on each new phone or tablet,
-				no code needed. Younger kids' devices each get a code. The account holder and co-holders OK new colors for
-				people, and the wall wears the account holder's accent color.
-			</p>
-			{remove.isError && <p className={s.error}>{remove.error.message}</p>}
-			{handOver.isError && <p className={s.error}>{handOver.error.message}</p>}
-			{change.isError && <p className={s.error}>{change.error.message}</p>}
-			{clearPin.isError && <p className={s.error}>{clearPin.error.message}</p>}
-
-			<form className={s.row} onSubmit={inviteNew}>
-				<Input
-					value={newName}
-					onChange={(e) => setNewName(e.target.value)}
-					placeholder="Someone new"
-					aria-label="Name"
-					maxLength={40}
-				/>
-				<Select
-					value={newKind}
-					onChange={(e) => setNewKind(e.target.value as Kind)}
-					aria-label="As"
-					style={{ flex: 'none' }}
-				>
-					<option value="guardian">Guardian</option>
-					<option value="kid">Kid</option>
-				</Select>
-				<Button variant="primary" type="submit" disabled={!newName.trim() || invite.isPending}>
-					Invite
-				</Button>
-			</form>
-
-			<h3 className={s.subhead}>The wall</h3>
-			<p className={s.hint}>
-				Get a code, then type it on the wall's screen. The wall asks for a guardian's PIN to open, and again to change
-				things.
-			</p>
-			<Button
-				variant="link"
-				size="sm"
-
-				style={{ alignSelf: 'flex-start' }}
-				disabled={me.guardianPins === 0}
-				onClick={() => invite.mutate({ kind: 'wall', what: 'the wall' })}
-			>
-				Add a wall display
-			</Button>
-			{me.guardianPins === 0 && <p className={s.hint}>A guardian sets their PIN first.</p>}
-
-			{data.invites.length > 0 && (
+	// Codes not used yet: someone's under People, the wall's under The wall.
+	const codes = (wall: boolean) => {
+		const waiting = data.invites.filter((i) => (i.kind === 'wall') === wall);
+		return (
+			waiting.length > 0 && (
 				<>
 					<h3 className={s.subhead}>Codes not used yet</h3>
 					<ul className={panel.devices}>
-						{data.invites.map((i) => (
+						{waiting.map((i) => (
 							<li key={i.id}>
 								<span>{i.kind === 'wall' ? 'The wall' : `${i.for ?? 'Someone'} (${i.kind})`}</span>
 								<span className={panel.deviceSeen}>
@@ -294,31 +123,220 @@ export default function HouseholdAccess() {
 						))}
 					</ul>
 				</>
-			)}
+			)
+		);
+	};
+	const walls = data.devices.filter((d) => d.kind === 'wall').length;
+	const count = (n: number, one: string, many: string) => (n === 1 ? `1 ${one}` : `${n} ${many}`);
+	return (
+		<>
+			{issued && <Issued {...issued} onClose={() => setIssued(null)} />}
+			{invite.isError && <p className={s.error}>{invite.error.message}</p>}
 
-			<h3 className={s.subhead}>Signed-in devices</h3>
-			<ul className={panel.devices}>
-				{data.devices.map((d) => (
-					<li key={d.id}>
-						<span>
-							{d.who ?? 'Someone'}
-							{DEVICE[d.kind]} · {d.label}
-							{d.thisDevice && <strong> (this one)</strong>}
-						</span>
-						<span className={panel.deviceSeen}>{ago(d.lastSeen)}</span>
-						{d.locked && (
-							<Button variant="link" size="sm" onClick={() => unlockDevice.mutate(d.id)}>
-								Unlock (too many wrong PINs)
-							</Button>
-						)}
-						{!d.thisDevice && (
-							<Button variant="link" size="sm" onClick={() => signOut.mutate(d.id)}>
-								Sign out
-							</Button>
-						)}
-					</li>
-				))}
-			</ul>
+			<Section title="People" note={count(data.people.length, 'person', 'people')} folded>
+				<ul className={s.people}>
+					{data.people.map((p) => (
+						<li key={p.memberId} className={s.person}>
+							<span className={s.dot} style={{ background: p.color }} />
+							<span className={s.who}>
+								<span>
+									{p.name}
+									{p.memberId === me.memberId && <strong> (you)</strong>}
+								</span>
+								<span className={s.how}>
+									{p.role
+										? `${p.holder ? 'Account holder' : p.coHolder ? 'Co-holder' : ROLE[p.role]} · ${p.account ? `signs in with ${signsInWith(p.email)}` : 'signs in on devices added by code'}${p.role === 'guardian' && !p.hasPin ? ' · no PIN yet' : ''}`
+										: "Doesn't sign in"}
+								</span>
+							</span>
+							<span className={s.actions}>
+								{p.role !== 'guardian' && !p.account && (
+									<Button
+										variant="link"
+										size="sm"
+
+										onClick={() => invite.mutate({ kind: 'kid', memberId: p.memberId, what: `${p.name}'s device` })}
+									>
+										Add a device
+									</Button>
+								)}
+								{!p.account && (
+									<Button
+										variant="link"
+										size="sm"
+
+										onClick={() =>
+											invite.mutate({ kind: 'guardian', memberId: p.memberId, what: `${p.name} (guardian)` })
+										}
+									>
+										Invite as guardian
+									</Button>
+								)}
+								{me.holder && p.role === 'kid' && p.account && p.membershipId && (
+									<Button
+										variant="link"
+										size="sm"
+
+										onClick={() =>
+											setChanging({
+												id: p.membershipId!,
+												change: { role: 'guardian' },
+												title: `Make ${p.name} a guardian?`,
+												label: 'Make guardian',
+												body: "They'll manage the family like you do, and set a PIN of their own for the wall and kids' devices.",
+											})
+										}
+									>
+										Make guardian
+									</Button>
+								)}
+								{me.holder && p.role === 'guardian' && !p.holder && p.memberId !== me.memberId && p.membershipId && (
+									<Button
+										variant="link"
+										size="sm"
+
+										onClick={() =>
+											setChanging(
+												p.coHolder
+													? {
+															id: p.membershipId!,
+															change: { coHolder: false },
+															title: `Stop sharing the account with ${p.name}?`,
+															label: 'Stop sharing',
+															body: "They stay a guardian, but new colors and other guardians' PINs go back to the account holder.",
+														}
+													: {
+															id: p.membershipId!,
+															change: { coHolder: true },
+															title: `Make ${p.name} a co-holder?`,
+															label: 'Make co-holder',
+															body: "They'll do everything the account holder does: OK new colors, reset guardians' PINs, and keep the household if the holder deletes their account. The wall keeps the holder's accent color.",
+														},
+											)
+										}
+									>
+										{p.coHolder ? 'Stop co-holder' : 'Make co-holder'}
+									</Button>
+								)}
+								{me.holder && p.role === 'guardian' && p.hasPin && p.memberId !== me.memberId && p.membershipId && (
+									<Button
+										variant="link"
+										size="sm"
+
+										onClick={() => setClearing({ id: p.membershipId!, name: p.name })}
+									>
+										Reset PIN
+									</Button>
+								)}
+								{me.holder && p.role === 'guardian' && !p.holder && p.membershipId && (
+									<Button
+										variant="link"
+										size="sm"
+
+										onClick={() => setHanding({ id: p.membershipId!, name: p.name })}
+									>
+										Make account holder
+									</Button>
+								)}
+								{p.membershipId && p.memberId !== me.memberId && (
+									<Button
+										variant="link"
+										size="sm"
+
+										onClick={() => setRemoving({ id: p.membershipId!, name: p.name })}
+									>
+										Remove sign-in
+									</Button>
+								)}
+							</span>
+							{/* Your own PIN, under your name. */}
+							{p.memberId === me.memberId && me.role === 'guardian' && me.kind === 'user' && (
+								<div className={panel.myPin}>
+									<MyPin hasPin={me.hasPin} onSaved={(st) => qc.setQueryData(['auth'], st)} />
+								</div>
+							)}
+						</li>
+					))}
+				</ul>
+				<p className={s.hint}>
+					A code is for joining once. After that, anyone with their own account just signs in on each new phone or
+					tablet, no code needed. Younger kids' devices each get a code. The account holder and co-holders OK new colors
+					for people, and the wall wears the account holder's accent color.
+				</p>
+				{remove.isError && <p className={s.error}>{remove.error.message}</p>}
+				{handOver.isError && <p className={s.error}>{handOver.error.message}</p>}
+				{change.isError && <p className={s.error}>{change.error.message}</p>}
+				{clearPin.isError && <p className={s.error}>{clearPin.error.message}</p>}
+
+				<form className={s.row} onSubmit={inviteNew}>
+					<Input
+						value={newName}
+						onChange={(e) => setNewName(e.target.value)}
+						placeholder="Someone new"
+						aria-label="Name"
+						maxLength={40}
+					/>
+					<Select
+						value={newKind}
+						onChange={(e) => setNewKind(e.target.value as Kind)}
+						aria-label="As"
+						style={{ flex: 'none' }}
+					>
+						<option value="guardian">Guardian</option>
+						<option value="kid">Kid</option>
+					</Select>
+					<Button variant="primary" type="submit" disabled={!newName.trim() || invite.isPending}>
+						Invite
+					</Button>
+				</form>
+
+				{codes(false)}
+			</Section>
+
+			<Section title="The wall" note={walls ? count(walls, 'wall', 'walls') : 'None yet'} folded>
+				<p className={s.hint}>
+					Get a code, then type it on the wall's screen. The wall asks for a guardian's PIN to open, and again to change
+					things.
+				</p>
+				<Button
+					variant="link"
+					size="sm"
+
+					style={{ alignSelf: 'flex-start' }}
+					disabled={me.guardianPins === 0}
+					onClick={() => invite.mutate({ kind: 'wall', what: 'the wall' })}
+				>
+					Add a wall display
+				</Button>
+				{me.guardianPins === 0 && <p className={s.hint}>A guardian sets their PIN first.</p>}
+
+				{codes(true)}
+			</Section>
+
+			<Section title="Signed-in devices" note={count(data.devices.length, 'device', 'devices')} folded>
+				<ul className={panel.devices}>
+					{data.devices.map((d) => (
+						<li key={d.id}>
+							<span>
+								{d.who ?? 'Someone'}
+								{DEVICE[d.kind]} · {d.label}
+								{d.thisDevice && <strong> (this one)</strong>}
+							</span>
+							<span className={panel.deviceSeen}>{ago(d.lastSeen)}</span>
+							{d.locked && (
+								<Button variant="link" size="sm" onClick={() => unlockDevice.mutate(d.id)}>
+									Unlock (too many wrong PINs)
+								</Button>
+							)}
+							{!d.thisDevice && (
+								<Button variant="link" size="sm" onClick={() => signOut.mutate(d.id)}>
+									Sign out
+								</Button>
+							)}
+						</li>
+					))}
+				</ul>
+			</Section>
 
 			{removing && (
 				<ConfirmDialog
@@ -373,7 +391,7 @@ export default function HouseholdAccess() {
 					The wall will wear their accent color, and the household is theirs to delete. You stay a guardian.
 				</ConfirmDialog>
 			)}
-		</section>
+		</>
 	);
 }
 

@@ -67,6 +67,8 @@
 	--shadow-xl: 0 1rem 3rem rgb(0 0 0 / 0.25); /* dialogs, alerts and cheers, over everything */
 	--shadow-gutter: 1px 1px 3px rgba(0, 0, 0, 0.25); /* a timeline's hour names, over the days sliding under them */
 	--shadow-bar: 0 4px 6px -3px rgb(0 0 0 / 0.18); /* a header the page scrolls under: along its bottom only */
+	--shadow-sunk:
+		inset 0 4px 6px -3px rgb(0 0 0 / 0.12), inset 0 -4px 6px -3px rgb(0 0 0 / 0.12); /* sunk in: inside top and bottom */
 	/* Space: gaps, padding and margins, small to large. Each step is a little more than the last, so things
 	   that belong together sit closer than things that don't. */
 	--space-1: 0.2rem; /* an icon and its words, a badge's padding */
@@ -156,7 +158,7 @@ button {
 	cursor: pointer;
 	min-height: var(--tap);
 	min-width: var(--tap);
-	border-radius: var(--radius);
+	border-radius: var(--radius-round);
 }
 button:active {
 	transform: scale(0.97);

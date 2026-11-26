@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { addDays, dayKey, fromDayKey, timeLabel } from '../../lib/dates';
 import { factFor, type KidFact } from '../../lib/kidFacts';
 import { kindWordsFor } from '../../lib/kindWords';
-import { useLists, useMeals, useMembers, useRangeEvents, useRecipes, useWeather } from '../../lib/queries';
+import { useLists, useMeals, useMembers, useRangeEvents, useRecipes, useSettings, useWeather } from '../../lib/queries';
 import { plannedOn } from '../../lib/meals';
 import { coverOf, mealPicture } from '../../lib/recipes';
 import {
@@ -81,6 +81,10 @@ const partOfDay = (iso: string) => {
  */
 export default function KidToday({ today, kid }: { today: string; kid: Member }) {
 	const little = (kid.stage ?? 'little') === 'little';
+	// The kind words and the fun fact: each on unless a grown-up turned it off (Settings, Daily cards).
+	const settings = useSettings().data;
+	const quotes = settings?.kidQuotes !== false;
+	const facts = settings?.kidFacts !== false;
 	const weatherQuery = useWeather();
 	const weather = weatherQuery.data;
 	const lists = useLists().data ?? [];
@@ -186,8 +190,8 @@ export default function KidToday({ today, kid }: { today: string; kid: Member })
 			)}
 			<SpecialDays today={today} kidId={kid.id} />
 			{/* Last, each across the whole width. */}
-			<Card label="Kind words" item={kindWordsFor(today)} />
-			<Card label="Did you know?" item={factFor(today, little)} />
+			{quotes && <Card label="Kind words" item={kindWordsFor(today)} />}
+			{facts && <Card label="Did you know?" item={factFor(today, little)} />}
 		</div>
 	);
 }

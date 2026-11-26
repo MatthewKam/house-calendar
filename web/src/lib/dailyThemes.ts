@@ -68,5 +68,7 @@ export function useDailyThemes<T>(themes: Theme<T>[], card: DailyCard, whose: st
 			? (id: string, on: boolean) =>
 					save.mutate({ key, value: on ? off.filter((o) => o !== id) : [...off.filter((o) => o !== id), id] })
 			: undefined,
+		/** Every theme on, or every one off. */
+		turnAll: key ? (on: boolean) => save.mutate({ key, value: on ? [] : themes.map((t) => t.id) }) : undefined,
 	};
 }
