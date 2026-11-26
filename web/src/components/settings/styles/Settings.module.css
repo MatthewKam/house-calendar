@@ -2,6 +2,7 @@
    bigger, the list in a card on the left and the group in one beside it. The page scrolls as a whole
    (the cards grow with what's in them), with a little room at its edges so their shadows aren't cut. */
 .page {
+	composes: pageWrap from global;
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
@@ -9,7 +10,8 @@
 	flex-direction: column;
 	gap: var(--space-4);
 	margin-inline: calc(-1 * var(--space-3));
-	padding: 0 var(--space-3) var(--space-3);
+	/* The page scrolls itself, so the column's room each side is in its own padding (scrollbar at the edge). */
+	padding: 0 calc(var(--space-3) + var(--page-gutter)) var(--space-3);
 }
 .pageHead {
 	display: flex;

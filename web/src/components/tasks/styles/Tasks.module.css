@@ -1,5 +1,6 @@
 /* ---- Page (in place of the calendar) ---- */
 .page {
+	composes: pageWrap from global;
 	flex: 1;
 	min-height: 0;
 	display: flex;
@@ -7,6 +8,8 @@
 	gap: var(--space-4);
 }
 .pageHead {
+	composes: pageHeadGlobal from global;
+	composes: pageColumn from global;
 	display: flex;
 	justify-content: space-between;
 	align-items: flex-end;
@@ -17,6 +20,7 @@
 	font-size: var(--text-2xl);
 }
 .scroll {
+	composes: pageScroll from global;
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
@@ -187,6 +191,7 @@
 }
 
 .actions {
+	composes: pageColumn from global;
 	display: flex;
 	gap: var(--space-3);
 	padding-bottom: var(--space-3);

@@ -1,5 +1,6 @@
 /* The Rewards page: a section per kid (bucket, jars, earned), then everything redeemed. */
 .page {
+	composes: pageWrap from global;
 	flex: 1;
 	min-height: 0;
 	display: flex;
@@ -7,6 +8,7 @@
 	gap: var(--space-4);
 }
 .pageHead {
+	composes: pageColumn from global;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -19,6 +21,7 @@
 }
 
 .scroll {
+	composes: pageScroll from global;
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;

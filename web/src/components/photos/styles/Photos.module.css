@@ -1,5 +1,6 @@
 /* The photo album. */
 .page {
+	composes: pageWrap from global;
 	flex: 1;
 	min-height: 0;
 	display: flex;
@@ -7,6 +8,7 @@
 	gap: var(--space-4);
 }
 .pageHead {
+	composes: pageColumn from global;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -26,6 +28,7 @@
 
 /* All / in the screen saver / not. */
 .tabs {
+	composes: pageColumn from global;
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--space-2);
@@ -45,6 +48,7 @@
 
 /* Select mode's toolbar. */
 .selectBar {
+	composes: pageColumn from global;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -58,7 +62,8 @@
 	font-weight: var(--weight-semibold);
 }
 .none {
-	margin: 0;
+	composes: pageColumn from global;
+	margin-block: 0;
 	color: var(--muted);
 }
 .settingsNote {
@@ -69,8 +74,9 @@
 
 /* Uploads in flight. */
 .uploads {
+	composes: pageColumn from global;
 	list-style: none;
-	margin: 0;
+	margin-block: 0;
 	padding: 0;
 	display: flex;
 	flex-direction: column;
@@ -121,6 +127,7 @@
 }
 
 .empty {
+	composes: pageColumn from global;
 	flex: 1;
 	display: flex;
 	flex-direction: column;
@@ -136,6 +143,7 @@
 
 /* The grid: square tiles, filling the width. */
 .grid {
+	composes: pageScroll from global;
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;

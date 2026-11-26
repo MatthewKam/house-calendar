@@ -2,6 +2,7 @@
 
 /* ---- The book ---- */
 .page {
+	composes: pageWrap from global;
 	flex: 1;
 	min-height: 0;
 	display: flex;
@@ -9,6 +10,7 @@
 	gap: var(--space-4);
 }
 .pageHead {
+	composes: pageColumn from global;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -47,6 +49,7 @@
 	color: var(--on-accent);
 }
 .scroll {
+	composes: pageScroll from global;
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
@@ -1131,6 +1134,7 @@ button.ideaSearch {
 
 /* The page's two tabs: Recipes and Plan ahead. */
 .pageTabs {
+	composes: pageColumn from global;
 	flex: none;
 	max-width: 26rem;
 }

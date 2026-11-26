@@ -275,3 +275,21 @@ input {
 		color-mix(in srgb, var(--text) 6%, transparent) 6px 12px
 	);
 }
+
+/* A page held to a centred column on large screens (80% wide, 56rem at least), full width on a phone.
+   The page stays full width, so the box that scrolls runs to the screen's edge and its scrollbar is there:
+   pageWrap on the page; pageColumn on each part above or below the scroll box; pageScroll on the scroll box.
+   --page-gutter is the room each side of the column; it's a % of the parent, so use it in a margin or
+   padding of the page itself (a page that scrolls itself) or of one of its children. */
+.pageWrap {
+	--page-gutter: max(0px, (100% - max(56rem, 80%)) / 2);
+}
+.pageColumn {
+	margin-inline: var(--page-gutter);
+}
+.pageScroll {
+	padding-inline: var(--page-gutter);
+}
+.pageHeadGlobal {
+	padding-bottom: var(--space-6);
+}

@@ -1,5 +1,6 @@
 /* The page: title on top, then the lists. */
 .page {
+	composes: pageWrap from global;
 	flex: 1;
 	min-height: 0;
 	display: flex;
@@ -11,6 +12,8 @@
 	font-size: var(--text-2xl);
 }
 .pageHead {
+	composes: pageHeadGlobal from global;
+	composes: pageColumn from global;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -20,12 +23,14 @@
 
 /* Which lists show: a check per list, tapped on or off. */
 .picker {
+	composes: pageColumn from global;
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--space-3);
 }
 
 .board {
+	composes: pageScroll from global;
 	flex: 1;
 	min-height: 0;
 	overflow-y: auto;
@@ -399,6 +404,7 @@
 	font-size: var(--text-sm);
 }
 .setup {
+	composes: pageColumn from global;
 	flex: 1;
 	display: flex;
 	flex-direction: column;
@@ -503,6 +509,7 @@
 
 /* Lists loading: two list-shaped blocks side by side where there's room. */
 .loading {
+	composes: pageColumn from global;
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
 	gap: var(--space-5);
@@ -510,7 +517,8 @@
 }
 /* Couldn't sync with the family's phones lately: said above the lists. */
 .unsynced {
-	margin: 0;
+	composes: pageColumn from global;
+	margin-block: 0;
 	padding: var(--space-3) var(--space-4);
 	border-radius: var(--radius-sm);
 	border: 1px solid var(--warn-line);
