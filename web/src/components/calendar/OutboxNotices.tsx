@@ -101,7 +101,7 @@ export default function OutboxNotices() {
 					tone="info"
 					icon="↻"
 					title={`Waiting for ${outbox.waitingOn.join(' and ')}`}
-					details="Changes to its calendars are saved on it the next time it opens Sprig."
+					details="Changes to its calendars are saved on it in a moment, or else the next time it opens Sprig."
 				/>
 			)}
 			{outbox.pending > 0 && outbox.lastError && (

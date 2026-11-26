@@ -66,10 +66,13 @@ export function registerPhoneCalendars(app: FastifyInstance, db: DB) {
 			const result = await syncOnce(db, source);
 			const took = refused.reduce((n, s) => n + handOver(db, s, [sourceKey(id)]), 0);
 			if (took) req.log.info({ events: took }, "a phone took over iCloud's calendars from a refused password");
+			const wake = req.body.wake;
 			db.prepare(
-				`INSERT INTO phones (id, member_id, name, last_sync) VALUES (?, ?, ?, ?)
-         ON CONFLICT(id) DO UPDATE SET name = excluded.name, last_sync = excluded.last_sync`,
-			).run(id, memberId, req.body.name, new Date().toISOString());
+				`INSERT INTO phones (id, member_id, name, last_sync, wake_token, wake_sandbox) VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET name = excluded.name, last_sync = excluded.last_sync,
+           wake_token = COALESCE(excluded.wake_token, phones.wake_token),
+           wake_sandbox = CASE WHEN excluded.wake_token IS NULL THEN phones.wake_sandbox ELSE excluded.wake_sandbox END`,
+			).run(id, memberId, req.body.name, new Date().toISOString(), wake?.token ?? null, wake?.sandbox ? 1 : 0);
 			// Changes made in Sprig, checked against what it just sent, for it to save.
 			const edits = editsForPhone(db, id, req.body.events.map(toRemote));
 			return { ...summary(phone(id)!), events: result.events, edits };

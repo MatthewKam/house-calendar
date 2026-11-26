@@ -127,6 +127,8 @@ export const PhoneSync = z.strictObject({
 	name: z.string().min(1).max(100),
 	calendars: z.array(PhoneCalendar).max(100),
 	events: z.array(PhoneEvent).max(20_000),
+	/** Its address with Apple, to wake it with a silent push when a change waits for it (newer app builds). */
+	wake: z.strictObject({ token: z.string().regex(/^[0-9a-fA-F]{64,200}$/), sandbox: z.boolean() }).optional(),
 });
 /**
  * A change made in Sprig for the phone to save with EventKit, handed back when it sends its calendars. The

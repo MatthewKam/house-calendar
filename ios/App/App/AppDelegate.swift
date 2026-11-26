@@ -34,9 +34,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
 
-    // Apple's answer to asking for alerts (the device token, or why not), passed on to the push plugin.
+    // Apple's answer to asking for alerts (the device token, or why not), passed on to the push plugin. The
+    // same token wakes the phone when Sprig has calendar changes for it (PhoneCalendars.swift).
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        PhoneCalendarSync.wakeToken = deviceToken.map { String(format: "%02x", $0) }.joined()
         NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
+    }
+
+    // A silent push from Sprig (server/phoneWake.ts): changes made there wait for this phone's calendars.
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+                     fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        guard userInfo["sprig"] as? String == "calendars" else { return completionHandler(.noData) }
+        Task {
+            let sent = try? await PhoneCalendarSync.send()
+            completionHandler(sent == nil ? .failed : .newData)
+        }
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {

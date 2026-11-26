@@ -51,6 +51,18 @@ enum PhoneCalendarSync {
         }
     }
 
+    /// This phone's address with Apple (AppDelegate), sent so Sprig can wake it when changes wait for it.
+    private static let wakeKey = "phoneCalendars.wakeToken"
+    static var wakeToken: String? {
+        get { UserDefaults.standard.string(forKey: wakeKey) }
+        set { UserDefaults.standard.set(newValue, forKey: wakeKey) }
+    }
+
+    /// Asks Apple for the address (no prompt: waking silently needs no permission to show alerts).
+    static func askToBeWoken() {
+        DispatchQueue.main.async { UIApplication.shared.registerForRemoteNotifications() }
+    }
+
     static var allowed: Bool {
         if #available(iOS 17.0, *) { return EKEventStore.authorizationStatus(for: .event) == .fullAccess }
         return EKEventStore.authorizationStatus(for: .event) == .authorized
@@ -82,7 +94,14 @@ enum PhoneCalendarSync {
         let to = cal.date(byAdding: .month, value: monthsAhead, to: thisMonth)!
         let events = calendars.isEmpty ? [] : store.events(matching: store.predicateForEvents(withStart: from, end: to, calendars: calendars))
 
-        let body = { (canSave: Bool) -> [String: Any] in [
+        // A build run from Xcode gets its address from Apple's sandbox (as in Alerts.swift).
+        #if DEBUG
+            let sandbox = true
+        #else
+            let sandbox = false
+        #endif
+        let wake: [String: Any] = wakeToken.map { ["wake": ["token": $0, "sandbox": sandbox]] } ?? [:]
+        let body = { (newer: Bool) -> [String: Any] in [
             "name": setup.name,
             "calendars": calendars.map { c in
                 [
@@ -91,14 +110,14 @@ enum PhoneCalendarSync {
                     "color": hex(c.cgColor) as Any,
                     "account": c.source?.title ?? "",
                     "primary": c.calendarIdentifier == primary,
-                ].merging(canSave ? ["writable": c.allowsContentModifications] : [:]) { a, _ in a } as [String: Any]
+                ].merging(newer ? ["writable": c.allowsContentModifications] : [:]) { a, _ in a } as [String: Any]
             },
             "events": events.compactMap(json),
-        ] }
+        ].merging(newer ? wake : [:]) { a, _ in a } }
         let path = "/api/phone-calendars/\(setup.phone)"
         // Changes made in Sprig can be saved to a calendar that allows it (not a subscribed or shared read-only one).
         var (data, status) = try await request("PUT", path, body(true), token: token)
-        // A Sprig from before it could take them back turns "writable" away: send as before.
+        // A Sprig from before it could take them back turns "writable" and "wake" away: send as before.
         if status == 400 { (data, status) = try await request("PUT", path, body(false), token: token) }
         guard status < 300 else { throw SyncError.refused }
         let answer = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
@@ -379,6 +398,7 @@ public class PhoneCalendarsPlugin: CAPPlugin, CAPBridgedPlugin {
         PhoneCalendarSync.setup = Setup(server: server, phone: phone, name: name, calendarIds: ids)
         PhoneCalendarSync.token = token
         PhoneCalendarSync.scheduleBackground()
+        PhoneCalendarSync.askToBeWoken()
         sync(call)
     }
 
@@ -391,6 +411,7 @@ public class PhoneCalendarsPlugin: CAPPlugin, CAPBridgedPlugin {
     /// Sends now (the page calls it when Sprig opens); resolves with how many events went.
     @objc func syncNow(_ call: CAPPluginCall) {
         if let token = call.getString("token") { PhoneCalendarSync.token = token }
+        if PhoneCalendarSync.setup != nil { PhoneCalendarSync.askToBeWoken() }
         sync(call)
     }
 
@@ -398,6 +419,7 @@ public class PhoneCalendarsPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func stop(_ call: CAPPluginCall) {
         PhoneCalendarSync.setup = nil
         PhoneCalendarSync.token = nil
+        PhoneCalendarSync.wakeToken = nil
         BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: PhoneCalendarSync.task)
         call.resolve()
     }

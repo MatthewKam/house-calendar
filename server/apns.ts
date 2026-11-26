@@ -22,6 +22,11 @@ export interface AppleKey {
 export interface ApplePusher {
 	/** Throws an error with `statusCode` 410 when Apple says the app is gone from that phone. */
 	send(device: AppleDevice, alert: Alert): Promise<void>;
+	/**
+	 * A silent push: nothing shows, the app wakes for a few seconds to do `job` (phoneWake.ts). iOS rations
+	 * these and skips an app the person swiped away. Throws as send() does.
+	 */
+	wake(device: AppleDevice, job: string): Promise<void>;
 }
 
 /** Apple takes a token up to an hour old, and refuses new ones more often than every 20 minutes. */
@@ -66,53 +71,74 @@ export function applePusher({ key, keyId, teamId, topic }: AppleKey): ApplePushe
 		return s;
 	};
 
-	return {
-		send(device, alert) {
-			const host = device.sandbox ? 'api.sandbox.push.apple.com' : 'api.push.apple.com';
-			const body = JSON.stringify({
-				aps: { alert: { title: alert.title, body: alert.body }, sound: 'default' },
-				url: alert.url,
+	/** One push to one phone; resolves once Apple took it. */
+	const post = (device: AppleDevice, headers: Record<string, string>, body: string) => {
+		const host = device.sandbox ? 'api.sandbox.push.apple.com' : 'api.push.apple.com';
+		const s = session(host);
+		hold(s, 1);
+		return new Promise<void>((resolve, reject) => {
+			const req = s.request({
+				':method': 'POST',
+				':path': `/3/device/${device.token}`,
+				authorization: `bearer ${bearer()}`,
+				'apns-topic': topic,
+				...headers,
 			});
-			const s = session(host);
-			hold(s, 1);
-			return new Promise<void>((resolve, reject) => {
-				const req = s.request({
-					':method': 'POST',
-					':path': `/3/device/${device.token}`,
-					authorization: `bearer ${bearer()}`,
-					'apns-topic': topic,
+			let status = 0;
+			let reply = '';
+			req.setEncoding('utf8');
+			req.on('response', (headers) => (status = Number(headers[':status'])));
+			req.on('data', (chunk: string) => (reply += chunk));
+			req.on('error', reject);
+			req.on('end', () => {
+				if (status === 200) return resolve();
+				const reason = (() => {
+					try {
+						return (JSON.parse(reply) as { reason?: string }).reason ?? '';
+					} catch {
+						return '';
+					}
+				})();
+				// Deleted from the phone, or a token from the other server (sandbox or not): gone, like a browser's 410.
+				const gone = status === 410 || reason === 'BadDeviceToken' || reason === 'DeviceTokenNotForTopic';
+				reject(
+					Object.assign(new Error(`Apple turned down an alert: ${status} ${reason}`), {
+						statusCode: gone ? 410 : status,
+					}),
+				);
+			});
+			req.end(body);
+		}).finally(() => hold(s, -1));
+	};
+
+	return {
+		send: (device, alert) =>
+			post(
+				device,
+				{
 					'apns-push-type': 'alert',
 					'apns-priority': '10',
 					// Stale after a day, as for browsers: Apple drops it rather than deliver it late.
 					'apns-expiration': String(Math.floor(Date.now() / 1000) + 86_400),
 					// One alert per thing on the phone, like the browser's tag (Apple allows 64 bytes).
 					'apns-collapse-id': alert.tag.slice(0, 64),
-				});
-				let status = 0;
-				let reply = '';
-				req.setEncoding('utf8');
-				req.on('response', (headers) => (status = Number(headers[':status'])));
-				req.on('data', (chunk: string) => (reply += chunk));
-				req.on('error', reject);
-				req.on('end', () => {
-					if (status === 200) return resolve();
-					const reason = (() => {
-						try {
-							return (JSON.parse(reply) as { reason?: string }).reason ?? '';
-						} catch {
-							return '';
-						}
-					})();
-					// Deleted from the phone, or a token from the other server (sandbox or not): gone, like a browser's 410.
-					const gone = status === 410 || reason === 'BadDeviceToken' || reason === 'DeviceTokenNotForTopic';
-					reject(
-						Object.assign(new Error(`Apple turned down an alert: ${status} ${reason}`), {
-							statusCode: gone ? 410 : status,
-						}),
-					);
-				});
-				req.end(body);
-			}).finally(() => hold(s, -1));
-		},
+				},
+				JSON.stringify({
+					aps: { alert: { title: alert.title, body: alert.body }, sound: 'default' },
+					url: alert.url,
+				}),
+			),
+		wake: (device, job) =>
+			post(
+				device,
+				{
+					// Silent pushes must go as background, priority 5 (Apple refuses 10 for them).
+					'apns-push-type': 'background',
+					'apns-priority': '5',
+					'apns-expiration': String(Math.floor(Date.now() / 1000) + 3_600),
+					'apns-collapse-id': job.slice(0, 64),
+				},
+				JSON.stringify({ aps: { 'content-available': 1 }, sprig: job }),
+			),
 	};
 }
