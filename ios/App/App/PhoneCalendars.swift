@@ -6,8 +6,9 @@ import Security
 // The phone's own calendars, shared with the family without a password (server/phoneCalendars.ts). The page
 // asks for access and picks which calendars to share; from then on this file does the sending itself:
 // whenever Sprig opens (the page calls syncNow) and when iOS lets it refresh in the background, so the
-// family sees changes made in the Calendar app even if Sprig isn't opened. Sending is all here, not in the
-// page, because the page doesn't run in the background.
+// family sees changes made in the Calendar app even if Sprig isn't opened. Each time, Sprig answers with
+// changes made there to these calendars (server/phoneOutbox.ts), which this file saves with EventKit and
+// reports back. Sending is all here, not in the page, because the page doesn't run in the background.
 
 /** What to send and where: set by the page, kept for background refreshes. */
 private struct Setup: Codable {
@@ -55,10 +56,24 @@ enum PhoneCalendarSync {
         return EKEventStore.authorizationStatus(for: .event) == .authorized
     }
 
-    /// Sends the chosen calendars now. Throws when it couldn't; returns how many events went.
+    /// Sends the chosen calendars now, and saves what was changed in Sprig to them. Throws when it couldn't;
+    /// returns how many events went.
     @discardableResult
     static func send() async throws -> Int {
-        guard let setup, let token, allowed else { throw SyncError.notSetUp }
+        guard setup != nil, token != nil, allowed else { throw SyncError.notSetUp }
+        // What was saved last time but never reached Sprig goes first.
+        await report()
+        let (count, edits) = try await sendCalendars()
+        guard !edits.isEmpty else { return count }
+        for edit in edits { saveEdit(edit) }
+        await report()
+        // Again, so Sprig has them as they are now (a new event under the id the phone gave it).
+        return try await sendCalendars().events
+    }
+
+    /// Sends the chosen calendars; Sprig answers with the changes made there for this phone to save.
+    private static func sendCalendars() async throws -> (events: Int, edits: [[String: Any]]) {
+        guard let setup, let token else { throw SyncError.notSetUp }
         let calendars = store.calendars(for: .event).filter { setup.calendarIds.contains($0.calendarIdentifier) }
         let primary = store.defaultCalendarForNewEvents?.calendarIdentifier
         let cal = Calendar.current
@@ -67,7 +82,7 @@ enum PhoneCalendarSync {
         let to = cal.date(byAdding: .month, value: monthsAhead, to: thisMonth)!
         let events = calendars.isEmpty ? [] : store.events(matching: store.predicateForEvents(withStart: from, end: to, calendars: calendars))
 
-        let body: [String: Any] = [
+        let body = { (canSave: Bool) -> [String: Any] in [
             "name": setup.name,
             "calendars": calendars.map { c in
                 [
@@ -76,23 +91,184 @@ enum PhoneCalendarSync {
                     "color": hex(c.cgColor) as Any,
                     "account": c.source?.title ?? "",
                     "primary": c.calendarIdentifier == primary,
-                ] as [String: Any]
+                ].merging(canSave ? ["writable": c.allowsContentModifications] : [:]) { a, _ in a } as [String: Any]
             },
             "events": events.compactMap(json),
-        ]
-        var request = URLRequest(url: URL(string: "\(setup.server)/api/phone-calendars/\(setup.phone)")!)
-        request.httpMethod = "PUT"
+        ] }
+        let path = "/api/phone-calendars/\(setup.phone)"
+        // Changes made in Sprig can be saved to a calendar that allows it (not a subscribed or shared read-only one).
+        var (data, status) = try await request("PUT", path, body(true), token: token)
+        // A Sprig from before it could take them back turns "writable" away: send as before.
+        if status == 400 { (data, status) = try await request("PUT", path, body(false), token: token) }
+        guard status < 300 else { throw SyncError.refused }
+        let answer = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+        return (events.count, answer?["edits"] as? [[String: Any]] ?? [])
+    }
+
+    /// Sends to Sprig; answers with what came back and its status. Throws only when it didn't get there.
+    private static func request(_ method: String, _ path: String, _ body: [String: Any], token: String) async throws
+        -> (Data, Int)
+    {
+        guard let setup else { throw SyncError.notSetUp }
+        var request = URLRequest(url: URL(string: "\(setup.server)\(path)")!)
+        request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        let (_, response) = try await URLSession.shared.data(for: request)
-        guard let status = (response as? HTTPURLResponse)?.statusCode, status < 300 else { throw SyncError.refused }
-        return events.count
+        let (data, response) = try await URLSession.shared.data(for: request)
+        return (data, (response as? HTTPURLResponse)?.statusCode ?? 0)
+    }
+
+    // MARK: Saving changes made in Sprig
+
+    /// What was done with each change, kept until Sprig has it: a change handed out again (its answer was lost)
+    /// is answered from here instead of being saved twice (a repeat moved an hour twice).
+    private static let doneKey = "phoneCalendars.done"
+    private static var done: [[String: Any]] {
+        get { UserDefaults.standard.array(forKey: doneKey) as? [[String: Any]] ?? [] }
+        set { UserDefaults.standard.set(newValue, forKey: doneKey) }
+    }
+
+    /// Tells Sprig what was done; forgotten once it has them, or turns them away (4xx: they'd go round forever).
+    private static func report() async {
+        let results = done
+        guard !results.isEmpty, let setup, let token else { return }
+        // Offline, or Sprig down (5xx): kept, and tried again next time.
+        guard let (_, status) = try? await request("POST", "/api/phone-calendars/\(setup.phone)/edits",
+                                                   ["results": results], token: token),
+              status >= 200, status < 500 else { return }
+        // Only what was sent: anything saved meanwhile stays for next time.
+        done = done.filter { r in !results.contains { $0["id"] as? Int == r["id"] as? Int && $0["version"] as? String == r["version"] as? String } }
+    }
+
+    /// Saves one change with EventKit (once), and keeps how it went for report().
+    private static func saveEdit(_ edit: [String: Any]) {
+        guard let id = edit["id"] as? Int, let version = edit["version"] as? String else { return }
+        if done.contains(where: { $0["id"] as? Int == id && $0["version"] as? String == version }) { return }
+        var result: [String: Any] = ["id": id, "version": version, "saved": true]
+        do {
+            if let newId = try apply(edit) { result["eventId"] = newId }
+        } catch {
+            result["saved"] = false
+            result["error"] = String(error.localizedDescription.prefix(500))
+        }
+        done.append(result)
+    }
+
+    /// The change itself. Returns the new event's id when it made one.
+    private static func apply(_ edit: [String: Any]) throws -> String? {
+        let changes = edit["changes"] as? [String: Any] ?? [:]
+        guard let calendarId = edit["calendarId"] as? String, let calendar = store.calendar(withIdentifier: calendarId)
+        else { throw EditError.noCalendar }
+        guard calendar.allowsContentModifications else { throw EditError.readOnly }
+        let op = edit["op"] as? String
+
+        if op == "create" {
+            let event = EKEvent(eventStore: store)
+            event.calendar = calendar
+            event.title = ""
+            try set(event, changes)
+            try store.save(event, span: .thisEvent, commit: true)
+            return occurrenceId(event)
+        }
+        guard let eventId = edit["eventId"] as? String else { throw EditError.notFound }
+
+        if edit["series"] as? Bool == true {
+            // The first day, saved with every one after it: the whole repeat.
+            guard let first = store.calendarItem(withIdentifier: eventId) as? EKEvent else { throw EditError.notFound }
+            if op == "delete" {
+                try store.remove(first, span: .futureEvents, commit: true)
+                return nil
+            }
+            if let title = changes["title"] as? String { first.title = title }
+            if changes.keys.contains("location") { first.location = changes["location"] as? String }
+            if let start = first.startDate, let end = first.endDate {
+                let shift = (changes["shiftMs"] as? Double ?? 0) / 1000
+                let newStart = start.addingTimeInterval(shift)
+                first.startDate = newStart
+                first.endDate = (changes["durationMs"] as? Double).map { newStart.addingTimeInterval($0 / 1000) }
+                    ?? end.addingTimeInterval(shift)
+            }
+            try store.save(first, span: .futureEvents, commit: true)
+            return nil
+        }
+
+        guard let event = occurrence(eventId, in: calendar) else { throw EditError.notFound }
+        if op == "delete" {
+            try store.remove(event, span: .thisEvent, commit: true)
+        } else {
+            try set(event, changes)
+            try store.save(event, span: .thisEvent, commit: true)
+        }
+        return nil
+    }
+
+    /// One day of an event by the id json() gave it: the phone's id, then "#" and when that day starts.
+    private static func occurrence(_ id: String, in calendar: EKCalendar) -> EKEvent? {
+        let parts = id.split(separator: "#", maxSplits: 1).map(String.init)
+        guard parts.count == 2, let start = ISO8601DateFormatter().date(from: parts[1]) else {
+            return store.calendarItem(withIdentifier: id) as? EKEvent
+        }
+        let around = store.predicateForEvents(withStart: start.addingTimeInterval(-86_400), end: start.addingTimeInterval(86_400),
+                                              calendars: [calendar])
+        return store.events(matching: around).first { occurrenceId($0) == id }
+    }
+
+    /// Sets the details Sprig sent: title, location, notes, and all day with its start and end.
+    private static func set(_ event: EKEvent, _ changes: [String: Any]) throws {
+        if let title = changes["title"] as? String { event.title = title }
+        if changes.keys.contains("location") { event.location = changes["location"] as? String }
+        if changes.keys.contains("notes") { event.notes = changes["notes"] as? String }
+        guard let start = changes["start"] as? String, let end = changes["end"] as? String else { return }
+        let allDay = changes["allDay"] as? Bool ?? event.isAllDay
+        event.isAllDay = allDay
+        if allDay {
+            // Days: the end is the day after the last, and EventKit wants the last day.
+            guard let first = day(start), let after = day(end) else { throw EditError.badTime }
+            event.startDate = first
+            event.endDate = max(first, after.addingTimeInterval(-1))
+        } else {
+            guard let from = instant(start), let to = instant(end) else { throw EditError.badTime }
+            event.startDate = from
+            event.endDate = to
+        }
+    }
+
+    private static func instant(_ s: String) -> Date? {
+        let withFraction = ISO8601DateFormatter()
+        withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return withFraction.date(from: s) ?? ISO8601DateFormatter().date(from: s)
+    }
+
+    private static func day(_ s: String) -> Date? {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)
+        f.timeZone = .current
+        f.dateFormat = "yyyy-MM-dd"
+        return f.date(from: s)
+    }
+
+    enum EditError: LocalizedError {
+        case noCalendar, readOnly, notFound, badTime
+        var errorDescription: String? {
+            switch self {
+            case .noCalendar: return "That calendar isn't on this phone any more"
+            case .readOnly: return "That calendar can't be changed on this phone"
+            case .notFound: return "That event isn't on this phone any more"
+            case .badTime: return "That time couldn't be read"
+            }
+        }
+    }
+
+    /// An occurrence's id as Sprig knows it: every day of a repeat shares the phone's id; its start tells them apart.
+    private static func occurrenceId(_ e: EKEvent) -> String? {
+        guard let start = e.startDate, let id = e.calendarItemIdentifier as String? else { return nil }
+        return String("\(id)#\(ISO8601DateFormatter().string(from: start))".prefix(400))
     }
 
     /// One occurrence as the server takes it; nil for one it can't place.
     private static func json(_ e: EKEvent) -> [String: Any]? {
-        guard let start = e.startDate, let end = e.endDate, let id = e.calendarItemIdentifier as String? else { return nil }
+        guard let start = e.startDate, let end = e.endDate, let id = occurrenceId(e) else { return nil }
         let iso = ISO8601DateFormatter()
         // An all-day event ends at the start of its last day, or the next; the server wants the day after.
         let day = DateFormatter()
@@ -102,8 +278,7 @@ enum PhoneCalendarSync {
         let allDayEnd = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: end.addingTimeInterval(-1)))!
         return [
             "calendarId": e.calendar.calendarIdentifier,
-            // Every occurrence of a repeat shares its id; its start tells them apart.
-            "id": String("\(id)#\(iso.string(from: start))".prefix(400)),
+            "id": id,
             "title": String((e.title ?? "").prefix(1000)),
             "allDay": e.isAllDay,
             "start": e.isAllDay ? day.string(from: start) : iso.string(from: start),
