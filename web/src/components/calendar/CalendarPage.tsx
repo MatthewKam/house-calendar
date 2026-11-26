@@ -143,9 +143,6 @@ export default function CalendarPage({
 				/>
 			)}
 			<OutboxNotices />
-			{sync?.peopleError && (
-				<Notice tone="warn" title="Couldn't sort new events by person" details={sync.peopleError} />
-			)}
 
 			<div className={s.body}>
 				{/* Wait for the saved view so the page doesn't flash Week before Month; until then, and

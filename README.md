@@ -396,12 +396,9 @@ survives future syncs.
 
 **Calendars:** in Settings, link each iCloud calendar to a person (all its events become theirs) or leave it on
 **By event**, and untick **Show** to keep a calendar off the wall. Who an event is for is decided in this order:
-your pick on the event, then the calendar's person, then Claude's pick from the title.
-
-**Sort by person automatically (optional):** add `ANTHROPIC_API_KEY` to `.env` and restart. After each sync, Claude
-reads the titles of events nobody has assigned yet (and your family's names) and picks who each is for, e.g.
-"Sam - swim class" goes to Sam and "Riley & Sam dentist" to both. Your own picks always win. Event titles and family names are sent to the
-Anthropic API.
+your pick on the event, then the calendar's person, then the family names in the title ("Sam - swim class" is Sam's,
+"Riley & Sam dentist" is both). No name means everyone, until someone picks. This is plain code on the server: no AI,
+and titles go nowhere.
 If syncing fails (wrong password, no internet), a banner says so and the last synced copy stays on screen.
 
 ### Connect Reminders

@@ -38,8 +38,6 @@ export interface CalendarOptions {
 	syncedEdits?: SyncedEdits;
 	/** Someone opened Sprig: sync the calendar accounts now (each at most every 30 seconds). */
 	syncNow?: () => Promise<void>;
-	/** A calendar link changed, so Claude can sort what is now unassigned. */
-	onAssignmentsChanged?: () => void;
 }
 
 interface CalendarRow {
@@ -103,8 +101,6 @@ export function registerCalendars(app: FastifyInstance, db: DB, opts: CalendarOp
 				);
 				applyPeople(db, row.id);
 			})();
-			// Unlinking or showing a calendar can leave events for Claude to sort.
-			opts.onAssignmentsChanged?.();
 			return calendarSummary(db.prepare('SELECT * FROM calendars WHERE id = ?').get(row.id) as CalendarRow);
 		},
 	);

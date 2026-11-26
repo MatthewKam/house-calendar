@@ -40,8 +40,6 @@ export function buildApp(
 	db: DB,
 	opts: CalendarOptions & {
 		webDist?: string;
-		/** Called after the family list or a calendar link changes, so Claude can sort what is now unassigned. */
-		onAssignmentsChanged?: () => void;
 		/** Shared secret the phones' Reminders Shortcut sends; without it, Reminders sync is off. */
 		remindersToken?: string;
 		/** Called after a list is changed on the wall, so the change can be sent to Reminders soon. */
@@ -102,7 +100,7 @@ export function buildApp(
 
 	// ---- Synced calendars, sync status and calendar accounts (calendars.ts) --
 	registerCalendars(app, db, opts);
-	registerPhoneCalendars(app, db, opts);
+	registerPhoneCalendars(app, db);
 
 	registerTasks(app, db);
 	registerRewards(app, db);

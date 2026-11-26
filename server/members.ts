@@ -54,8 +54,6 @@ export function registerMembers(
 	app: FastifyInstance,
 	db: DB,
 	opts: {
-		/** The family list changed, so Claude can sort what is now unassigned. */
-		onAssignmentsChanged?: () => void;
 		/** Someone was removed, so their sign-ins to this household go too. */
 		onMemberRemoved?: (memberId: string) => void;
 	},
@@ -79,7 +77,8 @@ export function registerMembers(
 			req.body.color.toLowerCase(),
 			next,
 		);
-		opts.onAssignmentsChanged?.();
+		// A new name can now be found in event titles.
+		applyPeople(db);
 		reply.code(201);
 		return toMember(get(id)!, req.raw.viewer?.guardians);
 	});
@@ -112,7 +111,7 @@ export function registerMembers(
 			db.prepare(
 				'UPDATE members SET name = ?, color = ?, sort_order = ?, birthdate = ?, stage = ?, allergies = ? WHERE id = ?',
 			).run(name.trim(), color.toLowerCase(), sortOrder, birthdate, stage, allergies, row.id);
-			if (name.trim() !== row.name) opts.onAssignmentsChanged?.();
+			if (name.trim() !== row.name) applyPeople(db);
 			return toMember(get(row.id)!, req.raw.viewer?.guardians);
 		},
 	);
@@ -186,9 +185,8 @@ export function registerMembers(
 		})();
 		if (res.changes === 0) return reply.code(404).send({ error: 'Member not found' });
 		opts.onMemberRemoved?.(req.params.id);
-		// Calendars linked to this person fall back to manual and Claude picks.
+		// Calendars linked to this person fall back to manual picks and names in titles.
 		applyPeople(db);
-		opts.onAssignmentsChanged?.();
 		return reply.code(204).send();
 	});
 }

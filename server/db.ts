@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { applyPeople } from './people.ts';
 
 export type DB = Database.Database;
 
@@ -1071,6 +1072,12 @@ const migrations: Migration[] = [
 			}
 		).n;
 		if (!has) db.exec('ALTER TABLE calendars ADD COLUMN account TEXT');
+	},
+	// Who calendar events are for is no longer picked by AI, only by hand, a calendar's person or the
+	// names in a title (people.ts). AI's old picks go, and everything is sorted again that way.
+	(db) => {
+		db.prepare("DELETE FROM event_people WHERE source = 'ai'").run();
+		applyPeople(db);
 	},
 ];
 

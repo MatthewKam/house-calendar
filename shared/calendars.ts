@@ -15,7 +15,7 @@ export const Provider = z.enum(['icloud', 'google', 'phone']);
 /** A change to a synced calendar (PATCH /api/calendars/:id): any of these, at least one. */
 export const CalendarPatch = z
 	.strictObject({
-		/** Everyone's events in it are this person's; null lets manual picks and Claude decide per event. */
+		/** Everyone's events in it are this person's; null lets manual picks and names in titles decide per event. */
 		memberId: z.string().nullable(),
 		hidden: z.boolean(),
 		/** Who sees its events, unless an event says otherwise. */
@@ -56,8 +56,6 @@ export const SyncStatus = z.object({
 	lastError: z.string().nullable(),
 	calendars: z.int(),
 	events: z.int(),
-	/** Set when Claude couldn't sort events by person; the sync itself still succeeded. */
-	peopleError: z.string().nullable(),
 	/** Whether events can be changed on the wall and sent back. */
 	canWrite: z.boolean(),
 });

@@ -152,7 +152,6 @@ describe('Google connections', () => {
 		const google = googleCalendars(db, {
 			oauth: { ...oauth(), revoke: async (t) => void revoked.push(t) },
 			sealer: sealer(randomBytes(32)),
-			classify: null,
 			log,
 			fetchImpl,
 		});

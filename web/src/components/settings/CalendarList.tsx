@@ -13,9 +13,10 @@ export default function CalendarList({ members }: { members: Member[] }) {
 	return (
 		<section className={`${s.section} ${s.calendarList}`} title="Calendar Lists">
 			<p className={s.hint}>
-				Link a calendar to a person and all its events are theirs. Leave it on <b>By event</b> to pick per event, with
-				Claude sorting new ones by title. <b>Sees</b> is who sees its events unless an event says otherwise: Busy shows
-				others only the time; Private hides them from anyone not on them (guardians still see the kids').
+				Link a calendar to a person and all its events are theirs. Leave it on <b>By event</b> to pick per event; until
+				you do, an event with a family name in its title is theirs, and one without is everyone's. <b>Sees</b> is who
+				sees its events unless an event says otherwise: Busy shows others only the time; Private hides them from anyone
+				not on them (guardians still see the kids').
 			</p>
 			<ul className={s.list}>
 				{calendars.map((c) => (

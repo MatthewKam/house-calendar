@@ -66,7 +66,6 @@ function setup() {
 	const cloud = fakeICloud('abcd-efgh-ijkl-mnop');
 	const icloud = icloudCalendars(db, {
 		sealer: sealer(randomBytes(32)),
-		classify: null,
 		log,
 		fetchImpl: cloud.fetchImpl,
 	});

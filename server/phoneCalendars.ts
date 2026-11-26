@@ -24,7 +24,7 @@ interface PhoneRow {
 /** Where a phone's calendars come from, in calendars.source. */
 const sourceKey = (phone: string) => `phone:${phone}`;
 
-export function registerPhoneCalendars(app: FastifyInstance, db: DB, opts: { onAssignmentsChanged?: () => void } = {}) {
+export function registerPhoneCalendars(app: FastifyInstance, db: DB) {
 	const phone = (id: string) => db.prepare('SELECT * FROM phones WHERE id = ?').get(id) as PhoneRow | undefined;
 	const summary = (r: PhoneRow): Phone => ({
 		id: r.id,
@@ -67,7 +67,6 @@ export function registerPhoneCalendars(app: FastifyInstance, db: DB, opts: { onA
 				`INSERT INTO phones (id, member_id, name, last_sync) VALUES (?, ?, ?, ?)
          ON CONFLICT(id) DO UPDATE SET name = excluded.name, last_sync = excluded.last_sync`,
 			).run(id, memberId, req.body.name, new Date().toISOString());
-			opts.onAssignmentsChanged?.();
 			return { ...summary(phone(id)!), events: result.events };
 		},
 	);

@@ -3,7 +3,6 @@ import { openDb } from './db.ts';
 import { buildApp } from './app.ts';
 import { createSync } from './sync.ts';
 import { ICloudSource } from './providers/icloud.ts';
-import { claudeClassifier } from './people.ts';
 import { googleRoutes } from './travel.ts';
 import { googlePlaces } from './places.ts';
 import { runShortcut, syncRunner } from './shortcut.ts';
@@ -44,9 +43,8 @@ const list = (s?: string) =>
 		.map((x) => x.trim())
 		.filter(Boolean);
 
-// With an Anthropic key, Claude sorts synced events by person (titles go to the Anthropic API).
-const classify = env.ANTHROPIC_API_KEY ? claudeClassifier() : null;
-// With it too, Say it and Snap a flyer read what's said or photographed (sent to the Anthropic API).
+// With an Anthropic key, Say it and Snap a flyer read what's said or photographed (sent to the Anthropic API).
+// Who calendar events are for is sorted in plain code (people.ts), never by AI.
 const understand = env.ANTHROPIC_API_KEY ? claudeUnderstand() : undefined;
 const readRecipe = env.ANTHROPIC_API_KEY ? claudeReadRecipe() : undefined;
 const dishIdeas = env.ANTHROPIC_API_KEY ? claudeDishIdeas() : undefined;
@@ -85,7 +83,7 @@ const households = householdRegistry((h) => {
 	const legacy = h.legacy === 1;
 	const sync =
 		legacy && env.ICLOUD_APPLE_ID && env.ICLOUD_APP_PASSWORD
-			? createSync(db, new ICloudSource(env.ICLOUD_APPLE_ID, env.ICLOUD_APP_PASSWORD), classify)
+			? createSync(db, new ICloudSource(env.ICLOUD_APPLE_ID, env.ICLOUD_APP_PASSWORD))
 			: null;
 	// On a Mac running the wall itself, the server can sync Reminders: directly (REMINDERS_MAC=1), or by
 	// running a Shortcut (REMINDERS_SHORTCUT names it). On the Pi, phones run the Shortcut instead.
@@ -106,11 +104,6 @@ const households = householdRegistry((h) => {
 			connect: (c) => icloud!.connect(c),
 		},
 		syncNow: () => Promise.all([sync?.now(), google?.now(), icloud?.now()]).then(() => {}),
-		onAssignmentsChanged: () => {
-			void sync?.assignPeople();
-			void google?.assignPeople();
-			void icloud?.assignPeople();
-		},
 		// Any household can connect iCloud or Google, so edits to its calendars can always be sent back.
 		syncedEdits: {
 			soon: () => {
@@ -142,10 +135,10 @@ const households = householdRegistry((h) => {
 	});
 	sync?.start(app.log);
 	if (oauth) {
-		google = googleCalendars(db, { oauth, sealer: secrets, classify, log: app.log });
+		google = googleCalendars(db, { oauth, sealer: secrets, log: app.log });
 		google.refresh();
 	}
-	icloud = icloudCalendars(db, { sealer: secrets, classify, log: app.log });
+	icloud = icloudCalendars(db, { sealer: secrets, log: app.log });
 	icloud.refresh();
 	if (legacy && process.platform === 'darwin' && (env.REMINDERS_MAC === '1' || env.REMINDERS_SHORTCUT)) {
 		const minutes = Number(env.REMINDERS_MINUTES ?? env.REMINDERS_SHORTCUT_MINUTES) || 5;

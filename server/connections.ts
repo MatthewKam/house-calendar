@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import type { DB } from './db.ts';
 import { createSync } from './sync.ts';
 import type { CalendarSource, CalendarWriter } from './providers/types.ts';
-import type { Classify } from './people.ts';
 import type { Sealer } from './secrets.ts';
 import type { Connection } from '../shared/calendars.ts';
 
@@ -24,7 +23,6 @@ export type { Connection };
 
 export interface ConnectionOptions {
 	sealer: Sealer;
-	classify: Classify | null;
 	log: Log;
 	intervalMs?: number;
 }
@@ -66,7 +64,7 @@ export function calendarConnections(
 				account: row.account,
 				secret,
 			});
-			const sync = createSync(db, source, opts.classify, opts.intervalMs);
+			const sync = createSync(db, source, opts.intervalMs);
 			sync.start(opts.log);
 			syncs.set(row.id, sync);
 		}
@@ -141,7 +139,6 @@ export function calendarConnections(
 			});
 		},
 		statuses: () => [...syncs.values()].map((s) => s.status),
-		assignPeople: () => Promise.all([...syncs.values()].map((s) => s.assignPeople())),
 		/** Syncs every account now (those that haven't in the last little while); resolves when done. */
 		now: () => Promise.all([...syncs.values()].map((s) => s.now())).then(() => {}),
 		/** Sends what's waiting to the accounts that take them, now. */

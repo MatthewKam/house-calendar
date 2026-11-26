@@ -160,7 +160,6 @@ describe('one status for every account', () => {
 			lastError: "iCloud isn't letting Sprig in right now",
 			calendars: 0,
 			events: 0,
-			peopleError: null,
 			canWrite: true,
 		});
 		expect(combineStatus([refused('icloud'), refused('icloud')])?.lastError).toBe(
@@ -190,7 +189,7 @@ describe('a refused password and a phone', () => {
 		return db;
 	};
 	const runOnce = async (db: ReturnType<typeof openDb>, source: CalendarSource) => {
-		const sync = createSync(db, source, null, 1e9);
+		const sync = createSync(db, source, 1e9);
 		sync.start(quiet);
 		await vi.waitFor(() => expect(sync.status.running).toBe(false));
 		sync.stop();
@@ -235,7 +234,7 @@ describe('opening Sprig', () => {
 			},
 			fetchRange: async () => [],
 		};
-		const sync = createSync(db, source, null, 1e9);
+		const sync = createSync(db, source, 1e9);
 		vi.useFakeTimers({ toFake: ['Date'] });
 		try {
 			await sync.now();

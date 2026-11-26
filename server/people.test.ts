@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { openDb } from './db.ts';
 import { buildApp } from './app.ts';
 import { syncOnce } from './sync.ts';
-import { assignPending, pendingSeries, type Classify } from './people.ts';
+import { namesIn } from './people.ts';
 import type { CalendarSource, RemoteEvent } from './providers/types.ts';
 
 const now = new Date('2026-10-06T12:00:00Z');
@@ -19,14 +19,6 @@ const source = (events: RemoteEvent[]): CalendarSource => ({
 	listCalendars: async () => [{ remoteId: 'cal', name: 'Family' }],
 	fetchRange: async () => events,
 });
-
-/** Picks every member whose name appears in the title, like Claude would for these simple cases. */
-function nameMatcher(calls: number[] = []): Classify {
-	return async (members, items) => {
-		calls.push(items.length);
-		return items.map((it) => members.filter((m) => it.title.includes(m.name)).map((m) => m.id));
-	};
-}
 
 async function setup() {
 	const db = openDb(':memory:');
@@ -55,86 +47,92 @@ const swim = [
 	ev('cal/swim.ics#2026-10-13T16:00:00', 'Sam - swim class', 13),
 ];
 
-describe('assigning people to synced events', () => {
-	it('never sends private events to AI: one by one, or a whole calendar', async () => {
-		const { db, app } = await setup();
-		await syncOnce(db, source([...swim, ev('cal/bill.ics', 'AT&T bill')]), now);
-		const swimId = (
-			db.prepare(`SELECT id FROM events WHERE title = 'Sam - swim class' LIMIT 1`).get() as { id: string }
-		).id;
-		await app.inject({ method: 'PUT', url: `/api/events/${swimId}/visibility`, payload: { visibility: 'private' } });
-		expect(pendingSeries(db).map((p) => p.title)).toEqual(['AT&T bill']);
-		const cal = (db.prepare(`SELECT calendar_id FROM events WHERE id = ?`).get(swimId) as { calendar_id: string })
-			.calendar_id;
-		const patched = await app.inject({
-			method: 'PATCH',
-			url: `/api/calendars/${cal}`,
-			payload: { visibility: 'private' },
-		});
-		expect(patched.json().visibility).toBe('private');
-		expect(pendingSeries(db)).toEqual([]);
-	});
+describe('finding family names in a title', () => {
+	const family = [
+		{ id: 'sam', name: 'Sam' },
+		{ id: 'riley', name: 'Riley Kam' },
+		{ id: 'jo', name: 'Jo' },
+	];
+	const named = namesIn(family);
+	it.each([
+		['Sam - swim class', ['sam']],
+		["sam's swim school", ['sam']],
+		['SAM SWIM', ['sam']],
+		['Riley & Sam swim', ['sam', 'riley']],
+		['Sam and Riley: dentist', ['sam', 'riley']],
+		['Riley Kam checkup', ['riley']],
+		['Play date with Noah & Riley', ['riley']],
+		['Swim (Sam)', ['sam']],
+		['Samba lesson', []],
+		['Jordan’s party', []],
+		['Joseph visits', []],
+		['AT&T bill', []],
+		['', []],
+	])('%j → %j', (title, ids) => expect(named(title)).toEqual(ids));
 
-	it('asks once per series and applies the pick to every repeat', async () => {
+	it('copes with names that look like patterns', () => {
+		expect(namesIn([{ id: 'x', name: 'A.J.' }])('A.J. soccer')).toEqual(['x']);
+		expect(namesIn([{ id: 'x', name: 'A.J.' }])('AxJx soccer')).toEqual([]);
+		expect(namesIn([{ id: 'x', name: '  ' }])('anything')).toEqual([]);
+	});
+});
+
+describe('assigning people to synced events', () => {
+	it('gives every repeat to the person named in the title, and the rest to everyone', async () => {
 		const { db, add, memberOf } = await setup();
 		const sam = await add('Sam');
 		await syncOnce(db, source([...swim, ev('cal/bill.ics', 'AT&T bill')]), now);
-
-		const calls: number[] = [];
-		expect(await assignPending(db, nameMatcher(calls))).toBe(1);
-		expect(calls).toEqual([2]); // two series, not three events
 		expect(memberOf('Sam - swim class')).toEqual([sam]);
 		expect(memberOf('AT&T bill')).toEqual([]);
-
-		// Nothing new to ask about, including the bill Claude left as "everyone".
-		expect(pendingSeries(db)).toEqual([]);
+		// Nothing is stored for them: worked out again from the title each time.
+		expect(db.prepare('SELECT count(*) AS n FROM event_people').get()).toEqual({ n: 0 });
 	});
 
 	it('keeps assignments when the next sync replaces the events', async () => {
 		const { db, add, memberOf } = await setup();
 		const sam = await add('Sam');
 		await syncOnce(db, source(swim), now);
-		await assignPending(db, nameMatcher());
 		await syncOnce(db, source(swim), now);
 		expect(memberOf('Sam - swim class')).toEqual([sam]);
 	});
 
-	it('lets a manual pick override Claude, and Claude never changes it back', async () => {
+	it('sorts again when someone joins or is renamed', async () => {
 		const { db, app, add, memberOf } = await setup();
 		await add('Sam');
-		const riley = await add('Riley');
-		await syncOnce(db, source(swim), now);
-		await assignPending(db, nameMatcher());
-
-		const { id } = db.prepare('SELECT id FROM events LIMIT 1').get() as { id: string };
-		const res = await app.inject({ method: 'PUT', url: `/api/events/${id}/people`, payload: { memberIds: [riley] } });
-		expect(res.statusCode).toBe(200);
-		expect(memberOf('Sam - swim class')).toEqual([riley]);
-
-		await add('Jordan'); // family changed, so AI picks are redone, but not manual ones
-		expect(pendingSeries(db)).toEqual([]);
-		await syncOnce(db, source(swim), now);
-		expect(memberOf('Sam - swim class')).toEqual([riley]);
-	});
-
-	it('asks again about AI picks when the family changes', async () => {
-		const { db, add, memberOf } = await setup();
-		await add('Sam');
 		await syncOnce(db, source([ev('cal/x.ics', 'Riley - soccer')]), now);
-		await assignPending(db, nameMatcher());
 		expect(memberOf('Riley - soccer')).toEqual([]);
 
 		const riley = await add('Riley');
-		expect(pendingSeries(db)).toHaveLength(1);
-		await assignPending(db, nameMatcher());
 		expect(memberOf('Riley - soccer')).toEqual([riley]);
+
+		await app.inject({ method: 'PATCH', url: `/api/members/${riley}`, payload: { name: 'Rye' } });
+		expect(memberOf('Riley - soccer')).toEqual([]);
 	});
 
-	it('ignores ids the classifier made up', async () => {
-		const { db, add, memberOf } = await setup();
+	it('lets a manual pick override the names, including a pick of everyone', async () => {
+		const { db, app, add, memberOf } = await setup();
 		await add('Sam');
+		const riley = await add('Riley');
+		await syncOnce(db, source([...swim, ev('cal/beds.ics', 'Make beds')]), now);
+		expect(memberOf('Make beds')).toEqual([]);
+
+		const swimId = (
+			db.prepare("SELECT id FROM events WHERE title = 'Sam - swim class' LIMIT 1").get() as { id: string }
+		).id;
+		const res = await app.inject({
+			method: 'PUT',
+			url: `/api/events/${swimId}/people`,
+			payload: { memberIds: [riley] },
+		});
+		expect(res.statusCode).toBe(200);
+		expect(memberOf('Sam - swim class')).toEqual([riley]);
+
+		await add('Jordan');
 		await syncOnce(db, source(swim), now);
-		await assignPending(db, async (_m, items) => items.map(() => ['not-a-member']));
+		expect(memberOf('Sam - swim class')).toEqual([riley]);
+
+		// Picking nobody means everyone, even with Sam in the title.
+		await app.inject({ method: 'PUT', url: `/api/events/${swimId}/people`, payload: { memberIds: [] } });
 		expect(memberOf('Sam - swim class')).toEqual([]);
 	});
 
@@ -168,12 +166,11 @@ describe('assigning people to synced events', () => {
 });
 
 describe('calendars linked to a person', () => {
-	it('beats Claude, loses to manual picks, and stops Claude being asked', async () => {
+	it('beats names in the title, and loses to manual picks', async () => {
 		const { db, app, add, memberOf } = await setup();
 		const sam = await add('Sam');
 		const alex = await add('Alex');
 		await syncOnce(db, source([...swim, ev('cal/derm.ics', 'Derm Appt')]), now);
-		await assignPending(db, nameMatcher());
 		const cal = (db.prepare("SELECT id FROM calendars WHERE provider = 'icloud'").get() as { id: string }).id;
 
 		const { id: dermId } = db.prepare("SELECT id FROM events WHERE title = 'Derm Appt'").get() as { id: string };
@@ -181,11 +178,10 @@ describe('calendars linked to a person', () => {
 
 		const res = await app.inject({ method: 'PATCH', url: `/api/calendars/${cal}`, payload: { memberId: alex } });
 		expect(res.statusCode).toBe(200);
-		expect(memberOf('Sam - swim class')).toEqual([alex]); // the calendar link beats Claude's pick
+		expect(memberOf('Sam - swim class')).toEqual([alex]); // the calendar link beats the name in the title
 		expect(memberOf('Derm Appt')).toEqual([sam]); // the manual pick beats the calendar link
-		expect(pendingSeries(db)).toEqual([]);
 
-		// Survives a resync, and unlinking brings Claude's pick back.
+		// Survives a resync, and unlinking brings the name back.
 		await syncOnce(db, source([...swim, ev('cal/derm.ics', 'Derm Appt')]), now);
 		expect(memberOf('Sam - swim class')).toEqual([alex]);
 		await app.inject({ method: 'PATCH', url: `/api/calendars/${cal}`, payload: { memberId: null } });
@@ -197,7 +193,7 @@ describe('calendars linked to a person', () => {
 		expect(memberOf('Sam - swim class')).toEqual([sam]);
 	});
 
-	it('hides a calendar from the wall and from Claude', async () => {
+	it('hides a calendar from the wall', async () => {
 		const { db, app, add } = await setup();
 		await add('Sam');
 		await syncOnce(db, source(swim), now);
@@ -211,7 +207,6 @@ describe('calendars linked to a person', () => {
 			toDay: '2026-10-11',
 		});
 		expect(JSON.parse((await app.inject({ url: `/api/events?${week}` })).body)).toEqual([]);
-		expect(pendingSeries(db)).toEqual([]);
 
 		const [listed] = JSON.parse((await app.inject({ url: '/api/calendars' })).body);
 		expect(listed).toMatchObject({ id: cal, name: 'Family', hidden: true, memberId: null, events: 1 });
@@ -219,12 +214,11 @@ describe('calendars linked to a person', () => {
 });
 
 describe('events for several people', () => {
-	it('lets Claude and manual picks name several people, and survives one of them leaving', async () => {
+	it('lets titles and manual picks name several people, and survives one of them leaving', async () => {
 		const { db, app, add, memberOf } = await setup();
 		const riley = await add('Riley');
 		const sam = await add('Sam');
 		await syncOnce(db, source([ev('cal/swim.ics', 'Riley & Sam swim'), ev('cal/bed.ics', 'Make beds')]), now);
-		await assignPending(db, nameMatcher());
 		expect(memberOf('Riley & Sam swim').sort()).toEqual([riley, sam].sort());
 
 		const { id } = db.prepare("SELECT id FROM events WHERE title = 'Make beds'").get() as { id: string };

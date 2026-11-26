@@ -3,7 +3,7 @@ import type { DB } from './db.ts';
 import type { CalendarSource, CalendarWriter, RemoteEvent } from './providers/types.ts';
 import { icalStore } from './providers/icalStore.ts';
 import { eventId, overlayOutbox, pushOutbox, SEND_AFTER_MS } from './outbox.ts';
-import { applyPeople, assignPending, type Classify } from './people.ts';
+import { applyPeople } from './people.ts';
 import { CalDavAuthError } from './providers/caldav.ts';
 import { gaveWay, handOver, refusedSince as storedRefusal, setRefused } from './handover.ts';
 import type { SyncStatus } from '../shared/calendars.ts';
@@ -120,7 +120,6 @@ export function combineStatus(list: SyncStatus[]): SyncStatus | null {
 		lastError: [...new Set(list.map((s) => s.lastError).filter(Boolean))].join('; ') || null,
 		calendars: list.reduce((n, s) => n + s.calendars, 0),
 		events: list.reduce((n, s) => n + s.events, 0),
-		peopleError: list.find((s) => s.peopleError)?.peopleError ?? null,
 		canWrite: list.some((s) => s.canWrite),
 	};
 }
@@ -170,16 +169,8 @@ function coveredByPhone(db: DB, key: string, memberId: string | null | undefined
 	);
 }
 
-/**
- * Live status for the API, plus start() to sync now and then every `intervalMs`. With a classifier,
- * each pass also has Claude pick who new events are for.
- */
-export function createSync(
-	db: DB,
-	source: CalendarSource & Partial<CalendarWriter>,
-	classify: Classify | null,
-	intervalMs = 5 * 60_000,
-) {
+/** Live status for the API, plus start() to sync now and then every `intervalMs`. */
+export function createSync(db: DB, source: CalendarSource & Partial<CalendarWriter>, intervalMs = 5 * 60_000) {
 	// Where the wall's edits go: the service's own store (Google), or iCloud's resources; null: read only.
 	const writer = source.store ?? (source.getEvent && source.writeEvent ? icalStore(source as CalendarWriter) : null);
 	const status: SyncStatus = {
@@ -189,7 +180,6 @@ export function createSync(
 		lastError: null,
 		calendars: 0,
 		events: 0,
-		peopleError: null,
 		canWrite: !!writer,
 	};
 	const key = source.key ?? source.id;
@@ -237,35 +227,14 @@ export function createSync(
 		} finally {
 			status.running = false;
 		}
-		await assignPeople();
 		if (again) {
 			again = false;
 			void run();
 		}
 	}
 
-	let assigning: Promise<void> | null = null;
-	/** Sorts unassigned series by person. Safe to call any time; overlapping calls share one run. */
-	function assignPeople() {
-		if (!classify) return Promise.resolve();
-		assigning ??= (async () => {
-			try {
-				const assigned = await assignPending(db, classify);
-				status.peopleError = null;
-				if (assigned) log.info({ assigned }, 'Claude assigned people to events');
-			} catch (err) {
-				status.peopleError = err instanceof Error ? err.message : String(err);
-				log.error({ err }, 'assigning people failed');
-			} finally {
-				assigning = null;
-			}
-		})();
-		return assigning;
-	}
-
 	return {
 		status,
-		assignPeople,
 		start(logger: Log) {
 			log = logger;
 			void run();

@@ -42,13 +42,41 @@ describe('several-people migration', () => {
       INSERT INTO event_people (calendar_id, series_id, member_id, source) VALUES ('ic', 's1', 't', 'manual'), ('ic', 's2', NULL, 'ai');`);
 		old.close();
 
-		const db = openDb(file);
+		// Up to just before AI picks were dropped (below).
+		const db = openDb(file, 69);
 		expect(db.prepare('SELECT event_id, member_id FROM event_members').all()).toEqual([
 			{ event_id: 'e1', member_id: 't' },
 		]);
 		expect(db.prepare('SELECT series_id, member_ids, source FROM event_people ORDER BY series_id').all()).toEqual([
 			{ series_id: 's1', member_ids: '["t"]', source: 'manual' },
 			{ series_id: 's2', member_ids: '[]', source: 'ai' },
+		]);
+	});
+});
+
+describe('no-AI sorting migration', () => {
+	it("drops AI's picks, keeps manual ones, and sorts by the names in titles", () => {
+		const file = join(mkdtempSync(join(tmpdir(), 'cal-')), 'cal.db');
+		openDb(file, 69).close();
+		const old = new Database(file);
+		old.exec(`INSERT INTO members (id, name, color) VALUES ('r', 'Riley', '#2fa66a'), ('s', 'Sam', '#2f7de1');
+      INSERT INTO calendars (id, provider, remote_id, name) VALUES ('ic', 'icloud', 'u', 'Home');
+      INSERT INTO events (id, calendar_id, title, start, end, series_id) VALUES
+        ('e1', 'ic', 'Dentist', '2026-10-06', '2026-10-07', 's1'),
+        ('e2', 'ic', 'Riley soccer', '2026-10-06', '2026-10-07', 's2'),
+        ('e3', 'ic', 'Sam swim', '2026-10-06', '2026-10-07', 's3');
+      INSERT INTO event_people (calendar_id, series_id, member_ids, source) VALUES
+        ('ic', 's1', '["s"]', 'ai'), ('ic', 's2', '["s"]', 'ai'), ('ic', 's3', '["r"]', 'manual');
+      INSERT INTO event_members (event_id, member_id) VALUES ('e1', 's'), ('e2', 's'), ('e3', 'r');`);
+		old.close();
+
+		const db = openDb(file);
+		expect(db.prepare('SELECT series_id, source FROM event_people').all()).toEqual([
+			{ series_id: 's3', source: 'manual' },
+		]);
+		expect(db.prepare('SELECT event_id, member_id FROM event_members ORDER BY event_id').all()).toEqual([
+			{ event_id: 'e2', member_id: 'r' },
+			{ event_id: 'e3', member_id: 'r' },
 		]);
 	});
 });
