@@ -87,13 +87,13 @@
 				Google Calendar information is used only to show and update your family's calendar in Sprig, and is shown
 				only to the people in your household. We don't sell it, use it for ads, or use it to train AI models, and
 				people at Sprig don't read it except to fix a problem you ask us to look at, for security, or where the law
-				requires it. It's shared with another service only to run a feature you use: event titles may be sent to
-				Anthropic to sort synced events by person, as described below.
+				requires it. It's shared with another service only to run a feature you use: an event's place may be sent to
+				Google Maps to work out the drive time, as described below. It's never sent to an AI service.
 			</p>
 			<p>
 				<strong>AI.</strong> Sprig doesn't use Google user data, or anything made from it, to develop, improve or
-				train AI or machine learning models. When event titles go to Anthropic's API to sort events by person, they
-				are used only to give you that answer; Anthropic doesn't train its models on them.
+				train AI or machine learning models, and never sends it to one. Who each event is for is worked out on our
+				server from the family names in its title, without AI.
 			</p>
 			<p>
 				<strong>Keeping it safe.</strong> Your Google access is stored encrypted, the copy of your events is kept on
@@ -145,11 +145,13 @@
 				</li>
 				<li>
 					<strong>Anthropic</strong> (the maker of Claude) reads what you hand it: a flyer you photograph or something
-					you say for <em>Snap a flyer</em> and <em>Say it</em>, a recipe page you add, dish ideas you ask for, and
-					event titles when sorting synced events by person. Anthropic doesn't use this to train its models.
+					you say for <em>Snap a flyer</em> and <em>Say it</em>, a recipe page you add, and dish ideas you ask for,
+					each only when you ask. Nothing from your calendars goes to it. Anthropic doesn't use this to train its
+					models.
 				</li>
 				<li>
-					<strong>Google Maps</strong> works out drive times and suggests addresses, from the addresses you type.
+					<strong>Google Maps</strong> works out drive times and suggests addresses, from the addresses you type and
+					the places on your events.
 				</li>
 				<li>
 					<strong>Open-Meteo</strong> and the <strong>U.S. Census Bureau's geocoder</strong> turn a place into a
