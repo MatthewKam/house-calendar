@@ -94,6 +94,11 @@ export async function convertVideo(
 			'-pix_fmt',
 			'yuv420p',
 			// The index at the front, so it starts playing before it's all downloaded.
+			// No metadata (where it was filmed, the phone, the date): only the picture is kept.
+			'-map_metadata',
+			'-1',
+			'-map_chapters',
+			'-1',
 			'-movflags',
 			'+faststart',
 			// "out_time_us=..." lines as it goes: how much is done.

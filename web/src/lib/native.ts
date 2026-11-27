@@ -13,6 +13,11 @@ export const isApp = Capacitor.isNativePlatform();
 
 /** Where the app's calls go: sprig-family.com, or VITE_APP_SERVER (a Mac's address while developing). */
 export const SERVER = isApp ? import.meta.env.VITE_APP_SERVER || 'https://sprig-family.com' : '';
+/**
+ * The site's own pages (privacy, support) by their full address: in the app (and on a computer running the
+ * app while developing) a short /privacy would open the app itself, which doesn't have them.
+ */
+export const SITE_PAGE = (path: '/privacy' | '/support', hash = '') => `https://sprig-family.com${path}${hash}`;
 
 const KEY = 'session';
 let session: { token: string; media: string } | null = null;

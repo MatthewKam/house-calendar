@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, type AuthStatus } from '../../lib/api';
-import { appleSignIn, isApp } from '../../lib/native';
+import { appleSignIn, isApp, SITE_PAGE } from '../../lib/native';
 import { pendingJoin } from '../../lib/joinCode';
 import { notChosen, offerPasskeyNext, passkeysWork, prepareSignIn, signInFromAutofill } from '../../lib/passkeys';
 import JoinForm from './JoinForm';
@@ -234,7 +234,14 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 				{!isApp && <GetTheApp />}
 				{!isApp && <About />}
 				<footer className={s.footer}>
-					<a href="/privacy">Privacy</a> · <a href="/support">Support</a>
+					{/* A new tab (in the app, a Safari sheet): the pages are the site's, not the app's. */}
+					<a href={SITE_PAGE('/privacy')} target="_blank" rel="noopener noreferrer">
+						Privacy
+					</a>{' '}
+					·{' '}
+					<a href={SITE_PAGE('/support')} target="_blank" rel="noopener noreferrer">
+						Support
+					</a>
 				</footer>
 			</div>
 		</main>

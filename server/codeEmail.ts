@@ -1,3 +1,5 @@
+import { CHILD_DATA, CHILD_NOT_KEPT, CHILD_USE } from '../shared/childPrivacy.ts';
+
 // The email with a code in it: to sign in, to set a new PIN, or a guardian's consent for their children
 // (identity.ts sends it). Sprig waving at the top, the code big, and a quote to grow on, a different one each
 // day. Plain text goes along with it. The consent email is also COPPA's direct notice to the parent (what's
@@ -8,12 +10,15 @@ export type CodeFor = 'sign-in' | 'pin' | 'consent' | 'consented';
 
 const PRIVACY = 'https://sprig-family.com/privacy#children';
 
-/** The notice a guardian reads before giving consent: paragraphs. */
+/**
+ * The notice a guardian reads before giving consent: paragraphs, exactly what's kept about a child (the same
+ * words as Settings → Family → Children's privacy and the privacy page, from shared/childPrivacy.ts).
+ */
 export const CONSENT_NOTICE = [
-	'Before you add a child to Sprig, here is what Sprig keeps about children, and your consent as their parent or guardian.',
-	"What's kept: what you put in about your child (name, birthday, stage, allergies, tasks, goals, rewards, moments you catch), what they do in Sprig (tasks ticked, stars, potty chart, reading and learning progress, list items, photos they upload), and their device's name and alert address.",
-	"Why: only to run Sprig for your family. No ads, nothing sold or shared. The only others who handle it are the services Sprig needs to work (our host, backups, email), and they may not use it for anything else. A child's device can't use Sprig's AI features.",
-	'How long: while your child is in your household; activity over 2 years old goes automatically; removing your child deletes what we have about them.',
+	'Before you add a child to Sprig, here is exactly what Sprig keeps about children, and your consent as their parent or guardian.',
+	...CHILD_DATA.map((g) => [`${g.title}:`, ...g.items.map((i) => `• ${i}`)].join('\n')),
+	['Never kept:', ...CHILD_NOT_KEPT.map((i) => `• ${i}`)].join('\n'),
+	["How it's used:", ...CHILD_USE.map((i) => `• ${i}`)].join('\n'),
 	"Your rights: you can see, change or delete anything about your child in the app, take this consent back (Settings → Family → Children's privacy), or ask us at hello@sprig-family.com.",
 	'Sprig is made and run by Tayno.',
 ];
@@ -67,7 +72,7 @@ export function codeEmail(code: string, purpose: CodeFor, site: string, now = ne
 		`Sprig · ${site} · hello@sprig-family.com`,
 	].join('\n');
 	const notice = words.length
-		? `<tr><td style="padding:0 28px 20px;font-size:14px;line-height:1.5;color:#1f2a1c">${words.map((p) => `<p style="margin:0 0 10px">${esc(p)}</p>`).join('')}<p style="margin:0"><a href="${PRIVACY}" style="color:#6b8f3a">The full notice</a></p></td></tr>`
+		? `<tr><td style="padding:0 28px 20px;font-size:14px;line-height:1.5;color:#1f2a1c">${words.map((p) => `<p style="margin:0 0 10px">${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}<p style="margin:0"><a href="${PRIVACY}" style="color:#6b8f3a">The full notice</a></p></td></tr>`
 		: '';
 	const heading = purpose === 'consented' ? 'Consent given' : "Hi! Here's your code";
 	// Tables and inline styles: what email apps show alike.

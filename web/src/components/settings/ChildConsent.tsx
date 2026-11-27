@@ -2,16 +2,61 @@ import { useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, problemText } from '../../lib/api';
 import { keys, useAuthStatus } from '../../lib/queries';
+import { SITE_PAGE } from '../../lib/native';
+import { CHILD_DATA, CHILD_NOT_KEPT, CHILD_USE } from '../../../../shared/childPrivacy';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Field';
 import s from './styles/Settings.module.css';
 
 /**
- * Children's privacy (Settings, Family): a guardian's consent for the household's children (COPPA, the
- * privacy page's Children section). Not given yet: Sprig emails the notice and a code, typed in here to give
- * it; a second email confirms it. Given: it can be taken back (the children's devices are signed out, and no
- * child can be added, until a guardian gives it again). Only guardians on their own account see it.
+ * Children's privacy (Settings, Family): exactly what Sprig keeps about a child (shared/childPrivacy.ts, the
+ * same words as the consent email and the privacy page), and a guardian's consent for it (COPPA). Not given
+ * yet: the list is open, and Sprig emails it with a code, typed in here to give consent; a second email
+ * confirms it. Given: the list folds away, and consent can be taken back (the children's devices are signed
+ * out, and no child can be added, until a guardian gives it again). Only guardians on their own account see it.
  */
+/** The full notice: the site's privacy page, outside the app (a new tab; in the app, a Safari sheet). */
+const NOTICE = SITE_PAGE('/privacy', '#children');
+
+/** Exactly what's kept about a child, what never is, and how it's used. */
+function WhatWeKeep() {
+	return (
+		<div className={s.kept}>
+			{CHILD_DATA.map((g) => (
+				<div key={g.title}>
+					<h4 className={s.keptTitle}>{g.title}</h4>
+					<ul className={s.keptList}>
+						{g.items.map((item) => (
+							<li key={item}>{item}</li>
+						))}
+					</ul>
+				</div>
+			))}
+			<div>
+				<h4 className={s.keptTitle}>Never kept</h4>
+				<ul className={s.keptList}>
+					{CHILD_NOT_KEPT.map((item) => (
+						<li key={item}>{item}</li>
+					))}
+				</ul>
+			</div>
+			<div>
+				<h4 className={s.keptTitle}>How it's used</h4>
+				<ul className={s.keptList}>
+					{CHILD_USE.map((item) => (
+						<li key={item}>{item}</li>
+					))}
+				</ul>
+			</div>
+			<p className={s.hint}>
+				<a href={NOTICE} target="_blank" rel="noopener noreferrer">
+					The full privacy notice
+				</a>
+			</p>
+		</div>
+	);
+}
+
 export default function ChildConsent({ hasChildren }: { hasChildren: boolean }) {
 	const auth = useAuthStatus().data;
 	const qc = useQueryClient();
@@ -58,9 +103,13 @@ export default function ChildConsent({ hasChildren }: { hasChildren: boolean }) 
 			{given ? (
 				<>
 					<p className={s.hint}>
-						✓ You've given consent, as their parent or guardian, for Sprig to keep what it needs about your children for
-						your family. <a href="/privacy#children">What that is</a>
+						✓ You've given consent, as their parent or guardian, for Sprig to keep what's below about your children, for
+						your family.
 					</p>
+					<details className={s.keptFold}>
+						<summary>What Sprig keeps about your children</summary>
+						<WhatWeKeep />
+					</details>
 					<p className={s.hint}>
 						Taking it back signs your children's devices out, and no child can be added, until a guardian gives it
 						again. Removing a child (tap them above) deletes what we have about them.
@@ -82,8 +131,9 @@ export default function ChildConsent({ hasChildren }: { hasChildren: boolean }) 
 						{hasChildren
 							? 'Sprig needs your consent, as their parent or guardian, for what it keeps about your children. '
 							: 'Before you add a child, Sprig needs your consent, as their parent or guardian, for what it keeps about children. '}
-						We'll email you what that is and a code to type in here. <a href="/privacy#children">Read it now</a>
+						Here is exactly what that is. We'll email it to you too, with a code to type in here.
 					</p>
+					<WhatWeKeep />
 					{sentTo ? (
 						<form className={s.row} onSubmit={confirm}>
 							<Input
