@@ -10,6 +10,7 @@ import { keys } from './lib/queries';
 import { api, problemText } from './lib/api';
 import { isApp, linksInSheet, openTappedAlerts, loadSession, syncPhoneCalendars } from './lib/native';
 import CookAlong from './components/recipes/CookAlong';
+import { watchCrashes } from './lib/crashes';
 
 const queryClient = new QueryClient({
 	// Edits show straight away and save in the background; if a save fails, the screen goes back and
@@ -50,6 +51,8 @@ if (import.meta.env.PROD && !isApp && 'serviceWorker' in navigator) {
 
 // Buttons press reliably on touch screens (no stray text selection or long-press menus).
 guardTouch();
+// Crashes are reported, so they can be fixed (lib/crashes.ts).
+watchCrashes();
 
 // The phone app reads its kept sign-in first (on the web there's nothing to wait for).
 await loadSession();

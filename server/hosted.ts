@@ -28,6 +28,8 @@ import { childConsentRoutes } from './hosted/childConsent.ts';
 import { googleRoutes } from './hosted/google.ts';
 import { deleteAccountRoutes } from './hosted/deleteAccount.ts';
 import { DEMO_OFF, demoBlocks, demoRoutes } from './hosted/demo.ts';
+import { crashRoutes } from './hosted/crashes.ts';
+import { crashLog, watchServerErrors } from './crashes.ts';
 
 /**
  * A Cooking together link's calls: /api/cook/<household>/<secret>, and its /me, /live and photos
@@ -37,6 +39,9 @@ const COOK_LINK = /^\/api\/cook\/([0-9a-f-]{36})\/([A-Za-z0-9_-]{32})(\/(?:me|li
 
 /** Google calling about a watched calendar (googleWatch.ts): /api/google/notify/<household>. */
 const GOOGLE_NOTIFY = /^\/api\/google\/notify\/([0-9a-f-]{36})$/;
+
+/** The front's own calls (signing in, accounts, crash reports), which no household answers. */
+const FRONT = /^\/api\/(?:(?:account|auth)\/|crash$)/;
 
 // The front of the hosted app. It signs people in (Apple, Google, or a code by email), keeps track
 // of households, invites and devices (accounts.ts), and passes every other /api call to the
@@ -98,6 +103,7 @@ function sendJson(res: ServerResponse, code: number, body: unknown) {
 
 export function buildServer(accounts: AccountsDB, households: HouseholdRegistry, opts: ServerOptions) {
 	let rootHandler: ((req: IncomingMessage, res: ServerResponse) => void) | null = null;
+	const crashes = opts.crashes ?? crashLog(accounts);
 	const app = Fastify({
 		logger: opts.logger ?? logger(),
 		trustProxy: opts.trustProxy ?? 'loopback',
@@ -106,11 +112,21 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 			return createServer((req, res) => {
 				handle(req, res).catch((err) => {
 					app.log.error(err);
+					// The address's ids made alike, so the same crash counts as one.
+					const route = (req.url ?? '/').split('?')[0].replace(/[0-9a-f-]{36}|[A-Za-z0-9_-]{32,}/g, ':id');
+					let householdId: string | null | undefined;
+					try {
+						householdId = sessionOf(req)?.household_id;
+					} catch {
+						// The accounts database is what failed: noted without the household.
+					}
+					crashes.server(err, { method: req.method, route, householdId });
 					if (!res.headersSent) sendJson(res, 500, { error: 'Something went wrong' });
 				});
 			});
 		},
 	});
+	watchServerErrors(app, (err, where) => crashes.server(err, where));
 	const x = sessions(accounts, households);
 	const protect = securityHeaders(opts.webDist);
 	const { sessionOf, contextOf, ownParent, isParent, isHolder, guardiansOf, actorOf, setParentUntil } = x;
@@ -206,7 +222,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 			req.url = `/api/cook/${cook[2]}${cook[3] ?? ''}${query}`;
 			return (await households.get(h)).app.routing(req, res);
 		}
-		if (path.startsWith('/api/') && !/^\/api\/(account|auth)\//.test(path)) {
+		if (path.startsWith('/api/') && !FRONT.test(path)) {
 			const s = sessionOf(req);
 			const c = s && contextOf(s);
 			if (!s || !c?.household || !c.role) return sendJson(res, 401, { error: 'Sign in first' });
@@ -231,6 +247,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 	googleRoutes(app, accounts, households, x, opts);
 	deleteAccountRoutes(app, accounts, households, x, opts);
 	demoRoutes(app, accounts, households, x, opts);
+	crashRoutes(app, x, crashes);
 
 	// For the host's health check: up, and the accounts database answers.
 	app.get('/health', async () => {
@@ -251,6 +268,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 	return {
 		app,
 		handle,
+		crashes,
 		close: async () => {
 			await app.close();
 			await households.closeAll();

@@ -5,6 +5,7 @@ import type { AccountsDB, HouseholdRow, MembershipRow, SessionRow } from '../acc
 import type { HouseholdRegistry } from '../households.ts';
 import type { SendCode, VerifyToken } from '../identity.ts';
 import type { GoogleOAuth } from '../providers/google.ts';
+import type { CrashLog } from '../crashes.ts';
 import { deviceLabel, sha } from '../auth.ts';
 
 // What the hosted front's routes share: who a request's session is, in which household and as whom,
@@ -72,6 +73,8 @@ export interface ServerOptions {
 	 */
 	clientIpHeader?: string;
 	logger?: boolean;
+	/** Where crash reports go (crashes.ts); made from the accounts database when not given. */
+	crashes?: CrashLog;
 }
 
 /** Hosted: only the proxy right in front is believed, so the address it adds is the one used. */

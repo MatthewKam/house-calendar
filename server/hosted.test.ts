@@ -253,6 +253,37 @@ describe("a guardian's consent for their children", () => {
 	});
 });
 
+describe('crash reports', () => {
+	const crashes = () => accounts.prepare('SELECT * FROM crashes').all() as Record<string, unknown>[];
+	const seen = () => accounts.prepare('SELECT * FROM crash_households').all() as Record<string, unknown>[];
+	const report = { message: 'TypeError: x is undefined', stack: 'at Today (index-1a2b.js:1:200)', place: 'Today' };
+
+	it('come in without signing in, and the same crash adds to its count', async () => {
+		const browser = device();
+		expect((await browser.post('/api/crash', { ...report, platform: 'web', version: '2611271805' })).status).toBe(204);
+		expect((await browser.post('/api/crash', report)).status).toBe(204);
+		expect(crashes()).toMatchObject([{ source: 'app', place: 'Today', count: 2, device: null }]);
+		expect(seen()).toEqual([]);
+	});
+
+	it("note a signed-in device's household and kind, and never an email", async () => {
+		const phone = await guardian();
+		await phone.post('/api/crash', { ...report, message: 'Error: no account for alex@example.com' });
+		const [crash] = crashes();
+		expect(crash).toMatchObject({ device: 'user', message: 'Error: no account for <email>' });
+		const household = accounts.prepare('SELECT id FROM households').get() as { id: string };
+		expect(seen()).toMatchObject([{ household_id: household.id, count: 1 }]);
+	});
+
+	it('take only so many a minute from one device, and refuse what is not a report', async () => {
+		const browser = device();
+		for (let i = 0; i < 15; i++)
+			await browser.post('/api/crash', { ...report, message: `Error: number ${'x'.repeat(i)}` });
+		expect(crashes()).toHaveLength(10);
+		expect((await browser.post('/api/crash', { stack: 'no message' })).status).toBe(400);
+	});
+});
+
 describe('Google calling about a watched calendar', () => {
 	it('reaches the household it names without signing in, always answered 200, and only by POST', async () => {
 		await guardian();

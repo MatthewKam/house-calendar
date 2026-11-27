@@ -18,6 +18,10 @@ export default defineConfig(({ mode }) => {
 			proxy: { '/api': { target: 'http://127.0.0.1:3000', changeOrigin: false } },
 		},
 		build: { outDir: 'dist', emptyOutDir: true },
+		// The build's stamp for crash reports (web/src/lib/crashes.ts): when it was made, in UTC, e.g. 2611271805.
+		define: {
+			'import.meta.env.VITE_BUILD': JSON.stringify(new Date().toISOString().replace(/\D/g, '').slice(2, 12)),
+		},
 		test: { root: '.', include: ['server/**/*.test.ts', 'web/src/**/*.test.ts'], env: { NODE_ENV: 'test' } },
 	} as any;
 });
