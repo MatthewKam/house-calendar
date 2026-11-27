@@ -220,6 +220,15 @@ describe("a guardian's consent for their children", () => {
 		const spare = (await alex.post('/api/account/invites', { kind: 'kid', name: 'Riley' })).body.code;
 		const ipad = device();
 		expect((await ipad.post('/api/account/join', { code: kidCode })).body).toMatchObject({ role: 'kid' });
+		// When and from whose email it was given: shown to guardians, never to a kid's device.
+		expect((await alex.get('/api/auth/status')).body.household).toMatchObject({
+			childConsentAt: expect.any(String),
+			childConsentBy: 'alex@example.com',
+		});
+		const kidSees = (await ipad.get('/api/auth/status')).body.household;
+		expect(kidSees.childConsent).toBe(true);
+		expect(kidSees).not.toHaveProperty('childConsentBy');
+		expect(kidSees).not.toHaveProperty('childConsentAt');
 
 		// Taken back: the kid's device is signed out, the unused code ends, and no child can be added.
 		expect((await alex.del('/api/account/child-consent')).body.household.childConsent).toBe(false);
