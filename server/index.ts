@@ -16,6 +16,7 @@ import { googleOAuth } from './providers/google.ts';
 import { googleCalendars } from './googleSync.ts';
 import { deleteOldHistory } from './retention.ts';
 import { crashLog } from './crashes.ts';
+import { usageLog } from './usage.ts';
 import { icloudCalendars } from './icloudSync.ts';
 import { loadKey, sealer } from './secrets.ts';
 import { loadVapid, webPusher } from './push.ts';
@@ -41,6 +42,9 @@ const dataDir = env.DATA_DIR ?? resolve(root, 'data');
 const accounts = openAccounts(resolve(dataDir, 'accounts.db'));
 // Crash reports (crashes.ts), from the app and the server, for the admin page.
 const crashes = crashLog(accounts);
+// The usage log (usage.ts): counts per household per day, for the admin page.
+const usage = usageLog(accounts);
+usage.start();
 relativizePaths(accounts, dataDir);
 const list = (s?: string) =>
 	(s ?? '')
@@ -100,6 +104,7 @@ const households = householdRegistry((h) => {
 	const app = buildApp(db, {
 		photosDir: fromStored(dataDir, h.photos_dir),
 		onServerError: (err, where) => crashes.server(err, { ...where, householdId: h.id }),
+		onUsage: (metric) => usage.count(h.id, metric),
 		sync: () =>
 			combineStatus([...(sync ? [sync.status] : []), ...(google?.statuses() ?? []), ...(icloud?.statuses() ?? [])]),
 		// Started just below, once the app's logger exists.
@@ -294,6 +299,7 @@ server.app.listen({ host, port }).catch((err) => {
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {
 	process.on(sig, async () => {
 		await server.close();
+		usage.stop();
 		accounts.close();
 		process.exit(0);
 	});

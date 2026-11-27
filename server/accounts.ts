@@ -198,6 +198,16 @@ const migrations: string[] = [
     PRIMARY KEY (fingerprint, household_id)
   );
   `,
+	// The usage log (usage.ts): counts per household per day, nothing about any one person.
+	`
+  CREATE TABLE usage_daily (
+    day          TEXT NOT NULL,
+    household_id TEXT NOT NULL REFERENCES households(id) ON DELETE CASCADE,
+    metric       TEXT NOT NULL,
+    count        INTEGER NOT NULL,
+    PRIMARY KEY (day, household_id, metric)
+  );
+  `,
 ];
 
 export function openAccounts(file: string): AccountsDB {
