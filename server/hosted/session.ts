@@ -79,6 +79,8 @@ export interface ServerOptions {
 	 * test accounts, whose households it marks as theirs (OWN_EMAILS; they can't open it). Without it, it's off.
 	 */
 	admin?: { email: string; own?: string[] };
+	/** A copy of the site that isn't the real one ("test", from SITE_LABEL): its pages say so, and it isn't indexed. */
+	siteLabel?: string;
 	/** The server's own health (health.ts), for the admin page; without it, the page leaves it out. */
 	health?: ServerHealth;
 	/** Where crash reports go (crashes.ts); made from the accounts database when not given. */

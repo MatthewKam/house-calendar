@@ -1,0 +1,45 @@
+# The test copy of the site: sprig-family-test.fly.dev. The same code as the real one (fly.toml), on its own machine,
+# disk and secrets, sharing nothing with it. It starts empty and never gets a copy of the real site's data (real
+# children's information stays where it is); fill it with demo families. Set up once with deploy/test-site.sh;
+# deploy whatever branch is checked out with `npm run deploy:test`.
+
+app = "sprig-family-test"
+primary_region = "sjc"
+
+[build]
+
+[env]
+  NODE_ENV = "production"
+  HOST = "0.0.0.0"
+  PORT = "3000"
+  DATA_DIR = "/data"
+  TRUST_PROXY = "1"
+  # Its pages say "Test site", and search engines skip it (server/hosted.ts).
+  SITE_LABEL = "test"
+
+# Its own small disk. No backups: what's here can be thrown away.
+[[mounts]]
+  source = "test_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  # Sleeps when nobody's using it, so it costs next to nothing; the first visit after wakes it (a few seconds).
+  # While it sleeps, background work (calendar syncs, alerts) waits.
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "30s"
+    method = "GET"
+    path = "/health"
+    timeout = "5s"
+
+# The same size as the real site, so the admin page's memory figures (and a scale test) compare.
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory = "1gb"

@@ -132,6 +132,13 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 	if (opts.health) watchTiming(app, opts.health.timing);
 	const x = sessions(accounts, households);
 	const protect = securityHeaders(opts.webDist);
+	// The test copy of the site (fly.test.toml): its pages say so (app.css shows a strip), and search engines skip it.
+	const label = opts.siteLabel && /^[a-z-]{1,20}$/.test(opts.siteLabel) ? opts.siteLabel : null;
+	const page = opts.webDist && join(opts.webDist, 'index.html');
+	const labelledPage =
+		label && page && existsSync(page)
+			? readFileSync(page, 'utf8').replace('<html', `<html data-site="${label}"`)
+			: null;
 	const { sessionOf, contextOf, ownParent, isParent, isHolder, guardiansOf, actorOf, setParentUntil } = x;
 
 	// ---- Passing calls to households ----------------------------------------
@@ -182,6 +189,12 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 			}
 		}
 		const path = (req.url ?? '/').split('?')[0];
+		if (label) res.setHeader('x-robots-tag', 'noindex, nofollow');
+		// The app's page, marked as the test site's (the same page the files would give, with data-site on it).
+		if (labelledPage && req.method === 'GET' && /^\/(index\.html|admin|cook\/.*)?$/.test(path)) {
+			res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' });
+			return res.end(labelledPage);
+		}
 		// Google, saying a watched calendar changed: no sign-in; the household checks the channel and its token.
 		// Always answered 200 (straight away, the sync runs after), so Google doesn't keep trying.
 		const notify = GOOGLE_NOTIFY.exec(path);

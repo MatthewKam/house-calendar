@@ -265,6 +265,8 @@ const server = buildServer(accounts, households, {
 	admin: env.ADMIN_EMAIL ? { email: env.ADMIN_EMAIL, own: list(env.OWN_EMAILS) } : undefined,
 	crashes,
 	health,
+	// The test copy of the site (fly.test.toml) sets SITE_LABEL=test.
+	siteLabel: env.SITE_LABEL || undefined,
 });
 
 // Something nothing caught (the server stops, as before, and the host starts it again): noted first.

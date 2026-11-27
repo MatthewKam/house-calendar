@@ -348,6 +348,9 @@ for backups. The app is at `https://<app>.fly.dev` (a custom domain can be added
 | `deploy/litestream.yml`   | Backs up every database in `/data` (new households too) to the bucket as it changes.            |
 | `deploy/set-secrets.sh`   | Sends the needed `.env` settings (and the token key) to Fly as secrets.                         |
 | `deploy/upload-data.sh`   | Copies this machine's data (accounts, households, photos) up, replacing what's there.           |
+| `fly.test.toml`           | The test copy of the site (sprig-family-test.fly.dev): its own machine and disk, sleeps when idle. |
+| `deploy/test-site.sh`     | Makes the test site once: the app, its disk, and its secrets from `.env`.                       |
+| `deploy/deploy-test.sh`   | `npm run deploy:test`: puts the checked-out branch on the test site, to try before the real one. |
 
 Once, to set it up:
 

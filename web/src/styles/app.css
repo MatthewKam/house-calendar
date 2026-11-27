@@ -49,6 +49,7 @@
 	--layer-toast: 30; /* toasts, and a flyer dragged over the page */
 	--layer-celebration: 40; /* a cheer, over everything */
 	--layer-photo: 60; /* a photo opened big */
+	--layer-site: 70; /* the test site's strip (below), over everything */
 	/* Corners, small to large. Use one of these rather than a number of your own; a corner that's part of a
 	   drawn shape (a circle: 50%; an em that grows with its text) says its own. */
 	--radius-xs: 0.4rem; /* tags, small badges, a key on a keypad */
@@ -292,4 +293,24 @@ input {
 }
 .pageHeadGlobal {
 	padding-bottom: var(--space-6);
+}
+
+/* The test copy of the site (fly.test.toml, SITE_LABEL=test, server/hosted.ts marks the page): a strip at the top
+   of every screen, so it's never mistaken for the real one. Taps go through it. */
+html[data-site='test'] body::after {
+	content: 'Test site';
+	position: fixed;
+	top: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: var(--layer-site);
+	padding: 0 var(--space-3);
+	border-radius: 0 0 var(--radius-xs) var(--radius-xs);
+	background: var(--warn-bg);
+	border: 1px solid var(--warn-line);
+	border-top: 0;
+	color: var(--warn);
+	font-size: var(--text-xs);
+	font-weight: var(--weight-bold);
+	pointer-events: none;
 }
