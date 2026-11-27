@@ -1,10 +1,12 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { feel } from '../../lib/haptics';
 import s from './styles/Button.module.css';
 
 // Sprig's buttons: one look per job, the same everywhere. A sheet's Save is `primary`, its Cancel
 // `secondary`; Delete in a confirm is `destructive`, a quieter red word is `danger`; Undo, Clear and
 // "Use a different email" are `link`; a quieter grey one beside another button (Cancel in a row, Undo,
 // Take back) is `quiet`. Kid mode's buttons are `size="lg"`.
+// Pressed, a primary or kid-sized button gives a light tap, and a destructive one a warning (lib/haptics).
 
 type Variant = 'primary' | 'secondary' | 'destructive' | 'danger' | 'link' | 'quiet';
 type Size = 'sm' | 'md' | 'lg';
@@ -29,11 +31,21 @@ export function Button({
 	className,
 	type = 'button',
 	children,
+	onClick,
 	...rest
 }: Props) {
 	const classes = [s.button, s[variant], s[size], block && s.block, className].filter(Boolean).join(' ');
+	const kind = variant === 'destructive' ? 'warn' : variant === 'primary' || size === 'lg' ? 'tap' : null;
 	return (
-		<button type={type} className={classes} {...rest}>
+		<button
+			type={type}
+			className={classes}
+			onClick={(e) => {
+				if (kind) feel(kind);
+				onClick?.(e);
+			}}
+			{...rest}
+		>
 			{icon !== undefined ? (
 				<>
 					<span className={s.icon} aria-hidden="true">

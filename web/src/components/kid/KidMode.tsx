@@ -34,6 +34,7 @@ import { RewardsIcon, TasksIcon, TodayIcon } from '../nav/NavBar';
 import PottyCard from '../tasks/PottyCard';
 import { StarIcon } from '../ui/icons';
 import ErrorBoundary from '../ui/ErrorBoundary';
+import { feel } from '../../lib/haptics';
 import s from './styles/KidMode.module.css';
 import { firstName } from '../../lib/people';
 import GrownUpPin from '../account/GrownUpPin';
@@ -176,6 +177,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin, startWi
 	function tick(t: Task) {
 		const ticked = didTask(done, t, kid.id, today);
 		if (!ticked) setPopped(t.id);
+		feel(ticked ? 'select' : 'done');
 		setDone.mutate({ taskId: t.id, memberId: kid.id, day: today, done: !ticked });
 	}
 

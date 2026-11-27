@@ -17,6 +17,7 @@ import { Button, IconButton } from '../ui/Button';
 import { Input } from '../ui/Field';
 import sheet from '../ui/styles/Sheet.module.css';
 import { iconChoices, ItemSheet, ListSheet, REMINDERS_ICON_NOTE } from './ListSheets';
+import { feel } from '../../lib/haptics';
 import s from './ListView.module.css';
 
 /** An item's place in the saved order: its name without the icon, ignoring case. */
@@ -262,7 +263,10 @@ export default function ListCard({ list, members, me, onShopping, color, onColor
 		const { icon, text } = splitIcon(it.title);
 		// No icon in its name: show a suggested one, lighter; the ✏️ sheet keeps it or picks another.
 		const suggested = icon ? null : suggestIcon(text);
-		const toggle = () => tick(it);
+		const toggle = () => {
+			feel(it.done ? 'select' : 'done');
+			tick(it);
+		};
 		return (
 			<div
 				className={`${s.row} ${it.done ? s.done : ''} ${it.done && (popped === it.id || held?.pinned.has(it.id)) ? s.justTicked : ''}`}

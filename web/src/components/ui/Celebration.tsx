@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { Cheer } from '../../lib/useCheer';
+import { feel } from '../../lib/haptics';
 import s from './styles/Celebration.module.css';
 
 const COLORS = ['#f6c445', '#ef6f6c', '#4ea8de', '#5cc28a', '#b48ae6', '#f59e4c', '#ff8fc7'];
@@ -71,8 +72,8 @@ export default function Celebration({
 	const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 	useEffect(() => {
 		const t = setTimeout(onDone, 5000);
-		// A happy buzz, on phones that can (Android; iPhones don't let web apps vibrate).
-		navigator.vibrate?.([80, 60, 80, 60, 160]);
+		// A happy buzz, on phones that can (lib/haptics).
+		feel('success');
 		return () => clearTimeout(t);
 	}, [onDone]);
 	const who = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0];

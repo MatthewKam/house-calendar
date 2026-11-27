@@ -1,5 +1,11 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { feel } from '../../lib/haptics';
 import s from './styles/NavBar.module.css';
+
+/** A tick under the finger for any of the bar's buttons (and More's). */
+const tick = (e: MouseEvent) => {
+	if ((e.target as HTMLElement).closest('button')) feel('select');
+};
 
 export type Page = 'calendar' | 'today' | 'tasks' | 'rewards' | 'lists' | 'photos' | 'recipes' | 'settings';
 
@@ -116,7 +122,7 @@ export default function NavBar({ page, onPage, onSettings, lock, phone, center, 
 		</button>
 	);
 	return (
-		<nav className={s.nav} aria-label="Main">
+		<nav className={s.nav} aria-label="Main" onClickCapture={tick}>
 			{item('today', 'Today', <TodayIcon />)}
 			{item('calendar', 'Calendar', <CalendarIcon />)}
 			{item('tasks', 'Tasks', <TasksIcon />)}
@@ -207,7 +213,7 @@ function BottomBar({ page, onPage, onSettings, lock, center }: Omit<Props, 'phon
 	};
 	return (
 		<>
-			<nav className={s.bar} aria-label="Main">
+			<nav className={s.bar} aria-label="Main" onClickCapture={tick}>
 				{tab('today', 'Today', <TodayIcon />)}
 				{tab('calendar', 'Calendar', <CalendarIcon />, 'Cal')}
 				<div className={s.center}>{center}</div>
@@ -224,7 +230,7 @@ function BottomBar({ page, onPage, onSettings, lock, center }: Omit<Props, 'phon
 			{more && (
 				<>
 					<div className={s.moreScrim} onClick={() => setMore(false)} role="presentation" />
-					<div className={s.moreSheet} role="dialog" aria-label="More">
+					<div className={s.moreSheet} role="dialog" aria-label="More" onClickCapture={tick}>
 						{MORE.map(([p, label, Icon]) => (
 							<button key={p} className={`${s.moreItem} ${page === p ? s.moreOn : ''}`} onClick={then(() => onPage(p))}>
 								<Icon />

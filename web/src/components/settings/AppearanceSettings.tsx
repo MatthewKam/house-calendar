@@ -1,10 +1,11 @@
 import type { CSSProperties } from 'react';
 import { ACCENTS, accentOf, useAccentSetting } from '../../lib/accent';
+import { canFeel, useHapticsSetting } from '../../lib/haptics';
 import { useAuthStatus, useSetSetting, useSettings } from '../../lib/queries';
 import { useTempUnit } from '../../lib/units';
 import { useThemeSetting, type Theme } from '../../lib/useTheme';
 import { UI_SCALES, useUiScale } from '../../lib/useUiScale';
-import { Section } from './parts';
+import { Section, SwitchRow } from './parts';
 import s from './styles/Settings.module.css';
 import { Segmented } from '../ui/Segmented';
 
@@ -24,6 +25,7 @@ export default function AppearanceSettings() {
 	const setSetting = useSetSetting();
 	// Light or dark, for this device (Same as this device: its own setting).
 	const [theme, setTheme] = useThemeSetting();
+	const [haptics, setHaptics] = useHapticsSetting();
 	const [accent, setAccent] = useAccentSetting();
 	const [unit, setUnit] = useTempUnit();
 	const [uiScale, setUiScale] = useUiScale();
@@ -100,6 +102,15 @@ export default function AppearanceSettings() {
 					options={[...UI_SCALES]}
 				/>
 			</Section>
+
+			{canFeel() && (
+				<SwitchRow
+					title="Vibration"
+					on={haptics}
+					onChange={setHaptics}
+					hint="A light tap under your finger for buttons, tabs, switches and ticking things off, on this device. On an iPhone it also follows Settings → Sounds & Haptics → System Haptics."
+				/>
+			)}
 		</>
 	);
 }

@@ -1,4 +1,5 @@
 import { useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { feel } from '../../lib/haptics';
 
 /** Props for the drag handle of one row. */
 export interface HandleProps {
@@ -60,6 +61,8 @@ export default function SortableList<T>({ items, getId, onReorder, className, dr
 		rows.forEach((r, i) => (r.el.style.transition = i === from ? 'none' : SLIDE));
 		drag.current = { id, startY: e.clientY, from, to: from, rows, shift: rows[from].height + Math.max(0, gap) };
 		setDragId(id);
+		// Picked up: a tap; each new place: a tick; let go somewhere new: a firmer tap (lib/haptics).
+		feel('tap');
 	}
 
 	function move(e: PointerEvent<HTMLElement>) {
@@ -76,6 +79,7 @@ export default function SortableList<T>({ items, getId, onReorder, className, dr
 		});
 		if (to === d.to) return;
 		d.to = to;
+		feel('select');
 		// Rows between the old and new place slide up or down by one row to make room.
 		d.rows.forEach((r, i) => {
 			if (i === d.from) return;
@@ -96,6 +100,7 @@ export default function SortableList<T>({ items, getId, onReorder, className, dr
 		requestAnimationFrame(() => d.rows.forEach((r) => (r.el.style.transition = '')));
 		setDragId(null);
 		if (commit && d.to !== d.from) {
+			feel('done');
 			const order = ids.filter((x) => x !== d.id);
 			order.splice(d.to, 0, d.id);
 			onReorder(order);

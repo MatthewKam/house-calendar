@@ -3,6 +3,7 @@ import { suggestIcon } from '../../lib/emoji';
 import type { ChecklistItem } from '../../lib/types';
 import IconPicker from './IconPicker';
 import { PencilIcon } from './icons';
+import { feel } from '../../lib/haptics';
 import s from './styles/Checklist.module.css';
 import { Button } from './Button';
 import { Input } from './Field';
@@ -84,7 +85,10 @@ export default function Checklist({
 									className={`${s.item} ${x.done ? s.done : ''}`}
 									aria-pressed={x.done}
 									disabled={busy}
-									onClick={() => onTick(x, !x.done)}
+									onClick={() => {
+										feel(x.done ? 'select' : 'done');
+										onTick(x, !x.done);
+									}}
 								>
 									<span className={s.tick} aria-hidden="true">
 										{x.done ? '✓' : ''}

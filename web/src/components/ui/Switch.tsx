@@ -1,3 +1,4 @@
+import { feel } from '../../lib/haptics';
 import s from './styles/Switch.module.css';
 
 /** An on/off switch: a pill with a knob, the accent when on. `label` is read out (the row shows its own title). */
@@ -20,7 +21,10 @@ export default function Switch({
 			aria-label={label}
 			className={s.switch}
 			disabled={disabled}
-			onClick={() => onChange(!on)}
+			onClick={() => {
+				feel('select');
+				onChange(!on);
+			}}
 		>
 			<span className={s.knob} aria-hidden="true" />
 		</button>

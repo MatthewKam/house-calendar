@@ -7,6 +7,7 @@ import type { Weather } from '../../lib/types';
 import { canFindHere, findHere, setHere, useWeatherHere } from '../../lib/useWeatherHere';
 import AddressInput from '../calendar/AddressInput';
 import { Loading, Skeleton, SkeletonLines } from '../ui/Skeleton';
+import { feel } from '../../lib/haptics';
 import s from './Today.module.css';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -279,6 +280,13 @@ function HourGraph({ hours, isDay }: { hours: Hour[]; isDay: (iso: string) => bo
 	const box = useRef<HTMLDivElement>(null);
 	const [width, setWidth] = useState(0);
 	const [picked, setPicked] = useState<number | null>(null);
+	// A tick for each hour the finger passes, like turning a dial (not for a mouse pointing along).
+	const touched = useRef(false);
+	const lastPicked = useRef<number | null>(null);
+	useEffect(() => {
+		if (picked !== null && picked !== lastPicked.current && touched.current) feel('select');
+		lastPicked.current = picked;
+	}, [picked]);
 	useEffect(() => {
 		const el = box.current;
 		if (!el) return;
@@ -346,6 +354,7 @@ function HourGraph({ hours, isDay }: { hours: Hour[]; isDay: (iso: string) => bo
 					role="img"
 					aria-label={`Temperatures from ${hourLabel(hours[0].time)} to ${hourLabel(hours[hours.length - 1].time)}: high ${hi}°, low ${lo}°`}
 					onPointerDown={(e) => {
+						touched.current = e.pointerType !== 'mouse';
 						const i = pick(e);
 						// The same hour tapped again: put it away.
 						setPicked((was) => (was === i && e.pointerType !== 'mouse' ? null : i));

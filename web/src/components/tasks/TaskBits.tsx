@@ -3,6 +3,7 @@ import { categoryLabel } from '../../lib/tasks';
 import type { Task } from '../../lib/types';
 import { StarIcon } from '../ui/icons';
 import { Tag } from '../ui/Chip';
+import { feel } from '../../lib/haptics';
 import s from './styles/Tasks.module.css';
 
 /** A task's icon (if any) and title. */
@@ -55,7 +56,10 @@ export function TaskTick({ task, ticked, onToggle }: { task: Task; ticked: boole
 		<button
 			className={`${s.task} ${ticked ? s.ticked : ''} ${task.required ? '' : s.extra}`}
 			aria-pressed={ticked}
-			onClick={onToggle}
+			onClick={() => {
+				feel(ticked ? 'select' : 'done');
+				onToggle();
+			}}
 		>
 			<span className={s.box} aria-hidden="true">
 				{ticked ? '✓' : ''}
