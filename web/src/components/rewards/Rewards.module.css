@@ -209,6 +209,13 @@
 	font-weight: var(--weight-semibold);
 	overflow-wrap: anywhere;
 }
+.rowTitle > button {
+	min-height: unset;
+	margin-top: -15px;
+	min-width: unset;
+	height: auto !important;
+	width: auto !important;
+}
 .rowSub {
 	color: var(--muted);
 	font-size: var(--text-sm);
