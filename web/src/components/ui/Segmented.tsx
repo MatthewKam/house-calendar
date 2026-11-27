@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { feel } from '../../lib/haptics';
 import s from './styles/Segmented.module.css';
 
 interface Option<T extends string> {
@@ -36,7 +37,10 @@ export function Segmented<T extends string>({ label, options, value, onChange, t
 						role={tabs ? 'tab' : undefined}
 						aria-selected={tabs ? on : undefined}
 						aria-pressed={tabs ? undefined : on}
-						onClick={() => onChange(o.id)}
+						onClick={() => {
+							if (o.id !== value) feel('select');
+							onChange(o.id);
+						}}
 					>
 						{o.label}
 						{o.hint && <span className={s.hint}>{o.hint}</span>}
