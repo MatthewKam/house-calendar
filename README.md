@@ -374,8 +374,8 @@ set up), and the Fly dashboard shows memory, CPU and the bill.
   sending-only key) in `.env`; the domain's records are in GoDaddy's DNS.
 - **Google:** add `https://<app>.fly.dev` under Authorized JavaScript origins and
   `https://<app>.fly.dev/api/account/google/callback` under redirect URIs.
-- **Restoring a backup:** `fly ssh console`, then `litestream restore -config /app/deploy/litestream.yml <path>`
-  for a database. Photos are covered by the disk snapshots (`fly volumes snapshots list`).
+- **Restoring a backup:** see [deploy/restoring.md](deploy/restoring.md): databases from Litestream (to the
+  second, back to the last midnight UTC), everything else from the daily disk snapshots (14 days).
 
 ### Connect iCloud
 
