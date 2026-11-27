@@ -29,6 +29,7 @@ import { googleRoutes } from './hosted/google.ts';
 import { deleteAccountRoutes } from './hosted/deleteAccount.ts';
 import { DEMO_OFF, demoBlocks, demoRoutes } from './hosted/demo.ts';
 import { crashRoutes } from './hosted/crashes.ts';
+import { adminRoutes } from './hosted/admin.ts';
 import { crashLog, watchServerErrors } from './crashes.ts';
 
 /**
@@ -40,8 +41,8 @@ const COOK_LINK = /^\/api\/cook\/([0-9a-f-]{36})\/([A-Za-z0-9_-]{32})(\/(?:me|li
 /** Google calling about a watched calendar (googleWatch.ts): /api/google/notify/<household>. */
 const GOOGLE_NOTIFY = /^\/api\/google\/notify\/([0-9a-f-]{36})$/;
 
-/** The front's own calls (signing in, accounts, crash reports), which no household answers. */
-const FRONT = /^\/api\/(?:(?:account|auth)\/|crash$)/;
+/** The front's own calls (signing in, accounts, crash reports, the admin page), which no household answers. */
+const FRONT = /^\/api\/(?:(?:account|auth|admin)\/|crash$)/;
 
 // The front of the hosted app. It signs people in (Apple, Google, or a code by email), keeps track
 // of households, invites and devices (accounts.ts), and passes every other /api call to the
@@ -248,6 +249,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 	deleteAccountRoutes(app, accounts, households, x, opts);
 	demoRoutes(app, accounts, households, x, opts);
 	crashRoutes(app, x, crashes);
+	adminRoutes(app, accounts, x, opts);
 
 	// For the host's health check: up, and the accounts database answers.
 	app.get('/health', async () => {
@@ -260,6 +262,8 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 		app.register(fastifyStatic, { root: opts.webDist });
 		// A Cooking together link opens the app, which shows the cooking page for it (main.tsx).
 		app.get('/cook/*', (_req, reply) => reply.sendFile('index.html'));
+		// The admin page (components/admin): the app shows it, or nothing, for whoever's signed in.
+		app.get('/admin', (_req, reply) => reply.sendFile('index.html'));
 		// The plain pages the App Store links to (web/public/pages/), at short addresses.
 		for (const page of ['privacy', 'support'])
 			app.get(`/${page}`, (_req, reply) => reply.sendFile(`pages/${page}.html`));

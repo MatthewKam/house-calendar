@@ -81,6 +81,7 @@ beforeEach(async () => {
 		logger: false,
 		sendCode: async (email, code) => void codes.set(email, code),
 		review: { email: 'review@sprig-family.com', code: '246810' },
+		admin: { email: 'Alex@Example.com', own: ['tester@example.com'] },
 		passkeys: { rpID: 'sprig.test', origins: ['https://sprig.test'] },
 		googleCalendar: {
 			authUrl: (redirect, state, hint) =>
@@ -281,6 +282,38 @@ describe('crash reports', () => {
 			await browser.post('/api/crash', { ...report, message: `Error: number ${'x'.repeat(i)}` });
 		expect(crashes()).toHaveLength(10);
 		expect((await browser.post('/api/crash', { stack: 'no message' })).status).toBe(400);
+	});
+});
+
+describe('the admin page', () => {
+	it('is there only for the admin, on their own account; to anyone else it is not there at all', async () => {
+		expect((await device().get('/api/admin/overview')).status).toBe(404);
+		const pat = device();
+		await pat.signIn('pat@example.com');
+		await pat.post('/api/account/households', { name: 'The Lees', yourName: 'Pat' });
+		expect((await pat.get('/api/admin/overview')).status).toBe(404);
+		const alex = await guardian();
+		expect((await alex.get('/api/admin/overview')).status).toBe(200);
+	});
+
+	it("shows households by number, marking the admin's, their test accounts' and the real families", async () => {
+		const pat = device();
+		await pat.signIn('pat@example.com');
+		await pat.post('/api/account/households', { name: 'The Lees', yourName: 'Pat' });
+		const tester = device();
+		await tester.signIn('tester@example.com');
+		await tester.post('/api/account/households', { name: 'Test', yourName: 'T' });
+		const alex = await guardian();
+		await pat.post('/api/crash', { message: 'Error: broke', place: 'Today' });
+		const { body } = await alex.get('/api/admin/overview');
+		expect(body.households).toMatchObject([
+			{ number: 1, tag: null, guardians: 1, kids: 0, devices: { user: 1 } },
+			{ number: 2, tag: 'test' },
+			{ number: 3, tag: 'you' },
+		]);
+		expect(body.signUps.map((u: { tag: string | null }) => u.tag)).toEqual([null, 'test', 'you']);
+		expect(body.crashes).toMatchObject([{ message: 'Error: broke', households: [1] }]);
+		expect(JSON.stringify(body)).not.toMatch(/Lees|pat@|Pat/);
 	});
 });
 

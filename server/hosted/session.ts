@@ -73,6 +73,11 @@ export interface ServerOptions {
 	 */
 	clientIpHeader?: string;
 	logger?: boolean;
+	/**
+	 * The admin page (hosted/admin.ts): the one account that may open it (ADMIN_EMAIL), and the emails of its
+	 * test accounts, whose households it marks as theirs (OWN_EMAILS; they can't open it). Without it, it's off.
+	 */
+	admin?: { email: string; own?: string[] };
 	/** Where crash reports go (crashes.ts); made from the accounts database when not given. */
 	crashes?: CrashLog;
 }

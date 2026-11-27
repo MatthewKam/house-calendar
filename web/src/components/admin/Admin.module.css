@@ -1,0 +1,200 @@
+/* The admin page (AdminPage.tsx): a plain page of cards, one column on a phone. */
+
+/* The app keeps the page itself still (app.css), so this scrolls. Text can be selected, to copy a stack. */
+.page {
+	height: 100%;
+	overflow-y: auto;
+	background: var(--bg);
+	color: var(--text);
+	-webkit-user-select: text;
+	user-select: text;
+}
+
+.inner {
+	max-width: 72rem;
+	margin: 0 auto;
+	padding: var(--space-5) var(--space-5) var(--space-8);
+	display: grid;
+	gap: var(--space-5);
+}
+
+.head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	justify-content: space-between;
+	gap: var(--space-4);
+}
+
+.title {
+	margin: 0;
+	font-size: var(--text-2xl);
+}
+
+.muted {
+	margin: 0;
+	color: var(--muted);
+	font-size: var(--text-sm);
+}
+
+.stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+	gap: var(--space-4);
+}
+
+.stat {
+	display: grid;
+	gap: var(--space-1);
+	padding: var(--space-4);
+	background: var(--surface);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-md);
+}
+
+.statLabel {
+	color: var(--muted);
+	font-size: var(--text-sm);
+}
+
+.statValue {
+	font-size: var(--text-3xl);
+	font-weight: var(--weight-bold);
+	font-variant-numeric: tabular-nums;
+}
+
+.charts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+	gap: var(--space-5);
+}
+
+.chart {
+	margin: 0;
+	display: grid;
+	gap: var(--space-2);
+}
+
+.chartHead {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--space-3);
+	font-size: var(--text-sm);
+}
+
+.chartTitle {
+	font-weight: var(--weight-semibold);
+}
+
+.chartValue {
+	color: var(--muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.chartValue strong {
+	color: var(--text);
+}
+
+.chartSvg {
+	width: 100%;
+	height: 7rem;
+	touch-action: none;
+}
+
+.bar {
+	fill: color-mix(in srgb, var(--accent) 55%, var(--surface));
+}
+
+.barOn {
+	fill: var(--accent);
+}
+
+.baseline {
+	stroke: var(--line);
+	vector-effect: non-scaling-stroke;
+}
+
+.chartAxis {
+	display: flex;
+	justify-content: space-between;
+	color: var(--muted);
+	font-size: var(--text-xs);
+}
+
+.features {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: var(--space-1);
+}
+
+.feature {
+	width: 100%;
+	display: grid;
+	grid-template-columns: 1fr auto;
+	align-items: center;
+	gap: var(--space-1) var(--space-3);
+	padding: var(--space-2);
+	border: 0;
+	border-radius: var(--radius-sm);
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+}
+
+.feature:hover {
+	background: var(--bg);
+}
+
+.featureName {
+	font-size: var(--text-sm);
+}
+
+/* Under the name and count, the whole width. */
+.featureBar {
+	grid-column: 1 / -1;
+	grid-row: 2;
+	height: var(--space-3);
+	border-radius: var(--radius-round);
+	background: var(--bg);
+	overflow: hidden;
+}
+
+.featureBar span {
+	display: block;
+	height: 100%;
+	border-radius: var(--radius-round);
+	background: var(--accent);
+}
+
+.featureCount {
+	font-size: var(--text-sm);
+	font-variant-numeric: tabular-nums;
+}
+
+.routes {
+	margin: 0 0 var(--space-3);
+	padding-left: var(--space-6);
+	display: grid;
+	gap: var(--space-1);
+	font-size: var(--text-sm);
+}
+
+.stack {
+	margin: 0;
+	padding: var(--space-3);
+	max-height: 20rem;
+	overflow: auto;
+	background: var(--bg);
+	border-radius: var(--radius-sm);
+	font-size: var(--text-xs);
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.number {
+	font-weight: var(--weight-bold);
+	font-variant-numeric: tabular-nums;
+}

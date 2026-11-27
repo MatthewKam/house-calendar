@@ -252,6 +252,8 @@ const server = buildServer(accounts, households, {
 	trustProxy: env.TRUST_PROXY === '1' ? oneHop : 'loopback',
 	// On Fly, its own header says who's calling (X-Forwarded-For ends with one of Fly's servers).
 	clientIpHeader: env.FLY_APP_NAME ? 'fly-client-ip' : undefined,
+	// The admin page: for ADMIN_EMAIL only; OWN_EMAILS are your test accounts, marked as yours.
+	admin: env.ADMIN_EMAIL ? { email: env.ADMIN_EMAIL, own: list(env.OWN_EMAILS) } : undefined,
 	crashes,
 });
 
