@@ -394,6 +394,10 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
 				name: c.household.name,
 				/** A guardian has given consent for the household's children (hosted/childConsent.ts). */
 				childConsent: !!c.household.child_consent_at,
+				/** When and from which email it was given: for guardians only. */
+				...(c.role === 'guardian' && c.household.child_consent_at
+					? { childConsentAt: c.household.child_consent_at, childConsentBy: c.household.child_consent_email ?? null }
+					: {}),
 			},
 			households: theirs,
 			role: c.role,

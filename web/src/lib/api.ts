@@ -207,7 +207,14 @@ export type AuthStatus =
 			/** How this person signs in (none for a kid's device or the wall). */
 			signIns?: ('apple' | 'google' | 'email')[];
 			/** childConsent: a guardian has given consent for the household's children (COPPA). */
-			household: { id: string; name: string; childConsent?: boolean } | null;
+			household: {
+				id: string;
+				name: string;
+				childConsent?: boolean;
+				/** Guardians only: when consent was given, and from which email. */
+				childConsentAt?: string;
+				childConsentBy?: string | null;
+			} | null;
 			households: { id: string; name: string; role: Role }[];
 			role: Role | null;
 			memberId: string | null;

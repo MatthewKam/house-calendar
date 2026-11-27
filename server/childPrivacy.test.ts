@@ -15,7 +15,7 @@ const page = readFileSync(resolve(import.meta.dirname, '../web/public/pages/priv
 	.replace(/\s+/g, ' ');
 
 describe("what's kept about a child", () => {
-	const all = [...CHILD_DATA.flatMap((g) => [`${g.title}:`, ...g.items]), ...CHILD_NOT_KEPT, ...CHILD_USE];
+	const all = [...CHILD_DATA.flatMap((g) => [g.title, g.why, ...g.items]), ...CHILD_NOT_KEPT, ...CHILD_USE];
 
 	it('is on the privacy page word for word', () => {
 		expect(all.filter((line) => !page.includes(line))).toEqual([]);
@@ -23,6 +23,6 @@ describe("what's kept about a child", () => {
 
 	it('is all in the consent email', () => {
 		const email = CONSENT_NOTICE.join('\n');
-		expect(all.filter((line) => !email.includes(line.replace(/:$/, '')))).toEqual([]);
+		expect(all.filter((line) => !email.includes(line))).toEqual([]);
 	});
 });

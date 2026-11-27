@@ -823,31 +823,48 @@
 	}
 }
 
-/* Children's privacy: exactly what's kept about a child, a heading and a bulleted list for each kind. */
+/* Children's privacy: exactly what's stored about a child, a block for each kind, side by side when there's room. */
+.keptHeading {
+	margin: var(--space-2) 0 0;
+	font-size: var(--text-md);
+	font-weight: var(--weight-semibold);
+}
 .kept {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-4);
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+	gap: var(--space-3);
+}
+.keptBlock {
+	padding: var(--space-3) var(--space-4);
+	border-radius: var(--radius);
+	background: var(--surface);
+	border: 1px solid var(--line);
+}
+/* What's never stored: set apart. */
+.keptNever {
+	background: var(--bg);
 }
 .keptTitle {
-	margin: 0 0 var(--space-1);
+	margin: 0 0 var(--space-2);
 	font-size: var(--text-sm);
 	font-weight: var(--weight-semibold);
 }
-.keptList {
-	margin: 0;
-	padding-left: var(--space-6);
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-1);
+/* Why Sprig needs it, under each block's heading. */
+.keptWhy {
+	margin: 0 0 var(--space-2);
 	color: var(--muted);
 	font-size: var(--text-sm);
 }
-/* Folded once consent is given; its summary looks like a link. */
-.keptFold > summary {
-	cursor: pointer;
-	color: var(--accent);
+.keptList {
+	margin: 0;
+	padding-left: var(--space-5);
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
 	font-size: var(--text-sm);
-	font-weight: var(--weight-semibold);
-	margin-bottom: var(--space-3);
+}
+/* Children's privacy: the first line, saying where things stand. */
+.consentLead {
+	margin: 0;
+	font-size: var(--text-md);
 }

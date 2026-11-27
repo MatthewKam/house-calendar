@@ -15,9 +15,9 @@ const PRIVACY = 'https://sprig-family.com/privacy#children';
  * words as Settings → Family → Children's privacy and the privacy page, from shared/childPrivacy.ts).
  */
 export const CONSENT_NOTICE = [
-	'Before you add a child to Sprig, here is exactly what Sprig keeps about children, and your consent as their parent or guardian.',
-	...CHILD_DATA.map((g) => [`${g.title}:`, ...g.items.map((i) => `• ${i}`)].join('\n')),
-	['Never kept:', ...CHILD_NOT_KEPT.map((i) => `• ${i}`)].join('\n'),
+	'What does Sprig need to know about your child? Exactly this, and only to run Sprig for your family. Your consent, as their parent or guardian, is for this.',
+	...CHILD_DATA.map((g) => [`${g.title}: ${g.why}`, ...g.items.map((i) => `• ${i}`)].join('\n')),
+	['Never stored:', ...CHILD_NOT_KEPT.map((i) => `• ${i}`)].join('\n'),
 	["How it's used:", ...CHILD_USE.map((i) => `• ${i}`)].join('\n'),
 	"Your rights: you can see, change or delete anything about your child in the app, take this consent back (Settings → Family → Children's privacy), or ask us at hello@sprig-family.com.",
 	'Sprig is made and run by Tayno.',

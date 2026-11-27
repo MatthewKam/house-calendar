@@ -2,72 +2,82 @@
 // Family → Children's privacy shows it (web ChildConsent), the consent email carries it (server/codeEmail.ts),
 // and the privacy page's Children section says the same words (server/childPrivacy.test.ts checks each is
 // there). Change it here and on the page together. docs/coppa.md has where each is kept in the code.
+// Each line names what's stored, short enough to scan.
 
 export interface ChildDataGroup {
 	title: string;
+	/** Why Sprig needs it. */
+	why: string;
+	/** Exactly what's stored. */
 	items: string[];
 }
 
-/** What's kept about a child, by where it comes from. */
+/** What's stored about a child, by kind. */
 export const CHILD_DATA: ChildDataGroup[] = [
 	{
 		title: 'About them (you add it)',
+		why: "So everyone sees who's who, their stars suit their age, and recipes warn about allergies.",
+		items: ['Name and color', 'Birthday, or a stage you pick', 'Allergies'],
+	},
+	{
+		title: 'Tasks and stars',
+		why: "So they can tick their tasks and fill their jars, and you can see how they're doing.",
 		items: [
-			'Their name and the color that marks them.',
-			'Their birthday, or the stage you pick for them (little, early, middle, tween or teen).',
-			'Allergies you add, so recipes can flag them.',
+			'The tasks you give them',
+			'Each tick: the day, time and stars earned',
+			'Goals: when each started and was done, and your note',
+			'"Caught being good" moments: the kind, your note and the stars',
+			'Stars put in jars, rewards you set, and when each is won',
 		],
 	},
 	{
-		title: 'Tasks, stars and rewards',
-		items: [
-			'The tasks you give them, and each time one is ticked: the day, the time and the stars it earned.',
-			'Goals you set them: when each started and was done, and any note you write.',
-			'Moments you catch them being good: what kind, your note, and the stars.',
-			'Stars they put in jars (which jar and when), the rewards you set, and when each is won.',
-		],
+		title: 'Potty chart (if you use it)',
+		why: 'So their chart fills in as they go.',
+		items: ['Each step marked, pee or poo, and the time'],
 	},
 	{
-		title: 'Potty chart and learning games (only if you turn them on)',
-		items: [
-			'Each potty step marked (ask, sit, go, wipe, wash), whether it was pee or poo, and when.',
-			'Each learning game played: the skill, the level, how many rounds and how many right the first time, and the stars; how long they played each day; their level in each skill.',
-		],
+		title: 'Learning games (if you turn them on)',
+		why: 'So games get harder as they learn, and stop at the time you set.',
+		items: ['Each game: the skill, level, rounds, how many right first time, stars', 'Minutes played each day'],
 	},
 	{
 		title: 'Family things they take part in',
+		why: "So they're on the calendar, lists and photos with the rest of the family.",
 		items: [
-			'Events they are on, which you add or which come from calendars you connect.',
-			'List items they add or tick, with who ticked each and when.',
-			'Photos and videos they upload from their device, and when each was taken. Photos and videos others add may show them; Sprig does not look at who is in a photo.',
+			"Events they're on",
+			'List items they add or tick, and when',
+			'Photos and videos they upload, and the date each was taken',
 		],
 	},
 	{
-		title: 'Their device (one you add with a code)',
+		title: 'Their device (added with a code)',
+		why: 'So you can see their devices and sign one out, and alerts reach them at the right time.',
 		items: [
-			'Its name (for example "iPad · Safari"), when it was added and when it was last used.',
-			'If alerts are on: the address its notification service gives us for sending them, and its time zone.',
+			'Its name, like "iPad · Safari"',
+			'When it was added and last used',
+			'If alerts are on: its alert address and time zone',
 		],
 	},
 	{
-		title: 'An older child who signs in themselves',
-		items: ['Their email address, and how they sign in: Apple, Google, a code we email them, or a passkey.'],
+		title: 'An older child who signs in',
+		why: 'So they can sign in on their own.',
+		items: ['Their email address, and how they sign in'],
 	},
 ];
 
-/** What Sprig never keeps about a child. */
+/** What Sprig never stores about a child. */
 export const CHILD_NOT_KEPT = [
-	'Where they are: no location history. If "Here" is picked for the weather, the device\'s rough location (about a kilometer) is used for the forecast and not kept.',
-	'Their voice: Sprig never records children, and videos are kept without sound.',
-	"Hidden details in photos and videos, such as where they were taken: they're removed when each is added.",
-	'Their contacts, or anything from other apps on their device.',
-	'Advertising IDs, or anything that follows them to other apps or websites.',
+	'Where they are (a rough location for the weather is used once, not stored)',
+	'Their voice (videos are kept without sound)',
+	"Where a photo or video was taken (it's removed when it's added)",
+	'Contacts, or anything from their other apps',
+	'Advertising IDs, or anything that tracks them elsewhere',
 ];
 
-/** How it's used, and by whom: short lines. */
+/** How it's used, and by whom. */
 export const CHILD_USE = [
-	'It is used only to run Sprig for your family. No ads, nothing sold, nothing shared for anyone else to use.',
-	"Your household sees it: guardians see everything; your children's devices and the family wall show what's meant for them.",
-	"The only others who handle it are the services Sprig needs to work (our host, our backups, and email for codes), and they may not use it for anything else. A child's device can't use Sprig's AI features.",
-	'Activity over 2 years old is deleted automatically, and removing your child deletes what we keep about them.',
+	'Only to run Sprig for your family, seen only by your household',
+	"Never sold, never used for ads, and a child's device can't use Sprig's AI features",
+	'Handled only by the services Sprig runs on (our host, backups, and email for codes)',
+	'Activity over 2 years old is deleted; removing a child deletes everything about them',
 ];
