@@ -9,6 +9,7 @@ import { isKid } from '../../lib/people';
 import { starterTasks, type StarterTask } from '../../lib/tasks';
 import type { Member } from '../../lib/types';
 import PhoneCalendars from '../settings/PhoneCalendars';
+import ChildConsent from '../settings/ChildConsent';
 import GoogleCalendars from '../settings/GoogleCalendars';
 import ICloudCalendars from '../settings/ICloudCalendars';
 import { Issued } from '../settings/HouseholdAccess';
@@ -84,10 +85,17 @@ function NextButton({ done, onNext, last }: { done: boolean; onNext: () => void;
 	);
 }
 
-/** The kids: a name and a birthday each (the birthday sets their stage: games, tasks and how they earn). */
+/**
+ * The kids: a name and a birthday each (the birthday sets their stage: games, tasks and how they earn). A
+ * parent's OK comes first (COPPA): until a guardian has given it, the step is Children's privacy (what Sprig
+ * stores about a child, and the emailed code), and the form shows once they have.
+ */
 export function Kids({ kids, last, onNext }: { kids: Member[]; last?: boolean; onNext: () => void }) {
 	const qc = useQueryClient();
 	const members = useMembers().data ?? [];
+	const auth = useAuthStatus().data;
+	// Signed out (the wall from before accounts) there's nothing to ask.
+	const consented = !auth?.signedIn || !!auth.household?.childConsent;
 	const [name, setName] = useState('');
 	const [birthdate, setBirthdate] = useState('');
 	const [error, setError] = useState<string | null>(null);
@@ -99,7 +107,11 @@ export function Kids({ kids, last, onNext }: { kids: Member[]; last?: boolean; o
 		setError(null);
 		try {
 			const m = await api.addMember({ name: name.trim(), color: PALETTE[members.length % PALETTE.length] });
-			await api.updateMember(m.id, { birthdate });
+			// No birthday, no kid: someone half made is taken out again, so a refused birthday leaves nobody behind.
+			await api.updateMember(m.id, { birthdate }).catch(async (err: unknown) => {
+				await api.deleteMember(m.id).catch(() => {});
+				throw err;
+			});
 			setName('');
 			setBirthdate('');
 			await qc.invalidateQueries({ queryKey: keys.members });
@@ -109,6 +121,15 @@ export function Kids({ kids, last, onNext }: { kids: Member[]; last?: boolean; o
 			setBusy(false);
 		}
 	}
+
+	if (!consented)
+		return (
+			<>
+				<h1 className={s.title}>Your kids</h1>
+				<ChildConsent hasChildren={false} />
+				<NextButton done={false} onNext={onNext} last={last} />
+			</>
+		);
 
 	return (
 		<>
