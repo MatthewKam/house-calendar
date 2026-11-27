@@ -1,4 +1,4 @@
--- A household's database (server/db.ts), at version 70. Written by server/schema.test.ts; don't edit by hand.
+-- A household's database (server/db.ts), at version 71. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
@@ -360,7 +360,7 @@ CREATE TABLE phones (
     member_id  TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
     name       TEXT NOT NULL,
     last_sync  TEXT NOT NULL
-  );
+  , wake_token TEXT, wake_sandbox INTEGER NOT NULL DEFAULT 0);
 
 CREATE TABLE photos (
     id            TEXT PRIMARY KEY,

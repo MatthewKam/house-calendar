@@ -19,6 +19,7 @@ function setup(withPush = true, withApple = true) {
 						if (gone.has(endpoint)) throw Object.assign(new Error('Gone'), { statusCode: 410 });
 						sent.push({ endpoint, alert });
 					},
+					async wake() {},
 				}
 			: undefined,
 	};

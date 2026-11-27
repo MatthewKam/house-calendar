@@ -133,6 +133,8 @@ export const OutboxStatus = z.object({
 	pending: z.int(),
 	/** The newest problem sending, if edits are stuck (offline, or iCloud refusing). */
 	lastError: z.string().nullable(),
+	/** Phones with edits waiting for them to open Sprig ("Matt's iPhone"), by name. */
+	waitingOn: z.array(z.string()),
 	conflicts: z.array(
 		z.object({
 			id: z.int(),

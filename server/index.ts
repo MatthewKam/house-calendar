@@ -22,6 +22,7 @@ import { claudeUnderstand } from './capture.ts';
 import { claudeReadRecipe } from './recipes.ts';
 import { claudeDishIdeas, claudeSurprise } from './dishIdeas.ts';
 import { combineStatus } from './sync.ts';
+import { phoneWaker } from './phoneWake.ts';
 import { clearBackupsHourly, s3Bucket } from './backups.ts';
 
 const root = resolve(import.meta.dirname, '..');
@@ -78,6 +79,8 @@ const push = {
 
 const households = householdRegistry((h) => {
 	const db = openDb(fromStored(dataDir, h.db_file));
+	// Phones that changes made here wait for are woken to save them (phoneWake.ts).
+	const phoneWake = phoneWaker(db, push.apple, (err) => app.log.error({ err }, 'waking phones failed'));
 	// The household from before accounts keeps the .env iCloud and Reminders setup. Every household
 	// connects its own: Google sign-in per person, and iCloud with an app-specific password.
 	const legacy = h.legacy === 1;
@@ -110,11 +113,13 @@ const households = householdRegistry((h) => {
 				if (sync?.canWrite) sync.soon();
 				icloud?.soon();
 				google?.soon();
+				phoneWake.soon();
 			},
 			now: () => {
 				if (sync?.canWrite) sync.sendNow();
 				icloud?.sendNow();
 				google?.sendNow();
+				phoneWake.soon(1_000);
 			},
 		},
 		remindersToken: legacy ? env.REMINDERS_TOKEN || undefined : undefined,

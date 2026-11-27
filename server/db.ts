@@ -1079,6 +1079,11 @@ const migrations: Migration[] = [
 		db.prepare("DELETE FROM event_people WHERE source = 'ai'").run();
 		applyPeople(db);
 	},
+	// How to wake a phone (Apple's silent push) when a change made in Sprig waits for it (phoneWake.ts).
+	`
+  ALTER TABLE phones ADD COLUMN wake_token TEXT;
+  ALTER TABLE phones ADD COLUMN wake_sandbox INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

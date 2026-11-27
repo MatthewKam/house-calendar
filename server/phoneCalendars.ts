@@ -4,13 +4,15 @@ import { syncOnce } from './sync.ts';
 import { gaveWay, handOver, passwordSources } from './handover.ts';
 import { schemaOf } from './schemas.ts';
 import type { CalendarSource, RemoteEvent } from './providers/types.ts';
-import { PhoneSync, type Phone, type PhoneEvent } from '../shared/calendars.ts';
+import { editsForPhone, takePhoneResults } from './phoneOutbox.ts';
+import { PhoneEditResults, PhoneSync, type Phone, type PhoneEvent } from '../shared/calendars.ts';
 
 // Calendars read from someone's iPhone (the app's PhoneCalendars plugin): no password, the phone just asks
 // to see its calendars. The phone sends every calendar the person shares, with their events over the sync
 // window, whenever Sprig opens or iOS lets it refresh; each send replaces what that phone sent before,
-// through the same snapshot sync as iCloud (sync.ts). They're read-only here: changing one is done on the
-// phone. Someone who also connects iCloud with a password (always in step, and changes go back to iCloud)
+// through the same snapshot sync as iCloud (sync.ts). A calendar the phone says it can save to can be
+// changed in Sprig too: the change waits until the phone next sends, which hands it back for the phone to
+// save (phoneOutbox.ts); the rest are changed on the phone only. Someone who also connects iCloud with a password (always in step, and changes go back to iCloud)
 // has their phone's iCloud calendars left out, so they don't show twice, unless iCloud has refused the
 // password for over an hour: then the phone's copy takes over until it works again (handover.ts).
 
@@ -60,14 +62,34 @@ export function registerPhoneCalendars(app: FastifyInstance, db: DB) {
 			const refused = sources.filter((s) => gaveWay(db, s));
 			const working = sources.length > refused.length;
 			const calendars = req.body.calendars.filter((c) => !(working && /icloud/i.test(c.account)));
-			const result = await syncOnce(db, phoneSource(id, memberId, calendars, req.body.events));
+			const source = phoneSource(id, memberId, calendars, req.body.events);
+			const result = await syncOnce(db, source);
 			const took = refused.reduce((n, s) => n + handOver(db, s, [sourceKey(id)]), 0);
 			if (took) req.log.info({ events: took }, "a phone took over iCloud's calendars from a refused password");
+			const wake = req.body.wake;
 			db.prepare(
-				`INSERT INTO phones (id, member_id, name, last_sync) VALUES (?, ?, ?, ?)
-         ON CONFLICT(id) DO UPDATE SET name = excluded.name, last_sync = excluded.last_sync`,
-			).run(id, memberId, req.body.name, new Date().toISOString());
-			return { ...summary(phone(id)!), events: result.events };
+				`INSERT INTO phones (id, member_id, name, last_sync, wake_token, wake_sandbox) VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET name = excluded.name, last_sync = excluded.last_sync,
+           wake_token = COALESCE(excluded.wake_token, phones.wake_token),
+           wake_sandbox = CASE WHEN excluded.wake_token IS NULL THEN phones.wake_sandbox ELSE excluded.wake_sandbox END`,
+			).run(id, memberId, req.body.name, new Date().toISOString(), wake?.token ?? null, wake?.sandbox ? 1 : 0);
+			// Changes made in Sprig, checked against what it just sent, for it to save.
+			const edits = editsForPhone(db, id, req.body.events.map(toRemote));
+			return { ...summary(phone(id)!), events: result.events, edits };
+		},
+	);
+
+	// What the phone did with the changes it was handed. Only the phone's own person (or, signed out, anyone).
+	app.post<{ Params: { phone: string }; Body: PhoneEditResults }>(
+		'/api/phone-calendars/:phone/edits',
+		{ schema: { body: schemaOf(PhoneEditResults) } },
+		async (req, reply) => {
+			const row = phone(req.params.phone);
+			if (!row) return reply.code(404).send({ error: 'Not found' });
+			if (req.raw.viewer && req.raw.viewer.memberId !== row.member_id) {
+				return reply.code(403).send({ error: "That's someone else's phone" });
+			}
+			return { saved: takePhoneResults(db, row.id, req.body.results) };
 		},
 	);
 
@@ -80,6 +102,9 @@ export function registerPhoneCalendars(app: FastifyInstance, db: DB) {
 			return reply.code(403).send({ error: "Locked: unlock with a guardian's PIN to change this", locked: true });
 		}
 		db.transaction(() => {
+			db.prepare('DELETE FROM event_outbox WHERE calendar_id IN (SELECT id FROM calendars WHERE source = ?)').run(
+				sourceKey(row.id),
+			);
 			db.prepare('DELETE FROM calendars WHERE source = ?').run(sourceKey(row.id));
 			db.prepare('DELETE FROM phones WHERE id = ?').run(row.id);
 		})();
@@ -106,8 +131,8 @@ function phoneSource(
 				name: c.name,
 				primary: c.primary,
 				color: c.color ?? undefined,
-				// Changed on the phone, not here.
-				writable: false,
+				// Changed in Sprig too only when the phone can save it (newer app builds).
+				writable: c.writable === true,
 				account: c.account,
 			})),
 		fetchRange: async (calendarRemoteId) =>
