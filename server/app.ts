@@ -36,6 +36,7 @@ import { registerEvents } from './events.ts';
 import { schemaOf } from './schemas.ts';
 import { watchServerErrors } from './crashes.ts';
 import { watchUsage } from './usage.ts';
+import { watchTiming } from './health.ts';
 import { SettingKey, SettingValue, type Settings } from '../shared/settings.ts';
 import type { z } from 'zod';
 
@@ -87,12 +88,15 @@ export function buildApp(
 		onServerError?: (err: Error, where: { method: string; route?: string }) => void;
 		/** Told of each change that went through, by route, for the usage log (usage.ts). */
 		onUsage?: (metric: string) => void;
+		/** Told how long each answer took, by route, for the server health (health.ts). */
+		onTiming?: (route: string, ms: number) => void;
 	} = {},
 ) {
 	// trustProxy: behind Tailscale's HTTPS (tailscale serve), so the device's address and https are seen.
 	const app = Fastify({ logger: logger(), trustProxy: 'loopback' });
 	if (opts.onServerError) watchServerErrors(app, opts.onServerError);
 	if (opts.onUsage) watchUsage(app, opts.onUsage);
+	if (opts.onTiming) watchTiming(app, opts.onTiming);
 
 	// Parent-only changes need a guardian (or a device unlocked with a guardian's PIN).
 	registerGuard(app);

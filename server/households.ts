@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { DB } from './db.ts';
 import type { HouseholdRow } from './accounts.ts';
+import type { SyncStatus } from '../shared/calendars.ts';
 
 // Each household runs as its own app (app.ts) on its own database, built the first time someone
 // in it signs in, and kept running (its syncs and timers too) until the server stops or it's deleted.
@@ -14,6 +15,8 @@ interface HouseholdApp {
 		/** Google called about one of its watches (googleWatch.ts); true when it was one of this household's. */
 		notified?(channelId: string | undefined, token: string | undefined, state: string | undefined): boolean;
 	};
+	/** Each Google and iCloud account it syncs, as it stands (for the admin page's server health). */
+	syncStatuses?(): SyncStatus[];
 	/** Takes out a person's calendar connections (giving back Google's access): their account is being deleted. */
 	disconnect?(memberId: string): Promise<void>;
 	close(): Promise<void>;
@@ -41,6 +44,13 @@ export function householdRegistry(make: (h: HouseholdRow) => HouseholdApp) {
 			const running = live.get(id);
 			live.delete(id);
 			await running?.then((h) => h.close()).catch(() => {});
+		},
+		/** How many are running. */
+		running: () => live.size,
+		/** The ones running (those still starting are waited for; one that failed to start is left out). */
+		async all(): Promise<HouseholdApp[]> {
+			const settled = await Promise.allSettled([...live.values()]);
+			return settled.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
 		},
 		async closeAll() {
 			const all = [...live.values()];

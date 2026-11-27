@@ -8,6 +8,7 @@ import { Segmented } from '../ui/Segmented';
 import { Tag } from '../ui/Chip';
 import { Button } from '../ui/Button';
 import DayChart, { shortDay } from './DayChart';
+import Health from './Health';
 import { areaName, areaOf, isAutomatic, routeName } from './features';
 import s from './Admin.module.css';
 
@@ -126,6 +127,8 @@ function Overview({
 						]}
 					/>
 				</header>
+
+				{data.health && <Health health={data.health} />}
 
 				<div className={s.stats}>
 					<Stat label="Households" value={households.length} />

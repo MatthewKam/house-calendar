@@ -60,4 +60,28 @@ export interface AdminOverview {
 	/** Changes over the last 30 days, by route and household. */
 	uses: AdminUse[];
 	crashes: AdminCrash[];
+	/** The server's own health, when it's measured (always, once running). */
+	health: AdminHealth | null;
+}
+
+/** How a figure stands: fine, worth watching, or act now. */
+export type HealthLevel = 'ok' | 'warn' | 'bad';
+
+/** One figure in the admin page's server health (server/health.ts says each one's thresholds). */
+export interface HealthGauge {
+	id: 'memory' | 'disk' | 'data' | 'households' | 'busy' | 'speed' | 'syncs';
+	label: string;
+	/** The figure: "412 MB of 1 GB". */
+	value: string;
+	/** What it means, or what's in it. */
+	detail: string;
+	level: HealthLevel;
+}
+
+export interface AdminHealth {
+	gauges: HealthGauge[];
+	/** The slowest kinds of request over the last hour (waiting-for-a-change ones left out). */
+	slowest: { route: string; count: number; maxMs: number; p95Ms: number }[];
+	/** When the server started. */
+	startedAt: string;
 }

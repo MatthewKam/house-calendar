@@ -17,6 +17,7 @@ import { googleCalendars } from './googleSync.ts';
 import { deleteOldHistory } from './retention.ts';
 import { crashLog } from './crashes.ts';
 import { usageLog } from './usage.ts';
+import { serverHealth } from './health.ts';
 import { icloudCalendars } from './icloudSync.ts';
 import { loadKey, sealer } from './secrets.ts';
 import { loadVapid, webPusher } from './push.ts';
@@ -45,6 +46,12 @@ const crashes = crashLog(accounts);
 // The usage log (usage.ts): counts per household per day, for the admin page.
 const usage = usageLog(accounts);
 usage.start();
+// The server's own health (health.ts): memory, disk, how busy, how fast, syncs behind; for the admin page.
+const health = serverHealth({
+	dataDir,
+	households: () => households,
+	householdCount: () => (accounts.prepare('SELECT COUNT(*) AS n FROM households').get() as { n: number }).n,
+});
 relativizePaths(accounts, dataDir);
 const list = (s?: string) =>
 	(s ?? '')
@@ -105,6 +112,7 @@ const households = householdRegistry((h) => {
 		photosDir: fromStored(dataDir, h.photos_dir),
 		onServerError: (err, where) => crashes.server(err, { ...where, householdId: h.id }),
 		onUsage: (metric) => usage.count(h.id, metric),
+		onTiming: health.timing,
 		sync: () =>
 			combineStatus([...(sync ? [sync.status] : []), ...(google?.statuses() ?? []), ...(icloud?.statuses() ?? [])]),
 		// Started just below, once the app's logger exists.
@@ -192,6 +200,7 @@ const households = householdRegistry((h) => {
 		app,
 		db,
 		google: google ?? undefined,
+		syncStatuses: () => [...(sync ? [sync.status] : []), ...(google?.statuses() ?? []), ...(icloud?.statuses() ?? [])],
 		async disconnect(memberId) {
 			for (const kind of [google, icloud])
 				for (const c of kind?.list() ?? []) if (c.memberId === memberId) await kind!.remove(c.id);
@@ -255,6 +264,7 @@ const server = buildServer(accounts, households, {
 	// The admin page: for ADMIN_EMAIL only; OWN_EMAILS are your test accounts, marked as yours.
 	admin: env.ADMIN_EMAIL ? { email: env.ADMIN_EMAIL, own: list(env.OWN_EMAILS) } : undefined,
 	crashes,
+	health,
 });
 
 // Something nothing caught (the server stops, as before, and the host starts it again): noted first.

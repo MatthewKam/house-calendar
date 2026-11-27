@@ -6,6 +6,7 @@ import type { HouseholdRegistry } from '../households.ts';
 import type { SendCode, VerifyToken } from '../identity.ts';
 import type { GoogleOAuth } from '../providers/google.ts';
 import type { CrashLog } from '../crashes.ts';
+import type { ServerHealth } from '../health.ts';
 import { deviceLabel, sha } from '../auth.ts';
 
 // What the hosted front's routes share: who a request's session is, in which household and as whom,
@@ -78,6 +79,8 @@ export interface ServerOptions {
 	 * test accounts, whose households it marks as theirs (OWN_EMAILS; they can't open it). Without it, it's off.
 	 */
 	admin?: { email: string; own?: string[] };
+	/** The server's own health (health.ts), for the admin page; without it, the page leaves it out. */
+	health?: ServerHealth;
 	/** Where crash reports go (crashes.ts); made from the accounts database when not given. */
 	crashes?: CrashLog;
 }

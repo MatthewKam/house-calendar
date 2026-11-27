@@ -37,7 +37,7 @@ export function adminRoutes(app: FastifyInstance, accounts: AccountsDB, x: Sessi
 		return !!admin && s?.kind === 'user' && !!s.user_id && emailsOf(s.user_id).includes(admin);
 	}
 
-	function overview(): AdminOverview {
+	function overview(): Omit<AdminOverview, 'health'> {
 		const households = accounts
 			.prepare('SELECT rowid AS number, id, legacy, created_at FROM households ORDER BY rowid')
 			.all() as { number: number; id: string; legacy: number; created_at: string }[];
@@ -175,9 +175,9 @@ export function adminRoutes(app: FastifyInstance, accounts: AccountsDB, x: Sessi
 		};
 	}
 
-	app.get('/api/admin/overview', async (req, reply) => {
+	app.get('/api/admin/overview', async (req, reply): Promise<AdminOverview | undefined> => {
 		if (!isAdmin(req)) return reply.code(404).send({ error: 'Not found' });
 		reply.header('cache-control', 'no-store');
-		return overview();
+		return { ...overview(), health: (await opts.health?.snapshot()) ?? null };
 	});
 }

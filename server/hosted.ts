@@ -31,6 +31,7 @@ import { DEMO_OFF, demoBlocks, demoRoutes } from './hosted/demo.ts';
 import { crashRoutes } from './hosted/crashes.ts';
 import { adminRoutes } from './hosted/admin.ts';
 import { crashLog, watchServerErrors } from './crashes.ts';
+import { watchTiming } from './health.ts';
 
 /**
  * A Cooking together link's calls: /api/cook/<household>/<secret>, and its /me, /live and photos
@@ -128,6 +129,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 		},
 	});
 	watchServerErrors(app, (err, where) => crashes.server(err, where));
+	if (opts.health) watchTiming(app, opts.health.timing);
 	const x = sessions(accounts, households);
 	const protect = securityHeaders(opts.webDist);
 	const { sessionOf, contextOf, ownParent, isParent, isHolder, guardiansOf, actorOf, setParentUntil } = x;
