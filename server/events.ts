@@ -1,6 +1,7 @@
 import type { SyncedEdits } from './calendars.ts';
 import type { FastifyInstance } from 'fastify';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { LIVE_TIMES, liveAnswer, type LiveTimes } from './shopping.ts';
 import type { DB } from './db.ts';
 import { isDay, allMembersExist, schemaOf } from './schemas.ts';
 import { assignManually } from './people.ts';
@@ -81,6 +82,31 @@ const EVENT_SELECT = `
     EXISTS (SELECT 1 FROM event_special s WHERE ${SERIES_OF}) AS special,
     ${CHECKLIST_SQL} AS checklist
   FROM events e`;
+
+/** Each household's last events fingerprint, and how many writes its database had made when it was taken. */
+const stamps = new WeakMap<DB, { writes: number; stamp: string }>();
+
+/**
+ * A fingerprint of everything the calendar shows (every event as the range sends it, and the calendars'
+ * names, colours and whether they're hidden): it changes when any of it does, except when it was last saved. Worked out again only after
+ * something was written to the household's database, so asking every second costs next to nothing; a sync
+ * that rewrites the same events leaves it as it was.
+ */
+export function eventsStamp(db: DB): string {
+	const writes = (db.prepare('SELECT total_changes() AS n').get() as { n: number }).n;
+	const known = stamps.get(db);
+	if (known?.writes === writes) return known.stamp;
+	const hash = createHash('sha1');
+	// Not updated_at: a sync sets it afresh even when nothing changed, and it isn't shown.
+	for (const row of db.prepare(`${EVENT_SELECT} ORDER BY e.id`).iterate() as Iterable<Record<string, unknown>>) {
+		const { updated_at: _, ...shown } = row;
+		hash.update(JSON.stringify(shown));
+	}
+	hash.update(JSON.stringify(db.prepare('SELECT id, name, color, hidden FROM calendars ORDER BY id').raw().all()));
+	const stamp = hash.digest('hex').slice(0, 16);
+	stamps.set(db, { writes, stamp });
+	return stamp;
+}
 
 /** An event's calendar and series (every repeat of it), which its special mark and flyer are kept by. */
 const seriesOf = (db: DB, eventId: string) =>
@@ -179,8 +205,16 @@ const PHONE_READ_ONLY =
  * Event routes. `syncedEdits` is present when changes to synced events can be sent to iCloud (soon()
  * sends a new edit after the Undo window); without it, synced events are read-only.
  */
-export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: SyncedEdits) {
+export function registerEvents(app: FastifyInstance, db: DB, syncedEdits?: SyncedEdits, live: LiveTimes = LIVE_TIMES) {
 	// ---- Events ------------------------------------------------------------
+
+	// An open screen asks again and again; each ask is answered as soon as anything it shows changes
+	// (a Google calendar the moment Google says, another device's edit), or after a wait as it is. The
+	// answer is only the fingerprint: the screen then fetches the events it's showing.
+	app.get<{ Querystring: { stamp?: string } }>('/api/events/live', async (req, reply) => {
+		const { stamp } = await liveAnswer(() => eventsStamp(db), req.query.stamp, reply, live);
+		return { stamp };
+	});
 	const getEvent = (id: string) => toEvent(db.prepare(`${EVENT_SELECT} WHERE e.id = ?`).get(id) as EventRow);
 	const knownPhoto = (id?: string | null) => !id || !!db.prepare('SELECT 1 FROM photos WHERE id = ?').get(id);
 	/** Replaces who a wall event is for. */

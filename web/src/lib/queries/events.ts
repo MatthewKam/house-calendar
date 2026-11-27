@@ -2,10 +2,11 @@
 // changes waiting for iCloud or Google, time-to-leave alerts and travel times.
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { addDays, dayKey } from '../dates';
 import type { EventInput, CalEvent, LeaveAlert, ChecklistItem, OutboxStatus, Visibility } from '../types';
-import { showNow, putBack, newId, REFRESH_MS, keys } from './shared';
+import { showNow, putBack, newId, REFRESH_MS, keys, askLive } from './shared';
 
 /** Events overlapping the `days` local days starting at `from`. */
 export function useRangeEvents(from: Date, days: number) {
@@ -19,6 +20,32 @@ export function useRangeEvents(from: Date, days: number) {
 		// Keep showing the old range while the next one loads, so paging doesn't flash empty.
 		placeholderData: keepPreviousData,
 	});
+}
+
+/**
+ * While `on` and the page is in sight: the events on screen are fetched again as soon as the server says
+ * anything they show changed (a Google calendar the moment Google tells Sprig, another device's edit),
+ * instead of at the next minute's refresh, which carries on regardless.
+ */
+export function useLiveEvents(on: boolean) {
+	const qc = useQueryClient();
+	const [inSight, setInSight] = useState(() => document.visibilityState === 'visible');
+	useEffect(() => {
+		const look = () => setInSight(document.visibilityState === 'visible');
+		document.addEventListener('visibilitychange', look);
+		return () => document.removeEventListener('visibilitychange', look);
+	}, []);
+	useEffect(() => {
+		if (!on || !inSight) return;
+		const stop = new AbortController();
+		let seen: string | null = null;
+		void askLive(stop.signal, api.liveEvents, ({ stamp }) => {
+			// The first answer is how things are now; after that, a new one means they changed.
+			if (seen !== null && stamp !== seen) void qc.invalidateQueries({ queryKey: keys.events });
+			seen = stamp;
+		});
+		return () => stop.abort();
+	}, [on, inSight, qc]);
 }
 
 /** "Time to leave" alerts; checked often so the wall shows one on time. */

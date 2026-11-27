@@ -96,7 +96,7 @@ export function buildApp(
 	registerMembers(app, db, opts);
 
 	// ---- Events, and edits waiting for iCloud (events.ts) ------------------
-	registerEvents(app, db, opts.syncedEdits);
+	registerEvents(app, db, opts.syncedEdits, opts.liveLists);
 
 	// ---- Synced calendars, sync status and calendar accounts (calendars.ts) --
 	registerCalendars(app, db, opts);

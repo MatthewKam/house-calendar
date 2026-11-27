@@ -41,6 +41,36 @@ export const REFRESH_MS = 60_000;
 // ---- Live, while shopping together -----------------------------------------------------------
 
 /**
+ * Asks again and again until `signal` aborts, each ask answered by the server as soon as something changed
+ * (or after its wait, as it is), sending back the last answer's stamp. Without a signal it tries again in a
+ * moment. `answered` gets each answer.
+ */
+export async function askLive<T extends { stamp: string }>(
+	signal: AbortSignal,
+	ask: (stamp: string | null, signal: AbortSignal) => Promise<T>,
+	answered: (live: T) => void,
+) {
+	const pause = (ms: number) =>
+		new Promise<void>((done) => {
+			const t = setTimeout(done, ms);
+			signal.addEventListener('abort', () => {
+				clearTimeout(t);
+				done();
+			});
+		});
+	let stamp: string | null = null;
+	while (!signal.aborted) {
+		try {
+			const live = await ask(stamp, signal);
+			stamp = live.stamp;
+			answered(live);
+		} catch {
+			await pause(3_000);
+		}
+	}
+}
+
+/**
  * While `on`: asks again and again for what's cached at `key`, each ask answered as soon as it changes
  * on the server (a tick on the other phone), and puts it in the cache (made from the answer, and what was there). Its edits use `key` as their
  * mutation key: while one is on its way it answers with the data itself, and an answer from here could
@@ -59,26 +89,9 @@ export function useLive<T extends { stamp: string }>(
 		if (!on) return;
 		const queryKey = JSON.parse(id) as QueryKey;
 		const stop = new AbortController();
-		const pause = (ms: number) =>
-			new Promise<void>((done) => {
-				const t = setTimeout(done, ms);
-				stop.signal.addEventListener('abort', () => {
-					clearTimeout(t);
-					done();
-				});
-			});
-		void (async () => {
-			let stamp: string | null = null;
-			while (!stop.signal.aborted) {
-				try {
-					const live = await ask(stamp, stop.signal);
-					stamp = live.stamp;
-					if (!qc.isMutating({ mutationKey: queryKey })) qc.setQueryData(queryKey, (old: unknown) => data(live, old));
-				} catch {
-					await pause(3_000);
-				}
-			}
-		})();
+		void askLive(stop.signal, ask, (live) => {
+			if (!qc.isMutating({ mutationKey: queryKey })) qc.setQueryData(queryKey, (old: unknown) => data(live, old));
+		});
 		return () => stop.abort();
 		// ask and data are the same calls each time; the key's words say when it's another one.
 		// eslint-disable-next-line react-hooks/exhaustive-deps

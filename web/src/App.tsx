@@ -15,6 +15,7 @@ import {
 	useSettings,
 	useSyncStatus,
 	useAuthStatus,
+	useLiveEvents,
 } from './lib/queries';
 import EventDialog from './components/calendar/EventDialog';
 import CalendarPage from './components/calendar/CalendarPage';
@@ -158,6 +159,8 @@ export default function App() {
 	// Who's signed in here, shown at the bottom of the bar.
 	const auth = useAuthStatus().data;
 	const signedIn = auth?.signedIn ? auth : null;
+	// Events on screen update within seconds of a change (a Google calendar, another device), not each minute.
+	useLiveEvents(!!signedIn);
 	// Settings is for grown-ups: on it with the device locked (it locked itself, or a refresh on
 	// #settings), off to the first page.
 	const settingsLocked = page === 'settings' && !!auth && !parentLock.parent;

@@ -593,6 +593,9 @@ export const api = {
 	/** Shopping together from a list (on), or stopping (server/lists.ts). */
 	setShopping: (id: string, on: boolean) => call<SprigList[]>('PUT', `/api/lists/${id}/shopping`, { on }),
 	/** The lists as soon as they're not as the stamp says, or after a while (asked over and over while shopping together). */
+	/** Answers as soon as anything the calendar shows changes (or after a wait): only its fingerprint. */
+	liveEvents: (stamp: string | null, signal: AbortSignal) =>
+		call<{ stamp: string }>('GET', `/api/events/live${stamp ? `?stamp=${stamp}` : ''}`, undefined, { signal }),
 	liveLists: (stamp: string | null, signal: AbortSignal) =>
 		call<LiveLists>('GET', `/api/lists/live${stamp ? `?stamp=${stamp}` : ''}`, undefined, { signal }),
 	changeList: (id: string, patch: ListPatch) => call<SprigList[]>('PATCH', `/api/lists/${id}`, patch),
