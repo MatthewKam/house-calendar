@@ -823,33 +823,34 @@
 	}
 }
 
-/* Children's privacy: exactly what's stored about a child, a block for each kind, side by side when there's room. */
+/* Children's privacy: exactly what's stored about a child, as a plain document: a heading for each kind,
+   why Sprig needs it, and a list. */
 .keptHeading {
-	margin: var(--space-2) 0 0;
+	font-size: var(--text-md);
+	font-weight: var(--weight-semibold);
+	cursor: pointer;
+	color: var(--accent);
+}
+/* The question, folded; open, the answer under it. */
+.keptFold {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+}
+.keptFold[open] > summary {
+	margin-bottom: var(--space-3);
+}
+.kept {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-5);
+}
+.keptTitle {
+	margin: 0 0 var(--space-1);
 	font-size: var(--text-md);
 	font-weight: var(--weight-semibold);
 }
-.kept {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-	gap: var(--space-3);
-}
-.keptBlock {
-	padding: var(--space-3) var(--space-4);
-	border-radius: var(--radius);
-	background: var(--surface);
-	border: 1px solid var(--line);
-}
-/* What's never stored: set apart. */
-.keptNever {
-	background: var(--bg);
-}
-.keptTitle {
-	margin: 0 0 var(--space-2);
-	font-size: var(--text-sm);
-	font-weight: var(--weight-semibold);
-}
-/* Why Sprig needs it, under each block's heading. */
+/* Why Sprig needs it, under each heading. */
 .keptWhy {
 	margin: 0 0 var(--space-2);
 	color: var(--muted);

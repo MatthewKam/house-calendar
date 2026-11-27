@@ -11,17 +11,17 @@ import s from './styles/Settings.module.css';
 /**
  * Children's privacy (Settings, Family): exactly what Sprig keeps about a child (shared/childPrivacy.ts, the
  * same words as the consent email and the privacy page), and a guardian's consent for it (COPPA). Not given
- * yet: the list, and Sprig emails it with a code, typed in here to give consent; a second email
+ * yet: the list (folded until tapped), and Sprig emails it with a code, typed in here to give consent; a second email
  * confirms it. Given: the list folds away, and consent can be taken back (the children's devices are signed
  * out, and no child can be added, until a guardian gives it again). Only guardians on their own account see it.
  */
 /** The full notice: the site's privacy page, outside the app (a new tab; in the app, a Safari sheet). */
 const NOTICE = SITE_PAGE('/privacy', '#children');
 
-/** One block of the list: its heading and what's in it. */
-function Block({ title, why, items, tone }: { title: string; why?: string; items: string[]; tone?: 'never' }) {
+/** One kind of thing: its heading, why Sprig needs it, and exactly what's stored. */
+function Block({ title, why, items }: { title: string; why?: string; items: string[] }) {
 	return (
-		<div className={`${s.keptBlock} ${tone === 'never' ? s.keptNever : ''}`}>
+		<section>
 			<h4 className={s.keptTitle}>{title}</h4>
 			{why && <p className={s.keptWhy}>{why}</p>}
 			<ul className={s.keptList}>
@@ -29,23 +29,22 @@ function Block({ title, why, items, tone }: { title: string; why?: string; items
 					<li key={item}>{item}</li>
 				))}
 			</ul>
-		</div>
+		</section>
 	);
 }
 
-/** Exactly what's stored about a child, what never is, and how it's used: always in view. */
+/** Exactly what's stored about a child, what never is, and how it's used: folded to the question until tapped. */
 function WhatWeStore() {
 	return (
-		<>
-			<h3 className={s.keptHeading}>What does Sprig need to know about my child?</h3>
+		// Folded to its question to start; a tap opens the answer.
+		<details className={s.keptFold}>
+			<summary className={s.keptHeading}>What does Sprig need to know about my child?</summary>
 			<p className={s.hint}>Exactly this, and only to run Sprig for your family:</p>
 			<div className={s.kept}>
 				{CHILD_DATA.map((g) => (
 					<Block key={g.title} title={g.title} why={g.why} items={g.items} />
 				))}
-			</div>
-			<div className={s.kept}>
-				<Block title="Never stored" items={CHILD_NOT_KEPT} tone="never" />
+				<Block title="Never stored" items={CHILD_NOT_KEPT} />
 				<Block title="How it's used" items={CHILD_USE} />
 			</div>
 			<p className={s.hint}>
@@ -53,7 +52,7 @@ function WhatWeStore() {
 					The full privacy notice
 				</a>
 			</p>
-		</>
+		</details>
 	);
 }
 
@@ -137,7 +136,9 @@ export default function ChildConsent({ hasChildren }: { hasChildren: boolean }) 
 								: "Before you add a child, Sprig needs a parent's OK."}
 						</strong>
 					</p>
-					<p className={s.hint}>Read what Sprig stores below. We'll email you a code to make sure it's you.</p>
+					<p className={s.hint}>
+						Tap the question below to see exactly what Sprig stores. We'll email you a code to make sure it's you.
+					</p>
 					<WhatWeStore />
 					{sentTo ? (
 						<form className={s.row} onSubmit={confirm}>
