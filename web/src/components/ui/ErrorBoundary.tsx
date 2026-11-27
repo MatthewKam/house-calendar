@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import Problem from './Problem';
+import { reportCrash } from '../../lib/crashes';
 import s from './styles/Problem.module.css';
 
 /**
@@ -38,6 +39,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
 	componentDidCatch(error: Error, info: ErrorInfo) {
 		console.error(`Sprig: ${this.props.what} broke`, error, info.componentStack);
+		reportCrash(error, this.props.what, info.componentStack ?? undefined);
 	}
 
 	render() {

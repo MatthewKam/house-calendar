@@ -15,6 +15,8 @@ import { appleVerifier, googleSignInCode, googleVerifier, resendSender, type Sen
 import { googleOAuth } from './providers/google.ts';
 import { googleCalendars } from './googleSync.ts';
 import { deleteOldHistory } from './retention.ts';
+import { crashLog } from './crashes.ts';
+import { usageLog } from './usage.ts';
 import { icloudCalendars } from './icloudSync.ts';
 import { loadKey, sealer } from './secrets.ts';
 import { loadVapid, webPusher } from './push.ts';
@@ -38,6 +40,11 @@ try {
 const env = process.env;
 const dataDir = env.DATA_DIR ?? resolve(root, 'data');
 const accounts = openAccounts(resolve(dataDir, 'accounts.db'));
+// Crash reports (crashes.ts), from the app and the server, for the admin page.
+const crashes = crashLog(accounts);
+// The usage log (usage.ts): counts per household per day, for the admin page.
+const usage = usageLog(accounts);
+usage.start();
 relativizePaths(accounts, dataDir);
 const list = (s?: string) =>
 	(s ?? '')
@@ -96,6 +103,8 @@ const households = householdRegistry((h) => {
 	let icloud: ReturnType<typeof icloudCalendars> | null = null;
 	const app = buildApp(db, {
 		photosDir: fromStored(dataDir, h.photos_dir),
+		onServerError: (err, where) => crashes.server(err, { ...where, householdId: h.id }),
+		onUsage: (metric) => usage.count(h.id, metric),
 		sync: () =>
 			combineStatus([...(sync ? [sync.status] : []), ...(google?.statuses() ?? []), ...(icloud?.statuses() ?? [])]),
 		// Started just below, once the app's logger exists.
@@ -243,7 +252,16 @@ const server = buildServer(accounts, households, {
 	trustProxy: env.TRUST_PROXY === '1' ? oneHop : 'loopback',
 	// On Fly, its own header says who's calling (X-Forwarded-For ends with one of Fly's servers).
 	clientIpHeader: env.FLY_APP_NAME ? 'fly-client-ip' : undefined,
+	// The admin page: for ADMIN_EMAIL only; OWN_EMAILS are your test accounts, marked as yours.
+	admin: env.ADMIN_EMAIL ? { email: env.ADMIN_EMAIL, own: list(env.OWN_EMAILS) } : undefined,
+	crashes,
 });
+
+// Something nothing caught (the server stops, as before, and the host starts it again): noted first.
+process.on('uncaughtExceptionMonitor', (err, origin) => crashes.server(err, { route: origin }));
+// Crash reports go 90 days after they were last seen: now, then each day.
+crashes.forgetOld();
+setInterval(() => crashes.forgetOld(), 24 * 3_600_000).unref();
 
 // The household from before accounts (data/calendar.db) is kept; claim it with the code this logs.
 adoptLegacy(
@@ -283,6 +301,7 @@ server.app.listen({ host, port }).catch((err) => {
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {
 	process.on(sig, async () => {
 		await server.close();
+		usage.stop();
 		accounts.close();
 		process.exit(0);
 	});

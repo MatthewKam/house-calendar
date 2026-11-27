@@ -10,6 +10,7 @@ import { keys } from './lib/queries';
 import { api, problemText } from './lib/api';
 import { isApp, linksInSheet, openTappedAlerts, loadSession, syncPhoneCalendars } from './lib/native';
 import CookAlong from './components/recipes/CookAlong';
+import { watchCrashes } from './lib/crashes';
 
 const queryClient = new QueryClient({
 	// Edits show straight away and save in the background; if a save fails, the screen goes back and
@@ -50,6 +51,8 @@ if (import.meta.env.PROD && !isApp && 'serviceWorker' in navigator) {
 
 // Buttons press reliably on touch screens (no stray text selection or long-press menus).
 guardTouch();
+// Crashes are reported, so they can be fixed (lib/crashes.ts).
+watchCrashes();
 
 // The phone app reads its kept sign-in first (on the web there's nothing to wait for).
 await loadSession();
@@ -64,6 +67,11 @@ document.addEventListener('visibilitychange', () => document.visibilityState ===
 // A Cooking together link (server/cook.ts): its own page, open to anyone with it, no signing in.
 const cookPage = /^\/cook\/([0-9a-f-]{36})\/([A-Za-z0-9_-]{32})\/?$/.exec(location.pathname);
 
+// The admin page (components/admin), at /admin: its own page, loaded only there. The server answers it only
+// for the admin; anyone else sees "Nothing here".
+const adminPage = location.pathname === '/admin';
+const AdminPage = lazy(() => import('./components/admin/AdminPage'));
+
 // Google and iCloud are read again each time Sprig opens or comes back into view, so a change made in
 // their own apps shows straight away rather than at the next 5-minute pass (the server keeps it to one
 // every 30 seconds). Not on a Cooking together page, which has no sign-in.
@@ -76,7 +84,7 @@ const syncAccounts = () =>
 		},
 		() => {},
 	);
-if (!cookPage) {
+if (!cookPage && !adminPage) {
 	syncAccounts();
 	document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && syncAccounts());
 }
@@ -93,6 +101,10 @@ createRoot(document.getElementById('app')!).render(
 				{designPage ? (
 					<Suspense fallback={null}>
 						<DesignPage />
+					</Suspense>
+				) : adminPage ? (
+					<Suspense fallback={null}>
+						<AdminPage />
 					</Suspense>
 				) : cookPage ? (
 					<CookAlong household={cookPage[1]} secret={cookPage[2]} />

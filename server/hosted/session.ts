@@ -5,6 +5,7 @@ import type { AccountsDB, HouseholdRow, MembershipRow, SessionRow } from '../acc
 import type { HouseholdRegistry } from '../households.ts';
 import type { SendCode, VerifyToken } from '../identity.ts';
 import type { GoogleOAuth } from '../providers/google.ts';
+import type { CrashLog } from '../crashes.ts';
 import { deviceLabel, sha } from '../auth.ts';
 
 // What the hosted front's routes share: who a request's session is, in which household and as whom,
@@ -72,6 +73,13 @@ export interface ServerOptions {
 	 */
 	clientIpHeader?: string;
 	logger?: boolean;
+	/**
+	 * The admin page (hosted/admin.ts): the one account that may open it (ADMIN_EMAIL), and the emails of its
+	 * test accounts, whose households it marks as theirs (OWN_EMAILS; they can't open it). Without it, it's off.
+	 */
+	admin?: { email: string; own?: string[] };
+	/** Where crash reports go (crashes.ts); made from the accounts database when not given. */
+	crashes?: CrashLog;
 }
 
 /** Hosted: only the proxy right in front is believed, so the address it adds is the one used. */

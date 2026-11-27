@@ -34,6 +34,8 @@ import { registerDishIdeas, type IdeasFn, type SurpriseFn } from './dishIdeas.ts
 import { registerLearn } from './learn.ts';
 import { registerEvents } from './events.ts';
 import { schemaOf } from './schemas.ts';
+import { watchServerErrors } from './crashes.ts';
+import { watchUsage } from './usage.ts';
 import { SettingKey, SettingValue, type Settings } from '../shared/settings.ts';
 import type { z } from 'zod';
 
@@ -81,10 +83,16 @@ export function buildApp(
 		liveLists?: { waitMs: number; lookMs: number };
 		/** How much a household may ask Claude (claudeLimit.ts); tests make it small. */
 		claudeLimits?: { perMinute: number; perDay: number };
+		/** Told of each error that's the server's fault, for crash reports (crashes.ts). */
+		onServerError?: (err: Error, where: { method: string; route?: string }) => void;
+		/** Told of each change that went through, by route, for the usage log (usage.ts). */
+		onUsage?: (metric: string) => void;
 	} = {},
 ) {
 	// trustProxy: behind Tailscale's HTTPS (tailscale serve), so the device's address and https are seen.
 	const app = Fastify({ logger: logger(), trustProxy: 'loopback' });
+	if (opts.onServerError) watchServerErrors(app, opts.onServerError);
+	if (opts.onUsage) watchUsage(app, opts.onUsage);
 
 	// Parent-only changes need a guardian (or a device unlocked with a guardian's PIN).
 	registerGuard(app);

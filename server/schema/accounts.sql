@@ -1,4 +1,4 @@
--- The accounts database (server/accounts.ts), at version 11. Written by server/schema.test.ts; don't edit by hand.
+-- The accounts database (server/accounts.ts), at version 13. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE child_consent_log (
     household_id  TEXT NOT NULL REFERENCES households(id) ON DELETE CASCADE,
@@ -14,6 +14,30 @@ CREATE TABLE consent_codes (
     expires_at    TEXT NOT NULL,
     tries         INTEGER NOT NULL DEFAULT 0
   );
+
+CREATE TABLE crash_households (
+    fingerprint  TEXT NOT NULL REFERENCES crashes(fingerprint) ON DELETE CASCADE,
+    household_id TEXT NOT NULL REFERENCES households(id) ON DELETE CASCADE,
+    count        INTEGER NOT NULL DEFAULT 1,
+    last_at      TEXT NOT NULL,
+    PRIMARY KEY (fingerprint, household_id)
+  );
+
+CREATE TABLE crashes (
+    fingerprint TEXT PRIMARY KEY,
+    source      TEXT NOT NULL CHECK (source IN ('app', 'server')),
+    message     TEXT NOT NULL,
+    stack       TEXT,
+    place       TEXT,
+    platform    TEXT,
+    version     TEXT,
+    device      TEXT,
+    count       INTEGER NOT NULL DEFAULT 1,
+    first_at    TEXT NOT NULL,
+    last_at     TEXT NOT NULL
+  );
+
+CREATE INDEX crashes_last ON crashes(last_at);
 
 CREATE TABLE email_codes (
     email       TEXT PRIMARY KEY,
@@ -107,6 +131,14 @@ CREATE TABLE sessions (
     created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     last_seen     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   , parent_by TEXT REFERENCES memberships(id) ON DELETE SET NULL, wall_mode INTEGER NOT NULL DEFAULT 0);
+
+CREATE TABLE usage_daily (
+    day          TEXT NOT NULL,
+    household_id TEXT NOT NULL REFERENCES households(id) ON DELETE CASCADE,
+    metric       TEXT NOT NULL,
+    count        INTEGER NOT NULL,
+    PRIMARY KEY (day, household_id, metric)
+  );
 
 CREATE TABLE users (
     id          TEXT PRIMARY KEY,

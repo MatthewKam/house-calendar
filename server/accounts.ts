@@ -174,6 +174,40 @@ const migrations: string[] = [
     tries         INTEGER NOT NULL DEFAULT 0
   );
   `,
+	// Crash reports (crashes.ts): each different crash once, with how often it happened, and which households saw it.
+	`
+  CREATE TABLE crashes (
+    fingerprint TEXT PRIMARY KEY,
+    source      TEXT NOT NULL CHECK (source IN ('app', 'server')),
+    message     TEXT NOT NULL,
+    stack       TEXT,
+    place       TEXT,
+    platform    TEXT,
+    version     TEXT,
+    device      TEXT,
+    count       INTEGER NOT NULL DEFAULT 1,
+    first_at    TEXT NOT NULL,
+    last_at     TEXT NOT NULL
+  );
+  CREATE INDEX crashes_last ON crashes(last_at);
+  CREATE TABLE crash_households (
+    fingerprint  TEXT NOT NULL REFERENCES crashes(fingerprint) ON DELETE CASCADE,
+    household_id TEXT NOT NULL REFERENCES households(id) ON DELETE CASCADE,
+    count        INTEGER NOT NULL DEFAULT 1,
+    last_at      TEXT NOT NULL,
+    PRIMARY KEY (fingerprint, household_id)
+  );
+  `,
+	// The usage log (usage.ts): counts per household per day, nothing about any one person.
+	`
+  CREATE TABLE usage_daily (
+    day          TEXT NOT NULL,
+    household_id TEXT NOT NULL REFERENCES households(id) ON DELETE CASCADE,
+    metric       TEXT NOT NULL,
+    count        INTEGER NOT NULL,
+    PRIMARY KEY (day, household_id, metric)
+  );
+  `,
 ];
 
 export function openAccounts(file: string): AccountsDB {

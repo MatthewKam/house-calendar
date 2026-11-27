@@ -56,6 +56,7 @@ export const CHILD_DATA: ChildDataGroup[] = [
 			'Its name, like "iPad · Safari"',
 			'When it was added and last used',
 			'If alerts are on: its alert address and time zone',
+			'If Sprig breaks on it: a crash report, so we can fix it (what went wrong, never what they did or typed)',
 		],
 	},
 	{

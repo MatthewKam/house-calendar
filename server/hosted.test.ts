@@ -81,6 +81,7 @@ beforeEach(async () => {
 		logger: false,
 		sendCode: async (email, code) => void codes.set(email, code),
 		review: { email: 'review@sprig-family.com', code: '246810' },
+		admin: { email: 'Alex@Example.com', own: ['tester@example.com'] },
 		passkeys: { rpID: 'sprig.test', origins: ['https://sprig.test'] },
 		googleCalendar: {
 			authUrl: (redirect, state, hint) =>
@@ -259,6 +260,69 @@ describe("a guardian's consent for their children", () => {
 		await ipad.post('/api/account/join', { code });
 		expect((await ipad.post('/api/account/child-consent/start', {})).status).toBe(401);
 		expect((await ipad.del('/api/account/child-consent')).status).toBe(401);
+	});
+});
+
+describe('crash reports', () => {
+	const crashes = () => accounts.prepare('SELECT * FROM crashes').all() as Record<string, unknown>[];
+	const seen = () => accounts.prepare('SELECT * FROM crash_households').all() as Record<string, unknown>[];
+	const report = { message: 'TypeError: x is undefined', stack: 'at Today (index-1a2b.js:1:200)', place: 'Today' };
+
+	it('come in without signing in, and the same crash adds to its count', async () => {
+		const browser = device();
+		expect((await browser.post('/api/crash', { ...report, platform: 'web', version: '2611271805' })).status).toBe(204);
+		expect((await browser.post('/api/crash', report)).status).toBe(204);
+		expect(crashes()).toMatchObject([{ source: 'app', place: 'Today', count: 2, device: null }]);
+		expect(seen()).toEqual([]);
+	});
+
+	it("note a signed-in device's household and kind, and never an email", async () => {
+		const phone = await guardian();
+		await phone.post('/api/crash', { ...report, message: 'Error: no account for alex@example.com' });
+		const [crash] = crashes();
+		expect(crash).toMatchObject({ device: 'user', message: 'Error: no account for <email>' });
+		const household = accounts.prepare('SELECT id FROM households').get() as { id: string };
+		expect(seen()).toMatchObject([{ household_id: household.id, count: 1 }]);
+	});
+
+	it('take only so many a minute from one device, and refuse what is not a report', async () => {
+		const browser = device();
+		for (let i = 0; i < 15; i++)
+			await browser.post('/api/crash', { ...report, message: `Error: number ${'x'.repeat(i)}` });
+		expect(crashes()).toHaveLength(10);
+		expect((await browser.post('/api/crash', { stack: 'no message' })).status).toBe(400);
+	});
+});
+
+describe('the admin page', () => {
+	it('is there only for the admin, on their own account; to anyone else it is not there at all', async () => {
+		expect((await device().get('/api/admin/overview')).status).toBe(404);
+		const pat = device();
+		await pat.signIn('pat@example.com');
+		await pat.post('/api/account/households', { name: 'The Lees', yourName: 'Pat' });
+		expect((await pat.get('/api/admin/overview')).status).toBe(404);
+		const alex = await guardian();
+		expect((await alex.get('/api/admin/overview')).status).toBe(200);
+	});
+
+	it("shows households by number, marking the admin's, their test accounts' and the real families", async () => {
+		const pat = device();
+		await pat.signIn('pat@example.com');
+		await pat.post('/api/account/households', { name: 'The Lees', yourName: 'Pat' });
+		const tester = device();
+		await tester.signIn('tester@example.com');
+		await tester.post('/api/account/households', { name: 'Test', yourName: 'T' });
+		const alex = await guardian();
+		await pat.post('/api/crash', { message: 'Error: broke', place: 'Today' });
+		const { body } = await alex.get('/api/admin/overview');
+		expect(body.households).toMatchObject([
+			{ number: 1, tag: null, guardians: 1, kids: 0, devices: { user: 1 } },
+			{ number: 2, tag: 'test' },
+			{ number: 3, tag: 'you' },
+		]);
+		expect(body.signUps.map((u: { tag: string | null }) => u.tag)).toEqual([null, 'test', 'you']);
+		expect(body.crashes).toMatchObject([{ message: 'Error: broke', households: [1] }]);
+		expect(JSON.stringify(body)).not.toMatch(/Lees|pat@|Pat/);
 	});
 });
 
