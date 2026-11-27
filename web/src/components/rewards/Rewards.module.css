@@ -211,7 +211,7 @@
 }
 .rowTitle > button {
 	min-height: unset;
-	margin-top: -15px;
+	margin-top: calc(-1 * var(--space-5));
 	min-width: unset;
 	height: auto !important;
 	width: auto !important;
