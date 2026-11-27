@@ -1084,6 +1084,19 @@ const migrations: Migration[] = [
   ALTER TABLE phones ADD COLUMN wake_token TEXT;
   ALTER TABLE phones ADD COLUMN wake_sandbox INTEGER NOT NULL DEFAULT 0;
   `,
+	// Google calls Sprig when a watched calendar changes (googleWatch.ts): one channel per calendar.
+	// No resource_id: Google doesn't do it for that calendar; asked again once expires_at has passed.
+	`
+  CREATE TABLE google_watches (
+    channel_id   TEXT PRIMARY KEY,
+    source       TEXT NOT NULL,
+    calendar     TEXT NOT NULL,
+    token        TEXT NOT NULL,
+    resource_id  TEXT,
+    expires_at   TEXT NOT NULL
+  );
+  CREATE INDEX google_watches_source ON google_watches(source);
+  `,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

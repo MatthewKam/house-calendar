@@ -9,7 +9,11 @@ interface HouseholdApp {
 	app: FastifyInstance;
 	db: DB;
 	/** Google Calendar for this household, when it's turned on. */
-	google?: { connect(c: { memberId: string | null; account: string; refreshToken: string }): void };
+	google?: {
+		connect(c: { memberId: string | null; account: string; refreshToken: string }): void;
+		/** Google called about one of its watches (googleWatch.ts); true when it was one of this household's. */
+		notified?(channelId: string | undefined, token: string | undefined, state: string | undefined): boolean;
+	};
 	/** Takes out a person's calendar connections (giving back Google's access): their account is being deleted. */
 	disconnect?(memberId: string): Promise<void>;
 	close(): Promise<void>;

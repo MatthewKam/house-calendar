@@ -18,6 +18,8 @@ let accounts: AccountsDB;
 let server: ReturnType<typeof buildServer>;
 const codes = new Map<string, string>();
 const connected: { memberId: string | null; account: string; refreshToken: string }[] = [];
+/** Google's calls about watched calendars, as each household heard them. */
+const notified: { household: string; channel?: string; token?: string; state?: string }[] = [];
 
 const event = {
 	title: 'Dentist',
@@ -64,7 +66,10 @@ beforeEach(async () => {
 		return {
 			app,
 			db,
-			google: { connect: (c) => void connected.push(c) },
+			google: {
+				connect: (c) => void connected.push(c),
+				notified: (channel, token, state) => (notified.push({ household: h.id, channel, token, state }), true),
+			},
 			close: async () => {
 				await app.close();
 				db.close();
@@ -166,6 +171,26 @@ describe('the web address', () => {
 		expect(res.statusCode).toBe(200);
 		expect(res.body).toContain('<title>Sprig</title>');
 		await web.close();
+	});
+});
+
+describe('Google calling about a watched calendar', () => {
+	it('reaches the household it names without signing in, always answered 200, and only by POST', async () => {
+		await guardian();
+		const { id } = accounts.prepare('SELECT id FROM households').get() as { id: string };
+		notified.length = 0;
+		const call = (household: string, method: 'POST' | 'GET' = 'POST') =>
+			inject(server.handle, {
+				method,
+				url: `/api/google/notify/${household}`,
+				headers: { 'x-goog-channel-id': 'ch-1', 'x-goog-channel-token': 'tok', 'x-goog-resource-state': 'exists' },
+			});
+		expect((await call(id)).statusCode).toBe(200);
+		expect(notified).toEqual([{ household: id, channel: 'ch-1', token: 'tok', state: 'exists' }]);
+		// A household that isn't there: still 200 (Google would only try again), and nothing happens.
+		expect((await call('00000000-0000-0000-0000-000000000000')).statusCode).toBe(200);
+		expect((await call(id, 'GET')).statusCode).toBe(401);
+		expect(notified).toHaveLength(1);
 	});
 });
 

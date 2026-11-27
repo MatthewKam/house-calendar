@@ -33,6 +33,9 @@ import { DEMO_OFF, demoBlocks, demoRoutes } from './hosted/demo.ts';
  */
 const COOK_LINK = /^\/api\/cook\/([0-9a-f-]{36})\/([A-Za-z0-9_-]{32})(\/(?:me|live|images\/[A-Za-z0-9-]{1,64}))?$/;
 
+/** Google calling about a watched calendar (googleWatch.ts): /api/google/notify/<household>. */
+const GOOGLE_NOTIFY = /^\/api\/google\/notify\/([0-9a-f-]{36})$/;
+
 // The front of the hosted app. It signs people in (Apple, Google, or a code by email), keeps track
 // of households, invites and devices (accounts.ts), and passes every other /api call to the
 // household the caller is signed in to, with who they are (auth.ts Viewer).
@@ -157,6 +160,25 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 			}
 		}
 		const path = (req.url ?? '/').split('?')[0];
+		// Google, saying a watched calendar changed: no sign-in; the household checks the channel and its token.
+		// Always answered 200 (straight away, the sync runs after), so Google doesn't keep trying.
+		const notify = GOOGLE_NOTIFY.exec(path);
+		if (notify && req.method === 'POST') {
+			req.resume();
+			const h = accounts.prepare('SELECT * FROM households WHERE id = ?').get(notify[1]) as HouseholdRow | undefined;
+			const header = (name: string) => {
+				const v = req.headers[name];
+				return typeof v === 'string' ? v : undefined;
+			};
+			if (h)
+				(await households.get(h)).google?.notified?.(
+					header('x-goog-channel-id'),
+					header('x-goog-channel-token'),
+					header('x-goog-resource-state'),
+				);
+			res.writeHead(200);
+			return res.end();
+		}
 		// The site's demo doesn't do everything (hosted/demo.ts).
 		if (path.startsWith('/api/') && demoBlocks(accounts, req.method ?? 'GET', path, () => sessionOf(req)))
 			return sendJson(res, 403, { error: DEMO_OFF, demo: true });

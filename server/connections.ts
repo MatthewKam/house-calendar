@@ -40,9 +40,15 @@ export function calendarConnections(
 		}): CalendarSource & Partial<CalendarWriter>;
 		/** Tells the provider the app no longer has access, when it's removed. */
 		revoke?(secret: string): Promise<void>;
+		/** After each sync of an account that went through (Google keeps its watches up then). */
+		afterSync?(key: string, source: CalendarSource & Partial<CalendarWriter>): Promise<void>;
+		/** An account is being removed, before its access is given back. */
+		beforeRemove?(key: string, source: CalendarSource & Partial<CalendarWriter>): Promise<void>;
 	},
 ) {
 	const syncs = new Map<string, ReturnType<typeof createSync>>();
+	const sources = new Map<string, CalendarSource & Partial<CalendarWriter>>();
+	const keyOf = (id: string) => `${provider}:${id}`;
 	const rows = () =>
 		db.prepare(`SELECT * FROM connections WHERE provider = ? ORDER BY created_at`).all(provider) as ConnectionRow[];
 
@@ -58,20 +64,23 @@ export function calendarConnections(
 				opts.log.error({ err }, `can't read the ${provider} secret for ${row.account}`);
 				continue;
 			}
+			const key = keyOf(row.id);
 			const source = opts.source({
-				key: `${provider}:${row.id}`,
+				key,
 				memberId: row.member_id,
 				account: row.account,
 				secret,
 			});
-			const sync = createSync(db, source, opts.intervalMs);
+			const sync = createSync(db, source, opts.intervalMs, opts.afterSync && (() => opts.afterSync!(key, source)));
 			sync.start(opts.log);
 			syncs.set(row.id, sync);
+			sources.set(row.id, source);
 		}
 		for (const [id, sync] of syncs) {
 			if (now.some((r) => r.id === id)) continue;
 			sync.stop();
 			syncs.delete(id);
+			sources.delete(id);
 		}
 		// Calendars from accounts no longer connected go, with their events.
 		db.prepare(
@@ -95,6 +104,7 @@ export function calendarConnections(
 				// Its sync starts over with the new secret.
 				syncs.get(existing.id)?.stop();
 				syncs.delete(existing.id);
+				sources.delete(existing.id);
 			} else {
 				db.prepare(`INSERT INTO connections (id, provider, member_id, account, token) VALUES (?, ?, ?, ?, ?)`).run(
 					randomUUID(),
@@ -110,6 +120,11 @@ export function calendarConnections(
 			const row = db.prepare('SELECT * FROM connections WHERE id = ? AND provider = ?').get(id, provider) as
 				ConnectionRow | undefined;
 			if (!row) return false;
+			const source = sources.get(id);
+			if (source && opts.beforeRemove)
+				await opts
+					.beforeRemove(keyOf(id), source)
+					.catch((err: unknown) => opts.log.error({ err }, `before removing ${row.account}, that failed`));
 			db.prepare('DELETE FROM connections WHERE id = ?').run(id);
 			refresh();
 			try {
@@ -141,6 +156,13 @@ export function calendarConnections(
 		statuses: () => [...syncs.values()].map((s) => s.status),
 		/** Syncs every account now (those that haven't in the last little while); resolves when done. */
 		now: () => Promise.all([...syncs.values()].map((s) => s.now())).then(() => {}),
+		/** The account with this source key (google:<id>) says it changed: it syncs in a moment. */
+		changed(key: string) {
+			const id = key.startsWith(`${provider}:`) ? key.slice(provider.length + 1) : null;
+			const sync = id ? syncs.get(id) : undefined;
+			sync?.changed();
+			return !!sync;
+		},
 		/** Sends what's waiting to the accounts that take them, now. */
 		sendNow() {
 			for (const s of syncs.values()) if (s.canWrite) s.sendNow();

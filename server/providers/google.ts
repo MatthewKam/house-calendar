@@ -264,6 +264,40 @@ export class GoogleSource implements CalendarSource {
 	private path = (calendar: string, eventId?: string) =>
 		`/calendars/${encodeURIComponent(calendar)}/events${eventId ? `/${encodeURIComponent(eventId)}` : ''}`;
 
+	/**
+	 * Asks Google to call `address` whenever this calendar's events change (a "channel"), for about
+	 * `ttlSeconds`. Google says each time with the channel's id and `token`, nothing about the change
+	 * itself; Sprig then syncs. Null: Google doesn't do this for that calendar (holidays, birthdays).
+	 */
+	async watch(
+		calendar: string,
+		channel: { id: string; token: string; address: string; ttlSeconds: number },
+	): Promise<{ resourceId: string; expiresAt: number } | null> {
+		const res = await this.call('POST', `${this.path(calendar)}/watch`, {
+			body: {
+				id: channel.id,
+				type: 'web_hook',
+				address: channel.address,
+				token: channel.token,
+				params: { ttl: String(channel.ttlSeconds) },
+			},
+		});
+		if (res.status === 400 && /pushNotSupportedForRequestedResource/i.test(await res.clone().text())) return null;
+		await this.check(res);
+		const json = (await res.json()) as { resourceId?: string; expiration?: string };
+		return {
+			resourceId: String(json.resourceId),
+			expiresAt: Number(json.expiration) || Date.now() + channel.ttlSeconds * 1000,
+		};
+	}
+
+	/** Stops a channel from watch(); one Google has already let go of is done. */
+	async unwatch(channelId: string, resourceId: string) {
+		const res = await this.call('POST', '/channels/stop', { body: { id: channelId, resourceId } });
+		if (res.status === 404) return;
+		await this.check(res);
+	}
+
 	/** An event as it is now (with its etag), or null when it's gone. */
 	private async event(calendar: string, eventId: string): Promise<GEvent | null> {
 		const res = await this.call('GET', this.path(calendar, eventId));

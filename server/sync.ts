@@ -173,8 +173,19 @@ function coveredByPhone(db: DB, key: string, memberId: string | null | undefined
 	);
 }
 
-/** Live status for the API, plus start() to sync now and then every `intervalMs`. */
-export function createSync(db: DB, source: CalendarSource & Partial<CalendarWriter>, intervalMs = 5 * 60_000) {
+/** How long changed() waits for more of the same news (Google often calls a few times for one change). */
+export const CHANGED_WAIT_MS = 2_000;
+
+/**
+ * Live status for the API, plus start() to sync now and then every `intervalMs`. `afterSync` runs after
+ * each pass that went through (Google's watches are kept up then); its failures are only logged.
+ */
+export function createSync(
+	db: DB,
+	source: CalendarSource & Partial<CalendarWriter>,
+	intervalMs = 5 * 60_000,
+	afterSync?: () => Promise<void>,
+) {
 	// Where the wall's edits go: the service's own store (Google), or iCloud's resources; null: read only.
 	const writer = source.store ?? (source.getEvent && source.writeEvent ? icalStore(source as CalendarWriter) : null);
 	const status: SyncStatus = {
@@ -191,6 +202,7 @@ export function createSync(db: DB, source: CalendarSource & Partial<CalendarWrit
 	let refusedSince: number | null = storedRefusal(db, key);
 	let timer: NodeJS.Timeout | undefined;
 	let soonTimer: NodeJS.Timeout | undefined;
+	let changedTimer: NodeJS.Timeout | undefined;
 	let again = false;
 	/** When the last pass started (0: none yet). */
 	let lastRun = 0;
@@ -219,6 +231,8 @@ export function createSync(db: DB, source: CalendarSource & Partial<CalendarWrit
 				if (took) log.info({ events: took }, 'iCloud took its calendars back from the phone');
 			}
 			log.info(result, `${source.id} sync done`);
+			if (afterSync)
+				await afterSync().catch((err: unknown) => log.error({ err }, `${source.id}: keeping up after the sync failed`));
 		} catch (err) {
 			// Refused: since when (kept through other errors in between, until a sync goes through).
 			if (err instanceof CalDavAuthError) {
@@ -263,9 +277,19 @@ export function createSync(db: DB, source: CalendarSource & Partial<CalendarWrit
 			if (status.running || Date.now() - lastRun < minGapMs) return null;
 			return run();
 		},
+		/**
+		 * The calendar service says something changed (Google's watch): sync in a moment, once for a few
+		 * calls together. Mid-pass, another follows it, so a change made during the fetch isn't missed.
+		 */
+		changed() {
+			clearTimeout(changedTimer);
+			changedTimer = setTimeout(() => void run(), CHANGED_WAIT_MS);
+			changedTimer.unref?.();
+		},
 		stop: () => {
 			clearInterval(timer);
 			clearTimeout(soonTimer);
+			clearTimeout(changedTimer);
 		},
 	};
 }

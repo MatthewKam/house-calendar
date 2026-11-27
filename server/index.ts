@@ -140,7 +140,15 @@ const households = householdRegistry((h) => {
 	});
 	sync?.start(app.log);
 	if (oauth) {
-		google = googleCalendars(db, { oauth, sealer: secrets, log: app.log });
+		google = googleCalendars(db, {
+			oauth,
+			sealer: secrets,
+			log: app.log,
+			// Google can only call a public https address, so only when hosted (googleWatch.ts).
+			notifyAddress: env.PUBLIC_URL?.startsWith('https://')
+				? `${env.PUBLIC_URL.replace(/\/$/, '')}/api/google/notify/${h.id}`
+				: undefined,
+		});
 		google.refresh();
 	}
 	icloud = icloudCalendars(db, { sealer: secrets, log: app.log });

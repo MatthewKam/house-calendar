@@ -1,4 +1,4 @@
--- A household's database (server/db.ts), at version 71. Written by server/schema.test.ts; don't edit by hand.
+-- A household's database (server/db.ts), at version 72. Written by server/schema.test.ts; don't edit by hand.
 
 CREATE TABLE auth (
     id        INTEGER PRIMARY KEY CHECK (id = 1),
@@ -198,6 +198,17 @@ CREATE TABLE "goals" (
   );
 
 CREATE INDEX goals_member ON goals(member_id);
+
+CREATE TABLE google_watches (
+    channel_id   TEXT PRIMARY KEY,
+    source       TEXT NOT NULL,
+    calendar     TEXT NOT NULL,
+    token        TEXT NOT NULL,
+    resource_id  TEXT,
+    expires_at   TEXT NOT NULL
+  );
+
+CREATE INDEX google_watches_source ON google_watches(source);
 
 CREATE TABLE hidden_goals (library_key TEXT PRIMARY KEY);
 
