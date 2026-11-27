@@ -14,6 +14,7 @@ import AppearanceSettings from './AppearanceSettings';
 import CalendarList from './CalendarList';
 import DailyCardSettings from './DailyCardSettings';
 import FamilyMembers from './FamilyMembers';
+import ChildConsent from './ChildConsent';
 import GoogleCalendars from './GoogleCalendars';
 import HomeAddress from './HomeAddress';
 import HouseholdAccess from './HouseholdAccess';
@@ -130,6 +131,15 @@ export default function Settings({ members, onLeave, onKidMode }: Props) {
 				<Section title="Home address" note={homeAddress || 'Not set'}>
 					<HomeAddress />
 				</Section>
+				{/* A guardian's consent for the children (COPPA): theirs to give, on their own account. */}
+				{auth?.signedIn && auth.kind === 'user' && auth.role === 'guardian' && (
+					<Section
+						title="Children's privacy"
+						note={auth.household?.childConsent ? 'Consent given' : 'Needs your consent'}
+					>
+						<ChildConsent hasChildren={members.some((m) => m.stage !== null && m.stage !== 'adult')} />
+					</Section>
+				)}
 			</Group>
 
 			{/* Its own group: the phone's, iCloud's and Google's calendars, and whose each one is. */}

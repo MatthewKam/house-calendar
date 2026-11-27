@@ -1,4 +1,19 @@
--- The accounts database (server/accounts.ts), at version 10. Written by server/schema.test.ts; don't edit by hand.
+-- The accounts database (server/accounts.ts), at version 11. Written by server/schema.test.ts; don't edit by hand.
+
+CREATE TABLE child_consent_log (
+    household_id  TEXT NOT NULL REFERENCES households(id) ON DELETE CASCADE,
+    action        TEXT NOT NULL CHECK (action IN ('given', 'taken back')),
+    email         TEXT,
+    at            TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+
+CREATE TABLE consent_codes (
+    membership_id TEXT PRIMARY KEY REFERENCES memberships(id) ON DELETE CASCADE,
+    code_hash     TEXT NOT NULL,
+    sent_at       TEXT NOT NULL,
+    expires_at    TEXT NOT NULL,
+    tries         INTEGER NOT NULL DEFAULT 0
+  );
 
 CREATE TABLE email_codes (
     email       TEXT PRIMARY KEY,
@@ -21,7 +36,7 @@ CREATE TABLE households (
     -- The household that was here before accounts: it keeps the .env integrations (iCloud, Reminders).
     legacy      INTEGER NOT NULL DEFAULT 0,
     created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-  , holder_id TEXT REFERENCES memberships(id) ON DELETE SET NULL);
+  , holder_id TEXT REFERENCES memberships(id) ON DELETE SET NULL, child_consent_at TEXT, child_consent_email TEXT);
 
 CREATE TABLE identities (
     provider    TEXT NOT NULL CHECK (provider IN ('google', 'apple', 'email')),

@@ -108,6 +108,17 @@ export function registerMembers(
 			if (birthdate && (!realDay(birthdate) || birthdate > localDay())) {
 				return reply.code(400).send({ error: 'That birthday is not a real past date' });
 			}
+			// Someone becoming a child here (a birthday or a stage says so) needs a guardian's consent first
+			// (COPPA, hosted/childConsent.ts). Signed out (the wall from before accounts): nothing to ask.
+			const isKid = (m: { birthdate: string | null; stage: string | null }) => {
+				const s = stageOf(m, localDay());
+				return s !== null && s !== 'adult';
+			};
+			if (req.raw.viewer?.childConsent === false && isKid({ birthdate, stage }) && !isKid(row))
+				return reply.code(403).send({
+					error: "Give your consent for your children first: Settings → Family → Children's privacy",
+					needsConsent: true,
+				});
 			db.prepare(
 				'UPDATE members SET name = ?, color = ?, sort_order = ?, birthdate = ?, stage = ?, allergies = ? WHERE id = ?',
 			).run(name.trim(), color.toLowerCase(), sortOrder, birthdate, stage, allergies, row.id);

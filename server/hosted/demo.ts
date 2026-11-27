@@ -104,8 +104,12 @@ export function demoRoutes(
 				accounts
 					.prepare('INSERT INTO users (id, name, email, demo_until) VALUES (?, ?, NULL, ?)')
 					.run(userId, 'Alex', later(DEMO_MS));
+				// Made-up children, no real ones: nothing to ask a guardian's consent for (hosted/childConsent.ts).
 				accounts
-					.prepare('INSERT INTO households (id, name, db_file, photos_dir) VALUES (?, ?, ?, ?)')
+					.prepare(
+						`INSERT INTO households (id, name, db_file, photos_dir, child_consent_at, child_consent_email)
+          VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), 'demo')`,
+					)
 					.run(id, 'The Rivera family', join(dir, 'calendar.db'), join(dir, 'photos'));
 			})();
 			const h = householdById(id)!;

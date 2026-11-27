@@ -20,6 +20,8 @@ export interface Viewer {
 	guardians: string[];
 	/** A parent-only change was made: keeps a wall or kid device's unlock going. */
 	stillParent(): void;
+	/** A guardian has given consent for this household's children (COPPA); false: children can't be added. */
+	childConsent?: boolean;
 }
 
 declare module 'node:http' {

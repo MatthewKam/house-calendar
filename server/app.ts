@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { logger } from './logging.ts';
 import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
 import { existsSync } from 'node:fs';
@@ -83,7 +84,7 @@ export function buildApp(
 	} = {},
 ) {
 	// trustProxy: behind Tailscale's HTTPS (tailscale serve), so the device's address and https are seen.
-	const app = Fastify({ logger: process.env.NODE_ENV !== 'test' && { level: 'info' }, trustProxy: 'loopback' });
+	const app = Fastify({ logger: logger(), trustProxy: 'loopback' });
 
 	// Parent-only changes need a guardian (or a device unlocked with a guardian's PIN).
 	registerGuard(app);

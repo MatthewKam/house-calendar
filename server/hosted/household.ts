@@ -231,6 +231,11 @@ export function householdRoutes(app: FastifyInstance, accounts: AccountsDB, x: S
 			const c = needParent(req, reply);
 			if (!c) return;
 			const { kind, memberId, name } = req.body;
+			if (kind === 'kid' && !c.household.child_consent_at)
+				return reply.code(403).send({
+					error: "Give your consent for your children first: Settings → Family → Children's privacy",
+					needsConsent: true,
+				});
 			if (
 				kind === 'wall' &&
 				!accounts

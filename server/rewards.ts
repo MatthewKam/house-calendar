@@ -62,8 +62,11 @@ class Refused extends Error {}
 const dayOr = (d?: string) => (d && isDay(d) ? d : localDay());
 const sum = (stars: Record<string, number>) => Object.values(stars).reduce((a, n) => a + n, 0);
 
-/** Stars a kid can still put in jars: everything earned from extras, moments, goals and potty rows, minus what's in jars. */
-export function bucket(db: DB, memberId: string) {
+/**
+ * Every star a kid has earned: from extras, moments, goals, learning and potty rows, and those carried
+ * forward when old history was deleted (retention.ts).
+ */
+export function earned(db: DB, memberId: string) {
 	return (
 		db
 			.prepare(
@@ -75,10 +78,20 @@ export function bucket(db: DB, memberId: string) {
     + (SELECT COALESCE(SUM(stars), 0) FROM learn_sessions WHERE member_id = @m)
     -- Potty charts: a star for each full row.
     + (SELECT COUNT(*) FROM (SELECT 1 FROM potty_punches WHERE member_id = @m GROUP BY card_id, step HAVING COUNT(*) >= ${ROW_PUNCHES}))
-    - (SELECT COALESCE(SUM(stars), 0) FROM jar_stars WHERE member_id = @m) AS n`,
+    + (SELECT COALESCE(carried_stars, 0) FROM members WHERE id = @m) AS n`,
 			)
 			.get({ m: memberId }) as { n: number }
 	).n;
+}
+
+/** Stars a kid can still put in jars: everything earned, minus what's in jars. */
+export function bucket(db: DB, memberId: string) {
+	const inJars = (
+		db.prepare('SELECT COALESCE(SUM(stars), 0) AS n FROM jar_stars WHERE member_id = ?').get(memberId) as {
+			n: number;
+		}
+	).n;
+	return earned(db, memberId) - inJars;
 }
 
 /** Takes up to `n` stars out of one jar row; returns how many. */

@@ -115,7 +115,15 @@ async function guardian() {
 	await phone.signIn('alex@example.com');
 	const made = await phone.post('/api/account/households', { name: 'The Kims', yourName: 'Alex' });
 	expect(made.status).toBe(201);
+	await consent(phone);
 	return phone;
+}
+
+/** A guardian gives consent for the household's children, with the code emailed to them. */
+async function consent(phone: ReturnType<typeof device>, email = 'alex@example.com') {
+	expect((await phone.post('/api/account/child-consent/start', {})).status).toBe(200);
+	const done = await phone.post('/api/account/child-consent/verify', { code: codes.get(email)! });
+	expect(done.body.household.childConsent).toBe(true);
 }
 
 describe('the web address', () => {
@@ -171,6 +179,77 @@ describe('the web address', () => {
 		expect(res.statusCode).toBe(200);
 		expect(res.body).toContain('<title>Sprig</title>');
 		await web.close();
+	});
+});
+
+describe("a guardian's consent for their children", () => {
+	it('is asked before a child is added, by an emailed code, and taking it back signs the children out', async () => {
+		const alex = device();
+		await alex.signIn('alex@example.com');
+		await alex.post('/api/account/households', { name: 'The Kims', yourName: 'Alex' });
+		expect((await alex.get('/api/auth/status')).body.household.childConsent).toBe(false);
+		// No child yet: a kid's code, or a birthday that makes someone a child, waits for consent.
+		const sam = (await alex.post('/api/members', { name: 'Sam', color: '#2f6b3a' })).body;
+		expect(await alex.post('/api/account/invites', { kind: 'kid', name: 'Riley' })).toMatchObject({
+			status: 403,
+			body: { needsConsent: true },
+		});
+		expect((await alex.patch(`/api/members/${sam.id}`, { birthdate: '2022-05-01' })).body.needsConsent).toBe(true);
+		// A grown-up's birthday is fine.
+		expect((await alex.patch(`/api/members/${sam.id}`, { birthdate: '1990-05-01' })).status).toBe(200);
+
+		// The code: a wrong one is refused, the right one gives consent.
+		codes.clear();
+		expect((await alex.post('/api/account/child-consent/start', {})).body).toEqual({ sentTo: 'alex@example.com' });
+		const code = codes.get('alex@example.com')!;
+		expect(code).toMatch(/^\d{6}$/);
+		expect((await alex.post('/api/account/child-consent/start', {})).status).toBe(429);
+		expect(
+			(await alex.post('/api/account/child-consent/verify', { code: '000000' === code ? '111111' : '000000' })).status,
+		).toBe(401);
+		const given = await alex.post('/api/account/child-consent/verify', { code });
+		expect(given.body.household.childConsent).toBe(true);
+		// The confirmation went too (no code in it).
+		expect(codes.get('alex@example.com')).toBe('');
+		const log = accounts.prepare('SELECT action, email FROM child_consent_log').all();
+		expect(log).toEqual([{ action: 'given', email: 'alex@example.com' }]);
+
+		// Now children can be added, and a kid's device joins.
+		expect((await alex.patch(`/api/members/${sam.id}`, { birthdate: '2022-05-01' })).status).toBe(200);
+		const kidCode = (await alex.post('/api/account/invites', { kind: 'kid', memberId: sam.id })).body.code;
+		const spare = (await alex.post('/api/account/invites', { kind: 'kid', name: 'Riley' })).body.code;
+		const ipad = device();
+		expect((await ipad.post('/api/account/join', { code: kidCode })).body).toMatchObject({ role: 'kid' });
+
+		// Taken back: the kid's device is signed out, the unused code ends, and no child can be added.
+		expect((await alex.del('/api/account/child-consent')).body.household.childConsent).toBe(false);
+		expect((await ipad.get('/api/auth/status')).body).toEqual({ signedIn: false });
+		expect((await device().post('/api/account/join', { code: spare })).status).not.toBe(200);
+		expect((await alex.post('/api/account/invites', { kind: 'kid', name: 'Riley' })).status).toBe(403);
+		// What's kept stays until a guardian removes the child.
+		expect((await alex.get('/api/members')).body.map((m: { name: string }) => m.name)).toContain('Sam');
+		expect(accounts.prepare('SELECT action FROM child_consent_log').all()).toEqual([
+			{ action: 'given' },
+			{ action: 'taken back' },
+		]);
+	});
+
+	it('signs out a device unused for 6 months', async () => {
+		const alex = await guardian();
+		const stale = new Date(Date.now() - 183 * 86_400_000).toISOString();
+		accounts.prepare('UPDATE sessions SET last_seen = ?').run(stale);
+		expect((await alex.get('/api/auth/status')).body).toEqual({ signedIn: false });
+		expect((await alex.get('/api/members')).status).toBe(401);
+	});
+
+	it("is a guardian's to give, on their own account", async () => {
+		const alex = await guardian();
+		await alex.put('/api/account/pin', { pin: '1357' });
+		const code = (await alex.post('/api/account/invites', { kind: 'kid', name: 'Sam' })).body.code;
+		const ipad = device();
+		await ipad.post('/api/account/join', { code });
+		expect((await ipad.post('/api/account/child-consent/start', {})).status).toBe(401);
+		expect((await ipad.del('/api/account/child-consent')).status).toBe(401);
 	});
 });
 

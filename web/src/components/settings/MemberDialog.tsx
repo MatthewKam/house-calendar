@@ -68,14 +68,19 @@ export default function MemberDialog({
 	member,
 	canColor,
 	onSave,
+	onRemove,
 	onClose,
 }: {
 	member: Member;
 	/** A grown-up's color is only theirs to change. */
 	canColor: boolean;
 	onSave: (edit: MemberEdit) => void;
+	/** Removes them, deleting what's kept about them (a child, say); left out, no Remove. */
+	onRemove?: () => void;
 	onClose: () => void;
 }) {
+	// Removing is two taps.
+	const [removing, setRemoving] = useState(false);
 	const [edit, setEdit] = useState<MemberEdit>({
 		name: member.name,
 		color: member.color,
@@ -212,7 +217,21 @@ export default function MemberDialog({
 				<p className={s.hint}>Recipes flag them. A help, not a guarantee: check labels too.</p>
 			</div>
 
+			{removing && (
+				<p className={s.hint} role="alert">
+					This deletes {member.name}'s tasks, stars, jars, rewards, moments, goals and progress, and signs out their
+					devices. Photos and events they're in stay, without their name.
+				</p>
+			)}
 			<div className={sheet.actions}>
+				{onRemove && (
+					<Button
+						variant={removing ? 'destructive' : 'danger'}
+						onClick={() => (removing ? onRemove() : setRemoving(true))}
+					>
+						{removing ? `Remove ${member.name}` : 'Remove'}
+					</Button>
+				)}
 				<span className={sheet.spacer} />
 				<Button onClick={onClose}>Cancel</Button>
 				<Button variant="primary" type="submit" disabled={!edit.name.trim()}>

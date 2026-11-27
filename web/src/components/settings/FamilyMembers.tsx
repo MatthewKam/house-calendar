@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuthStatus, useSetMemberColor, useUpdateMember } from '../../lib/queries';
+import { useAuthStatus, useDeleteMember, useSetMemberColor, useUpdateMember } from '../../lib/queries';
 import { STAGE_NAMES } from '../../lib/stages';
 import type { Member, MemberPatch } from '../../lib/types';
 import ColorAsked from '../account/ColorAsked';
@@ -17,6 +17,7 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 	const auth = useAuthStatus().data;
 	const updateMember = useUpdateMember();
 	const setColor = useSetMemberColor();
+	const removeMember = useDeleteMember();
 	// Signed out there's no holder. A grown-up's color is only theirs to change.
 	const holder = !auth?.signedIn || auth.holder;
 	const canColor = (m: Member) => !auth?.signedIn || !m.guardian || m.id === auth.memberId;
@@ -70,6 +71,16 @@ export default function FamilyMembers({ members }: { members: Member[] }) {
 					member={editingMember}
 					canColor={canColor(editingMember)}
 					onSave={(edit) => save(editingMember, edit)}
+					// A child can be removed here, deleting what's kept about them (the privacy page says so). A grown-up
+					// who signs in leaves through Settings → Users instead.
+					onRemove={
+						!editingMember.guardian && !(auth?.signedIn && editingMember.id === auth.memberId)
+							? () => {
+									removeMember.mutate(editingMember.id);
+									setEditing(null);
+								}
+							: undefined
+					}
 					onClose={() => setEditing(null)}
 				/>
 			)}

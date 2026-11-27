@@ -89,6 +89,12 @@ function useMemberMutation<T>(fn: (arg: T) => Promise<unknown>, show?: (arg: T, 
 	});
 }
 
+/** Removes someone from the household (and what's kept about them). */
+export const useDeleteMember = () =>
+	useMemberMutation(
+		(id: string) => api.deleteMember(id),
+		(id, members) => members.filter((m) => m.id !== id),
+	);
 export const useUpdateMember = () =>
 	useMemberMutation(
 		({ id, patch }: { id: string; patch: MemberPatch }) => api.updateMember(id, patch),

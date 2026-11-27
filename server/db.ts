@@ -1097,6 +1097,8 @@ const migrations: Migration[] = [
   );
   CREATE INDEX google_watches_source ON google_watches(source);
   `,
+	// Stars earned in history deleted for being old (retention.ts), still counted in the kid's bucket.
+	`ALTER TABLE members ADD COLUMN carried_stars INTEGER NOT NULL DEFAULT 0;`,
 ];
 
 /** `upTo` stops after that many migrations; tests use it to build an older database. */

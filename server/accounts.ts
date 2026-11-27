@@ -155,6 +155,25 @@ const migrations: string[] = [
   );
   CREATE INDEX passkeys_user ON passkeys(user_id);
   `,
+	// A guardian's consent for their household's children (COPPA, docs/coppa.md): when it was given and from which
+	// email (null: not given, or taken back), each time it was given or taken back, and the emailed codes.
+	`
+  ALTER TABLE households ADD COLUMN child_consent_at TEXT;
+  ALTER TABLE households ADD COLUMN child_consent_email TEXT;
+  CREATE TABLE child_consent_log (
+    household_id  TEXT NOT NULL REFERENCES households(id) ON DELETE CASCADE,
+    action        TEXT NOT NULL CHECK (action IN ('given', 'taken back')),
+    email         TEXT,
+    at            TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE TABLE consent_codes (
+    membership_id TEXT PRIMARY KEY REFERENCES memberships(id) ON DELETE CASCADE,
+    code_hash     TEXT NOT NULL,
+    sent_at       TEXT NOT NULL,
+    expires_at    TEXT NOT NULL,
+    tries         INTEGER NOT NULL DEFAULT 0
+  );
+  `,
 ];
 
 export function openAccounts(file: string): AccountsDB {
@@ -203,6 +222,9 @@ export interface HouseholdRow {
 	photos_dir: string;
 	legacy: number;
 	holder_id: string | null;
+	/** When a guardian gave consent for the household's children (null: not given, or taken back). */
+	child_consent_at?: string | null;
+	child_consent_email?: string | null;
 }
 export interface MembershipRow {
 	id: string;

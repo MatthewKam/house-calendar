@@ -14,6 +14,7 @@ import { oneHop } from './hosted/session.ts';
 import { appleVerifier, googleSignInCode, googleVerifier, resendSender, type SendCode } from './identity.ts';
 import { googleOAuth } from './providers/google.ts';
 import { googleCalendars } from './googleSync.ts';
+import { deleteOldHistory } from './retention.ts';
 import { icloudCalendars } from './icloudSync.ts';
 import { loadKey, sealer } from './secrets.ts';
 import { loadVapid, webPusher } from './push.ts';
@@ -139,6 +140,18 @@ const households = householdRegistry((h) => {
 		surprise,
 	});
 	sync?.start(app.log);
+	// Activity history older than 2 years goes (retention.ts): now, then each day.
+	const forget = () => {
+		try {
+			const gone = deleteOldHistory(db);
+			if (gone) app.log.info({ gone }, 'deleted old activity history');
+		} catch (err) {
+			app.log.error({ err }, 'deleting old activity history failed');
+		}
+	};
+	forget();
+	const forgetDaily = setInterval(forget, 24 * 3_600_000);
+	forgetDaily.unref();
 	if (oauth) {
 		google = googleCalendars(db, {
 			oauth,
@@ -175,6 +188,7 @@ const households = householdRegistry((h) => {
 				for (const c of kind?.list() ?? []) if (c.memberId === memberId) await kind!.remove(c.id);
 		},
 		async close() {
+			clearInterval(forgetDaily);
 			sync?.stop();
 			google?.stop();
 			icloud?.stop();
@@ -192,7 +206,9 @@ const sendCode: SendCode | undefined =
 		? resendSender(env.RESEND_API_KEY, env.EMAIL_FROM, env.PUBLIC_URL || 'https://sprig-family.com')
 		: env.NODE_ENV !== 'production' || env.EMAIL_CODES_IN_LOG === '1'
 			? async (email, code, purpose = 'sign-in') =>
-					console.log(`${purpose === 'pin' ? 'PIN' : 'Sign-in'} code for ${email}: ${code}`)
+					console.log(
+						`${purpose === 'pin' ? 'PIN' : purpose === 'consent' ? 'Consent' : purpose === 'consented' ? 'Consent given' : 'Sign-in'} code for ${email}: ${code}`,
+					)
 			: undefined;
 
 const server = buildServer(accounts, households, {

@@ -206,7 +206,8 @@ export type AuthStatus =
 			user: { name: string; email: string | null } | null;
 			/** How this person signs in (none for a kid's device or the wall). */
 			signIns?: ('apple' | 'google' | 'email')[];
-			household: { id: string; name: string } | null;
+			/** childConsent: a guardian has given consent for the household's children (COPPA). */
+			household: { id: string; name: string; childConsent?: boolean } | null;
 			households: { id: string; name: string; role: Role }[];
 			role: Role | null;
 			memberId: string | null;
@@ -342,6 +343,10 @@ export const api = {
 	/** Forgot it: a code to this guardian's email (or the server's log). */
 	forgotPin: () => call<{ sentTo: string }>('POST', '/api/account/pin/forgot'),
 	resetPin: (code: string, pin: string) => call<AuthStatus>('POST', '/api/account/pin/reset', { code, pin }),
+	/** A guardian's consent for the household's children: the notice and a code by email, the code, or taken back. */
+	childConsentStart: () => call<{ sentTo: string }>('POST', '/api/account/child-consent/start'),
+	childConsentVerify: (code: string) => call<AuthStatus>('POST', '/api/account/child-consent/verify', { code }),
+	childConsentTakeBack: () => call<AuthStatus>('DELETE', '/api/account/child-consent'),
 	/** The account holder clears another guardian's PIN. */
 	/** Lets a device locked by wrong PINs try again now. */
 	unlockDevice: (id: string) => call<void>('POST', `/api/account/devices/${id}/unlock`),
@@ -366,6 +371,8 @@ export const api = {
 	members: () => call<Member[]>('GET', '/api/members'),
 	addMember: (m: { name: string; color: string }) => call<Member>('POST', '/api/members', m),
 	updateMember: (id: string, m: MemberPatch) => call<Member>('PATCH', `/api/members/${id}`, m),
+	/** Removes someone, deleting what's kept about them (their tasks, stars, jars, progress, devices). */
+	deleteMember: (id: string) => call<void>('DELETE', `/api/members/${id}`),
 	/** A new color for someone: made at once by the account holder, otherwise asked for (asked: true). */
 	setMemberColor: (id: string, color: string) =>
 		call<{ member: Member; asked: boolean }>('PUT', `/api/members/${id}/color`, { color }),

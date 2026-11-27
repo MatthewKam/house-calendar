@@ -1,8 +1,29 @@
-// The email with a code in it: to sign in, or to set a new PIN (identity.ts sends it). Sprig waving at
-// the top, the code big, and a quote to grow on, a different one each day. Plain text goes along with it.
+// The email with a code in it: to sign in, to set a new PIN, or a guardian's consent for their children
+// (identity.ts sends it). Sprig waving at the top, the code big, and a quote to grow on, a different one each
+// day. Plain text goes along with it. The consent email is also COPPA's direct notice to the parent (what's
+// kept about children, why, who else handles it, their rights); 'consented' confirms it, with no code.
 
 /** What the code is for. */
-export type CodeFor = 'sign-in' | 'pin';
+export type CodeFor = 'sign-in' | 'pin' | 'consent' | 'consented';
+
+const PRIVACY = 'https://sprig-family.com/privacy#children';
+
+/** The notice a guardian reads before giving consent: paragraphs. */
+export const CONSENT_NOTICE = [
+	'Before you add a child to Sprig, here is what Sprig keeps about children, and your consent as their parent or guardian.',
+	"What's kept: what you put in about your child (name, birthday, stage, allergies, tasks, goals, rewards, moments you catch), what they do in Sprig (tasks ticked, stars, potty chart, reading and learning progress, list items, photos they upload), and their device's name and alert address.",
+	"Why: only to run Sprig for your family. No ads, nothing sold or shared. The only others who handle it are the services Sprig needs to work (our host, backups, email), and they may not use it for anything else. A child's device can't use Sprig's AI features.",
+	'How long: while your child is in your household; activity over 2 years old goes automatically; removing your child deletes what we have about them.',
+	"Your rights: you can see, change or delete anything about your child in the app, take this consent back (Settings → Family → Children's privacy), or ask us at hello@sprig-family.com.",
+	'Sprig is made and run by Tayno.',
+];
+
+/** The confirmation, once consent is given: paragraphs. */
+const CONSENTED = [
+	"Thank you. You've given consent, as your children's parent or guardian, for Sprig to keep what it needs about them for your family, as the notice said.",
+	"To take it back: Settings → Family → Children's privacy → Take back. Your children's devices are signed out, and no more children can be added, until a guardian gives it again. Removing a child deletes what we have about them.",
+	"Didn't do this? Write to hello@sprig-family.com and we'll undo it.",
+];
 
 /** Quotes about growing, little by little. */
 export const GROWTH_QUOTES: { text: string; by: string }[] = [
@@ -25,18 +46,30 @@ const esc = (s: string) =>
 /** The email: subject, the page, and plain text. `site` is where Sprig is (for its picture and links). */
 export function codeEmail(code: string, purpose: CodeFor, site: string, now = new Date()) {
 	const quote = quoteFor(now);
-	const what = purpose === 'pin' ? 'set a new PIN' : 'sign in';
-	const subject = purpose === 'pin' ? `${code} is your Sprig PIN code` : `${code} is your Sprig code`;
+	const what = purpose === 'pin' ? 'set a new PIN' : purpose === 'consent' ? 'give your consent' : 'sign in';
+	const subject =
+		purpose === 'pin'
+			? `${code} is your Sprig PIN code`
+			: purpose === 'consent'
+				? `${code}: your consent for your children in Sprig`
+				: purpose === 'consented'
+					? "You've given consent for your children in Sprig"
+					: `${code} is your Sprig code`;
 	const host = site.replace(/^https?:\/\//, '').replace(/\/$/, '');
+	// The consent email's notice, or the confirmation's words, with a link to the full privacy notice.
+	const words = purpose === 'consent' ? CONSENT_NOTICE : purpose === 'consented' ? CONSENTED : [];
+	const withCode = purpose !== 'consented';
 	const text = [
-		`Hi! Here's your code to ${what}: ${code}`,
-		'It works for 10 minutes.',
-		'',
-		`Something to grow on: "${quote.text}" (${quote.by})`,
-		'',
-		"Didn't ask for a code? You can ignore this email.",
+		...(withCode ? [`Hi! Here's your code to ${what}: ${code}`, 'It works for 10 minutes.', ''] : []),
+		...(words.length ? [...words.flatMap((p) => [p, '']), `The full notice: ${PRIVACY}`, ''] : []),
+		...(withCode ? [`Something to grow on: "${quote.text}" (${quote.by})`, ''] : []),
+		...(withCode ? ["Didn't ask for a code? You can ignore this email."] : []),
 		`Sprig · ${site} · hello@sprig-family.com`,
 	].join('\n');
+	const notice = words.length
+		? `<tr><td style="padding:0 28px 20px;font-size:14px;line-height:1.5;color:#1f2a1c">${words.map((p) => `<p style="margin:0 0 10px">${esc(p)}</p>`).join('')}<p style="margin:0"><a href="${PRIVACY}" style="color:#6b8f3a">The full notice</a></p></td></tr>`
+		: '';
+	const heading = purpose === 'consented' ? 'Consent given' : "Hi! Here's your code";
 	// Tables and inline styles: what email apps show alike.
 	const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(subject)}</title></head>
@@ -44,15 +77,24 @@ export function codeEmail(code: string, purpose: CodeFor, site: string, now = ne
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f1;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;background:#ffffff;border-radius:20px;font-family:-apple-system,Helvetica,Arial,sans-serif;color:#1f2a1c">
 <tr><td align="center" style="padding:28px 28px 0"><img src="${esc(site)}/mascot/sprig-email.png" width="120" alt="Sprig, waving" style="display:block;width:120px;height:auto"></td></tr>
-<tr><td align="center" style="padding:12px 28px 0"><h1 style="margin:0;font-size:22px">Hi! Here's your code</h1>
-<p style="margin:8px 0 0;color:#5b6657;font-size:15px">Type it into Sprig to ${what}.</p></td></tr>
-<tr><td align="center" style="padding:20px 28px"><div style="display:inline-block;padding:14px 22px;border-radius:14px;background:#eef7e6;font-size:34px;font-weight:700;letter-spacing:8px;font-family:Menlo,Consolas,monospace;color:#2f6b3a">${esc(code)}</div>
-<p style="margin:10px 0 0;color:#5b6657;font-size:13px">It works for 10 minutes.</p></td></tr>
-<tr><td style="padding:0 28px 24px"><div style="border-left:4px solid #8cc63f;background:#f7faf3;border-radius:10px;padding:14px 16px">
+<tr><td align="center" style="padding:12px 28px 0"><h1 style="margin:0;font-size:22px">${heading}</h1>
+${withCode ? `<p style="margin:8px 0 0;color:#5b6657;font-size:15px">Type it into Sprig to ${what}.</p>` : ''}</td></tr>
+${
+	withCode
+		? `<tr><td align="center" style="padding:20px 28px"><div style="display:inline-block;padding:14px 22px;border-radius:14px;background:#eef7e6;font-size:34px;font-weight:700;letter-spacing:8px;font-family:Menlo,Consolas,monospace;color:#2f6b3a">${esc(code)}</div>
+<p style="margin:10px 0 0;color:#5b6657;font-size:13px">It works for 10 minutes.</p></td></tr>`
+		: '<tr><td style="padding:12px"></td></tr>'
+}
+${notice}
+${
+	withCode
+		? `<tr><td style="padding:0 28px 24px"><div style="border-left:4px solid #8cc63f;background:#f7faf3;border-radius:10px;padding:14px 16px">
 <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#6b8f3a;font-weight:700">🌱 Something to grow on</div>
 <p style="margin:6px 0 0;font-size:16px;line-height:1.4">“${esc(quote.text)}”</p>
-<p style="margin:4px 0 0;font-size:13px;color:#5b6657">${esc(quote.by)}</p></div></td></tr>
-<tr><td align="center" style="padding:0 28px 24px;color:#8a9386;font-size:12px;line-height:1.5">Didn't ask for a code? You can ignore this email.<br>
+<p style="margin:4px 0 0;font-size:13px;color:#5b6657">${esc(quote.by)}</p></div></td></tr>`
+		: ''
+}
+<tr><td align="center" style="padding:0 28px 24px;color:#8a9386;font-size:12px;line-height:1.5">${withCode ? "Didn't ask for a code? You can ignore this email.<br>" : ''}
 Sprig · <a href="${esc(site)}" style="color:#6b8f3a">${esc(host)}</a> · <a href="mailto:hello@sprig-family.com" style="color:#6b8f3a">hello@sprig-family.com</a></td></tr>
 </table></td></tr></table></body></html>`;
 	return { subject, html, text };

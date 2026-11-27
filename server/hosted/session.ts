@@ -12,6 +12,8 @@ import { deviceLabel, sha } from '../auth.ts';
 
 export const COOKIE = 'household_session';
 const YEAR_S = 365 * 24 * 3600;
+/** A device unused this long is signed out (the privacy page's "How long we keep it"). */
+export const UNUSED_MS = 182 * 24 * 3_600_000;
 export const PARENT_MS = 10 * 60_000;
 export const MAX_TRIES = 5;
 const LOCK_MS = 15 * 60_000;
@@ -164,7 +166,9 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
 		const token = tokenOf(raw);
 		const hash = started.get(raw) ?? (token ? sha(token) : mediaSession(raw));
 		return hash
-			? (accounts.prepare('SELECT * FROM sessions WHERE token_hash = ?').get(hash) as SessionRow | undefined)
+			? (accounts
+					.prepare('SELECT * FROM sessions WHERE token_hash = ? AND last_seen >= ?')
+					.get(hash, new Date(Date.now() - UNUSED_MS).toISOString()) as SessionRow | undefined)
 			: undefined;
 	};
 	/** The session a picture's address opens with its media key (see MEDIA). */
@@ -270,10 +274,8 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
 			.run(until, until ? (by ?? null) : null, s.token_hash);
 
 	function startSession(req: FastifyRequest, reply: FastifyReply, row: Pick<SessionRow, 'kind'> & Partial<SessionRow>) {
-		// Devices unused for longer than a cookie lasts are signed out for good.
-		accounts
-			.prepare(`DELETE FROM sessions WHERE last_seen < ?`)
-			.run(new Date(Date.now() - YEAR_S * 1000).toISOString());
+		// Devices unused for 6 months are signed out for good.
+		accounts.prepare(`DELETE FROM sessions WHERE last_seen < ?`).run(new Date(Date.now() - UNUSED_MS).toISOString());
 		const old = sessionOf(req);
 		if (old) accounts.prepare('DELETE FROM sessions WHERE token_hash = ?').run(old.token_hash);
 		const token = randomBytes(32).toString('base64url');
@@ -387,7 +389,12 @@ export function sessions(accounts: AccountsDB, households: HouseholdRegistry) {
 			kind: s.kind,
 			user,
 			signIns,
-			household: c.household && { id: c.household.id, name: c.household.name },
+			household: c.household && {
+				id: c.household.id,
+				name: c.household.name,
+				/** A guardian has given consent for the household's children (hosted/childConsent.ts). */
+				childConsent: !!c.household.child_consent_at,
+			},
 			households: theirs,
 			role: c.role,
 			memberId: c.membership?.member_id ?? null,

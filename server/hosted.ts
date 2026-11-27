@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import { logger } from './logging.ts';
 import fastifyStatic from '@fastify/static';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { createHash, randomInt, randomUUID } from 'node:crypto';
@@ -23,6 +24,7 @@ import { passkeyRoutes } from './hosted/passkeys.ts';
 import { householdRoutes } from './hosted/household.ts';
 import { unlockRoutes } from './hosted/unlock.ts';
 import { pinRoutes } from './hosted/pin.ts';
+import { childConsentRoutes } from './hosted/childConsent.ts';
 import { googleRoutes } from './hosted/google.ts';
 import { deleteAccountRoutes } from './hosted/deleteAccount.ts';
 import { DEMO_OFF, demoBlocks, demoRoutes } from './hosted/demo.ts';
@@ -97,7 +99,7 @@ function sendJson(res: ServerResponse, code: number, body: unknown) {
 export function buildServer(accounts: AccountsDB, households: HouseholdRegistry, opts: ServerOptions) {
 	let rootHandler: ((req: IncomingMessage, res: ServerResponse) => void) | null = null;
 	const app = Fastify({
-		logger: opts.logger ?? (process.env.NODE_ENV !== 'test' && { level: 'info' }),
+		logger: opts.logger ?? logger(),
 		trustProxy: opts.trustProxy ?? 'loopback',
 		serverFactory: (handler) => {
 			rootHandler = handler;
@@ -124,6 +126,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 			holder: isHolder(c),
 			guardians: guardiansOf(c.household!.id),
 			actor: actorOf(c),
+			childConsent: !!c.household!.child_consent_at,
 			stillParent: () => {
 				if (!ownParent(c)) setParentUntil(s, later(PARENT_MS));
 			},
@@ -224,6 +227,7 @@ export function buildServer(accounts: AccountsDB, households: HouseholdRegistry,
 	householdRoutes(app, accounts, x);
 	unlockRoutes(app, accounts, x);
 	pinRoutes(app, accounts, x, opts);
+	childConsentRoutes(app, accounts, x, opts);
 	googleRoutes(app, accounts, households, x, opts);
 	deleteAccountRoutes(app, accounts, households, x, opts);
 	demoRoutes(app, accounts, households, x, opts);
