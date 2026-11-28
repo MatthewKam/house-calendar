@@ -69,8 +69,9 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 	const inHours = events.filter((ev) => !inStrip(ev));
 
 	const track = useRef<HTMLDivElement>(null);
-	// A day's width (all are the same); the track's left scroll for day i is i of them.
-	const dayWidth = () => track.current?.querySelector<HTMLElement>(`.${s.name}`)?.offsetWidth || 1;
+	// A day's width (all are the same); the track's left scroll for day i is i of them. Exact, fractions and
+	// all: offsetWidth's whole pixels put a later day a few px off, the next one peeking in at the edge.
+	const dayWidth = () => track.current?.querySelector<HTMLElement>(`.${s.name}`)?.getBoundingClientRect().width || 1;
 	// Sprig's own glide to a day: while it runs, the days may sit anywhere between where they were and
 	// there (everywhere else they're held on the middle day, below).
 	const glide = useRef<{ from: number; to: number; until: number } | null>(null);
