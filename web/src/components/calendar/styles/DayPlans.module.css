@@ -5,14 +5,12 @@
 	flex-direction: column;
 	gap: 0.9rem;
 }
-.which,
-.times {
+.which {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.4rem;
 }
-.which button,
-.times button {
+.which button {
 	min-height: 2.75rem;
 	padding: 0.4rem 0.8rem;
 	border: 1px solid var(--line);
@@ -34,8 +32,7 @@
 	font-weight: 400;
 	color: var(--muted);
 }
-.which button[aria-pressed='true'],
-.times button[aria-pressed='true'] {
+.which button[aria-pressed='true'] {
 	background: var(--accent);
 	border-color: var(--accent);
 	color: var(--on-accent);
@@ -131,15 +128,9 @@
 	align-items: center;
 	gap: 0.5rem;
 }
-.times button[aria-checked='true'] {
-	background: var(--accent);
-	border-color: var(--accent);
-	color: var(--on-accent);
-}
-/* The one not picked: muted, like a sheet's secondary button (Edit event). */
-.times button[aria-checked='false'] {
-	background: var(--bg);
-	border-color: var(--bg);
+/* On the day | Before (Segmented): the whole row, how long before under it. */
+.whenBar {
+	flex-basis: 100%;
 }
 .howLong {
 	display: flex;

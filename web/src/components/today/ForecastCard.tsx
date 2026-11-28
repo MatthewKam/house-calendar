@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type PointerEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from 'react';
 import { api } from '../../lib/api';
 import { fromDayKey, longDate } from '../../lib/dates';
 import { sky } from '../../lib/weather';
@@ -8,6 +8,7 @@ import { canFindHere, findHere, setHere, useWeatherHere } from '../../lib/useWea
 import AddressInput from '../calendar/AddressInput';
 import { Loading, Skeleton, SkeletonLines } from '../ui/Skeleton';
 import { feel } from '../../lib/haptics';
+import { Segmented } from '../ui/Segmented';
 import s from './Today.module.css';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -160,48 +161,49 @@ function PlaceSwitch() {
 			)
 			.finally(() => setFinding(false));
 	}
-	// `busy`: finding where you are; the pin bobs and the words stay the same, so the switch doesn't change width.
-	const option = (on: boolean, label: ReactNode, pick: () => void, busy = false) => (
-		<button
-			type="button"
-			role="radio"
-			aria-checked={on}
-			aria-busy={busy || undefined}
-			className={s.placeOption}
-			onClick={pick}
-			disabled={finding}
-		>
-			{label}
-		</button>
-	);
 	const onHere = !!here && !place;
+	// Home | Here | Other (Segmented, a tap each): which is picked, and what picking each does.
+	const picked = place || typing ? 'other' : onHere || finding ? 'here' : 'home';
+	const pick = (id: 'home' | 'here' | 'other') => {
+		setProblem(null);
+		if (id === 'home') {
+			setTyping(false);
+			setHere(null);
+		} else if (id === 'here') goHere();
+		// The place picked shows its name; tapped again, another can be typed in.
+		else setTyping((t) => !t || !place);
+	};
 	return (
 		<>
 			<div className={s.place}>
-				<div className={s.placeSwitch} role="radiogroup" aria-label="Weather for">
-					{option(!here && !typing && !finding, '🏠 Home', () => {
-						setProblem(null);
-						setTyping(false);
-						setHere(null);
-					})}
-					{(canFindHere() || onHere) &&
-						option(
-							onHere && !typing,
-							<>
-								<span className={s.placePin} aria-hidden="true">
-									📍
-								</span>{' '}
-								Here
-							</>,
-							goHere,
-							finding && !typing,
-						)}
-					{/* The place picked shows its name; tapped again, another can be typed in. */}
-					{option(!!place || typing, place ? `🔎 ${place.name}` : '🔎 Other', () => {
-						setProblem(null);
-						setTyping((t) => !t || !place);
-					})}
-				</div>
+				<Segmented
+					label="Weather for"
+					haptic="tap"
+					value={picked}
+					onChange={pick}
+					disabled={finding}
+					options={[
+						{ id: 'home', label: '🏠 Home' },
+						...(canFindHere() || onHere
+							? [
+									{
+										id: 'here' as const,
+										// While finding where you are, the pin bobs and the words stay, so the bar keeps its width.
+										busy: finding && !typing,
+										label: (
+											<span>
+												<span className={s.placePin} aria-hidden="true">
+													📍
+												</span>{' '}
+												Here
+											</span>
+										),
+									},
+								]
+							: []),
+						{ id: 'other', label: <span className={s.placeName}>{place ? `🔎 ${place.name}` : '🔎 Other'}</span> },
+					]}
+				/>
 				{problem && <span className={s.placeProblem}>{problem}</span>}
 			</div>
 			{typing && (

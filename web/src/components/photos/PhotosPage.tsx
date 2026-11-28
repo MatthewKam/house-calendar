@@ -11,6 +11,7 @@ import sheet from '../ui/styles/Sheet.module.css';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import { feel, tapArea } from '../../lib/haptics';
+import { Segmented } from '../ui/Segmented';
 import s from './styles/Photos.module.css';
 import Sheet from '../ui/Sheet';
 import { Button, IconButton } from '../ui/Button';
@@ -273,26 +274,18 @@ export default function PhotosPage({ onPreview, incoming, onTaken, plusInBar }: 
 			</header>
 
 			{photos.length > 0 && (
-				<div className={s.tabs} role="tablist" aria-label="Show">
-					{(
-						[
-							['all', `All (${photos.length})`],
-							['in', `In screen saver (${inCount})`],
-						] as [Show, string][]
-					).map(([id, label]) => (
-						<button
-							key={id}
-							role="tab"
-							aria-selected={show === id}
-							className={`${s.tab} ${show === id ? s.tabOn : ''}`}
-							onClick={() => {
-								if (show !== id) feel('select');
-								setShow(id);
-							}}
-						>
-							{label}
-						</button>
-					))}
+				<div className={s.tabs}>
+					<Segmented
+						tabs
+						className={s.showBar}
+						label="Show"
+						value={show}
+						onChange={setShow}
+						options={[
+							{ id: 'all', label: `All (${photos.length})` },
+							{ id: 'in', label: `In screen saver (${inCount})` },
+						]}
+					/>
 					{photos.length > 0 && parent && (
 						<Button type="submit" disabled={selecting} onClick={startSelecting}>
 							Select images

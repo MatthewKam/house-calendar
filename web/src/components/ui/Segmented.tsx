@@ -7,6 +7,8 @@ interface Option<T extends string> {
 	label: ReactNode;
 	/** A quieter line under the label ("Required for the day"). */
 	hint?: ReactNode;
+	/** Working on it (finding where you are): marked aria-busy, for its label to show it. */
+	busy?: boolean;
 }
 
 interface Props<T extends string> {
@@ -18,13 +20,17 @@ interface Props<T extends string> {
 	/** It switches what's shown under it (Catch one | History): read out as tabs. */
 	tabs?: boolean;
 	className?: string;
-	/** How a change feels (lib/haptics): a tick, unless it says otherwise (History's Week | Month taps). */
-	haptic?: Feel;
+	/** How a change feels (lib/haptics): a tick, unless it says otherwise (History's Week | Month taps);
+	 *  null when what it changes gives its own (Today's days). */
+	haptic?: Feel | null;
+	/** None can be picked just now. */
+	disabled?: boolean;
 }
 
 /**
  * Two to four choices side by side in one bar, one picked (Task | Goal, Week | Month, Catch one |
- * History). For more, or several at once, use Chips.
+ * History, Today | Tomorrow | Rest of the week, On the day | Before). Every choice like these is one: not
+ * pills or tabs of a screen's own. For more, or several at once, use Chips.
  */
 export function Segmented<T extends string>({
 	label,
@@ -34,6 +40,7 @@ export function Segmented<T extends string>({
 	tabs,
 	className,
 	haptic = 'select',
+	disabled,
 }: Props<T>) {
 	return (
 		<div className={[s.bar, className].filter(Boolean).join(' ')} role={tabs ? 'tablist' : 'group'} aria-label={label}>
@@ -47,8 +54,10 @@ export function Segmented<T extends string>({
 						role={tabs ? 'tab' : undefined}
 						aria-selected={tabs ? on : undefined}
 						aria-pressed={tabs ? undefined : on}
+						aria-busy={o.busy || undefined}
+						disabled={disabled}
 						onClick={() => {
-							if (o.id !== value) feel(haptic);
+							if (o.id !== value && haptic) feel(haptic);
 							onChange(o.id);
 						}}
 					>

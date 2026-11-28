@@ -31,19 +31,12 @@
 	composes: pageColumn from global;
 	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	gap: var(--space-2);
 }
-.tab {
-	min-height: 2.4rem;
-	padding: 0 var(--space-5);
-	border-radius: var(--radius-round);
-	color: var(--muted);
-	font-weight: var(--weight-semibold);
-}
-.tabOn {
-	background: var(--surface);
-	color: var(--text);
-	box-shadow: 0 0 0 1.5px var(--accent);
+/* All | In screen saver (Segmented), Select images beside it. */
+.showBar {
+	flex: 1 1 18rem;
 }
 
 /* Select mode's toolbar. */
