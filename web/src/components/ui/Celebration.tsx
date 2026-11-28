@@ -72,10 +72,15 @@ export default function Celebration({
 	const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 	useEffect(() => {
 		const t = setTimeout(onDone, 5000);
-		// A happy buzz, on phones that can (lib/haptics).
+		// A happy buzz, on phones that can (lib/haptics), again every second and a half while the confetti
+		// falls (once, with less motion and no confetti).
 		feel('success');
-		return () => clearTimeout(t);
-	}, [onDone]);
+		const again = calm ? undefined : setInterval(() => feel('success'), 1500);
+		return () => {
+			clearTimeout(t);
+			clearInterval(again);
+		};
+	}, [onDone, calm]);
 	const who = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0];
 	return (
 		<div className={s.overlay} onClick={onDone} role="alert">

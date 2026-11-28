@@ -20,6 +20,7 @@ import { Chip } from '../ui/Chip';
 import { Field, Fieldset, Input } from '../ui/Field';
 import sheet from '../ui/styles/Sheet.module.css';
 import ListCard, { type CardList } from './ListCard';
+import { tapArea } from '../../lib/haptics';
 import s from './ListView.module.css';
 
 /** The Lists page: Sprig's own lists, and shared iCloud Reminders lists synced through the phones. */
@@ -43,7 +44,7 @@ export default function ListView() {
 	};
 
 	return (
-		<section className={s.page} aria-label="Lists">
+		<section className={s.page} aria-label="Lists" {...tapArea}>
 			<header className={`${s.pageHead} pageHeadGlobal`}>
 				<h1 className={s.pageTitle}>Lists</h1>
 				<span className={s.spacer} />

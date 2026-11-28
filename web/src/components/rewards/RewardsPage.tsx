@@ -11,6 +11,7 @@ import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import { Button } from '../ui/Button';
 import { SectionHead } from '../ui/Card';
+import { tapArea } from '../../lib/haptics';
 import s from './Rewards.module.css';
 import { useFolded } from '../../lib/useFolded';
 
@@ -79,7 +80,7 @@ export default function RewardsPage({ today, members }: Props) {
 	}, []);
 
 	return (
-		<section className={s.page} aria-label="Rewards">
+		<section className={s.page} aria-label="Rewards" {...tapArea}>
 			<header className={s.pageHead}>
 				<div>
 					<h1 className={s.pageTitle}>Rewards</h1>

@@ -7,6 +7,7 @@ import { TaskName, TaskTick } from './TaskBits';
 import { StarIcon } from '../ui/icons';
 import { IconButton } from '../ui/Button';
 import { Segmented } from '../ui/Segmented';
+import { feel } from '../../lib/haptics';
 import s from './styles/Tasks.module.css';
 
 type Period = 'week' | 'month';
@@ -60,6 +61,7 @@ export default function TaskHistory({ kid, tasks, today, onEdit }: Props) {
 				<Segmented
 					className={s.periods}
 					label="History period"
+					haptic="tap"
 					value={period}
 					onChange={(p) => {
 						setPeriod(p);
@@ -199,7 +201,10 @@ function WeekTable({
 										className={`${s.cell} ${state}`}
 										disabled={future}
 										aria-label={`${c.title}, ${d.toLocaleDateString([], { weekday: 'long' })}: ${ticked ? 'done' : future ? 'coming up' : 'not done'}`}
-										onClick={() => onToggle(c, key, ticked)}
+										onClick={() => {
+											feel(ticked ? 'select' : 'done');
+											onToggle(c, key, ticked);
+										}}
 									>
 										{ticked ? '✓' : ''}
 									</button>
