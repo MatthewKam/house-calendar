@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { UNASSIGNED } from '../../lib/color';
 import { percent, tasksFor, type taskProgress } from '../../lib/tasks';
 import type { CalEvent, Member, Task } from '../../lib/types';
@@ -39,6 +39,19 @@ export default function PeopleFilter({
 }) {
 	// The pop-up of names that aren't shown (people without tasks, and Everyone).
 	const [moreOpen, setMoreOpen] = useState(false);
+	// The pop-up, nudged sideways if it would run off either side of the screen (a small phone).
+	const panel = useRef<HTMLDivElement>(null);
+	useLayoutEffect(() => {
+		const el = panel.current;
+		if (!moreOpen || !el) return;
+		el.style.translate = '';
+		const margin = 16;
+		const r = el.getBoundingClientRect();
+		const over = r.right - (document.documentElement.clientWidth - margin);
+		const under = margin - r.left;
+		if (over > 0) el.style.translate = `${-Math.min(over, Math.max(0, r.left - margin))}px 0`;
+		else if (under > 0) el.style.translate = `${under}px 0`;
+	}, [moreOpen]);
 	const everyone = { id: EVERYONE, name: 'Everyone', color: UNASSIGNED };
 	const withTasks = members.filter((m) => tasksFor(tasks, m.id).length > 0);
 	// Until anyone has tasks, show everybody.
@@ -93,7 +106,7 @@ export default function PeopleFilter({
 					{moreOpen && (
 						<>
 							<div className={s.moreScrim} onClick={() => setMoreOpen(false)} role="presentation" />
-							<div className={s.morePanel}>
+							<div className={s.morePanel} ref={panel}>
 								{folded && focus.length > 0 && (
 									<button className={`${s.clearFilter} ${s.clearInPanel}`} onClick={() => onFocus([])}>
 										Clear
