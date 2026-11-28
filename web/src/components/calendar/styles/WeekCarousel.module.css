@@ -134,9 +134,10 @@
 	/* No rubber band at the top or bottom of the hours, or sideways: iOS's bounce shook the sticky names
 	   and the corner against it. */
 	overscroll-behavior: none;
-	/* Clipped to the frame's rounded corners here too: iOS lets the sticky names' square corners show past
-	   the frame's own rounding (a straight line past today's rounded top). */
-	clip-path: inset(0 round var(--radius-lg));
+	/* Rounded like the frame, on the scroller itself: iOS doesn't clip scrolled content to a parent's
+	   rounded corners, so today's straight green edge showed past the corner once the hours scrolled up
+	   under the names. A scroller's own rounding clips what scrolls in it. */
+	border-radius: var(--radius-lg);
 	scrollbar-width: none;
 	/* The browser may only scroll up and down; a sideways swipe is WeekCarousel.tsx's. */
 	touch-action: pan-y;
