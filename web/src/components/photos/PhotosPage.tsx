@@ -10,6 +10,7 @@ import ScreenSaverSettings from '../settings/ScreenSaverSettings';
 import sheet from '../ui/styles/Sheet.module.css';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
+import { feel, tapArea } from '../../lib/haptics';
 import s from './styles/Photos.module.css';
 import Sheet from '../ui/Sheet';
 import { Button, IconButton } from '../ui/Button';
@@ -20,6 +21,8 @@ interface Props {
 	/** Picked with the phone's + (Add a photo): uploaded here, then onTaken. */
 	incoming?: File[] | null;
 	onTaken?: () => void;
+	/** The bottom bar's + is showing (a phone), with Add a photo in it: no round + of the page's own. */
+	plusInBar?: boolean;
 }
 
 interface Upload {
@@ -88,7 +91,7 @@ function UploadStatus({ upload: u, video }: { upload: Upload; video?: Photo }) {
 	);
 }
 
-export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
+export default function PhotosPage({ onPreview, incoming, onTaken, plusInBar }: Props) {
 	const photosQuery = usePhotos();
 	const photos = photosQuery.data ?? [];
 	const { refresh, update, remove, setSlideshow } = usePhotoActions();
@@ -130,6 +133,8 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 	}
 	function toggle(id: string) {
 		const next = new Set(selected);
+		// Haptics: picked is done, unpicked a tick.
+		feel(next.has(id) ? 'select' : 'done');
 		if (next.has(id)) next.delete(id);
 		else next.add(id);
 		setSelected(next);
@@ -244,7 +249,7 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 	}, [current, index, shown]);
 
 	return (
-		<section className={s.page} aria-label="Photos" {...drag}>
+		<section className={s.page} aria-label="Photos" {...drag} {...tapArea}>
 			<header className={s.pageHead}>
 				<h1 className={s.pageTitle}>Photos</h1>
 				<div className={s.actions}>
@@ -280,7 +285,10 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 							role="tab"
 							aria-selected={show === id}
 							className={`${s.tab} ${show === id ? s.tabOn : ''}`}
-							onClick={() => setShow(id)}
+							onClick={() => {
+								if (show !== id) feel('select');
+								setShow(id);
+							}}
 						>
 							{label}
 						</button>
@@ -316,6 +324,7 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 						variant="primary"
 						type="submit"
 						disabled={setSlideshow.isPending}
+						haptic="done"
 						onClick={() => void saveSelection()}
 					>
 						Save selection
@@ -379,7 +388,11 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 								className={`${s.tile} ${selecting ? s.selectable : ''} ${on ? s.picked : ''}`}
 								aria-pressed={selecting ? on : undefined}
 								aria-label={`Photo from ${taken(p.takenAt)}`}
-								onClick={() => (selecting ? toggle(p.id) : setViewing(p.id))}
+								onClick={() => {
+									if (selecting) return toggle(p.id);
+									feel('select');
+									setViewing(p.id);
+								}}
 							>
 								{p.ready ? (
 									<img src={p.thumbUrl} alt="" loading="lazy" decoding="async" />
@@ -527,8 +540,10 @@ export default function PhotosPage({ onPreview, incoming, onTaken }: Props) {
 					It's removed from the album and the screen saver. This can't be undone.
 				</ConfirmDialog>
 			)}
-			{/* Upload photos: the round + at the bottom right. */}
-			<Fab label="Upload photos" onClick={() => (touch ? input.current?.click() : setUploadOpen(true))} />
+			{/* Upload photos: the round + at the bottom right (on a phone, the bottom bar's + has Add a photo). */}
+			{!plusInBar && (
+				<Fab label="Upload photos" onClick={() => (touch ? input.current?.click() : setUploadOpen(true))} />
+			)}
 
 			{uploadOpen && (
 				<>

@@ -7,6 +7,7 @@ import { Button } from '../ui/Button';
 import Switch from '../ui/Switch';
 import { Field, Input, Select } from '../ui/Field';
 import { List, ListRow } from '../ui/ListRow';
+import { ON_DONE } from '../../lib/haptics';
 
 /** Minutes without a touch before it starts. */
 /** Whether this device's screen is being kept on, in words. */
@@ -68,6 +69,7 @@ export default function ScreenSaverSettings({
 								on={saver.enabled}
 								onChange={(on) => save({ enabled: on })}
 								label="Show photos when this screen is idle"
+								haptic={ON_DONE}
 							/>
 						}
 					/>
@@ -112,14 +114,24 @@ export default function ScreenSaverSettings({
 							title="Show today's events"
 							detail="Bottom left, under the clock"
 							trailing={
-								<Switch on={saver.showEvents} onChange={(on) => save({ showEvents: on })} label="Show today's events" />
+								<Switch
+									on={saver.showEvents}
+									onChange={(on) => save({ showEvents: on })}
+									label="Show today's events"
+									haptic={ON_DONE}
+								/>
 							}
 						/>
 						<ListRow
 							title="Dim the photos at night"
 							detail="And change them more slowly"
 							trailing={
-								<Switch on={saver.night} onChange={(on) => save({ night: on })} label="Dim the photos at night" />
+								<Switch
+									on={saver.night}
+									onChange={(on) => save({ night: on })}
+									label="Dim the photos at night"
+									haptic={ON_DONE}
+								/>
 							}
 						/>
 					</List>

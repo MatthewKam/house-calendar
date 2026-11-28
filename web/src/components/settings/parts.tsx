@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import Switch from '../ui/Switch';
+import type { Feel } from '../../lib/haptics';
 import ErrorBoundary from '../ui/ErrorBoundary';
 import { PHONE, PHONE_SIDEWAYS, useMediaQuery } from '../../lib/useMediaQuery';
 import s from './styles/Settings.module.css';
@@ -144,12 +145,15 @@ export function SwitchRow({
 	onChange,
 	hint,
 	children,
+	haptic,
 }: {
 	title: string;
 	on: boolean;
 	onChange: (on: boolean) => void;
 	hint: string;
 	children?: ReactNode;
+	/** How turning it on and off feel (Switch). */
+	haptic?: { on: Feel; off: Feel };
 }) {
 	const [info, setInfo] = useState(false);
 	return (
@@ -159,7 +163,7 @@ export function SwitchRow({
 					{title}
 					<InfoButton about={title} open={info} onToggle={() => setInfo(!info)} />
 				</span>
-				<Switch on={on} onChange={onChange} label={title} />
+				<Switch on={on} onChange={onChange} label={title} haptic={haptic} />
 			</div>
 			{info && <p className={s.switchHint}>{hint}</p>}
 			{on && children && <div className={s.foldBody}>{children}</div>}

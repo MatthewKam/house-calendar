@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { feel } from '../../lib/haptics';
+import { feel, type Feel } from '../../lib/haptics';
 import s from './styles/Button.module.css';
 
 // Sprig's buttons: one look per job, the same everywhere. A sheet's Save is `primary`, its Cancel
@@ -20,6 +20,8 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 	icon?: ReactNode;
 	/** As wide as where it sits. */
 	block?: boolean;
+	/** How pressing it feels (lib/haptics), when not its look's own (Save selection is done). */
+	haptic?: Feel;
 }
 
 /** A button with words (and maybe an icon). Never submits a form unless it says `type="submit"`. */
@@ -32,10 +34,11 @@ export function Button({
 	type = 'button',
 	children,
 	onClick,
+	haptic,
 	...rest
 }: Props) {
 	const classes = [s.button, s[variant], s[size], block && s.block, className].filter(Boolean).join(' ');
-	const kind = variant === 'destructive' ? 'warn' : variant === 'primary' || size === 'lg' ? 'tap' : null;
+	const kind = haptic ?? (variant === 'destructive' ? 'warn' : variant === 'primary' || size === 'lg' ? 'tap' : null);
 	return (
 		<button
 			type={type}

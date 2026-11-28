@@ -1,4 +1,4 @@
-import { feel } from '../../lib/haptics';
+import { feel, type Feel } from '../../lib/haptics';
 import s from './styles/Switch.module.css';
 
 /** An on/off switch: a pill with a knob, the accent when on. `label` is read out (the row shows its own title). */
@@ -7,11 +7,14 @@ export default function Switch({
 	onChange,
 	label,
 	disabled,
+	haptic,
 }: {
 	on: boolean;
 	onChange: (on: boolean) => void;
 	label: string;
 	disabled?: boolean;
+	/** How turning it on and off feel (lib/haptics); a tick either way unless it says otherwise. */
+	haptic?: { on: Feel; off: Feel };
 }) {
 	return (
 		<button
@@ -22,7 +25,7 @@ export default function Switch({
 			className={s.switch}
 			disabled={disabled}
 			onClick={() => {
-				feel('select');
+				feel(haptic ? (on ? haptic.off : haptic.on) : 'select');
 				onChange(!on);
 			}}
 		>
