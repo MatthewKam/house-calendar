@@ -1,5 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { feel } from '../../lib/haptics';
+import { Segmented } from './Segmented';
 import { PHONE_SIDEWAYS, TABLET, useMediaQuery, WIDE } from '../../lib/useMediaQuery';
 
 /** A day (or a few) of the calendar: its button's name, and what's on. */
@@ -32,10 +33,13 @@ export function DayCalendar({
 	styles: s,
 	stacked = false,
 	three = true,
+	bar = false,
 }: {
 	days: CalendarDay[];
 	styles: CalendarStyles;
 	stacked?: boolean;
+	/** The days' buttons as the shared choice bar (Segmented), not the page's own (kid mode's big ones). */
+	bar?: boolean;
 	/** All three side by side when there's room (wider than 1400px); false keeps the first and a carousel. */
 	three?: boolean;
 }) {
@@ -51,7 +55,7 @@ export function DayCalendar({
 		return (
 			<div className={`${s.calendar} ${s.calendarStacked}`}>
 				{day(days[0])}
-				<Carousel days={days.slice(1)} styles={s} />
+				<Carousel days={days.slice(1)} styles={s} bar={bar} />
 			</div>
 		);
 	}
@@ -60,19 +64,19 @@ export function DayCalendar({
 		return (
 			<div className={s.calendar}>
 				{day(days[0])}
-				<Carousel days={days.slice(1)} styles={s} />
+				<Carousel days={days.slice(1)} styles={s} bar={bar} />
 			</div>
 		);
 	}
 	return (
 		<div className={s.calendar}>
-			<Carousel days={days} styles={s} />
+			<Carousel days={days} styles={s} bar={bar} />
 		</div>
 	);
 }
 
 /** Days a page at a time: a button for each along the top, and a swipe to the next or back. */
-function Carousel({ days, styles: s }: { days: CalendarDay[]; styles: CalendarStyles }) {
+function Carousel({ days, styles: s, bar }: { days: CalendarDay[]; styles: CalendarStyles; bar?: boolean }) {
 	const [at, setAt] = useState(0);
 	// Which way the last move went, so the new day slides in from that side.
 	const [from, setFrom] = useState<'right' | 'left'>('right');
@@ -97,20 +101,33 @@ function Carousel({ days, styles: s }: { days: CalendarDay[]; styles: CalendarSt
 				if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(e.clientY - start.y)) go(at + (dx < 0 ? 1 : -1));
 			}}
 		>
-			<div className={s.dayButtons} role="tablist">
-				{days.map((d, i) => (
-					<button
-						key={d.label}
-						type="button"
-						role="tab"
-						aria-selected={i === at}
-						className={`${s.dayButton} ${i === at ? s.dayButtonOn : ''}`}
-						onClick={() => go(i)}
-					>
-						{d.label}
-					</button>
-				))}
-			</div>
+			{bar ? (
+				// go() gives the tick, as a swipe's does.
+				<Segmented
+					tabs
+					haptic={null}
+					className={s.dayBar}
+					label="Days"
+					value={String(Math.min(at, days.length - 1))}
+					onChange={(id) => go(Number(id))}
+					options={days.map((d, i) => ({ id: String(i), label: d.label }))}
+				/>
+			) : (
+				<div className={s.dayButtons} role="tablist">
+					{days.map((d, i) => (
+						<button
+							key={d.label}
+							type="button"
+							role="tab"
+							aria-selected={i === at}
+							className={`${s.dayButton} ${i === at ? s.dayButtonOn : ''}`}
+							onClick={() => go(i)}
+						>
+							{d.label}
+						</button>
+					))}
+				</div>
+			)}
 			<section
 				key={shown.label}
 				role="tabpanel"

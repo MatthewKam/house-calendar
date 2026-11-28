@@ -302,7 +302,7 @@ export default function TodayPage({
 					<Skeleton height="3.6rem" />
 				</Loading>
 			) : (
-				<DayCalendar days={calendar} styles={s} stacked={twoColumns || threeColumns} three={false} />
+				<DayCalendar days={calendar} styles={s} stacked={twoColumns || threeColumns} three={false} bar />
 			)}
 		</Card>
 	);

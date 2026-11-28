@@ -13,6 +13,7 @@ import AddressInput from './AddressInput';
 import { PickChip } from '../ui/NameChip';
 import { feel } from '../../lib/haptics';
 import sheet from '../ui/styles/Sheet.module.css';
+import { Segmented } from '../ui/Segmented';
 import s from './styles/EventDialog.module.css';
 import DateInput from '../ui/DateInput';
 import { CalendarPick, useNewEventCalendar } from './CalendarPick';
@@ -96,20 +97,12 @@ function SeenPicker({ value, onChange }: { value: Visibility; onChange: (v: Visi
 	return (
 		<>
 			<div className={s.label}>Who sees it</div>
-			<div className={s.seen} role="radiogroup" aria-label="Who sees it">
-				{SEEN.map((o) => (
-					<button
-						key={o.id}
-						type="button"
-						role="radio"
-						aria-checked={value === o.id}
-						className={s.seenOption}
-						onClick={() => onChange(o.id)}
-					>
-						{o.label}
-					</button>
-				))}
-			</div>
+			<Segmented
+				label="Who sees it"
+				value={value}
+				onChange={onChange}
+				options={SEEN.map(({ id, label }) => ({ id, label }))}
+			/>
 			<div className={s.seenHint}>{SEEN.find((o) => o.id === value)?.hint}</div>
 		</>
 	);

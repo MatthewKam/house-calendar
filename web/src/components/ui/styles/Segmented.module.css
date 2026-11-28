@@ -34,3 +34,10 @@
 	font-weight: var(--weight-regular);
 	color: var(--muted);
 }
+/* Waiting (finding where you are): the others fade, the busy one shows it in its label. */
+.option:disabled {
+	cursor: default;
+}
+.option:disabled:not([aria-busy='true']) {
+	opacity: 0.6;
+}

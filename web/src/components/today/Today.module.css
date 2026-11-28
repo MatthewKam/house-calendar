@@ -204,37 +204,18 @@
 	align-items: flex-end;
 	gap: var(--space-1);
 }
-.placeSwitch {
-	display: flex;
-	padding: var(--space-1);
-	border-radius: var(--radius-round);
-	background: var(--bg);
-}
-.placeOption {
-	min-height: 2.2rem;
-	padding: 0 var(--space-4);
-	border-radius: var(--radius-round);
-	font-size: var(--text-sm);
-	font-weight: var(--weight-semibold);
-	color: var(--muted);
-}
-/* A long place name: cut short. */
-.placeOption {
+/* A long place's name, cut short in its choice. */
+.placeName {
+	display: block;
 	max-width: 9rem;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-.placeOption[aria-checked='true'] {
-	background: var(--surface);
-	color: var(--text);
-	box-shadow: var(--shadow-sm);
-}
-/* Finding where you are: the pin bobs (or, with less motion, the button breathes), the words unchanged. */
 .placePin {
 	display: inline-block;
 }
-.placeOption[aria-busy='true'] .placePin {
+[aria-busy='true'] .placePin {
 	animation: placeBob 0.8s ease-in-out infinite;
 }
 @keyframes placeBob {
@@ -243,10 +224,10 @@
 	}
 }
 @media (prefers-reduced-motion: reduce) {
-	.placeOption[aria-busy='true'] .placePin {
+	[aria-busy='true'] .placePin {
 		animation: none;
 	}
-	.placeOption[aria-busy='true'] {
+	[aria-busy='true']:has(.placePin) {
 		animation: placeBreathe 1.2s ease-in-out infinite;
 	}
 }
@@ -509,73 +490,9 @@ details > summary.cardHead {
 	/* Up and down still scrolls the page; sideways is a swipe. */
 	touch-action: pan-y;
 }
-.dayButtons {
-	display: flex;
-	gap: var(--space-2);
-	padding: 0 var(--space-5);
-}
-.dayButton {
-	--tab-color: var(--line);
-	--curve: var(--radius-sm);
-	position: relative;
-	background: var(--tab-color);
-	color: var(--text);
-	padding: var(--space-2) var(--space-4);
-	border: 0;
-	border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-	font-size: var(--text-md);
-	font-weight: var(--weight-bold);
-	line-height: var(--leading-tight);
-	white-space: nowrap;
-}
-
-.dayButton::before,
-.dayButton::after {
-	content: '';
-	position: absolute;
-	bottom: 0;
-	width: var(--curve);
-	height: var(--curve);
-	border-radius: 0;
-	box-shadow: none;
-	pointer-events: none;
-}
-
-.dayButton::before {
-	right: 100%;
-	background: radial-gradient(circle at top left, transparent 70%, var(--tab-color) 71%);
-}
-
-.dayButton::after {
-	left: 100%;
-	background: radial-gradient(circle at top right, transparent 70%, var(--tab-color) 71%);
-}
-.dayButtonOn {
-	border-color: var(--c);
-	background: var(--c);
-	color: var(--on-accent);
-}
-.dayButtonOn::before,
-.dayButtonOn::after {
-	content: '';
-	position: absolute;
-	bottom: 0;
-	width: var(--curve);
-	height: var(--curve);
-	border-radius: 0;
-	box-shadow: none;
-	pointer-events: none;
-}
-.dayButtonOn::before {
-	right: 100%;
-	background: radial-gradient(circle at top left, transparent 70%, var(--c) 71%);
-	z-index: 1;
-}
-
-.dayButtonOn::after {
-	left: 100%;
-	background: radial-gradient(circle at top right, transparent 70%, var(--c) 71%);
-	z-index: 1;
+/* Today | Tomorrow | Rest of the week (Segmented), over the day it shows. */
+.dayBar {
+	margin-bottom: var(--space-3);
 }
 .dayPage {
 	display: flex;

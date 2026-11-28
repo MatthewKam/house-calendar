@@ -9,6 +9,7 @@ import DayMeals from './DayMeals';
 import DayPlans from './DayPlans';
 import DayTimeline from './DayTimeline';
 import { Button } from '../ui/Button';
+import { Segmented } from '../ui/Segmented';
 import s from './styles/DayPanel.module.css';
 
 interface Props {
@@ -62,14 +63,19 @@ export default function DayPanel({ day, shown, today, members, onAdd, onOpen, on
 				</header>
 
 				{(access.plans || access.reminders) && (
-					<div className={s.tabs} role="tablist" aria-label="Show">
-						<button role="tab" aria-selected={tab === 'events'} onClick={() => setTab('events')}>
-							Events
-						</button>
-						<button role="tab" aria-selected={tab === 'plans'} onClick={() => setTab('plans')}>
-							Plans{planned && <span className={s.dot} aria-label=" (something planned)" />}
-						</button>
-					</div>
+					<Segmented
+						tabs
+						label="Show"
+						value={tab}
+						onChange={setTab}
+						options={[
+							{ id: 'events', label: 'Events' },
+							{
+								id: 'plans',
+								label: <span>Plans{planned && <span className={s.dot} aria-label=" (something planned)" />}</span>,
+							},
+						]}
+					/>
 				)}
 
 				{tab === 'plans' && (access.plans || access.reminders) ? (

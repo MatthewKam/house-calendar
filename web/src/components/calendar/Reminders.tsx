@@ -5,6 +5,7 @@ import { useChangeSpecialReminders, usePlansAccess, useSpecialReminders } from '
 import type { CalEvent } from '../../lib/types';
 import { usePush } from '../../lib/usePush';
 import { Button } from '../ui/Button';
+import { Segmented } from '../ui/Segmented';
 import s from './styles/DayPlans.module.css';
 
 interface Props {
@@ -78,14 +79,16 @@ export default function Reminders(props: Props) {
 			)}
 			<p className={s.none}>{hint}</p>
 			<div className={s.whenRow}>
-				<div className={s.times} role="radiogroup" aria-label="When">
-					<button type="button" role="radio" aria-checked={onTheDay} onClick={() => setOnTheDay(true)}>
-						On the day
-					</button>
-					<button type="button" role="radio" aria-checked={!onTheDay} onClick={() => setOnTheDay(false)}>
-						Before
-					</button>
-				</div>
+				<Segmented
+					className={s.whenBar}
+					label="When"
+					value={onTheDay ? 'day' : 'before'}
+					onChange={(id) => setOnTheDay(id === 'day')}
+					options={[
+						{ id: 'day', label: 'On the day' },
+						{ id: 'before', label: 'Before' },
+					]}
+				/>
 				{!onTheDay && (
 					<div className={s.howLong}>
 						<input
