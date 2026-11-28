@@ -18,12 +18,24 @@ import s from './styles/WeekCarousel.module.css';
 /** Dots on a day's card, one per person with something that day, before the rest are left off. */
 const MAX_DOTS = 5;
 /** How far (px) a finger goes before its swipe picks a way: up and down (the hours scroll) or sideways
- *  (the days move), and keeps to it until it lets go. Early, so iOS hasn't started scrolling yet. */
-const DECIDE = 8;
+ *  (the days move), and keeps to it until it lets go. */
+const DECIDE = 10;
+/** A swipe moves the days only when it's clearly sideways: within 30° of flat (it went 1 / tan 30° as far
+ *  across as up or down). Anything steeper, a thumb's slanting swipe down too, scrolls the hours. */
+const SIDEWAYS = 1.73;
 /** How far a day must be dragged (a share of its width) to move on to the next one. */
 const MOVE_ON = 0.3;
 /** A swipe this fast (px per ms) moves a day however short it is. */
 const FLICK = 0.4;
+
+/** Where the days slide to for day i (of the nine) in the middle: --day follows the frame's width, so
+ *  they stay there as the screen turns or folds. */
+const at = (i: number) => `calc(${-i} * var(--day))`;
+/** How far (px) the days have slid, partway through a glide too. */
+function slidOf(el: HTMLElement | null) {
+	const transform = el ? getComputedStyle(el).transform : 'none';
+	return transform === 'none' ? 0 : new DOMMatrixReadOnly(transform).m41;
+}
 
 interface Props {
 	/** The week's seven days. */
@@ -68,66 +80,61 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 	const nowHours = (now.getTime() - new Date(now).setHours(0, 0, 0, 0)) / 3_600_000;
 	const inHours = events.filter((ev) => !inStrip(ev));
 
-	const track = useRef<HTMLDivElement>(null);
-	// A day's width (all are the same); the track's left scroll for day i is i of them. Exact, fractions and
-	// all: offsetWidth's whole pixels put a later day a few px off, the next one peeking in at the edge.
-	const dayWidth = () => track.current?.querySelector<HTMLElement>(`.${s.name}`)?.getBoundingClientRect().width || 1;
-	// Sprig's own glide to a day: while it runs, the days may sit anywhere between where they were and
-	// there (everywhere else they're held on the middle day, below).
-	const glide = useRef<{ from: number; to: number; until: number } | null>(null);
-	const glideTo = (left: number, top?: number) => {
-		const el = track.current;
-		if (!el) return;
-		glide.current = { from: el.scrollLeft, to: left, until: performance.now() + 1000 };
-		el.scrollTo({ left, top, behavior: 'smooth' });
-	};
-	// Straight there, ending any glide.
-	const jumpTo = (left: number) => {
-		glide.current = null;
-		track.current?.scrollTo({ left });
+	// The days' names on top and the hours under them, each in a strip of the nine days that slides
+	// sideways (both together); only the hours scroll, up and down.
+	const week = useRef<HTMLDivElement>(null);
+	const body = useRef<HTMLDivElement>(null);
+	const names = useRef<HTMLDivElement>(null);
+	const hours = useRef<HTMLDivElement>(null);
+	// A day's width (all are the same), exact, fractions and all.
+	const dayWidth = () => names.current?.querySelector<HTMLElement>(`.${s.name}`)?.getBoundingClientRect().width || 1;
+	/** Slides the days to x, gliding there (the strips' own transition) or straight there. */
+	const slide = (x: string, glide: boolean) => {
+		for (const el of [names.current, hours.current]) {
+			if (!el) continue;
+			el.style.transition = glide ? '' : 'none';
+			el.style.transform = `translate3d(${x}, 0, 0)`;
+		}
 	};
 
-	// Put the middle day in the middle: gliding there within the week, at once when the week changed
-	// (its days have moved under the same scroll).
-	const week = keys[1];
-	const shownWeek = useRef<string | null>(null);
-	useLayoutEffect(() => {
-		const el = track.current;
-		if (!el) return;
-		const sameWeek = shownWeek.current === week;
-		shownWeek.current = week;
-		const left = mainIndex * dayWidth();
-		if (Math.abs(el.scrollLeft - left) <= 1) return;
-		if (sameWeek) glideTo(left);
-		else jumpTo(left);
-	}, [mainIndex, week]);
-
-	// Stay on the middle day when the screen changes width (the days change width). Only the width: a
-	// change of height (Safari's address bar shrinking as the page scrolls) mustn't cut a glide short.
 	const mainRef = useRef(mainIndex);
 	mainRef.current = mainIndex;
-	useEffect(() => {
-		const el = track.current;
-		if (!el) return;
-		let width = el.clientWidth;
-		const observer = new ResizeObserver(() => {
-			if (el.clientWidth === width) return;
-			width = el.clientWidth;
-			jumpTo(mainRef.current * dayWidth());
-		});
-		observer.observe(el);
-		return () => observer.disconnect();
-	}, []);
+	const latest = useRef({ keys, onMain });
+	latest.current = { keys, onMain };
+	/** Puts day i (of the nine) in the middle, gliding there; the day before or after the week moves to
+	 *  that week. */
+	const go = (i: number) => {
+		const { keys, onMain } = latest.current;
+		const to = Math.min(keys.length - 1, Math.max(0, i));
+		slide(at(to), true);
+		if (to !== mainRef.current) onMain(keys[to]);
+	};
 
-	// Folding or opening the whole-day events changes the names' height; keep the middle day in the middle.
+	// The middle day in the middle: gliding there within the week. Into the next or last week (a swipe
+	// past the week's end, a tap on the day before or after it), the days have moved under the strips, so
+	// the glide carries on from the same place among the new days; any other change of week is at once.
+	const first = all[0].getTime();
+	const shownFirst = useRef<number | null>(null);
 	useLayoutEffect(() => {
-		jumpTo(mainRef.current * dayWidth());
-	}, [expanded]);
+		const was = shownFirst.current;
+		shownFirst.current = first;
+		if (was === first) return slide(at(mainIndex), true);
+		if (was !== null) {
+			const w = dayWidth();
+			const x = slidOf(hours.current) + Math.round((first - was) / 86_400_000) * w;
+			if (Math.abs(x + mainIndex * w) <= w * 1.05) {
+				slide(`${x}px`, false);
+				void hours.current?.offsetWidth; // there now, so the glide starts from it
+				return slide(at(mainIndex), true);
+			}
+		}
+		slide(at(mainIndex), false);
+	}, [mainIndex, first]);
 
 	// Opens with the time now (or 8 AM) a quarter of the way down, once the text-size setting has settled.
 	useEffect(() => {
 		const frame = requestAnimationFrame(() => {
-			const el = track.current;
+			const el = body.current;
 			const target = el?.querySelector<HTMLElement>(`.${t.now}`) ?? el?.querySelector<HTMLElement>('[data-hour="8"]');
 			if (!el || !target) return;
 			el.scrollTop += target.getBoundingClientRect().top - el.getBoundingClientRect().top - el.clientHeight / 4;
@@ -135,18 +142,17 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 		return () => cancelAnimationFrame(frame);
 	}, []);
 
-	// Today tapped: one glide that puts today in the middle and the time now halfway down the hours
-	// that show under the days' names.
+	// Today tapped: today glides to the middle (above, as it becomes the middle day) and the time now to
+	// halfway down the hours.
 	useEffect(() => {
 		if (!todayAt) return;
 		const frame = requestAnimationFrame(() => {
-			const el = track.current;
+			const el = body.current;
 			const line = el?.querySelector<HTMLElement>(`.${t.now}`);
-			const names = el?.querySelector<HTMLElement>(`.${s.name}`)?.offsetHeight ?? 0;
 			if (!el || !line) return;
-			const middle = names + (el.clientHeight - names) / 2;
-			const top = el.scrollTop + line.getBoundingClientRect().top - el.getBoundingClientRect().top - middle;
-			glideTo(mainRef.current * dayWidth(), top);
+			const top =
+				el.scrollTop + line.getBoundingClientRect().top - el.getBoundingClientRect().top - el.clientHeight / 2;
+			el.scrollTo({ top, behavior: 'smooth' });
 		});
 		return () => cancelAnimationFrame(frame);
 	}, [todayAt]);
@@ -157,23 +163,23 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 	// Sprig scrolls them itself (to now, or Today). A fling's glide after the finger lifts ticks on too.
 	const hourTick = useRef({ hour: -1, by: 0 });
 	const onScroll = () => {
-		const el = track.current;
+		const el = body.current;
 		if (!el) return;
 		setScrolled(el.scrollTop > 0);
-		const hours = el.querySelector<HTMLElement>(`.${s.column}`);
-		const hourPx = hours ? hours.offsetHeight / 24 : 0;
+		const column = el.querySelector<HTMLElement>(`.${s.column}`);
+		const hourPx = column ? column.offsetHeight / 24 : 0;
 		if (!hourPx) return;
 		const hour = Math.floor(el.scrollTop / hourPx);
-		const t = hourTick.current;
+		const tick = hourTick.current;
 		const now = performance.now();
-		if (now - t.by < 400) {
-			t.by = now;
-			if (hour !== t.hour && t.hour !== -1) feel('select');
+		if (now - tick.by < 400) {
+			tick.by = now;
+			if (hour !== tick.hour && tick.hour !== -1) feel('select');
 		}
-		t.hour = hour;
+		tick.hour = hour;
 	};
 	useEffect(() => {
-		const el = track.current;
+		const el = body.current;
 		if (!el) return;
 		const byHand = () => (hourTick.current.by = performance.now());
 		el.addEventListener('touchmove', byHand, { passive: true });
@@ -184,46 +190,33 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 		};
 	}, []);
 
-	// The days move sideways only by Sprig's own hand (.track doesn't scroll sideways by itself, and nothing
-	// snaps), so a swipe can't fight the browser. A finger's swipe keeps to one way, picked in its first
-	// DECIDE px: mostly up or down, and the browser scrolls the hours as usual; mostly sideways, and the days
-	// follow the finger while the hours are held (the touch's moves are cancelled, so iOS doesn't scroll
-	// them). Letting go moves on a day if it went MOVE_ON of one or was flicked (never more than one day, however hard),
-	// else springs back to the middle day; so does a touch the browser takes over. Touch events, not pointer
-	// events: only they can stop iOS's own scroll once a swipe turns out to be sideways.
+	// A finger's swipe keeps to one way, picked in its first DECIDE px: clearly sideways (SIDEWAYS), and the
+	// days follow the finger while the hours are held (the touch's moves are cancelled, so the browser
+	// doesn't scroll them); anything else is the browser's own scroll up and down, untouched. Letting go
+	// moves on a day if it went MOVE_ON of one or was flicked that way (never more than one day, however
+	// hard), else springs back; so does a touch the browser takes over. Touch events, not pointer events:
+	// only they can stop iOS's own scroll once a swipe turns out to be sideways.
 	const dragged = useRef(false);
-	const latest = useRef({ keys, onMain });
-	latest.current = { keys, onMain };
 	useEffect(() => {
-		const el = track.current;
-		if (!el) return;
+		const el = week.current;
+		const scroller = body.current;
+		if (!el || !scroller) return;
 		let d: {
 			x: number;
 			y: number;
-			left: number;
+			/** The hours' scroll when the finger went down, held while the days move. */
 			top: number;
 			/** null until it's picked a way. */
 			way: 'sideways' | 'down' | null;
+			/** Where the days were when the swipe turned sideways, and where they are now (px). */
+			from: number;
+			slid: number;
+			w: number;
 			lastX: number;
 			t: number;
 			v: number;
 		} | null = null;
-		// The days stay on the middle one: anything else that moves them (iOS puts them back to the first day
-		// while the hours scroll, with or without a finger on them) is put back at once. Only a finger's
-		// sideways swipe, and Sprig's own glide to a day, move them.
-		const hold = () => {
-			if (d?.way === 'sideways') return;
-			const left = mainRef.current * dayWidth();
-			const g = glide.current;
-			if (g) {
-				const done = performance.now() > g.until || Math.abs(el.scrollLeft - g.to) <= 1;
-				if (done) glide.current = null;
-				const between = el.scrollLeft >= Math.min(g.from, g.to) - 1 && el.scrollLeft <= Math.max(g.from, g.to) + 1;
-				if (!done && between) return;
-			}
-			if (Math.abs(el.scrollLeft - left) > 1) el.scrollLeft = left;
-		};
-		const springBack = () => glideTo(mainRef.current * dayWidth());
+		const springBack = () => slide(at(mainRef.current), true);
 		const start = (e: TouchEvent) => {
 			if (e.touches.length !== 1) {
 				if (d?.way === 'sideways') springBack();
@@ -235,28 +228,36 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			d = {
 				x: t.clientX,
 				y: t.clientY,
-				left: el.scrollLeft,
-				top: el.scrollTop,
+				top: scroller.scrollTop,
 				way: null,
-				lastX: t.clientX,
-				t: e.timeStamp,
+				from: 0,
+				slid: 0,
+				w: 1,
+				lastX: 0,
+				t: 0,
 				v: 0,
 			};
 		};
 		const move = (e: TouchEvent) => {
 			if (!d || d.way === 'down') return;
 			const t = e.touches[0];
-			const dx = t.clientX - d.x;
 			if (!d.way) {
+				const dx = t.clientX - d.x;
 				const dy = t.clientY - d.y;
 				if (Math.hypot(dx, dy) < DECIDE) return;
-				// Up and down (or iOS has already started scrolling): the browser's, and the days stay put.
-				if (Math.abs(dy) >= Math.abs(dx) || !e.cancelable) {
+				// Up and down, or slanting (or the browser has already started scrolling): the hours'.
+				if (!e.cancelable || Math.abs(dx) < Math.abs(dy) * SIDEWAYS) {
 					d.way = 'down';
 					return;
 				}
 				d.way = 'sideways';
 				dragged.current = true;
+				// From here the days follow the finger, from where they are (partway through a glide too).
+				d.x = t.clientX;
+				d.from = d.slid = slidOf(hours.current);
+				d.w = dayWidth();
+				d.lastX = t.clientX;
+				d.t = e.timeStamp;
 			}
 			// Sideways: no scrolling up or down while the days move.
 			if (e.cancelable) e.preventDefault();
@@ -265,30 +266,25 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			d.v = 0.6 * d.v + 0.4 * ((t.clientX - d.lastX) / dt);
 			d.lastX = t.clientX;
 			d.t = e.timeStamp;
-			// The days follow the finger, but no further than a day either way.
-			const w = dayWidth();
-			el.scrollLeft = d.left - Math.max(-w, Math.min(w, dx));
-			if (el.scrollTop !== d.top) el.scrollTop = d.top;
+			// No further than a day either way from the middle one.
+			const rest = -mainRef.current * d.w;
+			d.slid = Math.max(rest - d.w, Math.min(rest + d.w, d.from + t.clientX - d.x));
+			slide(`${d.slid}px`, false);
+			if (scroller.scrollTop !== d.top) scroller.scrollTop = d.top;
 		};
 		const end = () => {
 			const was = d;
 			d = null;
 			if (was?.way !== 'sideways') return;
-			const { keys, onMain } = latest.current;
-			const w = dayWidth();
-			const main = mainRef.current;
-			const dx = was.left - el.scrollLeft; // + is a swipe to the right (back a day)
-			// A flick goes the way the finger was moving at the end.
+			const off = was.slid + mainRef.current * was.w; // + is to the right (back a day)
+			// A flick goes the way the finger was moving at the end (one back the other way springs back);
+			// otherwise far enough moves on.
 			const flick = Math.abs(was.v) > FLICK ? Math.sign(was.v) : 0;
-			// One day at most, however far or hard the swipe.
-			const step = Math.abs(dx) > w * MOVE_ON || (flick && flick === Math.sign(dx)) ? 1 : 0;
-			const i = Math.min(keys.length - 1, Math.max(0, main - Math.sign(dx) * step));
-			if (i === main) return springBack();
+			const on = flick ? flick === Math.sign(off) : Math.abs(off) > was.w * MOVE_ON;
+			if (!on || !off) return springBack();
 			// A tick as the swipe moves to another day (lib/haptics).
 			feel('select');
-			// On from where the finger left it now, so nothing puts it back on the old day meanwhile.
-			glideTo(i * w);
-			onMain(keys[i]);
+			go(mainRef.current - Math.sign(off));
 		};
 		// The browser took the touch: back to the middle day, never on to another.
 		const cancel = () => {
@@ -297,35 +293,39 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			if (was?.way === 'sideways') springBack();
 		};
 		// A trackpad's sideways swipe (or a mouse's sideways wheel): one day per swipe, however long it
-		// coasts, and quick swipes in a row a day each (lib/wheelSwipe.ts tells them apart).
+		// coasts, and quick swipes in a row a day each (lib/wheelSwipe.ts tells them apart). Up and down
+		// over the days' names scrolls the hours, as it would over them.
 		const swipes = wheelSwipe();
 		const wheel = (e: WheelEvent) => {
-			if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+			if (e.ctrlKey) return;
+			if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) {
+				if (scroller.contains(e.target as Node)) return;
+				e.preventDefault();
+				scroller.scrollTop += e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+				return;
+			}
 			e.preventDefault();
 			const step = swipes.push(e.deltaX, e.timeStamp);
 			if (!step) return;
-			const { keys, onMain } = latest.current;
-			const i = Math.min(keys.length - 1, Math.max(0, mainRef.current + step));
-			if (i !== mainRef.current) {
-				feel('select');
-				onMain(keys[i]);
-			}
+			const i = mainRef.current + step;
+			if (i < 0 || i >= latest.current.keys.length) return;
+			feel('select');
+			go(i);
 		};
 		el.addEventListener('touchstart', start, { passive: true });
 		el.addEventListener('touchmove', move, { passive: false });
 		el.addEventListener('touchend', end);
 		el.addEventListener('touchcancel', cancel);
 		el.addEventListener('wheel', wheel, { passive: false });
-		el.addEventListener('scroll', hold, { passive: true });
 		return () => {
-			el.removeEventListener('scroll', hold);
 			el.removeEventListener('touchstart', start);
 			el.removeEventListener('touchmove', move);
 			el.removeEventListener('touchend', end);
 			el.removeEventListener('touchcancel', cancel);
 			el.removeEventListener('wheel', wheel);
 		};
-		// Once: the current main day, days and onMain come through refs.
+		// Once: the current main day, days and onMain come through refs (go and slide only read them).
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	return (
@@ -369,9 +369,8 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 				{/* Sprig's sprout in the corner above "all-day" (outside the days, which slide under the corner). */}
 				<Sprout className={s.logo} />
 				<div
-					ref={track}
-					className={`${s.track} ${scrolled ? s.scrolled : ''}`}
-					onScroll={onScroll}
+					ref={week}
+					className={s.week}
 					// A swipe isn't a tap on what it started on.
 					onClickCapture={(e) => {
 						if (!dragged.current) return;
@@ -379,126 +378,143 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 						e.stopPropagation();
 					}}
 				>
-					{/* Row 1: the days' names, with their whole-day events and meals; they stay at the top. */}
-					<span className={s.corner}>
-						<button
-							type="button"
-							className={s.fold}
-							aria-expanded={expanded}
-							aria-label={expanded ? 'Fold all-day events' : 'Show all-day events'}
-							onClick={() => setExpanded(!expanded)}
-						>
-							<span className={s.allDayLabel}>all-day</span>
-							<span aria-hidden="true">{expanded ? '▴' : '▾'}</span>
-						</button>
-					</span>
-					<span className={s.pad} />
-					{all.map((day, i) => {
-						const key = dayKey(day);
-						return (
-							<div
-								key={key}
-								className={[s.name, key === today && s.nameToday, key < today && s.namePast, i !== mainIndex && s.side]
-									.filter(Boolean)
-									.join(' ')}
-								onClick={() => {
-									if (i !== mainIndex) onMain(key);
-									// Open on a phone: tapping the middle day's names (not an event) folds them again.
-									else if (small && expanded) setExpanded(false);
-								}}
+					{/* The days' names, with their whole-day events and meals; they stay at the top. */}
+					<div className={`${s.head} ${scrolled ? s.scrolled : ''}`}>
+						<span className={s.corner}>
+							<button
+								type="button"
+								className={s.fold}
+								aria-expanded={expanded}
+								aria-label={expanded ? 'Fold all-day events' : 'Show all-day events'}
+								onClick={() => setExpanded(!expanded)}
 							>
-								<h3 className={s.title}>
-									<span className={s.weekday}>{day.toLocaleDateString([], { weekday: 'long' })}</span>
-									<span className={s.num}>{day.getDate()}</span>
-								</h3>
-								{folded ? (
-									// Folded: a bar in its people's colours for each; tap to open them all.
-									<span
-										className={s.foldedBars}
-										onClick={(e) => {
-											if (i !== mainIndex) return;
-											e.stopPropagation();
-											setExpanded(true);
-										}}
-									>
-										{eventsOn(events, day)
-											.filter(inStrip)
-											.map((ev) => (
+								<span className={s.allDayLabel}>all-day</span>
+								<span aria-hidden="true">{expanded ? '▴' : '▾'}</span>
+							</button>
+						</span>
+						<div className={s.viewport}>
+							<div ref={names} className={s.strip}>
+								<span className={s.pad} />
+								{all.map((day, i) => {
+									const key = dayKey(day);
+									return (
+										<div
+											key={key}
+											className={[
+												s.name,
+												key === today && s.nameToday,
+												key < today && s.namePast,
+												i !== mainIndex && s.side,
+											]
+												.filter(Boolean)
+												.join(' ')}
+											onClick={() => {
+												if (i !== mainIndex) go(i);
+												// Open on a phone: tapping the middle day's names (not an event) folds them again.
+												else if (small && expanded) setExpanded(false);
+											}}
+										>
+											<h3 className={s.title}>
+												<span className={s.weekday}>{day.toLocaleDateString([], { weekday: 'long' })}</span>
+												<span className={s.num}>{day.getDate()}</span>
+											</h3>
+											{folded ? (
+												// Folded: a bar in its people's colours for each; tap to open them all.
 												<span
-													key={ev.id}
-													className={`${s.foldedBar} ${isOver(ev, now) ? s.foldedOver : ''}`}
-													style={eventPaint(ev, members).vars}
-												/>
-											))}
-									</span>
-								) : (
-									<>
-										{eventsOn(events, day)
-											.filter(inStrip)
-											.map((ev) => (
-												<button
-													key={ev.id}
-													type="button"
-													className={`${s.allDay} ${isOver(ev, now) ? t.past : ''}`}
-													style={eventPaint(ev, members).vars}
-													data-busy={ev.busy || undefined}
+													className={s.foldedBars}
 													onClick={(e) => {
+														if (i !== mainIndex) return;
 														e.stopPropagation();
-														onOpen(ev, key);
+														setExpanded(true);
 													}}
-													title={ev.allDay ? ev.title : `${ev.title}, from ${timeLabel(ev.start)}`}
 												>
-													{ev.title}
-												</button>
-											))}
-										<DayMeals day={key} />
-									</>
-								)}
+													{eventsOn(events, day)
+														.filter(inStrip)
+														.map((ev) => (
+															<span
+																key={ev.id}
+																className={`${s.foldedBar} ${isOver(ev, now) ? s.foldedOver : ''}`}
+																style={eventPaint(ev, members).vars}
+															/>
+														))}
+												</span>
+											) : (
+												<>
+													{eventsOn(events, day)
+														.filter(inStrip)
+														.map((ev) => (
+															<button
+																key={ev.id}
+																type="button"
+																className={`${s.allDay} ${isOver(ev, now) ? t.past : ''}`}
+																style={eventPaint(ev, members).vars}
+																data-busy={ev.busy || undefined}
+																onClick={(e) => {
+																	e.stopPropagation();
+																	onOpen(ev, key);
+																}}
+																title={ev.allDay ? ev.title : `${ev.title}, from ${timeLabel(ev.start)}`}
+															>
+																{ev.title}
+															</button>
+														))}
+													<DayMeals day={key} />
+												</>
+											)}
+										</div>
+									);
+								})}
+								<span className={s.pad} />
 							</div>
-						);
-					})}
-					<span className={s.pad} />
-
-					{/* Row 2: the hours in the margin (they stay at the left), then each day's 24 hours. */}
-					<div className={s.gutter}>
-						{Array.from({ length: 23 }, (_, i) => i + 1).map((h) => (
-							<span key={h} data-hour={h} className={t.hour} style={{ top: `${(h / 24) * 100}%` }}>
-								<HourName h={h} />
-							</span>
-						))}
+						</div>
 					</div>
-					<span className={`${s.pad} ${s.hours}`} />
-					{all.map((day, i) => {
-						const key = dayKey(day);
-						return (
-							<div
-								key={key}
-								className={[
-									s.hours,
-									s.column,
-									key === today && s.columnToday,
-									key < today && s.columnPast,
-									i !== mainIndex && s.side,
-								]
-									.filter(Boolean)
-									.join(' ')}
-								onClick={() => i !== mainIndex && onMain(key)}
-							>
-								{placeDay(inHours, day, 0, 24).map((p) => (
-									<TimedEvent key={p.ev.id} placed={p} day={day} now={now} members={members} onOpen={onOpen} />
-								))}
-								{/* The time now, in today's column, moving down every minute. */}
-								{key === today && (
-									<div
-										className={t.now}
-										style={{ top: `${(nowHours / 24) * 100}%` }}
-										aria-label={`Now, ${timeLabel(now)}`}
-									/>
-								)}
+
+					{/* The hours in the margin, then each day's 24 hours: the one part that scrolls, up and down. */}
+					<div ref={body} className={s.body} onScroll={onScroll}>
+						<div className={s.gutter}>
+							{Array.from({ length: 23 }, (_, i) => i + 1).map((h) => (
+								<span key={h} data-hour={h} className={t.hour} style={{ top: `${(h / 24) * 100}%` }}>
+									<HourName h={h} />
+								</span>
+							))}
+						</div>
+						<div className={s.viewport}>
+							<div ref={hours} className={s.strip}>
+								<span className={`${s.pad} ${s.hours}`} />
+								{all.map((day, i) => {
+									const key = dayKey(day);
+									return (
+										<div
+											key={key}
+											className={[
+												s.hours,
+												s.column,
+												key === today && s.columnToday,
+												key < today && s.columnPast,
+												i !== mainIndex && s.side,
+											]
+												.filter(Boolean)
+												.join(' ')}
+											onClick={() => i !== mainIndex && go(i)}
+										>
+											{placeDay(inHours, day, 0, 24).map((p) => (
+												<TimedEvent key={p.ev.id} placed={p} day={day} now={now} members={members} onOpen={onOpen} />
+											))}
+											{/* The time now, in today's column, moving down every minute. */}
+											{key === today && (
+												<div
+													className={t.now}
+													style={{ top: `${(nowHours / 24) * 100}%` }}
+													aria-label={`Now, ${timeLabel(now)}`}
+												/>
+											)}
+										</div>
+									);
+								})}
+								<span className={`${s.pad} ${s.hours}`} />
 							</div>
-						);
-					})}
-					<span className={`${s.pad} ${s.hours}`} />
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

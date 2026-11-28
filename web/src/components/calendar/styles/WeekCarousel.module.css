@@ -92,7 +92,11 @@
 		var(--shadow-md);
 }
 
-/* ---- The days by the hour ---- */
+/* ---- The days by the hour ----
+   Two parts, each moving one way only, so nothing fights a finger: the days' names on top (.head), and
+   under them the hours (.body), the one thing that scrolls, up and down, by the browser's own hand. The
+   days move sideways by WeekCarousel.tsx sliding both .strips together (a transform, never a scroll, so
+   iOS can't put them back to the start). */
 .frame {
 	position: relative;
 	flex: 1;
@@ -102,10 +106,12 @@
 	border-radius: var(--radius-lg);
 	box-shadow: var(--shadow-md);
 	overflow: hidden;
+	/* iOS doesn't always clip what slides inside to rounded corners; a clip path does. */
+	clip-path: inset(0 round var(--radius-lg));
 	/* The days' widths follow the frame's (container units below). */
 	container-type: inline-size;
 }
-.track {
+.week {
 	--gutter: 3.6rem;
 	--hour: 3.2rem;
 	/* A day's width: three side by side on a wide frame; narrower, the middle one takes more and the
@@ -124,34 +130,70 @@
 	);
 	flex: 1;
 	min-width: 0;
-	display: grid;
-	grid-template-columns: var(--gutter) var(--pad) repeat(9, var(--day)) var(--pad);
-	grid-template-rows: auto auto;
-	/* The hours scroll up and down; the days move sideways only by WeekCarousel.tsx's hand (a swipe, a
-	   tap, the cards), so no snapping or sideways scroll of the browser's own fights a finger. Sideways
-	   is auto, not hidden: iOS puts a hidden way's scroll back to the start while scrolling the other. */
-	overflow: auto;
-	/* No rubber band at the top or bottom of the hours, or sideways: iOS's bounce shook the sticky names
-	   and the corner against it. */
-	overscroll-behavior: none;
-	/* Rounded like the frame, on the scroller itself: iOS doesn't clip scrolled content to a parent's
-	   rounded corners, so today's straight green edge showed past the corner once the hours scrolled up
-	   under the names. A scroller's own rounding clips what scrolls in it. */
-	border-radius: var(--radius-lg);
-	scrollbar-width: none;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
 	/* The browser may only scroll up and down; a sideways swipe is WeekCarousel.tsx's. */
 	touch-action: pan-y;
 }
-.track::-webkit-scrollbar {
+/* The days' names, with the corner; they stay put as the hours scroll under them. */
+.head {
+	position: relative;
+	/* Its shadow over the hours, once they've scrolled. */
+	z-index: 3;
+	flex: none;
+	display: flex;
+	background: var(--surface);
+}
+.head.scrolled {
+	box-shadow: var(--shadow-bar);
+}
+/* The hours: they scroll up and down, nothing else. Nothing in here sticks, so the browser's own
+   scrolling (its glide, and its bounce at the ends) runs as smooth as any page. */
+.body {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	align-items: flex-start;
+	overflow-x: hidden;
+	overflow-y: auto;
+	/* A bounce at the ends stays in here, not the page's. */
+	overscroll-behavior: contain;
+	scrollbar-width: none;
+}
+.body::-webkit-scrollbar {
 	display: none;
 }
+/* Where the days slide, beside the corner or the hour names: clipped, never scrolled. */
+.viewport {
+	flex: 1;
+	min-width: 0;
+	/* The strip as tall as the row: the names reach down as far as the corner. */
+	display: flex;
+	overflow: clip;
+}
+/* The days side by side, the day before the week and the day after too; slid so the middle day is in
+   the middle (WeekCarousel.tsx sets the transform). */
+.strip {
+	display: grid;
+	grid-template-columns: var(--pad) repeat(9, var(--day)) var(--pad);
+	width: max-content;
+	/* own: a glide to the next day, quick to start and easing in, like a native carousel */
+	transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+	will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+	.strip {
+		transition: none;
+	}
+}
 @container (max-width: 760px) {
-	.track {
+	.week {
 		--day: calc((100cqw - var(--gutter)) / 2);
 	}
 }
 @container (max-width: 480px) {
-	.track {
+	.week {
 		--gutter: 3rem;
 		--day: calc((100cqw - var(--gutter)) * 0.64);
 	}
@@ -159,7 +201,7 @@
 /* A screen under 500px (a size of its own: a small phone): the middle day takes the whole frame, none
    peeking in either side. A swipe still slides the next day in, a day at a time. */
 @media (max-width: 499.98px) {
-	.track {
+	.week {
 		--gutter: 3rem;
 		--day: calc(100cqw - var(--gutter));
 	}
@@ -169,9 +211,9 @@
 	}
 }
 
-/* Sprig's sprout in the corner above "all-day" (.track's --notch: its top padding, a date's
+/* Sprig's sprout in the corner above "all-day" (.week's --notch: its top padding, a date's
    circle and the gap under it), in the middle of the hours' margin. Its own sizes, as the frame is the
-   container .track's sizes follow. */
+   container .week's sizes follow. */
 .logo {
 	--gutter: 3.6rem;
 	position: absolute;
@@ -187,30 +229,12 @@
 	}
 }
 
-/* Row 1: the names stay at the top as the hours scroll; the corner stays put both ways. */
+/* The names' row: a line along its bottom. */
 .corner,
 .name,
 .pad:not(.hours) {
-	position: sticky;
-	top: 0;
-	/* Over the hours as they scroll under, the time now's line too (WeekTimeline's .now is 2). */
-	z-index: 3;
 	background: var(--surface);
 	border-bottom: 1px solid var(--line);
-}
-.corner {
-	left: 0;
-	z-index: 4;
-}
-/* The hours scrolled under the names: a shadow along their bottom, over the hours. */
-.scrolled .name,
-.scrolled .pad:not(.hours) {
-	box-shadow: var(--shadow-bar);
-}
-.scrolled .corner {
-	box-shadow:
-		var(--shadow-bar),
-		3.5px 0 3px -2px rgba(0, 0, 0, 0.25); /* own: the corner's shadow on its right side only */
 }
 .name {
 	display: flex;
@@ -293,11 +317,16 @@
 
 /* Phones: the corner button that folds and opens the whole-day events. */
 .corner {
+	/* Its shadow over the days sliding by. */
+	position: relative;
+	z-index: 1;
+	flex: none;
+	width: var(--gutter);
 	/* At the top, level with the days' names, so it stays put as the names grow or shrink. */
 	display: flex;
 	align-items: flex-start;
 	justify-content: center;
-	/* Under the logo (.track's --notch), where the days' whole-day events start, with the line under the
+	/* Under the logo (.week's --notch), where the days' whole-day events start, with the line under the
 	   dates running on across it. */
 	padding-top: calc(var(--notch) + var(--space-2));
 	background:
@@ -339,16 +368,19 @@
 	opacity: 0.45;
 }
 
-/* Row 2: 24 hours. The hour names stay at the left as the days slide under them. */
+/* The hours: 24 of them. The hour names stay at the left as the days slide by. */
 .hours {
 	position: relative;
 	height: calc(24 * var(--hour));
 	background: var(--lines);
 }
 .gutter {
-	position: sticky;
-	left: 0;
+	position: relative;
+	/* Its shadow over the days sliding by (their time now's line stays inside their own slide), under
+	   the names' shadow. */
 	z-index: 2;
+	flex: none;
+	width: var(--gutter);
 	height: calc(24 * var(--hour));
 	background: var(--bg);
 	box-shadow: var(--shadow-gutter);
