@@ -1,4 +1,5 @@
-/* Buttons (Button.tsx): the looks a sheet's buttons have always had (Sheet.module.css), now shared. */
+/* Buttons (Button.tsx): the looks a sheet's buttons have always had (Sheet.module.css), now shared. Every
+   size is a pill (app.css's button: --radius-round). */
 .button {
 	display: inline-flex;
 	align-items: center;
@@ -42,7 +43,6 @@
 	padding-inline: var(--space-7);
 	font-size: var(--text-lg);
 	font-weight: var(--weight-bold);
-	border-radius: var(--radius-lg);
 }
 
 /* Looks: one per job. */
