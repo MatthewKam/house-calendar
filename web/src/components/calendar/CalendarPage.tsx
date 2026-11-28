@@ -14,6 +14,7 @@ import { Notice } from '../ui/Notice';
 import PeopleFilter, { eventShown } from './PeopleFilter';
 import WeekCarousel from './WeekCarousel';
 import WeekTimeline from './WeekTimeline';
+import { feel, pressArea } from '../../lib/haptics';
 import s from './styles/CalendarPage.module.css';
 
 const fmt = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'numeric' });
@@ -74,9 +75,16 @@ export default function CalendarPage({
 			? `${days[0].getDate()}–${days[6].getDate()}`
 			: `${days[0].getDate()} – ${days[6].getDate()}`;
 
+	// Haptics: a tick for anything pressed on the calendar (days, cards, ‹ Today ›, the filter), a tap for an event.
+	const ticks = pressArea('select');
+	const openEvent: typeof onOpen = (...args) => {
+		feel('tap');
+		onOpen(...args);
+	};
+
 	return (
 		<>
-			<div className={s.monthHeaderTitle}>
+			<div className={s.monthHeaderTitle} {...ticks}>
 				<div>
 					<h1 className={s.monthTitle}>
 						<strong>{month}</strong>
@@ -88,7 +96,7 @@ export default function CalendarPage({
 					<PeopleFilter members={members} tasks={tasks} progress={progress} focus={focus} onFocus={onFocus} />
 				)}
 			</div>
-			<header className={s.header}>
+			<header className={s.header} {...ticks}>
 				<div className={s.group}>
 					{/* Week or Month: one switch, its knob on the side away from the view's name. */}
 					<button
@@ -97,7 +105,10 @@ export default function CalendarPage({
 						aria-checked={view === 'week'}
 						aria-label="Week view"
 						className={`${s.viewSwitch} ${view === 'month' ? s.viewMonth : ''}`}
-						onClick={() => changeView(view === 'week' ? 'month' : 'week')}
+						onClick={() => {
+							feel('done');
+							changeView(view === 'week' ? 'month' : 'week');
+						}}
 					>
 						<span className={s.viewName}>{view === 'week' ? 'Week' : 'Month'}</span>
 						<span className={s.viewKnob} aria-hidden="true" />
@@ -144,7 +155,7 @@ export default function CalendarPage({
 			)}
 			<OutboxNotices />
 
-			<div className={s.body}>
+			<div className={s.body} {...ticks}>
 				{/* Wait for the saved view so the page doesn't flash Week before Month; until then, and
 				    while the events come in, a grid of grey days. */}
 				{eventsQuery.isError ? (
@@ -172,7 +183,7 @@ export default function CalendarPage({
 						events={events}
 						members={members}
 						onSelect={setSelected}
-						onOpen={onOpen}
+						onOpen={openEvent}
 					/>
 				) : carousel ? (
 					<WeekCarousel
@@ -182,7 +193,7 @@ export default function CalendarPage({
 						events={events}
 						members={members}
 						onMain={setMain}
-						onOpen={onOpen}
+						onOpen={openEvent}
 						todayAt={todayAt}
 					/>
 				) : (
@@ -194,7 +205,7 @@ export default function CalendarPage({
 						events={events}
 						members={members}
 						onSelect={setSelected}
-						onOpen={onOpen}
+						onOpen={openEvent}
 						todayAt={todayAt}
 					/>
 				)}
@@ -205,7 +216,7 @@ export default function CalendarPage({
 						today={today}
 						members={members}
 						onAdd={onAdd}
-						onOpen={onOpen}
+						onOpen={openEvent}
 						onClose={() => setSelected(null)}
 					/>
 				)}

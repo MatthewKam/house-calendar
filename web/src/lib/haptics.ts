@@ -103,14 +103,17 @@ const PRESSABLE = 'button, a[href], summary, [role="button"], [role="tab"], [rol
 let askedAtPress = 0;
 
 /**
- * For a whole part of a page (Today, the event panel): a tap for anything pressable in it, unless what was
- * pressed gave its own feel (a tick for a tab, a firmer tap for a tick-off). Spread on the part's element.
+ * For a whole part of a page: `kind` for anything pressable in it, unless what was pressed gave its own
+ * feel (a tick for a tab, a firmer tap for a tick-off). Spread on the part's element.
  */
-export const tapArea = {
+export const pressArea = (kind: Feel) => ({
 	onClickCapture: () => {
 		askedAtPress = asked;
 	},
 	onClick: (e: MouseEvent) => {
-		if (asked === askedAtPress && (e.target as Element).closest?.(PRESSABLE)) feel('tap');
+		if (asked === askedAtPress && (e.target as Element).closest?.(PRESSABLE)) feel(kind);
 	},
-};
+});
+
+/** Today and the event panel: a tap for anything pressed. */
+export const tapArea = pressArea('tap');

@@ -12,6 +12,7 @@ import DayMeals from './DayMeals';
 import { HourName, TimedEvent } from './WeekTimeline';
 import t from './styles/WeekTimeline.module.css';
 import { wheelSwipe } from '../../lib/wheelSwipe';
+import { feel } from '../../lib/haptics';
 import s from './styles/WeekCarousel.module.css';
 
 /** Dots on a day's card, one per person with something that day, before the rest are left off. */
@@ -151,7 +152,36 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 
 	// The hours scrolled under the days' names: a shadow under them.
 	const [scrolled, setScrolled] = useState(false);
-	const onScroll = () => setScrolled((track.current?.scrollTop ?? 0) > 0);
+	// And a tick for each hour that passes as a finger (or a wheel) scrolls them, like a picker's; not when
+	// Sprig scrolls them itself (to now, or Today). A fling's glide after the finger lifts ticks on too.
+	const hourTick = useRef({ hour: -1, by: 0 });
+	const onScroll = () => {
+		const el = track.current;
+		if (!el) return;
+		setScrolled(el.scrollTop > 0);
+		const hours = el.querySelector<HTMLElement>(`.${s.column}`);
+		const hourPx = hours ? hours.offsetHeight / 24 : 0;
+		if (!hourPx) return;
+		const hour = Math.floor(el.scrollTop / hourPx);
+		const t = hourTick.current;
+		const now = performance.now();
+		if (now - t.by < 400) {
+			t.by = now;
+			if (hour !== t.hour && t.hour !== -1) feel('select');
+		}
+		t.hour = hour;
+	};
+	useEffect(() => {
+		const el = track.current;
+		if (!el) return;
+		const byHand = () => (hourTick.current.by = performance.now());
+		el.addEventListener('touchmove', byHand, { passive: true });
+		el.addEventListener('wheel', byHand, { passive: true });
+		return () => {
+			el.removeEventListener('touchmove', byHand);
+			el.removeEventListener('wheel', byHand);
+		};
+	}, []);
 
 	// The days move sideways only by Sprig's own hand (.track doesn't scroll sideways by itself, and nothing
 	// snaps), so a swipe can't fight the browser. A finger's swipe keeps to one way, picked in its first
