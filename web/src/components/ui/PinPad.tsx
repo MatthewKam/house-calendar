@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuthStatus } from '../../lib/queries';
+import { feel } from '../../lib/haptics';
 import s from './styles/PinPad.module.css';
 
 /** For the dialog the pad is in: on a phone on its side, the words and buttons go beside the pad. */
@@ -32,7 +33,9 @@ export default function PinPad({
 	// Each new error shakes the dots once.
 	const [shakes, setShakes] = useState(0);
 	useEffect(() => {
-		if (error) setShakes((n) => n + 1);
+		if (!error) return;
+		setShakes((n) => n + 1);
+		feel('warn');
 	}, [error]);
 	const status = useAuthStatus().data;
 	const length = status?.signedIn ? status.pinLength : null;
@@ -103,7 +106,10 @@ export default function PinPad({
 							className={`${s.key} ${s.back}`}
 							aria-label="Delete"
 							disabled={!value}
-							onClick={() => onChange(value.slice(0, -1))}
+							onClick={() => {
+								feel('tap');
+								onChange(value.slice(0, -1));
+							}}
 						>
 							<svg viewBox="0 0 24 24" aria-hidden="true">
 								<path d="M9 5h10.5A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5H9l-6-7zM12 9.5l5 5M17 9.5l-5 5" />
@@ -115,7 +121,10 @@ export default function PinPad({
 							type="button"
 							className={s.key}
 							disabled={!!length && value.length >= max}
-							onClick={() => type(k)}
+							onClick={() => {
+								feel('tap');
+								type(k);
+							}}
 						>
 							{k}
 						</button>

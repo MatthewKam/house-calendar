@@ -463,7 +463,7 @@ export default function RecipeView({
 
 	return (
 		<>
-			<Sheet label={r.title} onClose={onClose} className={`${s.view} ${cooking || fullScreen ? sheet.full : ''}`} taps>
+			<Sheet label={r.title} onClose={onClose} className={`${s.view} ${cooking || fullScreen ? sheet.full : ''}`}>
 				<header className={sheet.head}>
 					{/* "‹ Today" above the name, the name keeping its place on the left. */}
 					<div className={s.titleWithBack}>

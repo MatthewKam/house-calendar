@@ -14,6 +14,7 @@ import GoogleCalendars from '../settings/GoogleCalendars';
 import ICloudCalendars from '../settings/ICloudCalendars';
 import { Issued } from '../settings/HouseholdAccess';
 import { GetTheApp } from './SignIn';
+import { tapArea } from '../../lib/haptics';
 import s from './styles/Account.module.css';
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/Chip';
@@ -49,7 +50,7 @@ export default function Setup({ status, kind, onDone }: { status: SignedIn; kind
 	const next = () => (at + 1 < steps.length ? setStep(steps[at + 1]) : onDone());
 
 	return (
-		<main className={s.screen}>
+		<main className={s.screen} {...tapArea}>
 			<div className={s.column}>
 				<ol className={s.steps} aria-label={`Step ${at + 1} of ${steps.length}`}>
 					{steps.map((x, i) => (

@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { tapArea } from '../../lib/haptics';
 import s from './styles/PinScreen.module.css';
 import { Button } from '../ui/Button';
 
@@ -48,7 +49,7 @@ export default function PinScreen({ title, hint, onSubmit, onDone }: Props) {
 	});
 
 	return (
-		<main className={s.screen}>
+		<main className={s.screen} {...tapArea}>
 			<img src="/icon.svg" alt="" className={s.logo} />
 			<h1 className={s.title}>{title}</h1>
 			<div className={`${s.dots} ${error ? s.shake : ''}`} aria-label={`${pin.length} digits entered`}>
