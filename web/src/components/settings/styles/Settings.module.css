@@ -802,6 +802,10 @@
 	.groupRow[aria-expanded='true']:active {
 		box-shadow: none;
 	}
+	/* And the next group's title over its bottom, so an open group is shaded at both ends. */
+	.groupFold:has(> .groupRow[aria-expanded='true']) + .groupFold > .groupRow {
+		box-shadow: var(--shadow-bar-up);
+	}
 	.scroll {
 		padding: var(--space-2) 0 var(--space-5) 0;
 		overflow-y: visible;

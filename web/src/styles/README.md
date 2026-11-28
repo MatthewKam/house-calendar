@@ -93,6 +93,7 @@ A circle is `50%`. A corner that should grow with its text uses `em`.
 | `--shadow-xl` | dialogs, alerts and cheers |
 | `--shadow-gutter` | the hour names on the left of a timeline, over the days sliding under them (the week on a phone) |
 | `--shadow-bar` | along the bottom of a header the page scrolls under (Today on a phone, once its cards scroll) |
+| `--shadow-bar-up` | along the top of a bar, so what's above seems to end under it (the next Settings group's title, under an open one) |
 | `--shadow-sunk` | inside the top and bottom edges, so a part looks set into the page (an open Settings section's body) |
 
 Three kinds are written where they're used, because their colour is set on the element and a shared name can't pick it up:
