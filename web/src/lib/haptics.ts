@@ -109,17 +109,21 @@ let askedAtPress = 0;
  * For a whole part of a page: `kind` for anything pressable in it, unless what was pressed gave its own
  * feel (a tick for a tab, a firmer tap for a tick-off). Spread on the part's element.
  */
-export const pressArea = (kind: Feel) => ({
+export const pressArea = (kind: Feel | ((pressed: Element) => Feel)) => ({
 	onClickCapture: () => {
 		askedAtPress = asked;
 	},
 	onClick: (e: MouseEvent) => {
-		if (asked === askedAtPress && (e.target as Element).closest?.(PRESSABLE)) feel(kind);
+		const pressed = (e.target as Element).closest?.(PRESSABLE);
+		if (asked === askedAtPress && pressed) feel(typeof kind === 'function' ? kind(pressed) : kind);
 	},
 });
 
 /** Today and the event panel: a tap for anything pressed. */
 export const tapArea = pressArea('tap');
+
+/** A pop-up (Sheet): its × (named Close) ticks as it closes; anything else pressed taps. */
+export const sheetArea = pressArea((pressed) => (pressed.getAttribute('aria-label') === 'Close' ? 'select' : 'tap'));
 
 /**
  * For a page of folding parts (Settings): opening one ticks, folding it away taps. A <details>' summary, or

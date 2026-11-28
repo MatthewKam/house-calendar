@@ -11,6 +11,7 @@ import { api, problemText } from './lib/api';
 import { isApp, linksInSheet, openTappedAlerts, loadSession, syncPhoneCalendars } from './lib/native';
 import CookAlong from './components/recipes/CookAlong';
 import { watchCrashes } from './lib/crashes';
+import { feel } from './lib/haptics';
 
 const queryClient = new QueryClient({
 	// Edits show straight away and save in the background; if a save fails, the screen goes back and
@@ -21,6 +22,7 @@ const queryClient = new QueryClient({
 			if (/Sign in/.test(err.message) || mutation.meta?.inline) return;
 			// Refused because this device is locked (it timed out, say): show it as locked again.
 			if (/^Locked/.test(err.message)) void queryClient.invalidateQueries({ queryKey: keys.auth });
+			feel('warn');
 			window.dispatchEvent(new CustomEvent('household:save-failed', { detail: problemText(err) }));
 		},
 	}),

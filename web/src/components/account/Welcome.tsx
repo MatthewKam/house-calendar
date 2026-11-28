@@ -4,6 +4,7 @@ import { pendingJoin } from '../../lib/joinCode';
 import { startSetup } from '../../lib/setup';
 import { isApp } from '../../lib/native';
 import JoinForm from './JoinForm';
+import { tapArea } from '../../lib/haptics';
 import s from './styles/Account.module.css';
 import { familyName, firstName } from '../../lib/people';
 import { Button } from '../ui/Button';
@@ -43,7 +44,7 @@ export default function Welcome({ status, onDone }: { status: SignedIn; onDone: 
 	}
 
 	return (
-		<main className={s.screen}>
+		<main className={s.screen} {...tapArea}>
 			<div className={s.column}>
 				<img src="/wordmark.svg" alt="Sprig" className={s.wordmark} />
 				<h1 className={s.title}>Hi{given ? `, ${firstName(given)}` : ''}</h1>

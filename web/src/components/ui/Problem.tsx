@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { problemText } from '../../lib/api';
+import { feel } from '../../lib/haptics';
 import s from './styles/Problem.module.css';
 import { Button } from './Button';
 
@@ -22,6 +24,10 @@ export default function Problem({
 	/** Kid mode broke as a whole: the grown-ups' way out (it asks for a PIN, as Exit does). */
 	onLeave?: () => void;
 }) {
+	// A warning buzz as it shows (lib/haptics); never for the kids, where nothing should feel like failing.
+	useEffect(() => {
+		if (kind !== 'kid') feel('warn');
+	}, [kind]);
 	if (kind === 'kid') {
 		return (
 			<div className={`${s.kid} ${className ?? ''}`} role="alert">

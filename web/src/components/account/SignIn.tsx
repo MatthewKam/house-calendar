@@ -5,6 +5,7 @@ import { appleSignIn, isApp, SITE_PAGE } from '../../lib/native';
 import { pendingJoin } from '../../lib/joinCode';
 import { notChosen, offerPasskeyNext, passkeysWork, prepareSignIn, signInFromAutofill } from '../../lib/passkeys';
 import JoinForm from './JoinForm';
+import { tapArea } from '../../lib/haptics';
 import s from './styles/Account.module.css';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Field';
@@ -182,7 +183,7 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 	}
 
 	return (
-		<main className={s.screen}>
+		<main className={s.screen} {...tapArea}>
 			<div className={s.column}>
 				<img src="/wordmark.svg" alt="Sprig" className={s.wordmark} />
 				<h1 className={s.title}>Welcome</h1>

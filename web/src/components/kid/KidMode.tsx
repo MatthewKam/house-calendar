@@ -34,7 +34,7 @@ import { RewardsIcon, TasksIcon, TodayIcon } from '../nav/NavBar';
 import PottyCard from '../tasks/PottyCard';
 import { StarIcon } from '../ui/icons';
 import ErrorBoundary from '../ui/ErrorBoundary';
-import { feel } from '../../lib/haptics';
+import { feel, tapArea } from '../../lib/haptics';
 import s from './styles/KidMode.module.css';
 import { firstName } from '../../lib/people';
 import GrownUpPin from '../account/GrownUpPin';
@@ -124,7 +124,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin, startWi
 
 	if (!kid) {
 		return (
-			<main className={s.page}>
+			<main className={s.page} {...tapArea}>
 				<p className={s.none}>No kids yet. A grown-up adds them in Settings.</p>
 				<LeaveButton onLeave={onLeave} />
 			</main>
@@ -238,7 +238,7 @@ export default function KidMode({ today, kids, members, onLeave, askPin, startWi
 				<LeaveButton onLeave={onLeave} inNav />
 			</nav>
 			{colorsOpen && <KidColors kid={kid} onClose={() => setColorsOpen(false)} />}
-			<main className={s.page}>
+			<main className={s.page} {...tapArea}>
 				{/* The time and date on the left; on the right, the stars they have to put in jars, and whose it
 				    is: their name, which opens the other kids (and on Learn, Both) to switch to. */}
 				<div className={s.top}>

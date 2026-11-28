@@ -166,7 +166,7 @@ function SyncedEvent({
 				`${longDate(new Date(event.start))}, ${timeLabel(event.start)} – ${longDate(new Date(event.end))}, ${timeLabel(event.end)}`;
 	return (
 		<>
-			<Sheet label={event.title} onClose={onClose} className={sheet.drawer} taps>
+			<Sheet label={event.title} onClose={onClose} className={sheet.drawer}>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>{event.title}</h2>
 					<button type="button" className={sheet.close} onClick={closing} aria-label="Close">
@@ -382,13 +382,7 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
 
 	return (
 		<>
-			<Sheet
-				label={event ? 'Edit event' : 'New event'}
-				onClose={onClose}
-				onSubmit={submit}
-				className={sheet.drawer}
-				taps
-			>
+			<Sheet label={event ? 'Edit event' : 'New event'} onClose={onClose} onSubmit={submit} className={sheet.drawer}>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>{event ? 'Edit event' : 'New event'}</h2>
 					<button type="button" className={sheet.close} onClick={closing} aria-label="Close">

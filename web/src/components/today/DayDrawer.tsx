@@ -24,7 +24,7 @@ export default function DayDrawer({
 }) {
 	const date = fromDayKey(day.day);
 	return (
-		<Sheet label={`${day.name}: plans`} onClose={onClose} className={sheet.drawer} taps>
+		<Sheet label={`${day.name}: plans`} onClose={onClose} className={sheet.drawer}>
 			<div className={sheet.head}>
 				<div>
 					<div className={s.drawerDay}>{date.toLocaleDateString([], { weekday: 'long' })}</div>

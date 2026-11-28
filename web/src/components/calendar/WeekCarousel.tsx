@@ -284,6 +284,8 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			const step = Math.abs(dx) > w * MOVE_ON || (flick && flick === Math.sign(dx)) ? 1 : 0;
 			const i = Math.min(keys.length - 1, Math.max(0, main - Math.sign(dx) * step));
 			if (i === main) return springBack();
+			// A tick as the swipe moves to another day (lib/haptics).
+			feel('select');
 			// On from where the finger left it now, so nothing puts it back on the old day meanwhile.
 			glideTo(i * w);
 			onMain(keys[i]);
@@ -304,7 +306,10 @@ export default function WeekCarousel({ days, today, main, events, members, onMai
 			if (!step) return;
 			const { keys, onMain } = latest.current;
 			const i = Math.min(keys.length - 1, Math.max(0, mainRef.current + step));
-			if (i !== mainRef.current) onMain(keys[i]);
+			if (i !== mainRef.current) {
+				feel('select');
+				onMain(keys[i]);
+			}
 		};
 		el.addEventListener('touchstart', start, { passive: true });
 		el.addEventListener('touchmove', move, { passive: false });

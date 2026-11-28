@@ -1,5 +1,5 @@
 import { useEffect, useRef, type FormEvent, type ReactNode } from 'react';
-import { feel, tapArea } from '../../lib/haptics';
+import { feel, sheetArea } from '../../lib/haptics';
 import sheet from './styles/Sheet.module.css';
 
 /** The open sheets, oldest first: Escape closes only the top one (a confirm over a dialog). */
@@ -17,7 +17,7 @@ interface Props {
 	role?: 'dialog' | 'alertdialog';
 	/** A form: Enter in a field submits. */
 	onSubmit?: (e: FormEvent<HTMLFormElement>) => void;
-	/** A tap for anything pressed in it (lib/haptics tapArea), and a tick on closing from outside or Escape. */
+	/** A tap for anything pressed in it (lib/haptics tapArea), and a tick on closing (outside, Escape or ×). On unless false. */
 	taps?: boolean;
 }
 
@@ -26,7 +26,7 @@ interface Props {
  * has `onSubmit`), marked as a modal dialog, and Escape to close (only the top one when one is open
  * over another).
  */
-export default function Sheet({ label, onClose, children, className, role = 'dialog', onSubmit, taps }: Props) {
+export default function Sheet({ label, onClose, children, className, role = 'dialog', onSubmit, taps = true }: Props) {
 	const closing = () => {
 		if (taps) feel('select');
 		onClose();
@@ -52,7 +52,7 @@ export default function Sheet({ label, onClose, children, className, role = 'dia
 		role,
 		'aria-modal': true,
 		'aria-label': label,
-		...(taps ? tapArea : {}),
+		...(taps ? sheetArea : {}),
 	};
 	return (
 		<>
