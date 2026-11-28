@@ -216,7 +216,7 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => 
 						<div ref={googleEl} className={s.google} />
 					))}
 				{passkeyOn && (
-					<Button block icon="🔑" className={s.rounded} onClick={passkey}>
+					<Button block icon="🔑" onClick={passkey}>
 						Sign in with a passkey
 					</Button>
 				)}
@@ -347,7 +347,7 @@ function TryDemo({ onSignedIn }: { onSignedIn: (s: AuthStatus) => void }) {
 
 	return (
 		<div className={s.card}>
-			<Button block icon="👀" className={s.rounded} disabled={busy} onClick={() => void start()}>
+			<Button block icon="👀" disabled={busy} onClick={() => void start()}>
 				{busy ? 'Making your demo family…' : 'Try the demo'}
 			</Button>
 			<p className={s.hint}>Look around a made-up family's week. No email needed; it's deleted after a day.</p>
@@ -413,7 +413,6 @@ function EmailSignIn({ onSignedIn }: { onSignedIn: (s: AuthStatus) => void }) {
 			<Button
 				variant="primary"
 				block
-				className={s.rounded}
 				type="submit"
 				disabled={busy || (sent ? code.length !== 6 : !/\S+@\S+\.\S+/.test(email))}
 			>

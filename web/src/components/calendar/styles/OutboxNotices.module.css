@@ -32,18 +32,3 @@
 	justify-content: flex-end;
 	gap: 0.5rem;
 }
-.primary,
-.secondary {
-	padding: 0 1rem;
-	border-radius: var(--radius);
-	min-height: 2.5rem;
-	font-weight: 600;
-}
-.primary {
-	background: var(--accent);
-	color: var(--on-accent);
-}
-.secondary {
-	background: var(--surface);
-	border: 1px solid var(--line);
-}

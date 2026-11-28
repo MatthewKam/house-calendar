@@ -1,5 +1,5 @@
-/* Buttons (Button.tsx): the looks a sheet's buttons have always had (Sheet.module.css), now shared. Every
-   size is a pill (app.css's button: --radius-round). */
+/* Buttons (Button.tsx): every button with words, in pop-ups and on pages (a sheet's own copies of these
+   looks are gone). Every size is a pill (app.css's button: --radius-round). */
 .button {
 	display: inline-flex;
 	align-items: center;

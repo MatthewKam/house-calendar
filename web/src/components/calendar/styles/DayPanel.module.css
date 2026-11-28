@@ -69,11 +69,6 @@
 	color: var(--muted);
 	margin: 0;
 }
-.add {
-	background: var(--accent);
-	color: var(--on-accent);
-	font-weight: 600;
-}
 /* Events or Plans (a grown-up's): two tabs under the date. */
 .tabs {
 	display: flex;

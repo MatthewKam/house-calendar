@@ -4,6 +4,7 @@ import { UNASSIGNED } from '../../lib/color';
 import { useCalendars, useSetPeople, useSetSpecial, useSetVisibility } from '../../lib/queries';
 import type { CalEvent, EventInput, Member, Scope, Visibility } from '../../lib/types';
 import { PencilIcon } from '../ui/icons';
+import { Button } from '../ui/Button';
 import TravelInfo from './TravelInfo';
 import EventChecklist from './EventChecklist';
 import { EventReminders } from './Reminders';
@@ -227,25 +228,19 @@ function SyncedEvent({
 					</p>
 				)}
 				<div className={sheet.actions}>
-					{onEdit && !draft && (
-						<button type="button" className={sheet.secondary} onClick={onEdit}>
-							Edit event
-						</button>
-					)}
+					{onEdit && !draft && <Button onClick={onEdit}>Edit event</Button>}
 					<span className={sheet.spacer} />
 					{draft ? (
 						<>
-							<button type="button" className={sheet.secondary} onClick={() => setDraft(null)}>
-								Cancel
-							</button>
-							<button type="button" className={sheet.primary} onClick={save} disabled={setPeople.isPending}>
+							<Button onClick={() => setDraft(null)}>Cancel</Button>
+							<Button variant="primary" onClick={save} disabled={setPeople.isPending}>
 								Save
-							</button>
+							</Button>
 						</>
 					) : (
-						<button type="button" className={sheet.primary} onClick={closing} autoFocus>
+						<Button variant="primary" haptic="select" onClick={onClose} autoFocus>
 							Close
-						</button>
+						</Button>
 					)}
 				</div>
 			</Sheet>
@@ -443,9 +438,7 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
 						<a href={event.photoUrl} target="_blank" rel="noreferrer">
 							<img src={event.photoUrl} alt="The flyer" />
 						</a>
-						<button type="button" className={sheet.secondary} onClick={() => setKeepPhoto(false)}>
-							Remove photo
-						</button>
+						<Button onClick={() => setKeepPhoto(false)}>Remove photo</Button>
 					</div>
 				)}
 
@@ -495,54 +488,45 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
 					<div className={s.scopeAsk}>
 						<span className={s.scopeQuestion}>This event repeats. Save the change for:</span>
 						<div className={sheet.actions}>
-							<button type="button" className={sheet.secondary} onClick={() => setAskScope(null)}>
-								Back
-							</button>
+							<Button onClick={() => setAskScope(null)}>Back</Button>
 							<span className={sheet.spacer} />
-							<button type="button" className={sheet.secondary} onClick={() => onSave({ ...askScope, scope: 'one' })}>
-								This day only
-							</button>
-							<button
-								type="button"
-								className={sheet.primary}
+							<Button onClick={() => onSave({ ...askScope, scope: 'one' })}>This day only</Button>
+							<Button
+								variant="primary"
 								disabled={askScope.allDay !== event!.allDay}
 								title={askScope.allDay !== event!.allDay ? 'Change all day for every repeat on your phone' : undefined}
 								onClick={() => onSave({ ...askScope, scope: 'all' })}
 							>
 								Every day
-							</button>
+							</Button>
 						</div>
 					</div>
 				) : confirmDelete && repeating ? (
 					<div className={s.scopeAsk}>
 						<span className={s.scopeQuestion}>Delete this event:</span>
 						<div className={sheet.actions}>
-							<button type="button" className={sheet.secondary} onClick={() => setConfirmDelete(false)}>
-								Back
-							</button>
+							<Button onClick={() => setConfirmDelete(false)}>Back</Button>
 							<span className={sheet.spacer} />
-							<button type="button" className={sheet.danger} onClick={() => onDelete(event!, 'one')}>
+							<Button variant="danger" haptic="warn" onClick={() => onDelete(event!, 'one')}>
 								This day only
-							</button>
-							<button type="button" className={sheet.danger} onClick={() => onDelete(event!, 'all')}>
+							</Button>
+							<Button variant="danger" haptic="warn" onClick={() => onDelete(event!, 'all')}>
 								Every day
-							</button>
+							</Button>
 						</div>
 					</div>
 				) : (
 					<div className={sheet.actions}>
 						{event && (
-							<button type="button" className={sheet.danger} onClick={() => setConfirmDelete(true)}>
+							<Button variant="danger" onClick={() => setConfirmDelete(true)}>
 								Delete
-							</button>
+							</Button>
 						)}
 						<span className={sheet.spacer} />
-						<button type="button" className={sheet.secondary} onClick={closing}>
-							Cancel
-						</button>
-						<button type="submit" className={sheet.primary} disabled={!!problem}>
+						<Button onClick={closing}>Cancel</Button>
+						<Button variant="primary" type="submit" disabled={!!problem}>
 							Save
-						</button>
+						</Button>
 					</div>
 				)}
 			</Sheet>

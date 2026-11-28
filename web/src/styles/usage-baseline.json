@@ -7,12 +7,10 @@
 		"components/recipes/PlanIt.tsx": 2,
 		"components/recipes/RemindMe.tsx": 1
 	},
-	"Sheet's button looks (Button)": {
-		"components/calendar/EventDialog.tsx": 14
-	},
+	"Sheet's button looks (Button)": {},
 	"old text buttons and icon spans (Button)": {
-		"components/account/styles/DemoBar.module.css": 1,
 		"components/account/DemoBar.tsx": 2,
+		"components/account/styles/DemoBar.module.css": 1,
 		"components/calendar/styles/EventDialog.module.css": 2,
 		"components/calendar/styles/PeopleFilter.module.css": 1,
 		"components/recipes/RecipeView.tsx": 2,

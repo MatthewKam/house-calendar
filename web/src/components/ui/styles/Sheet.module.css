@@ -77,20 +77,6 @@
 .spacer {
 	flex: 1;
 }
-.primary {
-	background: var(--accent);
-	color: var(--on-accent);
-	padding: 0 var(--space-6);
-	font-weight: var(--weight-semibold);
-}
-.primary:disabled {
-	opacity: 0.4;
-}
-.secondary {
-	background: var(--bg);
-	padding: 0 var(--space-6);
-}
-/* Confirmation pop-ups: narrower, with a filled red button for the action. */
 /* A question over another sheet: its backdrop and the box above that sheet. */
 .scrimOver {
 	z-index: calc(var(--layer-sheet) + 2);
@@ -110,17 +96,6 @@
 .body {
 	color: var(--muted);
 	line-height: 1.4;
-}
-.destructive {
-	background: var(--danger-solid);
-	color: var(--on-danger);
-	padding: 0 var(--space-6);
-	font-weight: var(--weight-semibold);
-}
-.danger {
-	color: var(--danger);
-	padding: 0 var(--space-5);
-	font-weight: var(--weight-semibold);
 }
 /* Full screen (a recipe being cooked from): edge to edge, no corners. Two classes, so it wins over a
    sheet's own width. The phone's clock area is a border in the sheet's colour, so the title row sticks
