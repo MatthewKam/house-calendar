@@ -1,4 +1,5 @@
-node_modules/
+# Packages (also a worktree's link to another checkout's: no slash, so a link counts too).
+node_modules
 web/dist/
 # Calendar database and iCloud credentials stay on this machine.
 data/
