@@ -8,6 +8,7 @@ import type { CalEvent, Member } from '../../lib/types';
 import DayMeals from './DayMeals';
 import DayPlans from './DayPlans';
 import DayTimeline from './DayTimeline';
+import { Button } from '../ui/Button';
 import s from './styles/DayPanel.module.css';
 
 interface Props {
@@ -84,9 +85,9 @@ export default function DayPanel({ day, shown, today, members, onAdd, onOpen, on
 						<DayTimeline day={date} today={today} events={events} members={members} onOpen={(ev) => onOpen(ev, day)} />
 
 						{onAdd && (
-							<button className={s.add} onClick={() => onAdd(day)}>
+							<Button variant="primary" onClick={() => onAdd(day)}>
 								+ Add event
-							</button>
+							</Button>
 						)}
 					</>
 				)}

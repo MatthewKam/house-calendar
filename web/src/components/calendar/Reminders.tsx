@@ -4,6 +4,7 @@ import { dayKey } from '../../lib/dates';
 import { useChangeSpecialReminders, usePlansAccess, useSpecialReminders } from '../../lib/queries';
 import type { CalEvent } from '../../lib/types';
 import { usePush } from '../../lib/usePush';
+import { Button } from '../ui/Button';
 import s from './styles/DayPlans.module.css';
 
 interface Props {
@@ -128,9 +129,9 @@ export default function Reminders(props: Props) {
 					placeholder="What to do then? (Pick up a present)"
 					aria-label="What to do then"
 				/>
-				<button type="button" className={s.add} onClick={addIt} disabled={!valid || !ahead || add.isPending}>
+				<Button variant="primary" className={s.add} onClick={addIt} disabled={!valid || !ahead || add.isPending}>
 					Add
-				</button>
+				</Button>
 			</div>
 			{!valid && (
 				<p className={s.problem}>

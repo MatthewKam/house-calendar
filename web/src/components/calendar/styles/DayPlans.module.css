@@ -67,18 +67,10 @@
 	resize: vertical;
 	line-height: 1.4;
 }
+/* Save note and a reminder's Add (Button, primary): at the end of their row. */
 .saveNote,
 .add {
 	align-self: flex-end;
-	padding: 0 1.2rem;
-	border-radius: var(--radius-sm);
-	background: var(--accent);
-	color: var(--on-accent);
-	font-weight: 650;
-}
-.saveNote:disabled,
-.add:disabled {
-	opacity: 0.4;
 }
 .addRow {
 	display: flex;

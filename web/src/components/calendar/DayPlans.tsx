@@ -6,6 +6,7 @@ import type { SpecialDay } from '../../lib/specialDays';
 import type { ChecklistItem } from '../../lib/types';
 import Checklist from '../ui/Checklist';
 import Reminders from './Reminders';
+import { Button } from '../ui/Button';
 import s from './styles/DayPlans.module.css';
 
 /** Pictures to start a day's list from: a party, a trip, a holiday. */
@@ -96,9 +97,9 @@ function DayNote({ planKey, saved }: { planKey: string; saved: string }) {
 				onBlur={save}
 			/>
 			{changed && (
-				<button type="button" className={s.saveNote} onClick={save} disabled={note.isPending}>
+				<Button variant="primary" className={s.saveNote} onClick={save} disabled={note.isPending}>
 					Save note
-				</button>
+				</Button>
 			)}
 			{note.isError && <p className={s.problem}>{note.error.message}</p>}
 		</section>

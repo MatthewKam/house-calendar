@@ -1,6 +1,7 @@
 import { useOutbox, useResolveConflict } from '../../lib/queries';
 import { fromDayKey, timeLabel } from '../../lib/dates';
 import type { EventDetails } from '../../lib/types';
+import { Button } from '../ui/Button';
 import s from './styles/OutboxNotices.module.css';
 import { Notice } from '../ui/Notice';
 
@@ -62,20 +63,16 @@ export default function OutboxNotices() {
 								</tbody>
 							</table>
 							<div className={s.actions}>
-								<button
-									className={s.secondary}
-									disabled={resolve.isPending}
-									onClick={() => resolve.mutate({ id: c.id, keep: 'theirs' })}
-								>
+								<Button disabled={resolve.isPending} onClick={() => resolve.mutate({ id: c.id, keep: 'theirs' })}>
 									Use iCloud's
-								</button>
-								<button
-									className={s.primary}
+								</Button>
+								<Button
+									variant="primary"
 									disabled={resolve.isPending}
 									onClick={() => resolve.mutate({ id: c.id, keep: 'mine' })}
 								>
 									Keep mine
-								</button>
+								</Button>
 							</div>
 						</>
 					) : (
@@ -84,13 +81,13 @@ export default function OutboxNotices() {
 								“{c.mine.title}” was deleted on another device, so your change to it wasn't saved.
 							</div>
 							<div className={s.actions}>
-								<button
-									className={s.primary}
+								<Button
+									variant="primary"
 									disabled={resolve.isPending}
 									onClick={() => resolve.mutate({ id: c.id, keep: 'theirs' })}
 								>
 									OK
-								</button>
+								</Button>
 							</div>
 						</>
 					)}

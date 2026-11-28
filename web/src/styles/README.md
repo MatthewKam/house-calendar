@@ -73,13 +73,15 @@ Use the colour names, never hex values, for anything on the page. Each one has a
 | Name | Size | For |
 | --- | --- | --- |
 | `--radius-xs` | 0.4rem | tags, small badges, a key on a keypad |
-| `--radius-sm` | 0.6rem | buttons, inputs, chips, and a card's inner parts |
-| `--radius` | 0.9rem | cards and panels (and every `button` by default) |
+| `--radius-sm` | 0.6rem | inputs, chips, and a card's inner parts |
+| `--radius` | 0.9rem | cards and panels |
 | `--radius-lg` | 1.2rem | sheets and dialogs, big tiles |
 | `--radius-xl` | 1.5rem | kid mode's big cards, Learn's game boards |
-| `--radius-round` | 999px | pills: fully round ends |
+| `--radius-round` | 999px | pills: fully round ends; every button with words (every `button` by default) |
 
 A circle is `50%`. A corner that should grow with its text uses `em`.
+
+**Buttons are pills.** Every button with words is round-ended at every size: `Button`'s `sm`, `md` and `lg`, kid mode's too. Things you press that aren't buttons keep their own shape: a row, a tile, a card, an event, a chip, a choice in a `Segmented` bar. A picture-only button (×, ‹ ›, the +) is a circle.
 
 ## Shadows
 
