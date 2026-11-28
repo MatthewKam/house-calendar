@@ -35,6 +35,7 @@ import ErrorBoundary from '../ui/ErrorBoundary';
 import { problemText } from '../../lib/api';
 import Problem, { loadProblem } from '../ui/Problem';
 import ThemedHead from '../ui/ThemedHead';
+import { tapArea } from '../../lib/haptics';
 import s from './Today.module.css';
 import { Card } from '../ui/Card';
 
@@ -355,7 +356,7 @@ export default function TodayPage({
 	const guard = (what: string, card: ReactNode) => <ErrorBoundary what={what}>{card}</ErrorBoundary>;
 
 	return (
-		<section className={s.page} aria-label="Today">
+		<section className={s.page} aria-label="Today" {...tapArea}>
 			<header className={`${s.head} ${scrolled ? s.scrolled : ''}`}>
 				<div className={s.headText}>
 					<h1 className={s.hello}>

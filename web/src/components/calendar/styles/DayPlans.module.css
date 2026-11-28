@@ -144,6 +144,11 @@
 	border-color: var(--accent);
 	color: var(--on-accent);
 }
+/* The one not picked: muted, like a sheet's secondary button (Edit event). */
+.times button[aria-checked='false'] {
+	background: var(--bg);
+	border-color: var(--bg);
+}
 .howLong {
 	display: flex;
 	align-items: center;

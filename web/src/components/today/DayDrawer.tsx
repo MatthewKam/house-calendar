@@ -1,6 +1,7 @@
 import { fromDayKey } from '../../lib/dates';
 import type { SpecialDay } from '../../lib/specialDays';
 import DayPlans from '../calendar/DayPlans';
+import { feel } from '../../lib/haptics';
 import Sheet from '../ui/Sheet';
 import sheet from '../ui/styles/Sheet.module.css';
 import s from './Today.module.css';
@@ -23,13 +24,21 @@ export default function DayDrawer({
 }) {
 	const date = fromDayKey(day.day);
 	return (
-		<Sheet label={`${day.name}: plans`} onClose={onClose} className={sheet.drawer}>
+		<Sheet label={`${day.name}: plans`} onClose={onClose} className={sheet.drawer} taps>
 			<div className={sheet.head}>
 				<div>
 					<div className={s.drawerDay}>{date.toLocaleDateString([], { weekday: 'long' })}</div>
 					<h2 className={sheet.heading}>{date.toLocaleDateString([], { month: 'long', day: 'numeric' })}</h2>
 				</div>
-				<IconButton label="Close" icon="×" className={sheet.close} onClick={onClose} />
+				<IconButton
+					label="Close"
+					icon="×"
+					className={sheet.close}
+					onClick={() => {
+						feel('select');
+						onClose();
+					}}
+				/>
 			</div>
 			<DayPlans day={day.day} specials={specials} start={day.key} />
 		</Sheet>

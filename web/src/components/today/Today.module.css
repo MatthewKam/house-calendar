@@ -230,6 +230,31 @@
 	color: var(--text);
 	box-shadow: var(--shadow-sm);
 }
+/* Finding where you are: the pin bobs (or, with less motion, the button breathes), the words unchanged. */
+.placePin {
+	display: inline-block;
+}
+.placeOption[aria-busy='true'] .placePin {
+	animation: placeBob 0.8s ease-in-out infinite;
+}
+@keyframes placeBob {
+	50% {
+		transform: translateY(-0.2em);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.placeOption[aria-busy='true'] .placePin {
+		animation: none;
+	}
+	.placeOption[aria-busy='true'] {
+		animation: placeBreathe 1.2s ease-in-out infinite;
+	}
+}
+@keyframes placeBreathe {
+	50% {
+		opacity: 0.5;
+	}
+}
 /* Typing a place in: its own line under the switch. */
 .placeForm {
 	flex-basis: 100%;

@@ -93,4 +93,21 @@ describe('haptics', () => {
 		expect(() => h.feel('tap')).not.toThrow();
 		await settle();
 	});
+
+	it('taps for anything pressed in an area, unless it gave its own feel', async () => {
+		const h = await load();
+		const press = (target: unknown, own?: () => void) => {
+			h.tapArea.onClickCapture();
+			own?.();
+			h.tapArea.onClick({ target } as never);
+		};
+		const button = { closest: () => ({}) };
+		const text = { closest: () => null };
+		press(button);
+		expect(vibrate.mock.calls).toEqual([[10]]);
+		press(text);
+		expect(vibrate).toHaveBeenCalledTimes(1);
+		press(button, () => h.feel('select'));
+		expect(vibrate.mock.calls).toEqual([[10], [5]]);
+	});
 });

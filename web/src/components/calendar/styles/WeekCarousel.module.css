@@ -157,6 +157,10 @@
 		--gutter: 3rem;
 		--day: calc(100cqw - var(--gutter));
 	}
+	/* Today's day reaches the frame's right edge: its green top follows the frame's rounded corner. */
+	.nameToday {
+		border-top-right-radius: var(--radius-lg);
+	}
 }
 
 /* Sprig's sprout in the corner above "all-day" (.track's --notch: its top padding, a date's

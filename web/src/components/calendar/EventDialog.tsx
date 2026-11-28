@@ -10,6 +10,7 @@ import { EventReminders } from './Reminders';
 import EventForecast from './EventForecast';
 import AddressInput from './AddressInput';
 import { PickChip } from '../ui/NameChip';
+import { feel } from '../../lib/haptics';
 import sheet from '../ui/styles/Sheet.module.css';
 import s from './styles/EventDialog.module.css';
 import DateInput from '../ui/DateInput';
@@ -130,6 +131,11 @@ function SyncedEvent({
 	onEdit?: () => void;
 	locked?: boolean;
 }) {
+	// Closing: a tick (lib/haptics), from the ×, Close or Cancel; Sheet does the same for outside and Escape.
+	const closing = () => {
+		feel('select');
+		onClose();
+	};
 	// Where it comes from (and where changes go).
 	const google = useCalendars().data?.find((c) => c.id === event.calendarId)?.provider === 'google';
 	const service = google ? 'Google Calendar' : 'iCloud';
@@ -160,10 +166,10 @@ function SyncedEvent({
 				`${longDate(new Date(event.start))}, ${timeLabel(event.start)} – ${longDate(new Date(event.end))}, ${timeLabel(event.end)}`;
 	return (
 		<>
-			<Sheet label={event.title} onClose={onClose} className={sheet.drawer}>
+			<Sheet label={event.title} onClose={onClose} className={sheet.drawer} taps>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>{event.title}</h2>
-					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
+					<button type="button" className={sheet.close} onClick={closing} aria-label="Close">
 						×
 					</button>
 				</header>
@@ -237,7 +243,7 @@ function SyncedEvent({
 							</button>
 						</>
 					) : (
-						<button type="button" className={sheet.primary} onClick={onClose} autoFocus>
+						<button type="button" className={sheet.primary} onClick={closing} autoFocus>
 							Close
 						</button>
 					)}
@@ -276,6 +282,11 @@ export default function EventDialog(props: Props) {
 }
 
 function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSynced, special: newSpecial }: Props) {
+	// Closing: a tick (lib/haptics), from the ×, Close or Cancel; Sheet does the same for outside and Escape.
+	const closing = () => {
+		feel('select');
+		onClose();
+	};
 	const setVisibility = useSetVisibility();
 	const setSpecial = useSetSpecial();
 	const calendars = useCalendars().data ?? [];
@@ -371,10 +382,16 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
 
 	return (
 		<>
-			<Sheet label={event ? 'Edit event' : 'New event'} onClose={onClose} onSubmit={submit} className={sheet.drawer}>
+			<Sheet
+				label={event ? 'Edit event' : 'New event'}
+				onClose={onClose}
+				onSubmit={submit}
+				className={sheet.drawer}
+				taps
+			>
 				<header className={sheet.head}>
 					<h2 className={sheet.heading}>{event ? 'Edit event' : 'New event'}</h2>
-					<button type="button" className={sheet.close} onClick={onClose} aria-label="Close">
+					<button type="button" className={sheet.close} onClick={closing} aria-label="Close">
 						×
 					</button>
 				</header>
@@ -526,7 +543,7 @@ function EventForm({ day, event, members, onSave, onDelete, onClose, canEditSync
 							</button>
 						)}
 						<span className={sheet.spacer} />
-						<button type="button" className={sheet.secondary} onClick={onClose}>
+						<button type="button" className={sheet.secondary} onClick={closing}>
 							Cancel
 						</button>
 						<button type="submit" className={sheet.primary} disabled={!!problem}>
