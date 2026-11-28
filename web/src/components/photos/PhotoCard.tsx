@@ -5,6 +5,7 @@ import { useScreenSaverSettings } from '../../lib/useScreenSaverSettings';
 import { preload, slideSeconds } from '../../lib/photos';
 import type { Photo } from '../../lib/types';
 import { Loading, Skeleton } from '../ui/Skeleton';
+import { feel } from '../../lib/haptics';
 import s from './styles/PhotoCard.module.css';
 import { shuffle } from '../../lib/random';
 
@@ -55,6 +56,11 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 	useEffect(() => () => clearTimeout(arrowsTimer.current), []);
 
 	/** One photo forward or back, once it's loaded (so it never appears half-drawn). */
+	// Haptics: ‹ › tap; a swipe (finger or trackpad) ticks, like turning a page.
+	function tapStep(dir: 1 | -1) {
+		feel('tap');
+		step(dir);
+	}
 	function step(dir: 1 | -1) {
 		if (order.length < 2) return;
 		const next = (at + dir + order.length) % order.length;
@@ -108,6 +114,7 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 			sum += e.deltaX;
 			if (Math.abs(sum) >= 60) {
 				done = true;
+				feel('select');
 				stepRef.current(sum > 0 ? 1 : -1);
 			}
 		};
@@ -135,8 +142,10 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 		if (!start) return;
 		const dx = e.clientX - start.x;
 		const dy = e.clientY - start.y;
-		if (Math.abs(dx) >= SWIPE_PX && Math.abs(dx) > Math.abs(dy)) step(dx < 0 ? 1 : -1);
-		else if (open && Math.abs(dx) < TAP_PX && Math.abs(dy) < TAP_PX && !(e.target as Element).closest('button'))
+		if (Math.abs(dx) >= SWIPE_PX && Math.abs(dx) > Math.abs(dy)) {
+			feel('select');
+			step(dx < 0 ? 1 : -1);
+		} else if (open && Math.abs(dx) < TAP_PX && Math.abs(dy) < TAP_PX && !(e.target as Element).closest('button'))
 			setBig(true);
 	}
 
@@ -167,10 +176,10 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 			<Media key={current.id} photo={current} className={`${s.photo} ${under ? s.fadeIn : ''}`} />
 			{order.length > 1 && (
 				<div className={`${s.arrows} ${arrows ? s.awake : ''}`}>
-					<button className={`${s.step} ${s.prev}`} onClick={() => step(-1)} aria-label="Previous photo">
+					<button className={`${s.step} ${s.prev}`} onClick={() => tapStep(-1)} aria-label="Previous photo">
 						‹
 					</button>
-					<button className={`${s.step} ${s.next}`} onClick={() => step(1)} aria-label="Next photo">
+					<button className={`${s.step} ${s.next}`} onClick={() => tapStep(1)} aria-label="Next photo">
 						›
 					</button>
 				</div>
@@ -218,10 +227,10 @@ export default function PhotoCard({ onPlay, className }: { onPlay: () => void; c
 							<Media key={current.id} photo={current} className={s.bigPhoto} />
 							{order.length > 1 && (
 								<>
-									<button className={`${s.step} ${s.prev}`} onClick={() => step(-1)} aria-label="Previous photo">
+									<button className={`${s.step} ${s.prev}`} onClick={() => tapStep(-1)} aria-label="Previous photo">
 										‹
 									</button>
-									<button className={`${s.step} ${s.next}`} onClick={() => step(1)} aria-label="Next photo">
+									<button className={`${s.step} ${s.next}`} onClick={() => tapStep(1)} aria-label="Next photo">
 										›
 									</button>
 								</>
