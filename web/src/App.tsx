@@ -116,7 +116,7 @@ export default function App() {
 
 	const members = useMembers().data ?? [];
 	const settings = useSettings();
-	// This device's text size (Settings, Appearance).
+	// This device's text size (Settings, Look and feel).
 	const [uiScale] = useUiScale();
 	const saveEvent = useSaveEvent();
 	const saveTask = useSaveTask();

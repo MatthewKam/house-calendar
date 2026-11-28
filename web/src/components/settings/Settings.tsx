@@ -44,7 +44,7 @@ const slug = (title: string) => title.toLowerCase().replace(/\s+/g, '-');
 
 /**
  * Settings, a page of its own: who's signed in at the top, then a row for each group (Family, Calendars,
- * Learning, Appearance, Daily cards, Screen, Notifications, Users), the way to reach us, and Sign out.
+ * Learning, Look and feel, Daily cards, Screen, Notifications, Users), the way to reach us, and Sign out.
  * Under 900px they're one column, each group sliding open under its row (one at a time); bigger, the
  * list stays on the left and the group shows beside it (Family to start). Each group has an address of
  * its own (#settings/users), so a link or a refresh opens it. Changes save as they're made. Each group's parts are in this folder; parts.tsx
@@ -86,7 +86,7 @@ export default function Settings({ members, onLeave, onKidMode }: Props) {
 		'Family',
 		'Calendars',
 		...(shows.learning ? ['Learning'] : []),
-		'Appearance',
+		'Look and feel',
 		...(shows.dailyCards ? ['Daily cards'] : []),
 		...(shows.screen ? ['Screen'] : []),
 		...(shows.notifications ? ['Notifications'] : []),
@@ -179,7 +179,7 @@ export default function Settings({ members, onLeave, onKidMode }: Props) {
 				</Group>
 			)}
 
-			<Group title="Appearance">
+			<Group title="Look and feel">
 				<AppearanceSettings />
 			</Group>
 

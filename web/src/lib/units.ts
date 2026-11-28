@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { EventWeather, Weather } from './types';
 
 /**
- * °F or °C (with mph or km/h) for this device (Settings, Appearance), like light or dark. The server's
+ * °F or °C (with mph or km/h) for this device (Settings, Look and feel), like light or dark. The server's
  * weather is always °F and mph (what to wear is worked out from those); the app turns it to °C and km/h
  * as it arrives, so everything that shows the weather shows it in the device's own.
  */

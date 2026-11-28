@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 /**
- * How big the text is on this device (Settings, Appearance): Small, Regular or Large, kept on the device,
+ * How big the text is on this device (Settings, Look and feel): Small, Regular or Large, kept on the device,
  * like light or dark, so the wall's big text doesn't make the phones' big too. Regular until one's picked;
  * a size from the old slider that isn't one of them (90%, 140%…) or the household's old shared setting counts as Regular too.
  */

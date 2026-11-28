@@ -11,7 +11,7 @@ import { isApp } from './native';
 //   done     a thing ticked off (a task, a list item)
 //   success  something to celebrate (stars, a jar filled)
 //   warn     something taken away (delete)
-// There's a switch for it, on this device (Settings → Appearance → Vibration).
+// There's a switch for it, on this device (Settings → Look and feel → Vibration).
 
 export type Feel = 'tap' | 'select' | 'done' | 'success' | 'warn';
 

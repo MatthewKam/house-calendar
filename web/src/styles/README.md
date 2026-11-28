@@ -44,7 +44,7 @@ Every screen but the calendar uses these now. The calendar (`components/calendar
 1. **Lay it out from the components first.** A page is cards (`Card`) or sections (`SectionHead`) of rows (`List`, `ListRow`); a sheet is a `Sheet` with its heading, `Field`s and `Fieldset`s, and `Button`s in `sheet.actions` (`secondary` Cancel, `primary` Save, `danger` Delete on the left).
 2. **Then the screen's own module**, for what's only its own: where things sit (grids, columns, gaps between the parts) and the drawn things (a jar's bar, a kid's tile). Use the shared names for every size, weight, space and colour; mark anything else `own:` with why.
 3. **A look the components don't have** (a new kind of button, a box in a new tone): add it as a variant in `components/ui/`, with a line in the table above and a spot on `/design`, rather than styling it in the screen. Then every screen can use it.
-4. **Check it** in light and dark, on a phone (upright and on its side) and a tablet, and with Settings › Appearance › Text size up. `npm test` runs `scale.test.ts` and `usage.test.ts`.
+4. **Check it** in light and dark, on a phone (upright and on its side) and a tablet, and with Settings › Look and feel › Text size up. `npm test` runs `scale.test.ts` and `usage.test.ts`.
 
 ## Colours
 

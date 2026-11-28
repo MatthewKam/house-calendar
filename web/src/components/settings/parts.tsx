@@ -35,7 +35,7 @@ export const SettingsView = createContext<{
 });
 
 /**
- * A group of Settings (Family, Calendars, Learning, Appearance, Screen, Notifications, Users): in the list, a row
+ * A group of Settings (Family, Calendars, Learning, Look and feel, Screen, Notifications, Users): in the list, a row
  * (with a word on how it's set, for one that's a single thing; marked while it's the one showing beside the
  * list); in the view, its settings while it's the one picked; in one column, a row that slides open to its
  * settings (closing the one that was open) and shut again.
