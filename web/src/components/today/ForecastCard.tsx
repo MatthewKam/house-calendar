@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent, type ReactNode } from 'react';
 import { api } from '../../lib/api';
 import { fromDayKey, longDate } from '../../lib/dates';
 import { sky } from '../../lib/weather';
@@ -160,8 +160,17 @@ function PlaceSwitch() {
 			)
 			.finally(() => setFinding(false));
 	}
-	const option = (on: boolean, label: string, pick: () => void) => (
-		<button type="button" role="radio" aria-checked={on} className={s.placeOption} onClick={pick} disabled={finding}>
+	// `busy`: finding where you are; the pin bobs and the words stay the same, so the switch doesn't change width.
+	const option = (on: boolean, label: ReactNode, pick: () => void, busy = false) => (
+		<button
+			type="button"
+			role="radio"
+			aria-checked={on}
+			aria-busy={busy || undefined}
+			className={s.placeOption}
+			onClick={pick}
+			disabled={finding}
+		>
 			{label}
 		</button>
 	);
@@ -176,7 +185,17 @@ function PlaceSwitch() {
 						setHere(null);
 					})}
 					{(canFindHere() || onHere) &&
-						option(onHere && !typing, finding && !typing ? '📍 Finding…' : '📍 Here', goHere)}
+						option(
+							onHere && !typing,
+							<>
+								<span className={s.placePin} aria-hidden="true">
+									📍
+								</span>{' '}
+								Here
+							</>,
+							goHere,
+							finding && !typing,
+						)}
 					{/* The place picked shows its name; tapped again, another can be typed in. */}
 					{option(!!place || typing, place ? `🔎 ${place.name}` : '🔎 Other', () => {
 						setProblem(null);

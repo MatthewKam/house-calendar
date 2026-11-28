@@ -1,4 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
+import { feel } from '../../lib/haptics';
 import { PHONE_SIDEWAYS, TABLET, useMediaQuery, WIDE } from '../../lib/useMediaQuery';
 
 /** A day (or a few) of the calendar: its button's name, and what's on. */
@@ -77,6 +78,7 @@ function Carousel({ days, styles: s }: { days: CalendarDay[]; styles: CalendarSt
 	const [from, setFrom] = useState<'right' | 'left'>('right');
 	const go = (i: number) => {
 		if (i < 0 || i >= days.length || i === at) return;
+		feel('select');
 		setFrom(i > at ? 'right' : 'left');
 		setAt(i);
 	};

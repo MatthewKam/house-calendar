@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import { isApp } from './native';
 
@@ -44,8 +44,12 @@ export function hapticsOn() {
 
 let selecting = false;
 
+/** How many feels have been asked for: tapArea checks whether a press gave its own. */
+let asked = 0;
+
 /** Plays one feel, if this device can and its switch is on. Never throws: a missed tap is nothing. */
 export function feel(kind: Feel) {
+	asked++;
 	if (!hapticsOn() || !canFeel()) return;
 	if (!isApp) {
 		try {
@@ -93,3 +97,20 @@ export function useHapticsSetting() {
 	};
 	return [on, set] as const;
 }
+
+/** What counts as pressable in a tapArea. */
+const PRESSABLE = 'button, a[href], summary, [role="button"], [role="tab"], [role="radio"], [role="link"]';
+let askedAtPress = 0;
+
+/**
+ * For a whole part of a page (Today, the event panel): a tap for anything pressable in it, unless what was
+ * pressed gave its own feel (a tick for a tab, a firmer tap for a tick-off). Spread on the part's element.
+ */
+export const tapArea = {
+	onClickCapture: () => {
+		askedAtPress = asked;
+	},
+	onClick: (e: MouseEvent) => {
+		if (asked === askedAtPress && (e.target as Element).closest?.(PRESSABLE)) feel('tap');
+	},
+};
