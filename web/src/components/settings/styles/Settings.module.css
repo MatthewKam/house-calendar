@@ -802,7 +802,11 @@
 	.groupRow[aria-expanded='true']:active {
 		box-shadow: none;
 	}
-	/* And the next group's title over its bottom, so an open group is shaded at both ends. */
+	/* And the next group's title over its bottom, so an open group is shaded at both ends (no line
+	   between them, which would hide the shadow). */
+	.groupFold:has(> .groupRow[aria-expanded='true']) + .groupFold {
+		border-top-color: transparent;
+	}
 	.groupFold:has(> .groupRow[aria-expanded='true']) + .groupFold > .groupRow {
 		box-shadow: var(--shadow-bar-up);
 	}
