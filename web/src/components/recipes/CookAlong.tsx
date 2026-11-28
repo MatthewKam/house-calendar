@@ -11,6 +11,7 @@ import Problem from '../ui/Problem';
 import { Loading, Skeleton, SkeletonLines } from '../ui/Skeleton';
 import CookingBar from './CookingBar';
 import { CookingWith, DoneBy } from './CookingWith';
+import { feel } from '../../lib/haptics';
 import s from './Recipes.module.css';
 import { Button } from '../ui/Button';
 import { Segmented } from '../ui/Segmented';
@@ -137,7 +138,10 @@ export default function CookAlong({ household, secret }: { household: string; se
 										<input
 											type="checkbox"
 											checked={progress.prepped.includes(n)}
-											onChange={() => set({ prepped: toggle(progress.prepped, n) })}
+											onChange={() => {
+												feel(progress.prepped.includes(n) ? 'select' : 'done');
+												set({ prepped: toggle(progress.prepped, n) });
+											}}
 										/>
 										<span>{ingredientLine(i)}</span>
 										<DoneBy people={everyone} done={(p) => p.progress.prepped.includes(n)} />
@@ -160,7 +164,10 @@ export default function CookAlong({ household, secret }: { household: string; se
 							type="button"
 							className={s.step}
 							aria-pressed={progress.steps.includes(n)}
-							onClick={() => set({ steps: toggle(progress.steps, n) })}
+							onClick={() => {
+								feel(progress.steps.includes(n) ? 'select' : 'done');
+								set({ steps: toggle(progress.steps, n) });
+							}}
 						>
 							<span className={s.stepNumber}>{n + 1}</span>
 							{step}

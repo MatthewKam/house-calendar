@@ -17,7 +17,7 @@ export type Feel = 'tap' | 'select' | 'done' | 'success' | 'warn';
 
 const KEY = 'sprig:haptics';
 
-/** A switch whose on is worth more than a tick (the screen saver's): on is done, off a tap. */
+/** Every switch (Switch): on is done, off a tap. */
 export const ON_DONE = { on: 'done', off: 'tap' } as const satisfies { on: Feel; off: Feel };
 
 /** In a browser, how each feels: one short buzz, or a pattern (ms on, off, on…). */
@@ -120,3 +120,20 @@ export const pressArea = (kind: Feel) => ({
 
 /** Today and the event panel: a tap for anything pressed. */
 export const tapArea = pressArea('tap');
+
+/**
+ * For a page of folding parts (Settings): opening one ticks, folding it away taps. A <details>' summary, or
+ * a button saying whether it's open (aria-expanded), as it's pressed. Spread on the page's element.
+ */
+export const foldArea = {
+	onClickCapture: (e: MouseEvent) => {
+		const target = e.target as Element;
+		const summary = target.closest?.('summary');
+		if (summary?.parentElement instanceof HTMLDetailsElement) {
+			feel(summary.parentElement.open ? 'tap' : 'select');
+			return;
+		}
+		const button = target.closest?.('[aria-expanded]');
+		if (button) feel(button.getAttribute('aria-expanded') === 'true' ? 'tap' : 'select');
+	},
+};

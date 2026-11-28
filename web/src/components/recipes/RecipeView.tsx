@@ -52,6 +52,7 @@ import RecipeForm from './RecipeForm';
 import TagPicker from './TagPicker';
 import buttons from '../ui/styles/Buttons.module.css';
 import sheet from '../ui/styles/Sheet.module.css';
+import { feel } from '../../lib/haptics';
 import s from './Recipes.module.css';
 import { Button, IconButton } from '../ui/Button';
 import { Segmented } from '../ui/Segmented';
@@ -359,6 +360,7 @@ export default function RecipeView({
 											type="checkbox"
 											checked={ticked.includes(n)}
 											onChange={() => {
+												feel(ticked.includes(n) ? 'select' : 'done');
 												if (!cooking && shoppingHere) shop.tick.mutate({ index: n, done: !ticked.includes(n), by: me });
 												else setTicked(toggle(ticked, n));
 												setSent(null);
@@ -429,7 +431,10 @@ export default function RecipeView({
 							type="button"
 							className={s.step}
 							aria-pressed={stepsDone.includes(n)}
-							onClick={() => setStepsDone(toggle(stepsDone, n))}
+							onClick={() => {
+								feel(stepsDone.includes(n) ? 'select' : 'done');
+								setStepsDone(toggle(stepsDone, n));
+							}}
 						>
 							<span className={s.stepNumber}>{n + 1}</span>
 							{step}
@@ -458,7 +463,7 @@ export default function RecipeView({
 
 	return (
 		<>
-			<Sheet label={r.title} onClose={onClose} className={`${s.view} ${cooking || fullScreen ? sheet.full : ''}`}>
+			<Sheet label={r.title} onClose={onClose} className={`${s.view} ${cooking || fullScreen ? sheet.full : ''}`} taps>
 				<header className={sheet.head}>
 					{/* "‹ Today" above the name, the name keeping its place on the left. */}
 					<div className={s.titleWithBack}>

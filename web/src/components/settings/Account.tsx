@@ -72,7 +72,7 @@ export function SignOut({ status, onClose }: { status: SignedIn; onClose: () => 
 	}
 	return (
 		<>
-			<Button variant="danger" onClick={() => setAsking(true)} className={s.signOut}>
+			<Button variant="danger" haptic="warn" onClick={() => setAsking(true)} className={s.signOut}>
 				Sign out
 			</Button>
 			{asking && (
