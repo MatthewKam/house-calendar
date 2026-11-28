@@ -15,27 +15,35 @@ import ICloudCalendars from '../settings/ICloudCalendars';
 import { Issued } from '../settings/HouseholdAccess';
 import { GetTheApp } from './SignIn';
 import { tapArea } from '../../lib/haptics';
+import { usePush } from '../../lib/usePush';
 import s from './styles/Account.module.css';
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/Chip';
 import { Input } from '../ui/Field';
 
-const STEPS = ['kids', 'tasks', 'calendar', 'invite'] as const;
+const STEPS = ['kids', 'tasks', 'calendar', 'alerts', 'invite'] as const;
 type Step = (typeof STEPS)[number];
 const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
 
 /**
  * Right after starting a household, on that device: a few steps, one per screen, each skippable. The kids
- * (name and birthday), starter tasks for their ages, your phone's calendars, and inviting the other parent.
- * A parent who joins gets just the calendar step, for their own phone. Anything skipped is still in Settings.
+ * (name and birthday), starter tasks for their ages, your phone's calendars, alerts on this device, and
+ * inviting the other parent. A parent who joins gets just the calendar and alerts steps, for their own phone.
+ * Anything skipped is still in Settings.
  */
 export default function Setup({ status, kind, onDone }: { status: SignedIn; kind: SetupKind; onDone: () => void }) {
 	const kids = (useMembers().data ?? []).filter(isKid);
+	const push = usePush();
+	// Alerts once they're known to be possible here and still off; kept once offered, as turning them on
+	// (or saying no) changes that while on the step.
+	const [offerAlerts, setOfferAlerts] = useState(false);
+	if (push.state === 'off' && !offerAlerts) setOfferAlerts(true);
 	const steps = STEPS.filter(
 		(x) =>
-			(kind === 'started' || x === 'calendar') &&
+			(kind === 'started' || x === 'calendar' || x === 'alerts') &&
 			// Starter tasks only make sense once there's a kid to give them to.
-			(x !== 'tasks' || kids.length > 0),
+			(x !== 'tasks' || kids.length > 0) &&
+			(x !== 'alerts' || offerAlerts),
 	);
 	// Back from Google's pages (…/?calendar=connected, or what went wrong): straight back to the calendar step.
 	const [googleResult] = useState(() => new URLSearchParams(window.location.search).get('calendar'));
@@ -67,6 +75,7 @@ export default function Setup({ status, kind, onDone }: { status: SignedIn; kind
 						googleResult={googleResult}
 					/>
 				)}
+				{step === 'alerts' && <Alerts push={push} onNext={next} last={at === steps.length - 1} />}
 				{step === 'invite' && <Invite household={status.household?.name ?? 'your family'} onNext={next} />}
 			</div>
 		</main>
@@ -338,6 +347,49 @@ export function Calendar({
 				</>
 			)}
 			<NextButton done={shared || connected} onNext={onNext} last={last} />
+		</>
+	);
+}
+
+/**
+ * Alerts on this device: Sprig's own reason first, then the iPhone's (or browser's) "Allow notifications?",
+ * which it shows only once. Asking puts Sprig in the iPhone's Settings → Notifications, either way.
+ */
+export function Alerts({
+	push,
+	last,
+	onNext,
+}: {
+	push: ReturnType<typeof usePush>;
+	last?: boolean;
+	onNext: () => void;
+}) {
+	const { state, busy, error, turnOn } = push;
+	return (
+		<>
+			<h1 className={s.title}>Alerts</h1>
+			<p className={s.lead}>
+				Get a nudge on this {isApp ? 'phone' : 'device'} when a reminder on your lists comes due, and when it's time to
+				leave.
+			</p>
+			{state === 'on' ? (
+				<p className={s.hint} role="status">
+					Alerts are on. Turn them off any time in Settings → Notifications.
+				</p>
+			) : state === 'blocked' ? (
+				<p className={s.hint} role="status">
+					{isApp
+						? "Alerts are off for Sprig on this iPhone. To turn them on later, go to the iPhone's Settings → Notifications → Sprig."
+						: "Alerts are blocked for Sprig in this browser. To turn them on later, allow notifications for this site in the browser's settings."}
+				</p>
+			) : (
+				<Button variant="primary" size="lg" block disabled={busy || state !== 'off'} onClick={() => void turnOn()}>
+					Turn on alerts
+				</Button>
+			)}
+			{error && <p className={s.error}>{error}</p>}
+			<NextButton done={state === 'on' || state === 'blocked'} onNext={onNext} last={last} />
+			{state === 'off' && <p className={s.hint}>You can turn them on any time in Settings → Notifications.</p>}
 		</>
 	);
 }
