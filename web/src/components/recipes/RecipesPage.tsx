@@ -18,6 +18,7 @@ import AddRecipe from './AddRecipe';
 import RecipePages, { PAGE_SIZE } from './RecipePages';
 import { allProgress, progressText, saveProgress } from '../../lib/recipeProgress';
 import RecipeView from './RecipeView';
+import { feel, tapArea } from '../../lib/haptics';
 import s from './Recipes.module.css';
 import { Segmented } from '../ui/Segmented';
 import { Select } from '../ui/Field';
@@ -157,7 +158,7 @@ export default function RecipesPage({
 	});
 
 	return (
-		<section className={s.page} aria-label="Recipes">
+		<section className={s.page} aria-label="Recipes" {...tapArea}>
 			<header className={s.pageHead}>
 				<h1 className={s.pageTitle}>Recipes</h1>
 				{parent && (
@@ -307,7 +308,10 @@ export default function RecipesPage({
 										aria-label={v.label}
 										title={v.label}
 										aria-pressed={view === v.view}
-										onClick={() => pickView(v.view)}
+										onClick={() => {
+											if (view !== v.view) feel('select');
+											pickView(v.view);
+										}}
 									>
 										<v.Icon />
 									</button>
@@ -344,7 +348,16 @@ export default function RecipesPage({
 							size={PAGE_SIZE[view]}
 							scroller={scroller}
 							listClass={view === 'cards' ? s.grid : s.rows}
-							render={(r) => <RecipeCard recipe={r} view={view} onOpen={() => setOpen(r.id)} />}
+							render={(r) => (
+								<RecipeCard
+									recipe={r}
+									view={view}
+									onOpen={() => {
+										feel('select');
+										setOpen(r.id);
+									}}
+								/>
+							)}
 						/>
 					)}
 				</div>

@@ -5,7 +5,6 @@ import { startOver } from '../../lib/queries';
 import { useScreenSaverSettings } from '../../lib/useScreenSaverSettings';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import ScreenSaverSettings from './ScreenSaverSettings';
-import { ON_DONE } from '../../lib/haptics';
 import { SwitchRow } from './parts';
 
 /** "30 seconds", "2 minutes", "1 hour". */
@@ -64,7 +63,6 @@ export default function ScreenSettings({
 					title="Screen saver"
 					on={saver.enabled}
 					onChange={(on) => saveSaver({ enabled: on })}
-					haptic={ON_DONE}
 					hint={
 						saver.enabled
 							? `Photos after ${idleLabel(saver.idleMinutes)} without a touch.`

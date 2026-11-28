@@ -24,6 +24,7 @@ import { isApp } from '../../lib/native';
 import LearnSettings, { LearnAbout, learnNote } from './LearnSettings';
 import ScreenSettings from './ScreenSettings';
 import { Group, InfoButton, Section, SettingsView } from './parts';
+import { foldArea } from '../../lib/haptics';
 import s from './styles/Settings.module.css';
 import { LEARN_ON } from '../../lib/features';
 
@@ -239,7 +240,7 @@ export default function Settings({ members, onLeave, onKidMode }: Props) {
 	// One column: who's signed in, the groups (each opening in place), then Sign out and how to reach us.
 	if (oneColumn) {
 		return (
-			<section className={s.page} aria-label="Settings">
+			<section className={s.page} aria-label="Settings" {...foldArea}>
 				<header className={s.pageHead}>
 					<h1 className={s.pageTitle}>Settings</h1>
 				</header>
@@ -276,7 +277,7 @@ export default function Settings({ members, onLeave, onKidMode }: Props) {
 		</SettingsView.Provider>
 	);
 	return (
-		<section className={s.page} aria-label="Settings" ref={viewScroll}>
+		<section className={s.page} aria-label="Settings" ref={viewScroll} {...foldArea}>
 			<header className={s.pageHead}>
 				<h1 className={s.pageTitle}>Settings</h1>
 			</header>
