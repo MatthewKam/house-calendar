@@ -5,6 +5,7 @@ import type { Member, Reward } from '../../lib/types';
 import { PencilIcon, StarIcon } from '../ui/icons';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import { JarProgress, eachFills, shortDay } from './JarBits';
+import { feel } from '../../lib/haptics';
 import s from './Rewards.module.css';
 import DateInput from '../ui/DateInput';
 import { Button, IconButton } from '../ui/Button';
@@ -109,12 +110,19 @@ export default function KidJars({
 	const landed = (j: Reward) => Math.max(0, count(j) - (flying[j.id] ?? 0));
 	function addStar(j: Reward) {
 		if (!canAdd(j)) return;
+		// A happy buzz as the star's used, and again as it lands in the jar (lib/haptics).
+		feel('success');
 		const section = sectionRef.current;
 		const bars = section?.querySelectorAll(`[data-jar="${j.id}"] .${s.bar}`);
 		// Each fills it: this kid's own bar; otherwise the jar's one bar.
 		const bar = bars?.[eachFills(j) ? Math.max(0, j.memberIds.indexOf(kid.id)) : 0] ?? null;
 		const have = (eachFills(j) ? mine(j) : j.stars) + count(j) + 1;
-		if (flyStar(section?.querySelector(`.${s.bucket} svg`) ?? null, bar, have / j.goal, () => fly(j.id, -1)))
+		if (
+			flyStar(section?.querySelector(`.${s.bucket} svg`) ?? null, bar, have / j.goal, () => {
+				feel('success');
+				fly(j.id, -1);
+			})
+		)
 			fly(j.id, 1);
 		bump(j, 1);
 	}

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { feel } from '../../lib/haptics';
+import { feel, type Feel } from '../../lib/haptics';
 import s from './styles/Segmented.module.css';
 
 interface Option<T extends string> {
@@ -18,13 +18,23 @@ interface Props<T extends string> {
 	/** It switches what's shown under it (Catch one | History): read out as tabs. */
 	tabs?: boolean;
 	className?: string;
+	/** How a change feels (lib/haptics): a tick, unless it says otherwise (History's Week | Month taps). */
+	haptic?: Feel;
 }
 
 /**
  * Two to four choices side by side in one bar, one picked (Task | Goal, Week | Month, Catch one |
  * History). For more, or several at once, use Chips.
  */
-export function Segmented<T extends string>({ label, options, value, onChange, tabs, className }: Props<T>) {
+export function Segmented<T extends string>({
+	label,
+	options,
+	value,
+	onChange,
+	tabs,
+	className,
+	haptic = 'select',
+}: Props<T>) {
 	return (
 		<div className={[s.bar, className].filter(Boolean).join(' ')} role={tabs ? 'tablist' : 'group'} aria-label={label}>
 			{options.map((o) => {
@@ -38,7 +48,7 @@ export function Segmented<T extends string>({ label, options, value, onChange, t
 						aria-selected={tabs ? on : undefined}
 						aria-pressed={tabs ? undefined : on}
 						onClick={() => {
-							if (o.id !== value) feel('select');
+							if (o.id !== value) feel(haptic);
 							onChange(o.id);
 						}}
 					>

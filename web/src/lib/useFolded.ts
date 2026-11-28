@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { feel } from './haptics';
 
 /**
  * What's folded away (by id), remembered on this device under `storageKey`: the Tasks page's groups.
@@ -13,8 +14,9 @@ export function useFolded(storageKey: string) {
 			return [];
 		}
 	});
-	/** Folds (or opens) each of `ids`. */
-	const fold = (ids: string[], on: boolean) => {
+	/** Folds (or opens) each of `ids`, with a tick (lib/haptics) unless `quiet` (opened along with something else). */
+	const fold = (ids: string[], on: boolean, quiet = false) => {
+		if (!quiet) feel('select');
 		const next = on ? [...new Set([...folded, ...ids])] : folded.filter((id) => !ids.includes(id));
 		setFolded(next);
 		try {

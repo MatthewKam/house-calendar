@@ -25,6 +25,7 @@ import panel from '../calendar/styles/DayPanel.module.css';
 import { Loading, Skeleton } from '../ui/Skeleton';
 import Problem, { loadProblem } from '../ui/Problem';
 import { Button } from '../ui/Button';
+import { tapArea } from '../../lib/haptics';
 import s from './styles/Tasks.module.css';
 import { isKid } from '../../lib/people';
 import { useFolded } from '../../lib/useFolded';
@@ -92,7 +93,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 	const kids = members.filter((m) => tasksFor(tasks, m.id).length > 0 || isKid(m));
 
 	return (
-		<section className={s.page} aria-label="Tasks">
+		<section className={s.page} aria-label="Tasks" {...tapArea}>
 			<header className={s.pageHead}>
 				<div>
 					<h1 className={s.pageTitle}>Tasks</h1>
@@ -149,7 +150,7 @@ export default function TasksPage({ today, members, onAdd, onEdit, locked }: Pro
 											showHistory={showHistory}
 											onHistory={() => {
 												setHistoryKid(showHistory ? null : kid.id);
-												folds.fold([kid.id], false);
+												folds.fold([kid.id], false, true);
 											}}
 											moments={moments.filter((mo) => mo.memberId === kid.id)}
 											onMoment={locked ? undefined : (moment) => setUnsticking({ kid, moment })}
