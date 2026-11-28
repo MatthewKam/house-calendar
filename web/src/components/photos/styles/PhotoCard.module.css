@@ -151,8 +151,9 @@
 .bigClose {
 	position: absolute;
 	z-index: 3;
-	top: 0.7rem;
-	right: 0.7rem;
+	/* Below the phone's clock and notch, beside a notch on its side. */
+	top: calc(0.7rem + env(safe-area-inset-top, 0px));
+	right: calc(0.7rem + env(safe-area-inset-right, 0px));
 	width: 2.75rem;
 	height: 2.75rem;
 	min-width: 0;

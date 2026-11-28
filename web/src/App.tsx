@@ -470,7 +470,12 @@ export default function App() {
 							</Suspense>
 						) : page === 'photos' ? (
 							<Suspense fallback={null}>
-								<PhotosPage onPreview={saver.show} incoming={pickedPhotos} onTaken={() => setPickedPhotos(null)} />
+								<PhotosPage
+									onPreview={saver.show}
+									incoming={pickedPhotos}
+									onTaken={() => setPickedPhotos(null)}
+									plusInBar={phoneBar}
+								/>
 							</Suspense>
 						) : (
 							<CalendarPage

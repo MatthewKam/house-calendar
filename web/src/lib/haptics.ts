@@ -17,6 +17,9 @@ export type Feel = 'tap' | 'select' | 'done' | 'success' | 'warn';
 
 const KEY = 'sprig:haptics';
 
+/** A switch whose on is worth more than a tick (the screen saver's): on is done, off a tap. */
+export const ON_DONE = { on: 'done', off: 'tap' } as const satisfies { on: Feel; off: Feel };
+
 /** In a browser, how each feels: one short buzz, or a pattern (ms on, off, on…). */
 const BUZZ: Record<Feel, number | number[]> = {
 	tap: 10,
